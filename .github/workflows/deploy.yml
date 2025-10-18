@@ -1,0 +1,103 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install Node dependencies
+      run: npm ci
+    
+    - name: Build frontend assets
+      run: npm run build
+    
+    - name: Create deployment archive (excluding build assets)
+      run: |
+        tar -czf deploy.tar.gz \
+          --exclude=node_modules \
+          --exclude=.git \
+          --exclude=storage/logs/* \
+          --exclude=.env \
+          --exclude=.github \
+          --exclude=tests \
+          --exclude=*.md \
+          --exclude=public/build \
+          .
+    
+    - name: Upload deployment archive
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "deploy.tar.gz"
+        target: "/tmp/"
+    
+    - name: Upload built assets separately
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "public/build/"
+        target: "/tmp/build-assets/"
+        strip_components: 1
+    
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          set -e
+          
+          echo "🚀 Starting deployment..."
+          
+          # Navigate to project directory
+          cd /var/www/vbifzambia.com
+          
+          # Create backup
+          sudo cp -r . ../backup-$(date +%Y%m%d-%H%M%S) || true
+          
+          # Extract new version (without build assets)
+          sudo tar -xzf /tmp/deploy.tar.gz -C .
+          
+          # Copy built assets to correct location
+          sudo mkdir -p public/build
+          sudo cp -r /tmp/build-assets/* public/build/ 2>/dev/null || true
+          
+          # Install PHP dependencies
+          sudo -u www-data composer install --no-dev --optimize-autoloader --no-interaction
+          
+          # Set proper permissions
+          sudo chown -R www-data:www-data .
+          sudo chmod -R 755 storage bootstrap/cache public/build
+          
+          # Laravel optimizations
+          sudo -u www-data php artisan config:clear
+          sudo -u www-data php artisan cache:clear
+          sudo -u www-data php artisan migrate --force
+          sudo -u www-data php artisan config:cache
+          sudo -u www-data php artisan route:cache
+          sudo -u www-data php artisan view:cache
+          
+          # Clean up
+          rm /tmp/deploy.tar.gz
+          rm -rf /tmp/build-assets
+          
+          echo "✅ Deployment completed successfully!"
