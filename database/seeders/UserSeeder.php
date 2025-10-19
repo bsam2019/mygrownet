@@ -16,12 +16,12 @@ class UserSeeder extends Seeder
     {
         // Create admin user
         $admin = User::firstOrCreate(
-            ['email' => 'admin@vbif.com'],
+            ['email' => 'admin@mygrownet.com'],
             [
                 'name' => 'Admin User',
-                'email' => 'admin@vbif.com',
+                'email' => 'admin@mygrownet.com',
                 'email_verified_at' => now(),
-                'password' => Hash::make('vbif@2025!'),
+                'password' => Hash::make('mygrownet@2025!'),
                 'remember_token' => Str::random(10),
                 'created_at' => now()->subYear(),
             ]
@@ -34,10 +34,10 @@ class UserSeeder extends Seeder
 
         // Create one investment manager
         $manager = User::firstOrCreate(
-            ['email' => 'manager@vbif.com'],
+            ['email' => 'manager@mygrownet.com'],
             [
                 'name' => 'Investment Manager',
-                'email' => 'manager@vbif.com',
+                'email' => 'manager@mygrownet.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'remember_token' => Str::random(10),
@@ -53,10 +53,10 @@ class UserSeeder extends Seeder
         // Create support agents
         for ($i = 1; $i <= 2; $i++) {
             $support = User::firstOrCreate(
-                ['email' => "support$i@vbif.com"],
+                ['email' => "support$i@mygrownet.com"],
                 [
                     'name' => "Support Agent $i",
-                    'email' => "support$i@vbif.com",
+                    'email' => "support$i@mygrownet.com",
                     'email_verified_at' => now(),
                     'password' => Hash::make('password'),
                     'remember_token' => Str::random(10),
