@@ -19,12 +19,9 @@ class MyGrowNetAchievementsSeeder extends Seeder
         $achievements = Achievement::createMyGrowNetAchievements();
         
         foreach ($achievements as $achievementData) {
-            Achievement::updateOrInsert(
+            Achievement::updateOrCreate(
                 ['slug' => $achievementData['slug']],
-                array_merge($achievementData, [
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ])
+                $achievementData
             );
         }
 
