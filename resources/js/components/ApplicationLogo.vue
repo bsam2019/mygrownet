@@ -8,6 +8,7 @@ const logoUrl = computed(() => '/logo.png');
     <img 
         :src="logoUrl" 
         alt="MyGrowNet Logo" 
-        class="w-32 h-32 object-contain drop-shadow-[0_0_20px_rgba(37,99,235,0.6)] hover:drop-shadow-[0_0_30px_rgba(37,99,235,0.8)] transition-all duration-300"
+        class="w-32 h-32 object-contain"
+        style="filter: drop-shadow(0 0 20px rgba(37, 99, 235, 0.7)) drop-shadow(0 0 10px rgba(37, 99, 235, 0.5));"
     />
 </template>
