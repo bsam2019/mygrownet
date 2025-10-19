@@ -28,11 +28,11 @@ class ProductionSeeder extends Seeder
             // Membership Packages (7 Levels: Associate to Ambassador)
             PackageSeeder::class,               // Subscription packages with learning materials
             
-            // Achievement & Recognition System
-            MyGrowNetAchievementsSeeder::class, // Milestone achievements and badges
-            
             // Community Projects & Categories
             CategorySeeder::class,              // Project and investment categories
+            
+            // Achievement & Recognition System
+            MyGrowNetAchievementsSeeder::class, // Milestone achievements and badges
             
             // Optional: Educational Content (uncomment if ready)
             // EducationalContentSeeder::class,  // Learning packs and courses

@@ -54,7 +54,7 @@ const taglineColorClasses = {
             :src="logoUrl" 
             alt="MyGrowNet Logo" 
             :class="sizeClasses[size]"
-            class="object-contain"
+            class="object-contain drop-shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:drop-shadow-[0_0_25px_rgba(37,99,235,0.7)] transition-all duration-300"
         />
     </div>
 </template>
