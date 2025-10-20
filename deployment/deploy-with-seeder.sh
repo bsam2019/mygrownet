@@ -29,22 +29,32 @@ git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME
 echo "🔄 Running migrations..."
 php artisan migrate --force
 
-# Clear first (before fixing permissions)
+# Clear first
 echo "🧹 Clearing caches..."
 php artisan optimize:clear
 
-# Fix permissions
+# Fix permissions - set www-data as owner and sammy as group member
 echo "🔧 Fixing permissions..."
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S usermod -a -G www-data sammy
 
 # Run seeder
 echo "🌱 Running production seeder..."
 php artisan db:seed --class=ProductionSeeder
 
-# Optimize (after seeder)
+# Set proper permissions for optimization
+echo "🔧 Setting permissions for optimization..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/cache
+
+# Optimize
 echo "🚀 Optimizing..."
 php artisan optimize
+
+# Restore proper permissions
+echo "🔒 Restoring secure permissions..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
 
 echo "✅ Deployment complete!"
 

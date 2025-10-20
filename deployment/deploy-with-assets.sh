@@ -38,15 +38,23 @@ cd ${PROJECT_PATH}
 echo "📥 Pulling from GitHub..."
 git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
 
+# Clear first
+echo "🧹 Clearing caches..."
+php artisan optimize:clear
+
 # Fix permissions
 echo "🔧 Fixing permissions..."
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/cache
 
-# Clear and optimize
-echo "🧹 Clearing and optimizing..."
-php artisan optimize:clear
+# Optimize
+echo "🚀 Optimizing..."
 php artisan optimize
+
+# Restore secure permissions
+echo "🔒 Restoring secure permissions..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
 
 echo "✅ Deployment complete!"
 
