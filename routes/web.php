@@ -285,9 +285,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('can:view-commission-analytics')->name('analytics');
     });
 
-    // Investment Creation
-    Route::get('/investments/create/{opportunity?}', [InvestmentController::class, 'create'])->name('investments.create');
-    Route::post('/investments', [InvestmentController::class, 'store'])->name('investments.store');
+    // Note: investments.create and investments.store are already defined by Route::resource('investments') above
     
     // VBIF-specific routes
     // Matrix Management
