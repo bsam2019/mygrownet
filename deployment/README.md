@@ -2,8 +2,29 @@
 
 ## Setup
 
-1. Ensure `.deploy-credentials` file exists in project root (already created and gitignored)
-2. Make scripts executable: `chmod +x deployment/*.sh`
+### First Time Setup
+
+1. Run the credentials setup script:
+
+```bash
+bash deployment/setup-credentials.sh
+```
+
+This will guide you through creating the `.deploy-credentials` file with your:
+
+- Droplet IP and SSH credentials
+- GitHub username and token
+- Project path on the server
+
+2. Make scripts executable (if needed):
+
+```bash
+chmod +x deployment/*.sh
+```
+
+### Existing Setup
+
+If you already have a `.deploy-credentials` file, the deployment scripts will automatically load it.
 
 ## Available Scripts
 
