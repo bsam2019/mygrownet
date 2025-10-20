@@ -47,90 +47,80 @@ interface NavGroup {
     items: NavItem[];
 }
 
-const investmentNavItems: NavItem[] = [
+const myBusinessNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: route('dashboard'),
-        icon: HomeIcon,
-    },
-    {
-        title: 'My Investments',
-        href: route('investments.index'),
-        icon: ChartPieIcon,
-    },
-    {
-        title: 'New Investment',
-        href: route('investments.create'),
+        title: 'My Business Profile',
+        href: route('mygrownet.membership.show'),
         icon: BriefcaseIcon,
     },
     {
-        title: 'Investment Opportunities',
-        href: route('opportunities'),
-        icon: LightbulbIcon,
-    },
-    {
-        title: 'Portfolio',
-        href: route('portfolio'),
-        icon: BriefcaseIcon,
-    },
-    {
-        title: 'Investment Tiers',
-        href: route('tiers.index'),
-        icon: BookOpenIcon,
-    },
-    {
-        title: 'Tier Benefits',
-        href: route('tiers.compare'),
-        icon: StarIcon,
-    },
-];
-
-const referralNavItems: NavItem[] = [
-    {
-        title: 'Referrals',
-        href: route('referrals.index'),
-        icon: GroupIcon,
-    },
-    {
-        title: 'Commission Tracking',
-        href: route('referrals.commissions'),
+        title: 'Growth Levels',
+        href: route('mygrownet.levels.index'),
         icon: TrendingUpIcon,
     },
     {
-        title: 'Matrix Position',
+        title: 'Performance Points',
+        href: route('points.index'),
+        icon: ChartBarIcon,
+    },
+];
+
+const networkNavItems: NavItem[] = [
+    {
+        title: 'My Team',
+        href: route('referrals.index'),
+        icon: UsersIcon,
+    },
+    {
+        title: 'Matrix Structure',
         href: route('matrix.index'),
         icon: FolderIcon,
     },
     {
-        title: 'Matrix Genealogy',
-        href: route('referrals.matrix-genealogy'),
-        icon: UsersIcon,
+        title: 'Commission Earnings',
+        href: route('referrals.commissions'),
+        icon: TrendingUpIcon,
     },
 ];
 
 const financeNavItems: NavItem[] = [
     {
-        title: 'Transactions',
-        href: route('transactions'),
-        icon: ArrowRightLeftIcon,
+        title: 'MyGrow Save',
+        href: route('mygrownet.wallet.index'),
+        icon: BanknoteIcon,
+    },
+    {
+        title: 'Earnings & Bonuses',
+        href: route('mygrownet.earnings.index'),
+        icon: GiftIcon,
     },
     {
         title: 'Withdrawals',
         href: route('withdrawals.index'),
-        icon: BanknoteIcon,
+        icon: ArrowRightLeftIcon,
+    },
+    {
+        title: 'Transaction History',
+        href: route('transactions'),
+        icon: ChartBarIcon,
     },
 ];
 
 const reportsNavItems: NavItem[] = [
     {
-        title: 'Performance Report',
+        title: 'Business Performance',
         href: route('referrals.performance-report'),
+        icon: TrendingUpIcon,
+    },
+    {
+        title: 'Earnings Summary',
+        href: route('reports'),
         icon: ChartBarIcon,
     },
     {
-        title: 'Reports',
-        href: route('reports'),
-        icon: ChartBarIcon,
+        title: 'Network Analytics',
+        href: route('mygrownet.network.analytics'),
+        icon: ChartPieIcon,
     },
 ];
 
@@ -149,12 +139,12 @@ const adminNavItems: NavItem[] = [
         icon: ShieldIcon,
     },
     {
-        title: 'Manage Users',
+        title: 'Manage Members',
         href: route('admin.users.index'),
         icon: GroupIcon,
     },
     {
-        title: 'Investment Requests',
+        title: 'Subscription Requests',
         href: route('admin.investments.index'),
         icon: ChartPieIcon,
     },
@@ -168,15 +158,15 @@ const adminNavItems: NavItem[] = [
 // Create grouped navigation based on user role
 const navGroups = computed((): NavGroup[] => {
     const baseGroups: NavGroup[] = [
-        { label: 'Investments', items: investmentNavItems },
-        { label: 'Referrals & Network', items: referralNavItems },
-        { label: 'Finance', items: financeNavItems },
-        { label: 'Reports & Analytics', items: reportsNavItems },
-        { label: 'Account', items: accountNavItems },
+        { label: 'My Business', items: myBusinessNavItems, icon: BriefcaseIcon },
+        { label: 'Network & Team', items: networkNavItems, icon: UsersIcon },
+        { label: 'Finance', items: financeNavItems, icon: BanknoteIcon },
+        { label: 'Reports & Analytics', items: reportsNavItems, icon: ChartBarIcon },
+        { label: 'Account', items: accountNavItems, icon: CogIcon },
     ];
 
     if (isAdmin.value) {
-        baseGroups.push({ label: 'Administration', items: adminNavItems });
+        baseGroups.push({ label: 'Administration', items: adminNavItems, icon: ShieldIcon });
     }
 
     return baseGroups;
@@ -199,6 +189,26 @@ const navGroups = computed((): NavGroup[] => {
         </SidebarHeader>
 
         <SidebarContent>
+            <!-- Standalone Dashboard Link -->
+            <SidebarMenu class="px-2 py-2">
+                <SidebarMenuItem title="Dashboard">
+                    <SidebarMenuButton
+                        as-child
+                        :is-active="$page.url === route('dashboard')"
+                        :class="$page.url === route('dashboard')
+                            ? 'border-l-2 border-[#2563eb] bg-[#eff6ff] text-[#1d4ed8]'
+                            : ''"
+                        title="Dashboard"
+                    >
+                        <Link :href="route('dashboard')">
+                            <HomeIcon />
+                            <span>Dashboard</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+            
+            <!-- Grouped Navigation -->
             <NavMain :groups="navGroups" />
         </SidebarContent>
 

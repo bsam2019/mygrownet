@@ -12,6 +12,7 @@ import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator.vu
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
 });
@@ -61,11 +62,13 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="email">Email Address</Label>
+                    <Label for="email">
+                        Email Address 
+                        <span class="text-gray-400 font-normal">(Optional if phone provided)</span>
+                    </Label>
                     <Input
                         id="email"
                         type="email"
-                        required
                         :tabindex="2"
                         autocomplete="email"
                         v-model="form.email"
@@ -76,6 +79,35 @@ const submit = () => {
                         ]"
                     />
                     <InputError :message="form.errors.email" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="phone">
+                        Phone Number 
+                        <span class="text-gray-400 font-normal">(Optional if email provided)</span>
+                    </Label>
+                    <Input
+                        id="phone"
+                        type="tel"
+                        :tabindex="3"
+                        autocomplete="tel"
+                        v-model="form.phone"
+                        placeholder="0977123456 or +260977123456"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.phone ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                        Enter your Zambian phone number (e.g., 0977123456)
+                    </p>
+                    <InputError :message="form.errors.phone" />
+                </div>
+
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-xs text-blue-700">
+                        <strong>Note:</strong> You must provide at least one - either email or phone number (or both).
+                    </p>
                 </div>
 
                 <div class="grid gap-2">

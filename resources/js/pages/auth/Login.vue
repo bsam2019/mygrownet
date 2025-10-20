@@ -49,21 +49,24 @@ const submit = () => {
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">Email or Phone Number</Label>
                     <Input
                         id="email"
-                        type="email"
+                        type="text"
                         required
                         autofocus
                         :tabindex="1"
-                        autocomplete="email"
+                        autocomplete="username"
                         v-model="form.email"
-                        placeholder="email@example.com"
+                        placeholder="email@example.com or 0977123456"
                         :class="[
                             'bg-gray-50 focus-visible:ring-blue-500',
                             form.errors.email ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
                         ]"
                     />
+                    <p class="text-xs text-gray-500 mt-1">
+                        Enter your email address or phone number (e.g., 0977123456 or +260977123456)
+                    </p>
                     <InputError :message="form.errors.email" />
                 </div>
 

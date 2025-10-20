@@ -8,6 +8,7 @@ import { ChevronRightIcon } from 'lucide-vue-next';
 interface NavGroup {
     label: string; // required
     items: NavItem[];
+    icon?: any; // optional icon component for the group
 }
 
 const props = defineProps<{
@@ -104,26 +105,33 @@ watch(
     <div v-for="group in groups" :key="group.label">
         <SidebarGroup class="px-2 py-0">
             <SidebarGroupLabel 
-                class="cursor-pointer flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-2 py-2 transition-colors text-sm md:text-base"
+                class="cursor-pointer flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-2 py-2 transition-colors text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-700"
                 @click="toggleGroup(group.label)"
             >
-                <span>{{ group.label }}</span>
+                <span class="flex items-center gap-2">
+                    <component v-if="group.icon" :is="group.icon" class="h-3.5 w-3.5" />
+                    <span>{{ group.label }}</span>
+                </span>
                 <ChevronRightIcon 
-                    class="h-4 w-4 transition-transform duration-200" 
+                    class="h-3.5 w-3.5 transition-transform duration-200" 
                     :class="{ 'rotate-90': !isGroupCollapsed(group.label) }"
                 />
             </SidebarGroupLabel>
-            <SidebarMenu v-show="!isGroupCollapsed(group.label)">
-                <SidebarMenuItem v-for="item in group.items" :key="item.title">
+            <SidebarMenu :class="!isGroupCollapsed(group.label) ? 'mt-1' : 'group-data-[collapsible=icon]:block hidden'">
+                <SidebarMenuItem v-for="item in group.items" :key="item.title" :title="item.title">
                     <SidebarMenuButton
                         as-child
                         :is-active="isActive(item.href)"
-                        :class="isActive(item.href)
-                            ? 'border-l-2 border-[#2563eb] bg-[#eff6ff] text-[#1d4ed8]'
-                            : ''"
+                        :class="[
+                            'ml-2 text-sm',
+                            isActive(item.href)
+                                ? 'border-l-2 border-[#2563eb] bg-[#eff6ff] text-[#1d4ed8] font-medium'
+                                : 'text-gray-700 hover:text-gray-900'
+                        ]"
+                        :title="item.title"
                     >
                         <Link :href="item.href">
-                            <component :is="item.icon" />
+                            <component :is="item.icon" class="h-4 w-4" />
                             <span>{{ item.title }}</span>
                         </Link>
                     </SidebarMenuButton>

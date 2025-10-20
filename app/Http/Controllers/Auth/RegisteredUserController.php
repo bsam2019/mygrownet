@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,13 +33,29 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
+            'phone' => 'nullable|string|max:20|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.unique' => 'This email is already registered.',
+            'phone.unique' => 'This phone number is already registered.',
         ]);
+
+        // Ensure at least one identifier (email or phone) is provided
+        if (empty($request->email) && empty($request->phone)) {
+            throw ValidationException::withMessages([
+                'email' => 'Please provide either an email address or phone number.',
+                'phone' => 'Please provide either an email address or phone number.',
+            ]);
+        }
+
+        // Normalize phone number if provided
+        $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $normalizedPhone,
             'password' => Hash::make($request->password),
         ]);
 

@@ -36,10 +36,61 @@ class User extends Authenticatable
         });
     }
 
+    /**
+     * Find user by phone or email
+     * 
+     * @param string $identifier Phone number or email
+     * @return User|null
+     */
+    public static function findByPhoneOrEmail(string $identifier): ?User
+    {
+        // Check if it's a phone number (contains only digits, +, -, spaces, or parentheses)
+        if (preg_match('/^[\d\s\+\-\(\)]+$/', $identifier)) {
+            // Normalize phone number (remove spaces, dashes, parentheses)
+            $normalizedPhone = preg_replace('/[\s\-\(\)]/', '', $identifier);
+            
+            // Try to find by phone
+            return static::where('phone', $normalizedPhone)
+                ->orWhere('phone', $identifier)
+                ->first();
+        }
+        
+        // Otherwise treat as email
+        return static::where('email', $identifier)->first();
+    }
+
+    /**
+     * Normalize phone number for storage
+     * Removes spaces, dashes, and parentheses
+     * Ensures Zambian format (+260 or 0)
+     * 
+     * @param string $phone
+     * @return string
+     */
+    public static function normalizePhone(string $phone): string
+    {
+        // Remove all non-digit characters except +
+        $normalized = preg_replace('/[^\d\+]/', '', $phone);
+        
+        // If starts with 260 (without +), add +
+        if (preg_match('/^260\d{9}$/', $normalized)) {
+            $normalized = '+' . $normalized;
+        }
+        
+        // If starts with 0 and is 10 digits, convert to +260
+        if (preg_match('/^0\d{9}$/', $normalized)) {
+            $normalized = '+260' . substr($normalized, 1);
+        }
+        
+        return $normalized;
+    }
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'phone',
+        'phone_verified_at',
         'referrer_id',
         'status',
         'last_login_at',
@@ -54,7 +105,6 @@ class User extends Authenticatable
         'tier_history',
         'current_investment_tier_id',
         'rank',
-        'phone',
         'address',
         'balance',
         'total_earnings',
@@ -153,7 +203,7 @@ class User extends Authenticatable
     }
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class, 'referrer_id');
+        return $this->hasMany(Transaction::class, 'user_id');
     }
 
     public function referralCommissions(): HasMany

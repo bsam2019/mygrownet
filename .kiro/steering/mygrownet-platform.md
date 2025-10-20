@@ -187,13 +187,15 @@ Members must earn minimum MAP each month to receive earnings:
 ## Reference Documents
 
 For detailed information, refer to:
-- `docs/MYGROWNET_PLATFORM_CONCEPT.md` - Technical/business concept
+- `docs/MYGROWNET_PLATFORM_CONCEPT.md` - Technical/business concept with LP/BP integration
+- `docs/UNIFIED_PRODUCTS_SERVICES.md` - Complete products & services with LP/BP system
 - `docs/MyGrowNet_Platform_Guide.md` - Human-friendly guide
 - `docs/LEVEL_STRUCTURE.md` - Complete 7-level system details
 - `docs/POINTS_SYSTEM_SPECIFICATION.md` - Technical specification for points system
 - `docs/Points_System_Guide.md` - Member-friendly points system guide
 
 #[[file:docs/MYGROWNET_PLATFORM_CONCEPT.md]]
+#[[file:docs/UNIFIED_PRODUCTS_SERVICES.md]]
 #[[file:docs/MyGrowNet_Platform_Guide.md]]
 #[[file:docs/LEVEL_STRUCTURE.md]]
 #[[file:docs/POINTS_SYSTEM_SPECIFICATION.md]]

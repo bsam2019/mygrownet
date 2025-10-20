@@ -314,34 +314,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('dashboard');
         
-        // MLM Network Routes (TODO: Create NetworkController)
-        // Route::get('/network', [App\Http\Controllers\MyGrowNet\NetworkController::class, 'index'])->name('network.index');
-        // Route::get('/network/tree', [App\Http\Controllers\MyGrowNet\NetworkController::class, 'tree'])->name('network.tree');
-        // Route::get('/network/genealogy', [App\Http\Controllers\MyGrowNet\NetworkController::class, 'genealogy'])->name('network.genealogy');
+        // Member Membership Routes
+        Route::get('/my-membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'show'])->name('membership.show');
+        Route::get('/professional-levels', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'levels'])->name('levels.index');
         
-        // Commission Tracking Routes (TODO: Create CommissionController)
-        // Route::get('/commissions', [App\Http\Controllers\MyGrowNet\CommissionController::class, 'index'])->name('commissions.index');
-        // Route::get('/commissions/history', [App\Http\Controllers\MyGrowNet\CommissionController::class, 'history'])->name('commissions.history');
-        // Route::get('/commissions/breakdown', [App\Http\Controllers\MyGrowNet\CommissionController::class, 'breakdown'])->name('commissions.breakdown');
+        // Finance Routes
+        Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
+        Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
+        Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
         
-        // Team Volume Routes (TODO: Create TeamVolumeController)
-        // Route::get('/team-volume', [App\Http\Controllers\MyGrowNet\TeamVolumeController::class, 'index'])->name('team-volume.index');
-        // Route::get('/team-volume/analytics', [App\Http\Controllers\MyGrowNet\TeamVolumeController::class, 'analytics'])->name('team-volume.analytics');
-        
-        // Membership Tier Routes (TODO: Create MembershipController)
-        // Route::get('/membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'index'])->name('membership.index');
-        // Route::get('/membership/upgrade', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'upgrade'])->name('membership.upgrade');
-        // Route::post('/membership/upgrade', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'processUpgrade'])->name('membership.process-upgrade');
-        
-        // Community Projects Routes (TODO: Create ProjectController)
-        // Route::get('/projects', [App\Http\Controllers\MyGrowNet\ProjectController::class, 'index'])->name('projects.index');
-        // Route::get('/projects/{project}', [App\Http\Controllers\MyGrowNet\ProjectController::class, 'show'])->name('projects.show');
-        // Route::post('/projects/{project}/invest', [App\Http\Controllers\MyGrowNet\ProjectController::class, 'invest'])->name('projects.invest');
-        
-        // Subscription Management Routes (TODO: Create SubscriptionController)
-        // Route::get('/subscription', [App\Http\Controllers\MyGrowNet\SubscriptionController::class, 'index'])->name('subscription.index');
-        // Route::get('/subscription/manage', [App\Http\Controllers\MyGrowNet\SubscriptionController::class, 'manage'])->name('subscription.manage');
-        // Route::post('/subscription/renew', [App\Http\Controllers\MyGrowNet\SubscriptionController::class, 'renew'])->name('subscription.renew');
+        // Network & Analytics Routes
+        Route::get('/network', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('network'))->name('network.index');
+        Route::get('/network/analytics', [App\Http\Controllers\MyGrowNet\NetworkAnalyticsController::class, 'index'])->name('network.analytics');
+        Route::get('/commissions', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('commissions'))->name('commissions.index');
+        Route::get('/membership/upgrade', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('membership-upgrade'))->name('membership.upgrade');
+        Route::get('/projects', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('projects'))->name('projects.index');
+        Route::get('/assets', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('assets'))->name('assets.index');
+        Route::get('/rewards', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('rewards'))->name('rewards.index');
+        Route::get('/referrals', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('referrals'))->name('referrals.index');
+        Route::get('/learning', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('learning'))->name('learning.index');
         
         // API Routes for Dashboard Data
         Route::prefix('api')->name('api.')->group(function () {

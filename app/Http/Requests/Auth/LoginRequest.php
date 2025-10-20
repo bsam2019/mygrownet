@@ -27,13 +27,14 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'], // Changed to accept phone or email
             'password' => ['required', 'string'],
         ];
     }
 
     /**
      * Attempt to authenticate the request's credentials.
+     * Supports login with either email or phone number.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -41,7 +42,13 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $identifier = $this->input('email'); // Field name is 'email' but can contain phone
+        $password = $this->input('password');
+        
+        // Determine if identifier is phone or email
+        $credentials = $this->getCredentials($identifier, $password);
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -50,6 +57,33 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Get authentication credentials based on identifier type
+     *
+     * @param string $identifier
+     * @param string $password
+     * @return array
+     */
+    protected function getCredentials(string $identifier, string $password): array
+    {
+        // Check if identifier looks like a phone number
+        if (preg_match('/^[\d\s\+\-\(\)]+$/', $identifier)) {
+            // Normalize phone number
+            $normalizedPhone = \App\Models\User::normalizePhone($identifier);
+            
+            return [
+                'phone' => $normalizedPhone,
+                'password' => $password,
+            ];
+        }
+        
+        // Otherwise treat as email
+        return [
+            'email' => $identifier,
+            'password' => $password,
+        ];
     }
 
     /**

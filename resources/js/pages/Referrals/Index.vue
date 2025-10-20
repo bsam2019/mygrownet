@@ -2,41 +2,45 @@
     <InvestorLayout>
         <div class="space-y-6">
             <!-- Header -->
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <div class="flex items-center justify-between">
+            <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Referral System</h1>
-                        <p class="text-gray-600 mt-1">Manage your referral network and track commissions</p>
+                        <h1 class="text-xl md:text-2xl font-bold text-gray-900">My Team</h1>
+                        <p class="text-sm md:text-base text-gray-600 mt-1">Manage your business network and track team performance</p>
                     </div>
-                    <div class="flex items-center space-x-6">
-                        <div class="text-right">
-                            <div class="text-sm text-gray-500">Your Referral Code</div>
-                            <div class="text-lg font-mono font-bold text-blue-600">{{ referralCode }}</div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <div class="text-left sm:text-right">
+                            <div class="text-sm text-gray-500">Your Business ID</div>
+                            <div class="text-base md:text-lg font-mono font-bold text-blue-600">{{ referralCode }}</div>
                         </div>
-                        <div class="flex space-x-2">
+                        <div class="flex flex-wrap gap-2">
                             <button 
                                 @click="activeTab = 'overview'"
                                 :class="tabButtonClasses('overview')"
+                                class="text-sm md:text-base"
                             >
-                                Overview
+                                Team Overview
                             </button>
                             <button 
                                 @click="activeTab = 'matrix'"
                                 :class="tabButtonClasses('matrix')"
+                                class="text-sm md:text-base"
                             >
-                                Matrix
+                                Network Structure
                             </button>
                             <button 
                                 @click="activeTab = 'spillover'"
                                 :class="tabButtonClasses('spillover')"
+                                class="text-sm md:text-base"
                             >
-                                Spillover
+                                Growth Opportunities
                             </button>
                             <button 
                                 @click="activeTab = 'sharing'"
                                 :class="tabButtonClasses('sharing')"
+                                class="text-sm md:text-base"
                             >
-                                Sharing
+                                Invite Partners
                             </button>
                         </div>
                     </div>

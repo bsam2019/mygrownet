@@ -22,12 +22,17 @@ class TrackDailyLogin
         if (Auth::check()) {
             $user = Auth::user();
             
-            // Award daily login points
-            $transaction = $this->pointService->awardDailyLogin($user);
+            // Skip daily login points if user was created today (registration day)
+            $isRegistrationDay = $user->created_at->isToday();
             
-            // Check for streak bonuses if points were awarded
-            if ($transaction) {
-                $this->pointService->checkStreakBonuses($user);
+            if (!$isRegistrationDay) {
+                // Award daily login points
+                $transaction = $this->pointService->awardDailyLogin($user);
+                
+                // Check for streak bonuses if points were awarded
+                if ($transaction) {
+                    $this->pointService->checkStreakBonuses($user);
+                }
             }
         }
 

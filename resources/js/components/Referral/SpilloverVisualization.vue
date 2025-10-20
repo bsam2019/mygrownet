@@ -53,8 +53,8 @@
                             <DollarSignIcon class="h-5 w-5 text-purple-600" />
                         </div>
                         <div>
-                            <div class="text-sm font-medium text-purple-900">Spillover Earnings</div>
-                            <div class="text-xs text-purple-700">{{ formatCurrency(spilloverEarnings) }}</div>
+                            <div class="text-sm font-medium text-purple-900">Growth Earnings</div>
+                            <div class="text-xs text-purple-700">{{ formatCurrency(spilloverEarnings || 0) }}</div>
                         </div>
                     </div>
                 </div>
@@ -227,8 +227,8 @@
                         <DollarSignIcon class="h-6 w-6 text-emerald-600" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Spillover Earnings</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(spilloverStats.total_earnings) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Growth Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(spilloverStats?.total_earnings || 0) }}</p>
                     </div>
                 </div>
             </div>

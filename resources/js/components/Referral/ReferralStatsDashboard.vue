@@ -53,10 +53,10 @@
                         <TrendingUpIcon class="h-6 w-6 text-purple-600" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Matrix Earnings</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.matrix_earnings) }}</p>
+                        <p class="text-sm font-medium text-gray-600">Network Earnings</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.matrix_earnings || 0) }}</p>
                         <p class="text-xs text-purple-600 mt-1">
-                            {{ stats.matrix_positions_filled }}/39 positions
+                            {{ stats.matrix_positions_filled || 0 }}/3,279 positions
                         </p>
                     </div>
                 </div>

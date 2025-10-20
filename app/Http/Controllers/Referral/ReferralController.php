@@ -208,7 +208,7 @@ class ReferralController extends Controller
     /**
      * Generate or regenerate referral code
      */
-    public function generateReferralCode(): JsonResponse
+    public function generateReferralCode()
     {
         $user = auth()->user();
         
@@ -220,20 +220,9 @@ class ReferralController extends Controller
                 "Generated new referral code: {$referralCode}"
             );
             
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'referral_code' => $referralCode,
-                    'referral_link' => $this->generateReferralLink($user),
-                    'message' => 'Referral code generated successfully'
-                ]
-            ]);
+            return back()->with('success', 'Business ID generated successfully!');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate referral code',
-                'error' => $e->getMessage()
-            ], 500);
+            return back()->with('error', 'Failed to generate Business ID: ' . $e->getMessage());
         }
     }
 

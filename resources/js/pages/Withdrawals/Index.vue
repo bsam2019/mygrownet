@@ -1,6 +1,7 @@
 <template>
-  <AppShell>
-    <div class="space-y-6">
+  <InvestorLayout>
+    <div class="py-6 sm:py-8">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
         <div>
@@ -87,13 +88,14 @@
         </div>
       </div>
     </div>
-  </AppShell>
+    </div>
+  </InvestorLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { Head } from '@inertiajs/vue3'
-import AppShell from '@/components/AppShell.vue'
+import InvestorLayout from '@/Layouts/InvestorLayout.vue'
 import Icon from '@/components/Icon.vue'
 import WithdrawalEligibilityChecker from '@/components/Withdrawal/WithdrawalEligibilityChecker.vue'
 import WithdrawalHistoryTable from '@/components/Withdrawal/WithdrawalHistoryTable.vue'

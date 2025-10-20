@@ -327,7 +327,7 @@ const currentLevel = computed(() => {
 });
 
 const filledPositions = computed(() => props.matrixStats?.filled_positions || 0);
-const totalPositions = computed(() => 39); // 3 + 9 + 27
+const totalPositions = computed(() => 3279); // 3×3 Matrix, 7 Levels: 3+9+27+81+243+729+2187 = 3,279
 
 const estimatedCommission = computed(() => {
     // Estimate commission based on current tier and average investment
