@@ -70,7 +70,25 @@ class UserSeeder extends Seeder
             }
         }
 
-        // Note: Regular users are not seeded in production
-        // Users will register through the platform
+        // Create a test member user for testing
+        $testMember = User::firstOrCreate(
+            ['email' => 'member@mygrownet.com'],
+            [
+                'name' => 'Test Member',
+                'email' => 'member@mygrownet.com',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'remember_token' => Str::random(10),
+                'created_at' => now()->subMonths(6),
+            ]
+        );
+
+        // Assign member role
+        if (\Spatie\Permission\Models\Role::where('name', 'Member')->exists()) {
+            $testMember->assignRole('Member');
+        }
+
+        // Note: Regular users will register through the platform
+        // and will be automatically assigned the Member role
     }
 }

@@ -25,3 +25,6 @@ Thumbs.db
 .kiro/steering/deployment.md
 *.sh
 *.tar.gz
+
+# Deployment credentials (DO NOT COMMIT)
+.deploy-credentials
