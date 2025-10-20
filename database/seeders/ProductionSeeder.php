@@ -24,6 +24,7 @@ class ProductionSeeder extends Seeder
         $this->call([
             // Core System Data (Required)
             RolesAndPermissionsSeeder::class,   // User roles and permissions (must be first)
+            UserSeeder::class,                  // Admin and staff users
             
             // Membership Packages (7 Levels: Associate to Ambassador)
             PackageSeeder::class,               // Subscription packages with learning materials
@@ -44,7 +45,8 @@ class ProductionSeeder extends Seeder
         
         $this->command->info('📋 Essential data seeded:');
         $this->command->line('  ✓ User roles and permissions (Administrator, Manager, Support, Member)');
-        $this->command->line('  ✓ Subscription packages (7 levels: Basic → Ambassador)');
+        $this->command->line('  ✓ Admin and staff users (admin@mygrownet.com, manager@mygrownet.com)');
+        $this->command->line('  ✓ Subscription packages (7 levels: Associate → Ambassador)');
         $this->command->line('  ✓ Achievement system (milestones, badges, rewards)');
         $this->command->line('  ✓ Community project categories');
         
@@ -58,13 +60,13 @@ class ProductionSeeder extends Seeder
         
         $this->command->newLine();
         $this->command->warn('⚠️  Next Steps:');
-        $this->command->line('  1. Create your first admin user: php artisan make:admin');
+        $this->command->line('  1. Login as admin: admin@mygrownet.com / mygrownet@2025!');
         $this->command->line('  2. Configure payment gateways (MTN MoMo, Airtel Money)');
         $this->command->line('  3. Upload learning materials and courses');
         $this->command->line('  4. Set up community projects for profit-sharing');
         
         $this->command->newLine();
         $this->command->info('🚀 Your MyGrowNet platform is ready for production!');
-        $this->command->info('🌐 Visit: https://mygrownet.edulinkzm.com');
+        $this->command->info('🌐 Visit: https://mygrownet.com');
     }
 }

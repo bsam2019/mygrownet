@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
 
 defineProps<{
     status?: string;
@@ -35,6 +35,17 @@ const submit = () => {
             {{ status }}
         </div>
 
+        <!-- Error Alert -->
+        <div v-if="form.errors.email || form.errors.password" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-red-800 mb-1">Login Failed</h3>
+                <p class="text-sm text-red-700">
+                    {{ form.errors.email || form.errors.password }}
+                </p>
+            </div>
+        </div>
+
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
@@ -48,7 +59,10 @@ const submit = () => {
                         autocomplete="email"
                         v-model="form.email"
                         placeholder="email@example.com"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.email ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -68,7 +82,10 @@ const submit = () => {
                         autocomplete="current-password"
                         v-model="form.password"
                         placeholder="Enter your password"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.password ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <InputError :message="form.errors.password" />
                 </div>

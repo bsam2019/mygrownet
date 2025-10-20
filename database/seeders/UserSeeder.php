@@ -70,36 +70,7 @@ class UserSeeder extends Seeder
             }
         }
 
-        // Create regular users spread across 12 months (reduced for memory efficiency)
-        $startDate = now()->subMonths(12);
-
-        // Cache the investor role to avoid repeated queries
-        $investorRole = \Spatie\Permission\Models\Role::where('name', 'investor')->first();
-
-        foreach (range(0, 11) as $month) {
-            $date = $startDate->copy()->addMonths($month);
-
-            // Reduced user count to prevent memory issues (was 8-12, now 3-5)
-            $usersCount = rand(3, 5);
-
-            for ($i = 0; $i < $usersCount; $i++) {
-                $createdAt = $date->copy()->addDays(rand(0, 30));
-
-                $user = User::create([
-                    'name' => fake()->name(),
-                    'email' => fake()->unique()->safeEmail(),
-                    'email_verified_at' => $createdAt,
-                    'password' => Hash::make('password'),
-                    'remember_token' => Str::random(10),
-                    'created_at' => $createdAt,
-                    'updated_at' => $createdAt,
-                ]);
-
-                // Assign investor role if it exists
-                if ($investorRole) {
-                    $user->assignRole($investorRole);
-                }
-            }
-        }
+        // Note: Regular users are not seeded in production
+        // Users will register through the platform
     }
 }

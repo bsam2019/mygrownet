@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator.vue';
 
 const form = useForm({
@@ -27,6 +27,18 @@ const submit = () => {
     <AuthBase title="Create an account" description="Enter your details below to create your account">
         <Head title="Register" />
 
+        <!-- Error Alert -->
+        <div v-if="Object.keys(form.errors).length > 0" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-red-800 mb-1">Registration Failed</h3>
+                <p class="text-sm text-red-700 mb-2">Please correct the following errors:</p>
+                <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
+                    <li v-for="(error, field) in form.errors" :key="field">{{ error }}</li>
+                </ul>
+            </div>
+        </div>
+
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
@@ -40,7 +52,10 @@ const submit = () => {
                         autocomplete="name"
                         v-model="form.name"
                         placeholder="Enter your full name"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.name ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <InputError :message="form.errors.name" />
                 </div>
@@ -55,7 +70,10 @@ const submit = () => {
                         autocomplete="email"
                         v-model="form.email"
                         placeholder="you@example.com"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.email ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -70,7 +88,10 @@ const submit = () => {
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Create a secure password"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.password ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <PasswordStrengthIndicator :password="form.password" />
                     <InputError :message="form.errors.password" />
@@ -86,7 +107,10 @@ const submit = () => {
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         placeholder="Confirm your password"
-                        class="bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.password_confirmation ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
+                        ]"
                     />
                     <InputError :message="form.errors.password_confirmation" />
                 </div>
