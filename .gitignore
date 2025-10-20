@@ -24,6 +24,7 @@ Homestead.yaml
 Thumbs.db
 .kiro/steering/deployment.md
 *.sh
+!deployment/*.sh
 *.tar.gz
 
 # Deployment credentials (DO NOT COMMIT)
