@@ -28,11 +28,6 @@ class WithdrawalController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('Withdrawals/Create');
-    }
-
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -45,21 +40,31 @@ class WithdrawalController extends Controller
         
         $validated = $request->validate([
             'amount' => 'required|numeric|min:50|max:' . $availableBalance,
-            'payment_method' => 'required|in:mobile_money,bank_transfer',
-            'phone_number' => 'required|string',
-            'account_name' => 'required|string',
+            'phone_number' => [
+                'required',
+                'string',
+                'regex:/^(\+260|0)?[79][0-9]{8}$/'
+            ],
+            'account_name' => 'required|string|max:255',
+        ], [
+            'phone_number.regex' => 'Please enter a valid Zambian mobile number (MTN or Airtel)',
         ]);
+
+        // Normalize phone number format
+        $phoneNumber = $validated['phone_number'];
+        if (strpos($phoneNumber, '+260') !== 0) {
+            $phoneNumber = preg_replace('/^0/', '+260', $phoneNumber);
+        }
 
         $user->withdrawals()->create([
             'amount' => $validated['amount'],
-            'payment_method' => $validated['payment_method'],
-            'phone_number' => $validated['phone_number'],
-            'account_name' => $validated['account_name'],
+            'withdrawal_method' => 'mobile_money',
+            'wallet_address' => $phoneNumber . ' - ' . $validated['account_name'],
             'status' => 'pending',
         ]);
 
         return redirect()->route('withdrawals.index')
-            ->with('success', 'Withdrawal request submitted successfully.');
+            ->with('success', 'Withdrawal request submitted successfully. You will receive the funds within 24-48 hours.');
     }
 
     public function show(Withdrawal $withdrawal)

@@ -25,7 +25,6 @@ const showNewWithdrawal = ref(false);
 
 const form = useForm({
     amount: '',
-    payment_method: 'mobile_money',
     phone_number: '',
     account_name: '',
 });
@@ -103,6 +102,7 @@ const submitWithdrawal = () => {
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Processed</th>
                                 </tr>
@@ -115,6 +115,12 @@ const submitWithdrawal = () => {
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {{ formatCurrency(withdrawal.amount) }}
                                     </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-gray-900">Mobile Money</span>
+                                            <span class="text-xs text-gray-500">{{ withdrawal.wallet_address || '-' }}</span>
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span :class="['inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium', getStatusColor(withdrawal.status)]">
                                             <component :is="getStatusIcon(withdrawal.status)" class="h-3 w-3" />
@@ -126,7 +132,7 @@ const submitWithdrawal = () => {
                                     </td>
                                 </tr>
                                 <tr v-if="withdrawals.data.length === 0">
-                                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                                         No withdrawal requests yet
                                     </td>
                                 </tr>
@@ -144,40 +150,49 @@ const submitWithdrawal = () => {
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Request Withdrawal</h3>
                             
                             <form @submit.prevent="submitWithdrawal" class="space-y-4">
+                                <!-- Info Banner -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>Mobile Money Withdrawal</strong><br>
+                                        Funds will be sent to your mobile money account (MTN or Airtel)
+                                    </p>
+                                </div>
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                                    <input
-                                        v-model="form.amount"
-                                        type="number"
-                                        step="0.01"
-                                        :min="minimumWithdrawal"
-                                        :max="availableBalance"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                        required
-                                    />
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount (ZMW)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-gray-500">K</span>
+                                        <input
+                                            v-model="form.amount"
+                                            type="number"
+                                            step="0.01"
+                                            :min="minimumWithdrawal"
+                                            :max="availableBalance"
+                                            class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="0.00"
+                                            required
+                                        />
+                                    </div>
                                     <p v-if="form.errors.amount" class="mt-1 text-sm text-red-600">{{ form.errors.amount }}</p>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Available: {{ formatCurrency(availableBalance) }} | Minimum: {{ formatCurrency(minimumWithdrawal) }}
+                                    </p>
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                                    <select
-                                        v-model="form.payment_method"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        <option value="mobile_money">Mobile Money</option>
-                                        <option value="bank_transfer">Bank Transfer</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number / Account</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Mobile Money Number</label>
                                     <input
                                         v-model="form.phone_number"
-                                        type="text"
+                                        type="tel"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="+260..."
+                                        placeholder="0971234567 or +260971234567"
+                                        pattern="^(\+260|0)?[79][0-9]{8}$"
                                         required
                                     />
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Enter your MTN or Airtel mobile money number
+                                    </p>
+                                    <p v-if="form.errors.phone_number" class="mt-1 text-sm text-red-600">{{ form.errors.phone_number }}</p>
                                 </div>
 
                                 <div>
@@ -186,22 +201,34 @@ const submitWithdrawal = () => {
                                         v-model="form.account_name"
                                         type="text"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Full name as registered on mobile money"
                                         required
                                     />
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Must match the name on your mobile money account
+                                    </p>
+                                    <p v-if="form.errors.account_name" class="mt-1 text-sm text-red-600">{{ form.errors.account_name }}</p>
+                                </div>
+
+                                <!-- Processing Info -->
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <p class="text-xs text-gray-600">
+                                        <strong>Processing Time:</strong> Withdrawals are typically processed within 24-48 hours during business days.
+                                    </p>
                                 </div>
 
                                 <div class="flex gap-3 pt-4">
                                     <button
                                         type="button"
                                         @click="showNewWithdrawal = false"
-                                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        :disabled="form.processing"
-                                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                        :disabled="form.processing || parseFloat(form.amount) < minimumWithdrawal || parseFloat(form.amount) > availableBalance"
+                                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {{ form.processing ? 'Submitting...' : 'Submit Request' }}
                                     </button>

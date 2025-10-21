@@ -127,7 +127,7 @@
           {
             icon: 'PhoneIcon',
             label: 'Phone',
-            value: '+260 977 123 456'
+            value: '+260 977 563 730 / +260 961 144 812'
           },
           {
             icon: 'MapPinIcon',

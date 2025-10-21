@@ -296,4 +296,287 @@ class ReferralService
             ->orderBy('month', 'desc')
             ->get();
     }
+
+    /**
+     * Get comprehensive referral statistics for the Team page
+     */
+    public function getReferralStatistics(User $user)
+    {
+        $referrals = $user->referrals();
+        
+        return [
+            'total_referrals_count' => $referrals->count(),
+            'active_referrals_count' => $referrals->whereHas('subscriptions', function ($query) {
+                $query->where('status', 'active');
+            })->count(),
+            'total_commission_earned' => $user->referralCommissions()->where('status', 'paid')->sum('amount'),
+            'monthly_commission' => $user->referralCommissions()
+                ->where('status', 'paid')
+                ->whereMonth('processed_at', now()->month)
+                ->sum('amount'),
+            'pending_commission' => $user->referralCommissions()->where('status', 'pending')->sum('amount'),
+            'pending_transactions_count' => $user->referralCommissions()->where('status', 'pending')->count(),
+            'matrix_earnings' => 0, // Placeholder for matrix earnings
+            'matrix_positions_filled' => 0, // Placeholder
+        ];
+    }
+
+    /**
+     * Get earnings breakdown by level
+     */
+    public function getEarningsBreakdown(User $user)
+    {
+        $byLevel = [];
+        for ($level = 1; $level <= 7; $level++) {
+            $levelCommissions = $user->referralCommissions()
+                ->where('level', $level)
+                ->where('status', 'paid');
+            
+            $byLevel[] = [
+                'level' => $level,
+                'amount' => $levelCommissions->sum('amount'),
+                'count' => $levelCommissions->count(),
+            ];
+        }
+
+        return [
+            'by_level' => $byLevel,
+            'direct_referrals' => $user->referralCommissions()->where('level', 1)->where('status', 'paid')->sum('amount'),
+            'spillover' => 0, // Placeholder
+            'matrix_bonuses' => 0, // Placeholder
+            'reinvestment_bonuses' => 0, // Placeholder
+            'total' => $user->referralCommissions()->where('status', 'paid')->sum('amount'),
+        ];
+    }
+
+    /**
+     * Get performance metrics
+     */
+    public function getPerformanceMetrics(User $user)
+    {
+        $totalReferrals = $user->referrals()->count();
+        $activeReferrals = $user->referrals()->whereHas('subscriptions', function ($query) {
+            $query->where('status', 'active');
+        })->count();
+
+        return [
+            'conversion_rate' => $totalReferrals > 0 ? ($activeReferrals / $totalReferrals) * 100 : 0,
+            'average_investment' => $user->referrals()->withSum('subscriptions', 'amount')->get()->avg('subscriptions_sum_amount') ?? 0,
+            'retention_rate' => $activeReferrals > 0 ? ($activeReferrals / $totalReferrals) * 100 : 0,
+            'growth_rate' => 0, // Placeholder - would need historical data
+        ];
+    }
+
+    /**
+     * Get recent activity
+     */
+    public function getRecentActivity(User $user)
+    {
+        $activities = [];
+        
+        // Recent referrals
+        $recentReferrals = $user->referrals()->latest()->take(5)->get();
+        foreach ($recentReferrals as $referral) {
+            $activities[] = [
+                'id' => $referral->id,
+                'type' => 'referral',
+                'description' => "{$referral->name} joined your team",
+                'created_at' => $referral->created_at->toISOString(),
+            ];
+        }
+        
+        // Recent commissions
+        $recentCommissions = $user->referralCommissions()->latest()->take(5)->get();
+        foreach ($recentCommissions as $commission) {
+            $activities[] = [
+                'id' => $commission->id,
+                'type' => 'commission',
+                'description' => "Earned commission from Level {$commission->level}",
+                'amount' => $commission->amount,
+                'created_at' => $commission->created_at->toISOString(),
+            ];
+        }
+        
+        // Sort by date and limit
+        usort($activities, function ($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
+        });
+        
+        return array_slice($activities, 0, 10);
+    }
+
+    /**
+     * Get tier distribution of referrals
+     */
+    public function getTierDistribution(User $user)
+    {
+        // For MyGrowNet, we'll use professional levels instead of investment tiers
+        $distribution = $user->referrals()
+            ->select('current_professional_level', DB::raw('count(*) as count'))
+            ->groupBy('current_professional_level')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => ucfirst($item->current_professional_level),
+                    'count' => $item->count,
+                    'total_investment' => 0, // Placeholder
+                ];
+            });
+        
+        return $distribution->toArray();
+    }
+
+    /**
+     * Get matrix data (placeholder for now)
+     */
+    public function getMatrixData(User $user)
+    {
+        return [
+            'root' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'level' => $user->current_professional_level,
+            ],
+            'levels' => [
+                'level_1' => [],
+                'level_2' => [],
+                'level_3' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Get spillover info (placeholder)
+     */
+    public function getSpilloverInfo(User $user)
+    {
+        return [
+            'has_opportunities' => false,
+            'available_slots' => 0,
+        ];
+    }
+
+    /**
+     * Get matrix stats (placeholder)
+     */
+    public function getMatrixStats(User $user)
+    {
+        return [
+            'level_1_count' => $user->referrals()->count(),
+            'level_2_count' => 0,
+            'level_3_count' => 0,
+            'total_earnings' => $user->referralCommissions()->where('status', 'paid')->sum('amount'),
+            'filled_positions' => $user->referrals()->count(),
+            'total_positions' => 3,
+        ];
+    }
+
+    /**
+     * Get spillover data (placeholder)
+     */
+    public function getSpilloverData(User $user)
+    {
+        return [];
+    }
+
+    /**
+     * Get level 1 referrals
+     */
+    public function getLevel1Referrals(User $user)
+    {
+        return $user->referrals()->get()->map(function ($referral) {
+            return [
+                'id' => $referral->id,
+                'name' => $referral->name,
+                'email' => $referral->email,
+                'level' => $referral->current_professional_level,
+                'joined_at' => $referral->created_at->toISOString(),
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get spillover placements (placeholder)
+     */
+    public function getSpilloverPlacements(User $user)
+    {
+        return [];
+    }
+
+    /**
+     * Get spillover history (placeholder)
+     */
+    public function getSpilloverHistory(User $user)
+    {
+        return [];
+    }
+
+    /**
+     * Get spillover opportunities (placeholder)
+     */
+    public function getSpilloverOpportunities(User $user)
+    {
+        return [];
+    }
+
+    /**
+     * Get spillover stats (placeholder)
+     */
+    public function getSpilloverStats(User $user)
+    {
+        return [];
+    }
+
+    /**
+     * Get code stats
+     */
+    public function getCodeStats(User $user)
+    {
+        return [
+            'uses_count' => $user->referrals()->count(),
+            'successful_registrations' => $user->referrals()->count(),
+            'active_investors' => $user->referrals()->whereHas('subscriptions', function ($query) {
+                $query->where('status', 'active');
+            })->count(),
+            'total_earnings' => $user->referralCommissions()->where('status', 'paid')->sum('amount'),
+        ];
+    }
+
+    /**
+     * Get link stats (placeholder)
+     */
+    public function getLinkStats(User $user)
+    {
+        return [
+            'clicks' => 0,
+            'conversion_rate' => 0,
+        ];
+    }
+
+    /**
+     * Get message templates
+     */
+    public function getMessageTemplates()
+    {
+        return [
+            [
+                'id' => 1,
+                'title' => 'Join MyGrowNet',
+                'description' => 'Invite friends to join the platform',
+                'message' => 'Join me on MyGrowNet and start your journey to financial growth! Use my referral code {referral_code} or click here: {referral_link}',
+            ],
+            [
+                'id' => 2,
+                'title' => 'Opportunity Sharing',
+                'description' => 'Share the opportunity',
+                'message' => 'I\'ve been growing with MyGrowNet and I think you\'d love it too! Join using my code {referral_code} and let\'s grow together: {referral_link}',
+            ],
+            [
+                'id' => 3,
+                'title' => 'Professional Invitation',
+                'description' => 'Professional invitation message',
+                'message' => 'I\'d like to invite you to MyGrowNet, a platform for community empowerment and growth. Use referral code {referral_code} to get started: {referral_link}',
+            ],
+        ];
+    }
 } 

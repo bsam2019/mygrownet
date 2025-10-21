@@ -156,7 +156,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Withdrawals
     Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals.index');
-    Route::get('/withdrawals/create', [WithdrawalController::class, 'create'])->name('withdrawals.create');
     Route::post('/withdrawals', [WithdrawalController::class, 'store'])->name('withdrawals.store');
     Route::get('/withdrawals/{withdrawal}', [WithdrawalController::class, 'show'])->name('withdrawals.show');
     Route::patch('/withdrawals/{withdrawal}/approve', [WithdrawalController::class, 'approve'])->name('withdrawals.approve');

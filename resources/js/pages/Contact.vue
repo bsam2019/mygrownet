@@ -125,7 +125,10 @@
                     </div>
                     <div class="ml-3">
                       <h3 class="text-lg font-medium text-gray-900">Phone</h3>
-                      <p class="mt-1 text-gray-500">+260 97X XXX XXX</p>
+                      <div class="mt-1 space-y-1">
+                        <p class="text-gray-500">+260 977 563 730</p>
+                        <p class="text-gray-500">+260 961 144 812</p>
+                      </div>
                     </div>
                   </div>
 
@@ -135,7 +138,7 @@
                     </div>
                     <div class="ml-3">
                       <h3 class="text-lg font-medium text-gray-900">Email</h3>
-                      <p class="mt-1 text-gray-500">contact@vbif.com</p>
+                      <p class="mt-1 text-gray-500">support@mygrownet.com</p>
                     </div>
                   </div>
                 </div>

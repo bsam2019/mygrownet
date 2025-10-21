@@ -74,7 +74,7 @@ const formatCurrency = (amount: number | undefined | null) => {
                         Top Up
                     </Link>
                     <Link
-                        :href="route('withdrawals.create')"
+                        :href="route('withdrawals.index')"
                         class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-50 transition-colors text-sm"
                     >
                         Withdraw

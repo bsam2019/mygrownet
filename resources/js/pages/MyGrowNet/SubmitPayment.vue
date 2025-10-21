@@ -27,12 +27,56 @@ const submit = () => {
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
-                        <div class="mb-6 text-center">
+                <div class="mb-6 text-center">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                         <WalletIcon class="h-8 w-8 text-blue-600" />
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Top Up Wallet</h1>
-                    <p class="mt-2 text-sm text-gray-600">Submit proof of payment to add funds to your wallet</p>
+                    <p class="mt-2 text-sm text-gray-600">Send money to the numbers below, then submit proof of payment</p>
+                </div>
+
+                <!-- Payment Instructions (Top) -->
+                <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 shadow-md">
+                    <h3 class="font-semibold text-blue-900 mb-4 flex items-center gap-2 text-lg">
+                        <BanknoteIcon class="h-6 w-6" />
+                        Send Money To:
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-lg p-4 border-2 border-yellow-400 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3">
+                                <PhoneIcon class="h-5 w-5 text-yellow-600" />
+                                <span class="font-bold text-gray-900 text-lg">MTN Mobile Money</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="bg-yellow-50 rounded px-3 py-2">
+                                    <p class="text-xs text-gray-600 mb-1">Phone Number</p>
+                                    <p class="text-2xl font-bold text-gray-900 tracking-wide">0963426511</p>
+                                </div>
+                                <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Kafula Mbulo</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border-2 border-red-400 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3">
+                                <PhoneIcon class="h-5 w-5 text-red-600" />
+                                <span class="font-bold text-gray-900 text-lg">Airtel Money</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="bg-red-50 rounded px-3 py-2">
+                                    <p class="text-xs text-gray-600 mb-1">Phone Number</p>
+                                    <p class="text-2xl font-bold text-gray-900 tracking-wide">0979230669</p>
+                                </div>
+                                <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Kafula Mbulo</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-blue-200">
+                        <p class="text-sm font-medium text-blue-900 flex items-start gap-2">
+                            <span class="text-lg">💡</span>
+                            <span>After sending money, fill out the form below with your transaction details for verification.</span>
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Payment Form -->
@@ -64,7 +108,7 @@ const submit = () => {
                             <label class="block text-sm font-medium text-gray-700 mb-3">
                                 Payment Method <span class="text-red-500">*</span>
                             </label>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
                                     :class="form.payment_method === 'mtn_momo' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
                                     <input v-model="form.payment_method" type="radio" value="mtn_momo" class="sr-only" />
@@ -76,12 +120,6 @@ const submit = () => {
                                     <input v-model="form.payment_method" type="radio" value="airtel_money" class="sr-only" />
                                     <PhoneIcon class="h-5 w-5 text-red-600 mr-3 flex-shrink-0" />
                                     <span class="font-medium">Airtel Money</span>
-                                </label>
-                                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50"
-                                    :class="form.payment_method === 'bank_transfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
-                                    <input v-model="form.payment_method" type="radio" value="bank_transfer" class="sr-only" />
-                                    <BanknoteIcon class="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
-                                    <span class="font-medium">Bank Transfer</span>
                                 </label>
                             </div>
                         </div>
@@ -152,31 +190,12 @@ const submit = () => {
                     </form>
                 </div>
 
-                <!-- Payment Instructions -->
-                <div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-                    <h3 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                        <BanknoteIcon class="h-5 w-5" />
-                        Payment Instructions
-                    </h3>
-                    <div class="text-sm text-blue-800 space-y-2">
-                        <div class="flex items-start gap-2">
-                            <span class="font-semibold min-w-[120px]">MTN MoMo:</span>
-                            <span>Send money to <strong>0977123456</strong> (MyGrowNet)</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="font-semibold min-w-[120px]">Airtel Money:</span>
-                            <span>Send money to <strong>0966123456</strong> (MyGrowNet)</span>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="font-semibold min-w-[120px]">Bank Transfer:</span>
-                            <span>Account <strong>1234567890</strong>, Stanbic Bank</span>
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-blue-200">
-                            <p class="font-medium text-blue-900">
-                                ⚠️ After making payment, submit this form with your transaction reference for verification.
-                            </p>
-                        </div>
-                    </div>
+                <!-- Additional Info -->
+                <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p class="text-sm text-green-800 flex items-start gap-2">
+                        <span class="text-lg">✅</span>
+                        <span>Your wallet will be credited within a few hours once payment is verified by our team.</span>
+                    </p>
                 </div>
             </div>
         </div>

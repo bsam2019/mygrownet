@@ -115,9 +115,9 @@
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Money</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Investment Tier</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -135,29 +135,29 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ formatKwacha(withdrawal.amount) }}</div>
+                    <div class="text-sm font-medium text-gray-900">{{ formatKwacha(withdrawal.amount) }}</div>
                     <div class="text-sm text-gray-500">Balance: {{ formatKwacha(withdrawal.user.balance) }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900">{{ withdrawal.wallet_address || 'N/A' }}</div>
+                    <div class="text-xs text-gray-500">Mobile Money</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span :class="[
                       'px-2 py-1 text-xs font-medium rounded-full',
-                      withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                      withdrawal.status === 'approved' || withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' : 
                       withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' : 
                       'bg-yellow-100 text-yellow-800'
                     ]">
-                      {{ withdrawal.status === 'completed' ? 'Approved' : withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1) }}
+                      {{ withdrawal.status === 'completed' || withdrawal.status === 'approved' ? 'Approved' : withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1) }}
                     </span>
-                    <div v-if="withdrawal.rejection_reason" class="mt-1 text-xs text-gray-500">
-                      {{ withdrawal.rejection_reason }}
+                    <div v-if="withdrawal.reason" class="mt-1 text-xs text-gray-500">
+                      {{ withdrawal.reason }}
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">{{ formatDate(withdrawal.created_at) }}</div>
                     <div class="text-sm text-gray-500">{{ formatTime(withdrawal.created_at) }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ withdrawal.user.investment_tier }}</div>
-                    <div class="text-sm text-gray-500">{{ formatKwacha(withdrawal.user.investment_amount) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap space-x-2">
                     <button
@@ -301,9 +301,11 @@ const viewDetails = (id) => {
         <div class="mb-4">
           <h3 class="text-lg font-medium text-gray-900 mb-2">Withdrawal Information</h3>
           <p class="text-sm text-gray-600">Amount: ${formatKwacha(withdrawal.amount)}</p>
+          <p class="text-sm text-gray-600">Method: Mobile Money</p>
+          <p class="text-sm text-gray-600">Account: ${withdrawal.wallet_address || 'N/A'}</p>
           <p class="text-sm text-gray-600">Status: ${withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}</p>
           <p class="text-sm text-gray-600">Requested: ${formatDate(withdrawal.created_at)} ${formatTime(withdrawal.created_at)}</p>
-          ${withdrawal.rejection_reason ? `<p class="text-sm text-gray-600">Rejection Reason: ${withdrawal.rejection_reason}</p>` : ''}
+          ${withdrawal.reason ? `<p class="text-sm text-gray-600">Rejection Reason: ${withdrawal.reason}</p>` : ''}
         </div>
         <div class="mb-4">
           <h3 class="text-lg font-medium text-gray-900 mb-2">Account Balance</h3>

@@ -750,7 +750,7 @@ class DashboardController extends Controller
                 'type' => 'withdrawal_available',
                 'title' => 'Withdrawals Available',
                 'message' => "You have {$withdrawalEligible->count()} investment(s) eligible for withdrawal",
-                'action_url' => route('withdrawals.create'),
+                'action_url' => route('withdrawals.index'),
                 'created_at' => now(),
                 'priority' => 'medium'
             ];
