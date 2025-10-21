@@ -15,12 +15,12 @@ class PackageSeeder extends Seeder
                 'name' => 'Starter Kit - Associate',
                 'slug' => 'starter-kit-associate',
                 'description' => 'Complete starter package for new members. Includes registration fee, first month subscription, and welcome materials.',
-                'price' => 150.00, // Registration fee (50) + First month Basic (100)
+                'price' => 150.00, // Registration fee (50) + First month Associate (100)
                 'billing_cycle' => 'one-time',
                 'duration_months' => 1,
                 'features' => [
                     'One-time registration fee',
-                    'First month Basic membership included',
+                    'First month Associate membership included',
                     'Welcome learning pack',
                     'Getting started guide',
                     'Community access',
@@ -31,8 +31,8 @@ class PackageSeeder extends Seeder
                 'sort_order' => 0
             ],
             [
-                'name' => 'Basic',
-                'slug' => 'basic',
+                'name' => 'Associate',
+                'slug' => 'associate',
                 'description' => 'Entry-level membership with access to basic learning materials and community features',
                 'price' => 100.00,
                 'billing_cycle' => 'monthly',
@@ -55,7 +55,7 @@ class PackageSeeder extends Seeder
                 'billing_cycle' => 'monthly',
                 'duration_months' => 1,
                 'features' => [
-                    'All Basic features',
+                    'All Associate features',
                     'Advanced learning packs',
                     'Weekly group coaching',
                     'One-on-one mentorship (monthly)',
