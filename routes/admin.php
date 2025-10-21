@@ -347,3 +347,11 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
 });
 
+
+    // Bonus Points Settings
+    Route::prefix('settings/bonus-points')->name('settings.bp.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'index'])->name('index');
+        Route::post('/update-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateActivity'])->name('update-activity');
+        Route::post('/toggle-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'toggleActivity'])->name('toggle-activity');
+        Route::post('/update-rate', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateRate'])->name('update-rate');
+    });
