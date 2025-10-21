@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { 
     CurrencyDollarIcon, 
     ChartBarIcon, 
@@ -100,7 +100,7 @@ const totalCommissions = computed(() => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Commission History
@@ -342,5 +342,5 @@ const totalCommissions = computed(() => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

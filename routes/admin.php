@@ -118,6 +118,18 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::get('/activity', [ActivityLogController::class, 'index'])->name('activity.index');
     Route::post('/activity/filter', [ActivityLogController::class, 'filter'])->name('activity.filter');
 
+    // Workshop Management
+    Route::prefix('workshops')->name('workshops.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\WorkshopController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\WorkshopController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\WorkshopController::class, 'store'])->name('store');
+        Route::get('/registrations', [\App\Http\Controllers\Admin\WorkshopController::class, 'registrations'])->name('registrations');
+        Route::get('/{workshop}/edit', [\App\Http\Controllers\Admin\WorkshopController::class, 'edit'])->name('edit');
+        Route::match(['put', 'patch'], '/{workshop}', [\App\Http\Controllers\Admin\WorkshopController::class, 'update'])->name('update');
+        Route::patch('/{workshop}/status', [\App\Http\Controllers\Admin\WorkshopController::class, 'updateStatus'])->name('update-status');
+        Route::delete('/{workshop}', [\App\Http\Controllers\Admin\WorkshopController::class, 'destroy'])->name('destroy');
+    });
+
     // Reward System Management
     
     // Matrix Management

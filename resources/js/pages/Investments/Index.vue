@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,7 +39,7 @@ const getStatusBadge = (status: string) => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center mb-6">
@@ -103,5 +103,5 @@ const getStatusBadge = (status: string) => {
                 </Card>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

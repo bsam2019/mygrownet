@@ -22,7 +22,10 @@ import {
     GiftIcon,
     TrendingUpIcon,
     UsersIcon,
-    StarIcon
+    StarIcon,
+    CreditCardIcon,
+    HistoryIcon,
+    GraduationCapIcon
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { usePage } from '@inertiajs/vue3';
@@ -68,7 +71,7 @@ const myBusinessNavItems: NavItem[] = [
 const networkNavItems: NavItem[] = [
     {
         title: 'My Team',
-        href: route('referrals.index'),
+        href: route('my-team.index'),
         icon: UsersIcon,
     },
     {
@@ -78,14 +81,14 @@ const networkNavItems: NavItem[] = [
     },
     {
         title: 'Commission Earnings',
-        href: route('referrals.commissions'),
+        href: route('my-team.commissions'),
         icon: TrendingUpIcon,
     },
 ];
 
 const financeNavItems: NavItem[] = [
     {
-        title: 'MyGrow Save',
+        title: 'My Wallet',
         href: route('mygrownet.wallet.index'),
         icon: BanknoteIcon,
     },
@@ -93,6 +96,21 @@ const financeNavItems: NavItem[] = [
         title: 'Earnings & Bonuses',
         href: route('mygrownet.earnings.index'),
         icon: GiftIcon,
+    },
+    {
+        title: 'Quarterly Profit Shares',
+        href: route('mygrownet.profit-shares'),
+        icon: TrendingUpIcon,
+    },
+    {
+        title: 'Submit Payment',
+        href: route('mygrownet.payments.create'),
+        icon: CreditCardIcon,
+    },
+    {
+        title: 'Payment History',
+        href: route('mygrownet.payments.index'),
+        icon: HistoryIcon,
     },
     {
         title: 'Withdrawals',
@@ -109,7 +127,7 @@ const financeNavItems: NavItem[] = [
 const reportsNavItems: NavItem[] = [
     {
         title: 'Business Performance',
-        href: route('referrals.performance-report'),
+        href: route('my-team.performance-report'),
         icon: TrendingUpIcon,
     },
     {
@@ -121,6 +139,19 @@ const reportsNavItems: NavItem[] = [
         title: 'Network Analytics',
         href: route('mygrownet.network.analytics'),
         icon: ChartPieIcon,
+    },
+];
+
+const learningNavItems: NavItem[] = [
+    {
+        title: 'Workshops & Training',
+        href: route('mygrownet.workshops.index'),
+        icon: BookOpenIcon,
+    },
+    {
+        title: 'My Workshops',
+        href: route('mygrownet.workshops.my-workshops'),
+        icon: GraduationCapIcon,
     },
 ];
 
@@ -161,6 +192,7 @@ const navGroups = computed((): NavGroup[] => {
         { label: 'My Business', items: myBusinessNavItems, icon: BriefcaseIcon },
         { label: 'Network & Team', items: networkNavItems, icon: UsersIcon },
         { label: 'Finance', items: financeNavItems, icon: BanknoteIcon },
+        { label: 'Learning', items: learningNavItems, icon: BookOpenIcon },
         { label: 'Reports & Analytics', items: reportsNavItems, icon: ChartBarIcon },
         { label: 'Account', items: accountNavItems, icon: CogIcon },
     ];

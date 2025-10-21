@@ -84,16 +84,204 @@ class DashboardController extends Controller
     public function investorDashboard()
     {
         $user = auth()->user();
-        $now = Carbon::now();
-
-        // Cache key for user dashboard data
-        $cacheKey = "dashboard_data_user_{$user->id}";
         
-        $dashboardData = Cache::remember($cacheKey, 300, function () use ($user, $now) {
-            return $this->aggregateDashboardData($user, $now);
-        });
+        // MyGrowNet Dashboard Data
+        $dashboardData = [
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'referral_code' => $user->referral_code,
+                'joined_at' => $user->created_at->format('M d, Y'),
+            ],
+            'points' => [
+                'lifetime_points' => $user->lifetime_points ?? 0,
+                'bonus_points' => $user->bonus_points ?? 0,
+                'monthly_bp_target' => $this->getMonthlyBPTarget($user),
+                'bp_progress_percentage' => $this->calculateBPProgress($user),
+            ],
+            'professionalLevel' => [
+                'current' => $user->professional_level ?? 'Associate',
+                'level_number' => $this->getLevelNumber($user->professional_level ?? 'Associate'),
+                'next_level' => $this->getNextLevel($user->professional_level ?? 'Associate'),
+                'lp_required_for_next' => $this->getLPRequiredForNextLevel($user),
+                'lp_progress_percentage' => $this->calculateLPProgress($user),
+            ],
+            'earnings' => [
+                'current_month' => $this->getCurrentMonthEarnings($user),
+                'last_month' => $this->getLastMonthEarnings($user),
+                'total_lifetime' => $this->getTotalLifetimeEarnings($user),
+                'pending' => $this->getPendingEarnings($user),
+            ],
+            'network' => [
+                'direct_referrals' => $user->directReferrals()->count(),
+                'total_network' => $this->getTotalNetworkSize($user),
+                'active_members' => $this->getActiveNetworkMembers($user),
+                'level_breakdown' => $this->getNetworkLevelBreakdown($user),
+            ],
+            'wallet' => [
+                'balance' => $this->getWalletBalance($user),
+                'total_earnings' => $this->getTotalLifetimeEarnings($user),
+                'total_withdrawals' => $user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0,
+            ],
+            'recentActivities' => $this->getRecentActivities($user),
+        ];
 
-        return Inertia::render('Investors/Dashboard/index', $dashboardData);
+        return Inertia::render('Dashboard/MyGrowNetDashboard', $dashboardData);
+    }
+    
+    // Helper methods for MyGrowNet dashboard
+    private function getMonthlyBPTarget($user)
+    {
+        $levels = [
+            'Associate' => 100,
+            'Professional' => 200,
+            'Senior' => 300,
+            'Manager' => 400,
+            'Director' => 500,
+            'Executive' => 600,
+            'Ambassador' => 800,
+        ];
+        return $levels[$user->professional_level ?? 'Associate'] ?? 100;
+    }
+    
+    private function calculateBPProgress($user)
+    {
+        $target = $this->getMonthlyBPTarget($user);
+        $current = $user->bonus_points ?? 0;
+        return $target > 0 ? min(100, ($current / $target) * 100) : 0;
+    }
+    
+    private function getLevelNumber($level)
+    {
+        $levels = [
+            'Associate' => 1,
+            'Professional' => 2,
+            'Senior' => 3,
+            'Manager' => 4,
+            'Director' => 5,
+            'Executive' => 6,
+            'Ambassador' => 7,
+        ];
+        return $levels[$level] ?? 1;
+    }
+    
+    private function getNextLevel($currentLevel)
+    {
+        $progression = [
+            'Associate' => 'Professional',
+            'Professional' => 'Senior',
+            'Senior' => 'Manager',
+            'Manager' => 'Director',
+            'Director' => 'Executive',
+            'Executive' => 'Ambassador',
+            'Ambassador' => null,
+        ];
+        return $progression[$currentLevel] ?? null;
+    }
+    
+    private function getLPRequiredForNextLevel($user)
+    {
+        $requirements = [
+            'Associate' => 1000,
+            'Professional' => 2500,
+            'Senior' => 5000,
+            'Manager' => 10000,
+            'Director' => 20000,
+            'Executive' => 40000,
+            'Ambassador' => null,
+        ];
+        $nextLevel = $this->getNextLevel($user->professional_level ?? 'Associate');
+        return $nextLevel ? $requirements[$user->professional_level ?? 'Associate'] : null;
+    }
+    
+    private function calculateLPProgress($user)
+    {
+        $required = $this->getLPRequiredForNextLevel($user);
+        if (!$required) return 100;
+        
+        $current = $user->lifetime_points ?? 0;
+        return min(100, ($current / $required) * 100);
+    }
+    
+    private function getCurrentMonthEarnings($user)
+    {
+        return $user->referralCommissions()
+            ->whereYear('created_at', date('Y'))
+            ->whereMonth('created_at', date('m'))
+            ->where('status', 'paid')
+            ->sum('amount') ?? 0;
+    }
+    
+    private function getLastMonthEarnings($user)
+    {
+        $lastMonth = now()->subMonth();
+        return $user->referralCommissions()
+            ->whereYear('created_at', $lastMonth->year)
+            ->whereMonth('created_at', $lastMonth->month)
+            ->where('status', 'paid')
+            ->sum('amount') ?? 0;
+    }
+    
+    private function getTotalLifetimeEarnings($user)
+    {
+        $commissions = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;
+        $profitShares = $user->profitShares()->sum('amount') ?? 0;
+        return $commissions + $profitShares;
+    }
+    
+    private function getPendingEarnings($user)
+    {
+        return $user->referralCommissions()->where('status', 'pending')->sum('amount') ?? 0;
+    }
+    
+    private function getTotalNetworkSize($user)
+    {
+        return $user->directReferrals()->count() + 
+               $user->directReferrals()->with('directReferrals')->get()->sum(fn($r) => $r->directReferrals->count());
+    }
+    
+    private function getActiveNetworkMembers($user)
+    {
+        return $user->directReferrals()
+            ->where('last_login_at', '>=', now()->subDays(30))
+            ->count();
+    }
+    
+    private function getNetworkLevelBreakdown($user)
+    {
+        $breakdown = [];
+        for ($level = 1; $level <= 7; $level++) {
+            $breakdown[] = [
+                'level' => $level,
+                'count' => $level === 1 ? $user->directReferrals()->count() : 0,
+            ];
+        }
+        return $breakdown;
+    }
+    
+    private function getWalletBalance($user)
+    {
+        $totalEarnings = $this->getTotalLifetimeEarnings($user);
+        $totalWithdrawals = $user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0;
+        return $totalEarnings - $totalWithdrawals;
+    }
+    
+    private function getRecentActivities($user)
+    {
+        return $user->referralCommissions()
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($commission) {
+                return [
+                    'id' => $commission->id,
+                    'description' => 'Earned commission from Level ' . ($commission->level ?? '1') . ' referral',
+                    'points_earned' => 10, // Simplified
+                    'created_at' => $commission->created_at->diffForHumans(),
+                ];
+            })
+            ->toArray();
     }
 
     /**

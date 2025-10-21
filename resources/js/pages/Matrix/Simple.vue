@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { formatCurrency } from '@/utils/formatting';
 
 const page = usePage();
@@ -25,7 +25,7 @@ const referralLink = computed(() => page.props.referralLink || '');
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Matrix & Referrals
@@ -116,5 +116,5 @@ const referralLink = computed(() => page.props.referralLink || '');
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

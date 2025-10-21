@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +72,7 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <div class="flex items-center">
                 <Link 
@@ -212,5 +212,5 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
                 </div>
                 </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

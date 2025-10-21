@@ -1,5 +1,5 @@
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
@@ -137,12 +137,12 @@
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import { 
     ArrowLeftIcon, 

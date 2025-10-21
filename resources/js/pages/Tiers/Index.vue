@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { 
     StarIcon,
     ArrowUpIcon,
@@ -102,7 +102,7 @@ const getTierBadgeColor = (tierName: string) => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Investment Tiers
@@ -316,5 +316,5 @@ const getTierBadgeColor = (tierName: string) => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-sm p-6">
@@ -155,11 +155,11 @@
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>
 
 <script setup lang="ts">
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import { 
     ChartPie, 

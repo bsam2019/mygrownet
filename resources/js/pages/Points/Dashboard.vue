@@ -1,5 +1,5 @@
 <template>
-  <InvestorLayout>
+  <MemberLayout>
     <Head title="Points Dashboard" />
 
     <div class="py-12">
@@ -226,13 +226,13 @@
         </div>
       </div>
     </div>
-  </InvestorLayout>
+  </MemberLayout>
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import InvestorLayout from '@/Layouts/InvestorLayout.vue';
+import MemberLayout from '@/Layouts/MemberLayout.vue';
 
 const props = defineProps({
   userPoints: Object,

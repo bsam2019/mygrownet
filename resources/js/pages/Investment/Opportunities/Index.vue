@@ -1,6 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { formatCurrency } from '@/utils/formatting';
 import { ArrowLeftIcon, ChartBarIcon, ClockIcon, CurrencyDollarIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 
@@ -39,7 +39,7 @@ const getRiskLevelColor = (riskLevel) => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <div class="flex items-center">
                 <Link 
@@ -153,5 +153,5 @@ const getRiskLevelColor = (riskLevel) => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template> 

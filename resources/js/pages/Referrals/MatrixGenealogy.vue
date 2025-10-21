@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { 
     UserGroupIcon, 
     ChartBarIcon, 
@@ -73,7 +73,7 @@ const getTierColor = (tier: string | undefined): string => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Matrix Genealogy
@@ -247,5 +247,5 @@ const getTierColor = (tier: string | undefined): string => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

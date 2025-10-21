@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import InvestorLayout from '@/Layouts/InvestorLayout.vue';
+import MemberLayout from '@/Layouts/MemberLayout.vue';
 import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon } from 'lucide-vue-next';
 
 interface Transaction {
@@ -12,33 +12,48 @@ interface Transaction {
     description: string;
 }
 
-const props = defineProps<{
-    balance: number;
-    totalEarnings: number;
-    totalWithdrawals: number;
-    recentTransactions: Transaction[];
-    pendingWithdrawals: number;
-}>();
+const props = withDefaults(defineProps<{
+    balance?: number;
+    totalEarnings?: number;
+    totalWithdrawals?: number;
+    recentTransactions?: Transaction[];
+    pendingWithdrawals?: number;
+    commissionEarnings?: number;
+    profitEarnings?: number;
+    walletTopups?: number;
+    workshopExpenses?: number;
+}>(), {
+    balance: 0,
+    totalEarnings: 0,
+    totalWithdrawals: 0,
+    recentTransactions: () => [],
+    pendingWithdrawals: 0,
+    commissionEarnings: 0,
+    profitEarnings: 0,
+    walletTopups: 0,
+    workshopExpenses: 0,
+});
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | undefined | null) => {
+    const value = amount ?? 0;
     return new Intl.NumberFormat('en-ZM', {
         style: 'currency',
         currency: 'ZMW',
         minimumFractionDigits: 2,
-    }).format(amount);
+    }).format(value);
 };
 </script>
 
 <template>
-    <InvestorLayout>
-        <Head title="MyGrow Save - Digital Wallet" />
+    <MemberLayout>
+        <Head title="My Wallet" />
 
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Header -->
             <div class="mb-6">
-                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">MyGrow Save</h1>
-                <p class="mt-2 text-sm text-gray-600">Your digital wallet for managing earnings and funds</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">My Wallet</h1>
+                <p class="mt-2 text-sm text-gray-600">Manage your earnings, deposits, and withdrawals in one place</p>
             </div>
 
             <!-- Balance Card -->
@@ -51,56 +66,127 @@ const formatCurrency = (amount: number) => {
                     <BanknoteIcon class="h-12 w-12 text-blue-200" />
                 </div>
                 
-                <div class="flex gap-4 mt-6">
+                <div class="grid grid-cols-3 gap-3 mt-6">
+                    <Link
+                        :href="route('mygrownet.payments.create', { type: 'wallet_topup' })"
+                        class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-50 transition-colors text-sm"
+                    >
+                        Top Up
+                    </Link>
                     <Link
                         :href="route('withdrawals.create')"
-                        class="flex-1 bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-50 transition-colors"
+                        class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-50 transition-colors text-sm"
                     >
-                        Withdraw Funds
+                        Withdraw
                     </Link>
                     <Link
                         :href="route('transactions')"
-                        class="flex-1 bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-800 transition-colors"
+                        class="bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-center hover:bg-blue-800 transition-colors text-sm"
                     >
-                        View History
+                        History
                     </Link>
                 </div>
             </div>
 
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600">Total Earnings</p>
+                            <p class="text-sm text-gray-600">Total Income</p>
                             <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(totalEarnings) }}</p>
                         </div>
                         <div class="bg-green-100 p-3 rounded-lg">
                             <ArrowUpIcon class="h-6 w-6 text-green-600" />
                         </div>
                     </div>
+                    <p class="text-xs text-gray-500 mt-2">Earnings + Deposits</p>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600">Total Withdrawals</p>
+                            <p class="text-sm text-gray-600">Withdrawn</p>
                             <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(totalWithdrawals) }}</p>
                         </div>
                         <div class="bg-red-100 p-3 rounded-lg">
                             <ArrowDownIcon class="h-6 w-6 text-red-600" />
                         </div>
                     </div>
+                    <p class="text-xs text-gray-500 mt-2">Approved withdrawals</p>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600">Pending Withdrawals</p>
+                            <p class="text-sm text-gray-600">Pending</p>
                             <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(pendingWithdrawals) }}</p>
                         </div>
                         <div class="bg-amber-100 p-3 rounded-lg">
                             <ClockIcon class="h-6 w-6 text-amber-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Awaiting approval</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Expenses</p>
+                            <p class="text-xl font-bold text-gray-900 mt-1">{{ formatCurrency(workshopExpenses) }}</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-lg">
+                            <BanknoteIcon class="h-6 w-6 text-purple-600" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Workshop payments</p>
+                </div>
+            </div>
+
+            <!-- Earnings Breakdown -->
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Income Breakdown</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Referral Commissions</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(commissionEarnings) }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                    class="bg-blue-600 h-2 rounded-full" 
+                                    :style="{ width: totalEarnings > 0 ? `${(commissionEarnings / totalEarnings) * 100}%` : '0%' }"
+                                ></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Profit Shares</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(profitEarnings) }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                    class="bg-green-600 h-2 rounded-full" 
+                                    :style="{ width: totalEarnings > 0 ? `${(profitEarnings / totalEarnings) * 100}%` : '0%' }"
+                                ></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Wallet Top-ups</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(walletTopups) }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                    class="bg-purple-600 h-2 rounded-full" 
+                                    :style="{ width: totalEarnings > 0 ? `${(walletTopups / totalEarnings) * 100}%` : '0%' }"
+                                ></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -127,12 +213,12 @@ const formatCurrency = (amount: number) => {
                                 <span
                                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1"
                                     :class="{
-                                        'bg-green-100 text-green-800': transaction.status === 'paid',
+                                        'bg-green-100 text-green-800': transaction.status === 'paid' || transaction.status === 'verified',
                                         'bg-yellow-100 text-yellow-800': transaction.status === 'pending',
                                         'bg-gray-100 text-gray-800': transaction.status === 'processing',
                                     }"
                                 >
-                                    {{ transaction.status }}
+                                    {{ transaction.status === 'verified' ? 'Completed' : transaction.status }}
                                 </span>
                             </div>
                         </div>
@@ -154,5 +240,5 @@ const formatCurrency = (amount: number) => {
             </div>
         </div>
     </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

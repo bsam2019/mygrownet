@@ -5,6 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import { BookOpen, Folder, LayoutGrid, Users, FileText, Settings, Activity, HelpCircle, BarChart3 as ChartBarIcon, UserCheck, Building2, Briefcase, Target, DollarSign, Shield, Key } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
@@ -76,7 +77,17 @@ const userManagementNavItems: NavItem[] = [
 
 const financeNavItems: NavItem[] = [
     {
-        title: 'Profit Distribution',
+        title: 'Payment Approvals',
+        href: safeRoute('admin.payments.index'),
+        icon: DollarSign,
+    },
+    {
+        title: 'Community Profit Sharing',
+        href: safeRoute('admin.profit-sharing.index'),
+        icon: Activity,
+    },
+    {
+        title: 'Investment Profit Distribution',
         href: safeRoute('admin.profit-distribution.index'),
         icon: Activity,
     },

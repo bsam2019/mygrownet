@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import PortfolioStats from '@/components/Portfolio/PortfolioStats.vue';
 import { 
     CurrencyDollarIcon, 
@@ -90,7 +90,7 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
 </script>
 
 <template>
-    <InvestorLayout :footer-nav-items="footerNavItems">
+    <MemberLayout :footer-nav-items="footerNavItems">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Portfolio
@@ -211,5 +211,5 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template> 

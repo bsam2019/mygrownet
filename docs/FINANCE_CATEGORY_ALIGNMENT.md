@@ -28,24 +28,23 @@ The Finance category has been updated to align with MyGrowNet's business model, 
 
 ## Finance Structure Alignment
 
-### 1. MyGrow Save (Digital Wallet)
+### 1. My Wallet
 **Route**: `wallet.index`  
-**Status**: Placeholder (Coming Soon)
+**Status**: Functional
 
 **Purpose**:
-- Secure digital wallet for member funds
-- Store bonuses and earnings
-- Make purchases within ecosystem
-- Transfer funds to other members
-- Withdraw to mobile money/bank
+- Digital wallet for storing platform earnings
+- View available balance and transaction history
+- Manage funds earned from commissions and bonuses
+- Request withdrawals to mobile money/bank
 
 **Features**:
-- Voluntary savings with loyalty bonuses (BP-linked)
-- Emergency fund building
-- Structured as wallet service (legally compliant)
-- Integration with MTN MoMo, Airtel Money
+- Real-time balance tracking
+- Transaction history
+- Withdrawal management
+- Integration with MTN MoMo, Airtel Money (planned)
 
-**Reference**: `docs/MYGROWNET_PLATFORM_CONCEPT.md` - Section 3.5
+**Note**: This is an earnings wallet, not a savings account. It holds funds earned through platform activities until withdrawal.
 
 ---
 
@@ -178,8 +177,8 @@ Route::get('/network/analytics', ...)->name('network.analytics');
 ### Navigation Structure
 ```typescript
 const financeNavItems: NavItem[] = [
-    { title: 'MyGrow Save', href: route('wallet.index'), icon: BanknoteIcon },
-    { title: 'Earnings & Bonuses', href: route('earnings.index'), icon: GiftIcon },
+    { title: 'My Wallet', href: route('mygrownet.wallet.index'), icon: BanknoteIcon },
+    { title: 'Earnings & Bonuses', href: route('mygrownet.earnings.index'), icon: GiftIcon },
     { title: 'Withdrawals', href: route('withdrawals.index'), icon: ArrowRightLeftIcon },
     { title: 'Transaction History', href: route('transactions'), icon: ChartBarIcon },
 ];

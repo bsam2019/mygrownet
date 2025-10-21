@@ -20,7 +20,7 @@ const page = usePage();
 const collapsedGroups = ref<Set<string>>(new Set());
 const STORAGE_KEY = 'mygrownet.sidebar.collapsedGroups';
 
-// Initialize collapsed state: prefer saved state; otherwise collapse all EXCEPT the group containing the active route
+// Initialize collapsed state: prefer saved state; otherwise collapse ALL groups by default
 const initializeCollapsedGroups = (groups: NavGroup[]) => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -31,11 +31,12 @@ const initializeCollapsedGroups = (groups: NavGroup[]) => {
         } catch {}
     }
 
+    // Collapse all groups by default
     const newCollapsed = new Set<string>();
     groups.forEach(group => {
-        if (!group.label) return;
-        const hasActive = group.items?.some(i => isActive(i.href));
-        if (!hasActive) newCollapsed.add(group.label);
+        if (group.label) {
+            newCollapsed.add(group.label);
+        }
     });
     collapsedGroups.value = newCollapsed;
 };

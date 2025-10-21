@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import AppLayout from '@/layouts/InvestorLayout.vue';
+import AppLayout from '@/layouts/MemberLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({

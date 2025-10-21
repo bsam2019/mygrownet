@@ -1,5 +1,5 @@
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
@@ -267,12 +267,12 @@
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { ArrowLeftIcon, ChartBarIcon } from '@heroicons/vue/24/outline';
 

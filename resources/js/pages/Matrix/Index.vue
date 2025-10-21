@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { 
     UserGroupIcon, 
     ShareIcon, 
@@ -99,7 +99,7 @@ const renderMatrixLevel = (positions: MatrixPosition[], level: number) => {
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Matrix & Referrals
@@ -310,5 +310,5 @@ const renderMatrixLevel = (positions: MatrixPosition[], level: number) => {
                 </div>
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

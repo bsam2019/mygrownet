@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import InvestorLayout from './InvestorLayout.vue';
+import MemberLayout from './MemberLayout.vue';
 
 interface Props {
     title?: string;
@@ -13,7 +13,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <template>
     <Head :title="title" />
-    <InvestorLayout>
+    <MemberLayout>
         <slot />
-    </InvestorLayout>
+    </MemberLayout>
 </template>

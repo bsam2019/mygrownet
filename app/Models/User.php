@@ -608,11 +608,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get subscription payments
+     * Get member payments (subscriptions, workshops, products, etc.)
      */
-    public function subscriptionPayments(): HasMany
+    public function memberPayments(): HasMany
     {
-        return $this->paymentTransactions()->where('type', 'subscription_payment');
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::class);
     }
 
     /**

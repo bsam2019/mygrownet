@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Referral\ReferralController;
-use App\Http\Controllers\Investment\TransactionController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Investment\InvestmentController;
 use App\Http\Controllers\DashboardStatsController;
 use App\Http\Controllers\CategoryController;
@@ -60,6 +60,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/badges', [App\Http\Controllers\PointsController::class, 'badges'])->name('badges');
     });
 
+    // Admin Payment Approval Routes
+    Route::middleware(['admin'])->prefix('admin/payments')->name('admin.payments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'index'])->name('index');
+        Route::post('/{id}/verify', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'verify'])->name('verify');
+        Route::post('/{id}/reject', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'reject'])->name('reject');
+        Route::post('/{id}/reset', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'reset'])->name('reset');
+    });
+
+    // Admin Profit Sharing Routes
+    Route::middleware(['admin'])->prefix('admin/profit-sharing')->name('admin.profit-sharing.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ProfitSharingController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\ProfitSharingController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\ProfitSharingController::class, 'store'])->name('store');
+        Route::post('/{id}/approve', [App\Http\Controllers\Admin\ProfitSharingController::class, 'approve'])->name('approve');
+        Route::post('/{id}/distribute', [App\Http\Controllers\Admin\ProfitSharingController::class, 'distribute'])->name('distribute');
+    });
+
+    // Member Profit Sharing Routes
+    Route::middleware(['auth'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
+        Route::get('/profit-shares', [App\Http\Controllers\MyGrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
+    });
+
     // Admin Points Management Routes
     Route::middleware(['admin'])->prefix('admin/points')->name('admin.points.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\AdminPointsController::class, 'index'])->name('index');
@@ -112,20 +134,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/transactions/withdraw', [TransactionController::class, 'withdraw'])->name('transactions.withdraw');
 
     // Referrals - Enhanced VBIF System
-    Route::prefix('referrals')->name('referrals.')->group(function () {
+    // My Team Routes (formerly referrals)
+    Route::prefix('my-team')->name('my-team.')->group(function () {
         Route::get('/', [ReferralController::class, 'index'])->name('index');
         Route::get('/tree', [ReferralController::class, 'tree'])->name('tree');
         Route::get('/statistics', [ReferralController::class, 'statistics'])->name('statistics');
         Route::get('/commissions', [ReferralController::class, 'commissions'])->name('commissions');
         Route::get('/matrix-position', [ReferralController::class, 'matrixPosition'])->name('matrix-position');
         Route::get('/matrix-genealogy', [ReferralController::class, 'matrixGenealogy'])->name('matrix-genealogy');
-        Route::get('/referrals-by-level', [ReferralController::class, 'referralsByLevel'])->name('by-level');
+        Route::get('/by-level', [ReferralController::class, 'referralsByLevel'])->name('by-level');
         Route::get('/performance-report', [ReferralController::class, 'performanceReport'])->name('performance-report');
         Route::post('/generate-code', [ReferralController::class, 'generateReferralCode'])->name('generate-code');
         Route::post('/validate-code', [ReferralController::class, 'validateReferralCode'])->name('validate-code');
         Route::post('/calculate-commission', [ReferralController::class, 'calculateCommission'])->name('calculate-commission');
         Route::post('/export', [ReferralController::class, 'export'])->name('export');
     });
+    
+    // Legacy referrals routes (redirect to my-team)
+    Route::redirect('/referrals', '/my-team');
+    Route::redirect('/referrals/{any}', '/my-team/{any}')->where('any', '.*');
 
     // Withdrawals
     Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals.index');
@@ -322,6 +349,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
         Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
         Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
+        
+        // Member Payment Routes (subscriptions, workshops, products, coaching)
+        Route::get('/payments', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/create', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'create'])->name('payments.create');
+        Route::post('/payments', [App\Http\Controllers\MyGrowNet\MemberPaymentController::class, 'store'])->name('payments.store');
+        
+        // Workshop Routes
+        Route::get('/workshops', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'index'])->name('workshops.index');
+        Route::get('/workshops/my-workshops', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'myWorkshops'])->name('workshops.my-workshops');
+        Route::get('/workshops/{slug}', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'show'])->name('workshops.show');
+        Route::post('/workshops/{id}/register', [App\Http\Controllers\MyGrowNet\WorkshopController::class, 'register'])->name('workshops.register');
+        
+        // Profit Sharing Routes
+        Route::get('/profit-shares', [App\Http\Controllers\MyGrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
         
         // Network & Analytics Routes
         Route::get('/network', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('network'))->name('network.index');

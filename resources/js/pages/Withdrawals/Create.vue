@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/InvestorLayout.vue';
+import AppLayout from '@/layouts/MemberLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 const form = useForm({

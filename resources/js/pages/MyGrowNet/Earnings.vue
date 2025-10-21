@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import InvestorLayout from '@/Layouts/InvestorLayout.vue';
+import MemberLayout from '@/Layouts/MemberLayout.vue';
 import { GiftIcon, TrendingUpIcon, UsersIcon, StarIcon, CoinsIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -68,7 +68,7 @@ const maxMonthlyAmount = computed(() =>
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <Head title="Earnings & Bonuses" />
 
         <div class="py-6 sm:py-8">
@@ -162,5 +162,5 @@ const maxMonthlyAmount = computed(() =>
             </div>
         </div>
     </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

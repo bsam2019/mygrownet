@@ -146,12 +146,12 @@ import Badge from '@/components/ui/badge/Badge.vue';
 import InvestmentMetrics from '@/components/Investment/InvestmentMetrics.vue';
 import InvestmentTimeline from '@/components/Investment/InvestmentTimeline.vue';
 import LineChart from '@/components/Charts/LineChart.vue';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { formatCurrency } from '@/utils/formatting';
 
 export default {
   name: 'InvestmentShow',
-  layout: InvestorLayout,
+  layout: MemberLayout,
   components: {
     Badge,
     InvestmentMetrics,

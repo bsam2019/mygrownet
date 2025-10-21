@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import AppLayout from '@/layouts/InvestorLayout.vue';
+import AppLayout from '@/layouts/MemberLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import Pagination from '@/components/Pagination.vue';
 import { router } from '@inertiajs/vue3';

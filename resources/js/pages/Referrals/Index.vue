@@ -1,5 +1,5 @@
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
@@ -93,12 +93,12 @@
                 />
             </div>
         </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import InvestorLayout from '@/layouts/InvestorLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import MatrixVisualization from '@/components/Referral/MatrixVisualization.vue';
 import ReferralStatsDashboard from '@/components/Referral/ReferralStatsDashboard.vue';

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import InvestorLayout from '@/Layouts/InvestorLayout.vue';
+import MemberLayout from '@/Layouts/MemberLayout.vue';
 import { UsersIcon, TrendingUpIcon, ActivityIcon, AwardIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
@@ -43,7 +43,7 @@ const activityRate = computed(() =>
 </script>
 
 <template>
-    <InvestorLayout>
+    <MemberLayout>
         <Head title="Network Analytics" />
 
         <div class="py-6 sm:py-8">
@@ -211,5 +211,5 @@ const activityRate = computed(() =>
             </div>
         </div>
     </div>
-    </InvestorLayout>
+    </MemberLayout>
 </template>

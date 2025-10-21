@@ -11,48 +11,20 @@ class WithdrawalController extends Controller
     public function index()
     {
         $user = auth()->user();
+        
+        // Get withdrawals
         $withdrawals = $user->withdrawals()->latest()->paginate(10);
-
-        // Build investments array matching the front-end expectations
-        $rawInvestments = $user->investments()
-            ->where('status', 'active')
-            ->with(['tier', 'category'])
-            ->get();
-
-        $investments = $rawInvestments->map(function ($inv) {
-            // Safe current value accessor fallback
-            $currentValue = 0.0;
-            if (method_exists($inv, 'getCurrentValue')) {
-                $currentValue = (float) $inv->getCurrentValue();
-            } elseif (isset($inv->current_value)) {
-                $currentValue = (float) $inv->current_value;
-            } else {
-                // fallback to amount if no calculated value present
-                $currentValue = (float) $inv->amount;
-            }
-
-            // Determine tier info (fallback to category if tier relation isn't present)
-            $tierName = $inv->tier?->name ?? $inv->category?->name ?? 'Unknown';
-            $tierMin = $inv->tier->minimum_amount ?? $inv->category->minimum_amount ?? 0;
-
-            // Determine investment date
-            $investmentDate = $inv->investment_date ?? $inv->created_at;
-
-            return [
-                'id' => $inv->id,
-                'amount' => (float) $inv->amount,
-                'current_value' => $currentValue,
-                'investment_date' => optional($investmentDate)->toISOString(),
-                'tier' => [
-                    'name' => $tierName,
-                    'minimum_amount' => (float) $tierMin,
-                ],
-            ];
-        });
-
-        return Inertia::render('Withdrawals/Index', [
+        
+        // Calculate available balance (total earnings - total withdrawals)
+        $totalEarnings = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;
+        $totalEarnings += $user->profitShares()->sum('amount') ?? 0;
+        $totalWithdrawals = $user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0;
+        $availableBalance = $totalEarnings - $totalWithdrawals;
+        
+        return Inertia::render('Withdrawals/MyGrowNetIndex', [
             'withdrawals' => $withdrawals,
-            'investments' => $investments,
+            'availableBalance' => (float) $availableBalance,
+            'minimumWithdrawal' => 50.00,
         ]);
     }
 
@@ -63,17 +35,27 @@ class WithdrawalController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        
+        // Calculate available balance
+        $totalEarnings = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;
+        $totalEarnings += $user->profitShares()->sum('amount') ?? 0;
+        $totalWithdrawals = $user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0;
+        $availableBalance = $totalEarnings - $totalWithdrawals;
+        
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'wallet_address' => 'required|string',
-            'withdrawal_method' => 'required|in:bitcoin,ethereum,bank'
+            'amount' => 'required|numeric|min:50|max:' . $availableBalance,
+            'payment_method' => 'required|in:mobile_money,bank_transfer',
+            'phone_number' => 'required|string',
+            'account_name' => 'required|string',
         ]);
 
-        auth()->user()->withdrawals()->create([
+        $user->withdrawals()->create([
             'amount' => $validated['amount'],
-            'wallet_address' => $validated['wallet_address'],
-            'withdrawal_method' => $validated['withdrawal_method'],
-            'status' => 'pending'
+            'payment_method' => $validated['payment_method'],
+            'phone_number' => $validated['phone_number'],
+            'account_name' => $validated['account_name'],
+            'status' => 'pending',
         ]);
 
         return redirect()->route('withdrawals.index')

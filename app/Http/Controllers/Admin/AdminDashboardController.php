@@ -24,6 +24,7 @@ class AdminDashboardController extends Controller
             'pointsMetrics' => $this->getPointsMetrics(),
             'matrixMetrics' => $this->getMatrixMetrics(),
             'financialMetrics' => $this->getFinancialMetrics(),
+            'workshopMetrics' => $this->getWorkshopMetrics(),
             'professionalLevelDistribution' => $this->getProfessionalLevelDistribution(),
             'memberGrowthTrend' => $this->getMemberGrowthTrend(),
             'revenueGrowthTrend' => $this->getRevenueGrowthTrend(),
@@ -369,5 +370,37 @@ class AdminDashboardController extends Controller
         }
 
         return $alerts;
+    }
+
+    /**
+     * Get workshop metrics
+     */
+    private function getWorkshopMetrics(): array
+    {
+        $totalWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::count();
+        $publishedWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::where('status', 'published')->count();
+        $upcomingWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::where('status', 'published')
+            ->where('start_date', '>', now())
+            ->count();
+        
+        $totalRegistrations = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::count();
+        $thisMonthRegistrations = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        
+        $completedWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::where('status', 'completed')->count();
+        $totalRevenue = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
+            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
+            ->sum('workshops.price');
+
+        return [
+            'total_workshops' => $totalWorkshops,
+            'published' => $publishedWorkshops,
+            'upcoming' => $upcomingWorkshops,
+            'completed' => $completedWorkshops,
+            'total_registrations' => $totalRegistrations,
+            'this_month_registrations' => $thisMonthRegistrations,
+            'total_revenue' => $totalRevenue,
+        ];
     }
 }

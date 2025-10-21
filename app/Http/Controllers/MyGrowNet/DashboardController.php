@@ -82,6 +82,43 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
         
+        // Get upcoming workshops
+        $upcomingWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::where('status', 'published')
+            ->where('start_date', '>', now())
+            ->orderBy('start_date')
+            ->limit(3)
+            ->get()
+            ->map(function ($workshop) {
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'slug' => $workshop->slug,
+                    'category' => $workshop->category,
+                    'start_date' => $workshop->start_date->format('M j, Y'),
+                    'lp_reward' => $workshop->lp_reward,
+                    'bp_reward' => $workshop->bp_reward,
+                    'price' => number_format($workshop->price, 2),
+                    'available_slots' => $workshop->availableSlots(),
+                ];
+            });
+        
+        // Get user's workshop registrations
+        $myWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::with('workshop')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['registered', 'attended'])
+            ->latest()
+            ->limit(3)
+            ->get()
+            ->map(function ($registration) {
+                return [
+                    'id' => $registration->id,
+                    'workshop_title' => $registration->workshop->title,
+                    'workshop_slug' => $registration->workshop->slug,
+                    'start_date' => $registration->workshop->start_date->format('M j, Y'),
+                    'status' => $registration->status,
+                ];
+            });
+        
         // Get available community projects
         $availableProjects = CommunityProject::funding()
             ->with(['creator', 'manager'])
@@ -178,6 +215,8 @@ class DashboardController extends Controller
             'recentAchievements' => $recentAchievements,
             'availableProjects' => $availableProjects,
             'userInvestments' => $userInvestments,
+            'upcomingWorkshops' => $upcomingWorkshops,
+            'myWorkshops' => $myWorkshops,
             'monthlyStats' => $monthlyStats,
             'notifications' => $notifications->values(),
             'teamVolumeData' => $teamVolumeData,

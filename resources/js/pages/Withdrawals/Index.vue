@@ -1,5 +1,5 @@
 <template>
-  <InvestorLayout>
+  <MemberLayout>
     <div class="py-6 sm:py-8">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
       <!-- Page Header -->
@@ -89,13 +89,13 @@
       </div>
     </div>
     </div>
-  </InvestorLayout>
+  </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { Head } from '@inertiajs/vue3'
-import InvestorLayout from '@/Layouts/InvestorLayout.vue'
+import MemberLayout from '@/Layouts/MemberLayout.vue'
 import Icon from '@/components/Icon.vue'
 import WithdrawalEligibilityChecker from '@/components/Withdrawal/WithdrawalEligibilityChecker.vue'
 import WithdrawalHistoryTable from '@/components/Withdrawal/WithdrawalHistoryTable.vue'

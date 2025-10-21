@@ -67,6 +67,47 @@
                     />
                 </div>
 
+                <!-- Workshop Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard
+                        title="Total Workshops"
+                        :value="formatNumber(workshopMetrics.total_workshops)"
+                        :subtitle="`${workshopMetrics.upcoming} upcoming`"
+                        icon="academic-cap"
+                        color="blue"
+                    />
+                    
+                    <StatCard
+                        title="Total Registrations"
+                        :value="formatNumber(workshopMetrics.total_registrations)"
+                        :subtitle="`${workshopMetrics.this_month_registrations} this month`"
+                        icon="users"
+                        color="green"
+                    />
+                    
+                    <StatCard
+                        title="Workshop Revenue"
+                        :value="`K${formatNumber(workshopMetrics.total_revenue)}`"
+                        :subtitle="'All time'"
+                        icon="currency-dollar"
+                        color="emerald"
+                    />
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-600">Quick Actions</h3>
+                        </div>
+                        <div class="space-y-2">
+                            <a href="/admin/workshops" class="block w-full px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Manage Workshops
+                            </a>
+                            <a href="/admin/workshops/create" class="block w-full px-4 py-2 text-sm text-center bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                Create Workshop
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Charts Row -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Member Growth Trend -->
@@ -192,6 +233,7 @@ const props = defineProps<{
     pointsMetrics: any;
     matrixMetrics: any;
     financialMetrics: any;
+    workshopMetrics: any;
     professionalLevelDistribution: any[];
     memberGrowthTrend: any[];
     revenueGrowthTrend: any[];
