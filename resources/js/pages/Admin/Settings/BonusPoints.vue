@@ -361,6 +361,7 @@ const updateLPValue = (setting: LPSetting) => {
         id: setting.id,
         lp_value: setting.lp_value
     }, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             showToastMessage('LP value updated successfully');
@@ -377,6 +378,7 @@ const toggleLPActivity = (setting: LPSetting) => {
         id: setting.id,
         is_active: newStatus
     }, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             showToastMessage(`LP activity ${newStatus ? 'activated' : 'deactivated'}`);
@@ -389,6 +391,7 @@ const updateBPValue = (setting: BPSetting) => {
         id: setting.id,
         bp_value: setting.bp_value
     }, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             showToastMessage('BP value updated successfully');
@@ -405,6 +408,7 @@ const toggleActivity = (setting: BPSetting) => {
         id: setting.id,
         is_active: newStatus
     }, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             showToastMessage(`BP activity ${newStatus ? 'activated' : 'deactivated'}`);
@@ -470,6 +474,7 @@ const updateLevelRequirement = (level: LevelRequirement) => {
         level: level.level,
         lp_requirement: level.lp_requirement
     }, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             showToastMessage(`${level.name} LP requirement updated successfully`);
