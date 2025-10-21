@@ -33,6 +33,11 @@ class User extends Authenticatable
             if ($user->roles()->count() === 0) {
                 $user->assignRole('Member');
             }
+            
+            // Auto-generate referral code for new users
+            if (!$user->referral_code) {
+                $user->generateUniqueReferralCode();
+            }
         });
     }
 

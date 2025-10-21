@@ -278,7 +278,7 @@ const displayLink = computed(() => props.shortLink || props.referralLink);
 const generateNewCode = async () => {
     isGenerating.value = true;
     try {
-        await router.post(route('referrals.generate-code'), {}, {
+        await router.post(route('my-team.generate-code'), {}, {
             preserveState: true,
             onSuccess: () => {
                 showToastMessage('New referral code generated successfully!');
