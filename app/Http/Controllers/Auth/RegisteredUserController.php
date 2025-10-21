@@ -82,6 +82,15 @@ class RegisteredUserController extends Controller
 
             event(new Registered($user));
 
+            // Award points for registration
+            $user->awardPointsForActivity('registration', 'New member registration');
+
+            // Award points to referrer if exists
+            if ($referrerId) {
+                $referrer = User::find($referrerId);
+                $referrer->awardPointsForActivity('direct_referral', "Referred new member: {$user->name}");
+            }
+
             // Process starter kit for new member
             $starterKitService->processStarterKit($user);
 

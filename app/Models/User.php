@@ -1404,4 +1404,68 @@ class User extends Authenticatable
 
         return $this->points->monthly_points >= $requiredMap;
     }
+
+    /**
+     * Award Life Points (LP) to user
+     */
+    public function awardLifePoints(int $amount, string $activityType, string $description = null): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        // Add to user's total LP
+        $this->increment('life_points', $amount);
+
+        // Record transaction
+        \App\Models\PointTransaction::create([
+            'user_id' => $this->id,
+            'type' => 'life_points',
+            'amount' => $amount,
+            'activity_type' => $activityType,
+            'description' => $description ?? "Earned {$amount} LP from {$activityType}",
+            'balance_after' => $this->life_points,
+        ]);
+    }
+
+    /**
+     * Award Bonus Points (BP) to user
+     */
+    public function awardBonusPoints(int $amount, string $activityType, string $description = null): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        // Add to user's monthly BP
+        $this->increment('monthly_activity_points', $amount);
+
+        // Record transaction
+        \App\Models\PointTransaction::create([
+            'user_id' => $this->id,
+            'type' => 'bonus_points',
+            'amount' => $amount,
+            'activity_type' => $activityType,
+            'description' => $description ?? "Earned {$amount} BP from {$activityType}",
+            'balance_after' => $this->monthly_activity_points,
+        ]);
+    }
+
+    /**
+     * Award both LP and BP based on activity settings
+     */
+    public function awardPointsForActivity(string $activityType, string $description = null): void
+    {
+        // Get LP value from settings
+        $lpValue = \App\Models\LifePointSetting::getLPValue($activityType);
+        if ($lpValue > 0) {
+            $this->awardLifePoints($lpValue, $activityType, $description);
+        }
+
+        // Get BP value from settings
+        $bpValue = \App\Models\BonusPointSetting::getBPValue($activityType);
+        if ($bpValue > 0) {
+            $this->awardBonusPoints($bpValue, $activityType, $description);
+        }
+    }
 }

@@ -165,6 +165,9 @@ class WorkshopController extends Controller
             $registrationModel->status = 'registered';
             $registrationModel->save();
 
+            // Award points for workshop attendance
+            $user->awardPointsForActivity('workshop_attendance', "Registered for workshop: {$workshop->title}");
+
             return redirect()->route('mygrownet.workshops.my-workshops')
                 ->with('success', 'Successfully registered! K' . number_format($workshop->price, 2) . ' deducted from your wallet.');
         } catch (\DomainException $e) {

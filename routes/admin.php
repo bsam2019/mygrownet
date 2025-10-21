@@ -345,13 +345,21 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::get('/commissions', [\App\Http\Controllers\Employee\CommissionController::class, 'index'])
         ->name('commissions.index');
 
-});
-
-
-    // Bonus Points Settings
+    // Points System Settings (LP & BP)
     Route::prefix('settings/bonus-points')->name('settings.bp.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'index'])->name('index');
+        
+        // Life Points (LP)
+        Route::post('/update-lp-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateLPActivity'])->name('update-lp-activity');
+        Route::post('/toggle-lp-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'toggleLPActivity'])->name('toggle-lp-activity');
+        
+        // Bonus Points (BP)
         Route::post('/update-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateActivity'])->name('update-activity');
         Route::post('/toggle-activity', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'toggleActivity'])->name('toggle-activity');
         Route::post('/update-rate', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateRate'])->name('update-rate');
+        
+        // Level Requirements
+        Route::post('/update-level-requirement', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateLevelRequirement'])->name('update-level-requirement');
     });
+
+});

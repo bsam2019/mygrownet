@@ -11,6 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('life_point_settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('activity_type')->unique(); // e.g., 'registration', 'referral', 'purchase', 'course_completion'
+            $table->string('name'); // Display name
+            $table->text('description')->nullable();
+            $table->integer('lp_value'); // How many LP this activity earns
+            $table->boolean('is_active')->default(true);
+            $table->json('conditions')->nullable(); // Additional conditions
+            $table->timestamps();
+        });
+
         Schema::create('bonus_point_settings', function (Blueprint $table) {
             $table->id();
             $table->string('activity_type')->unique(); // e.g., 'registration', 'referral', 'purchase', 'course_completion'
@@ -31,6 +42,82 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+
+        // Seed default LP settings
+        DB::table('life_point_settings')->insert([
+            [
+                'activity_type' => 'registration',
+                'name' => 'New Member Registration',
+                'description' => 'LP earned when you register (one-time)',
+                'lp_value' => 50,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'direct_referral',
+                'name' => 'Direct Referral (Level 1)',
+                'description' => 'LP earned for each direct referral',
+                'lp_value' => 100,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'indirect_referral',
+                'name' => 'Indirect Referral (Level 2-7)',
+                'description' => 'LP earned for indirect referrals',
+                'lp_value' => 30,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'monthly_renewal',
+                'name' => 'Monthly Subscription Renewal',
+                'description' => 'LP earned each month you renew',
+                'lp_value' => 20,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'course_completion',
+                'name' => 'Course Completion',
+                'description' => 'LP earned when you complete a course',
+                'lp_value' => 50,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'workshop_attendance',
+                'name' => 'Workshop Attendance',
+                'description' => 'LP earned when you attend a workshop',
+                'lp_value' => 30,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'downline_activation',
+                'name' => 'Downline Member Activation',
+                'description' => 'LP earned when you help activate a downline member',
+                'lp_value' => 40,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'activity_type' => 'level_upgrade',
+                'name' => 'Professional Level Upgrade',
+                'description' => 'LP bonus when you upgrade to next level',
+                'lp_value' => 200,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
 
         // Seed default BP settings
         DB::table('bonus_point_settings')->insert([
@@ -126,5 +213,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('bp_conversion_rates');
         Schema::dropIfExists('bonus_point_settings');
+        Schema::dropIfExists('life_point_settings');
     }
 };
