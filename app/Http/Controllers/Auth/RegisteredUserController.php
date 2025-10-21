@@ -37,9 +37,11 @@ class RegisteredUserController extends Controller
             'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
             'phone' => 'nullable|string|max:20|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'referral_code' => 'nullable|string|max:20|exists:users,referral_code',
         ], [
             'email.unique' => 'This email is already registered.',
             'phone.unique' => 'This phone number is already registered.',
+            'referral_code.exists' => 'Invalid referral code. Please check and try again.',
         ]);
 
         // Ensure at least one identifier (email or phone) is provided
@@ -53,11 +55,21 @@ class RegisteredUserController extends Controller
         // Normalize phone number if provided
         $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
 
+        // Find referrer if referral code provided
+        $referrerId = null;
+        if ($request->referral_code) {
+            $referrer = User::where('referral_code', $request->referral_code)->first();
+            if ($referrer) {
+                $referrerId = $referrer->id;
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $normalizedPhone,
             'password' => Hash::make($request->password),
+            'referrer_id' => $referrerId,
         ]);
 
         event(new Registered($user));

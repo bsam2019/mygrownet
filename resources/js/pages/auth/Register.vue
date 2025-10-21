@@ -8,6 +8,11 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator.vue';
+import { onMounted } from 'vue';
+
+// Get referral code from URL query parameter
+const urlParams = new URLSearchParams(window.location.search);
+const referralCode = urlParams.get('ref') || '';
 
 const form = useForm({
     name: '',
@@ -15,6 +20,7 @@ const form = useForm({
     phone: '',
     password: '',
     password_confirmation: '',
+    referral_code: referralCode,
 });
 
 const submit = () => {
@@ -111,12 +117,41 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="referral_code">
+                        Referral Code 
+                        <span class="text-gray-400 font-normal">(Optional)</span>
+                    </Label>
+                    <Input
+                        id="referral_code"
+                        type="text"
+                        :tabindex="4"
+                        v-model="form.referral_code"
+                        placeholder="Enter referral code if you have one"
+                        :class="[
+                            'bg-gray-50 focus-visible:ring-blue-500',
+                            form.errors.referral_code ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200',
+                            referralCode ? 'border-green-300 bg-green-50' : ''
+                        ]"
+                    />
+                    <p v-if="referralCode" class="text-xs text-green-600 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Referral code applied from invitation link
+                    </p>
+                    <p v-else class="text-xs text-gray-500 mt-1">
+                        If someone referred you, enter their code here
+                    </p>
+                    <InputError :message="form.errors.referral_code" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input
                         id="password"
                         type="password"
                         required
-                        :tabindex="3"
+                        :tabindex="5"
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Create a secure password"
@@ -135,7 +170,7 @@ const submit = () => {
                         id="password_confirmation"
                         type="password"
                         required
-                        :tabindex="4"
+                        :tabindex="6"
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         placeholder="Confirm your password"
@@ -150,7 +185,7 @@ const submit = () => {
                 <Button
                     type="submit"
                     class="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 py-6"
-                    :tabindex="5"
+                    :tabindex="7"
                     :disabled="form.processing"
                 >
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
@@ -160,7 +195,7 @@ const submit = () => {
 
             <div class="text-center text-gray-600">
                 Already have an account?
-                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium ml-1" :tabindex="6">
+                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium ml-1" :tabindex="8">
                     Sign in instead
                 </TextLink>
             </div>
