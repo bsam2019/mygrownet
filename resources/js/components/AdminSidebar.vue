@@ -166,6 +166,11 @@ const employeeNavItems: NavItem[] = [
 
 const systemNavItems: NavItem[] = [
     {
+        title: 'Bonus Points Settings',
+        href: safeRoute('admin.settings.bp.index'),
+        icon: Target,
+    },
+    {
         title: 'Roles',
         href: safeRoute('admin.role-management.roles.index'),
         icon: Shield,
