@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Package;
 use App\Models\Subscription;
 use App\Models\Transaction;
-use App\Events\Points\UserRegistered;
+use App\Events\UserRegistered;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
