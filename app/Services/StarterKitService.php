@@ -41,9 +41,10 @@ class StarterKitService
             // Record transaction
             Transaction::create([
                 'user_id' => $user->id,
-                'type' => 'subscription',
+                'transaction_type' => 'subscription',
                 'amount' => $starterKit->price,
                 'status' => 'completed',
+                'reference_number' => 'SK-' . $user->id . '-' . now()->timestamp,
                 'description' => 'Welcome Package - Starter Kit (Associate)',
                 'notes' => 'Automatic starter kit assignment for new member',
                 'processed_at' => now(),
