@@ -12,6 +12,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \App\Events\UserRegistered::class => [
+            \App\Listeners\AwardRegistrationPoints::class,
+        ],
         \App\Events\UserReferred::class => [
             \App\Listeners\AwardReferralPoints::class,
         ],

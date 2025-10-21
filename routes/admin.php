@@ -130,6 +130,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::delete('/{workshop}', [\App\Http\Controllers\Admin\WorkshopController::class, 'destroy'])->name('destroy');
     });
 
+    // Starter Kit Management
+    Route::get('/starter-kits', [\App\Http\Controllers\Admin\StarterKitController::class, 'index'])->name('starter-kits.index');
+
     // Reward System Management
     
     // Matrix Management

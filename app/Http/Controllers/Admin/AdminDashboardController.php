@@ -21,6 +21,7 @@ class AdminDashboardController extends Controller
         return Inertia::render('Admin/Dashboard/Index', [
             'memberMetrics' => $this->getMemberMetrics(),
             'subscriptionMetrics' => $this->getSubscriptionMetrics(),
+            'starterKitMetrics' => $this->getStarterKitMetrics(),
             'pointsMetrics' => $this->getPointsMetrics(),
             'matrixMetrics' => $this->getMatrixMetrics(),
             'financialMetrics' => $this->getFinancialMetrics(),
@@ -99,6 +100,48 @@ class AdminDashboardController extends Controller
             'conversion_rate' => User::count() > 0 
                 ? round(($activeSubscriptions / User::count()) * 100, 1) 
                 : 0,
+        ];
+    }
+
+    /**
+     * Get starter kit metrics
+     */
+    private function getStarterKitMetrics(): array
+    {
+        $starterKitPackageId = DB::table('packages')
+            ->where('slug', 'starter-kit-associate')
+            ->value('id');
+
+        $totalAssigned = DB::table('package_subscriptions')
+            ->where('package_id', $starterKitPackageId)
+            ->count();
+        
+        $thisMonthAssigned = DB::table('package_subscriptions')
+            ->where('package_id', $starterKitPackageId)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        
+        $lastMonthAssigned = DB::table('package_subscriptions')
+            ->where('package_id', $starterKitPackageId)
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+        
+        $growth = $lastMonthAssigned > 0 
+            ? round((($thisMonthAssigned - $lastMonthAssigned) / $lastMonthAssigned) * 100, 1) 
+            : 0;
+
+        $totalMembers = User::count();
+        $assignmentRate = $totalMembers > 0 
+            ? round(($totalAssigned / $totalMembers) * 100, 1) 
+            : 0;
+
+        return [
+            'total_assigned' => $totalAssigned,
+            'this_month' => $thisMonthAssigned,
+            'assignment_rate' => $assignmentRate,
+            'growth_rate' => $growth,
         ];
     }
 

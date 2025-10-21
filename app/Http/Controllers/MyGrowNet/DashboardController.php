@@ -119,6 +119,25 @@ class DashboardController extends Controller
                 ];
             });
         
+        // Get starter kit information
+        $starterKit = \App\Models\Subscription::with('package')
+            ->where('user_id', $user->id)
+            ->whereHas('package', function ($query) {
+                $query->where('slug', 'starter-kit-associate');
+            })
+            ->first();
+        
+        $starterKitInfo = null;
+        if ($starterKit) {
+            $starterKitInfo = [
+                'received' => true,
+                'package_name' => $starterKit->package->name,
+                'received_date' => $starterKit->created_at->format('M j, Y'),
+                'features' => $starterKit->package->features,
+                'status' => $starterKit->status,
+            ];
+        }
+        
         // Get available community projects
         $availableProjects = CommunityProject::funding()
             ->with(['creator', 'manager'])
@@ -208,6 +227,7 @@ class DashboardController extends Controller
         return Inertia::render('MyGrowNet/Dashboard', [
             'user' => $user,
             'subscription' => $currentSubscription,
+            'starterKit' => $starterKitInfo,
             'membershipProgress' => $membershipProgress,
             'learningProgress' => $learningProgress,
             'referralStats' => $referralStats,

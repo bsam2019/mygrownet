@@ -57,6 +57,11 @@ const myBusinessNavItems: NavItem[] = [
         icon: BriefcaseIcon,
     },
     {
+        title: 'My Starter Kit',
+        href: route('mygrownet.starter-kit.show'),
+        icon: GiftIcon,
+    },
+    {
         title: 'Growth Levels',
         href: route('mygrownet.levels.index'),
         icon: TrendingUpIcon,

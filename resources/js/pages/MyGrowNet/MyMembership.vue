@@ -201,7 +201,7 @@
                     </Link>
 
                     <Link 
-                        :href="route('referrals.index')" 
+                        :href="route('my-team.index')" 
                         class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition-shadow"
                     >
                         <div class="p-6 text-center">

@@ -53,7 +53,7 @@ class PointsController extends Controller
     /**
      * Get point transactions history
      */
-    public function transactions(Request $request)
+    public function transactions(Request $request): Response
     {
         $user = $request->user();
 
@@ -64,7 +64,14 @@ class PointsController extends Controller
             ->latest()
             ->paginate(50);
 
-        return response()->json($transactions);
+        return Inertia::render('Points/Transactions', [
+            'transactions' => $transactions,
+            'filters' => [
+                'source' => $request->source,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to,
+            ],
+        ]);
     }
 
     /**

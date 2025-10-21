@@ -21,6 +21,13 @@ interface Props {
         referral_code: string;
         joined_at: string;
     };
+    starterKit?: {
+        received: boolean;
+        package_name: string;
+        received_date: string;
+        features: string[];
+        status: string;
+    } | null;
     points: {
         lifetime_points: number;
         bonus_points: number;
@@ -116,6 +123,34 @@ const quickActions = [
                 <div class="mb-6">
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Welcome back, {{ user.name }}!</h1>
                     <p class="mt-1 text-sm text-gray-600">Here's your business overview for today</p>
+                </div>
+
+                <!-- Starter Kit Welcome Card (for new members) -->
+                <div v-if="starterKit && starterKit.received" class="mb-6 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <GiftIcon class="h-6 w-6" />
+                                <h3 class="text-lg font-semibold">{{ starterKit.package_name }}</h3>
+                            </div>
+                            <p class="text-sm text-purple-100 mb-3">
+                                Received on {{ starterKit.received_date }} • Status: {{ starterKit.status }}
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div v-for="(feature, index) in starterKit.features.slice(0, 4)" :key="index" class="flex items-start gap-2">
+                                    <span class="text-purple-200 mt-0.5">✓</span>
+                                    <span class="text-sm text-purple-50">{{ feature }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center">
+                                <StarIcon class="h-8 w-8 mx-auto mb-2" />
+                                <p class="text-2xl font-bold">100</p>
+                                <p class="text-xs text-purple-100">LP Bonus</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Points Overview Cards -->

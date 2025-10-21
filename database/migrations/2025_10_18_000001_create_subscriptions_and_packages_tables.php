@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->string('slug')->unique();
                 $table->text('description')->nullable();
                 $table->decimal('price', 10, 2);
-                $table->enum('billing_cycle', ['monthly', 'quarterly', 'annual'])->default('monthly');
+                $table->enum('billing_cycle', ['one-time', 'monthly', 'quarterly', 'annual'])->default('monthly');
                 $table->integer('duration_months')->default(1);
                 $table->json('features')->nullable();
                 $table->boolean('is_active')->default(true);

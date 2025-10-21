@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\Investment;
+use App\Models\Subscription;
 use App\Models\ReferralCommission;
 use App\Events\UserReferred;
 use Illuminate\Support\Facades\DB;

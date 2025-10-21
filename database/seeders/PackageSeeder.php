@@ -10,6 +10,26 @@ class PackageSeeder extends Seeder
     public function run(): void
     {
         $packages = [
+            // Starter Kits (One-time purchase for new members)
+            [
+                'name' => 'Starter Kit - Associate',
+                'slug' => 'starter-kit-associate',
+                'description' => 'Complete starter package for new members. Includes registration fee, first month subscription, and welcome materials.',
+                'price' => 150.00, // Registration fee (50) + First month Basic (100)
+                'billing_cycle' => 'one-time',
+                'duration_months' => 1,
+                'features' => [
+                    'One-time registration fee',
+                    'First month Basic membership included',
+                    'Welcome learning pack',
+                    'Getting started guide',
+                    'Community access',
+                    'Initial mentorship session',
+                    'Starter resources bundle'
+                ],
+                'is_active' => true,
+                'sort_order' => 0
+            ],
             [
                 'name' => 'Basic',
                 'slug' => 'basic',

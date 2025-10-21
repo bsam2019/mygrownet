@@ -32,6 +32,36 @@
           </div>
         </div>
 
+        <!-- Starter Kit Welcome Card -->
+        <div v-if="starterKit && starterKit.received" class="mb-6 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+          <div class="flex items-start justify-between flex-wrap gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <GiftIcon class="h-6 w-6 flex-shrink-0" />
+                <h3 class="text-lg font-semibold">{{ starterKit.package_name }}</h3>
+              </div>
+              <p class="text-sm text-purple-100 mb-3">
+                Received on {{ starterKit.received_date }} • Status: <span class="font-semibold">{{ starterKit.status }}</span>
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div v-for="(feature, index) in starterKit.features.slice(0, 4)" :key="index" class="flex items-start gap-2">
+                  <span class="text-purple-200 mt-0.5 flex-shrink-0">✓</span>
+                  <span class="text-sm text-purple-50">{{ feature }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex-shrink-0">
+              <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4 text-center min-w-[100px]">
+                <svg class="h-8 w-8 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <p class="text-2xl font-bold">100</p>
+                <p class="text-xs text-purple-100">LP Bonus</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Notifications -->
         <div v-if="notifications.length > 0" class="mb-6">
           <div class="space-y-3">
@@ -985,12 +1015,20 @@ import {
   TrophyIcon,
   BuildingOfficeIcon,
   BuildingOffice2Icon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  GiftIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
   user: any
   subscription: any
+  starterKit?: {
+    received: boolean
+    package_name: string
+    received_date: string
+    features: string[]
+    status: string
+  } | null
   membershipProgress: any
   learningProgress: any
   referralStats: any

@@ -67,8 +67,8 @@
                     />
                 </div>
 
-                <!-- Workshop Stats Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Workshop & Starter Kit Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <StatCard
                         title="Total Workshops"
                         :value="formatNumber(workshopMetrics.total_workshops)"
@@ -93,6 +93,14 @@
                         color="emerald"
                     />
                     
+                    <StatCard
+                        title="Starter Kits"
+                        :value="formatNumber(starterKitMetrics.total_assigned)"
+                        :subtitle="`${starterKitMetrics.assignment_rate}% of members`"
+                        icon="gift"
+                        color="purple"
+                    />
+                    
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-sm font-medium text-gray-600">Quick Actions</h3>
@@ -101,8 +109,8 @@
                             <a href="/admin/workshops" class="block w-full px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Manage Workshops
                             </a>
-                            <a href="/admin/workshops/create" class="block w-full px-4 py-2 text-sm text-center bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                Create Workshop
+                            <a href="/admin/starter-kits" class="block w-full px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                Starter Kits
                             </a>
                         </div>
                     </div>
@@ -230,6 +238,7 @@ import {
 const props = defineProps<{
     memberMetrics: any;
     subscriptionMetrics: any;
+    starterKitMetrics: any;
     pointsMetrics: any;
     matrixMetrics: any;
     financialMetrics: any;
