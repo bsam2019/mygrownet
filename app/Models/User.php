@@ -1426,7 +1426,7 @@ class User extends Authenticatable
         // Record transaction
         \App\Models\PointTransaction::create([
             'user_id' => $this->id,
-            'point_type' => 'LP',
+            'point_type' => 'lifetime',
             'lp_amount' => $amount,
             'map_amount' => 0,
             'source' => $activityType,
@@ -1449,7 +1449,7 @@ class User extends Authenticatable
         // Record transaction
         \App\Models\PointTransaction::create([
             'user_id' => $this->id,
-            'point_type' => 'MAP',
+            'point_type' => 'monthly',
             'lp_amount' => 0,
             'map_amount' => $amount,
             'source' => $activityType,
