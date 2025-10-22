@@ -22,7 +22,13 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+        onFinish: () => {
+            form.reset('password');
+        },
+        onError: (errors) => {
+            // Scroll to top to show error alert
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
     });
 };
 </script>

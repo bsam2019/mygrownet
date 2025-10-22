@@ -25,7 +25,13 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('register'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
+        onFinish: () => {
+            form.reset('password', 'password_confirmation');
+        },
+        onError: (errors) => {
+            // Scroll to top to show error alert
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
     });
 };
 </script>
