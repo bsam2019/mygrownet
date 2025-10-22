@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import { BookOpen, Folder, LayoutGrid, Users, FileText, Settings, Activity, HelpCircle, BarChart3 as ChartBarIcon, UserCheck, Building2, Briefcase, Target, DollarSign, Shield, Key } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Users, FileText, Settings, Activity, HelpCircle, BarChart3 as ChartBarIcon, UserCheck, Building2, Briefcase, Target, DollarSign, Shield, Key, CreditCard } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Helper function to safely get route or return fallback
@@ -57,6 +57,16 @@ const userManagementNavItems: NavItem[] = [
         title: 'Users',
         href: safeRoute('admin.users.index'),
         icon: Users,
+    },
+    {
+        title: 'Subscriptions',
+        href: safeRoute('admin.subscriptions.index'),
+        icon: CreditCard,
+    },
+    {
+        title: 'Packages',
+        href: safeRoute('admin.packages.index'),
+        icon: BookOpen,
     },
     {
         title: 'Starter Kits',

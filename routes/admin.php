@@ -362,4 +362,25 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::post('/update-level-requirement', [\App\Http\Controllers\Admin\BonusPointSettingsController::class, 'updateLevelRequirement'])->name('update-level-requirement');
     });
 
+    // Package Management
+    Route::prefix('packages')->name('packages.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PackageController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\PackageController::class, 'store'])->name('store');
+        Route::put('/{package}', [\App\Http\Controllers\Admin\PackageController::class, 'update'])->name('update');
+        Route::delete('/{package}', [\App\Http\Controllers\Admin\PackageController::class, 'destroy'])->name('destroy');
+        Route::patch('/{package}/toggle-status', [\App\Http\Controllers\Admin\PackageController::class, 'toggleStatus'])->name('toggle-status');
+    });
+
+    // Subscription Management
+    Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SubscriptionController::class, 'index'])->name('index');
+        Route::post('/create', [\App\Http\Controllers\Admin\SubscriptionController::class, 'createSubscription'])->name('create');
+        Route::get('/{user}', [\App\Http\Controllers\Admin\SubscriptionController::class, 'show'])->name('show');
+        Route::post('/{user}/update-status', [\App\Http\Controllers\Admin\SubscriptionController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{user}/extend', [\App\Http\Controllers\Admin\SubscriptionController::class, 'extendSubscription'])->name('extend');
+        Route::post('/{user}/force-upgrade', [\App\Http\Controllers\Admin\SubscriptionController::class, 'forceUpgrade'])->name('force-upgrade');
+        Route::post('/bulk-action', [\App\Http\Controllers\Admin\SubscriptionController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/export', [\App\Http\Controllers\Admin\SubscriptionController::class, 'export'])->name('export');
+    });
+
 });

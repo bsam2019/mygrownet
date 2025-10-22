@@ -106,6 +106,9 @@
                             <h3 class="text-sm font-medium text-gray-600">Quick Actions</h3>
                         </div>
                         <div class="space-y-2">
+                            <Link :href="route('admin.subscriptions.index')" class="block w-full px-4 py-2 text-sm text-center bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                Subscriptions
+                            </Link>
                             <a href="/admin/workshops" class="block w-full px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Manage Workshops
                             </a>

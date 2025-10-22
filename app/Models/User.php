@@ -23,6 +23,17 @@ class User extends Authenticatable
     {
         parent::boot();
 
+        static::creating(function ($user) {
+            // Auto-generate referral code BEFORE saving
+            if (!$user->referral_code) {
+                do {
+                    $code = 'MGN' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
+                } while (User::where('referral_code', $code)->exists());
+                
+                $user->referral_code = $code;
+            }
+        });
+
         static::created(function ($user) {
             // Auto-assign Member role to new users
             if (!\Spatie\Permission\Models\Role::where('name', 'Member')->exists()) {
@@ -32,11 +43,6 @@ class User extends Authenticatable
             // Only assign if user doesn't already have a role
             if ($user->roles()->count() === 0) {
                 $user->assignRole('Member');
-            }
-            
-            // Auto-generate referral code for new users
-            if (!$user->referral_code) {
-                $user->generateUniqueReferralCode();
             }
         });
     }

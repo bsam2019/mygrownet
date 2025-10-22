@@ -10,174 +10,142 @@ class PackageSeeder extends Seeder
     public function run(): void
     {
         $packages = [
-            // ONE-TIME REGISTRATION (Required for all new members)
-            [
-                'name' => 'MyGrowNet Registration',
-                'slug' => 'registration',
-                'description' => 'One-time registration fee for new members. Includes welcome package, first month Associate membership, and platform access setup.',
-                'price' => 500.00,
-                'billing_cycle' => 'one-time',
-                'duration_months' => 1,
-                'features' => [
-                    'One-time registration fee',
-                    'First month Associate membership included',
-                    'Welcome learning pack',
-                    'Getting started guide',
-                    'Community access setup',
-                    'Initial mentorship session',
-                    'Starter resources bundle',
-                    'Matrix position assignment',
-                    'Referral code generation'
-                ],
-                'is_active' => true,
-                'sort_order' => 0
-            ],
-            
             // LEVEL-BASED MONTHLY SUBSCRIPTIONS
             [
-                'name' => 'Associate Membership',
+                'name' => 'Associate',
                 'slug' => 'associate-monthly',
-                'description' => 'Entry-level monthly subscription. Start your journey with MyGrowNet.',
+                'description' => 'Entry level - New member, learning (3 network members)',
                 'price' => 100.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'associate',
+                'lp_requirement' => 0,
                 'duration_months' => 1,
                 'features' => [
-                    'Basic learning materials',
-                    'Community forum access',
-                    'Monthly group coaching',
-                    'Matrix participation',
-                    'Profit-sharing eligibility (1.0x)',
-                    'Level 1-2 commission earnings',
-                    'Workshop access',
-                    'Email support'
+                    'Basic educational content',
+                    'Peer circle access',
+                    '7-level commission structure',
+                    'Monthly qualification: 100 MAP',
+                    'Profit-sharing: 1.0x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 1
             ],
             
             [
-                'name' => 'Professional Membership',
+                'name' => 'Professional',
                 'slug' => 'professional-monthly',
-                'description' => 'Enhanced membership for growing professionals.',
+                'description' => 'Skilled member, applying (9 network members)',
                 'price' => 150.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'professional',
+                'lp_requirement' => 500,
                 'duration_months' => 1,
                 'features' => [
-                    'All Associate features',
-                    'Advanced learning materials',
-                    'Weekly group coaching',
-                    'One-on-one mentorship (monthly)',
-                    'Profit-sharing eligibility (1.2x)',
-                    'Level 1-3 commission earnings',
-                    'Priority support'
+                    'Advanced educational content',
+                    'Group mentorship access',
+                    'Enhanced commission rates',
+                    'Monthly qualification: 200 MAP',
+                    'Profit-sharing: 1.2x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 2
             ],
             
             [
-                'name' => 'Senior Membership',
+                'name' => 'Senior',
                 'slug' => 'senior-monthly',
-                'description' => 'Premium membership for experienced team builders.',
+                'description' => 'Experienced, team building (27 network members)',
                 'price' => 200.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'senior',
+                'lp_requirement' => 1500,
                 'duration_months' => 1,
                 'features' => [
-                    'All Professional features',
-                    'Premium learning content',
-                    'Bi-weekly one-on-one coaching',
-                    'Business planning support',
-                    'Profit-sharing eligibility (1.5x)',
-                    'Level 1-4 commission earnings',
-                    'Certificate programs',
-                    'Dedicated support'
+                    'Premium content library',
+                    '1-on-1 mentorship sessions',
+                    'Team building bonuses',
+                    'Monthly qualification: 300 MAP',
+                    'Profit-sharing: 1.5x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 3
             ],
             
             [
-                'name' => 'Manager Membership',
+                'name' => 'Manager',
                 'slug' => 'manager-monthly',
-                'description' => 'Executive membership for team leaders.',
+                'description' => 'Team leader (81 network members)',
                 'price' => 300.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'manager',
+                'lp_requirement' => 4000,
                 'duration_months' => 1,
                 'features' => [
-                    'All Senior features',
-                    'Leadership development program',
-                    'Team building resources',
-                    'Weekly one-on-one coaching',
-                    'Profit-sharing eligibility (2.0x)',
-                    'Level 1-5 commission earnings',
-                    'Booster fund eligibility (K5,000+)',
-                    'VIP support'
+                    'Leadership training programs',
+                    'Team performance bonuses',
+                    'Booster fund: K5,000',
+                    'Monthly qualification: 400 MAP',
+                    'Profit-sharing: 2.0x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 4
             ],
             
             [
-                'name' => 'Director Membership',
+                'name' => 'Director',
                 'slug' => 'director-monthly',
-                'description' => 'Elite membership for strategic leaders.',
+                'description' => 'Strategic leader (243 network members)',
                 'price' => 400.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'director',
+                'lp_requirement' => 10000,
                 'duration_months' => 1,
                 'features' => [
-                    'All Manager features',
-                    'Strategic business consulting',
-                    'Unlimited one-on-one coaching',
-                    'Private networking events',
-                    'Profit-sharing eligibility (2.5x)',
-                    'Level 1-6 commission earnings',
-                    'Enhanced booster funds (K10,000+)',
-                    'Concierge support'
+                    'Strategic leadership content',
+                    'Business facilitation services',
+                    'Booster fund: K15,000',
+                    'Monthly qualification: 500 MAP',
+                    'Profit-sharing: 2.5x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 5
             ],
             
             [
-                'name' => 'Executive Membership',
+                'name' => 'Executive',
                 'slug' => 'executive-monthly',
-                'description' => 'Top-tier membership for high performers.',
+                'description' => 'Top performer (729 network members)',
                 'price' => 500.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'executive',
+                'lp_requirement' => 25000,
                 'duration_months' => 1,
                 'features' => [
-                    'All Director features',
-                    'Business ecosystem access',
-                    'Partnership opportunities',
-                    'International networking',
-                    'Profit-sharing eligibility (3.0x)',
-                    'Level 1-7 commission earnings',
-                    'Major booster funds (K25,000+)',
-                    'White-glove support',
-                    'Travel incentives'
+                    'Executive coaching access',
+                    'Innovation lab participation',
+                    'Booster fund: K50,000',
+                    'Monthly qualification: 600 MAP',
+                    'Profit-sharing: 3.0x base share'
                 ],
                 'is_active' => true,
                 'sort_order' => 6
             ],
             
             [
-                'name' => 'Ambassador Membership',
+                'name' => 'Ambassador',
                 'slug' => 'ambassador-monthly',
-                'description' => 'Ultimate membership for brand ambassadors.',
+                'description' => 'Brand representative (2,187 network members)',
                 'price' => 600.00,
                 'billing_cycle' => 'monthly',
+                'professional_level' => 'ambassador',
+                'lp_requirement' => 50000,
                 'duration_months' => 1,
                 'features' => [
-                    'All Executive features',
-                    'Brand ambassador status',
-                    'Speaking opportunities',
-                    'Maximum profit-sharing (3.5x)',
-                    'Full 7-level commission earnings',
-                    'Premium booster funds (K50,000+)',
-                    'Luxury rewards eligibility',
-                    'Global networking access',
-                    'Personal success team',
-                    'Lifetime achievement recognition'
+                    'VIP brand ambassador status',
+                    'Exclusive events & retreats',
+                    'Booster fund: K150,000',
+                    'Monthly qualification: 800 MAP',
+                    'Profit-sharing: 4.0x base share (MAX)'
                 ],
                 'is_active' => true,
                 'sort_order' => 7
@@ -190,6 +158,8 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Associate to Professional (pay the difference for current month).',
                 'price' => 50.00, // K150 - K100
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'professional',
+                'lp_requirement' => 500,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Professional level',
@@ -208,6 +178,8 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Professional to Senior (pay the difference for current month).',
                 'price' => 50.00, // K200 - K150
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'senior',
+                'lp_requirement' => 1500,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Senior level',
@@ -226,6 +198,8 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Senior to Manager (pay the difference for current month).',
                 'price' => 100.00, // K300 - K200
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'manager',
+                'lp_requirement' => 4000,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Manager level',
@@ -245,6 +219,8 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Manager to Director (pay the difference for current month).',
                 'price' => 100.00, // K400 - K300
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'director',
+                'lp_requirement' => 10000,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Director level',
@@ -264,6 +240,8 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Director to Executive (pay the difference for current month).',
                 'price' => 100.00, // K500 - K400
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'executive',
+                'lp_requirement' => 25000,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Executive level',
@@ -284,13 +262,15 @@ class PackageSeeder extends Seeder
                 'description' => 'Upgrade from Executive to Ambassador (pay the difference for current month).',
                 'price' => 100.00, // K600 - K500
                 'billing_cycle' => 'upgrade',
+                'professional_level' => 'ambassador',
+                'lp_requirement' => 50000,
                 'duration_months' => 0,
                 'features' => [
                     'Immediate upgrade to Ambassador level',
                     'Pay only the difference (K100)',
                     'Next month: Full K600 subscription',
                     'Full 7-level commission earnings',
-                    'Maximum profit-sharing (3.5x)',
+                    'Maximum profit-sharing (4.0x MAX)',
                     'Premium booster funds',
                     'Brand ambassador status'
                 ],
@@ -299,8 +279,9 @@ class PackageSeeder extends Seeder
             ]
         ];
 
-        // Deactivate old tier-based packages (they don't align with MyGrowNet model)
+        // Deactivate old packages
         Package::whereIn('slug', [
+            'registration',
             'starter-kit-associate',
             'basic',
             'associate',
@@ -322,29 +303,25 @@ class PackageSeeder extends Seeder
             );
         }
 
-        $this->command->info('Packages seeded successfully!');
+        $this->command->info('✅ Packages seeded successfully!');
         $this->command->info('');
-        $this->command->info('📦 Active Packages:');
-        $this->command->info('  Registration: K500 (one-time)');
+        $this->command->info('📦 Monthly Subscriptions (7 Levels):');
+        $this->command->info('  1. Associate: K100/month (0 LP required)');
+        $this->command->info('  2. Professional: K150/month (500 LP required)');
+        $this->command->info('  3. Senior: K200/month (1,500 LP required)');
+        $this->command->info('  4. Manager: K300/month (4,000 LP required)');
+        $this->command->info('  5. Director: K400/month (10,000 LP required)');
+        $this->command->info('  6. Executive: K500/month (25,000 LP required)');
+        $this->command->info('  7. Ambassador: K600/month (50,000 LP required)');
         $this->command->info('');
-        $this->command->info('  Monthly Subscriptions:');
-        $this->command->info('    • Associate: K100/month');
-        $this->command->info('    • Professional: K150/month');
-        $this->command->info('    • Senior: K200/month');
-        $this->command->info('    • Manager: K300/month');
-        $this->command->info('    • Director: K400/month');
-        $this->command->info('    • Executive: K500/month');
-        $this->command->info('    • Ambassador: K600/month');
+        $this->command->info('🔄 Upgrade Packages (Pay the difference):');
+        $this->command->info('  • To Professional: K50');
+        $this->command->info('  • To Senior: K50');
+        $this->command->info('  • To Manager: K100');
+        $this->command->info('  • To Director: K100');
+        $this->command->info('  • To Executive: K100');
+        $this->command->info('  • To Ambassador: K100');
         $this->command->info('');
-        $this->command->info('  Upgrade Packages (Pay the difference):');
-        $this->command->info('    • To Professional: K50');
-        $this->command->info('    • To Senior: K50');
-        $this->command->info('    • To Manager: K100');
-        $this->command->info('    • To Director: K100');
-        $this->command->info('    • To Executive: K100');
-        $this->command->info('    • To Ambassador: K100');
-        $this->command->info('');
-        $this->command->info('💡 Members advance through levels by earning Life Points (LP)');
-        $this->command->info('   and pay upgrade fee (difference) to unlock new subscription tier.');
+        $this->command->info('💡 Members advance by earning Life Points (LP) and paying upgrade fee.');
     }
 }
