@@ -528,7 +528,7 @@ Whether you want to:
 
 ## Contact Us
 
-**Website:** [MyGrowNet Platform URL]  
+**Website:** https://mygrownet.com  
 **Email:** info@mygrownet.com  
 **Phone:** [Contact Number]  
 **WhatsApp:** [WhatsApp Number]

@@ -21,8 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
         ]);
 
-        // Add daily login tracking to web middleware group
+        // Add Inertia and daily login tracking to web middleware group
         $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\TrackDailyLogin::class,
         ]);
     })

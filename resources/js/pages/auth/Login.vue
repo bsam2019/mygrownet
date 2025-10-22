@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
+import { Transition } from 'vue';
 
 defineProps<{
     status?: string;
@@ -25,7 +26,7 @@ const submit = () => {
         onFinish: () => {
             form.reset('password');
         },
-        onError: (errors) => {
+        onError: () => {
             // Scroll to top to show error alert
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
@@ -37,20 +38,49 @@ const submit = () => {
     <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
         <Head title="Log in" />
 
-        <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
-            {{ status }}
-        </div>
+        <!-- Success Message -->
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+        >
+            <div v-if="status" class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <p class="text-sm font-medium text-green-900">{{ status }}</p>
+                </div>
+            </div>
+        </Transition>
 
         <!-- Error Alert -->
-        <div v-if="form.errors.email || form.errors.password" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div class="flex-1">
-                <h3 class="text-sm font-semibold text-red-800 mb-1">Login Failed</h3>
-                <p class="text-sm text-red-700">
-                    {{ form.errors.email || form.errors.password }}
-                </p>
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+        >
+            <div v-if="form.hasErrors" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg shadow-sm">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <AlertCircle class="h-5 w-5 text-red-600" />
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-red-900 mb-1">Unable to sign in</h3>
+                        <p class="text-sm text-red-700">
+                            {{ form.errors.email || form.errors.password }}
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </Transition>
 
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
@@ -59,7 +89,6 @@ const submit = () => {
                     <Input
                         id="email"
                         type="text"
-                        required
                         autofocus
                         :tabindex="1"
                         autocomplete="username"
@@ -86,7 +115,6 @@ const submit = () => {
                     <Input
                         id="password"
                         type="password"
-                        required
                         :tabindex="2"
                         autocomplete="current-password"
                         v-model="form.password"

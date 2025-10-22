@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\StarterKitService;
+use App\Services\DefaultSponsorService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,20 +31,24 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, StarterKitService $starterKitService): RedirectResponse
+    public function store(Request $request, StarterKitService $starterKitService, DefaultSponsorService $defaultSponsorService): RedirectResponse
     {
         // Normalize phone number BEFORE validation
         $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
         
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
             'phone' => 'nullable|string|max:20',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'referral_code' => 'nullable|string|max:20|exists:users,referral_code',
         ], [
+            'name.required' => 'Please enter your full name.',
+            'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email is already registered.',
             'phone.unique' => 'This phone number is already registered.',
+            'password.required' => 'Please enter a password.',
+            'password.confirmed' => 'The password confirmation does not match.',
             'referral_code.exists' => 'Invalid referral code. Please check and try again.',
         ]);
 
@@ -68,6 +73,12 @@ class RegisteredUserController extends Controller
             $referrer = User::where('referral_code', $request->referral_code)->first();
             if ($referrer) {
                 $referrerId = $referrer->id;
+            }
+        } else {
+            // If no referral code provided, use default sponsor (admin/company)
+            $defaultSponsor = $defaultSponsorService->getDefaultSponsor();
+            if ($defaultSponsor) {
+                $referrerId = $defaultSponsor->id;
             }
         }
 

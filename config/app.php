@@ -145,7 +145,7 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        // App\Providers\EmployeeDomainServiceProvider::class, // Keep disabled - causes memory issues with employee system
+        App\Providers\EmployeeDomainServiceProvider::class, // Re-enabled for employee functionality
     ])->toArray(),
 
     /*

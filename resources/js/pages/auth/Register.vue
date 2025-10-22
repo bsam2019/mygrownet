@@ -8,7 +8,7 @@ import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator.vue';
-import { onMounted } from 'vue';
+import { Transition } from 'vue';
 
 // Get referral code from URL query parameter
 const urlParams = new URLSearchParams(window.location.search);
@@ -28,7 +28,7 @@ const submit = () => {
         onFinish: () => {
             form.reset('password', 'password_confirmation');
         },
-        onError: (errors) => {
+        onError: () => {
             // Scroll to top to show error alert
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
@@ -41,16 +41,33 @@ const submit = () => {
         <Head title="Register" />
 
         <!-- Error Alert -->
-        <div v-if="Object.keys(form.errors).length > 0" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div class="flex-1">
-                <h3 class="text-sm font-semibold text-red-800 mb-1">Registration Failed</h3>
-                <p class="text-sm text-red-700 mb-2">Please correct the following errors:</p>
-                <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
-                    <li v-for="(error, field) in form.errors" :key="field">{{ error }}</li>
-                </ul>
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+        >
+            <div v-if="form.hasErrors" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg shadow-sm">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <AlertCircle class="h-5 w-5 text-red-600" />
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-red-900 mb-2">Unable to create account</h3>
+                        <ul class="space-y-1">
+                            <li v-for="(error, field) in form.errors" :key="field" class="text-sm text-red-700 flex items-start gap-2">
+                                <span class="text-red-500 mt-0.5">•</span>
+                                <span>{{ error }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-        </div>
+        </Transition>
 
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
@@ -59,7 +76,6 @@ const submit = () => {
                     <Input
                         id="name"
                         type="text"
-                        required
                         autofocus
                         :tabindex="1"
                         autocomplete="name"
@@ -156,7 +172,6 @@ const submit = () => {
                     <Input
                         id="password"
                         type="password"
-                        required
                         :tabindex="5"
                         autocomplete="new-password"
                         v-model="form.password"
@@ -175,7 +190,6 @@ const submit = () => {
                     <Input
                         id="password_confirmation"
                         type="password"
-                        required
                         :tabindex="6"
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
