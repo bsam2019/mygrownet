@@ -60,8 +60,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::patch('/withdrawals/{withdrawal}/reject', [WithdrawalApprovalController::class, 'reject'])->name('withdrawals.reject');
 
     // User management
-    Route::resource('users', UserManagementController::class)->names('users');
     Route::patch('users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('users/{user}/update-password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
+    Route::resource('users', UserManagementController::class)->names('users');
 
     // User profile management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

@@ -32,16 +32,31 @@ class UserManagementController extends Controller
 
     public function show(User $user)
     {
-        return Inertia::render('Admin/Users/Show', [
+        $user->load(['roles', 'profile']);
+        
+        return Inertia::render('Admin/Users/Profile', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'status' => $user->status,
+                'balance' => $user->balance ?? 0,
+                'total_earnings' => $user->total_earnings ?? 0,
                 'role' => $user->roles->first()?->name ?? 'user',
                 'created_at' => $user->created_at,
                 'last_login_at' => $user->last_login_at
-            ]
+            ],
+            'profile' => $user->profile ? [
+                'phone_number' => $user->profile->phone_number,
+                'address' => $user->profile->address,
+                'city' => $user->profile->city,
+                'country' => $user->profile->country,
+                'preferred_payment_method' => $user->profile->preferred_payment_method,
+                'payment_details' => $user->profile->payment_details ?? [],
+                'avatar' => $user->profile->avatar,
+                'kyc_status' => $user->profile->kyc_status ?? 'not_started'
+            ] : null,
+            'roles' => \App\Models\Role::select('id', 'name')->get()
         ]);
     }
 
@@ -51,7 +66,13 @@ class UserManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'status' => 'required|in:active,inactive,suspended',
-            'role' => 'required|exists:roles,name'
+            'role' => 'nullable|exists:roles,name',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'preferred_payment_method' => 'nullable|in:bank,mobile_money',
+            'payment_details' => 'nullable|array'
         ]);
 
         $user->update([
@@ -60,9 +81,39 @@ class UserManagementController extends Controller
             'status' => $validated['status']
         ]);
 
-        $user->syncRoles([$validated['role']]);
+        if (isset($validated['role'])) {
+            $user->syncRoles([$validated['role']]);
+        }
+
+        // Update or create profile
+        $profileData = [
+            'phone_number' => $validated['phone_number'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'country' => $validated['country'] ?? null,
+            'preferred_payment_method' => $validated['preferred_payment_method'] ?? null,
+            'payment_details' => $validated['payment_details'] ?? null
+        ];
+
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            $profileData
+        );
 
         return back()->with('success', 'User updated successfully');
+    }
+
+    public function updatePassword(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        $user->update([
+            'password' => bcrypt($validated['password'])
+        ]);
+
+        return back()->with('success', 'Password updated successfully');
     }
 
     public function toggleStatus(User $user)

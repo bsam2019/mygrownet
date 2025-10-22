@@ -197,9 +197,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stats', [App\Http\Controllers\OtpController::class, 'stats'])->name('stats');
     });
 
-    // Settings
-    Route::get('/settings', [ProfileController::class, 'index'])->name('settings');
-
     // Employee Management Routes
     Route::prefix('employees')->name('employees.')->middleware(['can:view-employees', \App\Http\Middleware\EmployeeOperationLogger::class])->group(function () {
         Route::get('/', [App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('index');

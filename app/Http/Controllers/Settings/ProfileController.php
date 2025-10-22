@@ -18,6 +18,11 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        \Log::info('ProfileController@edit called', [
+            'user' => $request->user()?->id,
+            'path' => $request->path()
+        ]);
+        
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),

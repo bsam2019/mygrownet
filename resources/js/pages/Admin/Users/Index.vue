@@ -114,7 +114,7 @@ const toggleStatus = (user) => {
                     <td class="px-6 py-4">
                     <div>
                         <Link
-                        :href="route('admin.profile.show', user.id)"
+                        :href="route('admin.users.show', user.id)"
                         class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
                         >
                         {{ user.name }}

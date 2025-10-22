@@ -25,7 +25,8 @@ import {
     StarIcon,
     CreditCardIcon,
     HistoryIcon,
-    GraduationCapIcon
+    GraduationCapIcon,
+    UserIcon
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { usePage } from '@inertiajs/vue3';
@@ -162,8 +163,13 @@ const learningNavItems: NavItem[] = [
 
 const accountNavItems: NavItem[] = [
     {
+        title: 'Profile',
+        href: route('profile.edit'),
+        icon: UserIcon,
+    },
+    {
         title: 'Settings',
-        href: route('settings'),
+        href: route('profile.edit'),
         icon: CogIcon,
     },
 ];
