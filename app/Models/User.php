@@ -1426,11 +1426,11 @@ class User extends Authenticatable
         // Record transaction
         \App\Models\PointTransaction::create([
             'user_id' => $this->id,
-            'type' => 'life_points',
-            'amount' => $amount,
-            'activity_type' => $activityType,
+            'point_type' => 'LP',
+            'lp_amount' => $amount,
+            'map_amount' => 0,
+            'source' => $activityType,
             'description' => $description ?? "Earned {$amount} LP from {$activityType}",
-            'balance_after' => $this->life_points,
         ]);
     }
 
@@ -1449,11 +1449,11 @@ class User extends Authenticatable
         // Record transaction
         \App\Models\PointTransaction::create([
             'user_id' => $this->id,
-            'type' => 'bonus_points',
-            'amount' => $amount,
-            'activity_type' => $activityType,
-            'description' => $description ?? "Earned {$amount} BP from {$activityType}",
-            'balance_after' => $this->monthly_activity_points,
+            'point_type' => 'MAP',
+            'lp_amount' => 0,
+            'map_amount' => $amount,
+            'source' => $activityType,
+            'description' => $description ?? "Earned {$amount} MAP from {$activityType}",
         ]);
     }
 
