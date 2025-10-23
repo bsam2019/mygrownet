@@ -16,7 +16,7 @@ class UserManagementController extends Controller
                 ->with(['roles'])
                 ->select(['id', 'name', 'email', 'status', 'last_login_at', 'created_at'])
                 ->latest()
-                ->paginate(10)
+                ->paginate(50)
                 ->through(fn ($user) => [
                     'id' => $user->id,
                     'name' => $user->name,

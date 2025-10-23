@@ -154,6 +154,32 @@ const toggleStatus = (user) => {
               </tbody>
             </table>
           </div>
+
+          <!-- Pagination -->
+          <div v-if="users.links && users.links.length > 3" class="px-6 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-700">
+                Showing {{ users.from }} to {{ users.to }} of {{ users.total }} users
+              </div>
+              <div class="flex space-x-1">
+                <Link
+                  v-for="(link, index) in users.links"
+                  :key="index"
+                  :href="link.url"
+                  :class="[
+                    'px-3 py-2 text-sm rounded-md',
+                    link.active
+                      ? 'bg-blue-600 text-white'
+                      : link.url
+                      ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ]"
+                  v-html="link.label"
+                  :disabled="!link.url"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
