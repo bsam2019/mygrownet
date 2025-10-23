@@ -174,6 +174,14 @@ const employeeNavItems: NavItem[] = [
     }
 ];
 
+const resourcesNavItems: NavItem[] = [
+    {
+        title: 'Compensation Plan',
+        href: '/compensation-plan',
+        icon: FileText,
+    },
+];
+
 const systemNavItems: NavItem[] = [
     {
         title: 'Bonus Points Settings',
@@ -203,6 +211,7 @@ const navGroups: NavGroup[] = [
     { label: 'Finance', items: financeNavItems },
     { label: 'Reports & Analytics', items: reportsNavItems },
     { label: 'Employees', items: employeeNavItems },
+    { label: 'Resources', items: resourcesNavItems },
     { label: 'System', items: systemNavItems },
 ];
 

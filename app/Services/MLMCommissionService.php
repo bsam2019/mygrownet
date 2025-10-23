@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 class MLMCommissionService
 {
     /**
-     * Process five-level MLM commissions for a package purchase
+     * Process seven-level MLM commissions for a package purchase
      */
     public function processMLMCommissions(
         User $purchaser, 
@@ -24,8 +24,8 @@ class MLMCommissionService
         try {
             DB::beginTransaction();
             
-            // Get upline referrers up to 5 levels
-            $uplineReferrers = $this->getUplineReferrers($purchaser, 5);
+            // Get upline referrers up to 7 levels (MyGrowNet professional progression)
+            $uplineReferrers = $this->getUplineReferrers($purchaser, ReferralCommission::MAX_COMMISSION_LEVELS);
             
             foreach ($uplineReferrers as $referrerData) {
                 $referrer = User::find($referrerData['user_id']);
@@ -87,7 +87,7 @@ class MLMCommissionService
     /**
      * Get upline referrers efficiently using network path
      */
-    protected function getUplineReferrers(User $user, int $maxLevels = 5): array
+    protected function getUplineReferrers(User $user, int $maxLevels = 7): array
     {
         if (!$user->network_path) {
             // Fallback to UserNetwork model if path not set
@@ -115,7 +115,7 @@ class MLMCommissionService
      */
     protected function updateTeamVolumes(User $purchaser, float $packageAmount): void
     {
-        $uplineReferrers = $this->getUplineReferrers($purchaser, 5);
+        $uplineReferrers = $this->getUplineReferrers($purchaser, ReferralCommission::MAX_COMMISSION_LEVELS);
         
         foreach ($uplineReferrers as $referrerData) {
             $referrer = User::find($referrerData['user_id']);

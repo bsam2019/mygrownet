@@ -152,6 +152,11 @@ const reportsNavItems: NavItem[] = [
 
 const learningNavItems: NavItem[] = [
     {
+        title: 'Compensation Plan',
+        href: '/compensation-plan',
+        icon: StarIcon,
+    },
+    {
         title: 'Workshops & Training',
         href: route('mygrownet.workshops.index'),
         icon: BookOpenIcon,

@@ -14,14 +14,16 @@ use DateTimeImmutable;
 class MLMCommissionCalculationService
 {
     /**
-     * MyGrowNet five-level commission rates
+     * MyGrowNet seven-level professional progression commission rates
      */
     public const COMMISSION_RATES = [
-        1 => 12.0, // Level 1: 12%
-        2 => 6.0,  // Level 2: 6%
-        3 => 4.0,  // Level 3: 4%
-        4 => 2.0,  // Level 4: 2%
-        5 => 1.0,  // Level 5: 1%
+        1 => 15.0, // Level 1 (Associate): 15%
+        2 => 10.0, // Level 2 (Professional): 10%
+        3 => 8.0,  // Level 3 (Senior): 8%
+        4 => 6.0,  // Level 4 (Manager): 6%
+        5 => 4.0,  // Level 5 (Director): 4%
+        6 => 3.0,  // Level 6 (Executive): 3%
+        7 => 2.0,  // Level 7 (Ambassador): 2%
     ];
 
     /**
@@ -34,8 +36,8 @@ class MLMCommissionCalculationService
     ): Collection {
         $commissions = collect();
         
-        // Get upline referrers up to 5 levels
-        $uplineReferrers = UserNetwork::getUplineReferrers($purchaser->id, 5);
+        // Get upline referrers up to 7 levels (MyGrowNet professional progression)
+        $uplineReferrers = UserNetwork::getUplineReferrers($purchaser->id, 7);
         
         foreach ($uplineReferrers as $referrerData) {
             $referrer = User::find($referrerData['user_id']);
@@ -468,7 +470,7 @@ class MLMCommissionCalculationService
      */
     private function calculateNetworkVolume(User $user, $startDate, $endDate): float
     {
-        $networkMembers = UserNetwork::getNetworkMembers($user->id, 5);
+        $networkMembers = UserNetwork::getNetworkMembers($user->id, 7);
         $totalVolume = 0;
         
         foreach ($networkMembers as $level => $members) {
@@ -500,7 +502,7 @@ class MLMCommissionCalculationService
     private function calculateTeamDepth(User $user): int
     {
         $maxDepth = 0;
-        $networkMembers = UserNetwork::getNetworkMembers($user->id, 5);
+        $networkMembers = UserNetwork::getNetworkMembers($user->id, 7);
         
         foreach ($networkMembers as $level => $members) {
             if (!empty($members)) {

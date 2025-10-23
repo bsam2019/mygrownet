@@ -45,6 +45,20 @@ class ReferralController extends Controller
             ];
         }
         
+        // Get all direct referrals (team members) with their details
+        $teamMembers = $this->referralRepository->getDirectReferrals($user)
+            ->map(function($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'phone' => $member->phone ?? 'N/A',
+                    'email' => $member->email,
+                    'status' => $member->status,
+                    'joined_at' => $member->created_at->format('M d, Y'),
+                    'is_active' => $member->status === 'active',
+                ];
+            });
+        
         // Get recent referrals with investment data
         $recentReferrals = $this->referralRepository->getDirectReferrals($user)
             ->take(10);
@@ -116,7 +130,9 @@ class ReferralController extends Controller
             'codeStats' => $codeStats,
             'linkStats' => $linkStats,
             'messageTemplates' => $messageTemplates,
-            'currentUserTier' => $user->currentInvestmentTier?->name
+            'currentUserTier' => $user->currentInvestmentTier?->name,
+            'teamMembers' => $teamMembers, // Add team members list
+            'totalTeamMembers' => $teamMembers->count(), // Add total count
         ]);
     }
 

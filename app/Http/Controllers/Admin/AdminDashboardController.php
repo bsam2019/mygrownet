@@ -40,9 +40,21 @@ class AdminDashboardController extends Controller
     private function getMemberMetrics(): array
     {
         $totalMembers = User::count();
-        $activeMembers = User::where('status', 'active')
-            ->where('last_login_at', '>=', now()->subDays(30))
+        
+        // Active members are those with status = 'active' (have paid registration/subscription)
+        $activeMembers = User::where('status', 'active')->count();
+        
+        // Inactive members (including null status)
+        $inactiveMembers = User::where(function($query) {
+            $query->where('status', '!=', 'active')
+                  ->orWhereNull('status');
+        })->count();
+        
+        // Pending members (registered but not yet paid)
+        $pendingMembers = User::where('status', 'pending')
+            ->orWhereNull('status')
             ->count();
+        
         $newMembersThisMonth = User::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
@@ -54,9 +66,23 @@ class AdminDashboardController extends Controller
             ? round((($newMembersThisMonth - $lastMonthMembers) / $lastMonthMembers) * 100, 1) 
             : 0;
 
+        // Recently active (logged in within 30 days)
+        $recentlyActive = User::where('status', 'active')
+            ->where('last_login_at', '>=', now()->subDays(30))
+            ->count();
+
+        // Members with active subscriptions
+        $withActiveSubscriptions = User::whereHas('subscriptions', function($query) {
+            $query->where('status', 'active');
+        })->count();
+
         return [
             'total' => $totalMembers,
             'active' => $activeMembers,
+            'inactive' => $inactiveMembers,
+            'pending' => $pendingMembers,
+            'recently_active' => $recentlyActive,
+            'with_subscriptions' => $withActiveSubscriptions,
             'new_this_month' => $newMembersThisMonth,
             'growth_rate' => $memberGrowth,
             'active_percentage' => $totalMembers > 0 ? round(($activeMembers / $totalMembers) * 100, 1) : 0,
@@ -150,9 +176,18 @@ class AdminDashboardController extends Controller
      */
     private function getPointsMetrics(): array
     {
-        $totalLP = DB::table('user_points')->sum('lifetime_points');
-        $totalMAP = DB::table('user_points')->sum('monthly_points');
+        // Only count points for active users
+        $activeUserIds = User::where('status', 'active')->pluck('id');
         
+        $totalLP = DB::table('user_points')
+            ->whereIn('user_id', $activeUserIds)
+            ->sum('lifetime_points');
+            
+        $totalMAP = DB::table('user_points')
+            ->whereIn('user_id', $activeUserIds)
+            ->sum('monthly_points');
+        
+        // Points awarded this month
         $thisMonthLP = DB::table('point_transactions')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
@@ -163,22 +198,41 @@ class AdminDashboardController extends Controller
             ->whereYear('created_at', now()->year)
             ->sum('map_amount');
 
+        // Qualified users (meeting monthly MAP requirement)
         $qualifiedUsers = DB::table('user_points')
+            ->whereIn('user_id', $activeUserIds)
             ->where('monthly_points', '>=', 100)
             ->count();
         
-        $totalUsers = User::count();
-        $qualificationRate = $totalUsers > 0 
-            ? round(($qualifiedUsers / $totalUsers) * 100, 1) 
+        $activeUsers = $activeUserIds->count();
+        $qualificationRate = $activeUsers > 0 
+            ? round(($qualifiedUsers / $activeUsers) * 100, 1) 
             : 0;
 
+        // Average points per active user
+        $avgLP = $activeUsers > 0 ? round($totalLP / $activeUsers, 0) : 0;
+        $avgMAP = $activeUsers > 0 ? round($totalMAP / $activeUsers, 0) : 0;
+
+        // Users with points
+        $usersWithPoints = DB::table('user_points')
+            ->whereIn('user_id', $activeUserIds)
+            ->where(function($query) {
+                $query->where('lifetime_points', '>', 0)
+                      ->orWhere('monthly_points', '>', 0);
+            })
+            ->count();
+
         return [
-            'total_lp' => $totalLP,
-            'total_map' => $totalMAP,
-            'this_month_lp' => $thisMonthLP,
-            'this_month_map' => $thisMonthMAP,
+            'total_lp' => (int) $totalLP,
+            'total_map' => (int) $totalMAP,
+            'this_month_lp' => (int) $thisMonthLP,
+            'this_month_map' => (int) $thisMonthMAP,
             'qualified_users' => $qualifiedUsers,
             'qualification_rate' => $qualificationRate,
+            'avg_lp_per_user' => $avgLP,
+            'avg_map_per_user' => $avgMAP,
+            'users_with_points' => $usersWithPoints,
+            'active_users_count' => $activeUsers,
         ];
     }
 

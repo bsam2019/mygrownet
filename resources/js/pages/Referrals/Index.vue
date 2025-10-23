@@ -15,6 +15,13 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button 
+                                @click="activeTab = 'members'"
+                                :class="tabButtonClasses('members')"
+                                class="text-sm md:text-base"
+                            >
+                                My Team List
+                            </button>
+                            <button 
                                 @click="activeTab = 'overview'"
                                 :class="tabButtonClasses('overview')"
                                 class="text-sm md:text-base"
@@ -48,6 +55,59 @@
             </div>
 
             <!-- Tab Content -->
+            <div v-show="activeTab === 'members'">
+                <!-- Team Members List -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">My Team Members</h2>
+                        <p class="text-lg text-gray-600 mt-2">
+                            Total Team Members: <span class="font-bold text-blue-600">{{ totalTeamMembers }}</span>
+                        </p>
+                    </div>
+
+                    <div v-if="teamMembers && teamMembers.length > 0" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr v-for="(member, index) in teamMembers" :key="member.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ index + 1 }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ member.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ member.email }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ member.phone }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span 
+                                            :class="member.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                        >
+                                            {{ member.is_active ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ member.joined_at }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div v-else class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No team members yet</h3>
+                        <p class="mt-1 text-sm text-gray-500">Start inviting people to build your team!</p>
+                    </div>
+                </div>
+            </div>
+
             <div v-show="activeTab === 'overview'">
                 <!-- Referral Statistics Dashboard -->
                 <ReferralStatsDashboard 
@@ -197,6 +257,16 @@ interface MessageTemplate {
     message: string;
 }
 
+interface TeamMember {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    status: string;
+    joined_at: string;
+    is_active: boolean;
+}
+
 interface Props {
     referralStats: ReferralStats;
     earningsBreakdown: EarningsBreakdown;
@@ -219,11 +289,13 @@ interface Props {
     linkStats: LinkStats;
     messageTemplates: MessageTemplate[];
     currentUserTier?: string;
+    teamMembers: TeamMember[];
+    totalTeamMembers: number;
 }
 
 const props = defineProps<Props>();
 
-const activeTab = ref<'overview' | 'matrix' | 'spillover' | 'sharing'>('overview');
+const activeTab = ref<'members' | 'overview' | 'matrix' | 'spillover' | 'sharing'>('members');
 
 // Computed classes for tab buttons
 const tabButtonClasses = (tab: string) => [

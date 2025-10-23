@@ -209,6 +209,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
 
+    // Compensation Plan Route
+    Route::get('/compensation-plan', [App\Http\Controllers\CompensationPlanController::class, 'show'])->name('compensation-plan.show');
+
     // Employee Management Routes
     Route::prefix('employees')->name('employees.')->middleware(['can:view-employees', \App\Http\Middleware\EmployeeOperationLogger::class])->group(function () {
         Route::get('/', [App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('index');
