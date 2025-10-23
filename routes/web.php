@@ -4,6 +4,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Referral\ReferralController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Investment\InvestmentController;
@@ -196,6 +197,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/status', [App\Http\Controllers\OtpController::class, 'status'])->name('status');
         Route::get('/stats', [App\Http\Controllers\OtpController::class, 'stats'])->name('stats');
     });
+
+    // Settings Routes
+    Route::redirect('settings', '/settings/profile');
+    Route::get('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'edit'])->name('password.edit');
+    Route::put('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'update'])->name('password.update');
+    Route::get('settings/appearance', function () {
+        return Inertia::render('settings/Appearance');
+    })->name('appearance');
 
     // Employee Management Routes
     Route::prefix('employees')->name('employees.')->middleware(['can:view-employees', \App\Http\Middleware\EmployeeOperationLogger::class])->group(function () {
