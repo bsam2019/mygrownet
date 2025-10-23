@@ -581,17 +581,23 @@ class User extends Authenticatable
 
     public function hasActiveSubscription(): bool
     {
-        // Check both subscription_status field (legacy) and subscriptions relationship (new)
-        $hasLegacySubscription = $this->subscription_status === 'active' && 
-                                 $this->subscription_end_date && 
-                                 $this->subscription_end_date->isFuture();
-        
-        $hasNewSubscription = $this->subscriptions()
-            ->where('status', 'active')
-            ->where('end_date', '>', now())
+        // Primary check: Look for verified payments in member_payments table
+        $hasVerifiedPayment = $this->memberPayments()
+            ->where('status', 'verified')
             ->exists();
         
-        return $hasLegacySubscription || $hasNewSubscription;
+        // Debug logging to see what's happening
+        \Log::info('Checking subscription for user', [
+            'user_id' => $this->id,
+            'user_name' => $this->name,
+            'user_status' => $this->status,
+            'has_verified_payment' => $hasVerifiedPayment,
+            'total_payments' => $this->memberPayments()->count(),
+            'verified_payments' => $this->memberPayments()->where('status', 'verified')->count(),
+            'pending_payments' => $this->memberPayments()->where('status', 'pending')->count(),
+        ]);
+        
+        return $hasVerifiedPayment;
     }
 
     /**

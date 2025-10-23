@@ -212,6 +212,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Compensation Plan Route
     Route::get('/compensation-plan', [App\Http\Controllers\CompensationPlanController::class, 'show'])->name('compensation-plan.show');
 
+    // Debug route to check member payments
+    Route::get('/debug/check-member-status/{userId}', function($userId) {
+        $user = \App\Models\User::with('memberPayments')->findOrFail($userId);
+        
+        return response()->json([
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'user_email' => $user->email,
+            'subscription_status' => $user->subscription_status,
+            'subscription_end_date' => $user->subscription_end_date,
+            'has_active_subscription' => $user->hasActiveSubscription(),
+            'member_payments' => $user->memberPayments->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'amount' => $payment->amount,
+                    'payment_type' => $payment->payment_type,
+                    'status' => $payment->status,
+                    'payment_method' => $payment->payment_method,
+                    'verified_at' => $payment->verified_at,
+                    'created_at' => $payment->created_at,
+                ];
+            }),
+            'verified_subscription_payments' => $user->memberPayments()
+                ->where('status', 'verified')
+                ->where('payment_type', 'subscription')
+                ->get()
+                ->map(function($payment) {
+                    return [
+                        'id' => $payment->id,
+                        'amount' => $payment->amount,
+                        'status' => $payment->status,
+                        'payment_type' => $payment->payment_type,
+                    ];
+                }),
+        ]);
+    })->middleware('auth');
+
     // Employee Management Routes
     Route::prefix('employees')->name('employees.')->middleware(['can:view-employees', \App\Http\Middleware\EmployeeOperationLogger::class])->group(function () {
         Route::get('/', [App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('index');

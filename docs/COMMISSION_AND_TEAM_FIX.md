@@ -15,13 +15,16 @@
 - No commission records in `referral_commissions` table
 
 ### 2. Incorrect Active Referrals Count
-**Problem**: Team overview shows 0 active referrals even when team members have paid and are active.
+**Problem**: Team overview shows 0 active referrals even when team members have paid and are active. Additionally, team members who registered but haven't paid are shown as "Active" in the team list.
 
-**Root Cause**: The `getReferralStatistics` method checks for `investments` (VBIF legacy) instead of checking user `status = 'active'`.
+**Root Cause**: 
+1. The `getReferralStatistics` method checks for `investments` (VBIF legacy) instead of checking for active subscriptions.
+2. The team members list checks `status === 'active'` instead of verifying actual subscription payment status.
 
 **Impact**:
 - Dashboard shows incorrect "Active Team Members" count
 - Misleading statistics for users
+- Unpaid members appear as "Active" in the team list
 
 ## Solutions Implemented
 

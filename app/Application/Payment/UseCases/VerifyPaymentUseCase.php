@@ -64,6 +64,9 @@ class VerifyPaymentUseCase
                     'email_verified_at' => $user->email_verified_at ?? now(),
                 ]);
             }
+            
+            // Create matrix position if user doesn't have one
+            $this->ensureMatrixPosition($user);
         }
 
         Event::dispatch(new PaymentVerified(
@@ -74,5 +77,61 @@ class VerifyPaymentUseCase
             paymentType: $payment->paymentType()->value,
             occurredAt: $payment->verifiedAt()
         ));
+    }
+    
+    /**
+     * Ensure user has a matrix position
+     */
+    private function ensureMatrixPosition(\App\Models\User $user): void
+    {
+        // Check if user already has a matrix position
+        if ($user->getMatrixPosition()) {
+            return;
+        }
+        
+        // Find sponsor (referrer)
+        $sponsor = $user->referrer;
+        
+        if (!$sponsor) {
+            // Create root position for users without referrer
+            \App\Models\MatrixPosition::create([
+                'user_id' => $user->id,
+                'sponsor_id' => null,
+                'level' => 0, // Root level
+                'position' => 1,
+                'is_active' => true,
+                'placed_at' => now(),
+            ]);
+            return;
+        }
+        
+        // Use matrix service to find next available position
+        $matrixService = app(\App\Domain\Reward\Services\ReferralMatrixService::class);
+        $availablePosition = $matrixService->findNextAvailablePosition($sponsor);
+        
+        if ($availablePosition) {
+            \App\Models\MatrixPosition::create([
+                'user_id' => $user->id,
+                'sponsor_id' => $availablePosition['sponsor_id'],
+                'level' => $availablePosition['level'],
+                'position' => $availablePosition['position'],
+                'is_active' => true,
+                'placed_at' => now(),
+            ]);
+        } else {
+            // Fallback: create direct position under sponsor
+            $directChildren = \App\Models\MatrixPosition::where('sponsor_id', $sponsor->id)
+                ->where('level', 1)
+                ->count();
+                
+            \App\Models\MatrixPosition::create([
+                'user_id' => $user->id,
+                'sponsor_id' => $sponsor->id,
+                'level' => 1,
+                'position' => $directChildren + 1,
+                'is_active' => true,
+                'placed_at' => now(),
+            ]);
+        }
     }
 }

@@ -134,9 +134,9 @@ class EloquentReferralRepository implements ReferralRepositoryInterface
         $allReferrals = $this->getAllReferrals($user);
         $commissions = $this->getReferralCommissions($user);
         
-        // For MyGrowNet: Active referrals are those with status = 'active' (have paid registration/subscription)
+        // For MyGrowNet: Active referrals are those who have paid registration/subscription
         $activeReferrals = $directReferrals->filter(function($referral) {
-            return $referral->status === 'active';
+            return $referral->hasActiveSubscription();
         });
 
         $totalCommissionEarned = $commissions->where('status', 'paid')->sum('amount');

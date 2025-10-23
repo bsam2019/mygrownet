@@ -41,19 +41,27 @@ class AdminDashboardController extends Controller
     {
         $totalMembers = User::count();
         
-        // Active members are those with status = 'active' (have paid registration/subscription)
-        $activeMembers = User::where('status', 'active')->count();
-        
-        // Inactive members (including null status)
-        $inactiveMembers = User::where(function($query) {
-            $query->where('status', '!=', 'active')
-                  ->orWhereNull('status');
+        // Active members are those who have made a verified payment (K500 registration fee)
+        // Check for verified subscription payments in member_payments table
+        $activeMembers = User::whereHas('memberPayments', function($query) {
+            $query->where('status', 'verified')
+                  ->where('payment_type', 'subscription');
         })->count();
         
-        // Pending members (registered but not yet paid)
-        $pendingMembers = User::where('status', 'pending')
-            ->orWhereNull('status')
-            ->count();
+        // Inactive members (registered but no verified payment)
+        $inactiveMembers = User::whereDoesntHave('memberPayments', function($query) {
+            $query->where('status', 'verified')
+                  ->where('payment_type', 'subscription');
+        })->count();
+        
+        // Pending members (have pending payment but not yet verified)
+        $pendingMembers = User::whereHas('memberPayments', function($query) {
+            $query->where('status', 'pending')
+                  ->where('payment_type', 'subscription');
+        })->whereDoesntHave('memberPayments', function($query) {
+            $query->where('status', 'verified')
+                  ->where('payment_type', 'subscription');
+        })->count();
         
         $newMembersThisMonth = User::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
@@ -66,15 +74,15 @@ class AdminDashboardController extends Controller
             ? round((($newMembersThisMonth - $lastMonthMembers) / $lastMonthMembers) * 100, 1) 
             : 0;
 
-        // Recently active (logged in within 30 days)
-        $recentlyActive = User::where('status', 'active')
-            ->where('last_login_at', '>=', now()->subDays(30))
+        // Recently active (have verified payment AND logged in within 30 days)
+        $recentlyActive = User::whereHas('memberPayments', function($query) {
+            $query->where('status', 'verified')
+                  ->where('payment_type', 'subscription');
+        })->where('last_login_at', '>=', now()->subDays(30))
             ->count();
 
-        // Members with active subscriptions
-        $withActiveSubscriptions = User::whereHas('subscriptions', function($query) {
-            $query->where('status', 'active');
-        })->count();
+        // Members with active subscriptions (verified payments)
+        $withActiveSubscriptions = $activeMembers;
 
         return [
             'total' => $totalMembers,
@@ -176,8 +184,11 @@ class AdminDashboardController extends Controller
      */
     private function getPointsMetrics(): array
     {
-        // Only count points for active users
-        $activeUserIds = User::where('status', 'active')->pluck('id');
+        // Only count points for active users (those with verified payments)
+        $activeUserIds = User::whereHas('memberPayments', function($query) {
+            $query->where('status', 'verified')
+                  ->where('payment_type', 'subscription');
+        })->pluck('id');
         
         $totalLP = DB::table('user_points')
             ->whereIn('user_id', $activeUserIds)

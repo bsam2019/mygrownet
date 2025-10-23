@@ -48,6 +48,9 @@ class ReferralController extends Controller
         // Get all direct referrals (team members) with their details
         $teamMembers = $this->referralRepository->getDirectReferrals($user)
             ->map(function($member) {
+                // A member is truly active only if they have an active subscription (paid registration)
+                $isActive = $member->hasActiveSubscription();
+                
                 return [
                     'id' => $member->id,
                     'name' => $member->name,
@@ -55,7 +58,7 @@ class ReferralController extends Controller
                     'email' => $member->email,
                     'status' => $member->status,
                     'joined_at' => $member->created_at->format('M d, Y'),
-                    'is_active' => $member->status === 'active',
+                    'is_active' => $isActive,
                 ];
             });
         

@@ -52,7 +52,7 @@
                 </div>
                 <div class="text-center p-3 bg-blue-50 rounded-lg">
                     <div class="text-lg font-bold text-blue-600">{{ codeStats.active_investors }}</div>
-                    <div class="text-xs text-gray-600">Active Investors</div>
+                    <div class="text-xs text-gray-600">Active Members</div>
                 </div>
                 <div class="text-center p-3 bg-purple-50 rounded-lg">
                     <div class="text-lg font-bold text-purple-600">{{ formatCurrency(codeStats.total_earnings) }}</div>
