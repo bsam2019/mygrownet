@@ -134,12 +134,17 @@ class EloquentReferralRepository implements ReferralRepositoryInterface
         $allReferrals = $this->getAllReferrals($user);
         $commissions = $this->getReferralCommissions($user);
         
+        // For MyGrowNet: Active referrals are those with status = 'active' (have paid registration/subscription)
         $activeReferrals = $directReferrals->filter(function($referral) {
-            return $referral->investments->where('status', 'active')->count() > 0;
+            return $referral->status === 'active';
         });
 
         $totalCommissionEarned = $commissions->where('status', 'paid')->sum('amount');
         $pendingCommission = $commissions->where('status', 'pending')->sum('amount');
+        $monthlyCommission = $commissions->where('status', 'paid')
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->sum('amount');
+        $pendingTransactionsCount = $commissions->where('status', 'pending')->count();
 
         // Group commissions by level
         $commissionsByLevel = $commissions->groupBy('level')->map(function($levelCommissions) {
@@ -152,13 +157,17 @@ class EloquentReferralRepository implements ReferralRepositoryInterface
         });
 
         return [
-            'direct_referrals_count' => $directReferrals->count(),
-            'active_referrals_count' => $activeReferrals->count(),
             'total_referrals_count' => $allReferrals->count(),
+            'active_referrals_count' => $activeReferrals->count(),
+            'direct_referrals_count' => $directReferrals->count(),
             'total_commission_earned' => $totalCommissionEarned,
+            'monthly_commission' => $monthlyCommission,
             'pending_commission' => $pendingCommission,
+            'pending_transactions_count' => $pendingTransactionsCount,
             'commissions_by_level' => $commissionsByLevel->toArray(),
             'matrix_downline' => $this->getMatrixDownlineCount($user),
+            'matrix_earnings' => 0, // Placeholder for matrix earnings
+            'matrix_positions_filled' => 0, // Placeholder for matrix positions
             'referral_conversion_rate' => $directReferrals->count() > 0 
                 ? ($activeReferrals->count() / $directReferrals->count()) * 100 
                 : 0

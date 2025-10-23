@@ -27,6 +27,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\UserLevelAdvanced::class => [
             \App\Listeners\AwardDownlineAdvancementPoints::class,
         ],
+        \App\Domain\Payment\Events\PaymentVerified::class => [
+            \App\Listeners\ProcessMLMCommissions::class,
+        ],
     ];
 
     public function boot(): void
