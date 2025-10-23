@@ -29,6 +29,10 @@ fi
 
 echo "📦 Assets built successfully!"
 
+# Copy built assets to droplet
+echo "📤 Uploading built assets to droplet..."
+scp -r public/build ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
+
 # SSH and run deployment commands
 ssh ${DROPLET_USER}@${DROPLET_IP} << ENDSSH
 
@@ -38,21 +42,7 @@ cd ${PROJECT_PATH}
 echo "📥 Pulling from GitHub..."
 git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
 
-
-# Restore secure permissions
-echo "🔒 Restoring secure permissions..."
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
-
-echo "✅ Deployment complete!"
-
-ENDSSH
-
-# Copy built assets to droplet
-echo "📤 Uploading built assets to droplet..."
-scp -r public/build ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
-
-# Clear first
+# Clear caches
 echo "🧹 Clearing caches..."
 php artisan optimize:clear
 
@@ -64,5 +54,14 @@ echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/ca
 # Optimize
 echo "🚀 Optimizing..."
 php artisan optimize
+
+# Restore secure permissions
+echo "🔒 Restoring secure permissions..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
+
+echo "✅ Deployment complete!"
+
+ENDSSH
 
 echo "🎉 Assets deployed successfully!"
