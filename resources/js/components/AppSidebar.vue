@@ -26,7 +26,9 @@ import {
     CreditCardIcon,
     HistoryIcon,
     GraduationCapIcon,
-    UserIcon
+    UserIcon,
+    LockKeyhole as LockKeyholeIcon,
+    Palette as PaletteIcon
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { usePage } from '@inertiajs/vue3';
@@ -168,9 +170,14 @@ const accountNavItems: NavItem[] = [
         icon: UserIcon,
     },
     {
-        title: 'Settings',
-        href: route('profile.edit'),
-        icon: CogIcon,
+        title: 'Password',
+        href: route('password.edit'),
+        icon: LockKeyholeIcon,
+    },
+    {
+        title: 'Appearance',
+        href: route('appearance'),
+        icon: PaletteIcon,
     },
 ];
 
