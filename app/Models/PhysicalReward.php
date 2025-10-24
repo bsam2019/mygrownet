@@ -4,194 +4,144 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PhysicalReward extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'user_id',
+        'reward_type',
+        'level_achieved',
+        'status',
         'description',
-        'category',
-        'estimated_value',
-        'required_membership_tiers',
-        'required_referrals',
-        'required_subscription_amount',
-        'required_sustained_months',
-        'required_team_volume',
-        'required_team_depth',
-        'maintenance_period_months',
-        'requires_performance_maintenance',
-        'income_generating',
-        'estimated_monthly_income',
-        'asset_management_options',
-        'ownership_type',
-        'ownership_conditions',
-        'available_quantity',
-        'allocated_quantity',
-        'image_url',
-        'specifications',
-        'terms_and_conditions',
-        'is_active'
+        'earned_at',
+        'approved_at',
+        'delivered_at',
+        'approved_by',
+        'notes',
+        'metadata',
     ];
 
     protected $casts = [
-        'required_membership_tiers' => 'array',
-        'estimated_value' => 'decimal:2',
-        'required_subscription_amount' => 'decimal:2',
-        'required_team_volume' => 'decimal:2',
-        'estimated_monthly_income' => 'decimal:2',
-        'asset_management_options' => 'array',
-        'specifications' => 'array',
-        'requires_performance_maintenance' => 'boolean',
-        'income_generating' => 'boolean',
-        'is_active' => 'boolean'
+        'earned_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
-    public function allocations(): HasMany
+    /**
+     * Get the user that owns the physical reward
+     */
+    public function user(): BelongsTo
     {
-        return $this->hasMany(PhysicalRewardAllocation::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Check if reward is available for allocation
+     * Get the admin who approved the reward
      */
-    public function isAvailable(): bool
+    public function approvedBy(): BelongsTo
     {
-        return $this->is_active && 
-               $this->allocated_quantity < $this->available_quantity;
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
     /**
-     * Check if user is eligible for this reward
+     * Get formatted reward name
      */
-    public function isEligibleForUser(User $user): bool
+    public function getRewardNameAttribute(): string
     {
-        $tier = $user->membershipTier;
-        if (!$tier) {
-            return false;
-        }
-
-        // Check tier eligibility
-        if (!in_array($tier->name, $this->required_membership_tiers)) {
-            return false;
-        }
-
-        $teamVolume = $user->getCurrentTeamVolume();
-        if (!$teamVolume) {
-            return false;
-        }
-
-        // Check team volume requirements
-        if ($teamVolume->team_volume < $this->required_team_volume) {
-            return false;
-        }
-
-        // Check referral requirements
-        if ($teamVolume->active_referrals_count < $this->required_referrals) {
-            return false;
-        }
-
-        // Check team depth requirements
-        if ($teamVolume->team_depth < $this->required_team_depth) {
-            return false;
-        }
-
-        // Check subscription amount requirements
-        if ($tier->monthly_fee < $this->required_subscription_amount) {
-            return false;
-        }
-
-        // Check sustained months requirement
-        if ($this->required_sustained_months > 0) {
-            $consecutiveMonths = $this->getConsecutiveMonthsQualified($user);
-            if ($consecutiveMonths < $this->required_sustained_months) {
-                return false;
-            }
-        }
-
-        return true;
+        return match ($this->reward_type) {
+            'smartphone' => 'Smartphone',
+            'motorbike' => 'Motorbike',
+            'vehicle' => 'Vehicle',
+            'luxury_vehicle' => 'Luxury Vehicle',
+            'investment_property' => 'Investment Property',
+            default => ucfirst(str_replace('_', ' ', $this->reward_type)),
+        };
     }
 
     /**
-     * Get consecutive months user has qualified for this reward
+     * Get status badge color
      */
-    private function getConsecutiveMonthsQualified(User $user): int
+    public function getStatusColorAttribute(): string
     {
-        // This would integrate with TierQualificationTrackingService
-        // For now, return a basic calculation
-        $tier = $user->membershipTier;
-        if (!$tier) {
-            return 0;
-        }
-
-        // Check tier upgrade history for consecutive months
-        $tierUpgrade = $user->tierUpgrades()
-            ->where('to_tier_id', $tier->id)
-            ->latest()
-            ->first();
-
-        if (!$tierUpgrade) {
-            return 0;
-        }
-
-        return now()->diffInMonths($tierUpgrade->created_at);
+        return match ($this->status) {
+            'pending' => 'yellow',
+            'approved' => 'blue',
+            'processing' => 'indigo',
+            'delivered' => 'green',
+            'cancelled' => 'red',
+            default => 'gray',
+        };
     }
 
     /**
-     * Allocate reward to user
+     * Scope for pending rewards
      */
-    public function allocateToUser(User $user): ?PhysicalRewardAllocation
+    public function scopePending($query)
     {
-        if (!$this->isAvailable() || !$this->isEligibleForUser($user)) {
-            return null;
-        }
+        return $query->where('status', 'pending');
+    }
 
-        $allocation = PhysicalRewardAllocation::create([
-            'user_id' => $user->id,
-            'physical_reward_id' => $this->id,
-            'tier_id' => $user->current_investment_tier_id,
-            'team_volume_at_allocation' => $user->getCurrentTeamVolume()?->team_volume ?? 0,
-            'active_referrals_at_allocation' => $user->getCurrentTeamVolume()?->active_referrals_count ?? 0,
-            'status' => 'allocated',
-            'allocated_at' => now()
+    /**
+     * Scope for approved rewards
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
+     * Scope for delivered rewards
+     */
+    public function scopeDelivered($query)
+    {
+        return $query->where('status', 'delivered');
+    }
+
+    /**
+     * Approve the reward
+     */
+    public function approve(int $approvedBy): bool
+    {
+        return $this->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => $approvedBy,
         ]);
-
-        $this->increment('allocated_quantity');
-
-        return $allocation;
     }
 
     /**
-     * Get rewards by category
+     * Mark as processing
      */
-    public function scopeByCategory($query, string $category)
+    public function markAsProcessing(): bool
     {
-        return $query->where('category', $category);
+        return $this->update([
+            'status' => 'processing',
+        ]);
     }
 
     /**
-     * Get active rewards
+     * Mark as delivered
      */
-    public function scopeActive($query)
+    public function markAsDelivered(): bool
     {
-        return $query->where('is_active', true);
+        return $this->update([
+            'status' => 'delivered',
+            'delivered_at' => now(),
+        ]);
     }
 
     /**
-     * Get available rewards (not fully allocated)
+     * Cancel the reward
      */
-    public function scopeAvailable($query)
+    public function cancel(string $reason = null): bool
     {
-        return $query->whereRaw('allocated_quantity < available_quantity');
-    }
-
-    /**
-     * Get rewards for specific tier
-     */
-    public function scopeForTier($query, string $tierName)
-    {
-        return $query->whereJsonContains('required_membership_tiers', $tierName);
+        return $this->update([
+            'status' => 'cancelled',
+            'notes' => $reason,
+        ]);
     }
 }

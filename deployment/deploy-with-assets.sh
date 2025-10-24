@@ -38,9 +38,24 @@ ssh ${DROPLET_USER}@${DROPLET_IP} << ENDSSH
 
 cd ${PROJECT_PATH}
 
-# Pull latest changes
-echo "📥 Pulling from GitHub..."
-git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
+# Git pull is handled separately by deploy.sh
+# Uncomment below if you want to pull code changes with assets
+# # Remove untracked files that might conflict
+# echo "🗑️  Removing conflicting files..."
+# rm -f routes/debug.php
+# 
+# # Fix permissions before git operations
+# echo "🔓 Fixing file permissions..."
+# echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R ${DROPLET_USER}:${DROPLET_USER} .
+# echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R u+w .
+# 
+# # Reset any local changes
+# echo "🔄 Resetting local changes..."
+# git reset --hard HEAD
+# 
+# # Pull latest changes
+# echo "📥 Pulling from GitHub..."
+# git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
 
 # Clear caches
 echo "🧹 Clearing caches..."

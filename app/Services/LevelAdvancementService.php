@@ -216,13 +216,48 @@ class LevelAdvancementService
     protected function getMilestoneBonus(string $level): array
     {
         return match ($level) {
-            'professional' => ['cash' => 500, 'lp' => 100],
-            'senior' => ['cash' => 1500, 'lp' => 200],
-            'manager' => ['cash' => 5000, 'lp' => 500],
-            'director' => ['cash' => 15000, 'lp' => 1000],
-            'executive' => ['cash' => 50000, 'lp' => 2500],
-            'ambassador' => ['cash' => 150000, 'lp' => 5000],
-            default => ['cash' => 0, 'lp' => 0],
+            'professional' => [
+                'cash' => 500, 
+                'lp' => 100,
+                'physical_reward' => null,
+                'description' => 'K500 cash bonus'
+            ],
+            'senior' => [
+                'cash' => 1500, 
+                'lp' => 200,
+                'physical_reward' => 'smartphone',
+                'description' => 'K1,500 + Smartphone'
+            ],
+            'manager' => [
+                'cash' => 5000, 
+                'lp' => 500,
+                'physical_reward' => 'motorbike',
+                'description' => 'K5,000 + Motorbike'
+            ],
+            'director' => [
+                'cash' => 15000, 
+                'lp' => 1000,
+                'physical_reward' => 'vehicle',
+                'description' => 'K15,000 + Vehicle'
+            ],
+            'executive' => [
+                'cash' => 50000, 
+                'lp' => 2500,
+                'physical_reward' => 'luxury_vehicle',
+                'description' => 'K50,000 + Luxury Vehicle'
+            ],
+            'ambassador' => [
+                'cash' => 150000, 
+                'lp' => 5000,
+                'physical_reward' => 'investment_property',
+                'description' => 'K150,000 + Investment Property'
+            ],
+            default => [
+                'cash' => 0, 
+                'lp' => 0,
+                'physical_reward' => null,
+                'description' => 'No bonus'
+            ],
         };
     }
 
@@ -241,7 +276,13 @@ class LevelAdvancementService
                 'type' => 'milestone_bonus',
                 'amount' => $bonus['cash'],
                 'status' => 'completed',
-                'description' => "Milestone bonus for reaching {$level} level",
+                'description' => $bonus['description'] ?? "Milestone bonus for reaching {$level} level",
+                'metadata' => [
+                    'level' => $level,
+                    'cash_bonus' => $bonus['cash'],
+                    'lp_bonus' => $bonus['lp'],
+                    'physical_reward' => $bonus['physical_reward'],
+                ],
             ]);
         }
 
@@ -255,6 +296,53 @@ class LevelAdvancementService
                 "Level advancement bonus: {$level}"
             );
         }
+
+        // Create physical reward record if applicable
+        if (!empty($bonus['physical_reward'])) {
+            $this->createPhysicalRewardRecord($user, $level, $bonus['physical_reward']);
+        }
+    }
+
+    /**
+     * Create physical reward record for user
+     */
+    protected function createPhysicalRewardRecord(User $user, string $level, string $rewardType): void
+    {
+        // Check if PhysicalReward model exists
+        if (!class_exists(\App\Models\PhysicalReward::class)) {
+            // Log that physical reward system is not yet implemented
+            Log::info("Physical reward earned but system not implemented", [
+                'user_id' => $user->id,
+                'level' => $level,
+                'reward_type' => $rewardType,
+            ]);
+            return;
+        }
+
+        // Create physical reward record
+        \App\Models\PhysicalReward::create([
+            'user_id' => $user->id,
+            'reward_type' => $rewardType,
+            'level_achieved' => $level,
+            'status' => 'pending',
+            'earned_at' => now(),
+            'description' => $this->getPhysicalRewardDescription($rewardType),
+        ]);
+    }
+
+    /**
+     * Get description for physical reward type
+     */
+    protected function getPhysicalRewardDescription(string $rewardType): string
+    {
+        return match ($rewardType) {
+            'smartphone' => 'Smartphone reward for reaching Senior level',
+            'motorbike' => 'Motorbike reward for reaching Manager level',
+            'vehicle' => 'Vehicle reward for reaching Director level',
+            'luxury_vehicle' => 'Luxury vehicle reward for reaching Executive level',
+            'investment_property' => 'Investment property reward for reaching Ambassador level',
+            default => 'Physical reward',
+        };
     }
 
     /**

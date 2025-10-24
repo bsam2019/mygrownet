@@ -461,6 +461,11 @@ const positionBonuses = [
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                                <tr class="bg-green-50">
+                                    <td class="px-4 py-2 font-semibold text-green-900">Registration (Welcome Bonus)</td>
+                                    <td class="px-4 py-2 text-center font-bold text-green-600">35</td>
+                                    <td class="px-4 py-2 text-center font-bold text-green-600">25</td>
+                                </tr>
                                 <tr><td class="px-4 py-2">Direct referral</td><td class="px-4 py-2 text-center font-semibold">150</td><td class="px-4 py-2 text-center font-semibold">150</td></tr>
                                 <tr><td class="px-4 py-2">Complete basic course</td><td class="px-4 py-2 text-center">30</td><td class="px-4 py-2 text-center">30</td></tr>
                                 <tr><td class="px-4 py-2">Complete advanced course</td><td class="px-4 py-2 text-center">60</td><td class="px-4 py-2 text-center">60</td></tr>
@@ -469,6 +474,12 @@ const positionBonuses = [
                                 <tr><td class="px-4 py-2">Personal purchase (per K100)</td><td class="px-4 py-2 text-center">10</td><td class="px-4 py-2 text-center">10</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="text-sm text-blue-900">
+                            <span class="font-semibold">💡 Point Value:</span> Each LP or BP is worth K2. 
+                            Your welcome bonus of 35 LP + 25 BP = K120 total value!
+                        </p>
                     </div>
                 </div>
 
@@ -507,8 +518,8 @@ const positionBonuses = [
                         </div>
                         
                         <div>
-                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 2: Complete Orientation</h3>
-                            <p class="text-gray-700">Earn 100 LP welcome bonus and learn the platform</p>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 2: Get Your Welcome Bonus</h3>
+                            <p class="text-gray-700">Receive 35 LP + 25 BP (K120 value) upon registration</p>
                         </div>
                         
                         <div>

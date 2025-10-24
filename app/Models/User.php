@@ -642,6 +642,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's physical rewards (smartphones, vehicles, property, etc.)
+     */
+    public function physicalRewards(): HasMany
+    {
+        return $this->hasMany(PhysicalReward::class);
+    }
+
+    /**
      * Update current team volume tracking fields
      */
     public function updateCurrentTeamVolume(): void
