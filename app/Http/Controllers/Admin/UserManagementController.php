@@ -109,8 +109,10 @@ class UserManagementController extends Controller
             'password' => 'required|string|min:8|confirmed'
         ]);
 
+        // Don't use bcrypt() here because the User model has 'password' => 'hashed' cast
+        // which automatically hashes the password
         $user->update([
-            'password' => bcrypt($validated['password'])
+            'password' => $validated['password']
         ]);
 
         return back()->with('success', 'Password updated successfully');
