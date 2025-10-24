@@ -31,11 +31,23 @@ const formatNumber = (num: number) => {
 const sections = [
     { id: 'overview', label: 'Overview' },
     { id: 'referral-bonus', label: 'Referral Bonus' },
+    { id: 'position-bonus', label: 'Position Bonus' },
     { id: 'income-streams', label: '6 Income Streams' },
     { id: 'levels', label: '7 Professional Levels' },
     { id: 'points', label: 'Points System' },
     { id: 'examples', label: 'Income Examples' },
     { id: 'getting-started', label: 'Getting Started' },
+];
+
+// Position Bonus (Milestone Rewards) Data
+const positionBonuses = [
+    { position: 'Associate', teamSize: 3, cumulative: 3, lpEstimate: 0, milestoneBonus: 0 },
+    { position: 'Professional', teamSize: 9, cumulative: 12, lpEstimate: 5000, milestoneBonus: 500 },
+    { position: 'Senior', teamSize: 27, cumulative: 39, lpEstimate: 8000, milestoneBonus: 1500 },
+    { position: 'Manager', teamSize: 81, cumulative: 120, lpEstimate: 25000, milestoneBonus: 5000 },
+    { position: 'Director', teamSize: 243, cumulative: 363, lpEstimate: 120000, milestoneBonus: 15000 },
+    { position: 'Executive', teamSize: 729, cumulative: 1092, lpEstimate: 320000, milestoneBonus: 50000 },
+    { position: 'Ambassador', teamSize: 2187, cumulative: 3279, lpEstimate: 700000, milestoneBonus: 150000 },
 ];
 </script>
 
@@ -176,6 +188,96 @@ const sections = [
                                     <p class="text-sm text-gray-600 mb-1">Maximum Potential</p>
                                     <p class="text-2xl font-bold text-emerald-600">K{{ formatNumber(totalPotential) }}</p>
                                     <p class="text-xs text-gray-500 mt-1">With {{ formatNumber(totalTeamSize) }} team members</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Position Bonus (Milestone Rewards) -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4">
+                        <h2 class="text-xl md:text-2xl font-bold text-white flex items-center">
+                            <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                            Position Bonus (Milestone Rewards)
+                        </h2>
+                        <p class="text-purple-100 text-sm mt-1">Bonus pool distribution based on team performance</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-purple-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-purple-900 uppercase tracking-wider">
+                                            Position
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-purple-900 uppercase tracking-wider">
+                                            Team Size
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-purple-900 uppercase tracking-wider">
+                                            Cumulative
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-purple-900 uppercase tracking-wider">
+                                            LP Estimate
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-purple-900 uppercase tracking-wider">
+                                            Milestone Bonus
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-for="bonus in positionBonuses" :key="bonus.position" class="hover:bg-purple-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                {{ bonus.position }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 font-medium">
+                                            {{ formatNumber(bonus.teamSize) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                                            {{ formatNumber(bonus.cumulative) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600">
+                                            {{ formatNumber(bonus.lpEstimate) }} LP
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">
+                                            {{ bonus.milestoneBonus > 0 ? 'K' + formatNumber(bonus.milestoneBonus) : '-' }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile Cards -->
+                        <div class="md:hidden space-y-4">
+                            <div v-for="bonus in positionBonuses" :key="bonus.position" 
+                                 class="border border-purple-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-purple-50">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-600 text-white">
+                                        {{ bonus.position }}
+                                    </span>
+                                    <span v-if="bonus.milestoneBonus > 0" class="text-sm font-bold text-green-600">
+                                        K{{ formatNumber(bonus.milestoneBonus) }}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p class="text-purple-700">Team Size</p>
+                                        <p class="font-medium text-gray-900">{{ formatNumber(bonus.teamSize) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-purple-700">Cumulative</p>
+                                        <p class="font-medium text-gray-900">{{ formatNumber(bonus.cumulative) }}</p>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-purple-700">LP Estimate</p>
+                                        <p class="text-lg font-bold text-indigo-600">{{ formatNumber(bonus.lpEstimate) }} LP</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
