@@ -14,7 +14,7 @@
               <Logo size="lg" variant="white" />
             </div>
             <p class="text-slate-400 text-sm leading-relaxed">
-              Empowering growth through five-level commissions, asset rewards, community projects, and comprehensive education.
+              A community empowerment platform offering skill-based training, mentorship, and income opportunities through a sustainable 7-level professional growth system.
             </p>
           </div>
 
@@ -35,14 +35,14 @@
             </ul>
           </div>
 
-          <!-- Membership Tiers -->
+          <!-- Professional Levels -->
           <div>
-            <h4 class="text-white font-semibold mb-4">Membership Tiers</h4>
+            <h4 class="text-white font-semibold mb-4">Professional Levels</h4>
             <ul class="space-y-3">
-              <li v-for="plan in investmentPlans" :key="plan">
+              <li v-for="level in professionalLevels" :key="level">
                 <Link :href="route('register')"
                       class="text-slate-400 hover:text-white transition-colors duration-200 text-sm flex items-center group">
-                  {{ plan }}
+                  {{ level }}
                 </Link>
               </li>
             </ul>
@@ -106,17 +106,20 @@
         quickLinks: [
           { name: 'Home', route: 'home' },
           { name: 'About', route: 'about' },
+          { name: 'Shop', route: 'shop.index' },
           { name: 'Membership', route: 'membership.index' },
           { name: 'Compliance', route: 'compliance.information' },
           { name: 'Careers', route: 'careers.index' },
           { name: 'Contact', route: 'contact' }
         ],
-        investmentPlans: [
-          'Bronze Membership',
-          'Silver Membership',
-          'Gold Membership',
-          'Diamond Membership',
-          'Elite Membership'
+        professionalLevels: [
+          'Associate',
+          'Professional',
+          'Senior',
+          'Manager',
+          'Director',
+          'Executive',
+          'Ambassador'
         ],
         contactInfo: [
           {

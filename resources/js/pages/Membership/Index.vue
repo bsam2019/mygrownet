@@ -29,7 +29,7 @@
                     <div class="space-y-3 mb-6">
                         <div class="text-center">
                             <div class="text-sm text-gray-600 mb-1">Monthly Qualification</div>
-                            <div class="text-lg font-bold text-blue-600">{{ level.mapRequired }} MAP</div>
+                            <div class="text-lg font-bold text-blue-600">{{ level.mapRequired }} BP</div>
                         </div>
                         <div class="text-center">
                             <div class="text-sm text-gray-600 mb-1">Lifetime Points</div>
@@ -116,7 +116,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900">Monthly Activity Points (MAP)</h3>
+                            <h3 class="text-xl font-bold text-gray-900">Bonus Points (BP)</h3>
                         </div>
                         <p class="text-gray-600 mb-4">Reset monthly, required to qualify for earnings</p>
                         <ul class="space-y-2 text-sm text-gray-700">
@@ -126,7 +126,7 @@
                             </li>
                             <li class="flex items-start">
                                 <span class="text-blue-600 mr-2">•</span>
-                                <span>Must meet minimum MAP to receive earnings</span>
+                                <span>Must meet minimum BP to receive earnings</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="text-blue-600 mr-2">•</span>
@@ -200,7 +200,7 @@ const professionalLevels = [
             'Basic educational content',
             'Peer circle access',
             '7-level commission structure',
-            'Monthly qualification: 100 MAP',
+            'Monthly qualification: 100 BP',
             'Profit-sharing: 1.0x base share'
         ]
     },
@@ -221,7 +221,7 @@ const professionalLevels = [
             'Advanced educational content',
             'Group mentorship access',
             'Enhanced commission rates',
-            'Monthly qualification: 200 MAP',
+            'Monthly qualification: 200 BP',
             'Profit-sharing: 1.2x base share'
         ]
     },
@@ -242,7 +242,7 @@ const professionalLevels = [
             'Premium content library',
             '1-on-1 mentorship sessions',
             'Team building bonuses',
-            'Monthly qualification: 300 MAP',
+            'Monthly qualification: 300 BP',
             'Profit-sharing: 1.5x base share'
         ]
     },
@@ -263,7 +263,7 @@ const professionalLevels = [
             'Leadership training programs',
             'Team performance bonuses',
             'Booster fund: K5,000',
-            'Monthly qualification: 400 MAP',
+            'Monthly qualification: 400 BP',
             'Profit-sharing: 2.0x base share'
         ]
     },
@@ -284,7 +284,7 @@ const professionalLevels = [
             'Strategic leadership content',
             'Business facilitation services',
             'Booster fund: K15,000',
-            'Monthly qualification: 500 MAP',
+            'Monthly qualification: 500 BP',
             'Profit-sharing: 2.5x base share'
         ]
     },
@@ -305,7 +305,7 @@ const professionalLevels = [
             'Executive coaching access',
             'Innovation lab participation',
             'Booster fund: K50,000',
-            'Monthly qualification: 600 MAP',
+            'Monthly qualification: 600 BP',
             'Profit-sharing: 3.0x base share'
         ]
     },
@@ -326,7 +326,7 @@ const professionalLevels = [
             'VIP brand ambassador status',
             'Exclusive events & retreats',
             'Booster fund: K150,000',
-            'Monthly qualification: 800 MAP',
+            'Monthly qualification: 800 BP',
             'Profit-sharing: 4.0x base share (MAX)'
         ]
     }

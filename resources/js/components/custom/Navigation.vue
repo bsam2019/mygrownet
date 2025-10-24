@@ -110,6 +110,7 @@
       const navigationItems = [
         { name: 'Home', route: 'home' },
         { name: 'About', route: 'about' },
+        { name: 'Shop', route: 'shop.index' },
         { name: 'Membership', route: 'membership.index' },
         { name: 'Compliance', route: 'compliance.information' },
         { name: 'Careers', route: 'careers.index' },
