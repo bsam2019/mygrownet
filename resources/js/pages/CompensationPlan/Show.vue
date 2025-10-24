@@ -362,16 +362,23 @@ const positionBonuses = [
                     <div class="mb-8">
                         <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool (BP-Based)</h3>
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-                            <p class="font-semibold mb-2">Earn monthly bonuses based on your BP share!</p>
-                            <p class="text-gray-700 text-sm mb-2">Your BP comes from referral commissions, product sales, and platform activities.</p>
-                            <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × Monthly Bonus Pool</strong></p>
+                            <p class="font-semibold mb-2">60% of monthly platform profits shared based on your BP!</p>
+                            <p class="text-gray-700 text-sm mb-2"><strong>Revenue Sources:</strong> MyGrow Investments returns, Shop sales, Subscription fees, Partnership revenues</p>
+                            <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × 60% of Monthly Profit</strong></p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <p class="font-semibold mb-2">Example:</p>
-                            <p class="text-sm text-gray-700">Monthly Bonus Pool: K60,000</p>
+                            <p class="font-semibold mb-2">How You Earn BP:</p>
+                            <ul class="text-sm text-gray-700 space-y-1 mb-3">
+                                <li>• <strong>Referral Commissions:</strong> Converted to BP (K75 = 37.5 BP)</li>
+                                <li>• <strong>Product Sales:</strong> 10-20 BP per K100</li>
+                                <li>• <strong>Course Completion:</strong> 30-100 BP</li>
+                                <li>• <strong>Daily Engagement:</strong> 5-200 BP via streaks</li>
+                                <li>• <strong>Monthly Subscription:</strong> 25 BP</li>
+                            </ul>
+                            <p class="font-semibold mb-2">Example Distribution:</p>
+                            <p class="text-sm text-gray-700">Monthly Profit: K100,000 | Bonus Pool (60%): K60,000</p>
                             <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total BP</p>
                             <p class="text-lg font-bold text-emerald-600 mt-2">Your Bonus = K600</p>
-                            <p class="text-xs text-gray-500 mt-2">The more BP you earn, the bigger your share!</p>
                         </div>
                     </div>
 
