@@ -360,16 +360,18 @@ const positionBonuses = [
                     
                     <!-- Income Stream 1 -->
                     <div class="mb-8">
-                        <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool</h3>
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool (BP-Based)</h3>
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-                            <p class="font-semibold mb-2">60% of all company profits shared with active members every month!</p>
-                            <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × 60% of Profit</strong></p>
+                            <p class="font-semibold mb-2">Earn monthly bonuses based on your BP share!</p>
+                            <p class="text-gray-700 text-sm mb-2">Your BP comes from referral commissions, product sales, and platform activities.</p>
+                            <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × Monthly Bonus Pool</strong></p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4">
                             <p class="font-semibold mb-2">Example:</p>
-                            <p class="text-sm text-gray-700">Company Profit: K100,000 | Bonus Pool: K60,000</p>
-                            <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total</p>
+                            <p class="text-sm text-gray-700">Monthly Bonus Pool: K60,000</p>
+                            <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total BP</p>
                             <p class="text-lg font-bold text-emerald-600 mt-2">Your Bonus = K600</p>
+                            <p class="text-xs text-gray-500 mt-2">The more BP you earn, the bigger your share!</p>
                         </div>
                     </div>
 
@@ -404,13 +406,26 @@ const positionBonuses = [
 
                     <!-- Income Stream 5 -->
                     <div class="mb-8">
-                        <h3 class="text-xl font-bold text-blue-600 mb-3">5. Quarterly Profit-Sharing</h3>
-                        <p class="text-gray-700 mb-2">Every 3 months, share in company investment profits:</p>
-                        <ul class="list-disc list-inside text-gray-700 space-y-1">
-                            <li>Based on your professional level</li>
-                            <li>Associate: 1.0x share → Ambassador: 4.0x share</li>
-                            <li>Passive income that grows with the company</li>
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">5. Quarterly Profit-Sharing (Investment Projects)</h3>
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 mb-3">
+                            <p class="font-semibold mb-2">60% of investment project profits shared with ALL active members!</p>
+                            <p class="text-sm text-gray-700">MyGrowNet invests in profitable community projects (agriculture, manufacturing, real estate, services). Every active member receives a share of the profits.</p>
+                        </div>
+                        <p class="text-gray-700 mb-2">Distribution Structure:</p>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1 mb-3">
+                            <li><strong>50% Equal Share:</strong> All active members receive equal portion</li>
+                            <li><strong>50% Weighted Share:</strong> Based on professional level (Associate: 1.0x → Ambassador: 4.0x)</li>
+                            <li><strong>Paid Quarterly:</strong> Every 3 months</li>
+                            <li><strong>Passive Income:</strong> Grows with company investments</li>
                         </ul>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="font-semibold mb-2">Example:</p>
+                            <p class="text-sm text-gray-700">Project Profit: K100,000 | Member Share (60%): K60,000</p>
+                            <p class="text-sm text-gray-700">Equal Share (K30,000) ÷ 1,000 active members = K30 each</p>
+                            <p class="text-sm text-gray-700">Weighted Share (K30,000) based on level multiplier</p>
+                            <p class="text-sm text-gray-700 mt-2"><strong>Associate (1.0x):</strong> K30 + K20 = <strong class="text-emerald-600">K50 total</strong></p>
+                            <p class="text-sm text-gray-700"><strong>Ambassador (4.0x):</strong> K30 + K80 = <strong class="text-emerald-600">K110 total</strong></p>
+                        </div>
                     </div>
 
                     <!-- Income Stream 6 -->
