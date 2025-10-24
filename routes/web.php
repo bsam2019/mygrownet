@@ -559,19 +559,23 @@ require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 
     // MyGrow Shop Routes
-    Route::prefix('shop')->name('shop.')->middleware(['auth'])->group(function () {
+    Route::prefix('shop')->name('shop.')->group(function () {
+        // Public routes (guests can browse)
         Route::get('/', [App\Http\Controllers\ShopController::class, 'index'])->name('index');
         Route::get('/category/{category:slug}', [App\Http\Controllers\ShopController::class, 'category'])->name('category');
         Route::get('/product/{product:slug}', [App\Http\Controllers\ShopController::class, 'show'])->name('product');
         
-        // Cart Routes
-        Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart');
-        Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
-        Route::patch('/cart/update', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-        Route::delete('/cart/remove', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
-        Route::post('/checkout', [App\Http\Controllers\CartController::class, 'checkout'])->name('checkout');
-        
-        // Orders Routes
-        Route::get('/orders', [App\Http\Controllers\CartController::class, 'orders'])->name('orders');
-        Route::get('/orders/{order}', [App\Http\Controllers\CartController::class, 'showOrder'])->name('orders.show');
+        // Protected routes (require authentication)
+        Route::middleware(['auth'])->group(function () {
+            // Cart Routes
+            Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart');
+            Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
+            Route::patch('/cart/update', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+            Route::delete('/cart/remove', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
+            Route::post('/checkout', [App\Http\Controllers\CartController::class, 'checkout'])->name('checkout');
+            
+            // Orders Routes
+            Route::get('/orders', [App\Http\Controllers\CartController::class, 'orders'])->name('orders');
+            Route::get('/orders/{order}', [App\Http\Controllers\CartController::class, 'showOrder'])->name('orders.show');
+        });
     });

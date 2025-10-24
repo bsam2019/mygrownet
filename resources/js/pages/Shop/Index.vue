@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import MemberLayout from '@/layouts/MemberLayout.vue';
 
 interface Product {
@@ -54,7 +54,15 @@ const calculateBP = (price: number, bpValue: number) => {
     return Math.round((price / 100) * bpValue);
 };
 
+const page = usePage();
+const isAuthenticated = computed(() => !!page.props.auth?.user);
+
 const addToCart = (productId: number) => {
+    if (!isAuthenticated.value) {
+        router.visit(route('login'));
+        return;
+    }
+    
     router.post(route('shop.cart.add'), {
         product_id: productId,
         quantity: 1,
@@ -107,7 +115,7 @@ const addToCart = (productId: number) => {
                                 </div>
                                 <button @click="addToCart(product.id)"
                                         class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                                    Add to Cart
+                                    {{ isAuthenticated ? 'Add to Cart' : 'Login to Purchase' }}
                                 </button>
                             </div>
                         </div>
@@ -138,7 +146,7 @@ const addToCart = (productId: number) => {
                                     </button>
                                     <button @click="addToCart(product.id)"
                                             class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                                        Add
+                                        {{ isAuthenticated ? 'Add' : 'Login' }}
                                     </button>
                                 </div>
                             </div>

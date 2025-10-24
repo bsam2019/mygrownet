@@ -28,7 +28,8 @@ import {
     GraduationCapIcon,
     UserIcon,
     LockKeyhole as LockKeyholeIcon,
-    Palette as PaletteIcon
+    Palette as PaletteIcon,
+    ShoppingBagIcon
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { usePage } from '@inertiajs/vue3';
@@ -58,6 +59,11 @@ const myBusinessNavItems: NavItem[] = [
         title: 'My Business Profile',
         href: route('mygrownet.membership.show'),
         icon: BriefcaseIcon,
+    },
+    {
+        title: 'MyGrow Shop',
+        href: route('shop.index'),
+        icon: ShoppingBagIcon,
     },
     {
         title: 'My Starter Kit',
