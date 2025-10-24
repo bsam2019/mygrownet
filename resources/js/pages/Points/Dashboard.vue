@@ -1,14 +1,14 @@
 <template>
   <MemberLayout>
-    <Head title="Points Dashboard" />
+    <Head title="My Points (LP & BP)" />
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
         <!-- Page Header -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-            <h1 class="text-3xl font-bold">Your Points Dashboard</h1>
-            <p class="mt-2 text-blue-100">Track your progress and earn rewards</p>
+            <h1 class="text-3xl font-bold">My Points (LP & BP)</h1>
+            <p class="mt-2 text-blue-100">Track your Lifetime Points and Bonus Points</p>
           </div>
         </div>
 
@@ -34,14 +34,14 @@
             </div>
           </div>
 
-          <!-- Monthly Points -->
+          <!-- Bonus Points -->
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm font-medium text-gray-600">Monthly Points</p>
+                  <p class="text-sm font-medium text-gray-600">Bonus Points</p>
                   <p class="text-3xl font-bold text-gray-900 mt-2">
-                    {{ userPoints?.monthly_points?.toLocaleString() || 0 }} MAP
+                    {{ userPoints?.monthly_points?.toLocaleString() || 0 }} BP
                   </p>
                 </div>
                 <div class="p-3 bg-emerald-100 rounded-full">
@@ -50,7 +50,7 @@
                   </svg>
                 </div>
               </div>
-              <p class="text-xs text-gray-500 mt-2">Resets monthly • For earnings qualification</p>
+              <p class="text-xs text-gray-500 mt-2">Resets monthly • For bonus pool share</p>
             </div>
           </div>
 
@@ -92,7 +92,7 @@
               <div class="flex justify-between text-sm">
                 <span class="text-gray-600">Progress</span>
                 <span class="font-medium text-gray-900">
-                  {{ userPoints?.monthly_points || 0 }} / {{ currentMonthActivity?.map_required || 100 }} MAP
+                  {{ userPoints?.monthly_points || 0 }} / {{ currentMonthActivity?.map_required || 100 }} BP
                 </span>
               </div>
               
@@ -106,9 +106,9 @@
 
               <div v-if="!isQualified" class="mt-4 p-4 bg-amber-50 rounded-lg">
                 <p class="text-sm font-medium text-amber-900 mb-2">
-                  You need {{ (currentMonthActivity?.map_required || 100) - (userPoints?.monthly_points || 0) }} more MAP to qualify
+                  You need {{ (currentMonthActivity?.map_required || 100) - (userPoints?.monthly_points || 0) }} more BP to qualify
                 </p>
-                <p class="text-xs text-amber-700">Quick actions: Complete a course (+30 MAP), Make a sale (+10 MAP/K100), Login daily (+5 MAP)</p>
+                <p class="text-xs text-amber-700">Quick actions: Complete a course (+30 BP), Make a referral (+150 BP), Attend workshop (+50 BP)</p>
               </div>
             </div>
           </div>
@@ -137,14 +137,14 @@
 
             <div v-if="levelProgress?.next_level" class="space-y-4">
               <div class="flex justify-between text-sm mb-2">
-                <span class="text-gray-600">Overall Progress</span>
+                <span class="text-gray-600">Progress to Next Level</span>
                 <span class="font-medium text-gray-900">{{ Math.round(levelProgress?.progress || 0) }}%</span>
               </div>
               
               <div class="w-full bg-gray-200 rounded-full h-3">
                 <div 
-                  class="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                  :style="{ width: (levelProgress?.progress || 0) + '%' }"
+                  class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
+                  :style="{ width: Math.min(100, levelProgress?.progress || 0) + '%' }"
                 ></div>
               </div>
 
@@ -189,7 +189,7 @@
                     +{{ transaction.lp_amount }} LP
                   </p>
                   <p v-if="transaction.map_amount > 0" class="text-sm font-semibold text-emerald-600">
-                    +{{ transaction.map_amount }} MAP
+                    +{{ transaction.map_amount }} BP
                   </p>
                 </div>
               </div>

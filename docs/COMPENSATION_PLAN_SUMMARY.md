@@ -15,15 +15,26 @@
 - K50-K150 per referral (instant payment)
 
 ### 3. Network Commissions (7 Levels)
-| Level | Title | Rate |
-|-------|-------|------|
-| 1 | Associate | 15% |
-| 2 | Professional | 10% |
-| 3 | Senior | 8% |
-| 4 | Manager | 6% |
-| 5 | Director | 4% |
-| 6 | Executive | 3% |
-| 7 | Ambassador | 2% |
+
+**Registration Amount:** K500
+
+| Level | Team Size | Commission % | Potential Earnings (K) |
+|-------|-----------|--------------|------------------------|
+| 1 | 3 | 15% | 225 |
+| 2 | 9 | 10% | 450 |
+| 3 | 27 | 8% | 1,080 |
+| 4 | 81 | 6% | 2,430 |
+| 5 | 243 | 4% | 4,860 |
+| 6 | 729 | 3% | 10,935 |
+| 7 | 2,187 | 2% | 21,870 |
+| **Total** | **3,279** | **48%** | **K41,850** |
+
+**How it works:**
+- When someone in your network pays the K500 registration fee, you earn a percentage based on their level in your network
+- Level 1 (direct referrals): You earn 15% × K500 = K75 per person
+- Level 2 (referrals of your referrals): You earn 10% × K500 = K50 per person
+- And so on through 7 levels deep
+- **Maximum potential:** If you fill all 3,279 positions in your 7-level network, you could earn K41,850 in referral bonuses!
 
 ### 4. Product Sales Commissions
 - Personal: 10 BP per K100

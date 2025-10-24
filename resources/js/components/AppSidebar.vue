@@ -70,7 +70,7 @@ const myBusinessNavItems: NavItem[] = [
         icon: TrendingUpIcon,
     },
     {
-        title: 'Performance Points',
+        title: 'My Points (LP & BP)',
         href: route('points.index'),
         icon: ChartBarIcon,
     },

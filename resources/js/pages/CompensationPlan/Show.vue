@@ -1,236 +1,656 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { formatCurrency } from '@/utils/formatting';
 
-defineOptions({ layout: MemberLayout });
+interface ReferralLevel {
+    level: number;
+    team_size: number;
+    commission_percentage: number;
+    potential_earnings: number;
+    per_person: number;
+}
 
-const breadcrumbs = [
-    { label: 'Dashboard', href: '/dashboard' },
-    { label: 'Compensation Plan', href: '/compensation-plan' },
+interface Props {
+    registrationAmount: number;
+    referralBonusStructure: ReferralLevel[];
+    totalPotential: number;
+    totalTeamSize: number;
+    commissionRates: Record<number, number>;
+    levelNames: Record<number, string>;
+}
+
+const props = defineProps<Props>();
+
+const activeSection = ref('overview');
+
+const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US').format(num);
+};
+
+const sections = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'referral-bonus', label: 'Referral Bonus' },
+    { id: 'income-streams', label: '6 Income Streams' },
+    { id: 'levels', label: '7 Professional Levels' },
+    { id: 'points', label: 'Points System' },
+    { id: 'examples', label: 'Income Examples' },
+    { id: 'getting-started', label: 'Getting Started' },
 ];
 </script>
 
 <template>
-    <Head title="Compensation Plan" />
-
-    <MemberLayout :breadcrumbs="breadcrumbs">
-        <div class="max-w-7xl mx-auto space-y-8">
-            <!-- Cover Section -->
-            <div class="text-center py-16 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg">
-                <h1 class="text-5xl font-bold text-blue-600 mb-4">MyGrowNet</h1>
-                <h2 class="text-3xl font-semibold text-green-600 mb-6">Compensation Plan</h2>
-                <p class="text-2xl text-gray-700 mb-8">Your Path to Financial Freedom & Personal Growth</p>
-                <p class="text-lg text-gray-600">Learn • Earn • Grow</p>
-            </div>
-
-            <!-- What is MyGrowNet -->
-            <div class="bg-white rounded-lg shadow-sm p-8">
-                <h2 class="text-3xl font-bold text-blue-600 border-b-2 border-blue-600 pb-3 mb-6">
-                    What is MyGrowNet?
-                </h2>
-                
-                <div class="bg-blue-50 border-l-4 border-blue-600 p-6 mb-6">
-                    <p class="text-lg font-semibold mb-4">
-                        MyGrowNet is a community empowerment platform that helps you:
+    <MemberLayout>
+        <div class="py-6 md:py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Header -->
+                <div class="text-center mb-8 md:mb-12">
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        MyGrowNet Compensation Plan
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                        Build your network and earn through our 7-level referral bonus system
                     </p>
-                    <ul class="space-y-2 text-base">
-                        <li><strong>Learn</strong> - practical skills and business knowledge</li>
-                        <li><strong>Earn</strong> - income through multiple streams</li>
-                        <li><strong>Grow</strong> - personally and financially</li>
-                    </ul>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Legal Structure</h3>
-                        <p><strong>Private Limited Company</strong> - NOT an investment scheme</p>
-                        <p><strong>Business Model:</strong> Subscription-based with profit-sharing</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Our Mission</h3>
-                        <p>
-                            To create a community of empowered individuals who grow together through 
-                            skills, entrepreneurship, and shared rewards.
+                <!-- Registration Amount Card -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 md:p-8 mb-8 text-white">
+                    <div class="text-center">
+                        <p class="text-lg md:text-xl mb-2 opacity-90">Registration Amount</p>
+                        <p class="text-4xl md:text-5xl font-bold">K{{ formatNumber(registrationAmount) }}</p>
+                        <p class="mt-4 text-sm md:text-base opacity-90">
+                            One-time registration fee that unlocks your earning potential
                         </p>
                     </div>
                 </div>
 
-                <div class="bg-green-50 border-l-4 border-green-600 p-6">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Key Differentiators</h3>
-                    <ul class="space-y-2">
-                        <li><span class="text-green-600 font-bold">✓</span> Legal & Compliant</li>
-                        <li><span class="text-green-600 font-bold">✓</span> Real Products</li>
-                        <li><span class="text-green-600 font-bold">✓</span> Multiple Income Streams</li>
-                        <li><span class="text-green-600 font-bold">✓</span> Transparent System</li>
-                        <li><span class="text-green-600 font-bold">✓</span> Community Support</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- 6 Income Streams -->
-            <div class="bg-white rounded-lg shadow-sm p-8">
-                <h2 class="text-3xl font-bold text-blue-600 border-b-2 border-blue-600 pb-3 mb-6">
-                    How You Earn Money
-                </h2>
-                <p class="text-xl text-green-600 font-semibold mb-6">6 Powerful Income Streams</p>
-
-                <!-- Income Stream 1 -->
-                <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                        1. Monthly Bonus Pool (60% of Profits)
-                    </h3>
-                    <div class="bg-blue-50 border-l-4 border-blue-600 p-6 mb-4">
-                        <p class="font-semibold mb-3">
-                            60% of all company profits are shared with active members every month!
-                        </p>
-                        <p class="mb-2"><strong>Formula:</strong></p>
-                        <p class="font-mono text-sm">Your Bonus = (Your BP ÷ Total BP) × 60% of Profit</p>
+                <!-- Referral Bonus Structure -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
+                        <h2 class="text-xl md:text-2xl font-bold text-white">
+                            7-Level Referral Bonus Structure
+                        </h2>
                     </div>
-                </div>
-
-                <!-- Income Stream 2 -->
-                <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                        2. Direct Referral Bonuses
-                    </h3>
-                    <p>Earn <strong>K50-K150 per referral</strong> paid instantly</p>
-                </div>
-
-                <!-- Income Stream 3 -->
-                <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                        3. Network Commissions (7 Levels Deep)
-                    </h3>
                     
+                    <div class="p-6">
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Level
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Team Size
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Commission %
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Per Person
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Potential Earnings
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-for="level in referralBonusStructure" :key="level.level" class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold">
+                                                {{ level.level }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 font-medium">
+                                            {{ formatNumber(level.team_size) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                {{ level.commission_percentage }}%
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                                            K{{ formatNumber(level.per_person) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-emerald-600">
+                                            K{{ formatNumber(level.potential_earnings) }}
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-gray-50 font-bold">
+                                        <td class="px-6 py-4 text-left text-sm text-gray-900">
+                                            TOTAL
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                                            {{ formatNumber(totalTeamSize) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right text-sm text-gray-900">
+                                            48%
+                                        </td>
+                                        <td class="px-6 py-4"></td>
+                                        <td class="px-6 py-4 text-right text-lg text-emerald-600">
+                                            K{{ formatNumber(totalPotential) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile Cards -->
+                        <div class="md:hidden space-y-4">
+                            <div v-for="level in referralBonusStructure" :key="level.level" 
+                                 class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-800 font-bold">
+                                            {{ level.level }}
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ levelNames[level.level] }}</p>
+                                            <p class="text-xs text-gray-500">Level {{ level.level }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                        {{ level.commission_percentage }}%
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p class="text-gray-500">Team Size</p>
+                                        <p class="font-medium text-gray-900">{{ formatNumber(level.team_size) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-500">Per Person</p>
+                                        <p class="font-medium text-gray-900">K{{ formatNumber(level.per_person) }}</p>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-gray-500">Potential Earnings</p>
+                                        <p class="text-lg font-bold text-emerald-600">K{{ formatNumber(level.potential_earnings) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Total -->
+                            <div class="border-2 border-emerald-500 rounded-lg p-4 bg-emerald-50">
+                                <div class="text-center">
+                                    <p class="text-sm text-gray-600 mb-1">Maximum Potential</p>
+                                    <p class="text-2xl font-bold text-emerald-600">K{{ formatNumber(totalPotential) }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">With {{ formatNumber(totalTeamSize) }} team members</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">How It Works</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold">
+                                    1
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-1">Registration Commission</h3>
+                                <p class="text-gray-600">
+                                    When someone in your network pays the K500 registration fee, you earn a percentage based on their level in your network.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold">
+                                    2
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-1">7 Levels Deep</h3>
+                                <p class="text-gray-600">
+                                    <strong>Level 1 (Direct referrals):</strong> You earn 15% × K500 = K75 per person<br>
+                                    <strong>Level 2 (Referrals of your referrals):</strong> You earn 10% × K500 = K50 per person<br>
+                                    And so on through 7 levels deep!
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-bold">
+                                    3
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-1">Maximum Potential</h3>
+                                <p class="text-gray-600">
+                                    If you fill all <strong>{{ formatNumber(totalTeamSize) }} positions</strong> in your 7-level network, 
+                                    you could earn <strong class="text-emerald-600">K{{ formatNumber(totalPotential) }}</strong> in referral bonuses!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6 Income Streams -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">6 Powerful Income Streams</h2>
+                    
+                    <!-- Income Stream 1 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool</h3>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <p class="font-semibold mb-2">60% of all company profits shared with active members every month!</p>
+                            <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × 60% of Profit</strong></p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="font-semibold mb-2">Example:</p>
+                            <p class="text-sm text-gray-700">Company Profit: K100,000 | Bonus Pool: K60,000</p>
+                            <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total</p>
+                            <p class="text-lg font-bold text-emerald-600 mt-2">Your Bonus = K600</p>
+                        </div>
+                    </div>
+
+                    <!-- Income Stream 2 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">2. Direct Referral Bonuses</h3>
+                        <p class="text-gray-700 mb-2">Earn immediate cash when you refer new members:</p>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li><strong>K50-K150 per referral</strong> (depending on subscription tier)</li>
+                            <li>Paid instantly when they join</li>
+                            <li>No limit on referrals</li>
+                        </ul>
+                    </div>
+
+                    <!-- Income Stream 3 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">3. Network Commissions (7 Levels)</h3>
+                        <p class="text-gray-700 mb-4">Earn from your entire network across 7 professional levels - see table above for details</p>
+                    </div>
+
+                    <!-- Income Stream 4 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">4. Product Sales Commissions</h3>
+                        <p class="text-gray-700 mb-2">Earn from MyGrow Shop sales:</p>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li><strong>Personal purchases:</strong> 10 BP per K100 spent</li>
+                            <li><strong>Direct referral sales:</strong> 20 BP per K100</li>
+                            <li><strong>Network sales:</strong> 5 BP per K100</li>
+                        </ul>
+                    </div>
+
+                    <!-- Income Stream 5 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">5. Quarterly Profit-Sharing</h3>
+                        <p class="text-gray-700 mb-2">Every 3 months, share in company investment profits:</p>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>Based on your professional level</li>
+                            <li>Associate: 1.0x share → Ambassador: 4.0x share</li>
+                            <li>Passive income that grows with the company</li>
+                        </ul>
+                    </div>
+
+                    <!-- Income Stream 6 -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">6. Milestone Rewards</h3>
+                        <p class="text-gray-700 mb-4">Earn bonuses as you advance through professional levels:</p>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cash Bonus</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Physical Reward</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr><td class="px-4 py-2">Professional</td><td class="px-4 py-2 font-semibold text-emerald-600">K500</td><td class="px-4 py-2">-</td></tr>
+                                    <tr><td class="px-4 py-2">Senior</td><td class="px-4 py-2 font-semibold text-emerald-600">K1,500</td><td class="px-4 py-2">Smartphone</td></tr>
+                                    <tr><td class="px-4 py-2">Manager</td><td class="px-4 py-2 font-semibold text-emerald-600">K5,000</td><td class="px-4 py-2">Motorbike</td></tr>
+                                    <tr><td class="px-4 py-2">Director</td><td class="px-4 py-2 font-semibold text-emerald-600">K15,000</td><td class="px-4 py-2">Vehicle</td></tr>
+                                    <tr><td class="px-4 py-2">Executive</td><td class="px-4 py-2 font-semibold text-emerald-600">K50,000</td><td class="px-4 py-2">Luxury Rewards</td></tr>
+                                    <tr><td class="px-4 py-2">Ambassador</td><td class="px-4 py-2 font-semibold text-emerald-600">K150,000</td><td class="px-4 py-2">Property</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Points System -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">The Dual-Point System</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4">
+                            <h3 class="text-lg font-bold text-blue-600 mb-2">Life Points (LP)</h3>
+                            <p class="text-sm text-gray-700 mb-2">Your Career Progression</p>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>✓ Never expire - accumulate forever</li>
+                                <li>✓ Determine professional level</li>
+                                <li>✓ Unlock leadership benefits</li>
+                                <li>✓ Measure long-term commitment</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4">
+                            <h3 class="text-lg font-bold text-emerald-600 mb-2">Bonus Points (BP)</h3>
+                            <p class="text-sm text-gray-700 mb-2">Your Monthly Earnings</p>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>✓ Reset monthly - fresh start</li>
+                                <li>✓ Determine bonus pool share</li>
+                                <li>✓ Reward current activity</li>
+                                <li>✓ Drive immediate income</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">How to Earn Points</h3>
                     <div class="overflow-x-auto">
-                        <table class="w-full border-collapse bg-white shadow-sm">
-                            <thead>
-                                <tr class="bg-blue-600 text-white">
-                                    <th class="p-3 text-left">Level</th>
-                                    <th class="p-3 text-left">Title</th>
-                                    <th class="p-3 text-left">Rate</th>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>
+                                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">LP</th>
+                                    <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">BP</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">1</td>
-                                    <td class="p-3">Associate</td>
-                                    <td class="p-3 font-bold text-green-600">15%</td>
-                                </tr>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">2</td>
-                                    <td class="p-3">Professional</td>
-                                    <td class="p-3 font-bold text-green-600">10%</td>
-                                </tr>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">3</td>
-                                    <td class="p-3">Senior</td>
-                                    <td class="p-3 font-bold text-green-600">8%</td>
-                                </tr>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">4</td>
-                                    <td class="p-3">Manager</td>
-                                    <td class="p-3 font-bold text-green-600">6%</td>
-                                </tr>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">5</td>
-                                    <td class="p-3">Director</td>
-                                    <td class="p-3 font-bold text-green-600">4%</td>
-                                </tr>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-3">6</td>
-                                    <td class="p-3">Executive</td>
-                                    <td class="p-3 font-bold text-green-600">3%</td>
-                                </tr>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="p-3">7</td>
-                                    <td class="p-3">Ambassador</td>
-                                    <td class="p-3 font-bold text-green-600">2%</td>
-                                </tr>
+                            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                                <tr><td class="px-4 py-2">Direct referral</td><td class="px-4 py-2 text-center font-semibold">150</td><td class="px-4 py-2 text-center font-semibold">150</td></tr>
+                                <tr><td class="px-4 py-2">Complete basic course</td><td class="px-4 py-2 text-center">30</td><td class="px-4 py-2 text-center">30</td></tr>
+                                <tr><td class="px-4 py-2">Complete advanced course</td><td class="px-4 py-2 text-center">60</td><td class="px-4 py-2 text-center">60</td></tr>
+                                <tr><td class="px-4 py-2">Attend workshop</td><td class="px-4 py-2 text-center">50</td><td class="px-4 py-2 text-center">50</td></tr>
+                                <tr><td class="px-4 py-2">Monthly subscription</td><td class="px-4 py-2 text-center">25</td><td class="px-4 py-2 text-center">25</td></tr>
+                                <tr><td class="px-4 py-2">Personal purchase (per K100)</td><td class="px-4 py-2 text-center">10</td><td class="px-4 py-2 text-center">10</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Other Streams -->
-                <div class="space-y-6">
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                            4. Product Sales Commissions
-                        </h3>
-                        <p>Earn BP for purchases and sales in MyGrow Shop</p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                            5. Quarterly Profit-Sharing
-                        </h3>
-                        <p>Share in company investment profits every 3 months</p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">
-                            6. Milestone Rewards
-                        </h3>
-                        <p>Cash bonuses and physical rewards as you advance levels</p>
+                <!-- Income Potential -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Income Potential by Level</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Monthly Income</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-3">Associate</td><td class="px-6 py-3 text-right font-semibold text-gray-900">K100 - K300</td></tr>
+                                <tr><td class="px-6 py-3">Professional</td><td class="px-6 py-3 text-right font-semibold text-gray-900">K300 - K800</td></tr>
+                                <tr><td class="px-6 py-3">Senior</td><td class="px-6 py-3 text-right font-semibold text-gray-900">K800 - K2,000</td></tr>
+                                <tr><td class="px-6 py-3">Manager</td><td class="px-6 py-3 text-right font-semibold text-emerald-600">K2,000 - K5,000</td></tr>
+                                <tr><td class="px-6 py-3">Director</td><td class="px-6 py-3 text-right font-semibold text-emerald-600">K5,000 - K12,000</td></tr>
+                                <tr><td class="px-6 py-3">Executive</td><td class="px-6 py-3 text-right font-semibold text-emerald-600">K12,000 - K25,000</td></tr>
+                                <tr><td class="px-6 py-3">Ambassador</td><td class="px-6 py-3 text-right font-bold text-emerald-600">K25,000 - K50,000+</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- Download Full Plan -->
-            <div class="bg-blue-50 border-2 border-blue-600 rounded-lg p-6 text-center">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    Want the Complete Compensation Plan?
-                </h3>
-                <p class="text-gray-600 mb-4">
-                    View the full detailed presentation with all income examples, FAQs, and success stories.
-                </p>
-                <a 
-                    href="/compensation-plan.html" 
-                    target="_blank"
-                    class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    View Full Compensation Plan
-                </a>
-            </div>
+                <!-- Getting Started -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Getting Started</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 1: Register</h3>
+                            <p class="text-gray-700">Pay K500 one-time registration fee</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 2: Complete Orientation</h3>
+                            <p class="text-gray-700">Earn 100 LP welcome bonus and learn the platform</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 3: Start Earning</h3>
+                            <p class="text-gray-700">Complete courses, make referrals, and engage daily</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 4: Build Your Network</h3>
+                            <p class="text-gray-700">Use the 3×3 matrix system with spillover benefits</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">Step 5: Track Progress</h3>
+                            <p class="text-gray-700">Monitor your BP, earnings, and level advancement</p>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Registration Info -->
-            <div class="bg-white rounded-lg shadow-sm p-8">
-                <h2 class="text-3xl font-bold text-blue-600 border-b-2 border-blue-600 pb-3 mb-6">
-                    Ready to Get Started?
-                </h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="bg-blue-50 p-6 rounded-lg">
-                        <h3 class="text-xl font-semibold mb-3">Investment Required</h3>
-                        <ul class="space-y-2">
-                            <li>
-                                <strong>Registration:</strong> 
-                                <span class="text-2xl text-blue-600 font-bold">K500</span> (one-time)
-                            </li>
-                            <li>
-                                <strong>Monthly:</strong> 
-                                <span class="text-2xl text-blue-600 font-bold">K150-K1,000</span>
-                            </li>
+                <!-- Key Features -->
+                <div class="bg-gradient-to-r from-blue-50 to-emerald-50 rounded-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Key Features</h2>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">Legal & Compliant - Registered company</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">Multiple Income Streams</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">Fair BP-based Distribution</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">7 Professional Levels</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">Activity Multipliers (up to 1.5x)</span>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">✓</span>
+                            <span class="text-gray-700">30-Day Money-Back Guarantee</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Why MyGrowNet is Different -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Why MyGrowNet is Different</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">vs Traditional MLM</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 mb-1">Traditional MLM</p>
+                                    <ul class="text-sm text-gray-700 space-y-1">
+                                        <li>• Recruitment only focus</li>
+                                        <li>• Often overpriced products</li>
+                                        <li>• Fixed commissions</li>
+                                        <li>• Often unclear earnings</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-emerald-600 mb-1">MyGrowNet</p>
+                                    <ul class="text-sm text-gray-700 space-y-1">
+                                        <li>✓ Multiple income streams</li>
+                                        <li>✓ Real educational value</li>
+                                        <li>✓ Fair BP-based distribution</li>
+                                        <li>✓ Clear calculations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-600 mb-3">vs Investment Schemes</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 mb-1">Investment Schemes</p>
+                                    <ul class="text-sm text-gray-700 space-y-1">
+                                        <li>• Often illegal</li>
+                                        <li>• Guaranteed returns (unsustainable)</li>
+                                        <li>• No real products</li>
+                                        <li>• Pyramid collapse</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-emerald-600 mb-1">MyGrowNet</p>
+                                    <ul class="text-sm text-gray-700 space-y-1">
+                                        <li>✓ Registered company</li>
+                                        <li>✓ Returns based on effort</li>
+                                        <li>✓ Real subscriptions & services</li>
+                                        <li>✓ Multiple revenue sources</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-4">
+                            <h3 class="font-bold text-gray-900 mb-2">Q: Is this an investment scheme?</h3>
+                            <p class="text-gray-700"><strong>A:</strong> No. MyGrowNet is a subscription-based platform. You pay for products, services, and learning materials, not pooled investments.</p>
+                        </div>
+
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-4">
+                            <h3 class="font-bold text-gray-900 mb-2">Q: How much can I really earn?</h3>
+                            <p class="text-gray-700"><strong>A:</strong> It depends on your effort. Part-time members earn K300-K1,000/month. Full-time builders can earn K5,000-K50,000/month.</p>
+                        </div>
+
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-4">
+                            <h3 class="font-bold text-gray-900 mb-2">Q: Do I need to recruit to earn?</h3>
+                            <p class="text-gray-700"><strong>A:</strong> No. You can earn through learning, product sales, and engagement. Recruitment is just one of many earning paths.</p>
+                        </div>
+
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-4">
+                            <h3 class="font-bold text-gray-900 mb-2">Q: When do I get paid?</h3>
+                            <p class="text-gray-700"><strong>A:</strong> Direct commissions are instant. Monthly bonuses are paid by the 7th of each month. Quarterly profit-sharing every 3 months.</p>
+                        </div>
+
+                        <div class="border-l-4 border-blue-500 bg-blue-50 p-4">
+                            <h3 class="font-bold text-gray-900 mb-2">Q: Is there a joining fee?</h3>
+                            <p class="text-gray-700"><strong>A:</strong> Yes, a one-time registration fee of <strong>K500</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Notice -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-xl font-bold text-amber-900 mb-4">Important Notice</h2>
+                    <p class="text-gray-700 mb-4">
+                        MyGrowNet is <strong>not a "get rich quick" scheme</strong>. It's a legitimate business opportunity that rewards:
+                    </p>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start">
+                            <span class="text-amber-600 font-bold mr-2">•</span>
+                            <span><strong>Learning</strong> - Develop valuable skills</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-amber-600 font-bold mr-2">•</span>
+                            <span><strong>Effort</strong> - Work consistently</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-amber-600 font-bold mr-2">•</span>
+                            <span><strong>Leadership</strong> - Help others succeed</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-amber-600 font-bold mr-2">•</span>
+                            <span><strong>Patience</strong> - Build long-term wealth</span>
+                        </li>
+                    </ul>
+                    <p class="text-gray-700 mt-4 font-semibold">
+                        Your success depends on YOU. We provide the platform, training, and support. You provide the commitment, effort, and consistency.
+                    </p>
+                </div>
+
+                <!-- Legal Disclaimer -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 md:p-8 mb-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Legal Disclaimer</h2>
+                    
+                    <div class="space-y-4 text-sm text-gray-700">
+                        <p>
+                            This compensation plan is subject to change. All figures presented are examples and not guaranteed. 
+                            Actual earnings depend on individual effort, market conditions, and platform performance.
+                        </p>
+                        
+                        <p>
+                            MyGrowNet is a registered private limited company operating legally in Zambia. This is not an investment scheme, 
+                            pyramid scheme, or Ponzi scheme. Members pay for subscriptions, products, and services, not pooled investments.
+                        </p>
+
+                        <p>
+                            <strong>No Guaranteed Returns:</strong> Unlike investment schemes, MyGrowNet does not guarantee any specific returns. 
+                            Your earnings are based on your activity, effort, and the performance of the platform.
+                        </p>
+
+                        <p>
+                            <strong>Risk Disclosure:</strong> As with any business opportunity, there are risks involved. You may not earn back 
+                            your initial investment. Past performance of other members does not guarantee future results.
+                        </p>
+
+                        <p>
+                            <strong>Compliance:</strong> MyGrowNet operates in full compliance with Zambian laws and regulations. We maintain 
+                            transparent operations and regular audits.
+                        </p>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-300">
+                        <h3 class="font-bold text-gray-900 mb-3">Terms & Conditions</h3>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li>• Members must be 18 years or older</li>
+                            <li>• Registration fee is non-refundable after 30 days</li>
+                            <li>• Monthly subscriptions must be maintained for active status</li>
+                            <li>• Commissions are paid only to active members</li>
+                            <li>• Platform reserves the right to modify terms with notice</li>
+                            <li>• Fraudulent activity results in immediate termination</li>
+                            <li>• All earnings are subject to applicable taxes</li>
                         </ul>
                     </div>
-                    <div class="bg-green-50 p-6 rounded-lg">
-                        <h3 class="text-xl font-semibold mb-3">Potential Returns</h3>
-                        <ul class="space-y-2">
-                            <li>
-                                <strong>Month 1:</strong> 
-                                <span class="text-xl text-green-600 font-bold">K300-K800</span>
-                            </li>
-                            <li>
-                                <strong>Year 1:</strong> 
-                                <span class="text-xl text-green-600 font-bold">K2,000-K8,000/month</span>
-                            </li>
-                        </ul>
-                    </div>
+                </div>
+
+                <!-- Call to Action -->
+                <div class="bg-gradient-to-r from-blue-600 to-emerald-600 rounded-lg shadow-lg p-6 md:p-8 text-white text-center">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-4">Ready to Start Building Your Network?</h2>
+                    <p class="text-lg mb-6 opacity-90">
+                        Share your referral link and start earning commissions today!
+                    </p>
+                    <a :href="route('my-team.index')" 
+                       class="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors">
+                        View My Team
+                    </a>
+                </div>
+
+                <!-- Footer -->
+                <div class="text-center text-gray-500 text-sm mt-8 pt-8 border-t border-gray-200">
+                    <p>© 2025 MyGrowNet. All rights reserved.</p>
+                    <p class="mt-2">Version 1.0 | October 2025</p>
                 </div>
             </div>
         </div>
     </MemberLayout>
 </template>
+
+
+<style scoped>
+.section-nav {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+    .section-nav {
+        position: relative;
+        top: 0;
+        max-height: none;
+    }
+}
+</style>

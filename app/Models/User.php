@@ -581,23 +581,16 @@ class User extends Authenticatable
 
     public function hasActiveSubscription(): bool
     {
-        // Primary check: Look for verified payments in member_payments table
-        $hasVerifiedPayment = $this->memberPayments()
+        // Check both user status AND verified payment existence
+        // This ensures only users who have actually paid show as active
+        if ($this->status !== 'active') {
+            return false;
+        }
+        
+        // Double-check: User must have at least one verified payment
+        return $this->memberPayments()
             ->where('status', 'verified')
             ->exists();
-        
-        // Debug logging to see what's happening
-        \Log::info('Checking subscription for user', [
-            'user_id' => $this->id,
-            'user_name' => $this->name,
-            'user_status' => $this->status,
-            'has_verified_payment' => $hasVerifiedPayment,
-            'total_payments' => $this->memberPayments()->count(),
-            'verified_payments' => $this->memberPayments()->where('status', 'verified')->count(),
-            'pending_payments' => $this->memberPayments()->where('status', 'pending')->count(),
-        ]);
-        
-        return $hasVerifiedPayment;
     }
 
     /**

@@ -46,7 +46,7 @@ class PointsController extends Controller
             'badges' => $user->badges,
             'currentMonthActivity' => $user->currentMonthActivity,
             'isQualified' => $user->isQualifiedThisMonth(),
-            'daysLeftInMonth' => now()->endOfMonth()->diffInDays(now()),
+            'daysLeftInMonth' => max(0, now()->diffInDays(now()->endOfMonth())),
         ]);
     }
 
@@ -104,7 +104,7 @@ class PointsController extends Controller
             'needed_map' => max(0, $required - $current),
             'performance_tier' => $this->pointService->getPerformanceTier($user),
             'commission_bonus' => $this->pointService->getCommissionBonus($user),
-            'days_left' => now()->endOfMonth()->diffInDays(now()),
+            'days_left' => max(0, now()->diffInDays(now()->endOfMonth())),
         ]);
     }
 

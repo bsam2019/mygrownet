@@ -17,8 +17,9 @@ class MatrixController extends Controller
             $user->refresh(); // Refresh the model to get the updated referral_code
         }
         
-        // Get matrix structure (3 levels deep)
-        $matrixStructure = $user->buildMatrixStructure(3);
+        // Get matrix structure (3 levels deep) and flatten it
+        $matrixStructureNested = $user->buildMatrixStructure(3);
+        $matrixStructure = $this->flattenMatrixStructure($matrixStructureNested);
         
         // Get downline counts by level
         $downlineCounts = $user->getMatrixDownlineCount();
@@ -41,6 +42,37 @@ class MatrixController extends Controller
             'referralCode' => $user->referral_code ?? '',
             'referralLink' => $user->referral_code ? url('/register?ref=' . $user->referral_code) : url('/register')
         ]);
+    }
+    
+    /**
+     * Flatten nested matrix structure to flat array
+     */
+    private function flattenMatrixStructure(array $structure): array
+    {
+        if (empty($structure)) {
+            return [];
+        }
+        
+        $flattened = [];
+        
+        // Add current node
+        $flattened[] = [
+            'id' => $structure['user']['id'] ?? null,
+            'level' => $structure['level'] ?? 0,
+            'position' => $structure['position'] ?? 0,
+            'user' => $structure['user'] ?? [],
+            'children' => []
+        ];
+        
+        // Recursively add children
+        if (!empty($structure['children'])) {
+            foreach ($structure['children'] as $child) {
+                $childFlattened = $this->flattenMatrixStructure($child);
+                $flattened = array_merge($flattened, $childFlattened);
+            }
+        }
+        
+        return $flattened;
     }
     
     public function generateReferralCode()
@@ -67,8 +99,11 @@ class MatrixController extends Controller
     {
         $user = auth()->user();
         
+        $matrixStructureNested = $user->buildMatrixStructure(3);
+        $matrixStructure = $this->flattenMatrixStructure($matrixStructureNested);
+        
         return response()->json([
-            'matrixStructure' => $user->buildMatrixStructure(3),
+            'matrixStructure' => $matrixStructure,
             'downlineCounts' => $user->getMatrixDownlineCount(),
             'matrixPosition' => $user->getMatrixPosition()
         ]);

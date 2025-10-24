@@ -33,6 +33,9 @@ class ReferralMatrixService
             ];
         }
 
+        // Ensure user relationship is loaded
+        $position->load('user.currentInvestmentTier');
+        
         $structure = $this->buildMatrixLevel($position, 1, $maxLevel);
         $downlineCounts = $this->calculateDownlineCounts($user, $maxLevel);
 
@@ -67,17 +70,33 @@ class ReferralMatrixService
             return [];
         }
 
+        // Ensure user is loaded
+        if (!$position->relationLoaded('user')) {
+            $position->load('user.currentInvestmentTier');
+        }
+        
         $user = $position->user;
+        
+        // Handle case where user might be null
+        if (!$user) {
+            return [
+                'level' => $currentLevel,
+                'position' => $position->position,
+                'user' => null,
+                'children' => []
+            ];
+        }
+        
         $structure = [
             'level' => $currentLevel,
             'position' => $position->position,
             'user' => [
                 'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'total_investment' => $user->total_investment_amount,
-                'tier' => $user->currentInvestmentTier?->name,
-                'joined_at' => $position->placed_at
+                'name' => $user->name ?? 'Unknown User',
+                'email' => $user->email ?? '',
+                'total_investment' => $user->total_investment_amount ?? 0,
+                'tier' => $user->currentInvestmentTier?->name ?? 'No Tier',
+                'joined_at' => $position->placed_at?->format('M d, Y') ?? 'N/A'
             ],
             'children' => []
         ];
@@ -203,7 +222,6 @@ class ReferralMatrixService
                 'position' => $position['position'],
                 'is_active' => true,
                 'placed_at' => now(),
-                'placement_type' => $position['placement_type']
             ]);
 
             // Update user's matrix position reference
@@ -212,7 +230,6 @@ class ReferralMatrixService
                 'level' => $position['level'],
                 'position' => $position['position'],
                 'sponsor_id' => $position['sponsor_id'],
-                'placement_type' => $position['placement_type']
             ]]);
 
             // Notify affected upline members about spillover
@@ -298,29 +315,104 @@ class ReferralMatrixService
         
         if (!$matrix['has_position']) {
             return [
-                'visualization_type' => '3x3_matrix',
-                'user_position' => null,
-                'matrix_data' => [],
-                'statistics' => [
-                    'total_positions' => 0,
-                    'filled_positions' => 0,
-                    'available_positions' => 39, // 3 + 9 + 27
-                    'completion_percentage' => 0
+                'root' => null,
+                'levels' => [
+                    'level_1' => [],
+                    'level_2' => [],
+                    'level_3' => []
                 ]
             ];
         }
 
-        $visualizationData = $this->formatMatrixForVisualization($matrix['matrix_structure']);
-        $statistics = $this->calculateMatrixStatistics($matrix);
-
+        // Convert nested structure to flat levels for frontend
+        $flattenedLevels = $this->flattenMatrixToLevels($matrix['matrix_structure']);
+        
         return [
-            'visualization_type' => '3x3_matrix',
-            'user_position' => $matrix['matrix_position'],
-            'matrix_data' => $visualizationData,
-            'downline_counts' => $matrix['downline_counts'],
-            'statistics' => $statistics,
-            'spillover_opportunities' => $this->identifySpilloverOpportunities($user)
+            'root' => $flattenedLevels['root'],
+            'levels' => [
+                'level_1' => $flattenedLevels['level_1'] ?? [],
+                'level_2' => $flattenedLevels['level_2'] ?? [],
+                'level_3' => $flattenedLevels['level_3'] ?? []
+            ]
         ];
+    }
+    
+    /**
+     * Flatten nested matrix structure to level-based arrays
+     *
+     * @param array $structure
+     * @return array
+     */
+    protected function flattenMatrixToLevels(array $structure): array
+    {
+        $levels = [
+            'root' => null,
+            'level_1' => [],
+            'level_2' => [],
+            'level_3' => []
+        ];
+        
+        if (empty($structure)) {
+            return $levels;
+        }
+        
+        // Root node (the user themselves)
+        $levels['root'] = [
+            'id' => $structure['user']['id'] ?? null,
+            'name' => $structure['user']['name'] ?? 'You',
+            'email' => $structure['user']['email'] ?? '',
+            'tier' => $structure['user']['tier'] ?? 'No Tier',
+            'investment_amount' => $structure['user']['total_investment'] ?? 0,
+            'is_empty' => false,
+            'is_direct' => false,
+            'is_spillover' => false,
+            'status' => 'active',
+            'position' => 1,
+            'level' => 0
+        ];
+        
+        // Process children recursively
+        $this->extractLevelNodes($structure['children'] ?? [], $levels, 1);
+        
+        return $levels;
+    }
+    
+    /**
+     * Extract nodes at each level recursively
+     *
+     * @param array $children
+     * @param array &$levels
+     * @param int $currentLevel
+     * @return void
+     */
+    protected function extractLevelNodes(array $children, array &$levels, int $currentLevel): void
+    {
+        if ($currentLevel > 3 || empty($children)) {
+            return;
+        }
+        
+        $levelKey = "level_{$currentLevel}";
+        
+        foreach ($children as $child) {
+            $levels[$levelKey][] = [
+                'id' => $child['user']['id'] ?? null,
+                'name' => $child['user']['name'] ?? 'Unknown',
+                'email' => $child['user']['email'] ?? '',
+                'tier' => $child['user']['tier'] ?? 'No Tier',
+                'investment_amount' => $child['user']['total_investment'] ?? 0,
+                'is_empty' => empty($child['user']['id']),
+                'is_direct' => $currentLevel === 1,
+                'is_spillover' => $currentLevel > 1,
+                'status' => 'active',
+                'position' => $child['position'] ?? 0,
+                'level' => $currentLevel
+            ];
+            
+            // Process next level
+            if (!empty($child['children'])) {
+                $this->extractLevelNodes($child['children'], $levels, $currentLevel + 1);
+            }
+        }
     }
 
     /**
@@ -702,8 +794,9 @@ class ReferralMatrixService
      */
     protected function countSpilloverReceived(User $user): int
     {
+        // Count positions where sponsor_id is user but level > 1 (spillover positions)
         return MatrixPosition::where('sponsor_id', $user->id)
-            ->where('placement_type', 'spillover')
+            ->where('level', '>', 1)
             ->where('is_active', true)
             ->count();
     }
@@ -716,11 +809,12 @@ class ReferralMatrixService
      */
     protected function countSpilloverGiven(User $user): int
     {
-        // Count positions where user benefited from spillover from others
-        return MatrixPosition::where('user_id', $user->id)
-            ->where('placement_type', 'spillover')
-            ->where('is_active', true)
-            ->count();
+        // Count positions where user benefited from spillover (placed at level > 1 under someone)
+        $position = $user->getMatrixPosition();
+        if (!$position || $position->level <= 1) {
+            return 0;
+        }
+        return 1; // User was placed via spillover
     }
 
     /**
