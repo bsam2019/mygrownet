@@ -475,11 +475,15 @@ const positionBonuses = [
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <p class="text-sm text-blue-900">
-                            <span class="font-semibold">💡 Point Value:</span> Each LP or BP is worth K2. 
-                            Your welcome bonus of 35 LP + 25 BP = K120 total value!
+                    <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                        <p class="text-sm text-green-900 mb-2">
+                            <span class="font-semibold">🎁 Welcome Bonus Breakdown:</span>
                         </p>
+                        <ul class="text-sm text-green-900 space-y-1 ml-4">
+                            <li>• <strong>K225</strong> instant cash bonus</li>
+                            <li>• <strong>35 LP + 25 BP</strong> points (K120 value at K2 per point)</li>
+                            <li>• <strong>Total: K345</strong> welcome package!</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -519,7 +523,7 @@ const positionBonuses = [
                         
                         <div>
                             <h3 class="text-lg font-bold text-blue-600 mb-3">Step 2: Get Your Welcome Bonus</h3>
-                            <p class="text-gray-700">Receive 35 LP + 25 BP (K120 value) upon registration</p>
+                            <p class="text-gray-700">Receive K225 cash + 35 LP + 25 BP (Total: K345 value) upon registration</p>
                         </div>
                         
                         <div>

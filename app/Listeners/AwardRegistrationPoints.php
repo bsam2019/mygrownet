@@ -18,27 +18,43 @@ class AwardRegistrationPoints implements ShouldQueue
     public function handle($event): void
     {
         try {
+            $user = $event->user;
+
+            // Award cash bonus (K225)
+            $user->increment('balance', 225);
+
+            // Create transaction record for cash bonus
+            \App\Models\Transaction::create([
+                'user_id' => $user->id,
+                'type' => 'registration_bonus',
+                'amount' => 225,
+                'status' => 'completed',
+                'description' => 'Welcome bonus: K225 cash',
+            ]);
+
             // Award initial points to new member
             // 35 LP (Lifetime Points) + 25 BP (Bonus Points/Monthly Activity Points)
             // Value per point: K2 (Total value: K120)
             $this->pointService->awardPoints(
-                user: $event->user,
+                user: $user,
                 source: 'registration',
                 lpAmount: 35,
                 mapAmount: 25, // MAP (Monthly Activity Points) = BP (Bonus Points)
                 description: "Welcome to MyGrowNet! Registration bonus: 35 LP + 25 BP (K120 value)",
-                reference: $event->user
+                reference: $user
             );
 
-            Log::info('Registration points awarded', [
-                'user_id' => $event->user->id,
-                'user_name' => $event->user->name,
+            Log::info('Registration bonus awarded', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'cash_bonus' => 'K225',
                 'lp_awarded' => 35,
                 'bp_awarded' => 25,
-                'total_value' => 'K120',
+                'points_value' => 'K120',
+                'total_bonus' => 'K345',
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to award registration points', [
+            Log::error('Failed to award registration bonus', [
                 'error' => $e->getMessage(),
                 'user_id' => $event->user->id ?? null,
             ]);
