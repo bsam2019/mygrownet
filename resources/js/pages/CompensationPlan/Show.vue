@@ -41,13 +41,13 @@ const sections = [
 
 // Position Bonus (Milestone Rewards) Data
 const positionBonuses = [
-    { position: 'Associate', teamSize: 3, cumulative: 3, lpEstimate: 0, milestoneBonus: 0 },
-    { position: 'Professional', teamSize: 9, cumulative: 12, lpEstimate: 5000, milestoneBonus: 500 },
-    { position: 'Senior', teamSize: 27, cumulative: 39, lpEstimate: 8000, milestoneBonus: 1500 },
-    { position: 'Manager', teamSize: 81, cumulative: 120, lpEstimate: 25000, milestoneBonus: 5000 },
-    { position: 'Director', teamSize: 243, cumulative: 363, lpEstimate: 120000, milestoneBonus: 15000 },
-    { position: 'Executive', teamSize: 729, cumulative: 1092, lpEstimate: 320000, milestoneBonus: 50000 },
-    { position: 'Ambassador', teamSize: 2187, cumulative: 3279, lpEstimate: 700000, milestoneBonus: 150000 },
+    { position: 'Associate', teamSize: 3, cumulative: 3, lpEstimate: 0, milestoneBonus: '-', physicalReward: null },
+    { position: 'Professional', teamSize: 9, cumulative: 12, lpEstimate: 2500, milestoneBonus: 'K500', physicalReward: null },
+    { position: 'Senior', teamSize: 27, cumulative: 39, lpEstimate: 4000, milestoneBonus: 'K1,500 + Smartphone', physicalReward: 'Smartphone' },
+    { position: 'Manager', teamSize: 81, cumulative: 120, lpEstimate: 12500, milestoneBonus: 'K5,000 + Motorbike', physicalReward: 'Motorbike' },
+    { position: 'Director', teamSize: 243, cumulative: 363, lpEstimate: 60000, milestoneBonus: 'K15,000 + Vehicle', physicalReward: 'Vehicle' },
+    { position: 'Executive', teamSize: 729, cumulative: 1092, lpEstimate: 160000, milestoneBonus: 'K50,000 + Luxury', physicalReward: 'Luxury Vehicle' },
+    { position: 'Ambassador', teamSize: 2187, cumulative: 3279, lpEstimate: 350000, milestoneBonus: 'K150,000 + Property', physicalReward: 'Investment Property' },
 ];
 </script>
 
@@ -245,8 +245,8 @@ const positionBonuses = [
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600">
                                             {{ formatNumber(bonus.lpEstimate) }} LP
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-green-600">
-                                            {{ bonus.milestoneBonus > 0 ? 'K' + formatNumber(bonus.milestoneBonus) : '-' }}
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-emerald-600">
+                                            {{ bonus.milestoneBonus }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -261,22 +261,25 @@ const positionBonuses = [
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-600 text-white">
                                         {{ bonus.position }}
                                     </span>
-                                    <span v-if="bonus.milestoneBonus > 0" class="text-sm font-bold text-green-600">
-                                        K{{ formatNumber(bonus.milestoneBonus) }}
-                                    </span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                        <p class="text-purple-700">Team Size</p>
-                                        <p class="font-medium text-gray-900">{{ formatNumber(bonus.teamSize) }}</p>
+                                <div class="space-y-3 text-sm">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p class="text-purple-700">Team Size</p>
+                                            <p class="font-medium text-gray-900">{{ formatNumber(bonus.teamSize) }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-purple-700">Cumulative</p>
+                                            <p class="font-medium text-gray-900">{{ formatNumber(bonus.cumulative) }}</p>
+                                        </div>
                                     </div>
                                     <div>
-                                        <p class="text-purple-700">Cumulative</p>
-                                        <p class="font-medium text-gray-900">{{ formatNumber(bonus.cumulative) }}</p>
-                                    </div>
-                                    <div class="col-span-2">
                                         <p class="text-purple-700">LP Estimate</p>
                                         <p class="text-lg font-bold text-indigo-600">{{ formatNumber(bonus.lpEstimate) }} LP</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-purple-700">Milestone Bonus</p>
+                                        <p class="text-base font-bold text-emerald-600">{{ bonus.milestoneBonus }}</p>
                                     </div>
                                 </div>
                             </div>
