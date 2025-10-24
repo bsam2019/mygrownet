@@ -360,25 +360,26 @@ const positionBonuses = [
                     
                     <!-- Income Stream 1 -->
                     <div class="mb-8">
-                        <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool (BP-Based)</h3>
+                        <h3 class="text-xl font-bold text-blue-600 mb-3">1. Monthly Bonus Pool (BP-Based Distribution)</h3>
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
-                            <p class="font-semibold mb-2">60% of monthly platform profits shared based on your BP!</p>
-                            <p class="text-gray-700 text-sm mb-2"><strong>Revenue Sources:</strong> MyGrow Investments returns, Shop sales, Subscription fees, Partnership revenues</p>
+                            <p class="font-semibold mb-2">60% of monthly company profits distributed based on your BP share!</p>
+                            <p class="text-gray-700 text-sm mb-2"><strong>Profit Sources:</strong> MyGrow Investments returns, MyGrow Shop profits, Partnership revenues, Service fees</p>
                             <p class="text-gray-700">Formula: <strong>Your Bonus = (Your BP ÷ Total BP) × 60% of Monthly Profit</strong></p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-4">
                             <p class="font-semibold mb-2">How You Earn BP:</p>
                             <ul class="text-sm text-gray-700 space-y-1 mb-3">
-                                <li>• <strong>Referral Commissions:</strong> Converted to BP (K75 = 37.5 BP)</li>
-                                <li>• <strong>Product Sales:</strong> 10-20 BP per K100</li>
-                                <li>• <strong>Course Completion:</strong> 30-100 BP</li>
-                                <li>• <strong>Daily Engagement:</strong> 5-200 BP via streaks</li>
-                                <li>• <strong>Monthly Subscription:</strong> 25 BP</li>
+                                <li>• <strong>Referrals:</strong> 37.5 BP per Level 1 referral (from K75 commission)</li>
+                                <li>• <strong>Product Sales:</strong> 10-20 BP per K100 sold</li>
+                                <li>• <strong>Courses:</strong> 30-100 BP per completion</li>
+                                <li>• <strong>Daily Login:</strong> 5 BP/day, 50 BP/week streak, 200 BP/month streak</li>
+                                <li>• <strong>Subscription Renewal:</strong> 25 BP/month</li>
                             </ul>
                             <p class="font-semibold mb-2">Example Distribution:</p>
-                            <p class="text-sm text-gray-700">Monthly Profit: K100,000 | Bonus Pool (60%): K60,000</p>
-                            <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total BP</p>
-                            <p class="text-lg font-bold text-emerald-600 mt-2">Your Bonus = K600</p>
+                            <p class="text-sm text-gray-700">Company Monthly Profit: K100,000 | Bonus Pool (60%): K60,000</p>
+                            <p class="text-sm text-gray-700">You earned: 500 BP out of 50,000 total BP in platform</p>
+                            <p class="text-lg font-bold text-emerald-600 mt-2">Your Share = K600</p>
+                            <p class="text-xs text-gray-500 mt-2">The more BP you earn through activities, the bigger your monthly bonus!</p>
                         </div>
                     </div>
 
