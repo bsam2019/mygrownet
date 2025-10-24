@@ -100,10 +100,13 @@ const positionBonuses = [
                                             Commission %
                                         </th>
                                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Per Person
+                                            Cash Value
                                         </th>
                                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Potential Earnings
+                                            BP Earned
+                                        </th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Total BP Potential
                                         </th>
                                     </tr>
                                 </thead>
@@ -125,11 +128,14 @@ const positionBonuses = [
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
                                             K{{ formatNumber(level.per_person) }}
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600">
+                                            {{ (level.per_person / 2).toFixed(1) }} BP
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-emerald-600">
-                                            K{{ formatNumber(level.potential_earnings) }}
+                                            {{ formatNumber(Math.round(level.potential_earnings / 2)) }} BP
                                         </td>
                                     </tr>
-                                    <tr class="bg-gray-50 font-bold">
+                                    <tr class="bg-blue-50 font-bold">
                                         <td class="px-6 py-4 text-left text-sm text-gray-900">
                                             TOTAL
                                         </td>
@@ -139,9 +145,12 @@ const positionBonuses = [
                                         <td class="px-6 py-4 text-right text-sm text-gray-900">
                                             48%
                                         </td>
+                                        <td class="px-6 py-4 text-right text-sm text-gray-600">
+                                            K{{ formatNumber(totalPotential) }}
+                                        </td>
                                         <td class="px-6 py-4"></td>
                                         <td class="px-6 py-4 text-right text-lg text-emerald-600">
-                                            K{{ formatNumber(totalPotential) }}
+                                            {{ formatNumber(Math.round(totalPotential / 2)) }} BP
                                         </td>
                                     </tr>
                                 </tbody>
@@ -463,10 +472,10 @@ const positionBonuses = [
                             <tbody class="bg-white divide-y divide-gray-200 text-sm">
                                 <tr class="bg-green-50">
                                     <td class="px-4 py-2 font-semibold text-green-900">Registration (Welcome Bonus)</td>
-                                    <td class="px-4 py-2 text-center font-bold text-green-600">35</td>
                                     <td class="px-4 py-2 text-center font-bold text-green-600">25</td>
+                                    <td class="px-4 py-2 text-center font-bold text-green-600">-</td>
                                 </tr>
-                                <tr><td class="px-4 py-2">Direct referral</td><td class="px-4 py-2 text-center font-semibold">150</td><td class="px-4 py-2 text-center font-semibold">150</td></tr>
+                                <tr><td class="px-4 py-2">Direct referral (you earn)</td><td class="px-4 py-2 text-center font-semibold">150</td><td class="px-4 py-2 text-center font-semibold">150</td></tr>
                                 <tr><td class="px-4 py-2">Complete basic course</td><td class="px-4 py-2 text-center">30</td><td class="px-4 py-2 text-center">30</td></tr>
                                 <tr><td class="px-4 py-2">Complete advanced course</td><td class="px-4 py-2 text-center">60</td><td class="px-4 py-2 text-center">60</td></tr>
                                 <tr><td class="px-4 py-2">Attend workshop</td><td class="px-4 py-2 text-center">50</td><td class="px-4 py-2 text-center">50</td></tr>
@@ -475,14 +484,15 @@ const positionBonuses = [
                             </tbody>
                         </table>
                     </div>
-                    <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <p class="text-sm text-green-900 mb-2">
-                            <span class="font-semibold">🎁 Welcome Bonus Breakdown:</span>
+                    <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                        <p class="text-sm text-blue-900 mb-2">
+                            <span class="font-semibold">💡 How Points Work:</span>
                         </p>
-                        <ul class="text-sm text-green-900 space-y-1 ml-4">
-                            <li>• <strong>K225</strong> instant cash bonus</li>
-                            <li>• <strong>35 LP + 25 BP</strong> points (K120 value at K2 per point)</li>
-                            <li>• <strong>Total: K345</strong> welcome package!</li>
+                        <ul class="text-sm text-blue-900 space-y-1 ml-4">
+                            <li>• <strong>Registration:</strong> Get 25 LP to start your journey</li>
+                            <li>• <strong>Referral Commissions:</strong> Converted to BP at K2 per point (e.g., K75 = 37.5 BP)</li>
+                            <li>• <strong>LP Value:</strong> K2 per point for level advancement</li>
+                            <li>• <strong>BP Value:</strong> K2 per point for monthly bonus pool</li>
                         </ul>
                     </div>
                 </div>
@@ -523,7 +533,7 @@ const positionBonuses = [
                         
                         <div>
                             <h3 class="text-lg font-bold text-blue-600 mb-3">Step 2: Get Your Welcome Bonus</h3>
-                            <p class="text-gray-700">Receive K225 cash + 35 LP + 25 BP (Total: K345 value) upon registration</p>
+                            <p class="text-gray-700">Receive 25 LP (Lifetime Points) upon registration to start your journey</p>
                         </div>
                         
                         <div>

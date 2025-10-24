@@ -247,6 +247,7 @@ class ReferralCommission extends Model
 
     /**
      * Process commission payment
+     * Converts commission amount to BP (Bonus Points) at K2 per point
      */
     public function processPayment(): bool
     {
@@ -259,13 +260,25 @@ class ReferralCommission extends Model
             'paid_at' => now()
         ]);
 
-        // Update referrer's balance
-        $this->referrer->increment('balance', $this->amount);
+        // Convert commission to BP (Bonus Points)
+        // Value per BP: K2, so BP = Amount ÷ 2
+        $bpAmount = $this->amount / 2;
+
+        // Award BP to referrer using PointService
+        $pointService = app(\App\Services\PointService::class);
+        $pointService->awardPoints(
+            user: $this->referrer,
+            source: 'referral_commission',
+            lpAmount: 0, // No LP for commissions
+            mapAmount: (int) round($bpAmount), // Convert to BP (MAP = Monthly Activity Points = BP)
+            description: "Level {$this->level} referral commission: K{$this->amount} = {$bpAmount} BP",
+            reference: $this
+        );
         
         // Record activity
         $this->referrer->recordActivity(
             'commission_received',
-            "Received K{$this->amount} Level {$this->level} {$this->commission_type} commission"
+            "Received {$bpAmount} BP (K{$this->amount} value) - Level {$this->level} {$this->commission_type} commission"
         );
 
         return true;

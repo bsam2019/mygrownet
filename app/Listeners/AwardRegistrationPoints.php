@@ -20,41 +20,26 @@ class AwardRegistrationPoints implements ShouldQueue
         try {
             $user = $event->user;
 
-            // Award cash bonus (K225)
-            $user->increment('balance', 225);
-
-            // Create transaction record for cash bonus
-            \App\Models\Transaction::create([
-                'user_id' => $user->id,
-                'type' => 'registration_bonus',
-                'amount' => 225,
-                'status' => 'completed',
-                'description' => 'Welcome bonus: K225 cash',
-            ]);
-
-            // Award initial points to new member
-            // 35 LP (Lifetime Points) + 25 BP (Bonus Points/Monthly Activity Points)
-            // Value per point: K2 (Total value: K120)
+            // Award initial Lifetime Points to new member
+            // 25 LP (Lifetime Points) - for level progression
+            // No cash or BP on registration - those come from referral commissions
             $this->pointService->awardPoints(
                 user: $user,
                 source: 'registration',
-                lpAmount: 35,
-                mapAmount: 25, // MAP (Monthly Activity Points) = BP (Bonus Points)
-                description: "Welcome to MyGrowNet! Registration bonus: 35 LP + 25 BP (K120 value)",
+                lpAmount: 25,
+                mapAmount: 0, // No BP on registration
+                description: "Welcome to MyGrowNet! Registration bonus: 25 LP",
                 reference: $user
             );
 
-            Log::info('Registration bonus awarded', [
+            Log::info('Registration points awarded', [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
-                'cash_bonus' => 'K225',
-                'lp_awarded' => 35,
-                'bp_awarded' => 25,
-                'points_value' => 'K120',
-                'total_bonus' => 'K345',
+                'lp_awarded' => 25,
+                'bp_awarded' => 0,
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to award registration bonus', [
+            Log::error('Failed to award registration points', [
                 'error' => $e->getMessage(),
                 'user_id' => $event->user->id ?? null,
             ]);
