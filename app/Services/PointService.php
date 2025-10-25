@@ -50,6 +50,20 @@ class PointService
             $userPoints->increment('monthly_points', $finalMAP);
             $userPoints->touch('last_activity_date');
 
+            // Update user's bonus_points column (sync with monthly_points)
+            Log::info("Before BP increment", [
+                'user_id' => $user->id,
+                'current_bp' => $user->bonus_points,
+                'increment_amount' => $finalMAP
+            ]);
+            
+            $user->increment('bonus_points', $finalMAP);
+            
+            Log::info("After BP increment", [
+                'user_id' => $user->id,
+                'new_bp' => $user->fresh()->bonus_points
+            ]);
+            
             // Update user activity
             $user->update(['is_currently_active' => true]);
 

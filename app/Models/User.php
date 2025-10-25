@@ -1450,8 +1450,8 @@ class User extends Authenticatable
             return;
         }
 
-        // Add to user's monthly BP
-        $this->increment('monthly_activity_points', $amount);
+        // Add to user's BP (Bonus Points)
+        $this->increment('bonus_points', $amount);
 
         // Record transaction
         \App\Models\PointTransaction::create([

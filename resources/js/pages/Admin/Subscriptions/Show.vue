@@ -82,8 +82,8 @@
                                         </p>
                                     </div>
                                     <div>
-                                        <label class="text-sm font-medium text-gray-500">Monthly Activity Points (BP)</label>
-                                        <p class="text-lg font-semibold text-green-600">{{ user.monthly_activity_points?.toLocaleString() || 0 }}</p>
+                                        <label class="text-sm font-medium text-gray-500">Bonus Points (BP)</label>
+                                        <p class="text-lg font-semibold text-green-600">{{ user.bonus_points?.toLocaleString() || 0 }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -331,7 +331,7 @@ interface User {
     subscription_status: string;
     subscription_expires_at: string;
     life_points: number;
-    monthly_activity_points: number;
+    bonus_points: number;
     wallet_balance: number;
     total_referrals: number;
     total_commissions: number;

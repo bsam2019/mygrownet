@@ -133,27 +133,35 @@ class MLMCommissionService
     }
     
     /**
-     * Get upline referrers efficiently using network path
+     * Get upline referrers efficiently using network path or referrer_id chain
      */
     protected function getUplineReferrers(User $user, int $maxLevels = 7): array
     {
-        if (!$user->network_path) {
-            // Fallback to UserNetwork model if path not set
-            return UserNetwork::getUplineReferrers($user->id, $maxLevels);
-        }
-        
-        $pathArray = explode('.', $user->network_path);
-        array_pop($pathArray); // Remove user's own ID
-        
         $upline = [];
-        $levels = array_slice(array_reverse($pathArray), 0, $maxLevels);
+        $currentUser = $user;
+        $level = 1;
         
-        foreach ($levels as $index => $referrerId) {
+        // Walk up the referrer chain
+        while ($currentUser->referrer_id && $level <= $maxLevels) {
             $upline[] = [
-                'user_id' => (int) $referrerId,
-                'level' => $index + 1
+                'user_id' => $currentUser->referrer_id,
+                'level' => $level
             ];
+            
+            // Get the next referrer
+            $currentUser = User::find($currentUser->referrer_id);
+            if (!$currentUser) {
+                break;
+            }
+            
+            $level++;
         }
+        
+        Log::info("Built upline chain", [
+            'user_id' => $user->id,
+            'upline_count' => count($upline),
+            'upline' => $upline
+        ]);
         
         return $upline;
     }

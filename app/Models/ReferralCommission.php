@@ -278,7 +278,7 @@ class ReferralCommission extends Model
             user: $this->referrer,
             source: 'referral_commission',
             lpAmount: 0, // No LP for commissions
-            mapAmount: (int) round($bpAmount), // Convert to BP (MAP = Monthly Activity Points = BP)
+            mapAmount: (int) round($bpAmount), // BP awarded as MAP (Monthly Activity Points)
             description: "Level {$this->level} referral commission: K{$this->amount} = {$bpAmount} BP",
             reference: $this
         );
