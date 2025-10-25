@@ -249,21 +249,24 @@ const navGroups = computed((): NavGroup[] => {
             </SidebarMenu>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent class="overflow-y-auto">
             <!-- Standalone Dashboard Link -->
-            <SidebarMenu class="px-2 py-2">
+            <SidebarMenu class="px-2 py-2 md:py-1.5">
                 <SidebarMenuItem title="Dashboard">
                     <SidebarMenuButton
                         as-child
                         :is-active="$page.url === route('dashboard')"
-                        :class="$page.url === route('dashboard')
-                            ? 'border-l-2 border-[#2563eb] bg-[#eff6ff] text-[#1d4ed8]'
-                            : ''"
+                        :class="[
+                            'py-2.5 md:py-2 min-h-[44px] md:min-h-0',
+                            $page.url === route('dashboard')
+                                ? 'border-l-2 border-[#2563eb] bg-[#eff6ff] text-[#1d4ed8]'
+                                : ''
+                        ]"
                         title="Dashboard"
                     >
-                        <Link :href="route('dashboard')">
-                            <HomeIcon />
-                            <span>Dashboard</span>
+                        <Link :href="route('dashboard')" class="flex items-center gap-3 md:gap-2 w-full">
+                            <HomeIcon class="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+                            <span class="truncate">Dashboard</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

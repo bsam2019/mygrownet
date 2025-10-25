@@ -96,6 +96,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/bulk-award', [App\Http\Controllers\Admin\AdminPointsController::class, 'bulkAwardPoints'])->name('bulk-award');
         Route::get('/statistics', [App\Http\Controllers\Admin\AdminPointsController::class, 'statistics'])->name('statistics');
     });
+
+    // Admin Impersonation Routes
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::post('/impersonate/{user}', [App\Http\Controllers\Admin\ImpersonateController::class, 'impersonate'])->name('impersonate');
+    });
+    
+    // Leave impersonation - no admin middleware needed (user is impersonated)
+    Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
     Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
     Route::get('/dashboard/stats', [DashboardStatsController::class, 'index'])->name('dashboard.stats');
     

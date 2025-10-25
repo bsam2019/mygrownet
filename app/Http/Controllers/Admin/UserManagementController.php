@@ -9,14 +9,55 @@ use Inertia\Inertia;
 
 class UserManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $query = User::query()->with(['roles']);
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Role filter
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+
+        // Professional level filter
+        if ($request->filled('level')) {
+            $query->where('current_professional_level', $request->level);
+        }
+
+        // Date range filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Sort
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
         return Inertia::render('Admin/Users/Index', [
-            'users' => User::query()
-                ->with(['roles'])
-                ->select(['id', 'name', 'email', 'phone', 'status', 'last_login_at', 'created_at'])
-                ->latest()
+            'users' => $query
+                ->select(['id', 'name', 'email', 'phone', 'status', 'current_professional_level', 'last_login_at', 'created_at'])
                 ->paginate(50)
+                ->withQueryString()
                 ->through(fn ($user) => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -24,10 +65,21 @@ class UserManagementController extends Controller
                     'phone' => $user->phone,
                     'status' => $user->status,
                     'role' => $user->roles->first()?->name ?? 'user',
+                    'level' => $user->current_professional_level,
                     'created_at' => $user->created_at,
                     'last_login_at' => $user->last_login_at
                 ]),
-            'roles' => \App\Models\Role::select('id', 'name')->get()
+            'roles' => \App\Models\Role::select('id', 'name')->get(),
+            'filters' => $request->only(['search', 'status', 'role', 'level', 'date_from', 'date_to', 'sort', 'direction']),
+            'professionalLevels' => [
+                'associate' => 'Associate',
+                'professional' => 'Professional',
+                'senior' => 'Senior',
+                'manager' => 'Manager',
+                'director' => 'Director',
+                'executive' => 'Executive',
+                'ambassador' => 'Ambassador',
+            ]
         ]);
     }
 

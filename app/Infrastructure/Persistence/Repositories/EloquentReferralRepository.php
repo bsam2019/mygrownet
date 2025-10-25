@@ -157,7 +157,7 @@ class EloquentReferralRepository implements ReferralRepositoryInterface
         });
 
         return [
-            'total_referrals_count' => $allReferrals->count(),
+            'total_referrals_count' => $directReferrals->count(), // Show direct referrals as total for now
             'active_referrals_count' => $activeReferrals->count(),
             'direct_referrals_count' => $directReferrals->count(),
             'total_commission_earned' => $totalCommissionEarned,

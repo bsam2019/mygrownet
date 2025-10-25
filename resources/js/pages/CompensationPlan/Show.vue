@@ -440,7 +440,9 @@ const positionBonuses = [
                     <div class="mb-8">
                         <h3 class="text-xl font-bold text-blue-600 mb-3">6. Milestone Rewards</h3>
                         <p class="text-gray-700 mb-4">Earn bonuses as you advance through professional levels:</p>
-                        <div class="overflow-x-auto">
+                        
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
@@ -458,6 +460,51 @@ const positionBonuses = [
                                     <tr><td class="px-4 py-2">Ambassador</td><td class="px-4 py-2 font-semibold text-emerald-600">K150,000</td><td class="px-4 py-2">Property</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Mobile Cards -->
+                        <div class="md:hidden space-y-3">
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Professional</span>
+                                    <span class="text-lg font-bold text-emerald-600">K500</span>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Senior</span>
+                                    <span class="text-lg font-bold text-emerald-600">K1,500</span>
+                                </div>
+                                <p class="text-sm text-gray-600">+ Smartphone</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Manager</span>
+                                    <span class="text-lg font-bold text-emerald-600">K5,000</span>
+                                </div>
+                                <p class="text-sm text-gray-600">+ Motorbike</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Director</span>
+                                    <span class="text-lg font-bold text-emerald-600">K15,000</span>
+                                </div>
+                                <p class="text-sm text-gray-600">+ Vehicle</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-green-50">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Executive</span>
+                                    <span class="text-lg font-bold text-emerald-600">K50,000</span>
+                                </div>
+                                <p class="text-sm text-gray-600">+ Luxury Rewards</p>
+                            </div>
+                            <div class="border-2 border-emerald-500 rounded-lg p-4 bg-gradient-to-r from-emerald-100 to-green-100">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-900">Ambassador</span>
+                                    <span class="text-xl font-bold text-emerald-600">K150,000</span>
+                                </div>
+                                <p class="text-sm font-semibold text-gray-700">+ Investment Property</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -491,7 +538,9 @@ const positionBonuses = [
                     </div>
 
                     <h3 class="text-xl font-bold text-gray-900 mb-4">How to Earn Points</h3>
-                    <div class="overflow-x-auto">
+                    
+                    <!-- Desktop Table -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -520,6 +569,66 @@ const positionBonuses = [
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="md:hidden space-y-2">
+                        <div class="border-2 border-green-500 rounded-lg p-3 bg-green-50">
+                            <p class="font-semibold text-green-900 text-sm mb-1">Registration (Welcome Package)</p>
+                            <div class="flex justify-between text-sm">
+                                <span class="font-bold text-green-600">25 LP</span>
+                                <span class="font-bold text-green-600">K225 cash</span>
+                            </div>
+                        </div>
+                        <div class="border-2 border-blue-500 rounded-lg p-3 bg-blue-50">
+                            <p class="font-semibold text-blue-900 text-sm mb-1">Level 1 Referral Commission</p>
+                            <div class="flex justify-between text-sm">
+                                <span class="font-bold text-blue-600">-</span>
+                                <span class="font-bold text-blue-600">37.5 BP</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Direct referral (they get)</p>
+                            <div class="flex justify-between text-sm">
+                                <span class="font-semibold">25 LP</span>
+                                <span class="font-semibold">K225 cash</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Complete basic course</p>
+                            <div class="flex justify-between text-sm">
+                                <span>30 LP</span>
+                                <span>30 BP</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Complete advanced course</p>
+                            <div class="flex justify-between text-sm">
+                                <span>60 LP</span>
+                                <span>60 BP</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Attend workshop</p>
+                            <div class="flex justify-between text-sm">
+                                <span>50 LP</span>
+                                <span>50 BP</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Monthly subscription</p>
+                            <div class="flex justify-between text-sm">
+                                <span>25 LP</span>
+                                <span>25 BP</span>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                            <p class="text-sm mb-1">Personal purchase (per K100)</p>
+                            <div class="flex justify-between text-sm">
+                                <span>10 LP</span>
+                                <span>10 BP</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mt-6 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
                         <h4 class="text-lg font-bold text-emerald-900 mb-3">🎯 How Referral Commissions Work</h4>
                         <div class="grid md:grid-cols-2 gap-4 text-sm text-emerald-900">
@@ -547,7 +656,9 @@ const positionBonuses = [
                 <!-- Income Potential -->
                 <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 mb-8">
                     <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Income Potential by Level</h2>
-                    <div class="overflow-x-auto">
+                    
+                    <!-- Desktop Table -->
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -565,6 +676,38 @@ const positionBonuses = [
                                 <tr><td class="px-6 py-3">Ambassador</td><td class="px-6 py-3 text-right font-bold text-emerald-600">K25,000 - K50,000+</td></tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="md:hidden space-y-3">
+                        <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <span class="font-medium text-gray-900">Associate</span>
+                            <span class="font-semibold text-gray-900">K100 - K300</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <span class="font-medium text-gray-900">Professional</span>
+                            <span class="font-semibold text-gray-900">K300 - K800</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <span class="font-medium text-gray-900">Senior</span>
+                            <span class="font-semibold text-gray-900">K800 - K2,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border border-emerald-200 rounded-lg bg-emerald-50">
+                            <span class="font-medium text-gray-900">Manager</span>
+                            <span class="font-semibold text-emerald-600">K2,000 - K5,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border border-emerald-200 rounded-lg bg-emerald-50">
+                            <span class="font-medium text-gray-900">Director</span>
+                            <span class="font-semibold text-emerald-600">K5,000 - K12,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border border-emerald-200 rounded-lg bg-emerald-50">
+                            <span class="font-medium text-gray-900">Executive</span>
+                            <span class="font-semibold text-emerald-600">K12,000 - K25,000</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 border-2 border-emerald-500 rounded-lg bg-gradient-to-r from-emerald-100 to-green-100">
+                            <span class="font-bold text-gray-900">Ambassador</span>
+                            <span class="text-lg font-bold text-emerald-600">K25,000 - K50,000+</span>
+                        </div>
                     </div>
                 </div>
 

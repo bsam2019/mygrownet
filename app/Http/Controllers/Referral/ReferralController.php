@@ -30,20 +30,8 @@ class ReferralController extends Controller
         // Get comprehensive referral statistics
         $referralStats = $this->referralRepository->getReferralStatistics($user);
         
-        // Get matrix visualization data
-        $matrixData = $this->matrixService->generateMatrixVisualizationData($user);
-        
-        // Ensure matrixData has the expected structure
-        if (!isset($matrixData['levels'])) {
-            $matrixData = [
-                'root' => null,
-                'levels' => [
-                    'level_1' => [],
-                    'level_2' => [],
-                    'level_3' => []
-                ]
-            ];
-        }
+        // Get matrix visualization data - build directly from referrer relationships
+        $matrixData = $this->buildSimpleMatrixVisualization($user);
         
         // Get all direct referrals (team members) with their details
         $teamMembers = $this->referralRepository->getDirectReferrals($user)
@@ -73,20 +61,22 @@ class ReferralController extends Controller
         // Get earnings breakdown
         $earningsBreakdown = $this->getEarningsBreakdown($user);
         
-        // Get matrix performance metrics
-        $matrixPerformance = $this->matrixService->getMatrixPerformanceMetrics($user);
+        // Get 7-level network statistics
+        $networkStats = $this->get7LevelNetworkStats($user);
         
-        // Ensure matrixPerformance has the expected structure
-        if (!is_array($matrixPerformance)) {
-            $matrixPerformance = [
-                'level_1_count' => 0,
-                'level_2_count' => 0,
-                'level_3_count' => 0,
-                'total_earnings' => 0,
-                'filled_positions' => 0,
-                'total_positions' => 39
-            ];
-        }
+        // Get matrix performance metrics (for backward compatibility)
+        $matrixPerformance = [
+            'level_1_count' => $networkStats['level_1_count'],
+            'level_2_count' => $networkStats['level_2_count'],
+            'level_3_count' => $networkStats['level_3_count'],
+            'level_4_count' => $networkStats['level_4_count'] ?? 0,
+            'level_5_count' => $networkStats['level_5_count'] ?? 0,
+            'level_6_count' => $networkStats['level_6_count'] ?? 0,
+            'level_7_count' => $networkStats['level_7_count'] ?? 0,
+            'total_earnings' => $networkStats['total_earnings'],
+            'filled_positions' => $networkStats['total_network'],
+            'total_positions' => 3279 // 3+9+27+81+243+729+2187
+        ];
         
         // Get spillover information
         $spilloverInfo = $this->identifySpilloverOpportunities($user);
@@ -682,60 +672,69 @@ class ReferralController extends Controller
 
     private function calculateConversionRate(User $user): float
     {
+        // Conversion rate: referrals who have paid registration (active subscription)
         $directReferrals = $this->referralRepository->getDirectReferrals($user);
-        $activeInvestors = $directReferrals->filter(function($referral) {
-            return $referral->investments()->where('status', 'active')->exists();
+        $activeMembers = $directReferrals->filter(function($referral) {
+            return $referral->hasActiveSubscription();
         });
         
         return $directReferrals->count() > 0 
-            ? round(($activeInvestors->count() / $directReferrals->count()) * 100, 1)
+            ? round(($activeMembers->count() / $directReferrals->count()) * 100, 1)
             : 0;
     }
 
     private function calculateAverageInvestment(User $user): float
     {
+        // Average LP (Lifetime Points) per active member
         $directReferrals = $this->referralRepository->getDirectReferrals($user);
-        $totalInvestment = $directReferrals->sum(function($referral) {
-            return $referral->investments()->where('status', 'active')->sum('amount');
+        $activeMembers = $directReferrals->filter(function($referral) {
+            return $referral->hasActiveSubscription();
         });
         
-        $activeInvestors = $directReferrals->filter(function($referral) {
-            return $referral->investments()->where('status', 'active')->exists();
-        })->count();
+        $totalLP = $activeMembers->sum(function($referral) {
+            return $referral->points?->lifetime_points ?? 0;
+        });
         
-        return $activeInvestors > 0 ? $totalInvestment / $activeInvestors : 0;
+        return $activeMembers->count() > 0 ? round($totalLP / $activeMembers->count(), 0) : 0;
     }
 
     private function calculateRetentionRate(User $user): float
     {
+        // Retention: members who are still active after 3+ months
         $directReferrals = $this->referralRepository->getDirectReferrals($user);
-        $retainedReferrals = $directReferrals->filter(function($referral) {
-            return $referral->investments()
-                ->where('status', 'active')
-                ->where('created_at', '>=', now()->subMonths(6))
-                ->exists();
+        $oldMembers = $directReferrals->filter(function($referral) {
+            return $referral->created_at <= now()->subMonths(3);
         });
         
-        return $directReferrals->count() > 0 
-            ? round(($retainedReferrals->count() / $directReferrals->count()) * 100, 1)
-            : 0;
+        if ($oldMembers->count() === 0) {
+            return 0;
+        }
+        
+        $retainedMembers = $oldMembers->filter(function($referral) {
+            return $referral->status === 'active' && $referral->hasActiveSubscription();
+        });
+        
+        return round(($retainedMembers->count() / $oldMembers->count()) * 100, 1);
     }
 
     private function calculateMonthlyGrowthRate(User $user): float
     {
-        $thisMonth = $user->referralCommissions()
-            ->where('status', 'paid')
+        // Growth rate based on new referrals
+        $thisMonthReferrals = User::where('referrer_id', $user->id)
             ->whereMonth('created_at', now()->month)
-            ->sum('amount');
+            ->whereYear('created_at', now()->year)
+            ->count();
             
-        $lastMonth = $user->referralCommissions()
-            ->where('status', 'paid')
+        $lastMonthReferrals = User::where('referrer_id', $user->id)
             ->whereMonth('created_at', now()->subMonth()->month)
-            ->sum('amount');
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
         
-        return $lastMonth > 0 
-            ? round((($thisMonth - $lastMonth) / $lastMonth) * 100, 1)
-            : 0;
+        if ($lastMonthReferrals === 0) {
+            return $thisMonthReferrals > 0 ? 100 : 0;
+        }
+        
+        return round((($thisMonthReferrals - $lastMonthReferrals) / $lastMonthReferrals) * 100, 1);
     }
 
     private function getRecentActivity(User $user): array
@@ -782,24 +781,34 @@ class ReferralController extends Controller
 
     private function getTierDistribution(User $user): array
     {
+        // MyGrowNet uses professional levels, not investment tiers
         $directReferrals = $this->referralRepository->getDirectReferrals($user);
         
         $distribution = [];
-        $tiers = ['Basic', 'Starter', 'Builder', 'Leader', 'Elite'];
+        $levels = [
+            'associate' => 'Associate',
+            'professional' => 'Professional',
+            'senior' => 'Senior',
+            'manager' => 'Manager',
+            'director' => 'Director',
+            'executive' => 'Executive',
+            'ambassador' => 'Ambassador'
+        ];
         
-        foreach ($tiers as $tierName) {
-            $tierReferrals = $directReferrals->filter(function($referral) use ($tierName) {
-                return $referral->currentInvestmentTier?->name === $tierName;
+        foreach ($levels as $levelKey => $levelName) {
+            $levelReferrals = $directReferrals->filter(function($referral) use ($levelKey) {
+                return $referral->current_professional_level === $levelKey;
             });
             
-            $totalInvestment = $tierReferrals->sum(function($referral) {
-                return $referral->investments()->where('status', 'active')->sum('amount');
+            // Count total LP for this level
+            $totalLP = $levelReferrals->sum(function($referral) {
+                return $referral->points?->lifetime_points ?? 0;
             });
             
             $distribution[] = [
-                'name' => $tierName,
-                'count' => $tierReferrals->count(),
-                'total_investment' => $totalInvestment
+                'name' => $levelName,
+                'count' => $levelReferrals->count(),
+                'total_lp' => $totalLP
             ];
         }
         
@@ -832,26 +841,42 @@ class ReferralController extends Controller
 
     private function getMessageTemplates(): array
     {
-        return [
+        $user = auth()->user();
+        $referralCode = $user->referral_code ?? '';
+        $referralLink = $this->generateReferralLink($user);
+        
+        $templates = [
             [
                 'id' => 1,
-                'title' => 'Investment Opportunity',
-                'description' => 'Share the investment opportunity',
-                'message' => 'Hi! I wanted to share an amazing investment opportunity with you. Join VBIF and start earning returns on your investment. Use my referral code: {referral_code}'
+                'title' => 'Growth & Learning',
+                'description' => 'Share the learning and earning opportunity',
+                'template' => 'Hi! I wanted to share MyGrowNet with you - a platform where you can Learn, Earn, and Grow! Get access to skills training, mentorship, and multiple income streams. Join using my referral code: {referral_code}',
+                'message' => 'Hi! I wanted to share MyGrowNet with you - a platform where you can Learn, Earn, and Grow! Get access to skills training, mentorship, and multiple income streams. Join using my referral code: ' . $referralCode
             ],
             [
                 'id' => 2,
-                'title' => 'Financial Growth',
-                'description' => 'Focus on financial growth benefits',
-                'message' => 'Looking to grow your finances? VBIF offers structured investment tiers with guaranteed returns. Join using my link: {referral_link}'
+                'title' => 'Community Empowerment',
+                'description' => 'Focus on community and empowerment',
+                'template' => 'Join MyGrowNet and be part of a community that empowers members through education, mentorship, and profit-sharing. Build your network and grow together! Use my link: {referral_link}',
+                'message' => 'Join MyGrowNet and be part of a community that empowers members through education, mentorship, and profit-sharing. Build your network and grow together! Use my link: ' . $referralLink
             ],
             [
                 'id' => 3,
-                'title' => 'Community Investment',
-                'description' => 'Emphasize community aspect',
-                'message' => 'Join our investment community at VBIF! We\'re building wealth together through structured investments. Get started with my referral: {referral_code}'
+                'title' => 'Multiple Income Streams',
+                'description' => 'Emphasize earning opportunities',
+                'template' => 'Discover 6 powerful income streams with MyGrowNet! Earn through referrals, monthly bonus pools, quarterly profit-sharing, and more. Start your journey with my referral: {referral_code}',
+                'message' => 'Discover 6 powerful income streams with MyGrowNet! Earn through referrals, monthly bonus pools, quarterly profit-sharing, and more. Start your journey with my referral: ' . $referralCode
+            ],
+            [
+                'id' => 4,
+                'title' => 'Skills & Business',
+                'description' => 'Highlight skills and business development',
+                'template' => 'Want to learn practical skills while building a business? MyGrowNet offers training, coaching, and a 7-level professional growth system. Join me on this journey: {referral_link}',
+                'message' => 'Want to learn practical skills while building a business? MyGrowNet offers training, coaching, and a 7-level professional growth system. Join me on this journey: ' . $referralLink
             ]
         ];
+        
+        return $templates;
     }
 
     private function getEarningsBreakdown(User $user): array
@@ -897,6 +922,259 @@ class ReferralController extends Controller
             'matrix_bonuses' => $matrixBonuses,
             'reinvestment_bonuses' => $reinvestmentBonuses,
             'total' => $total
+        ];
+    }
+
+    /**
+     * Get 7-level network statistics
+     */
+    protected function get7LevelNetworkStats(User $user): array
+    {
+        $stats = [
+            'level_1_count' => 0,
+            'level_2_count' => 0,
+            'level_3_count' => 0,
+            'level_4_count' => 0,
+            'level_5_count' => 0,
+            'level_6_count' => 0,
+            'level_7_count' => 0,
+            'total_network' => 0,
+            'total_earnings' => 0,
+        ];
+
+        // Level 1: Direct referrals
+        $level1 = User::where('referrer_id', $user->id)->pluck('id');
+        $stats['level_1_count'] = $level1->count();
+
+        if ($level1->isEmpty()) {
+            return $stats;
+        }
+
+        // Level 2: Referrals of level 1
+        $level2 = User::whereIn('referrer_id', $level1)->pluck('id');
+        $stats['level_2_count'] = $level2->count();
+
+        if ($level2->isEmpty()) {
+            $stats['total_network'] = $stats['level_1_count'];
+            $stats['total_earnings'] = ReferralCommission::where('referrer_id', $user->id)->sum('amount');
+            return $stats;
+        }
+
+        // Level 3
+        $level3 = User::whereIn('referrer_id', $level2)->pluck('id');
+        $stats['level_3_count'] = $level3->count();
+
+        // Level 4
+        if ($level3->isNotEmpty()) {
+            $level4 = User::whereIn('referrer_id', $level3)->pluck('id');
+            $stats['level_4_count'] = $level4->count();
+
+            // Level 5
+            if ($level4->isNotEmpty()) {
+                $level5 = User::whereIn('referrer_id', $level4)->pluck('id');
+                $stats['level_5_count'] = $level5->count();
+
+                // Level 6
+                if ($level5->isNotEmpty()) {
+                    $level6 = User::whereIn('referrer_id', $level5)->pluck('id');
+                    $stats['level_6_count'] = $level6->count();
+
+                    // Level 7
+                    if ($level6->isNotEmpty()) {
+                        $level7 = User::whereIn('referrer_id', $level6)->pluck('id');
+                        $stats['level_7_count'] = $level7->count();
+                    }
+                }
+            }
+        }
+
+        // Calculate totals
+        $stats['total_network'] = $stats['level_1_count'] + $stats['level_2_count'] + 
+                                  $stats['level_3_count'] + $stats['level_4_count'] + 
+                                  $stats['level_5_count'] + $stats['level_6_count'] + 
+                                  $stats['level_7_count'];
+
+        // Get total earnings from commissions
+        $stats['total_earnings'] = ReferralCommission::where('referrer_id', $user->id)->sum('amount');
+
+        return $stats;
+    }
+
+    /**
+     * Build simple matrix visualization from referrer relationships
+     */
+    protected function buildSimpleMatrixVisualization(User $user): array
+    {
+        // Get user's points
+        $userPoints = $user->points;
+        
+        // Root node (the user themselves)
+        $root = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'professional_level' => ucfirst($user->current_professional_level ?? 'associate'),
+            'lifetime_points' => $userPoints?->lifetime_points ?? 0,
+            'bonus_points' => $userPoints?->bonus_points ?? 0,
+            'is_empty' => false,
+            'is_direct' => false,
+            'is_spillover' => false,
+            'status' => $user->status,
+            'position' => 1,
+            'level' => 0,
+            'joined_at' => $user->created_at->format('M d, Y')
+        ];
+
+        // Level 1: Direct referrals (up to 3 for 3x3 matrix)
+        $level1Users = User::where('referrer_id', $user->id)
+            ->with('points')
+            ->orderBy('created_at')
+            ->limit(3)
+            ->get();
+
+        $level1 = [];
+        for ($i = 0; $i < 3; $i++) {
+            if (isset($level1Users[$i])) {
+                $member = $level1Users[$i];
+                $memberPoints = $member->points;
+                $level1[] = [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'phone' => $member->phone,
+                    'professional_level' => ucfirst($member->current_professional_level ?? 'associate'),
+                    'lifetime_points' => $memberPoints?->lifetime_points ?? 0,
+                    'bonus_points' => $memberPoints?->bonus_points ?? 0,
+                    'is_empty' => false,
+                    'is_direct' => true,
+                    'is_spillover' => false,
+                    'status' => $member->status,
+                    'position' => $i + 1,
+                    'level' => 1,
+                    'joined_at' => $member->created_at->format('M d, Y')
+                ];
+            } else {
+                // Empty position
+                $level1[] = [
+                    'id' => null,
+                    'name' => 'Available',
+                    'email' => '',
+                    'phone' => '',
+                    'professional_level' => '',
+                    'lifetime_points' => 0,
+                    'bonus_points' => 0,
+                    'is_empty' => true,
+                    'is_direct' => false,
+                    'is_spillover' => false,
+                    'status' => 'empty',
+                    'position' => $i + 1,
+                    'level' => 1,
+                    'joined_at' => ''
+                ];
+            }
+        }
+
+        // Level 2: Referrals of level 1 (9 positions)
+        $level2 = [];
+        $position = 1;
+        foreach ($level1Users as $level1User) {
+            $level2Users = User::where('referrer_id', $level1User->id)
+                ->with('points')
+                ->orderBy('created_at')
+                ->limit(3)
+                ->get();
+
+            for ($i = 0; $i < 3; $i++) {
+                if (isset($level2Users[$i])) {
+                    $member = $level2Users[$i];
+                    $memberPoints = $member->points;
+                    $level2[] = [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'email' => $member->email,
+                        'phone' => $member->phone,
+                        'professional_level' => ucfirst($member->current_professional_level ?? 'associate'),
+                        'lifetime_points' => $memberPoints?->lifetime_points ?? 0,
+                        'bonus_points' => $memberPoints?->bonus_points ?? 0,
+                        'is_empty' => false,
+                        'is_direct' => false,
+                        'is_spillover' => false,
+                        'status' => $member->status,
+                        'position' => $position,
+                        'level' => 2,
+                        'joined_at' => $member->created_at->format('M d, Y')
+                    ];
+                } else {
+                    $level2[] = [
+                        'id' => null,
+                        'name' => 'Available',
+                        'email' => '',
+                        'phone' => '',
+                        'professional_level' => '',
+                        'lifetime_points' => 0,
+                        'bonus_points' => 0,
+                        'is_empty' => true,
+                        'is_direct' => false,
+                        'is_spillover' => false,
+                        'status' => 'empty',
+                        'position' => $position,
+                        'level' => 2,
+                        'joined_at' => ''
+                    ];
+                }
+                $position++;
+            }
+        }
+
+        // Fill remaining level 2 positions if level 1 isn't full
+        while (count($level2) < 9) {
+            $level2[] = [
+                'id' => null,
+                'name' => 'Available',
+                'email' => '',
+                'phone' => '',
+                'professional_level' => '',
+                'lifetime_points' => 0,
+                'bonus_points' => 0,
+                'is_empty' => true,
+                'is_direct' => false,
+                'is_spillover' => false,
+                'status' => 'empty',
+                'position' => $position++,
+                'level' => 2,
+                'joined_at' => ''
+            ];
+        }
+
+        // Level 3: 27 positions (simplified - just show available for now)
+        $level3 = [];
+        for ($i = 1; $i <= 27; $i++) {
+            $level3[] = [
+                'id' => null,
+                'name' => 'Available',
+                'email' => '',
+                'phone' => '',
+                'professional_level' => '',
+                'lifetime_points' => 0,
+                'bonus_points' => 0,
+                'is_empty' => true,
+                'is_direct' => false,
+                'is_spillover' => false,
+                'status' => 'empty',
+                'position' => $i,
+                'level' => 3,
+                'joined_at' => ''
+            ];
+        }
+
+        return [
+            'root' => $root,
+            'levels' => [
+                'level_1' => $level1,
+                'level_2' => $level2,
+                'level_3' => $level3
+            ]
         ];
     }
 }
