@@ -26,7 +26,7 @@ class AnalyticsController extends Controller
             ->sum('lp_amount');
         $thisMonthMAP = PointTransaction::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->sum('map_amount');
+            ->sum('bp_amount');
         
         // Level distribution
         $levelDistribution = User::select('current_professional_level', DB::raw('count(*) as count'))
@@ -58,7 +58,7 @@ class AnalyticsController extends Controller
         $qualificationRate = $totalUsers > 0 ? round(($qualifiedUsers / $totalUsers) * 100, 1) : 0;
         
         // Top point sources this month
-        $topSources = PointTransaction::select('source', DB::raw('SUM(lp_amount + map_amount) as total_points'))
+        $topSources = PointTransaction::select('source', DB::raw('SUM(lp_amount + bp_amount) as total_points'))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->groupBy('source')
@@ -77,7 +77,7 @@ class AnalyticsController extends Controller
                     'user_name' => $transaction->user->name ?? 'Unknown',
                     'source' => $transaction->source,
                     'lp_amount' => $transaction->lp_amount,
-                    'map_amount' => $transaction->map_amount,
+                    'bp_amount' => $transaction->bp_amount,
                     'description' => $transaction->description,
                     'created_at' => $transaction->created_at->format('M j, Y H:i')
                 ];
@@ -87,7 +87,7 @@ class AnalyticsController extends Controller
         $dailyTrend = PointTransaction::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(lp_amount) as lp_total'),
-                DB::raw('SUM(map_amount) as map_total')
+                DB::raw('SUM(bp_amount) as map_total')
             )
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('date')

@@ -102,27 +102,29 @@ const toggleStatus = (user) => {
               <thead class="bg-gray-50">
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Login</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
+                  <td class="px-6 py-4">
                     <div>
-                        <Link
+                      <Link
                         :href="route('admin.users.show', user.id)"
                         class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                        >
+                      >
                         {{ user.name }}
-                        </Link>
-                        <div class="text-xs text-gray-500">Joined {{ formatDate(user.created_at) }}</div>
+                      </Link>
+                      <div class="text-xs text-gray-500">ID: {{ user.id }}</div>
                     </div>
-                    </td>
-                  <td class="px-6 py-4 text-sm text-gray-500">{{ user.email }}</td>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900">{{ user.email }}</div>
+                    <div class="text-xs text-gray-500">{{ user.phone || 'No phone' }}</div>
+                  </td>
                   <td class="px-6 py-4">
                     <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                       {{ user.role }}
@@ -135,9 +137,6 @@ const toggleStatus = (user) => {
                     ]">
                       {{ user.status }}
                     </span>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-500">
-                    {{ formatDate(user.last_login_at) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap space-x-2">
                     <button @click="openEditModal(user)"

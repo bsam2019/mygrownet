@@ -50,7 +50,7 @@ class PointsAwarded implements ShouldBroadcast
     {
         return [
             'lp_amount' => $this->transaction->lp_amount,
-            'map_amount' => $this->transaction->map_amount,
+            'bp_amount' => $this->transaction->bp_amount,
             'source' => $this->transaction->source,
             'description' => $this->transaction->description,
             'total_lp' => $this->user->points->lifetime_points,

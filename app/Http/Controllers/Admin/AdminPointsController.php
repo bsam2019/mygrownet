@@ -29,7 +29,7 @@ class AdminPointsController extends Controller
     {
         $stats = [
             'total_lp_awarded' => PointTransaction::sum('lp_amount'),
-            'total_map_awarded' => PointTransaction::sum('map_amount'),
+            'total_map_awarded' => PointTransaction::sum('bp_amount'),
             'qualified_users_this_month' => MonthlyActivityStatus::currentMonth()->qualified()->count(),
             'total_users_with_points' => UserPoints::count(),
             'average_lp' => UserPoints::avg('lifetime_points'),
@@ -129,7 +129,7 @@ class AdminPointsController extends Controller
     {
         $validated = $request->validate([
             'lp_amount' => 'required|integer|min:0|max:10000',
-            'map_amount' => 'required|integer|min:0|max:10000',
+            'bp_amount' => 'required|integer|min:0|max:10000',
             'reason' => 'required|string|max:500',
         ]);
 
@@ -137,7 +137,7 @@ class AdminPointsController extends Controller
             $user,
             'admin_award',
             $validated['lp_amount'],
-            $validated['map_amount'],
+            $validated['bp_amount'],
             "Admin award: {$validated['reason']}"
         );
 
@@ -151,7 +151,7 @@ class AdminPointsController extends Controller
     {
         $validated = $request->validate([
             'lp_amount' => 'required|integer|min:0',
-            'map_amount' => 'required|integer|min:0',
+            'bp_amount' => 'required|integer|min:0',
             'reason' => 'required|string|max:500',
         ]);
 
@@ -164,7 +164,7 @@ class AdminPointsController extends Controller
             'user_id' => $user->id,
             'point_type' => 'both',
             'lp_amount' => -$validated['lp_amount'],
-            'map_amount' => -$validated['map_amount'],
+            'bp_amount' => -$validated['bp_amount'],
             'source' => 'admin_deduction',
             'description' => "Admin deduction: {$validated['reason']}",
             'multiplier_applied' => 1.00,
@@ -172,7 +172,7 @@ class AdminPointsController extends Controller
 
         // Update user points
         $user->points->decrement('lifetime_points', $validated['lp_amount']);
-        $user->points->decrement('monthly_points', $validated['map_amount']);
+        $user->points->decrement('monthly_points', $validated['bp_amount']);
 
         return back()->with('success', 'Points deducted successfully!');
     }
@@ -207,7 +207,7 @@ class AdminPointsController extends Controller
                 'user_id' => $user->id,
                 'point_type' => 'both',
                 'lp_amount' => $validated['lifetime_points'] - $oldLP,
-                'map_amount' => $validated['monthly_points'] - $oldMAP,
+                'bp_amount' => $validated['monthly_points'] - $oldMAP,
                 'source' => 'admin_adjustment',
                 'description' => "Admin adjustment: {$validated['reason']}",
                 'multiplier_applied' => 1.00,
@@ -269,7 +269,7 @@ class AdminPointsController extends Controller
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
             'lp_amount' => 'required|integer|min:0|max:10000',
-            'map_amount' => 'required|integer|min:0|max:10000',
+            'bp_amount' => 'required|integer|min:0|max:10000',
             'reason' => 'required|string|max:500',
         ]);
 
@@ -281,7 +281,7 @@ class AdminPointsController extends Controller
                     $user,
                     'admin_bulk_award',
                     $validated['lp_amount'],
-                    $validated['map_amount'],
+                    $validated['bp_amount'],
                     "Bulk award: {$validated['reason']}"
                 );
                 $count++;
@@ -308,27 +308,27 @@ class AdminPointsController extends Controller
 
         $stats = [
             'lp_awarded' => PointTransaction::where('created_at', '>=', $dateFrom)->sum('lp_amount'),
-            'map_awarded' => PointTransaction::where('created_at', '>=', $dateFrom)->sum('map_amount'),
+            'map_awarded' => PointTransaction::where('created_at', '>=', $dateFrom)->sum('bp_amount'),
             'transactions_count' => PointTransaction::where('created_at', '>=', $dateFrom)->count(),
             'unique_users' => PointTransaction::where('created_at', '>=', $dateFrom)->distinct('user_id')->count(),
         ];
 
         // Points by source
         $bySource = PointTransaction::where('created_at', '>=', $dateFrom)
-            ->selectRaw('source, SUM(lp_amount) as total_lp, SUM(map_amount) as total_map, COUNT(*) as count')
+            ->selectRaw('source, SUM(lp_amount) as total_lp, SUM(bp_amount) as total_map, COUNT(*) as count')
             ->groupBy('source')
             ->get();
 
         // Daily trend for the period
         $dailyTrend = PointTransaction::where('created_at', '>=', $dateFrom)
-            ->selectRaw('DATE(created_at) as date, SUM(lp_amount) as lp, SUM(map_amount) as map')
+            ->selectRaw('DATE(created_at) as date, SUM(lp_amount) as lp, SUM(bp_amount) as map')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
         // Top users by points awarded
         $topUsers = PointTransaction::where('created_at', '>=', $dateFrom)
-            ->selectRaw('user_id, SUM(lp_amount) as total_lp, SUM(map_amount) as total_map')
+            ->selectRaw('user_id, SUM(lp_amount) as total_lp, SUM(bp_amount) as total_map')
             ->groupBy('user_id')
             ->orderByDesc('total_lp')
             ->limit(10)

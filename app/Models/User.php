@@ -1435,7 +1435,7 @@ class User extends Authenticatable
             'user_id' => $this->id,
             'point_type' => 'lifetime',
             'lp_amount' => $amount,
-            'map_amount' => 0,
+            'bp_amount' => 0,
             'source' => $activityType,
             'description' => $description ?? "Earned {$amount} LP from {$activityType}",
         ]);
@@ -1458,7 +1458,7 @@ class User extends Authenticatable
             'user_id' => $this->id,
             'point_type' => 'monthly',
             'lp_amount' => 0,
-            'map_amount' => $amount,
+            'bp_amount' => $amount,
             'source' => $activityType,
             'description' => $description ?? "Earned {$amount} MAP from {$activityType}",
         ]);
