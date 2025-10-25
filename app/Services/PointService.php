@@ -37,7 +37,7 @@ class PointService
                 'user_id' => $user->id,
                 'point_type' => 'both',
                 'lp_amount' => $finalLP,
-                'map_amount' => $finalMAP,
+                'bp_amount' => $finalMAP,
                 'source' => $source,
                 'description' => $description,
                 'reference_type' => $reference ? get_class($reference) : null,

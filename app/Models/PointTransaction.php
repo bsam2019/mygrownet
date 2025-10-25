@@ -12,7 +12,7 @@ class PointTransaction extends Model
         'user_id',
         'point_type',
         'lp_amount',
-        'map_amount',
+        'bp_amount',
         'source',
         'description',
         'reference_type',
@@ -22,7 +22,7 @@ class PointTransaction extends Model
 
     protected $casts = [
         'lp_amount' => 'integer',
-        'map_amount' => 'integer',
+        'bp_amount' => 'integer',
         'multiplier_applied' => 'decimal:2',
     ];
 
