@@ -11,18 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->string('product_name');
-            $table->decimal('price', 10, 2);
-            $table->integer('quantity');
-            $table->integer('bp_earned')->default(0);
-            $table->timestamps();
-            
-            $table->index('order_id');
-        });
+        if (!Schema::hasTable('order_items')) {
+            Schema::create('order_items', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('order_id')->constrained()->onDelete('cascade');
+                $table->foreignId('product_id')->constrained()->onDelete('cascade');
+                $table->string('product_name');
+                $table->decimal('price', 10, 2);
+                $table->integer('quantity');
+                $table->integer('bp_earned')->default(0);
+                $table->timestamps();
+                
+                $table->index('order_id');
+            });
+        }
     }
 
     /**
