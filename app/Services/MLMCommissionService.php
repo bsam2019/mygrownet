@@ -21,23 +21,71 @@ class MLMCommissionService
     ): array {
         $commissions = [];
         
+        Log::info("Starting MLM commission processing", [
+            'purchaser_id' => $purchaser->id,
+            'purchaser_name' => $purchaser->name,
+            'package_amount' => $packageAmount,
+            'package_type' => $packageType,
+            'referrer_id' => $purchaser->referrer_id
+        ]);
+        
         try {
             DB::beginTransaction();
             
             // Get upline referrers up to 7 levels (MyGrowNet professional progression)
             $uplineReferrers = $this->getUplineReferrers($purchaser, ReferralCommission::MAX_COMMISSION_LEVELS);
             
+            Log::info("Upline referrers found", [
+                'count' => count($uplineReferrers),
+                'referrers' => $uplineReferrers
+            ]);
+            
             foreach ($uplineReferrers as $referrerData) {
                 $referrer = User::find($referrerData['user_id']);
                 $level = $referrerData['level'];
                 
-                if (!$referrer || !$referrer->hasActiveSubscription()) {
+                Log::info("Processing referrer", [
+                    'referrer_id' => $referrerData['user_id'],
+                    'level' => $level,
+                    'referrer_found' => $referrer ? 'yes' : 'no'
+                ]);
+                
+                if (!$referrer) {
+                    Log::warning("Referrer not found", ['referrer_id' => $referrerData['user_id']]);
                     continue;
+                }
+                
+                // For registration payments, only check if user is active
+                // For subscription payments, check if referrer has active subscription
+                if ($packageType === 'registration' || $packageType === 'wallet_topup') {
+                    // Registration commissions: referrer just needs to be active
+                    if ($referrer->status !== 'active') {
+                        Log::info("Referrer not active, skipping", [
+                            'referrer_id' => $referrer->id,
+                            'status' => $referrer->status
+                        ]);
+                        continue;
+                    }
+                } else {
+                    // Subscription/other commissions: referrer needs active subscription
+                    if (!$referrer->hasActiveSubscription()) {
+                        Log::info("Referrer doesn't have active subscription, skipping", [
+                            'referrer_id' => $referrer->id
+                        ]);
+                        continue;
+                    }
                 }
                 
                 // Calculate commission amount for this level
                 $commissionRate = ReferralCommission::getCommissionRate($level);
                 $commissionAmount = $packageAmount * ($commissionRate / 100);
+                
+                Log::info("Creating commission", [
+                    'referrer_id' => $referrer->id,
+                    'level' => $level,
+                    'rate' => $commissionRate,
+                    'amount' => $commissionAmount
+                ]);
                 
                 // Create commission record
                 $commission = ReferralCommission::create([

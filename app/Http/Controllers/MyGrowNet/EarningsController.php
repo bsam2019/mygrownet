@@ -15,7 +15,7 @@ class EarningsController extends Controller
         // Get earnings breakdown by type (using referral_commissions table)
         $referralEarnings = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;
         $profitShares = $user->profitShares()->sum('amount') ?? 0;
-        
+       
         $earningsByType = [
             'referral_bonuses' => (float) $referralEarnings * 0.4, // Estimate 40% from direct referrals
             'level_commissions' => (float) $referralEarnings * 0.6, // Estimate 60% from levels

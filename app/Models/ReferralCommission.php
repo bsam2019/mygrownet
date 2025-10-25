@@ -134,9 +134,17 @@ class ReferralCommission extends Model
      */
     public function isEligibleForPayment(): bool
     {
-        return $this->status === 'pending' && 
-               $this->referrer && 
-               $this->referrer->hasActiveSubscription();
+        if ($this->status !== 'pending' || !$this->referrer) {
+            return false;
+        }
+        
+        // For registration commissions, only check if referrer is active
+        if ($this->package_type === 'registration' || $this->package_type === 'wallet_topup') {
+            return $this->referrer->status === 'active';
+        }
+        
+        // For other commission types, check active subscription
+        return $this->referrer->hasActiveSubscription();
     }
 
     /**

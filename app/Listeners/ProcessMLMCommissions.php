@@ -18,6 +18,13 @@ class ProcessMLMCommissions
      */
     public function handle(PaymentVerified $event): void
     {
+        Log::info("ProcessMLMCommissions listener triggered", [
+            'payment_id' => $event->paymentId,
+            'user_id' => $event->userId,
+            'amount' => $event->amount,
+            'payment_type' => $event->paymentType
+        ]);
+
         try {
             $user = User::find($event->userId);
             
@@ -26,14 +33,29 @@ class ProcessMLMCommissions
                 return;
             }
 
+            Log::info("User found for commission processing", [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'referrer_id' => $user->referrer_id,
+                'status' => $user->status
+            ]);
+
             // Only process commissions for registration and subscription payments
             if (!in_array($event->paymentType, ['wallet_topup', 'subscription', 'registration'])) {
+                Log::info("Payment type not eligible for commissions", [
+                    'payment_type' => $event->paymentType
+                ]);
                 return;
             }
 
             // For registration payments (K500), process commissions
             if ($event->paymentType === 'wallet_topup' && $event->amount >= 500) {
-                $this->mlmService->processMLMCommissions(
+                Log::info("Processing registration commissions", [
+                    'user_id' => $user->id,
+                    'amount' => $event->amount
+                ]);
+
+                $commissions = $this->mlmService->processMLMCommissions(
                     $user,
                     $event->amount,
                     'registration'
@@ -41,13 +63,19 @@ class ProcessMLMCommissions
                 
                 Log::info("Registration commissions processed", [
                     'user_id' => $user->id,
-                    'amount' => $event->amount
+                    'amount' => $event->amount,
+                    'commissions_created' => count($commissions)
                 ]);
             }
 
             // For subscription payments, process commissions
             if ($event->paymentType === 'subscription') {
-                $this->mlmService->processMLMCommissions(
+                Log::info("Processing subscription commissions", [
+                    'user_id' => $user->id,
+                    'amount' => $event->amount
+                ]);
+
+                $commissions = $this->mlmService->processMLMCommissions(
                     $user,
                     $event->amount,
                     'subscription'
@@ -55,7 +83,8 @@ class ProcessMLMCommissions
                 
                 Log::info("Subscription commissions processed", [
                     'user_id' => $user->id,
-                    'amount' => $event->amount
+                    'amount' => $event->amount,
+                    'commissions_created' => count($commissions)
                 ]);
             }
 
@@ -66,6 +95,9 @@ class ProcessMLMCommissions
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            // Re-throw to ensure we see the error
+            throw $e;
         }
     }
 }
