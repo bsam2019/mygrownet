@@ -207,7 +207,7 @@ class AdminDashboardController extends Controller
         $thisMonthMAP = DB::table('point_transactions')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            ->sum('map_amount');
+            ->sum('bp_amount');
 
         // Qualified users (meeting monthly MAP requirement)
         $qualifiedUsers = DB::table('user_points')
