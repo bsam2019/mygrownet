@@ -48,40 +48,56 @@ class ProcessMLMCommissions
                 return;
             }
 
-            // For registration payments (K500), process commissions
-            if ($event->paymentType === 'wallet_topup' && $event->amount >= 500) {
-                Log::info("Processing registration commissions", [
-                    'user_id' => $user->id,
-                    'amount' => $event->amount
-                ]);
+            // Determine package type
+            $packageType = null;
+            
+            if ($event->paymentType === 'registration' || ($event->paymentType === 'wallet_topup' && $event->amount >= 500)) {
+                // Check if this is the FIRST registration payment (K500)
+                $hasRegistrationCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
+                    ->where('package_type', 'registration')
+                    ->exists();
 
-                $commissions = $this->mlmService->processMLMCommissions(
-                    $user,
-                    $event->amount,
-                    'registration'
-                );
-                
-                Log::info("Registration commissions processed", [
-                    'user_id' => $user->id,
-                    'amount' => $event->amount,
-                    'commissions_created' => count($commissions)
-                ]);
+                if ($hasRegistrationCommission) {
+                    Log::info("Registration commission already processed for this user, skipping", [
+                        'user_id' => $user->id,
+                        'payment_id' => $event->paymentId
+                    ]);
+                    return;
+                }
+
+                $packageType = 'registration';
+            } elseif ($event->paymentType === 'subscription') {
+                // Check if subscription commission already exists for this period
+                $existingSubscriptionCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
+                    ->where('package_type', 'subscription')
+                    ->where('created_at', '>=', now()->subMinutes(5))
+                    ->exists();
+
+                if ($existingSubscriptionCommission) {
+                    Log::info("Subscription commission already processed recently, skipping", [
+                        'user_id' => $user->id,
+                        'payment_id' => $event->paymentId
+                    ]);
+                    return;
+                }
+
+                $packageType = 'subscription';
             }
 
-            // For subscription payments, process commissions
-            if ($event->paymentType === 'subscription') {
-                Log::info("Processing subscription commissions", [
+            if ($packageType) {
+                Log::info("Processing {$packageType} commissions", [
                     'user_id' => $user->id,
-                    'amount' => $event->amount
+                    'amount' => $event->amount,
+                    'payment_type' => $event->paymentType
                 ]);
 
                 $commissions = $this->mlmService->processMLMCommissions(
                     $user,
                     $event->amount,
-                    'subscription'
+                    $packageType
                 );
                 
-                Log::info("Subscription commissions processed", [
+                Log::info("{$packageType} commissions processed", [
                     'user_id' => $user->id,
                     'amount' => $event->amount,
                     'commissions_created' => count($commissions)
