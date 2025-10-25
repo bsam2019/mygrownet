@@ -14,13 +14,14 @@ class UserManagementController extends Controller
         return Inertia::render('Admin/Users/Index', [
             'users' => User::query()
                 ->with(['roles'])
-                ->select(['id', 'name', 'email', 'status', 'last_login_at', 'created_at'])
+                ->select(['id', 'name', 'email', 'phone', 'status', 'last_login_at', 'created_at'])
                 ->latest()
                 ->paginate(50)
                 ->through(fn ($user) => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
                     'status' => $user->status,
                     'role' => $user->roles->first()?->name ?? 'user',
                     'created_at' => $user->created_at,

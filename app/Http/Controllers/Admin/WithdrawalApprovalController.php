@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
+use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ActivityLog;
@@ -16,20 +16,13 @@ class WithdrawalApprovalController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Withdrawals/Index', [
-            'withdrawals' => Transaction::where('transaction_type', 'withdrawal')
-                ->with(['user', 'investment'])
+            'withdrawals' => Withdrawal::with('user')
                 ->latest()
                 ->paginate(15),
             'summary' => [
-                'pending' => Transaction::where('transaction_type', 'withdrawal')
-                    ->where('status', 'pending')
-                    ->sum('amount'),
-                'completed' => Transaction::where('transaction_type', 'withdrawal')
-                    ->where('status', 'completed')
-                    ->sum('amount'),
-                'cancelled' => Transaction::where('transaction_type', 'withdrawal')
-                    ->where('status', 'cancelled')
-                    ->sum('amount')
+                'pending' => Withdrawal::where('status', 'pending')->sum('amount'),
+                'approved' => Withdrawal::where('status', 'approved')->sum('amount'),
+                'rejected' => Withdrawal::where('status', 'rejected')->sum('amount'),
             ]
         ]);
     }
@@ -49,7 +42,7 @@ class WithdrawalApprovalController extends Controller
     public function approve($id)
     {
         try {
-            $withdrawal = Transaction::findOrFail($id);
+            $withdrawal = Withdrawal::findOrFail($id);
             
             if ($withdrawal->status !== 'pending') {
                 return back()->with('error', 'This withdrawal cannot be approved.');
@@ -60,33 +53,22 @@ class WithdrawalApprovalController extends Controller
             try {
                 // Update withdrawal status
                 $withdrawal->update([
-                    'status' => 'completed',
+                    'status' => 'approved',
                     'processed_at' => now(),
-                    'processed_by' => auth()->id()
                 ]);
-
-                // Update investment amount if investment exists
-                if ($withdrawal->investment) {
-                    $withdrawal->investment->update([
-                        'amount' => $withdrawal->investment->amount - $withdrawal->amount
-                    ]);
-                }
 
                 // Log activity
                 ActivityLog::create([
+                    'loggable_type' => Withdrawal::class,
+                    'loggable_id' => $withdrawal->id,
                     'user_id' => auth()->id(),
                     'activity_type' => 'withdrawal_approval',
-                    'action' => 'approve',
-                    'description' => 'Approved withdrawal #' . $withdrawal->reference_number,
-                    'data' => json_encode([
-                        'withdrawal_id' => $withdrawal->id,
-                        'amount' => $withdrawal->amount,
-                        'user_id' => $withdrawal->user_id
-                    ])
+                    'action' => 'approved',
+                    'description' => 'Approved withdrawal of K' . number_format($withdrawal->amount, 2) . ' for ' . $withdrawal->user->name,
                 ]);
 
-                // Notify user
-                $withdrawal->user->notify(new WithdrawalApproved($withdrawal));
+                // Notify user (if notification exists)
+                // $withdrawal->user->notify(new WithdrawalApproved($withdrawal));
 
                 DB::commit();
                 return back()->with('success', 'Withdrawal approved successfully');
@@ -104,7 +86,7 @@ class WithdrawalApprovalController extends Controller
     public function reject($id, Request $request)
     {
         try {
-            $withdrawal = Transaction::findOrFail($id);
+            $withdrawal = Withdrawal::findOrFail($id);
             
             if ($withdrawal->status !== 'pending') {
                 return back()->with('error', 'This withdrawal cannot be rejected.');
@@ -120,27 +102,22 @@ class WithdrawalApprovalController extends Controller
                 // Update withdrawal status
                 $withdrawal->update([
                     'status' => 'rejected',
-                    'notes' => $request->reason,
+                    'reason' => $request->reason,
                     'processed_at' => now(),
-                    'processed_by' => auth()->id()
                 ]);
 
                 // Log activity
                 ActivityLog::create([
+                    'loggable_type' => Withdrawal::class,
+                    'loggable_id' => $withdrawal->id,
                     'user_id' => auth()->id(),
                     'activity_type' => 'withdrawal_rejection',
-                    'action' => 'reject',
-                    'description' => 'Rejected withdrawal #' . $withdrawal->reference_number,
-                    'data' => json_encode([
-                        'withdrawal_id' => $withdrawal->id,
-                        'amount' => $withdrawal->amount,
-                        'user_id' => $withdrawal->user_id,
-                        'reason' => $request->reason
-                    ])
+                    'action' => 'rejected',
+                    'description' => 'Rejected withdrawal of K' . number_format($withdrawal->amount, 2) . ' for ' . $withdrawal->user->name . '. Reason: ' . $request->reason,
                 ]);
 
-                // Notify user
-                $withdrawal->user->notify(new WithdrawalRejected($withdrawal, $request->reason));
+                // Notify user (if notification exists)
+                // $withdrawal->user->notify(new WithdrawalRejected($withdrawal, $request->reason));
 
                 DB::commit();
                 return back()->with('success', 'Withdrawal rejected successfully');

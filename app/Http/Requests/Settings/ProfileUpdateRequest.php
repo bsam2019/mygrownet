@@ -31,6 +31,12 @@ class ProfileUpdateRequest extends FormRequest
             ] : [
                 'sometimes', // present or omitted; no validation to avoid blocking name-only changes
             ],
+            'phone' => [
+                'nullable',
+                'string',
+                'regex:/^(\+260|0)?[79][0-9]{8}$/',
+                Rule::unique(User::class)->ignore($this->user()->id),
+            ],
         ];
     }
 }

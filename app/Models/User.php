@@ -302,7 +302,7 @@ class User extends Authenticatable
 
     public function withdrawals(): HasMany
     {
-        return $this->hasMany(WithdrawalPolicy::class);
+        return $this->hasMany(Withdrawal::class);
     }
 
     public function profitShares(): HasMany

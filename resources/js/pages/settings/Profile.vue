@@ -32,6 +32,7 @@ const { isAdmin } = usePermissions();
 const form = useForm({
     name: user?.name || '',
     email: user?.email || '',
+    phone: user?.phone || '',
 });
 
 const submit = () => {
@@ -47,7 +48,17 @@ const submit = () => {
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
-                <HeadingSmall title="Profile information" description="Update your name and email address" />
+                <!-- Success Message -->
+                <div v-if="$page.props.flash?.success" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-sm font-medium text-green-800">{{ $page.props.flash.success }}</p>
+                    </div>
+                </div>
+
+                <HeadingSmall title="Profile information" description="Update your name, email address, and mobile money number" />
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <div class="grid gap-2">
@@ -70,6 +81,23 @@ const submit = () => {
                         />
                         <InputError class="mt-2" :message="form.errors.email" />
                         <p v-if="!isAdmin" class="text-xs text-muted-foreground">Only administrators can change the email address.</p>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="phone">Mobile Money Number</Label>
+                        <Input
+                            id="phone"
+                            type="tel"
+                            class="mt-1 block w-full"
+                            v-model="form.phone"
+                            autocomplete="tel"
+                            placeholder="0971234567 or +260971234567"
+                            pattern="^(\+260|0)?[79][0-9]{8}$"
+                        />
+                        <InputError class="mt-2" :message="form.errors.phone" />
+                        <p class="text-xs text-muted-foreground">
+                            Enter your MTN or Airtel mobile money number. This will be used for withdrawals.
+                        </p>
                     </div>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
