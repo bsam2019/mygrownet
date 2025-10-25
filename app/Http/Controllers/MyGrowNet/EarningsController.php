@@ -13,12 +13,23 @@ class EarningsController extends Controller
         $user = $request->user();
         
         // Get earnings breakdown by type (using referral_commissions table)
-        $referralEarnings = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;
+        // Referral Bonuses = Level 1 commissions (direct referrals)
+        $referralBonuses = $user->referralCommissions()
+            ->where('status', 'paid')
+            ->where('level', 1)
+            ->sum('amount') ?? 0;
+        
+        // Level Commissions = Levels 2-7 commissions (network earnings)
+        $levelCommissions = $user->referralCommissions()
+            ->where('status', 'paid')
+            ->where('level', '>', 1)
+            ->sum('amount') ?? 0;
+        
         $profitShares = $user->profitShares()->sum('amount') ?? 0;
        
         $earningsByType = [
-            'referral_bonuses' => (float) $referralEarnings * 0.4, // Estimate 40% from direct referrals
-            'level_commissions' => (float) $referralEarnings * 0.6, // Estimate 60% from levels
+            'referral_bonuses' => (float) $referralBonuses,
+            'level_commissions' => (float) $levelCommissions,
             'profit_sharing' => (float) $profitShares,
             'milestone_rewards' => 0, // To be implemented
         ];

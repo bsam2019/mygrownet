@@ -25,6 +25,8 @@ class WithdrawalController extends Controller
             'withdrawals' => $withdrawals,
             'availableBalance' => (float) $availableBalance,
             'minimumWithdrawal' => 50.00,
+            'userPhone' => $user->phone ?? '',
+            'userName' => $user->name ?? '',
         ]);
     }
 

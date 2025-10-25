@@ -19,15 +19,23 @@ const props = defineProps<{
     };
     availableBalance: number;
     minimumWithdrawal: number;
+    userPhone?: string;
+    userName?: string;
 }>();
 
 const showNewWithdrawal = ref(false);
 
+// Initialize form with user's registered details
 const form = useForm({
     amount: '',
-    phone_number: '',
-    account_name: '',
+    phone_number: props.userPhone || '',
+    account_name: props.userName || '',
 });
+
+// Log to debug (remove after testing)
+console.log('User Phone:', props.userPhone);
+console.log('User Name:', props.userName);
+console.log('Form initialized:', form.phone_number, form.account_name);
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZM', {
@@ -184,13 +192,13 @@ const submitWithdrawal = () => {
                                     <input
                                         v-model="form.phone_number"
                                         type="tel"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                                         placeholder="0971234567 or +260971234567"
-                                        pattern="^(\+260|0)?[79][0-9]{8}$"
+                                        readonly
                                         required
                                     />
                                     <p class="mt-1 text-xs text-gray-500">
-                                        Enter your MTN or Airtel mobile money number
+                                        Using your registered phone number for security
                                     </p>
                                     <p v-if="form.errors.phone_number" class="mt-1 text-sm text-red-600">{{ form.errors.phone_number }}</p>
                                 </div>
@@ -200,12 +208,13 @@ const submitWithdrawal = () => {
                                     <input
                                         v-model="form.account_name"
                                         type="text"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                        placeholder="Full name as registered on mobile money"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                                        placeholder="Full name as registered"
+                                        readonly
                                         required
                                     />
                                     <p class="mt-1 text-xs text-gray-500">
-                                        Must match the name on your mobile money account
+                                        Using your registered name for security
                                     </p>
                                     <p v-if="form.errors.account_name" class="mt-1 text-sm text-red-600">{{ form.errors.account_name }}</p>
                                 </div>
