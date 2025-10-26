@@ -1,5 +1,5 @@
 <template>
-    <AppLayout title="Starter Kit">
+    <MemberLayout title="Starter Kit">
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Hero Section -->
@@ -262,11 +262,11 @@
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </MemberLayout>
 </template>
 
 <script setup>
-import AppLayout from '@/layouts/app/AppLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 import { Link } from '@inertiajs/vue3';
 
 defineProps({
