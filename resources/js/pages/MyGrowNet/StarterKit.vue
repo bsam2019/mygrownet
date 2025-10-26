@@ -1,25 +1,45 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import MemberLayout from '@/layouts/MemberLayout.vue';
-import { GiftIcon, CheckCircleIcon, StarIcon, CalendarIcon, PackageIcon } from 'lucide-vue-next';
+import { GiftIcon, CheckCircleIcon, StarIcon, CalendarIcon, PackageIcon, ShoppingBagIcon, BookOpenIcon, VideoIcon, AwardIcon } from 'lucide-vue-next';
 
 interface Props {
-    starterKit: {
-        received: boolean;
-        package_name: string;
-        package_description: string;
-        received_date: string;
-        features: string[];
-        status: string;
+    hasStarterKit: boolean;
+    hasPendingPayment?: boolean;
+    pendingPayment?: {
         amount: number;
-        start_date: string;
-        end_date: string;
-    } | null;
-    initialPoints: {
-        lp_amount: number;
-        map_amount: number;
-        awarded_at: string;
-    } | null;
+        payment_method: string;
+        payment_reference: string;
+        submitted_at: string;
+    };
+    price?: number;
+    shopCredit?: number;
+    purchaseUrl?: string;
+    purchase?: {
+        invoice_number: string;
+        purchased_at: string;
+        amount: number;
+        days_since_purchase: number;
+    };
+    shopCredit?: {
+        amount: number;
+        expiry: string;
+        days_remaining: number;
+    };
+    progress?: {
+        total_unlocks: number;
+        unlocked: number;
+        locked: number;
+        next_unlock: any;
+    };
+    content?: {
+        courses: any[];
+        videos: any[];
+        ebooks: any[];
+        tools: any[];
+        library: any[];
+    };
+    achievements?: any[];
     user: {
         name: string;
         email: string;
@@ -37,16 +57,6 @@ const formatCurrency = (amount: number) => {
         minimumFractionDigits: 2,
     }).format(amount);
 };
-
-const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-        active: 'bg-green-100 text-green-800',
-        expired: 'bg-gray-100 text-gray-800',
-        cancelled: 'bg-red-100 text-red-800',
-        pending: 'bg-yellow-100 text-yellow-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-};
 </script>
 
 <template>
@@ -63,22 +73,63 @@ const getStatusColor = (status: string) => {
                     </p>
                 </div>
 
+                <!-- Payment Pending Message -->
+                <div v-if="!hasStarterKit && hasPendingPayment" class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div class="flex items-start">
+                        <CalendarIcon class="h-6 w-6 text-blue-600 mt-0.5" />
+                        <div class="ml-3 flex-1">
+                            <h3 class="text-sm font-medium text-blue-800">Payment Pending Verification</h3>
+                            <p class="mt-2 text-sm text-blue-700">
+                                Your payment is being verified by our admin team. You'll receive access once confirmed (usually within 24 hours).
+                            </p>
+                            <div class="mt-4 bg-white rounded-lg p-4 border border-blue-200">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Payment Details</h4>
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Amount:</span>
+                                        <span class="font-semibold text-gray-900">K{{ pendingPayment?.amount }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Method:</span>
+                                        <span class="font-semibold text-gray-900 capitalize">{{ pendingPayment?.payment_method?.replace('_', ' ') }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Reference:</span>
+                                        <span class="font-semibold text-gray-900">{{ pendingPayment?.payment_reference }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Submitted:</span>
+                                        <span class="font-semibold text-gray-900">{{ pendingPayment?.submitted_at }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex gap-3">
+                                <Link
+                                    :href="route('mygrownet.payments.index')"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                >
+                                    View Payment History
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- No Starter Kit Message -->
-                <div v-if="!starterKit" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div v-else-if="!hasStarterKit && !hasPendingPayment" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
                     <div class="flex items-start">
                         <GiftIcon class="h-6 w-6 text-yellow-600 mt-0.5" />
                         <div class="ml-3">
                             <h3 class="text-sm font-medium text-yellow-800">No Starter Kit Found</h3>
                             <p class="mt-2 text-sm text-yellow-700">
-                                You haven't received a starter kit yet. Starter kits are automatically assigned when you register.
-                                If you believe this is an error, please contact support.
+                                You haven't purchased the Starter Kit yet. Get instant access to training, tools, and K{{ shopCredit }} shop credit for only K{{ price }}!
                             </p>
                             <div class="mt-4">
                                 <Link
-                                    :href="route('dashboard')"
-                                    class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                                    :href="purchaseUrl"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
-                                    Go to Dashboard
+                                    Purchase Starter Kit - K{{ price }}
                                 </Link>
                             </div>
                         </div>
@@ -86,93 +137,174 @@ const getStatusColor = (status: string) => {
                 </div>
 
                 <!-- Starter Kit Content -->
-                <div v-else class="space-y-6">
+                <div v-else-if="hasStarterKit && purchase" class="space-y-6">
                     <!-- Main Starter Kit Card -->
-                    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-8 text-white">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg shadow-lg p-8 text-white">
                         <div class="flex items-start justify-between flex-wrap gap-6">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-3 mb-3">
                                     <GiftIcon class="h-10 w-10 flex-shrink-0" />
                                     <div>
-                                        <h2 class="text-2xl font-bold">{{ starterKit.package_name }}</h2>
-                                        <p class="text-purple-100 text-sm mt-1">{{ starterKit.package_description }}</p>
+                                        <h2 class="text-2xl font-bold">MyGrowNet Starter Kit</h2>
+                                        <p class="text-blue-100 text-sm mt-1">Your complete onboarding package</p>
                                     </div>
                                 </div>
                                 
                                 <div class="flex flex-wrap gap-4 mt-4">
                                     <div class="flex items-center gap-2">
-                                        <CalendarIcon class="h-5 w-5 text-purple-200" />
-                                        <span class="text-sm">Received: {{ starterKit.received_date }}</span>
+                                        <CalendarIcon class="h-5 w-5 text-blue-200" />
+                                        <span class="text-sm">Purchased: {{ purchase.purchased_at }}</span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <PackageIcon class="h-5 w-5 text-purple-200" />
-                                        <span :class="['text-xs font-semibold px-3 py-1 rounded-full', getStatusColor(starterKit.status)]">
-                                            {{ starterKit.status }}
-                                        </span>
+                                        <PackageIcon class="h-5 w-5 text-blue-200" />
+                                        <span class="text-sm">Invoice: {{ purchase.invoice_number }}</span>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="flex-shrink-0">
                                 <div class="bg-white/20 backdrop-blur-sm rounded-lg p-6 text-center min-w-[140px]">
-                                    <p class="text-sm text-purple-100 mb-2">Package Value</p>
-                                    <p class="text-3xl font-bold">{{ formatCurrency(starterKit.amount) }}</p>
+                                    <p class="text-sm text-blue-100 mb-2">Package Value</p>
+                                    <p class="text-3xl font-bold">{{ formatCurrency(purchase.amount) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shop Credit Card -->
+                    <div v-if="shopCredit" class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <ShoppingBagIcon class="h-6 w-6 text-green-600" />
+                            Shop Credit
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-green-600 font-medium">Available Credit</p>
+                                <p class="text-3xl font-bold text-green-900 mt-2">{{ formatCurrency(shopCredit.amount) }}</p>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <p class="text-sm text-blue-600 font-medium">Expires On</p>
+                                <p class="text-xl font-bold text-blue-900 mt-2">{{ shopCredit.expiry }}</p>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-4">
+                                <p class="text-sm text-purple-600 font-medium">Days Remaining</p>
+                                <p class="text-3xl font-bold text-purple-900 mt-2">{{ shopCredit.days_remaining }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Card -->
+                    <div v-if="progress" class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Progress</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <p class="text-sm text-blue-600 font-medium">Unlocked Content</p>
+                                <p class="text-3xl font-bold text-blue-900 mt-2">{{ progress.unlocked }}</p>
+                                <p class="text-xs text-blue-600 mt-1">of {{ progress.total_unlocks }} items</p>
+                            </div>
+                            <div class="bg-yellow-50 rounded-lg p-4">
+                                <p class="text-sm text-yellow-600 font-medium">Locked Content</p>
+                                <p class="text-3xl font-bold text-yellow-900 mt-2">{{ progress.locked }}</p>
+                                <p class="text-xs text-yellow-600 mt-1">Coming soon</p>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-green-600 font-medium">Days Active</p>
+                                <p class="text-3xl font-bold text-green-900 mt-2">{{ purchase.days_since_purchase }}</p>
+                                <p class="text-xs text-green-600 mt-1">Since purchase</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Content -->
+                    <div v-if="content" class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Available Content</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Courses -->
+                            <div v-if="content.courses && content.courses.length > 0">
+                                <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                    <BookOpenIcon class="h-5 w-5 text-blue-600" />
+                                    Training Modules ({{ content.courses.length }})
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="course in content.courses" :key="course.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700">{{ course.name }}</span>
+                                        <CheckCircleIcon v-if="course.viewed" class="h-5 w-5 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- eBooks -->
+                            <div v-if="content.ebooks && content.ebooks.length > 0">
+                                <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                    <BookOpenIcon class="h-5 w-5 text-green-600" />
+                                    Premium eBooks ({{ content.ebooks.length }})
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="ebook in content.ebooks" :key="ebook.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700">{{ ebook.name }}</span>
+                                        <CheckCircleIcon v-if="ebook.viewed" class="h-5 w-5 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Videos -->
+                            <div v-if="content.videos && content.videos.length > 0">
+                                <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                    <VideoIcon class="h-5 w-5 text-purple-600" />
+                                    Video Tutorials ({{ content.videos.length }})
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="video in content.videos" :key="video.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700">{{ video.name }}</span>
+                                        <CheckCircleIcon v-if="video.viewed" class="h-5 w-5 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Marketing Tools -->
+                            <div v-if="content.tools && content.tools.length > 0">
+                                <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                    <PackageIcon class="h-5 w-5 text-orange-600" />
+                                    Marketing Tools ({{ content.tools.length }})
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="tool in content.tools" :key="tool.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700">{{ tool.name }}</span>
+                                        <CheckCircleIcon v-if="tool.viewed" class="h-5 w-5 text-green-600" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Digital Library -->
+                            <div v-if="content.library && content.library.length > 0" class="md:col-span-2">
+                                <h4 class="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                                    <BookOpenIcon class="h-5 w-5 text-indigo-600" />
+                                    Digital Library ({{ content.library.length }})
+                                </h4>
+                                <div class="space-y-2">
+                                    <div v-for="item in content.library" :key="item.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700">{{ item.name }}</span>
+                                        <CheckCircleIcon v-if="item.viewed" class="h-5 w-5 text-green-600" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Points Awarded Card -->
-                    <div v-if="initialPoints" class="bg-white rounded-lg shadow p-6">
+                    <!-- Achievements -->
+                    <div v-if="achievements && achievements.length > 0" class="bg-white rounded-lg shadow p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <StarIcon class="h-6 w-6 text-yellow-500" />
-                            Initial Points Bonus
+                            <AwardIcon class="h-6 w-6 text-yellow-500" />
+                            Your Achievements
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-blue-50 rounded-lg p-4">
-                                <p class="text-sm text-blue-600 font-medium">Life Points (LP)</p>
-                                <p class="text-3xl font-bold text-blue-900 mt-2">{{ initialPoints.lp_amount }}</p>
-                                <p class="text-xs text-blue-600 mt-1">Never expires</p>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-4">
-                                <p class="text-sm text-green-600 font-medium">Monthly Activity Points</p>
-                                <p class="text-3xl font-bold text-green-900 mt-2">{{ initialPoints.map_amount }}</p>
-                                <p class="text-xs text-green-600 mt-1">Resets monthly</p>
-                            </div>
-                            <div class="bg-purple-50 rounded-lg p-4">
-                                <p class="text-sm text-purple-600 font-medium">Awarded On</p>
-                                <p class="text-xl font-bold text-purple-900 mt-2">{{ initialPoints.awarded_at }}</p>
-                                <p class="text-xs text-purple-600 mt-1">Registration bonus</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Package Features -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">What's Included</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div
-                                v-for="(feature, index) in starterKit.features"
-                                :key="index"
-                                class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-                            >
-                                <CheckCircleIcon class="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                <span class="text-sm text-gray-700">{{ feature }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Membership Period -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Membership Period</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <p class="text-sm text-gray-600 mb-1">Start Date</p>
-                                <p class="text-lg font-semibold text-gray-900">{{ starterKit.start_date }}</p>
-                            </div>
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <p class="text-sm text-gray-600 mb-1">End Date</p>
-                                <p class="text-lg font-semibold text-gray-900">{{ starterKit.end_date }}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div v-for="achievement in achievements" :key="achievement.id" class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                                <span class="text-3xl">{{ achievement.icon }}</span>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ achievement.name }}</p>
+                                    <p class="text-xs text-gray-600 mt-1">{{ achievement.description }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ achievement.earned_at }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>

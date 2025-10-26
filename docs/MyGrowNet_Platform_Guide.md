@@ -38,12 +38,13 @@ You're not just buying access—you're investing in yourself. Get:
 
 ### 💰 Multiple Ways to Earn
 
-Unlike a regular job where you trade time for money, MyGrowNet lets you earn in **6 different ways**:
+Unlike a regular job where you trade time for money, MyGrowNet lets you earn in **7 different ways**:
 - **Direct referral bonuses** when you invite friends
 - **Network bonuses** from 7 levels of your community
 - **Milestone rewards** when you hit targets
 - **Booster funds** to start your own business
 - **Profit-sharing** from company investments (passive income!)
+- **Venture Builder dividends** from co-owned businesses (NEW!)
 - **Leadership prizes** for top performers
 
 ### 🤝 A Community That Supports You
@@ -179,6 +180,14 @@ As your network grows through these levels, you progress from **Associate** (jus
 - All active members qualify
 - Passive income stream
 
+**Venture Builder (NEW!):**
+- **Become a shareholder in real businesses**
+- Co-invest with other members in vetted projects
+- Own equity in agriculture, transport, real estate, and more
+- Receive dividends from profitable ventures
+- Legal protection as registered shareholder
+- Start with as little as K500-K1,000 per project
+
 **Booster Funds:**
 - Qualify for business startup capital
 - Get support to launch your venture
@@ -190,11 +199,20 @@ As your network grows through these levels, you progress from **Associate** (jus
 - Your share increases with your professional level
 - Example: If you're a Manager, you get 2x the base share
 
+**How Venture Builder Works:**
+- Browse vetted business projects on the platform
+- Choose projects that interest you
+- Invest your chosen amount (e.g., K1,000)
+- Once funding is complete, a new company is formed
+- You become a legal shareholder
+- Receive quarterly/annual dividends
+- Build a portfolio of business investments
+
 ---
 
 ## How You Earn Money
 
-MyGrowNet offers **6 different income streams** - more ways to earn than traditional jobs or MLMs!
+MyGrowNet offers **7 different income streams** - more ways to earn than traditional jobs or MLMs!
 
 ### 1. Referral Bonuses (Direct Income)
 
@@ -257,7 +275,37 @@ When you reach leadership levels:
 
 **This means you earn even when you're not actively recruiting!**
 
-### 6. Community Leadership Prizes
+### 6. Venture Builder Dividends (NEW!)
+
+**This is the game-changer!** Become a real business owner through co-investment:
+
+**How It Works:**
+- Browse vetted business projects on MyGrowNet
+- Choose projects you believe in (farms, transport, real estate, etc.)
+- Invest your amount (minimum K500-K1,000 per project)
+- When funding is complete, a new company is formed
+- You become a legal shareholder with documented equity
+- Receive dividends when the business makes profit
+
+**Example:** AgriGrow Farms Project
+- You invest K1,000 in a commercial vegetable farm
+- 425 members invest, raising K425,000 total capital
+- You own 0.2% of the company
+- Farm generates K200,000 profit in Year 1
+- Dividend payout (60%): K120,000
+- Your dividend: K240 (24% return on your K1,000!)
+
+**Benefits:**
+- Real ownership, not just commissions
+- Legal protection under Companies Act
+- Build investment portfolio
+- Diversify income sources
+- Learn about different businesses
+- Potential for high returns
+
+**This means you can build wealth through business ownership, not just network marketing!**
+
+### 7. Community Leadership Prizes
 
 Top performers receive:
 - **Monthly prizes** for best recruiters
@@ -317,10 +365,19 @@ Top performers receive:
 **Sarah's total income sources:**
 1. Network commissions: K15,000/month
 2. Profit-sharing: K400/quarter (K1,600/year)
-3. Business income: K5,000/month
-4. **Total: K20,000+/month**
+3. Venture Builder dividends: K2,000/quarter from 5 investments (K8,000/year)
+4. Business income: K5,000/month
+5. **Total: K20,000+/month + K9,600/year in dividends**
 
-**Sarah's transformation:** From struggling to make ends meet to running her own business and earning sustainable income from **multiple streams** (network commissions + profit-sharing + business)—all while helping others do the same.
+**Sarah's transformation:** From struggling to make ends meet to running her own business, owning equity in 5 different companies, and earning sustainable income from **multiple streams** (network commissions + profit-sharing + venture dividends + business)—all while helping others do the same.
+
+**Sarah's Investment Portfolio (Year 3):**
+- AgriGrow Farms: K1,000 invested, earning K600/year
+- TransportHub Ltd: K2,000 invested, earning K800/year
+- RealEstate Ventures: K3,000 invested, earning K1,200/year
+- TechServices Co: K1,500 invested, earning K450/year
+- Manufacturing Plus: K2,500 invested, earning K950/year
+- **Total invested: K10,000 | Annual dividends: K4,000+ (40%+ ROI)**
 
 ---
 

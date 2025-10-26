@@ -3,77 +3,386 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Package;
-use App\Models\Subscription;
-use App\Models\Transaction;
-use App\Events\UserRegistered;
+use App\Models\StarterKitPurchase;
+use App\Models\StarterKitUnlock;
+use App\Models\MemberAchievement;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class StarterKitService
 {
     /**
-     * Process starter kit for new member
+     * Starter Kit price in Kwacha.
      */
-    public function processStarterKit(User $user): void
-    {
-        DB::transaction(function () use ($user) {
-            // Get the starter kit package
-            $starterKit = Package::where('slug', 'starter-kit-associate')->first();
-            
-            if (!$starterKit) {
-                Log::warning('Starter kit package not found for user: ' . $user->id);
-                return;
+    public const PRICE = 500.00;
+
+    /**
+     * Shop credit amount in Kwacha.
+     */
+    public const SHOP_CREDIT = 100.00;
+
+    /**
+     * Shop credit expiry days.
+     */
+    public const CREDIT_EXPIRY_DAYS = 90;
+
+    /**
+     * Purchase starter kit for a user.
+     */
+    public function purchaseStarterKit(
+        User $user,
+        string $paymentMethod,
+        string $paymentReference = null
+    ): StarterKitPurchase {
+        return DB::transaction(function () use ($user, $paymentMethod, $paymentReference) {
+            // Handle wallet payment
+            if ($paymentMethod === 'wallet') {
+                // Calculate current wallet balance
+                $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
+                $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
+                $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+                    ->where('payment_type', 'wallet_topup')
+                    ->where('status', 'verified')
+                    ->sum('amount') ?? 0);
+                $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
+                $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+                $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
+                    ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
+                    ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
+                    ->sum('workshops.price') ?? 0);
+                $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+                
+                if ($walletBalance < self::PRICE) {
+                    throw new \Exception('Insufficient wallet balance');
+                }
+                
+                // Generate payment reference for wallet transaction
+                $paymentReference = 'WALLET-' . now()->format('YmdHis') . '-' . $user->id;
+                
+                Log::info('Wallet payment validated', [
+                    'user_id' => $user->id,
+                    'amount' => self::PRICE,
+                    'wallet_balance' => $walletBalance,
+                ]);
             }
-
-            // Create subscription for starter kit
-            $subscription = Subscription::create([
+            
+            // Create purchase record
+            $purchase = StarterKitPurchase::create([
                 'user_id' => $user->id,
-                'package_id' => $starterKit->id,
-                'amount' => $starterKit->price,
-                'status' => 'active',
-                'start_date' => now(),
-                'end_date' => now()->addMonths($starterKit->duration_months),
-                'renewal_date' => now()->addMonths($starterKit->duration_months),
-                'auto_renew' => false, // Starter kit is one-time
+                'amount' => self::PRICE,
+                'payment_method' => $paymentMethod,
+                'payment_reference' => $paymentReference ?? 'PENDING',
+                'status' => $paymentMethod === 'wallet' ? 'completed' : 'pending',
+                'invoice_number' => StarterKitPurchase::generateInvoiceNumber(),
             ]);
 
-            // Record transaction
-            Transaction::create([
+            Log::info('Starter Kit purchase created', [
                 'user_id' => $user->id,
-                'transaction_type' => 'subscription',
-                'amount' => $starterKit->price,
-                'status' => 'completed',
-                'reference_number' => 'SK-' . $user->id . '-' . now()->timestamp,
-                'description' => 'Welcome Package - Starter Kit (Associate)',
-                'notes' => 'Automatic starter kit assignment for new member',
-                'processed_at' => now(),
+                'invoice' => $purchase->invoice_number,
+                'payment_method' => $paymentMethod,
             ]);
 
-            // Fire event for points system (100 LP on registration)
-            event(new UserRegistered($user));
-
-            Log::info('Starter kit processed for user: ' . $user->id);
+            return $purchase;
         });
     }
 
     /**
-     * Check if user has received starter kit
+     * Complete starter kit purchase and grant access.
      */
-    public function hasStarterKit(User $user): bool
+    public function completePurchase(StarterKitPurchase $purchase): void
     {
-        return Subscription::where('user_id', $user->id)
-            ->whereHas('package', function ($query) {
-                $query->where('slug', 'starter-kit-associate');
-            })
-            ->exists();
+        DB::transaction(function () use ($purchase) {
+            $user = $purchase->user;
+
+            // Mark purchase as completed
+            $purchase->markAsCompleted();
+
+            // Update user record
+            $user->update([
+                'has_starter_kit' => true,
+                'starter_kit_purchased_at' => now(),
+            ]);
+
+            // Add shop credit to wallet
+            $this->addShopCredit($user);
+
+            // Create progressive unlock schedule
+            $this->createUnlockSchedule($user);
+
+            // Award registration bonus points
+            $this->awardRegistrationBonus($user);
+
+            // Send welcome email (implement separately)
+            // event(new StarterKitPurchased($user, $purchase));
+
+            Log::info('Starter Kit purchase completed', [
+                'user_id' => $user->id,
+                'invoice' => $purchase->invoice_number,
+            ]);
+        });
     }
 
     /**
-     * Get starter kit details
+     * Add shop credit to user record.
      */
-    public function getStarterKitDetails(): ?Package
+    protected function addShopCredit(User $user): void
     {
-        return Package::where('slug', 'starter-kit-associate')->first();
+        $user->update([
+            'starter_kit_shop_credit' => self::SHOP_CREDIT,
+            'starter_kit_credit_expiry' => Carbon::now()->addDays(self::CREDIT_EXPIRY_DAYS),
+            'starter_kit_credit_expiry' => now()->addDays(self::CREDIT_EXPIRY_DAYS),
+        ]);
+
+        Log::info('Shop credit added', [
+            'user_id' => $user->id,
+            'amount' => self::SHOP_CREDIT,
+            'expiry' => $user->starter_kit_credit_expiry,
+        ]);
+    }
+
+    /**
+     * Create progressive unlock schedule for user.
+     */
+    protected function createUnlockSchedule(User $user): void
+    {
+        $purchaseDate = Carbon::now();
+
+        $schedule = [
+            // Day 1: Immediate access
+            [
+                'content_item' => 'Module 1: Business Fundamentals',
+                'content_category' => 'course',
+                'unlock_date' => $purchaseDate,
+            ],
+            [
+                'content_item' => 'eBook: Success Guide',
+                'content_category' => 'ebook',
+                'unlock_date' => $purchaseDate,
+            ],
+            [
+                'content_item' => 'Video 1: Platform Navigation',
+                'content_category' => 'video',
+                'unlock_date' => $purchaseDate,
+            ],
+
+            // Day 8: Second wave
+            [
+                'content_item' => 'Module 2: Network Building Strategies',
+                'content_category' => 'course',
+                'unlock_date' => $purchaseDate->copy()->addDays(8),
+            ],
+            [
+                'content_item' => 'eBook: Network Building Mastery',
+                'content_category' => 'ebook',
+                'unlock_date' => $purchaseDate->copy()->addDays(8),
+            ],
+            [
+                'content_item' => 'Video 2: Building Your Network',
+                'content_category' => 'video',
+                'unlock_date' => $purchaseDate->copy()->addDays(8),
+            ],
+
+            // Day 15: Third wave
+            [
+                'content_item' => 'Module 3: Financial Success Planning',
+                'content_category' => 'course',
+                'unlock_date' => $purchaseDate->copy()->addDays(15),
+            ],
+            [
+                'content_item' => 'eBook: Financial Freedom Blueprint',
+                'content_category' => 'ebook',
+                'unlock_date' => $purchaseDate->copy()->addDays(15),
+            ],
+            [
+                'content_item' => 'Video 3: Maximizing Earnings',
+                'content_category' => 'video',
+                'unlock_date' => $purchaseDate->copy()->addDays(15),
+            ],
+
+            // Day 22: Marketing tools
+            [
+                'content_item' => 'Marketing Templates',
+                'content_category' => 'tool',
+                'unlock_date' => $purchaseDate->copy()->addDays(22),
+            ],
+            [
+                'content_item' => 'Pitch Deck',
+                'content_category' => 'tool',
+                'unlock_date' => $purchaseDate->copy()->addDays(22),
+            ],
+            [
+                'content_item' => 'Social Media Content Pack',
+                'content_category' => 'tool',
+                'unlock_date' => $purchaseDate->copy()->addDays(22),
+            ],
+
+            // Day 30: Library access
+            [
+                'content_item' => 'Digital Library Access (50+ eBooks)',
+                'content_category' => 'library',
+                'unlock_date' => $purchaseDate->copy()->addDays(30),
+            ],
+        ];
+
+        foreach ($schedule as $item) {
+            StarterKitUnlock::create([
+                'user_id' => $user->id,
+                ...$item,
+            ]);
+        }
+
+        // Unlock Day 1 items immediately
+        StarterKitUnlock::where('user_id', $user->id)
+            ->whereDate('unlock_date', '<=', Carbon::today())
+            ->update([
+                'is_unlocked' => true,
+                'unlocked_at' => now(),
+            ]);
+
+        Log::info('Unlock schedule created', ['user_id' => $user->id]);
+    }
+
+    /**
+     * Award registration bonus points.
+     */
+    protected function awardRegistrationBonus(User $user): void
+    {
+        // Award +37.5 LP for registration
+        $user->increment('life_points', 37.5);
+
+        Log::info('Registration bonus awarded', [
+            'user_id' => $user->id,
+            'lp_awarded' => 37.5,
+        ]);
+    }
+
+    /**
+     * Award achievement to user.
+     */
+    public function awardAchievement(User $user, string $achievementType): ?MemberAchievement
+    {
+        // Check if achievement already exists
+        if (MemberAchievement::where('user_id', $user->id)
+            ->where('achievement_type', $achievementType)
+            ->exists()) {
+            return null;
+        }
+
+        $details = MemberAchievement::ACHIEVEMENTS[$achievementType] ?? null;
+
+        if (!$details) {
+            Log::warning('Unknown achievement type', ['type' => $achievementType]);
+            return null;
+        }
+
+        $achievement = MemberAchievement::create([
+            'user_id' => $user->id,
+            'achievement_type' => $achievementType,
+            'achievement_name' => $details['name'],
+            'description' => $details['description'],
+            'badge_icon' => $details['icon'],
+            'badge_color' => $details['color'],
+            'earned_at' => now(),
+        ]);
+
+        // Award points if specified
+        if (isset($details['lp_reward'])) {
+            $user->increment('life_points', $details['lp_reward']);
+        }
+
+        if (isset($details['bp_reward'])) {
+            $user->increment('bonus_points', $details['bp_reward']);
+        }
+
+        Log::info('Achievement awarded', [
+            'user_id' => $user->id,
+            'achievement' => $achievementType,
+        ]);
+
+        return $achievement;
+    }
+
+    /**
+     * Process daily unlock checks.
+     */
+    public function processUnlocks(): int
+    {
+        $unlocked = 0;
+
+        $readyToUnlock = StarterKitUnlock::readyToUnlock()->get();
+
+        foreach ($readyToUnlock as $unlock) {
+            $unlock->unlock();
+            $unlocked++;
+
+            // Notify user (implement separately)
+            // event(new ContentUnlocked($unlock->user, $unlock));
+        }
+
+        Log::info('Daily unlocks processed', ['count' => $unlocked]);
+
+        return $unlocked;
+    }
+
+    /**
+     * Check and expire shop credits.
+     */
+    public function expireShopCredits(): int
+    {
+        $expired = User::where('starter_kit_shop_credit', '>', 0)
+            ->whereDate('starter_kit_credit_expiry', '<', Carbon::today())
+            ->update([
+                'starter_kit_shop_credit' => 0,
+                'starter_kit_credit_expiry' => null,
+            ]);
+
+        Log::info('Shop credits expired', ['count' => $expired]);
+
+        return $expired;
+    }
+
+    /**
+     * Get user's starter kit progress.
+     */
+    public function getUserProgress(User $user): array
+    {
+        if (!$user->has_starter_kit) {
+            return [
+                'has_starter_kit' => false,
+            ];
+        }
+
+        $purchase = StarterKitPurchase::where('user_id', $user->id)
+            ->completed()
+            ->first();
+
+        $unlocks = StarterKitUnlock::where('user_id', $user->id)->get();
+        $achievements = MemberAchievement::where('user_id', $user->id)
+            ->displayed()
+            ->get();
+
+        return [
+            'has_starter_kit' => true,
+            'purchased_at' => $purchase?->purchased_at,
+            'days_since_purchase' => $purchase?->purchased_at?->diffInDays(now()),
+            'shop_credit' => [
+                'amount' => $user->starter_kit_shop_credit ?? 0,
+                'expiry' => $user->starter_kit_credit_expiry,
+                'days_until_expiry' => $user->starter_kit_credit_expiry?->diffInDays(now(), false),
+            ],
+            'unlocks' => [
+                'total' => $unlocks->count(),
+                'unlocked' => $unlocks->where('is_unlocked', true)->count(),
+                'locked' => $unlocks->where('is_unlocked', false)->count(),
+                'next_unlock' => $unlocks->where('is_unlocked', false)
+                    ->sortBy('unlock_date')
+                    ->first(),
+            ],
+            'achievements' => [
+                'total' => $achievements->count(),
+                'recent' => $achievements->sortByDesc('earned_at')->take(5),
+            ],
+        ];
     }
 }

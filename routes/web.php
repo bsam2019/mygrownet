@@ -101,6 +101,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/impersonate/{user}', [App\Http\Controllers\Admin\ImpersonateController::class, 'impersonate'])->name('impersonate');
     });
+
+    // Admin Starter Kit Management Routes
+    Route::middleware(['admin'])->prefix('admin/starter-kit')->name('admin.starter-kit.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/purchases', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'purchases'])->name('purchases');
+        Route::put('/purchases/{purchase}/status', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'updatePurchaseStatus'])->name('purchases.update-status');
+        Route::get('/members', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'members'])->name('members');
+        Route::get('/analytics', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'analytics'])->name('analytics');
+    });
     
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
@@ -401,8 +410,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/my-membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'show'])->name('membership.show');
         Route::get('/professional-levels', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'levels'])->name('levels.index');
         
-        // Starter Kit Route
+        // Starter Kit Routes
         Route::get('/my-starter-kit', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'show'])->name('starter-kit.show');
+        Route::get('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'purchase'])->name('starter-kit.purchase');
+        Route::post('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
         
         // Finance Routes
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
@@ -586,4 +597,15 @@ require __DIR__.'/auth.php';
             Route::get('/orders', [App\Http\Controllers\CartController::class, 'orders'])->name('orders');
             Route::get('/orders/{order}', [App\Http\Controllers\CartController::class, 'showOrder'])->name('orders.show');
         });
+    });
+
+    // Starter Kit Routes
+    Route::prefix('starter-kit')->name('starter-kit.')->middleware(['auth'])->group(function () {
+        Route::get('/', [App\Http\Controllers\StarterKitController::class, 'index'])->name('index');
+        Route::get('/purchase', [App\Http\Controllers\StarterKitController::class, 'purchase'])->name('purchase');
+        Route::post('/purchase', [App\Http\Controllers\StarterKitController::class, 'store'])->name('store');
+        Route::get('/dashboard', [App\Http\Controllers\StarterKitController::class, 'dashboard'])->name('dashboard');
+        Route::get('/library', [App\Http\Controllers\StarterKitController::class, 'library'])->name('library');
+        Route::post('/track-access', [App\Http\Controllers\StarterKitController::class, 'trackAccess'])->name('track-access');
+        Route::post('/update-progress', [App\Http\Controllers\StarterKitController::class, 'updateProgress'])->name('update-progress');
     });

@@ -4,17 +4,24 @@ import { route } from 'ziggy-js';
 import MemberLayout from '@/layouts/MemberLayout.vue';
 import { CreditCardIcon, PhoneIcon, BanknoteIcon, WalletIcon } from 'lucide-vue-next';
 
+interface PaymentContext {
+    type: string;
+    amount: number;
+    description: string;
+}
+
 const props = defineProps<{
     userPhone?: string;
+    paymentContext?: PaymentContext;
 }>();
 
 const form = useForm({
-    amount: '',
+    amount: props.paymentContext?.amount?.toString() || '',
     payment_method: 'mtn_momo',
     payment_reference: '',
     phone_number: props.userPhone || '',
-    payment_type: 'wallet_topup',
-    notes: '',
+    payment_type: props.paymentContext?.type === 'starter_kit' ? 'product' : 'wallet_topup',
+    notes: props.paymentContext?.description || '',
 });
 
 const submit = () => {
@@ -31,8 +38,21 @@ const submit = () => {
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                         <WalletIcon class="h-8 w-8 text-blue-600" />
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Top Up Wallet</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                        {{ paymentContext?.type === 'starter_kit' ? 'Submit Starter Kit Payment' : 'Top Up Wallet' }}
+                    </h1>
                     <p class="mt-2 text-sm text-gray-600">Send money to the numbers below, then submit proof of payment</p>
+                </div>
+
+                <!-- Starter Kit Context Alert -->
+                <div v-if="paymentContext?.type === 'starter_kit'" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-900 mb-2">📦 MyGrowNet Starter Kit Purchase</h3>
+                    <p class="text-sm text-green-700">
+                        Amount: <span class="font-bold">K{{ paymentContext.amount }}</span>
+                    </p>
+                    <p class="text-sm text-green-700 mt-1">
+                        After verification, you'll receive instant access to all starter kit content and K100 shop credit.
+                    </p>
                 </div>
 
                 <!-- Payment Instructions (Top) -->

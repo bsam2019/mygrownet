@@ -70,7 +70,7 @@ const userManagementNavItems: NavItem[] = [
     },
     {
         title: 'Starter Kits',
-        href: safeRoute('admin.starter-kits.index'),
+        href: safeRoute('admin.starter-kit.dashboard'),
         icon: BookOpen,
     },
     {

@@ -65,6 +65,23 @@ class VerifyPaymentUseCase
                 ]);
             }
             
+            // Handle Starter Kit payment (product type with K500 amount)
+            if ($paymentType === 'product' && $payment->amount()->value() == 500 && !$user->has_starter_kit) {
+                // Check if purchase already exists for this payment
+                $existingPurchase = \App\Models\StarterKitPurchase::where('user_id', $user->id)
+                    ->where('payment_reference', $payment->paymentReference())
+                    ->first();
+                
+                if (!$existingPurchase) {
+                    $this->completeStarterKitPurchase($user, $payment);
+                } else {
+                    \Log::info('Starter Kit purchase already exists for this payment', [
+                        'user_id' => $user->id,
+                        'payment_id' => $payment->id(),
+                    ]);
+                }
+            }
+            
             // Create matrix position if user doesn't have one
             $this->ensureMatrixPosition($user);
         }
@@ -77,6 +94,42 @@ class VerifyPaymentUseCase
             paymentType: $payment->paymentType()->value,
             occurredAt: $payment->verifiedAt()
         ));
+    }
+    
+    /**
+     * Complete starter kit purchase after payment verification
+     */
+    private function completeStarterKitPurchase(\App\Models\User $user, $payment): void
+    {
+        try {
+            $starterKitService = app(\App\Services\StarterKitService::class);
+            
+            // Create purchase record with 'completed' status since payment is already verified
+            $purchase = \App\Models\StarterKitPurchase::create([
+                'user_id' => $user->id,
+                'amount' => 500,
+                'payment_method' => $payment->paymentMethod()->value,
+                'payment_reference' => $payment->paymentReference(),
+                'status' => 'completed',
+                'invoice_number' => \App\Models\StarterKitPurchase::generateInvoiceNumber(),
+                'purchased_at' => now(),
+            ]);
+            
+            // Grant access, add credit, create unlocks
+            $starterKitService->completePurchase($purchase);
+            
+            \Log::info('Starter Kit purchase completed via payment verification', [
+                'user_id' => $user->id,
+                'payment_id' => $payment->id(),
+                'invoice' => $purchase->invoice_number,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to complete starter kit purchase', [
+                'user_id' => $user->id,
+                'payment_id' => $payment->id(),
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
     
     /**

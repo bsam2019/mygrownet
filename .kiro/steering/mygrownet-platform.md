@@ -34,6 +34,13 @@ MyGrowNet is a modern **community empowerment and growth platform** designed to 
 - Spillover mechanism for additional referrals
 - Total network capacity: 3,279 members
 
+### Venture Builder (NEW)
+- Members can co-invest in vetted business projects
+- Each funded project forms a separate limited company
+- Investors become legal shareholders
+- MyGrowNet retains minority equity (10-20%)
+- Enables real wealth creation through business ownership
+
 ## 7-Level Professional Progression System
 
 | Level | Name | Network Size | Role |
@@ -140,6 +147,7 @@ Members must earn minimum MAP each month to receive earnings:
 4. Partnership and project returns (40% of profits)
 5. Merchandise and publication sales
 6. Digital product sales (e-books, courses, certifications)
+7. **Venture Builder revenue** - Minority equity stakes, facilitation fees, management fees
 
 ### Member Income Streams:
 1. **Referral bonuses** - Direct referral commissions
@@ -148,6 +156,7 @@ Members must earn minimum MAP each month to receive earnings:
 4. **Booster funds** - Business startup capital
 5. **Profit-sharing** - Quarterly distribution from empowerment projects (60% of project profits)
 6. **Product sales commissions** - Earnings from digital product sales
+7. **Venture Builder dividends** - Quarterly/annual dividends from co-owned businesses
 
 ## Technology Stack
 
@@ -183,6 +192,44 @@ Members must earn minimum MAP each month to receive earnings:
 - 7-level professional progression (Associate → Ambassador)
 - **Profit-sharing**: All active members receive quarterly profit distributions from company's empowerment projects
 - Members do NOT invest in projects directly - MyGrowNet invests, members benefit from success
+- **Venture Builder**: Optional co-investment feature where members can become shareholders in separate legal entities
+- Each Venture Builder project forms an independent limited company with proper governance
+- MyGrowNet acts as facilitator, not fund manager, maintaining legal compliance
+
+## MyGrow Save (Digital Wallet)
+
+### Important: Wallet is NOT a Bank or Investment
+
+The MyGrowNet Wallet is a **prepaid digital account system** for platform convenience:
+
+**What it IS:**
+- ✅ Digital account for storing platform funds
+- ✅ Convenience feature for transactions
+- ✅ Secure storage for earnings
+- ✅ Withdrawal capability to mobile money/bank
+
+**What it is NOT:**
+- ❌ NOT a bank account
+- ❌ NOT an investment product
+- ❌ NOT deposit-taking service
+- ❌ Does NOT earn interest
+- ❌ NOT for peer-to-peer transfers
+
+**Rewards and Bonuses:**
+- Loyalty points and bonus credits are promotional incentives
+- NOT interest or investment returns
+- Can only be used for platform purchases
+- Cannot be withdrawn as cash
+
+**Legal Compliance:**
+- Compliant with Bank of Zambia regulations
+- NOT a collective investment scheme
+- Member funds in segregated accounts
+- Full regulatory compliance
+
+For complete details, see: `docs/WALLET_POLICY_TERMS.md` and `docs/WALLET_MEMBER_GUIDE.md`
+
+---
 
 ## Reference Documents
 
@@ -193,6 +240,9 @@ For detailed information, refer to:
 - `docs/LEVEL_STRUCTURE.md` - Complete 7-level system details
 - `docs/POINTS_SYSTEM_SPECIFICATION.md` - Technical specification for points system
 - `docs/Points_System_Guide.md` - Member-friendly points system guide
+- `docs/VENTURE_BUILDER_CONCEPT.md` - Complete Venture Builder specification (NEW)
+- `docs/WALLET_POLICY_TERMS.md` - Official wallet policy and terms (NEW)
+- `docs/WALLET_MEMBER_GUIDE.md` - Member-friendly wallet guide (NEW)
 
 #[[file:docs/MYGROWNET_PLATFORM_CONCEPT.md]]
 #[[file:docs/UNIFIED_PRODUCTS_SERVICES.md]]
@@ -200,3 +250,6 @@ For detailed information, refer to:
 #[[file:docs/LEVEL_STRUCTURE.md]]
 #[[file:docs/POINTS_SYSTEM_SPECIFICATION.md]]
 #[[file:docs/Points_System_Guide.md]]
+#[[file:docs/VENTURE_BUILDER_CONCEPT.md]]
+#[[file:docs/WALLET_POLICY_TERMS.md]]
+#[[file:docs/WALLET_MEMBER_GUIDE.md]]

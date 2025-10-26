@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-MyGrowNet is a modern **digital wealth and empowerment platform** that combines investments, e-commerce, learning, and a referral-based income model within a compliant limited liability company structure. Members earn monthly income through **participation**, **learning**, **purchasing**, and **network growth**.
+MyGrowNet is a modern **digital wealth and empowerment platform** that combines product-based network marketing, e-commerce, learning, and **real economic participation** in profitable business ventures. Members earn income through **participation**, **learning**, **purchasing**, **network growth**, and **equity ownership** in vetted business projects.
 
 The platform is powered by a revolutionary **dual-point reward system**:
 - **Life Points (LP)** - Track long-term growth and professional advancement
@@ -16,11 +16,15 @@ The platform is powered by a revolutionary **dual-point reward system**:
 
 ### Legal Structure
 
-The platform is built as a **Private Limited Company**, not a collective investment scheme, ensuring full legal compliance. Members do not invest in pooled funds; instead, they subscribe for access to products, learning packs, and mentorship programs while benefiting from structured bonuses and community incentives.
+The platform is built as a **Private Limited Company**, not a collective investment scheme, ensuring full legal compliance. Members do not invest in pooled funds; instead, they:
+- Subscribe for access to products, learning packs, and mentorship programs
+- Earn through product sales, training programs, and profit-sharing
+- Optionally co-invest in vetted business ventures through the **Venture Builder** feature
+- Become shareholders in newly formed companies, promoting collective wealth creation
 
 ### Mission
 
-MyGrowNet's mission is to create a community of empowered individuals who grow together through skills, entrepreneurship, and shared rewards — measured and rewarded through transparent, performance-based point systems.
+MyGrowNet's mission is to create a community of empowered individuals who grow together through skills, entrepreneurship, shared rewards, and **real business ownership** — measured and rewarded through transparent, performance-based systems.
 
 ---
 
@@ -113,8 +117,45 @@ MyGrowNet's products are designed to add value to members' lives while generatin
 
 **Member Benefits:**
 - Earn BP through platform engagement
-- No direct investment required
+- No direct investment required from members
 - Passive income through monthly bonus pool
+- Profits from company investments, not member deposits
+
+### 3.1b. MyGrow Venture Builder (NEW)
+
+**Revolutionary co-investment feature** that enables members to become shareholders in real businesses:
+
+**How It Works:**
+- MyGrowNet publishes pre-assessed business projects on the platform
+- Members pledge investment amounts toward startup capital
+- Once capital target is reached, a new limited company is registered
+- All investors become documented shareholders
+- MyGrowNet retains minority equity (10-20%) for management support
+
+**Project Categories:**
+- Agriculture (farms, livestock, processing)
+- Transport (logistics, delivery services)
+- Real estate (rental properties, developments)
+- Manufacturing (production facilities)
+- Services (consulting, training centers)
+- Technology (software, digital services)
+
+**Member Benefits:**
+- Real equity ownership in businesses
+- Dividend income from profitable ventures
+- Legal protection under Companies Act
+- Lower barriers to business ownership
+- Diversified investment portfolio
+- Learning about different industries
+
+**Platform Benefits:**
+- Expands investment footprint without violating financial laws
+- Creates sustainable wealth for members
+- Builds credible, transparent community economy
+- Generates revenue through minority equity stakes
+- Differentiates from traditional MLM platforms
+
+*For complete Venture Builder details, see: [VENTURE_BUILDER_CONCEPT.md](./VENTURE_BUILDER_CONCEPT.md)*
 
 ### 3.2. MyGrow Matrix (3x7 Forced Matrix)
 
@@ -155,16 +196,36 @@ MyGrowNet's products are designed to add value to members' lives while generatin
 
 ### 3.5. MyGrow Save (Digital Wallet)
 
-**Secure digital wallet** for:
+**Secure digital wallet** for member convenience:
 - Store bonuses and earnings
 - Make purchases within ecosystem
-- Transfer funds to members
+- Pay for subscriptions and services
 - Withdraw to mobile money/bank
 
-**Savings Benefits:**
-- Voluntary savings earn **small loyalty bonuses (BP-linked)**
-- Emergency fund building
-- Structured as wallet service (legally compliant)
+**Key Features:**
+- NOT a bank account or investment product
+- Prepaid system for platform transactions only
+- No interest earned on balances
+- Voluntary loyalty bonuses (BP-linked) for active use
+- Emergency fund building capability
+- Fully compliant with Zambian regulations
+
+**Legal Structure:**
+- Structured as wallet service (NOT deposit-taking)
+- Compliant with Bank of Zambia regulations
+- NOT a collective investment scheme
+- Member funds held in segregated accounts
+
+**Important Distinctions:**
+- ❌ NOT for money transfers between individuals
+- ❌ NOT for lending or borrowing
+- ❌ Does NOT earn interest
+- ✅ For platform transactions only
+- ✅ Withdrawals available anytime
+- ✅ Secure and regulated
+
+*For complete wallet terms and policies, see: [WALLET_POLICY_TERMS.md](./WALLET_POLICY_TERMS.md)*  
+*For member-friendly guide, see: [WALLET_MEMBER_GUIDE.md](./WALLET_MEMBER_GUIDE.md)*
 
 ### 3.6. MyGrow Connect
 
@@ -361,9 +422,20 @@ MyGrowNet is registered as a **Private Limited Liability Company** to ensure law
 ✅ **Does NOT** collect public investments or guarantee returns  
 ✅ Generates revenue from legitimate product sales and subscription fees  
 ✅ Pays commissions and bonuses from company income and operational margins, not from direct member deposits  
-✅ Maintains transparency through audited financials and strict internal compliance
+✅ Maintains transparency through audited financials and strict internal compliance  
+✅ Facilitates co-investment through separate legal entities (Venture Builder)
 
-This structure allows the platform to operate legally across multiple jurisdictions while protecting members and the brand.
+### Venture Builder Compliance:
+
+✅ **Each funded project forms a separate limited company** under Zambia's Companies Act  
+✅ All investors are documented shareholders with legal protection  
+✅ Proper shareholder agreements and governance structures  
+✅ MyGrowNet acts as facilitator, not fund manager  
+✅ Clear separation between platform operations and venture investments  
+✅ Full transparency and regulatory compliance  
+✅ Member participation is voluntary and informed
+
+This structure allows the platform to operate legally across multiple jurisdictions while protecting members and the brand, and enables real wealth creation through business ownership.
 
 ---
 
@@ -431,29 +503,46 @@ MyGrowNet ensures long-term sustainability through multiple income streams:
 1. **Subscription and Learning Pack Sales**
    - Primary recurring revenue
    - Scalable with member growth
+   - Monthly/annual subscription fees
 
 2. **Mentorship and Coaching Fees**
    - Premium coaching programs
    - Specialized workshops
+   - One-on-one mentorship
 
 3. **Workshop and Event Revenue**
    - Physical training events
    - Conferences and seminars
+   - Certification programs
 
 4. **Merchandise and Publication Sales**
    - Branded materials
    - Published books and guides
+   - Digital products (e-books, courses)
+
+5. **E-Commerce Shop Commissions**
+   - Product sales commissions
+   - Affiliate arrangements
+   - Partner product revenues
 
 **Investment-Based Revenue:**
-5. **Empowerment Project Returns**
+6. **Empowerment Project Returns**
    - Company invests in profitable ventures
-   - 60% of profits shared with active members
+   - 60% of profits shared with active members via BP system
    - 40% retained for operations and growth
    - Creates sustainable passive income for members
 
-6. **Partnership and Corporate Sponsorships**
+7. **Venture Builder Revenue (NEW)**
+   - Minority equity stakes (10-20%) in new companies
+   - Platform facilitation fees (2-5% of capital raised)
+   - Management service fees (1-3% of venture revenue annually)
+   - Success-based performance fees
+   - Long-term dividend income from portfolio
+
+8. **Partnership and Corporate Sponsorships**
    - Strategic partnerships
    - Corporate training contracts
+   - Brand collaborations
 
 ### Growth Strategy
 

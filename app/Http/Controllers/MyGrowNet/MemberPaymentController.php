@@ -43,10 +43,14 @@ class MemberPaymentController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // Get payment context from session (e.g., from starter kit purchase)
+        $paymentContext = session('payment_context');
+        
         return Inertia::render('MyGrowNet/SubmitPayment', [
             'userPhone' => auth()->user()->phone ?? '',
+            'paymentContext' => $paymentContext,
         ]);
     }
 

@@ -144,6 +144,13 @@ class User extends Authenticatable
         'security_flags',
         'risk_score',
         'risk_assessed_at',
+        // Starter Kit fields
+        'has_starter_kit',
+        'starter_kit_purchased_at',
+        'starter_kit_terms_accepted',
+        'starter_kit_terms_accepted_at',
+        'starter_kit_shop_credit',
+        'starter_kit_credit_expiry',
     ];
 
     protected $hidden = [
@@ -176,6 +183,13 @@ class User extends Authenticatable
         'current_team_volume' => 'decimal:2',
         'current_personal_volume' => 'decimal:2',
         'monthly_subscription_fee' => 'decimal:2',
+        // Starter Kit casts
+        'has_starter_kit' => 'boolean',
+        'starter_kit_purchased_at' => 'datetime',
+        'starter_kit_terms_accepted' => 'boolean',
+        'starter_kit_terms_accepted_at' => 'datetime',
+        'starter_kit_shop_credit' => 'decimal:2',
+        'starter_kit_credit_expiry' => 'date',
         'subscription_start_date' => 'date',
         'subscription_end_date' => 'date',
     ];
@@ -911,6 +925,12 @@ class User extends Authenticatable
     public function otpTokens(): HasMany
     {
         return $this->hasMany(OtpToken::class);
+    }
+
+    // Starter Kit relationships
+    public function starterKitPurchases(): HasMany
+    {
+        return $this->hasMany(StarterKitPurchase::class);
     }
 
     // VBIF-specific matrix position methods
