@@ -222,9 +222,15 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'referrer_id');
     }
 
-    public function directReferrals(): HasMany
+    public function referrals(): HasMany
     {
         return $this->hasMany(User::class, 'referrer_id');
+    }
+
+    // Alias for backward compatibility
+    public function directReferrals(): HasMany
+    {
+        return $this->referrals();
     }
     public function transactions(): HasMany
     {
@@ -309,7 +315,7 @@ class User extends Authenticatable
      */
     public function getActiveDirectReferralsCountAttribute(): int
     {
-        return $this->directReferrals()
+        return $this->referrals()
             ->where('is_currently_active', true)
             ->count();
     }
