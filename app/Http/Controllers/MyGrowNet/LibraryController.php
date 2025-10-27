@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\MyGrowNet;
 
+use App\Application\Library\UseCases\AccessLibraryUseCase;
+use App\Application\Library\UseCases\ViewResourceUseCase;
 use App\Http\Controllers\Controller;
 use App\Models\LibraryResource;
 use App\Models\LibraryResourceAccess;
@@ -10,19 +12,26 @@ use Inertia\Inertia;
 
 class LibraryController extends Controller
 {
+    public function __construct(
+        private readonly AccessLibraryUseCase $accessLibraryUseCase,
+        private readonly ViewResourceUseCase $viewResourceUseCase
+    ) {}
+
     public function index(Request $request)
     {
         $user = $request->user();
         
-        // Check if user has library access (starter kit + subscription or within free period)
-        if (!$user->hasLibraryAccess()) {
+        // Use the Access Library Use Case
+        $result = $this->accessLibraryUseCase->execute($user);
+        
+        if (!$result['hasAccess']) {
             if (!$user->has_starter_kit) {
                 return redirect()->route('mygrownet.starter-kit.show')
-                    ->with('error', 'Purchase the Starter Kit to unlock the Resource Library.');
+                    ->with('error', $result['reason']);
             }
             
             return redirect()->route('mygrownet.membership.show')
-                ->with('error', 'Your 30-day free library access has expired. Activate your monthly subscription to continue accessing the library.');
+                ->with('error', $result['reason']);
         }
 
         $category = $request->get('category');

@@ -1,14 +1,17 @@
 <?php
 
-namespace App\Models;
+namespace App\Infrastructure\Persistence\Eloquent\Library;
 
+use App\Models\LibraryResourceAccess;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class LibraryResource extends Model
+class LibraryResourceModel extends Model
 {
     use HasFactory;
+
+    protected $table = 'library_resources';
 
     protected $fillable = [
         'title',
@@ -38,7 +41,7 @@ class LibraryResource extends Model
 
     public function accesses(): HasMany
     {
-        return $this->hasMany(LibraryResourceAccess::class);
+        return $this->hasMany(LibraryResourceAccess::class, 'library_resource_id');
     }
 
     public function getTypeLabelAttribute(): string

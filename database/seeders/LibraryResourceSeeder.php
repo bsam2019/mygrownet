@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\LibraryResource;
+use App\Infrastructure\Persistence\Eloquent\Library\LibraryResourceModel;
 use Illuminate\Database\Seeder;
 
 class LibraryResourceSeeder extends Seeder
@@ -214,7 +214,7 @@ class LibraryResourceSeeder extends Seeder
         ];
 
         foreach ($resources as $resource) {
-            LibraryResource::create($resource);
+            LibraryResourceModel::create($resource);
         }
     }
 }

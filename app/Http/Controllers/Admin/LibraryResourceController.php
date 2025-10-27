@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\LibraryResource;
+use App\Infrastructure\Persistence\Eloquent\Library\LibraryResourceModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,22 +11,22 @@ class LibraryResourceController extends Controller
 {
     public function index()
     {
-        $resources = LibraryResource::query()
+        $resources = LibraryResourceModel::query()
             ->ordered()
             ->get()
             ->groupBy('category');
 
         $stats = [
-            'total_resources' => LibraryResource::count(),
-            'active_resources' => LibraryResource::active()->count(),
-            'featured_resources' => LibraryResource::featured()->count(),
-            'total_views' => LibraryResource::sum('view_count'),
-            'by_type' => LibraryResource::active()
+            'total_resources' => LibraryResourceModel::count(),
+            'active_resources' => LibraryResourceModel::active()->count(),
+            'featured_resources' => LibraryResourceModel::featured()->count(),
+            'total_views' => LibraryResourceModel::sum('view_count'),
+            'by_type' => LibraryResourceModel::active()
                 ->selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->get()
                 ->keyBy('type'),
-            'by_category' => LibraryResource::active()
+            'by_category' => LibraryResourceModel::active()
                 ->selectRaw('category, count(*) as count')
                 ->groupBy('category')
                 ->get()
@@ -65,12 +65,12 @@ class LibraryResourceController extends Controller
             $validated['thumbnail'] = $thumbnailPath;
         }
 
-        LibraryResource::create($validated);
+        LibraryResourceModel::create($validated);
 
         return redirect()->back()->with('success', 'Resource added successfully!');
     }
 
-    public function update(Request $request, LibraryResource $resource)
+    public function update(Request $request, LibraryResourceModel $resource)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -106,7 +106,7 @@ class LibraryResourceController extends Controller
         return redirect()->back()->with('success', 'Resource updated successfully!');
     }
 
-    public function destroy(LibraryResource $resource)
+    public function destroy(LibraryResourceModel $resource)
     {
         // Delete thumbnail if exists
         if ($resource->thumbnail && \Storage::disk('public')->exists($resource->thumbnail)) {
