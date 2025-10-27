@@ -69,9 +69,12 @@ class RecalculateAllUserPoints extends Command
                 $correctLP += 25;
             }
             
-            // 2. Each verified referral gives 25 LP and 37.5 BP
+            // 2. Each referral with verified payment gives 25 LP and 37.5 BP
             $verifiedReferrals = $user->directReferrals()
-                ->where('status', 'verified')
+                ->whereHas('memberPayments', function($query) {
+                    $query->where('status', 'verified')
+                          ->where('payment_type', 'subscription');
+                })
                 ->count();
                 
             $correctLP += ($verifiedReferrals * 25);
