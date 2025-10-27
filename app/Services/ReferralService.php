@@ -202,10 +202,8 @@ class ReferralService
     {
         return [
             'total_referrals' => $user->referrals()->count(),
-            'active_referrals' => $user->referrals()
-                ->whereHas('investments', function ($query) {
-                    $query->where('status', 'active');
-                })->count(),
+            // IMPORTANT: Active = has purchased starter kit
+            'active_referrals' => $user->referrals()->where('has_starter_kit', true)->count(),
             'total_commission' => $user->referralCommissions()
                 ->where('status', 'paid')
                 ->sum('amount'),
@@ -260,9 +258,8 @@ class ReferralService
         return [
             'total_referrals' => User::whereNotNull('referrer_id')->count(),
             'active_referrals' => User::whereNotNull('referrer_id')
-                ->whereHas('investments', function ($query) {
-                    $query->where('status', 'active');
-                })->count(),
+                // IMPORTANT: Active = has purchased starter kit
+                ->where('has_starter_kit', true)->count(),
             'total_commission_paid' => ReferralCommission::where('status', 'paid')->sum('amount'),
             'pending_commission' => ReferralCommission::where('status', 'pending')->sum('amount'),
             'total_investments_from_referrals' => Investment::whereHas('user', function ($query) {
@@ -306,9 +303,8 @@ class ReferralService
         
         return [
             'total_referrals_count' => $referrals->count(),
-            'active_referrals_count' => $referrals->whereHas('subscriptions', function ($query) {
-                $query->where('status', 'active');
-            })->count(),
+            // IMPORTANT: Active = has purchased starter kit
+            'active_referrals_count' => $referrals->where('has_starter_kit', true)->count(),
             'total_commission_earned' => $user->referralCommissions()->where('status', 'paid')->sum('amount'),
             'monthly_commission' => $user->referralCommissions()
                 ->where('status', 'paid')
@@ -355,9 +351,8 @@ class ReferralService
     public function getPerformanceMetrics(User $user)
     {
         $totalReferrals = $user->referrals()->count();
-        $activeReferrals = $user->referrals()->whereHas('subscriptions', function ($query) {
-            $query->where('status', 'active');
-        })->count();
+        // IMPORTANT: Active = has purchased starter kit
+        $activeReferrals = $user->referrals()->where('has_starter_kit', true)->count();
 
         return [
             'conversion_rate' => $totalReferrals > 0 ? ($activeReferrals / $totalReferrals) * 100 : 0,
