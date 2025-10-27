@@ -55,53 +55,58 @@ class RecalculateAllUserPoints extends Command
         $oldLP = $user->life_points ?? 0;
         $oldBP = $user->bonus_points ?? 0;
         
-        $expectedLP = 0;
-        $expectedBP = 0;
+        // The point_transactions table is the SOURCE OF TRUTH
+        // Sum all transactions to get the correct totals
+        $correctLP = PointTransaction::where('user_id', $user->id)
+            ->sum('lp_amount') ?? 0;
+        $correctBP = PointTransaction::where('user_id', $user->id)
+            ->sum('bp_amount') ?? 0;
         
-        // 1. Starter kit gives 25 LP (one-time)
-        if ($user->has_starter_kit) {
-            $expectedLP += 25;
+        // If no transactions exist, calculate expected points from actual data
+        if ($correctLP == 0 && $correctBP == 0) {
+            // 1. Starter kit gives 25 LP (one-time)
+            if ($user->has_starter_kit) {
+                $correctLP += 25;
+            }
+            
+            // 2. Each verified referral gives 25 LP and 37.5 BP
+            $verifiedReferrals = $user->directReferrals()
+                ->where('status', 'verified')
+                ->count();
+                
+            $correctLP += ($verifiedReferrals * 25);
+            $correctBP += ($verifiedReferrals * 37.5);
         }
         
-        // 2. Each verified referral gives 25 LP and 37.5 BP
-        $verifiedReferrals = $user->directReferrals()
-            ->where('status', 'verified')
-            ->count();
-            
-        $expectedLP += ($verifiedReferrals * 25);
-        $expectedBP += ($verifiedReferrals * 37.5);
-        
-        // 3. Check point_transactions table for any other points
-        $transactionLP = PointTransaction::where('user_id', $user->id)
-            ->sum('lp_amount') ?? 0;
-        $transactionBP = PointTransaction::where('user_id', $user->id)
-            ->sum('bp_amount') ?? 0;
-            
-        // Use the higher value (either calculated or from transactions)
-        $finalLP = max($expectedLP, $transactionLP);
-        $finalBP = max($expectedBP, $transactionBP);
-        
-        $changed = ($oldLP != $finalLP) || ($oldBP != $finalBP);
+        $changed = ($oldLP != $correctLP) || ($oldBP != $correctBP);
         
         if ($changed && !$dryRun) {
-            $user->life_points = $finalLP;
-            $user->bonus_points = $finalBP;
+            // Update users table (cached totals)
+            $user->life_points = $correctLP;
+            $user->bonus_points = $correctBP;
             $user->save();
             
-            // Also update user_points table if exists
+            // Also update user_points table if exists (also cached totals)
             if ($user->points) {
-                $user->points->lifetime_points = $finalLP;
-                $user->points->monthly_points = $finalBP;
+                $user->points->lifetime_points = $correctLP;
+                $user->points->monthly_points = $correctBP;
                 $user->points->save();
+            } else {
+                // Create user_points record if it doesn't exist
+                $user->points()->create([
+                    'lifetime_points' => $correctLP,
+                    'monthly_points' => $correctBP,
+                    'last_reset_at' => now()->startOfMonth(),
+                ]);
             }
         }
         
         return [
             'changed' => $changed,
             'old_lp' => $oldLP,
-            'new_lp' => $finalLP,
+            'new_lp' => $correctLP,
             'old_bp' => $oldBP,
-            'new_bp' => $finalBP,
+            'new_bp' => $correctBP,
         ];
     }
 }
