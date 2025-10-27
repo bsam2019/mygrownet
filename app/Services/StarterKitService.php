@@ -96,7 +96,10 @@ class StarterKitService
             $user = $purchase->user;
 
             // Mark purchase as completed
-            $purchase->markAsCompleted();
+            $purchase->update([
+                'status' => 'completed',
+                'purchased_at' => now(),
+            ]);
 
             // Update user record
             $user->update([
