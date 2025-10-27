@@ -486,6 +486,8 @@ class ReferralService
                 'email' => $referral->email,
                 'level' => $referral->current_professional_level,
                 'joined_at' => $referral->created_at->toISOString(),
+                'has_starter_kit' => (bool) $referral->has_starter_kit,
+                'is_active' => (bool) $referral->has_starter_kit, // Active = has starter kit
             ];
         })->toArray();
     }
