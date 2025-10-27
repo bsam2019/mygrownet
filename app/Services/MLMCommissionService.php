@@ -77,6 +77,16 @@ class MLMCommissionService
                 }
                 
                 // Calculate commission amount for this level
+                // IMPORTANT: Only award commission if referrer has purchased starter kit
+                if (!$referrer->has_starter_kit) {
+                    Log::info("Skipping commission - referrer has no starter kit", [
+                        'referrer_id' => $referrer->id,
+                        'referrer_name' => $referrer->name,
+                        'level' => $level,
+                    ]);
+                    continue;
+                }
+                
                 $commissionRate = ReferralCommission::getCommissionRate($level);
                 $commissionAmount = $packageAmount * ($commissionRate / 100);
                 
