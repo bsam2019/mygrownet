@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
 import { GiftIcon, CheckCircleIcon, StarIcon, CalendarIcon, PackageIcon, ShoppingBagIcon, BookOpenIcon, VideoIcon, AwardIcon } from 'lucide-vue-next';
+
+interface ContentItem {
+    id: number;
+    title: string;
+    description: string | null;
+    category: string;
+    unlock_day: number;
+    estimated_value: number;
+    category_label: string;
+}
 
 interface Props {
     hasStarterKit: boolean;
@@ -15,6 +26,7 @@ interface Props {
     price?: number;
     shopCredit?: number;
     purchaseUrl?: string;
+    contentItems?: Record<string, ContentItem[]>;
     purchase?: {
         invoice_number: string;
         purchased_at: string;
@@ -40,13 +52,45 @@ interface Props {
         library: any[];
     };
     achievements?: any[];
-    user: {
+    user?: {
         name: string;
         email: string;
         phone: string;
         joined_at: string;
     };
 }
+
+const props = defineProps<Props>();
+
+const totalContentValue = computed(() => {
+    if (!props.contentItems) return 0;
+    let total = 0;
+    Object.values(props.contentItems).forEach(items => {
+        items.forEach(item => {
+            total += item.estimated_value;
+        });
+    });
+    return total;
+});
+
+const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+        training: '📚',
+        ebook: '📖',
+        video: '🎥',
+        tool: '🛠️',
+        library: '📚',
+    };
+    return icons[category] || '📄';
+};
+
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-ZM', {
+        style: 'currency',
+        currency: 'ZMW',
+        minimumFractionDigits: 0,
+    }).format(amount);
+};
 
 const props = defineProps<Props>();
 
@@ -116,22 +160,87 @@ const formatCurrency = (amount: number) => {
                 </div>
 
                 <!-- No Starter Kit Message -->
-                <div v-else-if="!hasStarterKit && !hasPendingPayment" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                    <div class="flex items-start">
-                        <GiftIcon class="h-6 w-6 text-yellow-600 mt-0.5" />
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-yellow-800">No Starter Kit Found</h3>
-                            <p class="mt-2 text-sm text-yellow-700">
-                                You haven't purchased the Starter Kit yet. Get instant access to training, tools, and K{{ shopCredit }} shop credit for only K{{ price }}!
-                            </p>
-                            <div class="mt-4">
-                                <Link
-                                    :href="purchaseUrl"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Purchase Starter Kit - K{{ price }}
-                                </Link>
+                <div v-else-if="!hasStarterKit && !hasPendingPayment" class="space-y-6">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-8 text-white">
+                        <div class="flex items-center justify-between flex-wrap gap-6">
+                            <div>
+                                <h2 class="text-3xl font-bold mb-2">MyGrowNet Starter Kit</h2>
+                                <p class="text-blue-100 text-lg">Everything you need to succeed on the platform</p>
+                                <p class="text-blue-200 mt-2">Total Value: K{{ totalContentValue + (shopCredit || 0) }} • Your Price: K{{ price }}</p>
                             </div>
+                            <Link
+                                :href="purchaseUrl"
+                                class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+                            >
+                                Purchase Now - K{{ price }}
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- What's Included -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">What's Included</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                v-for="(items, category) in contentItems"
+                                :key="category"
+                                class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                            >
+                                <div class="flex items-start gap-3">
+                                    <span class="text-3xl">{{ getCategoryIcon(category) }}</span>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">
+                                            {{ items.length }} {{ items[0]?.category_label || category }}{{ items.length > 1 ? 's' : '' }}
+                                        </h4>
+                                        <ul class="space-y-1 text-sm text-gray-600">
+                                            <li v-for="item in items" :key="item.id" class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>{{ item.title }}</span>
+                                            </li>
+                                        </ul>
+                                        <p class="text-xs text-gray-500 mt-2">
+                                            Value: K{{ items.reduce((sum, item) => sum + item.estimated_value, 0) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bonuses -->
+                            <div class="border border-green-200 bg-green-50 rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-3xl">🎁</span>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">Instant Bonuses</h4>
+                                        <ul class="space-y-1 text-sm text-gray-600">
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>K{{ shopCredit }} Shop Credit (90 days)</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>+37.5 Lifetime Points</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Achievement Badges</span>
+                                            </li>
+                                        </ul>
+                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ shopCredit }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 text-center">
+                            <Link
+                                :href="purchaseUrl"
+                                class="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Get Started - K{{ price }}
+                            </Link>
+                            <p class="text-sm text-gray-600 mt-3">
+                                Save K{{ totalContentValue + (shopCredit || 0) - (price || 0) }} ({{ Math.round(((totalContentValue + (shopCredit || 0) - (price || 0)) / (totalContentValue + (shopCredit || 0))) * 100) }}% off)
+                            </p>
                         </div>
                     </div>
                 </div>

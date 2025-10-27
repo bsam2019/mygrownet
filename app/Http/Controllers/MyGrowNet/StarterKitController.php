@@ -35,6 +35,12 @@ class StarterKitController extends Controller
                 ->first();
             
             if ($pendingPayment) {
+                // Load content items for preview
+                $contentItems = \App\Models\StarterKitContentItem::active()
+                    ->ordered()
+                    ->get()
+                    ->groupBy('category');
+                
                 return Inertia::render('MyGrowNet/StarterKit', [
                     'hasStarterKit' => false,
                     'hasPendingPayment' => true,
@@ -46,8 +52,15 @@ class StarterKitController extends Controller
                     ],
                     'price' => StarterKitService::PRICE,
                     'shopCredit' => StarterKitService::SHOP_CREDIT,
+                    'contentItems' => $contentItems,
                 ]);
             }
+            
+            // Load content items for preview
+            $contentItems = \App\Models\StarterKitContentItem::active()
+                ->ordered()
+                ->get()
+                ->groupBy('category');
             
             return Inertia::render('MyGrowNet/StarterKit', [
                 'hasStarterKit' => false,
@@ -55,6 +68,7 @@ class StarterKitController extends Controller
                 'price' => StarterKitService::PRICE,
                 'shopCredit' => StarterKitService::SHOP_CREDIT,
                 'purchaseUrl' => route('mygrownet.starter-kit.purchase'),
+                'contentItems' => $contentItems,
             ]);
         }
         
