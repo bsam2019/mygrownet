@@ -99,9 +99,9 @@ class StarterKitController extends Controller
             'hasStarterKit' => true,
             'purchase' => [
                 'invoice_number' => $purchase->invoice_number,
-                'purchased_at' => $purchase->purchased_at->format('M j, Y'),
+                'purchased_at' => $purchase->purchased_at ? $purchase->purchased_at->format('M j, Y') : ($purchase->created_at ? $purchase->created_at->format('M j, Y') : 'N/A'),
                 'amount' => $purchase->amount,
-                'days_since_purchase' => (int) $purchase->purchased_at->diffInDays(now()),
+                'days_since_purchase' => $purchase->purchased_at ? (int) $purchase->purchased_at->diffInDays(now()) : ($purchase->created_at ? (int) $purchase->created_at->diffInDays(now()) : 0),
             ],
             'shopCredit' => [
                 'amount' => $user->starter_kit_shop_credit ?? 0,
