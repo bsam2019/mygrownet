@@ -123,6 +123,7 @@ class MembershipController extends Controller
     
     /**
      * Get level requirements data
+     * Based on official MyGrowNet Points System documentation
      */
     private function getLevelRequirements(): array
     {
@@ -139,11 +140,12 @@ class MembershipController extends Controller
                 'additionalReqs' => 'Registration complete',
                 'milestoneBonus' => null,
                 'profitShareMultiplier' => '1.0x',
+                'commissionRate' => '15%',
                 'color' => 'gray',
                 'benefits' => [
                     'Basic educational content',
                     'Peer circle access',
-                    '7-level commission structure',
+                    '7-level commission structure (15%)',
                     'Monthly qualification: 100 MAP',
                     'Profit-sharing: 1.0x base share'
                 ]
@@ -156,17 +158,19 @@ class MembershipController extends Controller
                 'role' => 'Skilled member, applying',
                 'mapRequired' => 200,
                 'lpRequired' => 500,
-                'minTime' => '1 month',
+                'minTime' => '1 month active',
                 'additionalReqs' => '3 direct referrals',
-                'milestoneBonus' => 'K500',
+                'milestoneBonus' => 'K500 + 100 LP',
                 'profitShareMultiplier' => '1.2x',
+                'commissionRate' => '10%',
                 'color' => 'blue',
                 'benefits' => [
                     'Advanced educational content',
                     'Group mentorship access',
-                    'Enhanced commission rates',
+                    'Level 2 commissions (10%)',
                     'Monthly qualification: 200 MAP',
-                    'Profit-sharing: 1.2x base share'
+                    'Profit-sharing: 1.2x base share',
+                    'Promotion bonus: K500'
                 ]
             ],
             [
@@ -177,17 +181,20 @@ class MembershipController extends Controller
                 'role' => 'Experienced, team building',
                 'mapRequired' => 300,
                 'lpRequired' => 1500,
-                'minTime' => '3 months',
-                'additionalReqs' => '2 active directs, 1 course',
-                'milestoneBonus' => 'K1,500',
+                'minTime' => '3 months active',
+                'additionalReqs' => '2 active direct referrals, 1 course completed',
+                'milestoneBonus' => 'K1,500 + 200 LP',
                 'profitShareMultiplier' => '1.5x',
+                'commissionRate' => '8%',
                 'color' => 'green',
                 'benefits' => [
                     'Premium content library',
                     '1-on-1 mentorship sessions',
+                    'Level 3 commissions (8%)',
                     'Team building bonuses',
                     'Monthly qualification: 300 MAP',
-                    'Profit-sharing: 1.5x base share'
+                    'Profit-sharing: 1.5x base share',
+                    'Promotion bonus: K1,500'
                 ]
             ],
             [
@@ -198,17 +205,20 @@ class MembershipController extends Controller
                 'role' => 'Team leader',
                 'mapRequired' => 400,
                 'lpRequired' => 4000,
-                'minTime' => '6 months',
-                'additionalReqs' => '1 Professional in downline, 3 courses',
-                'milestoneBonus' => 'K5,000',
+                'minTime' => '6 months active',
+                'additionalReqs' => '1 Professional in downline, 3 courses completed',
+                'milestoneBonus' => 'K5,000 + 500 LP',
                 'profitShareMultiplier' => '2.0x',
+                'commissionRate' => '6%',
                 'color' => 'purple',
                 'benefits' => [
                     'Leadership training programs',
+                    'Level 4 commissions (6%)',
                     'Team performance bonuses',
                     'Booster fund: K5,000',
                     'Monthly qualification: 400 MAP',
-                    'Profit-sharing: 2.0x base share'
+                    'Profit-sharing: 2.0x base share',
+                    'Promotion bonus: K5,000'
                 ]
             ],
             [
@@ -219,17 +229,20 @@ class MembershipController extends Controller
                 'role' => 'Strategic leader',
                 'mapRequired' => 500,
                 'lpRequired' => 10000,
-                'minTime' => '12 months',
-                'additionalReqs' => '1 Senior in downline, 5 courses',
-                'milestoneBonus' => 'K15,000',
+                'minTime' => '12 months active',
+                'additionalReqs' => '1 Senior in downline, 5 courses completed',
+                'milestoneBonus' => 'K15,000 + 1,000 LP',
                 'profitShareMultiplier' => '2.5x',
+                'commissionRate' => '4%',
                 'color' => 'indigo',
                 'benefits' => [
                     'Strategic leadership content',
+                    'Level 5 commissions (4%)',
                     'Business facilitation services',
                     'Booster fund: K15,000',
                     'Monthly qualification: 500 MAP',
-                    'Profit-sharing: 2.5x base share'
+                    'Profit-sharing: 2.5x base share',
+                    'Promotion bonus: K15,000'
                 ]
             ],
             [
@@ -240,17 +253,20 @@ class MembershipController extends Controller
                 'role' => 'Top performer',
                 'mapRequired' => 600,
                 'lpRequired' => 25000,
-                'minTime' => '18 months',
-                'additionalReqs' => '1 Manager in downline, 10 courses',
-                'milestoneBonus' => 'K50,000',
+                'minTime' => '18 months active',
+                'additionalReqs' => '1 Manager in downline, 10 courses completed',
+                'milestoneBonus' => 'K50,000 + 2,500 LP',
                 'profitShareMultiplier' => '3.0x',
+                'commissionRate' => '3%',
                 'color' => 'yellow',
                 'benefits' => [
                     'Executive coaching access',
+                    'Level 6 commissions (3%)',
                     'Innovation lab participation',
                     'Booster fund: K50,000',
                     'Monthly qualification: 600 MAP',
-                    'Profit-sharing: 3.0x base share'
+                    'Profit-sharing: 3.0x base share',
+                    'Promotion bonus: K50,000'
                 ]
             ],
             [
@@ -261,17 +277,20 @@ class MembershipController extends Controller
                 'role' => 'Brand representative',
                 'mapRequired' => 800,
                 'lpRequired' => 50000,
-                'minTime' => '24 months',
-                'additionalReqs' => '1 Director in downline, 15 courses, 1 project',
-                'milestoneBonus' => 'K150,000',
+                'minTime' => '24 months active',
+                'additionalReqs' => '1 Director in downline, 15 courses, 1 project participation',
+                'milestoneBonus' => 'K150,000 + 5,000 LP',
                 'profitShareMultiplier' => '4.0x',
+                'commissionRate' => '2%',
                 'color' => 'red',
                 'benefits' => [
                     'VIP brand ambassador status',
+                    'Level 7 commissions (2%)',
                     'Exclusive events & retreats',
                     'Booster fund: K150,000',
                     'Monthly qualification: 800 MAP',
-                    'Profit-sharing: 4.0x base share (MAX)'
+                    'Profit-sharing: 4.0x base share (MAX)',
+                    'Promotion bonus: K150,000'
                 ]
             ]
         ];
