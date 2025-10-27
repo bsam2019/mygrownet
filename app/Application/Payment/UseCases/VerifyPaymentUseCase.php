@@ -158,6 +158,9 @@ class VerifyPaymentUseCase
             return;
         }
         
+        // Update sponsor's referral count
+        $sponsor->incrementReferralCount();
+        
         // Use matrix service to find next available position
         $matrixService = app(\App\Domain\Reward\Services\ReferralMatrixService::class);
         $availablePosition = $matrixService->findNextAvailablePosition($sponsor);
