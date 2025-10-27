@@ -29,7 +29,10 @@ class PurchaseStarterKitUseCase
     ): array {
         // Create value objects
         $price = Money::fromKwacha(self::PRICE_KWACHA);
-        $walletBalance = Money::fromKwacha((int) $user->wallet_balance);
+        
+        // Calculate wallet balance dynamically
+        $walletBalanceKwacha = $this->calculateWalletBalance($user);
+        $walletBalance = Money::fromKwacha($walletBalanceKwacha);
 
         // Check if purchase is allowed
         $canPurchase = $this->purchasePolicy->canPurchase(
@@ -57,6 +60,24 @@ class PurchaseStarterKitUseCase
 
         // For other payments, create pending purchase
         return $this->createPendingPurchase($user, $price, $paymentMethod, $paymentReference);
+    }
+
+    private function calculateWalletBalance(User $user): int
+    {
+        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
+        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
+        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+            ->where('payment_type', 'wallet_topup')
+            ->where('status', 'verified')
+            ->sum('amount') ?? 0);
+        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
+        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
+            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
+            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
+            ->sum('workshops.price') ?? 0);
+        
+        return (int) ($totalEarnings - $totalWithdrawals - $workshopExpenses);
     }
 
     private function processWalletPayment(User $user, Money $price): array

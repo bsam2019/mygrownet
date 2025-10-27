@@ -252,6 +252,12 @@ class StarterKitController extends Controller
     {
         return [
             [
+                'id' => 'wallet',
+                'name' => 'MyGrowNet Wallet',
+                'description' => 'Use your wallet balance',
+                'icon' => '💳',
+            ],
+            [
                 'id' => 'mobile_money',
                 'name' => 'Mobile Money',
                 'description' => 'MTN MoMo or Airtel Money',
