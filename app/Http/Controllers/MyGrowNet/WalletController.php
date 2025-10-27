@@ -28,7 +28,14 @@ class WalletController extends Controller
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price') ?? 0);
         
-        $balance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+        // Deduct transactions (starter kit purchases, etc.)
+        $transactionExpenses = (float) (\Illuminate\Support\Facades\DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('transaction_type', 'withdrawal')
+            ->sum('amount') ?? 0);
+        
+        $balance = $totalEarnings - $totalWithdrawals - $workshopExpenses - $transactionExpenses;
         
         // Get recent transactions (combine commissions, profit shares, and wallet top-ups)
         $recentCommissions = $user->referralCommissions()

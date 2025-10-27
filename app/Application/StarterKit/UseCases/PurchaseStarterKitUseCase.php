@@ -76,8 +76,13 @@ class PurchaseStarterKitUseCase
             ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price') ?? 0);
+        $transactionExpenses = (float) (\Illuminate\Support\Facades\DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('transaction_type', 'withdrawal')
+            ->sum('amount') ?? 0);
         
-        return (int) ($totalEarnings - $totalWithdrawals - $workshopExpenses);
+        return (int) ($totalEarnings - $totalWithdrawals - $workshopExpenses - $transactionExpenses);
     }
 
     private function processWalletPayment(User $user, Money $price): array
