@@ -83,7 +83,10 @@ class PurchaseStarterKitUseCase
     private function processWalletPayment(User $user, Money $price): array
     {
         // Use existing service for now (will refactor later)
-        $purchase = $this->starterKitService->purchaseWithWallet($user);
+        $purchase = $this->starterKitService->purchaseStarterKit($user, 'wallet');
+        
+        // Complete the purchase immediately for wallet payments
+        $this->starterKitService->completePurchase($purchase);
 
         return [
             'success' => true,
@@ -100,7 +103,7 @@ class PurchaseStarterKitUseCase
         ?string $paymentReference
     ): array {
         // Use existing service for now (will refactor later)
-        $purchase = $this->starterKitService->createPendingPurchase(
+        $purchase = $this->starterKitService->purchaseStarterKit(
             $user,
             $paymentMethod,
             $paymentReference
