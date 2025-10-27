@@ -60,10 +60,25 @@ class StarterKitService
                 // Generate payment reference for wallet transaction
                 $paymentReference = 'WALLET-' . now()->format('YmdHis') . '-' . $user->id;
                 
-                Log::info('Wallet payment validated', [
+                // Create transaction to deduct from wallet
+                DB::table('transactions')->insert([
+                    'user_id' => $user->id,
+                    'transaction_type' => 'adjustment',
+                    'amount' => -self::PRICE,
+                    'balance_after' => $walletBalance - self::PRICE,
+                    'description' => 'Starter Kit Purchase - Wallet Payment',
+                    'reference_id' => $paymentReference,
+                    'status' => 'completed',
+                    'processed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                Log::info('Wallet payment validated and transaction created', [
                     'user_id' => $user->id,
                     'amount' => self::PRICE,
                     'wallet_balance' => $walletBalance,
+                    'new_balance' => $walletBalance - self::PRICE,
                 ]);
             }
             
