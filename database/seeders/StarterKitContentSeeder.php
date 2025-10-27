@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\StarterKitContentItem;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel;
 use Illuminate\Database\Seeder;
 
 class StarterKitContentSeeder extends Seeder
@@ -126,7 +126,7 @@ class StarterKitContentSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            StarterKitContentItem::create($item);
+            ContentItemModel::create($item);
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\StarterKitContentItem;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,16 +11,16 @@ class StarterKitContentController extends Controller
 {
     public function index()
     {
-        $items = StarterKitContentItem::query()
+        $items = ContentItemModel::query()
             ->ordered()
             ->get()
             ->groupBy('category');
 
         $stats = [
-            'total_items' => StarterKitContentItem::count(),
-            'active_items' => StarterKitContentItem::active()->count(),
-            'total_value' => StarterKitContentItem::active()->sum('estimated_value'),
-            'by_category' => StarterKitContentItem::active()
+            'total_items' => ContentItemModel::count(),
+            'active_items' => ContentItemModel::active()->count(),
+            'total_value' => ContentItemModel::active()->sum('estimated_value'),
+            'by_category' => ContentItemModel::active()
                 ->selectRaw('category, count(*) as count, sum(estimated_value) as value')
                 ->groupBy('category')
                 ->get()
@@ -65,12 +65,12 @@ class StarterKitContentController extends Controller
             $validated['thumbnail'] = $thumbnailPath;
         }
 
-        $item = StarterKitContentItem::create($validated);
+        $item = ContentItemModel::create($validated);
 
         return redirect()->back()->with('success', 'Content item created successfully!');
     }
 
-    public function update(Request $request, StarterKitContentItem $item)
+    public function update(Request $request, ContentItemModel $item)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -117,7 +117,7 @@ class StarterKitContentController extends Controller
         return redirect()->back()->with('success', 'Content item updated successfully!');
     }
 
-    public function destroy(StarterKitContentItem $item)
+    public function destroy(ContentItemModel $item)
     {
         // Delete associated files
         if ($item->file_path && \Storage::disk('public')->exists($item->file_path)) {
@@ -142,7 +142,7 @@ class StarterKitContentController extends Controller
         ]);
 
         foreach ($validated['items'] as $itemData) {
-            StarterKitContentItem::where('id', $itemData['id'])
+            ContentItemModel::where('id', $itemData['id'])
                 ->update(['sort_order' => $itemData['sort_order']]);
         }
 

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\StarterKitPurchase;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
 use App\Models\StarterKitUnlock;
 use App\Models\MemberAchievement;
 use Carbon\Carbon;
@@ -68,13 +68,13 @@ class StarterKitService
             }
             
             // Create purchase record
-            $purchase = StarterKitPurchase::create([
+            $purchase = StarterKitPurchaseModel::create([
                 'user_id' => $user->id,
                 'amount' => self::PRICE,
                 'payment_method' => $paymentMethod,
                 'payment_reference' => $paymentReference ?? 'PENDING',
                 'status' => $paymentMethod === 'wallet' ? 'completed' : 'pending',
-                'invoice_number' => StarterKitPurchase::generateInvoiceNumber(),
+                'invoice_number' => StarterKitPurchaseModel::generateInvoiceNumber(),
             ]);
 
             Log::info('Starter Kit purchase created', [
@@ -354,7 +354,7 @@ class StarterKitService
             ];
         }
 
-        $purchase = StarterKitPurchase::where('user_id', $user->id)
+        $purchase = StarterKitPurchaseModel::where('user_id', $user->id)
             ->completed()
             ->first();
 

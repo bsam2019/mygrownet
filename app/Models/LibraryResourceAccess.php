@@ -33,6 +33,6 @@ class LibraryResourceAccess extends Model
 
     public function resource(): BelongsTo
     {
-        return $this->belongsTo(LibraryResource::class, 'library_resource_id');
+        return $this->belongsTo(\App\Infrastructure\Persistence\Eloquent\Library\LibraryResourceModel::class, 'library_resource_id');
     }
 }

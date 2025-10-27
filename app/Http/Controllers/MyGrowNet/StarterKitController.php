@@ -5,7 +5,8 @@ namespace App\Http\Controllers\MyGrowNet;
 use App\Application\StarterKit\UseCases\PurchaseStarterKitUseCase;
 use App\Http\Controllers\Controller;
 use App\Services\StarterKitService;
-use App\Models\StarterKitPurchase;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel;
 use App\Models\StarterKitUnlock;
 use App\Models\MemberAchievement;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class StarterKitController extends Controller
             
             if ($pendingPayment) {
                 // Load content items for preview
-                $contentItems = \App\Models\StarterKitContentItem::active()
+                $contentItems = ContentItemModel::active()
                     ->ordered()
                     ->get()
                     ->groupBy('category');
@@ -59,7 +60,7 @@ class StarterKitController extends Controller
             }
             
             // Load content items for preview
-            $contentItems = \App\Models\StarterKitContentItem::active()
+            $contentItems = ContentItemModel::active()
                 ->ordered()
                 ->get()
                 ->groupBy('category');
@@ -75,7 +76,7 @@ class StarterKitController extends Controller
         }
         
         // Get starter kit purchase
-        $purchase = StarterKitPurchase::where('user_id', $user->id)
+        $purchase = StarterKitPurchaseModel::where('user_id', $user->id)
             ->completed()
             ->first();
         
@@ -190,7 +191,7 @@ class StarterKitController extends Controller
         $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
         
         // Load content items from database
-        $contentItems = \App\Models\StarterKitContentItem::active()
+        $contentItems = ContentItemModel::active()
             ->ordered()
             ->get()
             ->groupBy('category');

@@ -952,7 +952,7 @@ class User extends Authenticatable
     // Starter Kit relationships
     public function starterKitPurchases(): HasMany
     {
-        return $this->hasMany(StarterKitPurchase::class);
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::class);
     }
 
     // VBIF-specific matrix position methods

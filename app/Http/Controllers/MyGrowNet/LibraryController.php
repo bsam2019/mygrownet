@@ -38,7 +38,7 @@ class LibraryController extends Controller
         $type = $request->get('type');
         $search = $request->get('search');
 
-        $query = LibraryResource::active()->ordered();
+        $query = LibraryResourceModel::active()->ordered();
 
         if ($category) {
             $query->byCategory($category);
@@ -57,7 +57,7 @@ class LibraryController extends Controller
         }
 
         $resources = $query->get()->groupBy('category');
-        $featured = LibraryResource::active()->featured()->ordered()->limit(6)->get();
+        $featured = LibraryResourceModel::active()->featured()->ordered()->limit(6)->get();
 
         // Get user's access history
         $recentlyAccessed = LibraryResourceAccess::where('user_id', $user->id)
@@ -69,7 +69,7 @@ class LibraryController extends Controller
             ->filter();
 
         $stats = [
-            'total_resources' => LibraryResource::active()->count(),
+            'total_resources' => LibraryResourceModel::active()->count(),
             'accessed_count' => LibraryResourceAccess::where('user_id', $user->id)->distinct('library_resource_id')->count(),
             'completed_count' => LibraryResourceAccess::where('user_id', $user->id)->where('completed', true)->distinct('library_resource_id')->count(),
         ];
@@ -113,7 +113,7 @@ class LibraryController extends Controller
         $resource->incrementViewCount();
 
         // Get related resources
-        $related = LibraryResource::active()
+        $related = LibraryResourceModel::active()
             ->where('category', $resource->category)
             ->where('id', '!=', $resource->id)
             ->ordered()

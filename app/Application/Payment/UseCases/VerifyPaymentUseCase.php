@@ -68,7 +68,7 @@ class VerifyPaymentUseCase
             // Handle Starter Kit payment (product type with K500 amount)
             if ($paymentType === 'product' && $payment->amount()->value() == 500 && !$user->has_starter_kit) {
                 // Check if purchase already exists for this payment
-                $existingPurchase = \App\Models\StarterKitPurchase::where('user_id', $user->id)
+                $existingPurchase = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::where('user_id', $user->id)
                     ->where('payment_reference', $payment->paymentReference())
                     ->first();
                 
@@ -105,13 +105,13 @@ class VerifyPaymentUseCase
             $starterKitService = app(\App\Services\StarterKitService::class);
             
             // Create purchase record with 'completed' status since payment is already verified
-            $purchase = \App\Models\StarterKitPurchase::create([
+            $purchase = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::create([
                 'user_id' => $user->id,
                 'amount' => 500,
                 'payment_method' => $payment->paymentMethod()->value,
                 'payment_reference' => $payment->paymentReference(),
                 'status' => 'completed',
-                'invoice_number' => \App\Models\StarterKitPurchase::generateInvoiceNumber(),
+                'invoice_number' => \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::generateInvoiceNumber(),
                 'purchased_at' => now(),
             ]);
             
