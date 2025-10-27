@@ -18,7 +18,14 @@ use App\Http\Controllers\Admin\InvestmentTierController;
 Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
-
+    // Receipt Management
+    Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ReceiptController::class, 'index'])->name('index');
+        Route::get('/{receipt}', [\App\Http\Controllers\Admin\ReceiptController::class, 'show'])->name('show');
+        Route::get('/{receipt}/download', [\App\Http\Controllers\Admin\ReceiptController::class, 'download'])->name('download');
+        Route::post('/{receipt}/resend', [\App\Http\Controllers\Admin\ReceiptController::class, 'resend'])->name('resend');
+        Route::post('/bulk-download', [\App\Http\Controllers\Admin\ReceiptController::class, 'bulkDownload'])->name('bulk-download');
+    });
 
     // Investment Metrics
     Route::get('/investments/metrics', [InvestmentMetricsController::class, 'show'])->name('investments.metrics');
