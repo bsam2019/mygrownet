@@ -34,7 +34,7 @@ class StarterKitService
         User $user,
         string $paymentMethod,
         string $paymentReference = null
-    ): StarterKitPurchase {
+    ): StarterKitPurchaseModel {
         return DB::transaction(function () use ($user, $paymentMethod, $paymentReference) {
             // Handle wallet payment
             if ($paymentMethod === 'wallet') {
@@ -90,7 +90,7 @@ class StarterKitService
     /**
      * Complete starter kit purchase and grant access.
      */
-    public function completePurchase(StarterKitPurchase $purchase): void
+    public function completePurchase(StarterKitPurchaseModel $purchase): void
     {
         DB::transaction(function () use ($purchase) {
             $user = $purchase->user;
