@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\MyGrowNet;
 
+use App\Application\StarterKit\UseCases\PurchaseStarterKitUseCase;
 use App\Http\Controllers\Controller;
 use App\Services\StarterKitService;
 use App\Models\StarterKitPurchase;
@@ -14,7 +15,8 @@ use Inertia\Response;
 class StarterKitController extends Controller
 {
     public function __construct(
-        protected StarterKitService $starterKitService
+        protected StarterKitService $starterKitService,
+        protected PurchaseStarterKitUseCase $purchaseUseCase
     ) {}
 
     /**
@@ -214,10 +216,6 @@ class StarterKitController extends Controller
         
         $user = $request->user();
         
-        if ($user->has_starter_kit) {
-            return back()->with('error', 'You already have the Starter Kit!');
-        }
-        
         try {
             // Update terms acceptance
             $user->update([
@@ -225,37 +223,24 @@ class StarterKitController extends Controller
                 'starter_kit_terms_accepted_at' => now(),
             ]);
             
-            // Handle wallet payment - instant access
-            if ($validated['payment_method'] === 'wallet') {
-                $purchase = $this->starterKitService->purchaseStarterKit(
-                    $user,
-                    'wallet',
-                    null
-                );
-                
-                $this->starterKitService->completePurchase($purchase);
-                
-                return redirect()->route('mygrownet.starter-kit.show')
-                    ->with('success', 'Welcome! Your Starter Kit is ready. K100 shop credit has been added.');
-            }
+            // Use the Purchase Use Case (DDD)
+            $result = $this->purchaseUseCase->execute(
+                $user,
+                $validated['payment_method']
+            );
             
-            // For other payment methods, redirect to Submit Payment page
-            return redirect()->route('mygrownet.payments.create')
-                ->with('payment_context', [
-                    'type' => 'starter_kit',
-                    'amount' => StarterKitService::PRICE,
-                    'description' => 'MyGrowNet Starter Kit Purchase',
-                ])
-                ->with('info', 'Please submit your payment details for verification. You will receive access once confirmed.');
+            return redirect($result['redirect'])
+                ->with('success', $result['message']);
+                
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             \Log::error('Starter Kit purchase failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
             
-            return back()->with('error', $e->getMessage() === 'Insufficient wallet balance' 
-                ? 'Insufficient wallet balance. Please deposit funds or use another payment method.'
-                : 'Purchase failed. Please try again.');
+            return back()->with('error', 'Purchase failed. Please try again.');
         }
     }
     
