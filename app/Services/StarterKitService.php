@@ -129,6 +129,9 @@ class StarterKitService
 
             // Award registration bonus points
             $this->awardRegistrationBonus($user);
+            
+            // Generate receipt
+            $this->generateStarterKitReceipt($user, $paymentMethod, $transactionReference);
 
             // Send welcome email (implement separately)
             // event(new StarterKitPurchased($user, $purchase));
@@ -138,6 +141,40 @@ class StarterKitService
                 'invoice' => $purchase->invoice_number,
             ]);
         });
+    }
+    
+    /**
+     * Generate receipt for starter kit purchase
+     */
+    private function generateStarterKitReceipt(User $user, string $paymentMethod, ?string $transactionRef): void
+    {
+        try {
+            $receiptService = app(\App\Services\ReceiptService::class);
+            $receipt = $receiptService->generateStarterKitReceipt($user, 500, $paymentMethod, $transactionRef);
+            
+            // Email receipt to user
+            $receiptService->emailReceipt(
+                $user,
+                $receipt->pdf_path,
+                'MyGrowNet - Starter Kit Purchase Receipt'
+            );
+            
+            $receipt->update([
+                'emailed' => true,
+                'emailed_at' => now(),
+            ]);
+            
+            Log::info('Starter Kit receipt generated and emailed', [
+                'receipt_id' => $receipt->id,
+                'user_id' => $user->id,
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the purchase if receipt generation fails
+            Log::error('Failed to generate starter kit receipt: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**

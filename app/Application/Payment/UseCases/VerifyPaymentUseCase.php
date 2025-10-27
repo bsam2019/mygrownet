@@ -23,6 +23,9 @@ class VerifyPaymentUseCase
         $payment->verify($adminId, $adminNotes);
         
         $this->paymentRepository->save($payment);
+        
+        // Generate receipt for the payment
+        $this->generateReceipt($payment);
 
         // Update user status when payment is verified
         $user = \App\Models\User::find($payment->userId());
@@ -187,6 +190,48 @@ class VerifyPaymentUseCase
                 'position' => $directChildren + 1,
                 'is_active' => true,
                 'placed_at' => now(),
+            ]);
+        }
+    }
+    
+    /**
+     * Generate receipt for verified payment
+     */
+    private function generateReceipt($payment): void
+    {
+        try {
+            // Get the Eloquent model for the payment
+            $paymentModel = \App\Models\MemberPayment::find($payment->id());
+            
+            if (!$paymentModel) {
+                \Log::warning('Payment model not found for receipt generation', ['payment_id' => $payment->id()]);
+                return;
+            }
+            
+            $receiptService = app(\App\Services\ReceiptService::class);
+            $receipt = $receiptService->generatePaymentReceipt($paymentModel);
+            
+            // Email receipt to user
+            $receiptService->emailReceipt(
+                $paymentModel->user,
+                $receipt->pdf_path,
+                'MyGrowNet - Payment Receipt'
+            );
+            
+            $receipt->update([
+                'emailed' => true,
+                'emailed_at' => now(),
+            ]);
+            
+            \Log::info('Receipt generated and emailed', [
+                'receipt_id' => $receipt->id,
+                'user_id' => $paymentModel->user_id,
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the payment verification if receipt generation fails
+            \Log::error('Failed to generate receipt: ' . $e->getMessage(), [
+                'payment_id' => $payment->id(),
+                'exception' => $e,
             ]);
         }
     }

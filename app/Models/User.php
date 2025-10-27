@@ -246,6 +246,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(ReferralCommission::class, 'referred_id');
     }
+    
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(Receipt::class);
+    }
 
     // MyGrowNet team volume relationships
     public function teamVolumes(): HasMany

@@ -394,6 +394,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Note: investments.create and investments.store are already defined by Route::resource('investments') above
     
+    // Receipts
+    Route::prefix('receipts')->name('receipts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReceiptController::class, 'index'])->name('index');
+        Route::get('/{receipt}/download', [App\Http\Controllers\ReceiptController::class, 'download'])->name('download');
+        Route::get('/{receipt}/view', [App\Http\Controllers\ReceiptController::class, 'view'])->name('view');
+    });
+    
     // VBIF-specific routes
     // Matrix Management
     Route::get('/matrix', [App\Http\Controllers\MatrixController::class, 'index'])->name('matrix.index');
