@@ -549,11 +549,10 @@ class User extends Authenticatable
     public function getReferralStats(): array
     {
         return [
-            'total_referrals' => $this->referral_count,
-            'active_referrals' => $this->directReferrals()
-                ->whereHas('investments', function($query) {
-                    $query->where('status', 'active');
-                })->count(),
+            'total_referrals' => $this->referrals()->count(), // Count actual referrals, not cached field
+            'active_referrals' => $this->referrals()
+                ->where('has_starter_kit', true)
+                ->count(), // Active = has starter kit
             'total_commission' => $this->referralCommissions()
                 ->where('status', 'paid')
                 ->sum('amount'),
