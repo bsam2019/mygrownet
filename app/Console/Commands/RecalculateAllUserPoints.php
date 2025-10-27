@@ -55,30 +55,34 @@ class RecalculateAllUserPoints extends Command
         $oldLP = $user->life_points ?? 0;
         $oldBP = $user->bonus_points ?? 0;
         
-        // The point_transactions table is the SOURCE OF TRUTH
-        // Sum all transactions to get the correct totals
-        $correctLP = PointTransaction::where('user_id', $user->id)
-            ->sum('lp_amount') ?? 0;
-        $correctBP = PointTransaction::where('user_id', $user->id)
-            ->sum('bp_amount') ?? 0;
-        
-        // If no transactions exist, calculate expected points from actual data
-        if ($correctLP == 0 && $correctBP == 0) {
-            // 1. Starter kit gives 25 LP (one-time)
-            if ($user->has_starter_kit) {
-                $correctLP += 25;
-            }
+        // IMPORTANT: Users without starter kit should have ZERO points
+        if (!$user->has_starter_kit) {
+            $correctLP = 0;
+            $correctBP = 0;
+        } else {
+            // The point_transactions table is the SOURCE OF TRUTH
+            // Sum all transactions to get the correct totals
+            $correctLP = PointTransaction::where('user_id', $user->id)
+                ->sum('lp_amount') ?? 0;
+            $correctBP = PointTransaction::where('user_id', $user->id)
+                ->sum('bp_amount') ?? 0;
             
-            // 2. Each referral with ANY verified payment gives 25 LP and 37.5 BP
-            // (subscription, wallet_topup, or product payments all count)
-            $verifiedReferrals = $user->directReferrals()
-                ->whereHas('memberPayments', function($query) {
-                    $query->where('status', 'verified');
-                })
-                ->count();
+            // If no transactions exist, calculate expected points from actual data
+            if ($correctLP == 0 && $correctBP == 0) {
+                // 1. Starter kit gives 25 LP (one-time)
+                $correctLP += 25;
                 
-            $correctLP += ($verifiedReferrals * 25);
-            $correctBP += ($verifiedReferrals * 37.5);
+                // 2. Each referral with ANY verified payment gives 25 LP and 37.5 BP
+                // (subscription, wallet_topup, or product payments all count)
+                $verifiedReferrals = $user->directReferrals()
+                    ->whereHas('memberPayments', function($query) {
+                        $query->where('status', 'verified');
+                    })
+                    ->count();
+                    
+                $correctLP += ($verifiedReferrals * 25);
+                $correctBP += ($verifiedReferrals * 37.5);
+            }
         }
         
         $changed = ($oldLP != $correctLP) || ($oldBP != $correctBP);

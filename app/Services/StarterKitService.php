@@ -246,15 +246,83 @@ class StarterKitService
 
     /**
      * Award registration bonus points.
+     * This includes starter kit bonus + retroactive referral bonuses.
      */
     protected function awardRegistrationBonus(User $user): void
     {
-        // Award +37.5 LP for registration
-        $user->increment('life_points', 37.5);
-
-        Log::info('Registration bonus awarded', [
+        // 1. Award 25 LP for starter kit purchase
+        DB::table('point_transactions')->insert([
             'user_id' => $user->id,
-            'lp_awarded' => 37.5,
+            'lp_amount' => 25,
+            'bp_amount' => 0,
+            'source' => 'starter_kit_purchase',
+            'description' => 'Starter Kit Purchase Bonus',
+            'reference_type' => 'starter_kit',
+            'reference_id' => $user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Log::info('Starter kit bonus awarded', [
+            'user_id' => $user->id,
+            'lp_awarded' => 25,
+        ]);
+
+        // 2. Award retroactive points for existing verified referrals
+        $verifiedReferrals = $user->directReferrals()
+            ->whereHas('memberPayments', function($query) {
+                $query->where('status', 'verified');
+            })
+            ->get();
+
+        foreach ($verifiedReferrals as $referral) {
+            DB::table('point_transactions')->insert([
+                'user_id' => $user->id,
+                'lp_amount' => 25,
+                'bp_amount' => 37.5,
+                'source' => 'direct_referral',
+                'description' => "Direct referral: {$referral->name} verified (Retroactive)",
+                'reference_type' => 'user',
+                'reference_id' => $referral->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Retroactive referral bonus awarded', [
+                'user_id' => $user->id,
+                'referral_id' => $referral->id,
+                'referral_name' => $referral->name,
+                'lp_awarded' => 25,
+                'bp_awarded' => 37.5,
+            ]);
+        }
+
+        // 3. Recalculate and update cached totals
+        $totalLP = DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->sum('lp_amount');
+        $totalBP = DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->sum('bp_amount');
+
+        $user->update([
+            'life_points' => $totalLP,
+            'bonus_points' => $totalBP,
+        ]);
+
+        // Also update user_points table if exists
+        if ($user->points) {
+            $user->points->update([
+                'lifetime_points' => $totalLP,
+                'monthly_points' => $totalBP,
+            ]);
+        }
+
+        Log::info('Registration bonus complete', [
+            'user_id' => $user->id,
+            'total_lp' => $totalLP,
+            'total_bp' => $totalBP,
+            'verified_referrals' => $verifiedReferrals->count(),
         ]);
     }
 
