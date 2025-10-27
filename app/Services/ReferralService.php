@@ -426,17 +426,62 @@ class ReferralService
      */
     public function getMatrixData(User $user)
     {
+        // Get level 1 referrals (direct referrals)
+        $level1 = $user->referrals()->get()->map(function ($ref) {
+            return [
+                'id' => $ref->id,
+                'name' => $ref->name,
+                'level' => $ref->current_professional_level,
+                'has_starter_kit' => (bool) $ref->has_starter_kit,
+                'is_active' => (bool) $ref->has_starter_kit,
+            ];
+        })->toArray();
+
+        // Get level 2 referrals (referrals of referrals)
+        $level2 = [];
+        foreach ($user->referrals as $level1User) {
+            foreach ($level1User->referrals as $level2User) {
+                $level2[] = [
+                    'id' => $level2User->id,
+                    'name' => $level2User->name,
+                    'level' => $level2User->current_professional_level,
+                    'has_starter_kit' => (bool) $level2User->has_starter_kit,
+                    'is_active' => (bool) $level2User->has_starter_kit,
+                    'parent_id' => $level1User->id,
+                ];
+            }
+        }
+
+        // Get level 3 referrals
+        $level3 = [];
+        foreach ($user->referrals as $level1User) {
+            foreach ($level1User->referrals as $level2User) {
+                foreach ($level2User->referrals as $level3User) {
+                    $level3[] = [
+                        'id' => $level3User->id,
+                        'name' => $level3User->name,
+                        'level' => $level3User->current_professional_level,
+                        'has_starter_kit' => (bool) $level3User->has_starter_kit,
+                        'is_active' => (bool) $level3User->has_starter_kit,
+                        'parent_id' => $level2User->id,
+                    ];
+                }
+            }
+        }
+
         return [
             'root' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'level' => $user->current_professional_level,
+                'has_starter_kit' => (bool) $user->has_starter_kit,
             ],
             'levels' => [
-                'level_1' => [],
-                'level_2' => [],
-                'level_3' => [],
+                'level_1' => $level1,
+                'level_2' => $level2,
+                'level_3' => $level3,
             ],
+            'total_network' => count($level1) + count($level2) + count($level3),
         ];
     }
 

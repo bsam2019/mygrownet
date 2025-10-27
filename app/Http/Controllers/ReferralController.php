@@ -74,6 +74,8 @@ class ReferralController extends Controller
             'linkStats' => $linkStats,
             'messageTemplates' => $messageTemplates,
             'currentUserTier' => $user->currentInvestmentTier?->name,
+            'teamMembers' => $level1Referrals, // Add teamMembers for the table
+            'totalTeamMembers' => count($level1Referrals),
         ]);
     }
 
