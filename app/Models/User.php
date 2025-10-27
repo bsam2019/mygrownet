@@ -1282,16 +1282,35 @@ class User extends Authenticatable
     {
         $counts = [];
         
-        for ($level = 1; $level <= $maxLevel; $level++) {
-            $counts["level_{$level}"] = MatrixPosition::whereHas('sponsor', function($query) use ($level) {
-                $query->where('id', $this->id);
-            })
-            ->where('level', $level)
+        // Level 1: Direct children (sponsor_id = this user's ID)
+        $level1Ids = MatrixPosition::where('sponsor_id', $this->id)
             ->where('is_active', true)
-            ->count();
+            ->pluck('user_id')
+            ->toArray();
+        $counts['level_1'] = count($level1Ids);
+        
+        // Level 2: Children of Level 1 members
+        if ($maxLevel >= 2 && !empty($level1Ids)) {
+            $level2Ids = MatrixPosition::whereIn('sponsor_id', $level1Ids)
+                ->where('is_active', true)
+                ->pluck('user_id')
+                ->toArray();
+            $counts['level_2'] = count($level2Ids);
+        } else {
+            $counts['level_2'] = 0;
+            $level2Ids = [];
+        }
+        
+        // Level 3: Children of Level 2 members
+        if ($maxLevel >= 3 && !empty($level2Ids)) {
+            $counts['level_3'] = MatrixPosition::whereIn('sponsor_id', $level2Ids)
+                ->where('is_active', true)
+                ->count();
+        } else {
+            $counts['level_3'] = 0;
         }
 
-        $counts['total'] = array_sum($counts);
+        $counts['total'] = $counts['level_1'] + $counts['level_2'] + $counts['level_3'];
         return $counts;
     }
 
