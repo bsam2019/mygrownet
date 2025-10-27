@@ -63,13 +63,12 @@ class StarterKitService
                 // Create transaction to deduct from wallet
                 DB::table('transactions')->insert([
                     'user_id' => $user->id,
-                    'transaction_type' => 'adjustment',
-                    'amount' => -self::PRICE,
-                    'balance_after' => $walletBalance - self::PRICE,
+                    'transaction_type' => 'withdrawal',
+                    'amount' => self::PRICE,
                     'description' => 'Starter Kit Purchase - Wallet Payment',
-                    'reference_id' => $paymentReference,
+                    'reference_number' => $paymentReference,
                     'status' => 'completed',
-                    'processed_at' => now(),
+                    'payment_method' => 'wallet',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
