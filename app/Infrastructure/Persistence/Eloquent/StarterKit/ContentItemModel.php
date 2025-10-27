@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Infrastructure\Persistence\Eloquent\StarterKit;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class StarterKitContentItem extends Model
+class ContentItemModel extends Model
 {
     use HasFactory;
+
+    protected $table = 'starter_kit_content_items';
 
     protected $fillable = [
         'title',
@@ -49,19 +51,6 @@ class StarterKitContentItem extends Model
             return 'Immediate Access';
         }
         return "Unlocks Day {$this->unlock_day}";
-    }
-
-    public function getFileSizeFormattedAttribute(): ?string
-    {
-        if (!$this->file_size) {
-            return null;
-        }
-
-        if ($this->file_size < 1024) {
-            return $this->file_size . ' KB';
-        }
-
-        return round($this->file_size / 1024, 2) . ' MB';
     }
 
     public function scopeActive($query)

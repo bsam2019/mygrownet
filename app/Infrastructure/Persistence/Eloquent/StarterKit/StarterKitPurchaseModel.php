@@ -1,14 +1,17 @@
 <?php
 
-namespace App\Models;
+namespace App\Infrastructure\Persistence\Eloquent\StarterKit;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StarterKitPurchase extends Model
+class StarterKitPurchaseModel extends Model
 {
     use HasFactory;
+
+    protected $table = 'starter_kit_purchases';
 
     protected $fillable = [
         'user_id',
@@ -25,17 +28,11 @@ class StarterKitPurchase extends Model
         'purchased_at' => 'datetime',
     ];
 
-    /**
-     * Get the user who purchased the starter kit.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Generate a unique invoice number.
-     */
     public static function generateInvoiceNumber(): string
     {
         $prefix = 'SK';
@@ -46,54 +43,11 @@ class StarterKitPurchase extends Model
         return "{$prefix}-{$year}{$month}-{$random}";
     }
 
-    /**
-     * Mark purchase as completed.
-     */
-    public function markAsCompleted(): void
-    {
-        $this->update([
-            'status' => 'completed',
-            'purchased_at' => now(),
-        ]);
-    }
-
-    /**
-     * Mark purchase as failed.
-     */
-    public function markAsFailed(): void
-    {
-        $this->update([
-            'status' => 'failed',
-        ]);
-    }
-
-    /**
-     * Check if purchase is completed.
-     */
-    public function isCompleted(): bool
-    {
-        return $this->status === 'completed';
-    }
-
-    /**
-     * Check if purchase is pending.
-     */
-    public function isPending(): bool
-    {
-        return $this->status === 'pending';
-    }
-
-    /**
-     * Scope for completed purchases.
-     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
     }
 
-    /**
-     * Scope for pending purchases.
-     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
