@@ -968,12 +968,42 @@ class User extends Authenticatable
 
     public function buildMatrixStructure(int $maxLevel = 3): array
     {
-        $position = $this->getMatrixPosition();
-        if (!$position) {
+        // Build matrix starting from this user's direct referrals
+        return $this->buildMatrixFromUser($this->id, 1, $maxLevel);
+    }
+
+    protected function buildMatrixFromUser(int $userId, int $currentLevel, int $maxLevel): array
+    {
+        if ($currentLevel > $maxLevel) {
             return [];
         }
 
-        return $this->buildMatrixLevel($position, 1, $maxLevel);
+        $positions = [];
+        
+        // Get all positions where this user is the sponsor
+        $children = MatrixPosition::where('sponsor_id', $userId)
+            ->where('is_active', true)
+            ->with('user')
+            ->orderBy('position')
+            ->get();
+
+        foreach ($children as $child) {
+            $positions[] = [
+                'id' => $child->id,
+                'level' => $currentLevel,
+                'position' => $child->position,
+                'user' => [
+                    'id' => $child->user->id,
+                    'name' => $child->user->name,
+                    'email' => $child->user->email,
+                    'total_investment' => $child->user->total_investment_amount ?? 0,
+                    'tier' => $child->user->currentInvestmentTier?->name
+                ],
+                'children' => []
+            ];
+        }
+
+        return $positions;
     }
 
     protected function buildMatrixLevel(MatrixPosition $position, int $currentLevel, int $maxLevel): array
@@ -997,7 +1027,6 @@ class User extends Authenticatable
 
         // Get direct children (3x3 matrix allows 3 children per position)
         $children = MatrixPosition::where('sponsor_id', $position->user_id)
-            ->where('level', $currentLevel + 1)
             ->where('is_active', true)
             ->with('user.currentInvestmentTier')
             ->orderBy('position')
