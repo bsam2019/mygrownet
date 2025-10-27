@@ -109,6 +109,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/purchases/{purchase}/status', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'updatePurchaseStatus'])->name('purchases.update-status');
         Route::get('/members', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'members'])->name('members');
         Route::get('/analytics', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'analytics'])->name('analytics');
+        
+        // Content Management
+        Route::get('/content', [App\Http\Controllers\Admin\StarterKitContentController::class, 'index'])->name('content.index');
+        Route::post('/content', [App\Http\Controllers\Admin\StarterKitContentController::class, 'store'])->name('content.store');
+        Route::put('/content/{item}', [App\Http\Controllers\Admin\StarterKitContentController::class, 'update'])->name('content.update');
+        Route::delete('/content/{item}', [App\Http\Controllers\Admin\StarterKitContentController::class, 'destroy'])->name('content.destroy');
+        Route::post('/content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])->name('content.reorder');
     });
     
     // Leave impersonation - no admin middleware needed (user is impersonated)

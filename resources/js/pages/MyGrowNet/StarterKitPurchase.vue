@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
 import { ShoppingBagIcon, CheckCircleIcon, AlertCircleIcon } from 'lucide-vue-next';
+
+interface ContentItem {
+    id: number;
+    title: string;
+    description: string | null;
+    category: string;
+    unlock_day: number;
+    estimated_value: number;
+    category_label: string;
+}
 
 interface Props {
     price: number;
@@ -13,9 +24,31 @@ interface Props {
         description: string;
         icon: string;
     }>;
+    contentItems: Record<string, ContentItem[]>;
 }
 
 const props = defineProps<Props>();
+
+const totalValue = computed(() => {
+    let total = 0;
+    Object.values(props.contentItems).forEach(items => {
+        items.forEach(item => {
+            total += item.estimated_value;
+        });
+    });
+    return total + props.shopCredit;
+});
+
+const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+        training: '📚',
+        ebook: '📖',
+        video: '🎥',
+        tool: '🛠️',
+        library: '📚',
+    };
+    return icons[category] || '📄';
+};
 
 const form = useForm({
     payment_method: 'mobile_money',
@@ -64,12 +97,12 @@ const formatCurrency = (amount: number) => {
                         <div class="flex justify-between items-center mb-6">
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">MyGrowNet Starter Kit</h2>
-                                <p class="text-sm text-gray-600">Total Value: K1,050</p>
+                                <p class="text-sm text-gray-600">Total Value: {{ formatCurrency(totalValue) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm text-gray-600 line-through">K1,050</p>
+                                <p class="text-sm text-gray-600 line-through">{{ formatCurrency(totalValue) }}</p>
                                 <p class="text-3xl font-bold text-green-600">{{ formatCurrency(price) }}</p>
-                                <p class="text-sm text-green-600">Save K550 (52%)</p>
+                                <p class="text-sm text-green-600">Save {{ formatCurrency(totalValue - price) }} ({{ Math.round((totalValue - price) / totalValue * 100) }}%)</p>
                             </div>
                         </div>
 
@@ -77,98 +110,42 @@ const formatCurrency = (amount: number) => {
                         <div class="border-t pt-6">
                             <h3 class="font-semibold text-gray-900 mb-4">What's Included:</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Training Modules -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                <!-- Dynamic Content Items by Category -->
+                                <div
+                                    v-for="(items, category) in contentItems"
+                                    :key="category"
+                                    class="bg-white rounded-lg p-4 border border-gray-200"
+                                >
                                     <div class="flex items-start">
-                                        <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">3 Training Modules</h4>
+                                        <span class="text-2xl mr-3 flex-shrink-0">{{ getCategoryIcon(category) }}</span>
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-gray-900">
+                                                {{ items.length }} {{ items[0]?.category_label || category }}{{ items.length > 1 ? 's' : '' }}
+                                            </h4>
                                             <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• Business Fundamentals</li>
-                                                <li>• Network Building Strategies</li>
-                                                <li>• Financial Success Planning</li>
+                                                <li v-for="item in items" :key="item.id">
+                                                    • {{ item.title }}
+                                                </li>
                                             </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K300</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- eBooks -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div class="flex items-start">
-                                        <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">3 Premium eBooks</h4>
-                                            <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• Success Guide</li>
-                                                <li>• Network Building Mastery</li>
-                                                <li>• Financial Freedom Blueprint</li>
-                                            </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K150</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Video Tutorials -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div class="flex items-start">
-                                        <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">3 Video Tutorials</h4>
-                                            <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• Platform Navigation</li>
-                                                <li>• Building Your Network</li>
-                                                <li>• Maximizing Earnings</li>
-                                            </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K200</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tools & Resources -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div class="flex items-start">
-                                        <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">Marketing Tools</h4>
-                                            <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• Marketing Templates</li>
-                                                <li>• Pitch Deck</li>
-                                                <li>• Social Media Content</li>
-                                            </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K100</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Library Access -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
-                                    <div class="flex items-start">
-                                        <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">Digital Library</h4>
-                                            <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• 50+ Business eBooks</li>
-                                                <li>• 30-Day Access</li>
-                                                <li>• Renewable Subscription</li>
-                                            </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K200</p>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Value: {{ formatCurrency(items.reduce((sum, item) => sum + item.estimated_value, 0)) }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Bonuses -->
-                                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                <div class="bg-white rounded-lg p-4 border border-gray-200 bg-gradient-to-br from-green-50 to-blue-50">
                                     <div class="flex items-start">
                                         <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
                                         <div>
-                                            <h4 class="font-semibold text-gray-900">Instant Bonuses</h4>
+                                            <h4 class="font-semibold text-gray-900">🎁 Instant Bonuses</h4>
                                             <ul class="text-sm text-gray-600 mt-1 space-y-1">
                                                 <li>• K{{ shopCredit }} Shop Credit (90 days)</li>
-                                                <li>• +50 Lifetime Points</li>
+                                                <li>• +37.5 Lifetime Points</li>
                                                 <li>• Achievement Badges</li>
                                             </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: K{{ shopCredit + 100 }}</p>
+                                            <p class="text-xs text-gray-500 mt-2">Value: {{ formatCurrency(shopCredit) }}</p>
                                         </div>
                                     </div>
                                 </div>

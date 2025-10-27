@@ -173,11 +173,18 @@ class StarterKitController extends Controller
             ->sum('workshops.price') ?? 0);
         $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
         
+        // Load content items from database
+        $contentItems = \App\Models\StarterKitContentItem::active()
+            ->ordered()
+            ->get()
+            ->groupBy('category');
+        
         return Inertia::render('MyGrowNet/StarterKitPurchase', [
             'price' => StarterKitService::PRICE,
             'shopCredit' => StarterKitService::SHOP_CREDIT,
             'walletBalance' => $walletBalance,
             'paymentMethods' => $this->getPaymentMethods(),
+            'contentItems' => $contentItems,
         ]);
     }
     
