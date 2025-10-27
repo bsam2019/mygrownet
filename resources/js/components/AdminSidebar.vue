@@ -74,6 +74,11 @@ const userManagementNavItems: NavItem[] = [
         icon: BookOpen,
     },
     {
+        title: 'Library Resources',
+        href: safeRoute('admin.library.resources.index'),
+        icon: BookOpen,
+    },
+    {
         title: 'Referral System',
         href: safeRoute('admin.referrals.index'),
         icon: Users,

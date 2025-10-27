@@ -114,10 +114,10 @@ class StarterKitContentSeeder extends Seeder
                 'sort_order' => 12,
             ],
 
-            // Library Access (1 item)
+            // Resource Library (1 item)
             [
-                'title' => 'Digital Library Access (30 Days)',
-                'description' => 'Access to 50+ business eBooks, guides, and resources. Renewable subscription.',
+                'title' => 'Resource Library Access',
+                'description' => 'Curated collection of 50+ free business resources including videos, courses, articles, templates, and tools. Covers business fundamentals, marketing, finance, leadership, and personal development.',
                 'category' => 'library',
                 'unlock_day' => 0,
                 'estimated_value' => 200,

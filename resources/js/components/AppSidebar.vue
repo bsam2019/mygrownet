@@ -163,6 +163,11 @@ const learningNavItems: NavItem[] = [
         icon: StarIcon,
     },
     {
+        title: 'Resource Library',
+        href: route('mygrownet.library.index'),
+        icon: BookOpenIcon,
+    },
+    {
         title: 'Workshops & Training',
         href: route('mygrownet.workshops.index'),
         icon: BookOpenIcon,

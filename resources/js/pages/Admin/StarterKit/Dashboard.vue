@@ -68,13 +68,22 @@ const getStatusColor = (status: string) => {
                         <h1 class="text-3xl font-bold text-gray-900">Starter Kit Management</h1>
                         <p class="mt-2 text-gray-600">Monitor purchases, member progress, and content engagement</p>
                     </div>
-                    <Link
-                        :href="route('admin.starter-kit.content.index')"
-                        class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        <Cog6ToothIcon class="w-5 h-5 mr-2" />
-                        Manage Content
-                    </Link>
+                    <div class="flex gap-3">
+                        <Link
+                            :href="route('admin.library.resources.index')"
+                            class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                            <Cog6ToothIcon class="w-5 h-5 mr-2" />
+                            Manage Library
+                        </Link>
+                        <Link
+                            :href="route('admin.starter-kit.content.index')"
+                            class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            <Cog6ToothIcon class="w-5 h-5 mr-2" />
+                            Manage Content
+                        </Link>
+                    </div>
                 </div>
 
                 <!-- Stats Grid -->

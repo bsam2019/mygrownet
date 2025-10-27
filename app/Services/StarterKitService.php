@@ -102,6 +102,7 @@ class StarterKitService
             $user->update([
                 'has_starter_kit' => true,
                 'starter_kit_purchased_at' => now(),
+                'library_access_until' => now()->addDays(30), // 30 days free library access
             ]);
 
             // Add shop credit to wallet

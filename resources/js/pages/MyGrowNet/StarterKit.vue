@@ -91,16 +91,6 @@ const formatCurrency = (amount: number) => {
         minimumFractionDigits: 0,
     }).format(amount);
 };
-
-const props = defineProps<Props>();
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', {
-        style: 'currency',
-        currency: 'ZMW',
-        minimumFractionDigits: 2,
-    }).format(amount);
-};
 </script>
 
 <template>
@@ -277,6 +267,17 @@ const formatCurrency = (amount: number) => {
                                     <p class="text-3xl font-bold">{{ formatCurrency(purchase.amount) }}</p>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Quick Access -->
+                        <div class="mt-6 flex gap-3">
+                            <Link
+                                :href="route('mygrownet.library.index')"
+                                class="flex items-center px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+                            >
+                                <BookOpenIcon class="w-5 h-5 mr-2" />
+                                Access Library
+                            </Link>
                         </div>
                     </div>
                     

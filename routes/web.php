@@ -118,6 +118,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])->name('content.reorder');
     });
     
+    // Admin Library Management Routes
+    Route::middleware(['admin'])->prefix('admin/library')->name('admin.library.')->group(function () {
+        Route::get('/resources', [App\Http\Controllers\Admin\LibraryResourceController::class, 'index'])->name('resources.index');
+        Route::post('/resources', [App\Http\Controllers\Admin\LibraryResourceController::class, 'store'])->name('resources.store');
+        Route::put('/resources/{resource}', [App\Http\Controllers\Admin\LibraryResourceController::class, 'update'])->name('resources.update');
+        Route::delete('/resources/{resource}', [App\Http\Controllers\Admin\LibraryResourceController::class, 'destroy'])->name('resources.destroy');
+    });
+    
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
     Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
@@ -421,6 +429,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/my-starter-kit', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'show'])->name('starter-kit.show');
         Route::get('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'purchase'])->name('starter-kit.purchase');
         Route::post('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
+        
+        // Library Routes (requires starter kit)
+        Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');
+        Route::get('/library/{resource}', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'show'])->name('library.show');
+        Route::post('/library/{resource}/complete', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'markCompleted'])->name('library.complete');
         
         // Finance Routes
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');

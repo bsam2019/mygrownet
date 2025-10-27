@@ -608,6 +608,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has access to the library
+     * Requires starter kit purchase AND either:
+     * - Within 30 days of starter kit purchase (free period), OR
+     * - Active monthly subscription
+     */
+    public function hasLibraryAccess(): bool
+    {
+        // Must have purchased starter kit
+        if (!$this->has_starter_kit) {
+            return false;
+        }
+
+        // Check if within free 30-day period
+        if ($this->library_access_until && now()->lte($this->library_access_until)) {
+            return true;
+        }
+
+        // After free period, requires active subscription
+        return $this->hasActiveSubscription();
+    }
+
+    /**
      * Get payment transactions
      */
     public function paymentTransactions(): HasMany
