@@ -529,8 +529,10 @@ class ReferralService
                 'id' => $referral->id,
                 'name' => $referral->name,
                 'email' => $referral->email,
+                'phone' => $referral->phone ?? 'N/A',
                 'level' => $referral->current_professional_level,
-                'joined_at' => $referral->created_at->toISOString(),
+                'status' => $referral->has_starter_kit ? 'Active' : 'Inactive',
+                'joined_at' => $referral->created_at->format('M d, Y'),
                 'has_starter_kit' => (bool) $referral->has_starter_kit,
                 'is_active' => (bool) $referral->has_starter_kit, // Active = has starter kit
             ];
