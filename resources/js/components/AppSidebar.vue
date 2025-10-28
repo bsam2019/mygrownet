@@ -28,6 +28,7 @@ import {
     GraduationCapIcon,
     UserIcon,
     LockKeyhole as LockKeyholeIcon,
+    FileTextIcon,
     Palette as PaletteIcon,
     ShoppingBagIcon
 } from 'lucide-vue-next';
@@ -122,6 +123,11 @@ const financeNavItems: NavItem[] = [
         icon: CreditCardIcon,
     },
     {
+        title: 'My Receipts',
+        href: route('receipts.index'),
+        icon: FileTextIcon,
+    },
+    {
         title: 'Payment History',
         href: route('mygrownet.payments.index'),
         icon: HistoryIcon,
@@ -135,6 +141,11 @@ const financeNavItems: NavItem[] = [
         title: 'Transaction History',
         href: route('transactions'),
         icon: ChartBarIcon,
+    },
+    {
+        title: 'My Receipts',
+        href: route('receipts.index'),
+        icon: DocumentTextIcon,
     },
 ];
 

@@ -102,6 +102,11 @@ const financeNavItems: NavItem[] = [
         icon: DollarSign,
     },
     {
+        title: 'Receipts',
+        href: safeRoute('admin.receipts.index'),
+        icon: FileText,
+    },
+    {
         title: 'Community Profit Sharing',
         href: safeRoute('admin.profit-sharing.index'),
         icon: Activity,
@@ -115,6 +120,11 @@ const financeNavItems: NavItem[] = [
         title: 'Withdrawals',
         href: safeRoute('admin.withdrawals.index'),
         icon: Activity,
+    },
+    {
+        title: 'Receipts',
+        href: safeRoute('admin.receipts.index'),
+        icon: FileText,
     },
 ];
 
