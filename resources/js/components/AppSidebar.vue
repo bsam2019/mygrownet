@@ -28,7 +28,7 @@ import {
     GraduationCapIcon,
     UserIcon,
     LockKeyhole as LockKeyholeIcon,
-    FileTextIcon,
+    FileText as FileTextIcon,
     Palette as PaletteIcon,
     ShoppingBagIcon
 } from 'lucide-vue-next';

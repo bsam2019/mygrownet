@@ -95,6 +95,15 @@ class StarterKitService
                 'invoice' => $purchase->invoice_number,
                 'payment_method' => $paymentMethod,
             ]);
+            
+            // For wallet payments, complete the purchase immediately
+            if ($paymentMethod === 'wallet') {
+                $this->completePurchase($purchase);
+                Log::info('Wallet purchase completed immediately', [
+                    'user_id' => $user->id,
+                    'invoice' => $purchase->invoice_number,
+                ]);
+            }
 
             return $purchase;
         });
@@ -131,7 +140,7 @@ class StarterKitService
             $this->awardRegistrationBonus($user);
             
             // Generate receipt
-            $this->generateStarterKitReceipt($user, $paymentMethod, $transactionReference);
+            $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
 
             // Send welcome email (implement separately)
             // event(new StarterKitPurchased($user, $purchase));
