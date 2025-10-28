@@ -201,7 +201,7 @@ class VerifyPaymentUseCase
     {
         try {
             // Get the Eloquent model for the payment
-            $paymentModel = \App\Models\MemberPayment::find($payment->id());
+            $paymentModel = \App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::find($payment->id());
             
             if (!$paymentModel) {
                 \Log::warning('Payment model not found for receipt generation', ['payment_id' => $payment->id()]);

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\MemberPayment;
+use App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel;
 use App\Models\Transaction;
 use App\Models\Receipt;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -14,9 +14,9 @@ class ReceiptService
     /**
      * Generate receipt for payment
      */
-    public function generatePaymentReceipt(MemberPayment $payment): Receipt
+    public function generatePaymentReceipt(MemberPaymentModel $payment): Receipt
     {
-        $receiptNumber = 'RCP-' . strtoupper(substr($payment->transaction_id, 0, 8));
+        $receiptNumber = 'RCP-' . strtoupper(substr($payment->transaction_id ?? uniqid(), 0, 8));
         
         $data = [
             'receipt_number' => $receiptNumber,
