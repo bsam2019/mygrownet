@@ -143,8 +143,8 @@ class StarterKitService
             // Only uplines who have purchased starter kit will receive commissions
             $this->processStarterKitCommissions($user, $purchase->amount);
             
-            // Generate receipt
-            $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
+            // Generate receipt (disabled temporarily - DomPDF not installed)
+            // $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
 
             // Send welcome email (implement separately)
             // event(new StarterKitPurchased($user, $purchase));
