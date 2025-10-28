@@ -33,7 +33,6 @@ import {
     ShoppingBagIcon
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
-import { usePage } from '@inertiajs/vue3';
 
 interface Props {
     footerNavItems?: NavItem[];
