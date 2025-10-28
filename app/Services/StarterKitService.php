@@ -139,6 +139,10 @@ class StarterKitService
             // Award registration bonus points
             $this->awardRegistrationBonus($user);
             
+            // Process MLM commissions for uplines (7 levels)
+            // Only uplines who have purchased starter kit will receive commissions
+            $this->processStarterKitCommissions($user, $purchase->amount);
+            
             // Generate receipt
             $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
 
@@ -150,6 +154,29 @@ class StarterKitService
                 'invoice' => $purchase->invoice_number,
             ]);
         });
+    }
+    
+    /**
+     * Process MLM commissions for starter kit purchase
+     */
+    protected function processStarterKitCommissions(User $user, float $amount): void
+    {
+        try {
+            $mlmService = app(MLMCommissionService::class);
+            $commissions = $mlmService->processMLMCommissions($user, $amount, 'starter_kit');
+            
+            Log::info('Starter kit commissions processed', [
+                'user_id' => $user->id,
+                'commissions_count' => count($commissions),
+                'total_commission' => collect($commissions)->sum('amount'),
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the purchase if commission processing fails
+            Log::error('Failed to process starter kit commissions: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
     
     /**
