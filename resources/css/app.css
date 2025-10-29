@@ -90,11 +90,30 @@ html {
         @apply bg-background text-foreground;
     }
 
-    /* Prevent iOS Safari zoom on input focus and ensure visibility in all browsers */
+    /* Prevent iOS Safari zoom on input focus */
     input,
     textarea,
     select {
-        font-size: 16px !important;
-        -webkit-text-size-adjust: 100%;
+        font-size: 16px;
+    }
+
+    /* Simple, reliable input styling for all browsers */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="number"],
+    input[type="search"],
+    textarea {
+        color: #111827;
+        background-color: #ffffff;
+    }
+
+    /* Autofill styling */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px white inset;
+        -webkit-text-fill-color: #111827;
     }
 }

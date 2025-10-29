@@ -67,6 +67,20 @@ class ReceiptService
     {
         $receiptNumber = 'SKT-' . strtoupper(uniqid());
         
+        // Itemized breakdown showing actual value and discount
+        $items = [
+            ['name' => 'Business Training Modules (3 Courses)', 'price' => 250.00],
+            ['name' => 'Educational eBooks Collection (3 eBooks)', 'price' => 150.00],
+            ['name' => 'Video Tutorial Series (3 Videos)', 'price' => 200.00],
+            ['name' => 'Marketing Tools & Templates', 'price' => 100.00],
+            ['name' => '30 Days Premium Library Access', 'price' => 150.00],
+            ['name' => 'K100 Shop Credit (90-day validity)', 'price' => 100.00],
+            ['name' => '25 Lifetime Points Bonus', 'price' => 50.00],
+        ];
+        
+        $subtotal = array_sum(array_column($items, 'price'));
+        $discount = $subtotal - $amount;
+        
         $data = [
             'receipt_number' => $receiptNumber,
             'date' => now()->format('F d, Y'),
@@ -75,14 +89,13 @@ class ReceiptService
             'payment_method' => $paymentMethod,
             'type' => 'Starter Kit Purchase',
             'description' => 'MyGrowNet Starter Kit - Digital Learning Package',
-            'items' => [
-                ['name' => 'Starter Kit Access', 'price' => $amount],
-                ['name' => '30 Days Library Access', 'price' => 0],
-                ['name' => 'K50 Shop Credit', 'price' => 0],
-            ],
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'show_discount' => true,
         ];
         
-        $pdf = Pdf::loadView('receipts.payment', $data); // Reuse payment template
+        $pdf = Pdf::loadView('receipts.payment', $data);
         
         $filename = "receipt_{$receiptNumber}.pdf";
         $path = storage_path("app/receipts/{$filename}");
@@ -105,7 +118,9 @@ class ReceiptService
             'description' => 'MyGrowNet Starter Kit - Digital Learning Package',
             'pdf_path' => $path,
             'metadata' => [
-                'items' => $data['items'],
+                'items' => $items,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
             ],
         ]);
         
@@ -154,5 +169,159 @@ class ReceiptService
                 ->subject($subject)
                 ->attach($receiptPath);
         });
+    }
+    
+    /**
+     * Generate receipt for workshop registration
+     */
+    public function generateWorkshopReceipt(User $user, $workshop, string $paymentMethod, float $amount, ?string $transactionRef = null): Receipt
+    {
+        $receiptNumber = 'WKS-' . strtoupper(uniqid());
+        
+        $data = [
+            'receipt_number' => $receiptNumber,
+            'date' => now()->format('F d, Y'),
+            'user' => $user,
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
+            'transaction_id' => $transactionRef,
+            'type' => 'Workshop Registration',
+            'description' => 'Workshop: ' . $workshop->title,
+            'items' => [
+                ['name' => $workshop->title, 'price' => $amount],
+                ['name' => 'Workshop Materials', 'price' => 0],
+                ['name' => 'Certificate of Completion', 'price' => 0],
+            ],
+        ];
+        
+        $pdf = Pdf::loadView('receipts.payment', $data);
+        
+        $filename = "receipt_{$receiptNumber}.pdf";
+        $path = storage_path("app/receipts/{$filename}");
+        
+        if (!file_exists(storage_path('app/receipts'))) {
+            mkdir(storage_path('app/receipts'), 0755, true);
+        }
+        
+        $pdf->save($path);
+        
+        $receipt = Receipt::create([
+            'receipt_number' => $receiptNumber,
+            'user_id' => $user->id,
+            'type' => 'workshop',
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
+            'transaction_reference' => $transactionRef,
+            'description' => 'Workshop: ' . $workshop->title,
+            'pdf_path' => $path,
+            'metadata' => [
+                'workshop_id' => $workshop->id,
+                'workshop_title' => $workshop->title,
+                'items' => $data['items'],
+            ],
+        ]);
+        
+        return $receipt;
+    }
+    
+    /**
+     * Generate receipt for subscription payment
+     */
+    public function generateSubscriptionReceipt(User $user, $subscription, string $paymentMethod, float $amount, ?string $transactionRef = null): Receipt
+    {
+        $receiptNumber = 'SUB-' . strtoupper(uniqid());
+        
+        $data = [
+            'receipt_number' => $receiptNumber,
+            'date' => now()->format('F d, Y'),
+            'user' => $user,
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
+            'transaction_id' => $transactionRef,
+            'type' => 'Subscription Payment',
+            'description' => 'MyGrowNet ' . $subscription->package_name . ' Subscription',
+            'items' => [
+                ['name' => $subscription->package_name . ' Subscription', 'price' => $amount],
+                ['name' => 'Duration: ' . $subscription->duration_months . ' month(s)', 'price' => 0],
+            ],
+        ];
+        
+        $pdf = Pdf::loadView('receipts.payment', $data);
+        
+        $filename = "receipt_{$receiptNumber}.pdf";
+        $path = storage_path("app/receipts/{$filename}");
+        
+        if (!file_exists(storage_path('app/receipts'))) {
+            mkdir(storage_path('app/receipts'), 0755, true);
+        }
+        
+        $pdf->save($path);
+        
+        $receipt = Receipt::create([
+            'receipt_number' => $receiptNumber,
+            'user_id' => $user->id,
+            'type' => 'subscription',
+            'amount' => $amount,
+            'payment_method' => $paymentMethod,
+            'transaction_reference' => $transactionRef,
+            'description' => 'MyGrowNet ' . $subscription->package_name . ' Subscription',
+            'pdf_path' => $path,
+            'metadata' => [
+                'subscription_id' => $subscription->id,
+                'package_name' => $subscription->package_name,
+                'duration_months' => $subscription->duration_months,
+                'items' => $data['items'],
+            ],
+        ]);
+        
+        return $receipt;
+    }
+    
+    /**
+     * Generate receipt for shop product purchase
+     */
+    public function generateShopReceipt(User $user, array $items, string $paymentMethod, float $totalAmount, ?string $transactionRef = null): Receipt
+    {
+        $receiptNumber = 'SHP-' . strtoupper(uniqid());
+        
+        $data = [
+            'receipt_number' => $receiptNumber,
+            'date' => now()->format('F d, Y'),
+            'user' => $user,
+            'amount' => $totalAmount,
+            'payment_method' => $paymentMethod,
+            'transaction_id' => $transactionRef,
+            'type' => 'Shop Purchase',
+            'description' => 'MyGrowNet Shop - ' . count($items) . ' item(s)',
+            'items' => $items,
+        ];
+        
+        $pdf = Pdf::loadView('receipts.payment', $data);
+        
+        $filename = "receipt_{$receiptNumber}.pdf";
+        $path = storage_path("app/receipts/{$filename}");
+        
+        if (!file_exists(storage_path('app/receipts'))) {
+            mkdir(storage_path('app/receipts'), 0755, true);
+        }
+        
+        $pdf->save($path);
+        
+        $receipt = Receipt::create([
+            'receipt_number' => $receiptNumber,
+            'user_id' => $user->id,
+            'type' => 'shop_purchase',
+            'amount' => $totalAmount,
+            'payment_method' => $paymentMethod,
+            'transaction_reference' => $transactionRef,
+            'description' => 'MyGrowNet Shop - ' . count($items) . ' item(s)',
+            'pdf_path' => $path,
+            'metadata' => [
+                'items' => $items,
+                'item_count' => count($items),
+            ],
+        ]);
+        
+        return $receipt;
     }
 }

@@ -23,9 +23,6 @@ class VerifyPaymentUseCase
         $payment->verify($adminId, $adminNotes);
         
         $this->paymentRepository->save($payment);
-        
-        // Generate receipt for the payment
-        $this->generateReceipt($payment);
 
         // Update user status when payment is verified
         $user = \App\Models\User::find($payment->userId());
@@ -82,6 +79,12 @@ class VerifyPaymentUseCase
                         'user_id' => $user->id,
                         'payment_id' => $payment->id(),
                     ]);
+                }
+            } else {
+                // Generate receipt for non-starter-kit payments (except wallet top-ups)
+                // Wallet top-ups are just deposits, not purchases, so no receipt needed
+                if ($paymentType !== 'wallet_topup') {
+                    $this->generateReceipt($payment);
                 }
             }
             

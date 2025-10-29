@@ -166,7 +166,7 @@ class StarterKitController extends Controller
     /**
      * Show purchase page
      */
-    public function purchase(Request $request): Response
+    public function purchase(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         

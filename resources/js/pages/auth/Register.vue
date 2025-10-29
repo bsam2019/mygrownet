@@ -81,10 +81,7 @@ const submit = () => {
                         autocomplete="name"
                         v-model="form.name"
                         placeholder="Enter your full name"
-                        :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.name ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
-                        ]"
+                        :class="form.errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.name" />
                 </div>
@@ -101,10 +98,7 @@ const submit = () => {
                         autocomplete="email"
                         v-model="form.email"
                         placeholder="you@example.com"
-                        :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.email ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
-                        ]"
+                        :class="form.errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -121,10 +115,7 @@ const submit = () => {
                         autocomplete="tel"
                         v-model="form.phone"
                         placeholder="0977123456 or +260977123456"
-                        :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.phone ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
-                        ]"
+                        :class="form.errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <p class="text-xs text-gray-500 mt-1">
                         Enter your Zambian phone number (e.g., 0977123456)
@@ -150,9 +141,8 @@ const submit = () => {
                         v-model="form.referral_code"
                         placeholder="Enter referral code if you have one"
                         :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.referral_code ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200',
-                            referralCode ? 'border-green-300 bg-green-50' : ''
+                            form.errors.referral_code ? 'border-red-500 focus-visible:ring-red-500' : '',
+                            referralCode ? 'border-green-500' : ''
                         ]"
                     />
                     <p v-if="referralCode" class="text-xs text-green-600 flex items-center gap-1">
@@ -176,10 +166,7 @@ const submit = () => {
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Create a secure password"
-                        :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.password ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
-                        ]"
+                        :class="form.errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <PasswordStrengthIndicator :password="form.password" />
                     <InputError :message="form.errors.password" />
@@ -194,10 +181,7 @@ const submit = () => {
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         placeholder="Confirm your password"
-                        :class="[
-                            'bg-gray-50 focus-visible:ring-blue-500',
-                            form.errors.password_confirmation ? 'border-red-300 focus-visible:ring-red-500' : 'border-gray-200'
-                        ]"
+                        :class="form.errors.password_confirmation ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.password_confirmation" />
                 </div>

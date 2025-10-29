@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton } from '@/components/ui/sidebar';
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { ChevronRightIcon } from 'lucide-vue-next';
 
 interface NavGroup {
@@ -16,6 +17,9 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
+const sidebar = useSidebar();
+const isSidebarCollapsed = computed(() => !sidebar.open.value);
+
 // Track collapsed state; persisted in localStorage so groups remain open after navigation
 const collapsedGroups = ref<Set<string>>(new Set());
 const STORAGE_KEY = 'mygrownet.sidebar.collapsedGroups';
@@ -105,12 +109,36 @@ watch(
 <template>
     <div v-for="group in groups" :key="group.label">
         <SidebarGroup class="px-2 py-0">
+            <TooltipProvider v-if="isSidebarCollapsed && group.icon" :delay-duration="0">
+                <Tooltip>
+                    <TooltipTrigger as-child>
+                        <SidebarGroupLabel 
+                            class="cursor-pointer flex items-center justify-center hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors px-2 py-2"
+                            @click="toggleGroup(group.label)"
+                        >
+                            <component 
+                                :is="group.icon" 
+                                class="h-5 w-5 text-gray-600" 
+                            />
+                        </SidebarGroupLabel>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" class="font-semibold">
+                        {{ group.label }}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            
             <SidebarGroupLabel 
-                class="cursor-pointer flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-2 py-2 transition-colors text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-700"
+                v-else
+                class="cursor-pointer flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors px-2 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-700"
                 @click="toggleGroup(group.label)"
             >
                 <span class="flex items-center gap-2">
-                    <component v-if="group.icon" :is="group.icon" class="h-3.5 w-3.5" />
+                    <component 
+                        v-if="group.icon" 
+                        :is="group.icon" 
+                        class="h-3.5 w-3.5" 
+                    />
                     <span>{{ group.label }}</span>
                 </span>
                 <ChevronRightIcon 
@@ -118,7 +146,11 @@ watch(
                     :class="{ 'rotate-90': !isGroupCollapsed(group.label) }"
                 />
             </SidebarGroupLabel>
-            <SidebarMenu :class="!isGroupCollapsed(group.label) ? 'mt-1' : 'group-data-[collapsible=icon]:block hidden'">
+            
+            <SidebarMenu 
+                v-show="!isGroupCollapsed(group.label) && !isSidebarCollapsed"
+                class="mt-1"
+            >
                 <SidebarMenuItem v-for="item in group.items" :key="item.title" :title="item.title">
                     <SidebarMenuButton
                         as-child

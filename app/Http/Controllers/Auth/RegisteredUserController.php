@@ -31,7 +31,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, StarterKitService $starterKitService, DefaultSponsorService $defaultSponsorService): RedirectResponse
+    public function store(Request $request, DefaultSponsorService $defaultSponsorService): RedirectResponse
     {
         // Normalize phone number BEFORE validation
         $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
@@ -102,8 +102,8 @@ class RegisteredUserController extends Controller
                 $referrer->awardPointsForActivity('direct_referral', "Referred new member: {$user->name}");
             }
 
-            // Process starter kit for new member
-            $starterKitService->processStarterKit($user);
+            // Note: Starter kit processing removed - handled separately when user purchases
+            // $starterKitService->processStarterKit($user);
 
             Auth::login($user);
 
