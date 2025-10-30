@@ -51,9 +51,25 @@ const isAdmin = computed(() => {
     return page.props.auth?.user?.roles?.some((role: any) => role.name === 'admin') || false;
 });
 
-// Menu structure
+// Check account type
+const accountType = computed(() => {
+    return page.props.auth?.user?.account_type || 'member';
+});
+
+const isInvestor = computed(() => accountType.value === 'investor');
+const isMember = computed(() => accountType.value === 'member');
+
+// Menu structure - Investor-only items (minimal)
+const investorNavItems: NavItem[] = [
+    { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
+    { title: 'My Investments', href: route('mygrownet.ventures.my-investments'), icon: TrendingUpIcon },
+    { title: 'My Wallet', href: route('mygrownet.wallet.index'), icon: BanknoteIcon },
+];
+
+// Full member items
 const myBusinessNavItems: NavItem[] = [
     { title: 'My Business Profile', href: route('mygrownet.membership.show'), icon: BriefcaseIcon },
+    { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
     { title: 'MyGrow Shop', href: route('shop.index'), icon: ShoppingBagIcon },
     { title: 'My Starter Kit', href: route('mygrownet.starter-kit.show'), icon: GiftIcon },
     { title: 'Growth Levels', href: route('mygrownet.levels.index'), icon: TrendingUpIcon },
@@ -254,8 +270,35 @@ onMounted(() => {
                     <span v-show="!isCollapsed || isMobile" class="ml-3">Dashboard</span>
                 </Link>
 
-                <!-- My Business Section -->
-                <div class="pt-2">
+                <!-- Investor Dashboard (Investor-only users) -->
+                <div v-if="isInvestor" class="space-y-1 pt-2">
+                    <Link v-for="item in investorNavItems" :key="item.title"
+                        :href="item.href"
+                        :class="[
+                            'flex items-center px-4 py-2 transition-colors duration-200',
+                            route().current(item.href) 
+                                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' 
+                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                        ]"
+                        @mouseenter="showItemTooltip($event, item.title)"
+                        @mouseleave="hideTooltip"
+                    >
+                        <component :is="item.icon" class="h-5 w-5" />
+                        <span v-show="!isCollapsed || isMobile" class="ml-3">{{ item.title }}</span>
+                    </Link>
+                    
+                    <!-- Upgrade to Member CTA -->
+                    <div v-show="!isCollapsed" class="mx-4 mt-4 rounded-lg bg-blue-50 p-4 border border-blue-200">
+                        <p class="text-sm font-semibold text-blue-900 mb-2">Unlock Full Benefits</p>
+                        <p class="text-xs text-blue-700 mb-3">Upgrade to full membership for MLM, shop access, and more!</p>
+                        <Link href="/membership/upgrade" class="block w-full rounded-md bg-blue-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-blue-500">
+                            Upgrade Now
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- My Business Section (Members only) -->
+                <div v-if="isMember" class="pt-2">
                     <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('myBusiness')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
@@ -288,8 +331,8 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Network & Team Section -->
-                <div class="pt-2">
+                <!-- Network & Team Section (Members only) -->
+                <div v-if="isMember" class="pt-2">
                     <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('network')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
@@ -322,8 +365,8 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Finance Section -->
-                <div class="pt-2">
+                <!-- Finance Section (Members only - full finance features) -->
+                <div v-if="isMember" class="pt-2">
                     <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('finance')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',

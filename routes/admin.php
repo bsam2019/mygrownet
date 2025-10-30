@@ -13,7 +13,6 @@ use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
 use App\Http\Controllers\Admin\WithdrawalApprovalController;
 use App\Http\Controllers\Admin\InvestmentCategoriesController;
-use App\Http\Controllers\Admin\InvestmentTierController;
 
 Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -50,15 +49,7 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::resource('categories', InvestmentCategoriesController::class)
         ->only(['index', 'store', 'update', 'destroy']);
 
-    // Investment tiers management
-    Route::get('/investment-tiers', [InvestmentTierController::class, 'index'])->name('investment-tiers.index');
-    Route::get('/investment-tiers/create', [InvestmentTierController::class, 'create'])->name('investment-tiers.create');
-    Route::post('/investment-tiers', [InvestmentTierController::class, 'store'])->name('investment-tiers.store');
-    Route::get('/investment-tiers/{tier}/edit', [InvestmentTierController::class, 'edit'])->name('investment-tiers.edit');
-    Route::put('/investment-tiers/{tier}', [InvestmentTierController::class, 'update'])->name('investment-tiers.update');
-    Route::delete('/investment-tiers/{tier}', [InvestmentTierController::class, 'destroy'])->name('investment-tiers.destroy');
-    Route::patch('/investment-tiers/{tier}/toggle-status', [InvestmentTierController::class, 'toggleStatus'])->name('investment-tiers.toggle-status');
-    Route::patch('/investment-tiers/{tier}/toggle-archive', [InvestmentTierController::class, 'toggleArchive'])->name('investment-tiers.toggle-archive');
+    // VBIF Investment tiers removed - now using Venture Builder system
 
     // Withdrawal management
     Route::get('/withdrawals', [WithdrawalApprovalController::class, 'index'])->name('withdrawals.index');

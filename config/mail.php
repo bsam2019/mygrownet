@@ -49,6 +49,28 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Brevo (Sendinblue) - 300 emails/day free
+        'brevo' => [
+            'transport' => 'smtp',
+            'host' => 'smtp-relay.brevo.com',
+            'port' => 587,
+            'encryption' => 'tls',
+            'username' => env('BREVO_USERNAME'),
+            'password' => env('BREVO_PASSWORD'),
+            'timeout' => null,
+        ],
+
+        // Gmail SMTP - 500 emails/day free
+        'gmail' => [
+            'transport' => 'smtp',
+            'host' => 'smtp.gmail.com',
+            'port' => 587,
+            'encryption' => 'tls',
+            'username' => env('GMAIL_USERNAME'),
+            'password' => env('GMAIL_PASSWORD'),
+            'timeout' => null,
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

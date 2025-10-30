@@ -14,7 +14,7 @@ use App\Http\Controllers\WithdrawalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Investment\InvestmentTierController;
+// InvestmentTierController removed - using Venture Builder
 use App\Http\Controllers\Admin\AdminInvestmentController;
 use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\EarningsProjectionController;
@@ -131,35 +131,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
     Route::get('/dashboard/stats', [DashboardStatsController::class, 'index'])->name('dashboard.stats');
     
-    // VBIF Dashboard API Endpoints
+    // Dashboard API Endpoints (MyGrowNet)
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
-        Route::get('/real-time-earnings', [DashboardController::class, 'realTimeEarnings'])->name('real-time-earnings');
-        Route::get('/withdrawal-eligibility', [DashboardController::class, 'withdrawalEligibility'])->name('withdrawal-eligibility');
-        Route::get('/penalty-preview', [DashboardController::class, 'penaltyPreview'])->name('penalty-preview');
-        Route::get('/notifications-activity', [DashboardController::class, 'notificationsAndActivity'])->name('notifications-activity');
         Route::get('/metrics', [DashboardController::class, 'dashboardMetrics'])->name('metrics');
-        Route::get('/investment-trends', [DashboardController::class, 'investmentTrends'])->name('investment-trends');
-        Route::get('/tier-upgrade-recommendations', [DashboardController::class, 'tierUpgradeRecommendations'])->name('tier-upgrade-recommendations');
+        Route::get('/notifications-activity', [DashboardController::class, 'notificationsAndActivity'])->name('notifications-activity');
         Route::get('/matrix-data', [DashboardController::class, 'matrixData'])->name('matrix-data');
     });
 
-    // Investments
-    Route::resource('investments', InvestmentController::class);
-    Route::patch('investments/{investment}/approve', [InvestmentController::class, 'approve'])->name('investments.approve');
-    Route::patch('investments/{investment}/reject', [InvestmentController::class, 'reject'])->name('investments.reject');
-    
-    // VBIF Investment enhancements
-    Route::get('investments/history/all', [InvestmentController::class, 'history'])->name('investments.history');
-    Route::get('investments/performance/metrics', [InvestmentController::class, 'performance'])->name('investments.performance');
-    Route::post('investments/tier-upgrade', [InvestmentController::class, 'requestTierUpgrade'])->name('investments.tier-upgrade');
-    Route::post('investments/{investment}/withdrawal', [InvestmentController::class, 'requestWithdrawal'])->name('investments.withdrawal');
-
-    // Investment Opportunities
-    Route::get('/opportunities', [App\Http\Controllers\OpportunityController::class, 'index'])->name('opportunities');
-    Route::get('/opportunities/{opportunity}', [App\Http\Controllers\OpportunityController::class, 'show'])->name('opportunities.show');
-
-    // Portfolio
-    Route::get('/portfolio', [App\Http\Controllers\PortfolioController::class, 'index'])->name('portfolio');
+    // VBIF Investment routes removed - now using Venture Builder system
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
@@ -603,6 +582,7 @@ Route::prefix('health')->name('health.')->group(function () {
 require __DIR__.'/admin.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+require __DIR__.'/venture.php';
 
     // MyGrow Shop Routes
     Route::prefix('shop')->name('shop.')->group(function () {

@@ -324,4 +324,85 @@ class ReceiptService
         
         return $receipt;
     }
+    
+    /**
+     * Generic method to create receipt for any transaction type
+     */
+    public function createReceipt(array $data): Receipt
+    {
+        $type = $data['type'] ?? 'general';
+        $prefixes = [
+            'venture_investment' => 'VNT',
+            'wallet_topup' => 'WLT',
+            'withdrawal' => 'WDR',
+            'commission' => 'COM',
+            'general' => 'RCP',
+        ];
+        
+        $prefix = $prefixes[$type] ?? 'RCP';
+        $receiptNumber = $prefix . '-' . strtoupper(uniqid());
+        
+        $user = User::find($data['user_id']);
+        
+        $pdfData = [
+            'receipt_number' => $receiptNumber,
+            'date' => now()->format('F d, Y'),
+            'user' => $user,
+            'amount' => $data['amount'],
+            'payment_method' => $data['payment_method'] ?? 'N/A',
+            'transaction_id' => $data['payment_reference'] ?? null,
+            'type' => $this->getTypeLabel($type),
+            'description' => $data['description'],
+            'items' => $data['items'] ?? null,
+        ];
+        
+        $pdf = Pdf::loadView('receipts.payment', $pdfData);
+        
+        $filename = "receipt_{$receiptNumber}.pdf";
+        $path = storage_path("app/receipts/{$filename}");
+        
+        if (!file_exists(storage_path('app/receipts'))) {
+            mkdir(storage_path('app/receipts'), 0755, true);
+        }
+        
+        $pdf->save($path);
+        
+        $receipt = Receipt::create([
+            'receipt_number' => $receiptNumber,
+            'user_id' => $data['user_id'],
+            'type' => $type,
+            'amount' => $data['amount'],
+            'payment_method' => $data['payment_method'] ?? null,
+            'transaction_reference' => $data['payment_reference'] ?? null,
+            'description' => $data['description'],
+            'pdf_path' => $path,
+            'metadata' => [
+                'reference_id' => $data['reference_id'] ?? null,
+                'items' => $data['items'] ?? null,
+            ],
+        ]);
+        
+        return $receipt;
+    }
+    
+    /**
+     * Get human-readable label for receipt type
+     */
+    private function getTypeLabel(string $type): string
+    {
+        $labels = [
+            'venture_investment' => 'Venture Investment',
+            'wallet_topup' => 'Wallet Top-up',
+            'withdrawal' => 'Withdrawal',
+            'commission' => 'Commission Payment',
+            'starter_kit' => 'Starter Kit Purchase',
+            'workshop' => 'Workshop Registration',
+            'subscription' => 'Subscription Payment',
+            'shop_purchase' => 'Shop Purchase',
+            'payment' => 'Registration Payment',
+            'general' => 'Transaction',
+        ];
+        
+        return $labels[$type] ?? 'Transaction';
+    }
 }

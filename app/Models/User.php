@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Traits\HasActivityLogs;
 use Spatie\Permission\Traits\HasRoles;
+use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureInvestmentModel;
+use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareholderModel;
 
 class User extends Authenticatable
 {
@@ -965,6 +967,17 @@ class User extends Authenticatable
         return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::class);
     }
 
+    // Venture Builder relationships
+    public function ventureInvestments(): HasMany
+    {
+        return $this->hasMany(VentureInvestmentModel::class);
+    }
+
+    public function ventureShareholders(): HasMany
+    {
+        return $this->hasMany(VentureShareholderModel::class);
+    }
+
     // VBIF-specific matrix position methods
     public function getMatrixPosition(): ?MatrixPosition
     {
@@ -1580,5 +1593,54 @@ class User extends Authenticatable
         if ($bpValue > 0) {
             $this->awardBonusPoints($bpValue, $activityType, $description);
         }
+    }
+
+    /**
+     * Account Type Helper Methods
+     */
+    public function isInvestor(): bool
+    {
+        return $this->account_type === 'investor';
+    }
+
+    public function isMember(): bool
+    {
+        return $this->account_type === 'member';
+    }
+
+    public function isFullMember(): bool
+    {
+        return $this->isMember() && $this->subscription_active;
+    }
+
+    public function canAccessMLMFeatures(): bool
+    {
+        return $this->isMember();
+    }
+
+    public function canInvestInVentures(): bool
+    {
+        // Both investors and members can invest
+        return true;
+    }
+
+    public function upgradeToMember(): bool
+    {
+        if ($this->isMember()) {
+            return false; // Already a member
+        }
+
+        $this->update(['account_type' => 'member']);
+        return true;
+    }
+
+    public function getAccountTypeLabel(): string
+    {
+        return match($this->account_type) {
+            'investor' => 'Investor',
+            'member' => 'Member',
+            'admin' => 'Administrator',
+            default => 'Member',
+        };
     }
 }

@@ -24,31 +24,32 @@ interface NavGroup {
     items: NavItem[];
 }
 
-const investmentNavItems: NavItem[] = [
+// Venture Builder navigation items
+const ventureNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: safeRoute('admin.dashboard'),
         icon: LayoutGrid,
     },
     {
-        title: 'Investment Requests',
-        href: safeRoute('admin.investments.index'),
-        icon: FileText,
+        title: 'Ventures',
+        href: safeRoute('admin.ventures.index'),
+        icon: Building2,
     },
     {
-        title: 'Investment Metrics',
-        href: safeRoute('admin.investments.metrics'),
-        icon: Activity,
+        title: 'Investments',
+        href: safeRoute('admin.ventures.investments.index'),
+        icon: DollarSign,
     },
     {
-        title: 'Investment Categories',
-        href: safeRoute('admin.categories.index'),
+        title: 'Categories',
+        href: safeRoute('admin.ventures.categories'),
         icon: Folder,
     },
     {
-        title: 'Investment Tiers',
-        href: safeRoute('admin.investment-tiers.index'),
-        icon: LayoutGrid,
+        title: 'Analytics',
+        href: safeRoute('admin.ventures.analytics'),
+        icon: ChartBarIcon,
     },
 ];
 
@@ -221,7 +222,7 @@ const systemNavItems: NavItem[] = [
 ];
 
 const navGroups: NavGroup[] = [
-    { label: 'Investments', items: investmentNavItems },
+    { label: 'Venture Builder', items: ventureNavItems },
     { label: 'User Management', items: userManagementNavItems },
     { label: 'Finance', items: financeNavItems },
     { label: 'Reports & Analytics', items: reportsNavItems },

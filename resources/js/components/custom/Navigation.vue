@@ -10,7 +10,8 @@
             </Link>
           </div>
           <div class="hidden md:block">
-            <div class="ml-10 flex items-center space-x-8">
+            <div class="ml-10 flex items-center space-x-6">
+              <!-- Regular Links -->
               <Link
                 v-for="item in filteredNavigationItems"
                 :key="item.name"
@@ -24,6 +25,37 @@
               >
                 {{ item.name }}
               </Link>
+              
+              <!-- Marketplace Dropdown -->
+              <div class="relative" @mouseenter="showMarketplace = true" @mouseleave="showMarketplace = false">
+                <button
+                  :class="[
+                    'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
+                    isMarketplaceActive ? 'text-blue-400' : 'text-white hover:text-blue-200'
+                  ]"
+                >
+                  Marketplace
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  v-show="showMarketplace"
+                  class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                >
+                  <div class="py-1">
+                    <Link
+                      v-for="item in marketplaceItems"
+                      :key="item.name"
+                      :href="route(item.route)"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      {{ item.name }}
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
               <Link
                 :href="route('login')"
                 class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
@@ -82,6 +114,22 @@
           >
             {{ item.name }}
           </Link>
+          
+          <!-- Mobile Marketplace Section -->
+          <div class="pt-2">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Marketplace
+            </div>
+            <Link
+              v-for="item in marketplaceItems"
+              :key="item.name"
+              :href="route(item.route)"
+              class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+            >
+              {{ item.name }}
+            </Link>
+          </div>
+
           <Link
             :href="route('login')"
             class="block w-full text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 mt-4"
@@ -94,7 +142,7 @@
   </template>
 
   <script>
-  import { ref } from 'vue';
+  import { ref, computed } from 'vue';
   import { Link } from '@inertiajs/vue3';
   import Logo from '../Logo.vue';
 
@@ -106,18 +154,23 @@
 
     setup() {
       const isMobileMenuOpen = ref(false);
+      const showMarketplace = ref(false);
 
       const navigationItems = [
         { name: 'Home', route: 'home' },
         { name: 'About', route: 'about' },
-        { name: 'Shop', route: 'shop.index' },
         { name: 'Membership', route: 'membership.index' },
         { name: 'Compliance', route: 'compliance.information' },
         { name: 'Careers', route: 'careers.index' },
         { name: 'Contact', route: 'contact' },
       ];
 
-      // Filter out routes that Ziggy doesn't expose on the current page/session
+      const marketplaceItems = [
+        { name: 'Venture Investments', route: 'ventures.index' },
+        { name: 'MyGrow Shop', route: 'shop.index' },
+      ];
+
+      // Filter out routes that Ziggy doesn't expose
       const filteredNavigationItems = navigationItems.filter((item) => {
         try {
           return route().has(item.route);
@@ -126,10 +179,22 @@
         }
       });
 
+      // Check if we're on a marketplace page
+      const isMarketplaceActive = computed(() => {
+        try {
+          return route().current('ventures.*') || route().current('shop.*');
+        } catch (e) {
+          return false;
+        }
+      });
+
       return {
         isMobileMenuOpen,
+        showMarketplace,
         navigationItems,
-        filteredNavigationItems
+        marketplaceItems,
+        filteredNavigationItems,
+        isMarketplaceActive
       };
     }
   }

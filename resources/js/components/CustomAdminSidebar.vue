@@ -20,7 +20,7 @@ import {
     Shield, 
     Key, 
     CreditCard,
-    ChevronDownIcon
+    ChevronDown
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -69,6 +69,15 @@ const financeNavItems: NavItem[] = [
     { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
+];
+
+const ventureBuilderNavItems: NavItem[] = [
+    { title: 'Dashboard', href: safeRoute('admin.ventures.dashboard'), icon: LayoutGrid },
+    { title: 'All Ventures', href: safeRoute('admin.ventures.index'), icon: Briefcase },
+    { title: 'Create Venture', href: safeRoute('admin.ventures.create'), icon: FileText },
+    { title: 'Investments', href: safeRoute('admin.ventures.investments.index'), icon: DollarSign },
+    { title: 'Categories', href: safeRoute('admin.ventures.categories'), icon: Folder },
+    { title: 'Analytics', href: safeRoute('admin.ventures.analytics'), icon: ChartBarIcon },
 ];
 
 const reportsNavItems: NavItem[] = [
@@ -239,7 +248,7 @@ onMounted(() => {
                             <LayoutGrid class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Investments</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.investments }" />
                     </button>
 
@@ -273,7 +282,7 @@ onMounted(() => {
                             <Users class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">User Management</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.userManagement }" />
                     </button>
 
@@ -307,12 +316,46 @@ onMounted(() => {
                             <DollarSign class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Finance</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.finance }" />
                     </button>
 
                     <div v-if="showSubmenu.finance && !isCollapsed" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in financeNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Venture Builder Section -->
+                <div class="pt-2">
+                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('ventureBuilder')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Venture Builder')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <Briefcase class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Venture Builder</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.ventureBuilder }" />
+                    </button>
+
+                    <div v-if="showSubmenu.ventureBuilder && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in ventureBuilderNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
@@ -341,7 +384,7 @@ onMounted(() => {
                             <ChartBarIcon class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Reports</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.reports }" />
                     </button>
 
@@ -375,7 +418,7 @@ onMounted(() => {
                             <UserCheck class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Employees</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.employees }" />
                     </button>
 
@@ -409,7 +452,7 @@ onMounted(() => {
                             <Shield class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">System</span>
                         </div>
-                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.system }" />
                     </button>
 
