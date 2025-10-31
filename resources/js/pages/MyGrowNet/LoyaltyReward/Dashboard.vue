@@ -13,7 +13,7 @@
           <div class="p-6 text-white">
             <h3 class="text-2xl font-bold">Loyalty Growth Reward Program</h3>
             <p class="mt-2 text-blue-100">
-              Earn up to K1,750 in Loyalty Credits over 70 days through active participation
+              Earn up to K2,100 in Loyalty Credits over 70 days through active participation
             </p>
           </div>
         </div>
@@ -238,13 +238,13 @@
                     />
                   </svg>
                   <p class="ml-3 text-sm font-medium text-green-800">
-                    Activity completed! You earned K25 today.
+                    Activity completed! You earned K30 today.
                   </p>
                 </div>
               </div>
               <div v-else class="mt-4 rounded-lg bg-yellow-50 p-4">
                 <p class="text-sm text-yellow-800">
-                  Complete an activity today to earn K25 in Loyalty Credits
+                  Complete an activity today to earn K30 in Loyalty Credits
                 </p>
                 <div class="mt-4 space-y-2">
                   <p class="text-sm font-medium text-gray-900">Quick Activities:</p>

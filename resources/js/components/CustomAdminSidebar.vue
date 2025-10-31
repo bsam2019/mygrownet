@@ -21,7 +21,8 @@ import {
     Key, 
     CreditCard,
     ChevronDown,
-    TrendingUp
+    TrendingUp,
+    Star
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -59,6 +60,7 @@ const userManagementNavItems: NavItem[] = [
     { title: 'Packages', href: safeRoute('admin.packages.index'), icon: BookOpen },
     { title: 'Starter Kits', href: safeRoute('admin.starter-kit.dashboard'), icon: BookOpen },
     { title: 'Library Resources', href: safeRoute('admin.library.resources.index'), icon: BookOpen },
+    { title: 'LGR Management', href: safeRoute('admin.lgr.index'), icon: Star },
     { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
     { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
     { title: 'Points Management', href: '/admin/points', icon: Target },

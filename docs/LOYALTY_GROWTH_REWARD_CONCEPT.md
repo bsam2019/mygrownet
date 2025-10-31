@@ -96,8 +96,8 @@ Members qualify for the 70-day Loyalty Growth Cycle after meeting **THREE key co
 | Element | Value | Notes |
 |---------|-------|-------|
 | **Cycle Duration** | 70 days | Maximum earning period |
-| **Daily Rate** | Up to K25 | Activity-dependent |
-| **Maximum Total** | K1,750 | 70 days × K25 |
+| **Daily Rate** | Up to K30 | Activity-dependent |
+| **Maximum Total** | K2,100 | 70 days × K30 |
 | **Reward Type** | Loyalty Growth Credits (LGC) | Stored in MyGrowNet Wallet |
 | **Payout Condition** | Active participation days only | No activity = no payout |
 
@@ -114,10 +114,10 @@ A day counts as "active" if the member performs at least ONE of:
 **Example Calculation:**
 ```
 Member active for 55 of 70 days:
-55 days × K25 = K1,375 in Loyalty Credits
+55 days × K30 = K1,650 in Loyalty Credits
 
 Member active for 70 of 70 days:
-70 days × K25 = K1,750 in Loyalty Credits (maximum)
+70 days × K30 = K2,100 in Loyalty Credits (maximum)
 ```
 
 ### 3.3 Source of Funds
@@ -165,12 +165,12 @@ When demand exceeds available pool:
 
 **Example:**
 ```
-25 members qualify for full cycle (K1,750 each)
-Total potential payout: 25 × K1,750 = K43,750
+25 members qualify for full cycle (K2,100 each)
+Total potential payout: 25 × K2,100 = K52,500
 Available pool: K20,000
 
 Proportional payout:
-Each member receives: (K20,000 ÷ K43,750) × K1,750 = K788
+Each member receives: (K20,000 ÷ K52,500) × K2,100 = K800
 
 This ensures MyGrowNet never overpays.
 ```
@@ -204,7 +204,7 @@ This ensures MyGrowNet never overpays.
 
 | Function | Description | Limits |
 |----------|-------------|--------|
-| **LGC Storage** | All daily K25 rewards stored as LGC | Unlimited |
+| **LGC Storage** | All daily K30 rewards stored as LGC | Unlimited |
 | **In-Platform Use** | Buy products, pay subscriptions, training | 100% usable |
 | **Cash Conversion** | Convert to withdrawable cash | Max 40% per cycle |
 | **Venture Investment** | Invest in Venture Builder projects | 100% usable |
@@ -214,19 +214,19 @@ This ensures MyGrowNet never overpays.
 
 **Scenario 1: Full Platform Use**
 ```
-Member earns K1,750 LGC over 70 days
+Member earns K2,100 LGC over 70 days
 Uses:
-- K500 for marketplace purchases
-- K300 for training renewal
-- K400 for Venture Builder investment
-- K550 remaining balance
+- K600 for marketplace purchases
+- K400 for training renewal
+- K500 for Venture Builder investment
+- K600 remaining balance
 ```
 
 **Scenario 2: Partial Cash Conversion**
 ```
-Member earns K1,400 LGC over 70 days
-Converts 40% to cash: K560 withdrawn
-Remaining K840 used for:
+Member earns K1,680 LGC over 70 days (56 active days)
+Converts 40% to cash: K672 withdrawn
+Remaining K1,008 used for:
 - Platform purchases
 - Future subscriptions
 - Venture investments
@@ -308,14 +308,14 @@ Make K500 in sales = +K50 bonus LGC
 ### 7.2 Notifications
 
 **Daily Reminders:**
-- "Complete today's activity to earn K25"
+- "Complete today's activity to earn K30"
 - "3 days until cycle ends"
 - "Pool status update"
 
 **Milestone Alerts:**
 - "Congratulations! 30 days completed"
-- "You've earned K750 in LGC"
-- "Cycle complete! K1,750 earned"
+- "You've earned K900 in LGC"
+- "Cycle complete! K2,100 earned"
 
 ---
 
@@ -340,10 +340,10 @@ Make K500 in sales = +K50 bonus LGC
 ### 8.2 Marketing Messages
 
 **Example 1: Member Onboarding**
-> "The Loyalty Growth Reward is our way of appreciating your effort in learning, networking, and contributing to the MyGrowNet ecosystem. Stay active, complete tasks, and earn up to K1,750 in Loyalty Credits over 70 days!"
+> "The Loyalty Growth Reward is our way of appreciating your effort in learning, networking, and contributing to the MyGrowNet ecosystem. Stay active, complete tasks, and earn up to K2,100 in Loyalty Credits over 70 days!"
 
 **Example 2: Dashboard Banner**
-> "Your activity matters! Complete today's tasks to earn K25 in Loyalty Credits. Current cycle: Day 15 of 70."
+> "Your activity matters! Complete today's tasks to earn K30 in Loyalty Credits. Current cycle: Day 15 of 70."
 
 **Example 3: Email Communication**
 > "Congratulations on qualifying for the Loyalty Growth Reward! Your 70-day cycle begins tomorrow. Remember: rewards are earned through daily participation and platform engagement."
@@ -468,7 +468,7 @@ Make K500 in sales = +K50 bonus LGC
 |---------|----------------|---------------|
 | **Reward Type** | Fixed cash | Loyalty Growth Credits (LGC) |
 | **Trigger** | Recruit 3 only | Recruit 3 + activity tasks |
-| **Daily Rate** | Fixed K25 | Up to K25 (activity-based) |
+| **Daily Rate** | Fixed K25 | Up to K30 (activity-based) |
 | **Duration** | 70 days | 70 days (unchanged) |
 | **Payout Source** | Registration fees only | Multiple revenue streams |
 | **Payout Form** | Direct cash | Pool-based, proportionate |

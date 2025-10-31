@@ -18,7 +18,7 @@ class LgrSettingsSeeder extends Seeder
             ],
             [
                 'key' => 'lgr_daily_rate',
-                'value' => '25.00',
+                'value' => '30.00',
                 'type' => 'decimal',
                 'description' => 'Daily LGC earning rate',
             ],
