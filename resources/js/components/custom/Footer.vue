@@ -14,15 +14,23 @@
               <Logo size="lg" variant="white" />
             </div>
             <p class="text-slate-400 text-sm leading-relaxed">
-              A community empowerment platform offering skill-based training, mentorship, and income opportunities through a sustainable 7-level professional growth system.
+              A community empowerment platform offering skill-based training, mentorship, and income opportunities.
             </p>
+            <!-- Contact Info -->
+            <div class="space-y-2 pt-2">
+              <div v-for="contact in contactInfo" :key="contact.label"
+                   class="flex items-center space-x-2 text-slate-400">
+                <component :is="contact.icon" class="w-4 h-4 text-blue-500 flex-shrink-0"/>
+                <span class="text-xs">{{ contact.value }}</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Quick Links -->
+          <!-- Opportunities -->
           <div>
-            <h4 class="text-white font-semibold mb-4">Quick Links</h4>
+            <h4 class="text-white font-semibold mb-4">Opportunities</h4>
             <ul class="space-y-3">
-              <li v-for="link in quickLinks" :key="link.name">
+              <li v-for="link in opportunityLinks" :key="link.name">
                 <Link :href="route().has(link.route) ? route(link.route) : '#'"
                       class="text-slate-400 hover:text-white transition-colors duration-200 text-sm flex items-center group">
                   <span>{{ link.name }}</span>
@@ -35,29 +43,28 @@
             </ul>
           </div>
 
-          <!-- Professional Levels -->
+          <!-- Resources -->
           <div>
-            <h4 class="text-white font-semibold mb-4">Professional Levels</h4>
+            <h4 class="text-white font-semibold mb-4">Resources</h4>
             <ul class="space-y-3">
-              <li v-for="level in professionalLevels" :key="level">
-                <Link :href="route('register')"
-                      class="text-slate-400 hover:text-white transition-colors duration-200 text-sm flex items-center group">
-                  {{ level }}
+              <li v-for="link in resourceLinks" :key="link.name">
+                <Link :href="route().has(link.route) ? route(link.route) : '#'"
+                      class="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                  {{ link.name }}
                 </Link>
               </li>
             </ul>
           </div>
 
-          <!-- Contact Info -->
+          <!-- Company -->
           <div>
-            <h4 class="text-white font-semibold mb-4">Contact Us</h4>
+            <h4 class="text-white font-semibold mb-4">Company</h4>
             <ul class="space-y-3">
-              <li v-for="contact in contactInfo" :key="contact.label"
-                  class="flex items-center space-x-3 text-slate-400 group">
-                <component :is="contact.icon" class="w-5 h-5 text-blue-500"/>
-                <span class="text-sm group-hover:text-white transition-colors duration-200">
-                  {{ contact.value }}
-                </span>
+              <li v-for="link in companyLinks" :key="link.name">
+                <Link :href="route().has(link.route) ? route(link.route) : '#'"
+                      class="text-slate-400 hover:text-white transition-colors duration-200 text-sm">
+                  {{ link.name }}
+                </Link>
               </li>
             </ul>
           </div>
@@ -103,23 +110,26 @@
     },
     data() {
       return {
-        quickLinks: [
-          { name: 'Home', route: 'home' },
-          { name: 'About', route: 'about' },
-          { name: 'Shop', route: 'shop.index' },
-          { name: 'Membership', route: 'membership.index' },
+        opportunityLinks: [
+          { name: 'Venture Builder', route: 'ventures.about' },
+          { name: 'Business Growth Fund', route: 'bgf.about' },
+          { name: 'Venture Investments', route: 'ventures.index' },
+          { name: 'MyGrow Shop', route: 'shop.index' },
+          { name: 'Membership Plans', route: 'membership.index' }
+        ],
+        resourceLinks: [
+          { name: 'About MyGrowNet', route: 'about' },
+          { name: 'How It Works', route: 'home' },
+          { name: 'FAQ', route: 'faq' },
+          { name: 'Success Stories', route: 'home' }
+        ],
+        companyLinks: [
           { name: 'Compliance', route: 'compliance.information' },
           { name: 'Careers', route: 'careers.index' },
-          { name: 'Contact', route: 'contact' }
-        ],
-        professionalLevels: [
-          'Associate',
-          'Professional',
-          'Senior',
-          'Manager',
-          'Director',
-          'Executive',
-          'Ambassador'
+          { name: 'Contact Us', route: 'contact' },
+          { name: 'All Policies', route: 'policies' },
+          { name: 'Privacy Policy', route: 'privacy' },
+          { name: 'Terms of Service', route: 'terms' }
         ],
         contactInfo: [
           {
@@ -130,7 +140,7 @@
           {
             icon: 'PhoneIcon',
             label: 'Phone',
-            value: '+260 977 563 730 / +260 961 144 812'
+            value: '+260 977 563 730'
           },
           {
             icon: 'MapPinIcon',
@@ -139,6 +149,7 @@
           }
         ],
         legalLinks: [
+          { name: 'All Policies', route: 'policies' },
           { name: 'Privacy Policy', route: 'privacy' },
           { name: 'Terms of Service', route: 'terms' }
         ]

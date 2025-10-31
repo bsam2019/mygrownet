@@ -978,6 +978,32 @@ class User extends Authenticatable
         return $this->hasMany(VentureShareholderModel::class);
     }
 
+    // Business Growth Fund relationships
+    public function bgfApplications(): HasMany
+    {
+        return $this->hasMany(BgfApplication::class);
+    }
+
+    public function bgfProjects(): HasMany
+    {
+        return $this->hasMany(BgfProject::class);
+    }
+
+    public function bgfDisbursements(): HasMany
+    {
+        return $this->hasMany(BgfDisbursement::class);
+    }
+
+    public function bgfRepayments(): HasMany
+    {
+        return $this->hasMany(BgfRepayment::class);
+    }
+
+    public function bgfContracts(): HasMany
+    {
+        return $this->hasMany(BgfContract::class);
+    }
+
     // VBIF-specific matrix position methods
     public function getMatrixPosition(): ?MatrixPosition
     {

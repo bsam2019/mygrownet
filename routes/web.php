@@ -23,9 +23,13 @@ use App\Http\Controllers\ComplianceController;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/features', fn() => Inertia::render('Features'))->name('features');
+Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
+Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
+Route::get('/privacy', fn() => Inertia::render('Privacy'))->name('privacy');
+Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
 Route::get('/investment', [HomeController::class, 'investment'])->name('investment');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
 Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
 
 // Public Careers routes
@@ -583,6 +587,7 @@ require __DIR__.'/admin.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/venture.php';
+require __DIR__.'/bgf.php';
 
     // MyGrow Shop Routes
     Route::prefix('shop')->name('shop.')->group(function () {

@@ -26,8 +26,40 @@
                 {{ item.name }}
               </Link>
               
+              <!-- Growth Opportunities Dropdown -->
+              <div class="relative" @mouseenter="handleGrowthEnter" @mouseleave="handleGrowthLeave">
+                <button
+                  :class="[
+                    'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
+                    isGrowthActive ? 'text-blue-400' : 'text-white hover:text-blue-200'
+                  ]"
+                >
+                  Opportunities
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  v-show="showGrowth"
+                  @mouseenter="handleGrowthEnter"
+                  @mouseleave="handleGrowthLeave"
+                  class="absolute left-0 mt-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                >
+                  <div class="py-1">
+                    <Link
+                      v-for="item in growthItems"
+                      :key="item.name"
+                      :href="route(item.route)"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      {{ item.name }}
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              
               <!-- Marketplace Dropdown -->
-              <div class="relative" @mouseenter="showMarketplace = true" @mouseleave="showMarketplace = false">
+              <div class="relative" @mouseenter="handleMarketplaceEnter" @mouseleave="handleMarketplaceLeave">
                 <button
                   :class="[
                     'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
@@ -41,7 +73,9 @@
                 </button>
                 <div
                   v-show="showMarketplace"
-                  class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                  @mouseenter="handleMarketplaceEnter"
+                  @mouseleave="handleMarketplaceLeave"
+                  class="absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
                 >
                   <div class="py-1">
                     <Link
@@ -115,6 +149,21 @@
             {{ item.name }}
           </Link>
           
+          <!-- Mobile Growth Opportunities Section -->
+          <div class="pt-2">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Growth Opportunities
+            </div>
+            <Link
+              v-for="item in growthItems"
+              :key="item.name"
+              :href="route(item.route)"
+              class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+            >
+              {{ item.name }}
+            </Link>
+          </div>
+          
           <!-- Mobile Marketplace Section -->
           <div class="pt-2">
             <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -154,15 +203,20 @@
 
     setup() {
       const isMobileMenuOpen = ref(false);
+      const showGrowth = ref(false);
       const showMarketplace = ref(false);
+      let growthTimeout = null;
+      let marketplaceTimeout = null;
 
       const navigationItems = [
         { name: 'Home', route: 'home' },
         { name: 'About', route: 'about' },
         { name: 'Membership', route: 'membership.index' },
-        { name: 'Compliance', route: 'compliance.information' },
-        { name: 'Careers', route: 'careers.index' },
-        { name: 'Contact', route: 'contact' },
+      ];
+
+      const growthItems = [
+        { name: 'Venture Builder', route: 'ventures.about' },
+        { name: 'Business Growth Fund', route: 'bgf.about' },
       ];
 
       const marketplaceItems = [
@@ -179,10 +233,42 @@
         }
       });
 
+      // Dropdown handlers with delay
+      const handleGrowthEnter = () => {
+        clearTimeout(growthTimeout);
+        showGrowth.value = true;
+      };
+
+      const handleGrowthLeave = () => {
+        growthTimeout = setTimeout(() => {
+          showGrowth.value = false;
+        }, 200);
+      };
+
+      const handleMarketplaceEnter = () => {
+        clearTimeout(marketplaceTimeout);
+        showMarketplace.value = true;
+      };
+
+      const handleMarketplaceLeave = () => {
+        marketplaceTimeout = setTimeout(() => {
+          showMarketplace.value = false;
+        }, 200);
+      };
+
+      // Check if we're on a growth opportunities page
+      const isGrowthActive = computed(() => {
+        try {
+          return route().current('ventures.about') || route().current('bgf.*');
+        } catch (e) {
+          return false;
+        }
+      });
+
       // Check if we're on a marketplace page
       const isMarketplaceActive = computed(() => {
         try {
-          return route().current('ventures.*') || route().current('shop.*');
+          return route().current('ventures.index') || route().current('shop.*');
         } catch (e) {
           return false;
         }
@@ -190,11 +276,18 @@
 
       return {
         isMobileMenuOpen,
+        showGrowth,
         showMarketplace,
         navigationItems,
+        growthItems,
         marketplaceItems,
         filteredNavigationItems,
-        isMarketplaceActive
+        isGrowthActive,
+        isMarketplaceActive,
+        handleGrowthEnter,
+        handleGrowthLeave,
+        handleMarketplaceEnter,
+        handleMarketplaceLeave
       };
     }
   }

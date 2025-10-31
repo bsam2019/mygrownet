@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\VentureAdminController;
 use App\Http\Controllers\MyGrowNet\VentureController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 
 // Public Venture Routes (No authentication required)
 Route::prefix('ventures')->name('ventures.')->group(function () {
+    // Information pages
+    Route::get('/about', fn() => Inertia::render('Ventures/About'))->name('about');
+    Route::get('/policy', fn() => Inertia::render('Ventures/Policy'))->name('policy');
+    
     // Browse and view ventures (public access)
     Route::get('/', [VentureController::class, 'index'])->name('index');
     Route::get('/{venture:slug}', [VentureController::class, 'show'])->name('show');

@@ -70,10 +70,19 @@ const investorNavItems: NavItem[] = [
 const myBusinessNavItems: NavItem[] = [
     { title: 'My Business Profile', href: route('mygrownet.membership.show'), icon: BriefcaseIcon },
     { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
+    { title: 'Business Growth Fund', href: route('mygrownet.bgf.index'), icon: BriefcaseIcon },
     { title: 'MyGrow Shop', href: route('shop.index'), icon: ShoppingBagIcon },
     { title: 'My Starter Kit', href: route('mygrownet.starter-kit.show'), icon: GiftIcon },
     { title: 'Growth Levels', href: route('mygrownet.levels.index'), icon: TrendingUpIcon },
     { title: 'My Points (LP & BP)', href: route('points.index'), icon: ChartBarIcon },
+];
+
+// Quick access to information pages
+const infoNavItems: NavItem[] = [
+    { title: 'Platform Features', href: route('features'), icon: StarIcon },
+    { title: 'About BGF', href: route('bgf.about'), icon: TrendingUpIcon },
+    { title: 'About Ventures', href: route('ventures.about'), icon: BriefcaseIcon },
+    { title: 'FAQ & Help', href: route('faq'), icon: BookOpenIcon },
 ];
 
 const networkNavItems: NavItem[] = [
@@ -454,6 +463,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.reports && !isCollapsed" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in reportsNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Info & Help Section -->
+                <div class="pt-2">
+                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('info')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Info & Help')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <FileTextIcon class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Info & Help</span>
+                        </div>
+                        <ChevronDownIcon v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.info }" />
+                    </button>
+
+                    <div v-if="showSubmenu.info && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in infoNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
