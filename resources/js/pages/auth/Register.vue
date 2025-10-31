@@ -29,7 +29,6 @@ const submit = () => {
             form.reset('password', 'password_confirmation');
         },
         onError: () => {
-            // Scroll to top to show error alert
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
     });
@@ -77,11 +76,9 @@ const submit = () => {
                         id="name"
                         type="text"
                         autofocus
-                        :tabindex="1"
                         autocomplete="name"
                         v-model="form.name"
                         placeholder="Enter your full name"
-                        :class="form.errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.name" />
                 </div>
@@ -94,11 +91,9 @@ const submit = () => {
                     <Input
                         id="email"
                         type="email"
-                        :tabindex="2"
                         autocomplete="email"
                         v-model="form.email"
                         placeholder="you@example.com"
-                        :class="form.errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -111,11 +106,9 @@ const submit = () => {
                     <Input
                         id="phone"
                         type="tel"
-                        :tabindex="3"
                         autocomplete="tel"
                         v-model="form.phone"
                         placeholder="0977123456 or +260977123456"
-                        :class="form.errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <p class="text-xs text-gray-500 mt-1">
                         Enter your Zambian phone number (e.g., 0977123456)
@@ -137,13 +130,8 @@ const submit = () => {
                     <Input
                         id="referral_code"
                         type="text"
-                        :tabindex="4"
                         v-model="form.referral_code"
                         placeholder="Enter referral code if you have one"
-                        :class="[
-                            form.errors.referral_code ? 'border-red-500 focus-visible:ring-red-500' : '',
-                            referralCode ? 'border-green-500' : ''
-                        ]"
                     />
                     <p v-if="referralCode" class="text-xs text-green-600 flex items-center gap-1">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -162,11 +150,9 @@ const submit = () => {
                     <Input
                         id="password"
                         type="password"
-                        :tabindex="5"
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Create a secure password"
-                        :class="form.errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <PasswordStrengthIndicator :password="form.password" />
                     <InputError :message="form.errors.password" />
@@ -177,11 +163,9 @@ const submit = () => {
                     <Input
                         id="password_confirmation"
                         type="password"
-                        :tabindex="6"
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         placeholder="Confirm your password"
-                        :class="form.errors.password_confirmation ? 'border-red-500 focus-visible:ring-red-500' : ''"
                     />
                     <InputError :message="form.errors.password_confirmation" />
                 </div>
@@ -189,7 +173,6 @@ const submit = () => {
                 <Button
                     type="submit"
                     class="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 py-6"
-                    :tabindex="7"
                     :disabled="form.processing"
                 >
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
@@ -199,7 +182,7 @@ const submit = () => {
 
             <div class="text-center text-gray-600">
                 Already have an account?
-                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium ml-1" :tabindex="8">
+                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium ml-1">
                     Sign in instead
                 </TextLink>
             </div>

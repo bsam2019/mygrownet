@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import NotificationBell from '@/components/NotificationBell.vue';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -59,7 +60,10 @@ const logout = () => router.post('/logout');
     <!-- Spacer -->
     <div class="flex-1" />
 
-    <!-- Right: Profile dropdown -->
+    <!-- Right: Notification Bell & Profile dropdown -->
+    <div class="flex items-center gap-2">
+      <NotificationBell />
+    </div>
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <button

@@ -24,6 +24,11 @@ Schedule::command('points:check-advancements')
     ->dailyAt('10:00')
     ->description('Check for level advancements');
 
+// Subscription Management
+Schedule::command('subscriptions:check-expiring')
+    ->dailyAt('08:00')
+    ->description('Check for expiring subscriptions and send reminders');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

@@ -28,6 +28,7 @@ Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
 Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
 Route::get('/privacy', fn() => Inertia::render('Privacy'))->name('privacy');
 Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
+Route::get('/wallet/policy', fn() => Inertia::render('Wallet/Policy'))->name('wallet.policy');
 Route::get('/investment', [HomeController::class, 'investment'])->name('investment');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
@@ -425,8 +426,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/library/{resource}', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'show'])->name('library.show');
         Route::post('/library/{resource}/complete', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'markCompleted'])->name('library.complete');
         
+        // Notification Routes
+        Route::get('/notifications', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'center'])->name('notifications.center');
+        Route::get('/notifications/count', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'count'])->name('notifications.count');
+        Route::get('/notifications/list', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{id}/read', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        
         // Finance Routes
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
+        Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
+        Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
         Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
         Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
         

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\ReferralCommission;
 use App\Models\UserNetwork;
 use App\Models\TeamVolume;
+use App\Application\Notification\UseCases\SendNotificationUseCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -116,6 +117,28 @@ class MLMCommissionService
                 
                 // Process payment immediately (24-hour requirement)
                 $commission->processPayment();
+                
+                // Send notification
+                try {
+                    app(SendNotificationUseCase::class)->execute(
+                        userId: $referrer->id,
+                        type: 'commission.earned',
+                        data: [
+                            'title' => 'Commission Earned',
+                            'message' => 'You earned a Level ' . $level . ' commission',
+                            'amount' => 'K' . number_format($commissionAmount, 2),
+                            'level' => (string)$level,
+                            'from_user' => $purchaser->name,
+                            'action_url' => route('mygrownet.earnings.index'),
+                            'action_text' => 'View Earnings'
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send commission notification', [
+                        'referrer_id' => $referrer->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
             
             // Update team volumes

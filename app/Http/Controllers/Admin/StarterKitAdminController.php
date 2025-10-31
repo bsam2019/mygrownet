@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\StarterKitPurchase;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
 use App\Models\StarterKitContentAccess;
 use App\Models\MemberAchievement;
 use App\Models\User;
@@ -16,15 +16,15 @@ class StarterKitAdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'total_purchases' => StarterKitPurchase::count(),
-            'total_revenue' => StarterKitPurchase::where('status', 'completed')->sum('amount'),
-            'pending_purchases' => StarterKitPurchase::where('status', 'pending')->count(),
+            'total_purchases' => StarterKitPurchaseModel::count(),
+            'total_revenue' => StarterKitPurchaseModel::where('status', 'completed')->sum('amount'),
+            'pending_purchases' => StarterKitPurchaseModel::where('status', 'pending')->count(),
             'active_members' => User::where('has_starter_kit', true)->count(),
             'completion_rate' => $this->getCompletionRate(),
             'avg_progress' => $this->getAverageProgress(),
         ];
 
-        $recentPurchases = StarterKitPurchase::with('user')
+        $recentPurchases = StarterKitPurchaseModel::with('user')
             ->latest()
             ->take(10)
             ->get()
@@ -52,7 +52,7 @@ class StarterKitAdminController extends Controller
 
     public function purchases(Request $request)
     {
-        $query = StarterKitPurchase::with('user');
+        $query = StarterKitPurchaseModel::with('user');
 
         if ($request->status) {
             $query->where('status', $request->status);
@@ -196,7 +196,7 @@ class StarterKitAdminController extends Controller
 
     private function getMonthlyRevenue(): array
     {
-        return StarterKitPurchase::where('status', 'completed')
+        return StarterKitPurchaseModel::where('status', 'completed')
             ->where('created_at', '>=', now()->subMonths(12))
             ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as revenue, COUNT(*) as count')
             ->groupBy('month')
@@ -225,7 +225,7 @@ class StarterKitAdminController extends Controller
 
     private function getPurchaseTrends(): array
     {
-        return StarterKitPurchase::where('created_at', '>=', now()->subDays(30))
+        return StarterKitPurchaseModel::where('created_at', '>=', now()->subDays(30))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -235,7 +235,7 @@ class StarterKitAdminController extends Controller
 
     private function getRevenueTrends(): array
     {
-        return StarterKitPurchase::where('status', 'completed')
+        return StarterKitPurchaseModel::where('status', 'completed')
             ->where('created_at', '>=', now()->subDays(30))
             ->selectRaw('DATE(created_at) as date, SUM(amount) as revenue')
             ->groupBy('date')
@@ -269,7 +269,7 @@ class StarterKitAdminController extends Controller
 
     private function getPaymentMethodStats(): array
     {
-        return StarterKitPurchase::where('status', 'completed')
+        return StarterKitPurchaseModel::where('status', 'completed')
             ->selectRaw('payment_method, COUNT(*) as count, SUM(amount) as revenue')
             ->groupBy('payment_method')
             ->get()

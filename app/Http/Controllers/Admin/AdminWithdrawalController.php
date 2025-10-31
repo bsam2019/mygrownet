@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WithdrawalPolicy;
+use App\Application\Notification\UseCases\SendNotificationUseCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -42,6 +43,19 @@ class AdminWithdrawalController extends Controller
 
                 // Process the withdrawal
                 $this->processWithdrawal($withdrawal);
+                
+                // Send notification
+                app(SendNotificationUseCase::class)->execute(
+                    userId: $withdrawal->user_id,
+                    type: 'wallet.withdrawal.approved',
+                    data: [
+                        'title' => 'Withdrawal Approved',
+                        'message' => 'Your withdrawal request has been approved and will be processed within 24-48 hours',
+                        'amount' => 'K' . number_format($withdrawal->amount, 2),
+                        'action_url' => route('withdrawals.index'),
+                        'action_text' => 'View Status'
+                    ]
+                );
             }
 
             DB::commit();
@@ -67,6 +81,20 @@ class AdminWithdrawalController extends Controller
                 'rejection_reason' => $request->rejection_reason,
                 'processed_at' => now()
             ]);
+            
+            // Send notification
+            app(SendNotificationUseCase::class)->execute(
+                userId: $withdrawal->user_id,
+                type: 'wallet.withdrawal.rejected',
+                data: [
+                    'title' => 'Withdrawal Rejected',
+                    'message' => 'Your withdrawal request has been rejected',
+                    'amount' => 'K' . number_format($withdrawal->amount, 2),
+                    'reason' => $request->rejection_reason,
+                    'action_url' => route('withdrawals.index'),
+                    'action_text' => 'View Details'
+                ]
+            );
 
             return response()->json(['message' => 'Withdrawal rejected successfully']);
         } catch (\Exception $e) {

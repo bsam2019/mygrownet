@@ -4,12 +4,14 @@ namespace App\Application\Payment\UseCases;
 
 use App\Domain\Payment\Events\PaymentVerified;
 use App\Domain\Payment\Repositories\MemberPaymentRepositoryInterface;
+use App\Application\Notification\UseCases\SendNotificationUseCase;
 use Illuminate\Support\Facades\Event;
 
 class VerifyPaymentUseCase
 {
     public function __construct(
-        private readonly MemberPaymentRepositoryInterface $paymentRepository
+        private readonly MemberPaymentRepositoryInterface $paymentRepository,
+        private readonly SendNotificationUseCase $notificationService
     ) {}
 
     public function execute(int $paymentId, int $adminId, ?string $adminNotes = null): void
@@ -54,6 +56,35 @@ class VerifyPaymentUseCase
                         'expires_at' => now()->addMonth(),
                     ]);
                 }
+                
+                // Send notification
+                $this->notificationService->execute(
+                    userId: $user->id,
+                    type: 'subscription.renewed',
+                    data: [
+                        'title' => 'Subscription Activated',
+                        'message' => 'Your subscription has been activated and is now active',
+                        'amount' => 'K' . number_format($payment->amount()->value(), 2),
+                        'expiry_date' => now()->addMonth()->format('M d, Y'),
+                        'action_url' => route('mygrownet.dashboard'),
+                        'action_text' => 'View Dashboard'
+                    ]
+                );
+            }
+            
+            // Handle wallet top-up
+            if ($paymentType === 'wallet_topup') {
+                $this->notificationService->execute(
+                    userId: $user->id,
+                    type: 'wallet.topup.received',
+                    data: [
+                        'title' => 'Wallet Topped Up',
+                        'message' => 'Your wallet has been topped up successfully',
+                        'amount' => 'K' . number_format($payment->amount()->value(), 2),
+                        'action_url' => route('mygrownet.wallet.index'),
+                        'action_text' => 'View Wallet'
+                    ]
+                );
             }
             
             // Handle registration payment

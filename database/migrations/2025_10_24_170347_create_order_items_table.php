@@ -15,7 +15,7 @@ return new class extends Migration
             Schema::create('order_items', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('order_id')->constrained()->onDelete('cascade');
-                $table->foreignId('product_id')->constrained()->onDelete('cascade');
+                $table->unsignedBigInteger('product_id')->nullable(); // No FK constraint - products table created later
                 $table->string('product_name');
                 $table->decimal('price', 10, 2);
                 $table->integer('quantity');
@@ -23,6 +23,7 @@ return new class extends Migration
                 $table->timestamps();
                 
                 $table->index('order_id');
+                $table->index('product_id');
             });
         }
     }
