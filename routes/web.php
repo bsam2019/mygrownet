@@ -131,6 +131,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/resources/{resource}', [App\Http\Controllers\Admin\LibraryResourceController::class, 'destroy'])->name('resources.destroy');
     });
     
+    // Admin LGR Management Routes
+    Route::middleware(['admin'])->prefix('admin/lgr')->name('admin.lgr.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\LgrAdminController::class, 'index'])->name('index');
+        Route::get('/cycles', [App\Http\Controllers\Admin\LgrAdminController::class, 'cycles'])->name('cycles');
+        Route::get('/qualifications', [App\Http\Controllers\Admin\LgrAdminController::class, 'qualifications'])->name('qualifications');
+        Route::get('/pool', [App\Http\Controllers\Admin\LgrAdminController::class, 'pool'])->name('pool');
+        Route::get('/activities', [App\Http\Controllers\Admin\LgrAdminController::class, 'activities'])->name('activities');
+        Route::get('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'settings'])->name('settings');
+        Route::put('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'updateSettings'])->name('settings.update');
+    });
+    
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
     Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
