@@ -89,16 +89,33 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
 
     private function toDomainEntity(NotificationModel $model): Notification
     {
-        return Notification::create(
-            id: $model->id,
-            userId: $model->user_id,
-            type: NotificationType::fromString($model->type),
-            title: $model->title,
-            message: $model->message,
-            actionUrl: $model->action_url,
-            actionText: $model->action_text,
-            data: $model->data ?? [],
-            priority: NotificationPriority::from($model->priority)
-        );
+        // Use reflection to create entity with all fields from database
+        $notification = new \ReflectionClass(Notification::class);
+        $instance = $notification->newInstanceWithoutConstructor();
+        
+        // Set private properties
+        $this->setProperty($instance, 'id', $model->id);
+        $this->setProperty($instance, 'userId', $model->user_id);
+        $this->setProperty($instance, 'type', NotificationType::fromString($model->type));
+        $this->setProperty($instance, 'title', $model->title);
+        $this->setProperty($instance, 'message', $model->message);
+        $this->setProperty($instance, 'actionUrl', $model->action_url);
+        $this->setProperty($instance, 'actionText', $model->action_text);
+        $this->setProperty($instance, 'data', $model->data ?? []);
+        $this->setProperty($instance, 'priority', NotificationPriority::from($model->priority));
+        $this->setProperty($instance, 'readAt', $model->read_at ? new \DateTimeImmutable($model->read_at) : null);
+        $this->setProperty($instance, 'archivedAt', $model->archived_at ? new \DateTimeImmutable($model->archived_at) : null);
+        $this->setProperty($instance, 'createdAt', new \DateTimeImmutable($model->created_at));
+        $this->setProperty($instance, 'expiresAt', $model->expires_at ? new \DateTimeImmutable($model->expires_at) : null);
+        
+        return $instance;
+    }
+    
+    private function setProperty(object $object, string $property, mixed $value): void
+    {
+        $reflection = new \ReflectionClass($object);
+        $prop = $reflection->getProperty($property);
+        $prop->setAccessible(true);
+        $prop->setValue($object, $value);
     }
 }

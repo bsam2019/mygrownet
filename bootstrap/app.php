@@ -21,9 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
         ]);
 
-        // Add Inertia to web middleware group
+        // Add Inertia and cache prevention to web middleware group
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\PreventBrowserCaching::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

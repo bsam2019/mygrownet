@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import { BellIcon } from 'lucide-vue-next';
+import axios from 'axios';
 
 interface Notification {
     id: string;
@@ -21,8 +22,7 @@ const loading = ref(false);
 
 const fetchCount = async () => {
     try {
-        const response = await fetch(route('mygrownet.notifications.count'));
-        const data = await response.json();
+        const { data } = await axios.get(route('mygrownet.notifications.count'));
         unreadCount.value = data.count;
     } catch (error) {
         console.error('Failed to fetch notification count:', error);
@@ -34,8 +34,7 @@ const fetchNotifications = async () => {
     
     loading.value = true;
     try {
-        const response = await fetch(route('mygrownet.notifications.index'));
-        const data = await response.json();
+        const { data } = await axios.get(route('mygrownet.notifications.index'));
         notifications.value = data.notifications;
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -46,16 +45,14 @@ const fetchNotifications = async () => {
 
 const markAsRead = async (id: string) => {
     try {
-        await router.post(route('mygrownet.notifications.read', { id }), {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                const notification = notifications.value.find(n => n.id === id);
-                if (notification) {
-                    notification.read_at = new Date().toISOString();
-                }
-                unreadCount.value = Math.max(0, unreadCount.value - 1);
-            }
-        });
+        await axios.post(route('mygrownet.notifications.read', { id }));
+        
+        // Update local state
+        const notification = notifications.value.find(n => n.id === id);
+        if (notification) {
+            notification.read_at = new Date().toISOString();
+        }
+        unreadCount.value = Math.max(0, unreadCount.value - 1);
     } catch (error) {
         console.error('Failed to mark notification as read:', error);
     }
@@ -63,15 +60,13 @@ const markAsRead = async (id: string) => {
 
 const markAllAsRead = async () => {
     try {
-        await router.post(route('mygrownet.notifications.read-all'), {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                notifications.value.forEach(n => {
-                    n.read_at = new Date().toISOString();
-                });
-                unreadCount.value = 0;
-            }
+        await axios.post(route('mygrownet.notifications.read-all'));
+        
+        // Update local state
+        notifications.value.forEach(n => {
+            n.read_at = new Date().toISOString();
         });
+        unreadCount.value = 0;
     } catch (error) {
         console.error('Failed to mark all as read:', error);
     }

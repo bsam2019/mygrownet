@@ -25,6 +25,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
+        // Use manifest file hash for asset versioning
+        // This ensures proper cache busting when assets change
+        if (file_exists(public_path('build/manifest.json'))) {
+            return md5_file(public_path('build/manifest.json'));
+        }
+        
         return parent::version($request);
     }
 

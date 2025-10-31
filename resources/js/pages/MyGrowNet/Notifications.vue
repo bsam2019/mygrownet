@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import MemberLayout from '@/Layouts/MemberLayout.vue';
 import { BellIcon, CheckIcon } from 'lucide-vue-next';
+import axios from 'axios';
 
 interface Notification {
     id: string;
@@ -22,8 +23,7 @@ const filter = ref<'all' | 'unread'>('all');
 const fetchNotifications = async () => {
     loading.value = true;
     try {
-        const response = await fetch(route('mygrownet.notifications.index'));
-        const data = await response.json();
+        const { data } = await axios.get(route('mygrownet.notifications.index'));
         notifications.value = data.notifications;
     } catch (error) {
         console.error('Failed to fetch notifications:', error);
@@ -33,26 +33,30 @@ const fetchNotifications = async () => {
 };
 
 const markAsRead = async (id: string) => {
-    await router.post(route('mygrownet.notifications.read', { id }), {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            const notification = notifications.value.find(n => n.id === id);
-            if (notification) {
-                notification.read_at = new Date().toISOString();
-            }
+    try {
+        await axios.post(route('mygrownet.notifications.read', { id }));
+        
+        // Update local state
+        const notification = notifications.value.find(n => n.id === id);
+        if (notification) {
+            notification.read_at = new Date().toISOString();
         }
-    });
+    } catch (error) {
+        console.error('Failed to mark as read:', error);
+    }
 };
 
 const markAllAsRead = async () => {
-    await router.post(route('mygrownet.notifications.read-all'), {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            notifications.value.forEach(n => {
-                n.read_at = new Date().toISOString();
-            });
-        }
-    });
+    try {
+        await axios.post(route('mygrownet.notifications.read-all'));
+        
+        // Update local state
+        notifications.value.forEach(n => {
+            n.read_at = new Date().toISOString();
+        });
+    } catch (error) {
+        console.error('Failed to mark all as read:', error);
+    }
 };
 
 const handleNotificationClick = (notification: Notification) => {

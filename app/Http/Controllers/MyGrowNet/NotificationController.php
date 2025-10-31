@@ -14,37 +14,48 @@ class NotificationController extends Controller
     ) {}
 
     /**
-     * Get unread notification count
+     * Get unread notification count (API endpoint)
      */
     public function count(Request $request)
     {
-        $count = $this->notificationRepository->countUnreadByUserId($request->user()->id);
+        // Force JSON response for API calls
+        if ($request->wantsJson() || !$request->header('X-Inertia')) {
+            $count = $this->notificationRepository->countUnreadByUserId($request->user()->id);
+            return response()->json(['count' => $count]);
+        }
         
-        return response()->json(['count' => $count]);
+        // If somehow called as Inertia request, return back
+        return back();
     }
 
     /**
-     * Get recent notifications
+     * Get recent notifications (API endpoint)
      */
     public function index(Request $request)
     {
-        $notifications = $this->notificationRepository->findByUserId(
-            $request->user()->id,
-            limit: 50
-        );
+        // Force JSON response for API calls
+        if ($request->wantsJson() || !$request->header('X-Inertia')) {
+            $notifications = $this->notificationRepository->findByUserId(
+                $request->user()->id,
+                limit: 50
+            );
+            
+            return response()->json([
+                'notifications' => array_map(fn($n) => [
+                    'id' => $n->id(),
+                    'title' => $n->title(),
+                    'message' => $n->message(),
+                    'action_url' => $n->actionUrl(),
+                    'action_text' => $n->actionText(),
+                    'priority' => $n->priority()->value,
+                    'read_at' => $n->readAt()?->format('Y-m-d H:i:s'),
+                    'created_at' => $n->createdAt()->format('Y-m-d H:i:s'),
+                ], $notifications)
+            ]);
+        }
         
-        return response()->json([
-            'notifications' => array_map(fn($n) => [
-                'id' => $n->id(),
-                'title' => $n->title(),
-                'message' => $n->message(),
-                'action_url' => $n->actionUrl(),
-                'action_text' => $n->actionText(),
-                'priority' => $n->priority()->value,
-                'read_at' => $n->readAt()?->format('Y-m-d H:i:s'),
-                'created_at' => $n->createdAt()->format('Y-m-d H:i:s'),
-            ], $notifications)
-        ]);
+        // If somehow called as Inertia request, return back
+        return back();
     }
 
     /**
@@ -52,9 +63,16 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request, string $id)
     {
+        \Log::info('Marking notification as read', ['id' => $id, 'user_id' => $request->user()->id]);
+        
         $this->notificationRepository->markAsRead($id);
         
-        return response()->json(['success' => true]);
+        // Return JSON for API calls, Inertia response for page requests
+        if ($request->wantsJson() || !$request->header('X-Inertia')) {
+            return response()->json(['success' => true]);
+        }
+        
+        return back();
     }
 
     /**
@@ -64,7 +82,12 @@ class NotificationController extends Controller
     {
         $this->notificationRepository->markAllAsRead($request->user()->id);
         
-        return response()->json(['success' => true]);
+        // Return JSON for API calls, Inertia response for page requests
+        if ($request->wantsJson() || !$request->header('X-Inertia')) {
+            return response()->json(['success' => true]);
+        }
+        
+        return back();
     }
 
     /**
