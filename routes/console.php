@@ -29,6 +29,19 @@ Schedule::command('subscriptions:check-expiring')
     ->dailyAt('08:00')
     ->description('Check for expiring subscriptions and send reminders');
 
+// Loyalty Growth Reward (LGR) System
+Schedule::command('lgr:process-daily-payouts')
+    ->dailyAt('00:30')
+    ->description('Process daily LGR payouts for active cycles');
+
+Schedule::command('lgr:complete-cycles')
+    ->dailyAt('01:00')
+    ->description('Complete LGR cycles that have reached their end date');
+
+Schedule::command('lgr:monitor-pool')
+    ->dailyAt('06:00')
+    ->description('Monitor LGR pool balance and send alerts if low');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

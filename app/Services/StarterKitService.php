@@ -145,6 +145,12 @@ class StarterKitService
             
             // Generate receipt
             $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
+            
+            // Update LGR qualification status
+            $this->updateLgrQualification($user);
+            
+            // Update referrer's LGR qualification (network building)
+            $this->updateReferrerLgrQualification($user);
 
             // Send welcome email (implement separately)
             // event(new StarterKitPurchased($user, $purchase));
@@ -154,6 +160,53 @@ class StarterKitService
                 'invoice' => $purchase->invoice_number,
             ]);
         });
+    }
+    
+    /**
+     * Update LGR qualification after starter kit purchase
+     */
+    protected function updateLgrQualification(User $user): void
+    {
+        try {
+            $lgrQualificationService = app(\App\Application\Services\LoyaltyReward\LgrQualificationService::class);
+            $lgrQualificationService->checkQualification($user->id);
+            
+            Log::info('LGR qualification updated after starter kit purchase', [
+                'user_id' => $user->id,
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the purchase if LGR update fails
+            Log::error('Failed to update LGR qualification: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
+    }
+    
+    /**
+     * Update referrer's LGR qualification when member purchases starter kit
+     */
+    protected function updateReferrerLgrQualification(User $user): void
+    {
+        try {
+            if (!$user->referrer_id) {
+                return;
+            }
+            
+            $lgrQualificationService = app(\App\Application\Services\LoyaltyReward\LgrQualificationService::class);
+            $lgrQualificationService->updateReferrerQualification($user->id);
+            
+            Log::info('Referrer LGR qualification updated after member starter kit purchase', [
+                'member_id' => $user->id,
+                'referrer_id' => $user->referrer_id,
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the purchase if LGR update fails
+            Log::error('Failed to update referrer LGR qualification: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
     
     /**

@@ -147,4 +147,19 @@ class LgrQualificationService
         
         return $qualification->isFullyQualified();
     }
+    
+    /**
+     * Update referrer's LGR qualification when a new member purchases starter kit
+     */
+    public function updateReferrerQualification(int $newMemberId): void
+    {
+        $newMember = User::find($newMemberId);
+        
+        if (!$newMember || !$newMember->referrer_id) {
+            return;
+        }
+        
+        // Update referrer's qualification
+        $this->checkQualification($newMember->referrer_id);
+    }
 }
