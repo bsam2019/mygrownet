@@ -433,6 +433,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/notifications/{id}/read', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         
+        // Loyalty Growth Reward (LGR) Routes
+        Route::prefix('loyalty-reward')->name('loyalty-reward.')->group(function () {
+            Route::get('/', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'index'])->name('index');
+            Route::get('/qualification', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'qualification'])->name('qualification');
+            Route::get('/activities', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'activities'])->name('activities');
+            Route::post('/start-cycle', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'startCycle'])->name('start-cycle');
+            Route::post('/record-activity', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'recordActivity'])->name('record-activity');
+        });
+        
         // Finance Routes
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
         Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
