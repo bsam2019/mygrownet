@@ -159,7 +159,7 @@
 
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
 
 interface Props {
   applications: {
