@@ -151,7 +151,7 @@
                   <dl>
                     <dt class="text-sm font-medium text-gray-500 truncate">Team Size</dt>
                     <dd class="text-lg font-medium text-gray-900">
-                      {{ networkData.total_network_size }}
+                      {{ networkData?.total_network_size || 0 }}
                     </dd>
                   </dl>
                 </div>

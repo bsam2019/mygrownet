@@ -103,9 +103,8 @@ const financeNavItems: NavItem[] = [
 ];
 
 const reportsNavItems: NavItem[] = [
-    { title: 'Business Performance', href: route('my-team.performance-report'), icon: TrendingUpIcon },
-    { title: 'Earnings Summary', href: route('reports'), icon: ChartBarIcon },
-    { title: 'Network Analytics', href: route('mygrownet.network.analytics'), icon: ChartBarIcon },
+    { title: 'Commission Earnings', href: route('my-team.commissions'), icon: TrendingUpIcon },
+    { title: 'Quarterly Profit Shares', href: route('mygrownet.profit-shares'), icon: TrendingUpIcon },
 ];
 
 const learningNavItems: NavItem[] = [

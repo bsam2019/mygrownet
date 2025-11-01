@@ -259,7 +259,8 @@ const impersonateUser = (userId) => {
             </div>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -320,6 +321,52 @@ const impersonateUser = (userId) => {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Card View -->
+          <div class="md:hidden divide-y divide-gray-200">
+            <div v-for="user in users.data" :key="user.id" class="p-4 hover:bg-gray-50">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <Link
+                    :href="route('admin.users.show', user.id)"
+                    class="text-base font-medium text-blue-600 hover:text-blue-800"
+                  >
+                    {{ user.name }}
+                  </Link>
+                  <div class="text-xs text-gray-500 mt-1">ID: {{ user.id }}</div>
+                </div>
+                <span :class="['px-2 py-1 text-xs rounded-full', getStatusColor(user.status)]">
+                  {{ user.status }}
+                </span>
+              </div>
+              
+              <div class="space-y-2 mb-3">
+                <div class="text-sm text-gray-900">{{ user.email }}</div>
+                <div class="text-sm text-gray-500">{{ user.phone || 'No phone' }}</div>
+                <span class="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                  {{ user.role }}
+                </span>
+              </div>
+              
+              <div class="flex flex-wrap gap-2">
+                <button @click="openEditModal(user)"
+                  class="flex-1 px-3 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700">
+                  Edit
+                </button>
+                <button @click="toggleStatus(user)"
+                  class="flex-1 px-3 py-2 text-sm text-white rounded"
+                  :class="user.status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'">
+                  {{ user.status === 'active' ? 'Suspend' : 'Activate' }}
+                </button>
+                <button 
+                  v-if="user.role !== 'admin'"
+                  @click="impersonateUser(user.id)"
+                  class="w-full px-3 py-2 text-sm text-white bg-amber-600 rounded hover:bg-amber-700">
+                  Login As
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Pagination -->
