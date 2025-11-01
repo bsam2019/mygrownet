@@ -2,6 +2,17 @@
   <GuestLayout>
     <div class="min-h-screen bg-gray-50 py-12">
       <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <!-- Back Button (Mobile) -->
+        <button
+          @click="$inertia.visit(route('home'))"
+          class="mb-4 flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 md:hidden"
+        >
+          <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Home
+        </button>
+        
         <!-- Header -->
         <div class="mb-8 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-8 shadow-sm">
           <h1 class="mb-4 text-3xl font-bold text-gray-900">

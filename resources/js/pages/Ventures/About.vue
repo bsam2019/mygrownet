@@ -15,6 +15,20 @@ const isAuthenticated = computed(() => !!page.props.auth?.user);
 
     <div class="min-h-screen bg-gray-50">
         <Navigation />
+        
+        <!-- Back Button (Mobile) -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 md:hidden">
+            <button
+                @click="$inertia.visit(route('ventures.index'))"
+                class="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+                <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Marketplace
+            </button>
+        </div>
+        
         <!-- Hero Section -->
         <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

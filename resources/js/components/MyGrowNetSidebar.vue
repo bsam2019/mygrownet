@@ -82,6 +82,7 @@ const infoNavItems: NavItem[] = [
     { title: 'Platform Features', href: route('features'), icon: StarIcon },
     { title: 'About BGF', href: route('bgf.about'), icon: TrendingUpIcon },
     { title: 'About Ventures', href: route('ventures.about'), icon: BriefcaseIcon },
+    { title: 'About LGR (Loyalty Reward)', href: route('loyalty-reward.policy'), icon: StarIcon },
     { title: 'FAQ & Help', href: route('faq'), icon: BookOpenIcon },
 ];
 

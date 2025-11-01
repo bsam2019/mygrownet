@@ -86,10 +86,23 @@ const truncateText = (text: string, length: number = 150) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
                 <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-gray-900">Venture Marketplace</h1>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Invest in vetted business projects and become a shareholder
-                    </p>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">Venture Marketplace</h1>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Invest in vetted business projects and become a shareholder
+                            </p>
+                        </div>
+                        <Link
+                            :href="route('ventures.about')"
+                            class="flex items-center space-x-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>How It Works</span>
+                        </Link>
+                    </div>
                 </div>
 
                 <!-- Filters -->

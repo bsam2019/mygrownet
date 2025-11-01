@@ -11,10 +11,23 @@
         <!-- Header Section -->
         <div class="overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm sm:rounded-lg">
           <div class="p-6 text-white">
-            <h3 class="text-2xl font-bold">Loyalty Growth Reward Program</h3>
-            <p class="mt-2 text-blue-100">
-              Earn up to K2,100 in Loyalty Credits over 70 days through active participation
-            </p>
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-2xl font-bold">Loyalty Growth Reward Program</h3>
+                <p class="mt-2 text-blue-100">
+                  Earn up to K2,100 in Loyalty Credits over 70 days through active participation
+                </p>
+              </div>
+              <Link
+                :href="route('loyalty-reward.policy')"
+                class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30 transition"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Learn More</span>
+              </Link>
+            </div>
           </div>
         </div>
 
