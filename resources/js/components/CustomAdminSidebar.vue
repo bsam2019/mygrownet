@@ -249,7 +249,7 @@ onMounted(() => {
             <nav>
                 <!-- Investments Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('investments')"
+                    <button @click="toggleSubmenu('investments')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -262,11 +262,11 @@ onMounted(() => {
                             <LayoutGrid class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Investments</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.investments }" />
                     </button>
 
-                    <div v-if="showSubmenu.investments && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.investments" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in investmentNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
@@ -283,7 +283,7 @@ onMounted(() => {
 
                 <!-- User Management Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('userManagement')"
+                    <button @click="toggleSubmenu('userManagement')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -296,11 +296,11 @@ onMounted(() => {
                             <Users class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">User Management</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.userManagement }" />
                     </button>
 
-                    <div v-if="showSubmenu.userManagement && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.userManagement" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in userManagementNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
@@ -317,7 +317,7 @@ onMounted(() => {
 
                 <!-- Finance Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('finance')"
+                    <button @click="toggleSubmenu('finance')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -330,11 +330,11 @@ onMounted(() => {
                             <DollarSign class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Finance</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.finance }" />
                     </button>
 
-                    <div v-if="showSubmenu.finance && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.finance" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in financeNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
@@ -351,7 +351,7 @@ onMounted(() => {
 
                 <!-- Venture Builder Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('ventureBuilder')"
+                    <button @click="toggleSubmenu('ventureBuilder')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -364,11 +364,11 @@ onMounted(() => {
                             <Briefcase class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Venture Builder</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.ventureBuilder }" />
                     </button>
 
-                    <div v-if="showSubmenu.ventureBuilder && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.ventureBuilder" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in ventureBuilderNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
@@ -385,7 +385,7 @@ onMounted(() => {
 
                 <!-- Business Growth Fund Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('bgf')"
+                    <button @click="toggleSubmenu('bgf')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -398,11 +398,11 @@ onMounted(() => {
                             <TrendingUp class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Growth Fund</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.bgf }" />
                     </button>
 
-                    <div v-if="showSubmenu.bgf && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.bgf" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in bgfNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
@@ -419,7 +419,7 @@ onMounted(() => {
 
                 <!-- Reports Section -->
                 <div class="pt-2">
-                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('reports')"
+                    <button @click="toggleSubmenu('reports')"
                         :class="[
                             'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
                             'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
@@ -432,11 +432,11 @@ onMounted(() => {
                             <ChartBarIcon class="h-5 w-5" />
                             <span v-show="!isCollapsed || isMobile" class="ml-3">Reports</span>
                         </div>
-                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
                             :class="{ 'rotate-180': showSubmenu.reports }" />
                     </button>
 
-                    <div v-if="showSubmenu.reports && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                    <div v-if="showSubmenu.reports" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in reportsNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
