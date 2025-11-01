@@ -55,7 +55,12 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="cycle in cycles.data" :key="cycle.id">
+                <tr v-if="!cycles || cycles.data.length === 0">
+                  <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                    No cycles found
+                  </td>
+                </tr>
+                <tr v-for="cycle in cycles?.data || []" :key="cycle.id">
                   <td class="whitespace-nowrap px-6 py-4">
                     <div>
                       <div class="font-medium text-gray-900">{{ cycle.user.name }}</div>
@@ -104,7 +109,7 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="cycles.data.length > 0" class="flex items-center justify-between">
+        <div v-if="cycles && cycles.data && cycles.data.length > 0" class="flex items-center justify-between">
           <div class="text-sm text-gray-700">
             Showing {{ cycles.from }} to {{ cycles.to }} of {{ cycles.total }} cycles
           </div>
@@ -136,11 +141,15 @@ import { router, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 
 interface Props {
-  cycles: any;
-  filters: any;
+  cycles?: any;
+  filters?: any;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  cycles: () => ({ data: [], links: [], from: 0, to: 0, total: 0 }),
+  filters: () => ({ status: '', search: '' }),
+});
+
 const filters = ref(props.filters || { status: '', search: '' });
 
 const applyFilters = () => {

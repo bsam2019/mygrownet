@@ -109,8 +109,8 @@ class LgrQualificationService
             $activities++;
         }
         
-        // Event attendance
-        if (DB::table('workshop_attendees')->where('user_id', $userId)->exists()) {
+        // Event attendance (workshop registrations)
+        if (DB::table('workshop_registrations')->where('user_id', $userId)->exists()) {
             $activities++;
         }
         

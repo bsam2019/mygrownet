@@ -1,5 +1,5 @@
 <template>
-  <AuthenticatedLayout>
+  <MemberLayout>
     <template #header>
       <h2 class="text-xl font-semibold leading-tight text-gray-900">
         Loyalty Growth Reward
@@ -61,7 +61,7 @@
                 </div>
                 <Link
                   v-if="!qualification.starter_package_completed"
-                  :href="route('mygrownet.starter-kit.index')"
+                  :href="route('mygrownet.starter-kit.show')"
                   class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   Get Started
@@ -324,7 +324,7 @@
           <div class="p-6">
             <h4 class="text-lg font-semibold text-gray-900">Loyalty Credits Balance</h4>
             <p class="mt-2 text-3xl font-bold text-blue-600">
-              K{{ user.loyalty_points.toFixed(2) }}
+              K{{ Number(user.loyalty_points || 0).toFixed(2) }}
             </p>
             <p class="mt-2 text-sm text-gray-600">
               Use for platform purchases, venture investments, or convert up to 40% to cash
@@ -342,13 +342,13 @@
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 
 interface Props {
   qualification: any;
