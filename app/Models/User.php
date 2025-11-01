@@ -157,6 +157,7 @@ class User extends Authenticatable
         'risk_assessed_at',
         // Starter Kit fields
         'has_starter_kit',
+        'starter_kit_tier',
         'starter_kit_purchased_at',
         'starter_kit_terms_accepted',
         'starter_kit_terms_accepted_at',

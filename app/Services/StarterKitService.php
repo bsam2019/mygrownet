@@ -12,15 +12,32 @@ use Illuminate\Support\Facades\Log;
 
 class StarterKitService
 {
+    public function __construct(
+        private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService
+    ) {}
+    
     /**
-     * Starter Kit price in Kwacha.
+     * Starter Kit tiers
      */
-    public const PRICE = 500.00;
+    public const TIER_BASIC = 'basic';
+    public const TIER_PREMIUM = 'premium';
+    
+    /**
+     * Starter Kit prices in Kwacha.
+     */
+    public const PRICE_BASIC = 500.00;
+    public const PRICE_PREMIUM = 1000.00;
+    
+    /**
+     * Legacy price constant (for backward compatibility)
+     */
+    public const PRICE = self::PRICE_BASIC;
 
     /**
-     * Shop credit amount in Kwacha.
+     * Shop credit amounts in Kwacha.
      */
-    public const SHOP_CREDIT = 100.00;
+    public const SHOP_CREDIT_BASIC = 100.00;
+    public const SHOP_CREDIT_PREMIUM = 200.00;
 
     /**
      * Shop credit expiry days.
@@ -33,9 +50,13 @@ class StarterKitService
     public function purchaseStarterKit(
         User $user,
         string $paymentMethod,
-        string $paymentReference = null
+        string $paymentReference = null,
+        string $tier = self::TIER_BASIC
     ): StarterKitPurchaseModel {
-        return DB::transaction(function () use ($user, $paymentMethod, $paymentReference) {
+        return DB::transaction(function () use ($user, $paymentMethod, $paymentReference, $tier) {
+            // Get price based on tier
+            $price = $tier === self::TIER_PREMIUM ? self::PRICE_PREMIUM : self::PRICE_BASIC;
+            $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
             // Handle wallet payment
             if ($paymentMethod === 'wallet') {
                 // Calculate current wallet balance
@@ -53,7 +74,7 @@ class StarterKitService
                     ->sum('workshops.price') ?? 0);
                 $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
                 
-                if ($walletBalance < self::PRICE) {
+                if ($walletBalance < $price) {
                     throw new \Exception('Insufficient wallet balance');
                 }
                 
@@ -63,7 +84,7 @@ class StarterKitService
                 // Create withdrawal record to deduct from wallet
                 DB::table('withdrawals')->insert([
                     'user_id' => $user->id,
-                    'amount' => self::PRICE,
+                    'amount' => $price,
                     'status' => 'approved',
                     'withdrawal_method' => 'wallet_payment',
                     'reason' => 'Starter Kit Purchase - Wallet Payment',
@@ -74,16 +95,17 @@ class StarterKitService
                 
                 Log::info('Wallet payment validated and transaction created', [
                     'user_id' => $user->id,
-                    'amount' => self::PRICE,
+                    'amount' => $price,
                     'wallet_balance' => $walletBalance,
-                    'new_balance' => $walletBalance - self::PRICE,
+                    'new_balance' => $walletBalance - $price,
                 ]);
             }
             
             // Create purchase record
             $purchase = StarterKitPurchaseModel::create([
                 'user_id' => $user->id,
-                'amount' => self::PRICE,
+                'tier' => $tier,
+                'amount' => $price,
                 'payment_method' => $paymentMethod,
                 'payment_reference' => $paymentReference ?? 'PENDING',
                 'status' => $paymentMethod === 'wallet' ? 'completed' : 'pending',
@@ -123,15 +145,19 @@ class StarterKitService
                 'purchased_at' => now(),
             ]);
 
+            // Get tier with fallback to basic
+            $tier = $purchase->tier ?? self::TIER_BASIC;
+            
             // Update user record
             $user->update([
                 'has_starter_kit' => true,
+                'starter_kit_tier' => $tier,
                 'starter_kit_purchased_at' => now(),
                 'library_access_until' => now()->addDays(30), // 30 days free library access
             ]);
 
             // Add shop credit to wallet
-            $this->addShopCredit($user);
+            $this->addShopCredit($user, $tier);
 
             // Create progressive unlock schedule
             $this->createUnlockSchedule($user);
@@ -145,6 +171,9 @@ class StarterKitService
             
             // Generate receipt
             $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
+            
+            // Send notification
+            $this->sendPurchaseNotification($user, $tier);
             
             // Update LGR qualification status
             $this->updateLgrQualification($user);
@@ -269,17 +298,19 @@ class StarterKitService
     /**
      * Add shop credit to user record.
      */
-    protected function addShopCredit(User $user): void
+    protected function addShopCredit(User $user, string $tier = self::TIER_BASIC): void
     {
+        $creditAmount = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+        
         $user->update([
-            'starter_kit_shop_credit' => self::SHOP_CREDIT,
-            'starter_kit_credit_expiry' => Carbon::now()->addDays(self::CREDIT_EXPIRY_DAYS),
+            'starter_kit_shop_credit' => $creditAmount,
             'starter_kit_credit_expiry' => now()->addDays(self::CREDIT_EXPIRY_DAYS),
         ]);
 
         Log::info('Shop credit added', [
             'user_id' => $user->id,
-            'amount' => self::SHOP_CREDIT,
+            'tier' => $tier,
+            'amount' => $creditAmount,
             'expiry' => $user->starter_kit_credit_expiry,
         ]);
     }
@@ -595,5 +626,47 @@ class StarterKitService
                 'recent' => $achievements->sortByDesc('earned_at')->take(5),
             ],
         ];
+    }
+    
+    /**
+     * Send purchase notification to user
+     */
+    protected function sendPurchaseNotification(User $user, string $tier): void
+    {
+        try {
+            $tierName = $tier === self::TIER_PREMIUM ? 'Premium' : 'Basic';
+            $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+            
+            $message = "Welcome to MyGrowNet! Your {$tierName} Starter Kit is now active. ";
+            $message .= "You've received K{$shopCredit} shop credit and access to all content.";
+            
+            if ($tier === self::TIER_PREMIUM) {
+                $message .= " You're now qualified for LGR quarterly profit sharing!";
+            }
+            
+            $this->notificationService->execute(
+                userId: $user->id,
+                type: 'subscriptions.starter_kit_purchased',
+                data: [
+                    'title' => '🎉 Starter Kit Activated!',
+                    'message' => $message,
+                    'tier' => $tierName,
+                    'shop_credit' => $shopCredit,
+                    'action_url' => route('mygrownet.starter-kit.show'),
+                    'action_text' => 'View Starter Kit'
+                ]
+            );
+            
+            Log::info('Starter Kit purchase notification sent', [
+                'user_id' => $user->id,
+                'tier' => $tier,
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the purchase if notification fails
+            Log::error('Failed to send starter kit notification: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
+        }
     }
 }

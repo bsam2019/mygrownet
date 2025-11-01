@@ -11,6 +11,16 @@ class LgrQualificationService
 {
     public function checkQualification(int $userId): array
     {
+        // Check if user has premium tier (only premium qualifies for LGR)
+        $user = User::find($userId);
+        if (!$user || $user->starter_kit_tier !== 'premium') {
+            return [
+                'qualified' => false,
+                'reason' => 'LGR is only available for Premium Starter Kit members',
+                'tier' => $user?->starter_kit_tier ?? 'none',
+            ];
+        }
+        
         $qualification = $this->getOrCreateQualification($userId);
         
         // Update qualification status
@@ -67,10 +77,11 @@ class LgrQualificationService
 
     private function hasCompletedStarterPackage(User $user): bool
     {
-        // Check if user has purchased starter kit
+        // Check if user has purchased PREMIUM tier starter kit (only premium qualifies for LGR)
         return DB::table('starter_kit_purchases')
             ->where('user_id', $user->id)
             ->where('status', 'completed')
+            ->where('tier', 'premium')
             ->exists();
     }
 

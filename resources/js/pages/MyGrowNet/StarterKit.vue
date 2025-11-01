@@ -14,6 +14,13 @@ interface ContentItem {
     category_label: string;
 }
 
+interface Tier {
+    name?: string;
+    price: number;
+    shopCredit: number;
+    lgrMultiplier?: number;
+}
+
 interface Props {
     hasStarterKit: boolean;
     hasPendingPayment?: boolean;
@@ -23,8 +30,10 @@ interface Props {
         payment_reference: string;
         submitted_at: string;
     };
-    price?: number;
-    shopCredit?: number;
+    tiers?: {
+        basic: Tier;
+        premium: Tier;
+    };
     purchaseUrl?: string;
     contentItems?: Record<string, ContentItem[]>;
     purchase?: {
@@ -57,6 +66,7 @@ interface Props {
         email: string;
         phone: string;
         joined_at: string;
+        starter_kit_tier?: string;
     };
 }
 
@@ -72,6 +82,10 @@ const totalContentValue = computed(() => {
     });
     return total;
 });
+
+// Get basic tier for display (default option)
+const basicTier = computed(() => props.tiers?.basic || { price: 500, shopCredit: 100 });
+const premiumTier = computed(() => props.tiers?.premium || { price: 1000, shopCredit: 200 });
 
 const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
@@ -156,13 +170,13 @@ const formatCurrency = (amount: number) => {
                             <div>
                                 <h2 class="text-3xl font-bold mb-2">MyGrowNet Starter Kit</h2>
                                 <p class="text-blue-100 text-lg">Everything you need to succeed on the platform</p>
-                                <p class="text-blue-200 mt-2">Total Value: K{{ totalContentValue + (shopCredit || 0) }} • Your Price: K{{ price }}</p>
+                                <p class="text-blue-200 mt-2">Total Value: K{{ totalContentValue + basicTier.shopCredit }} • Starting from K{{ basicTier.price }}</p>
                             </div>
                             <Link
                                 :href="purchaseUrl"
                                 class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
                             >
-                                Purchase Now - K{{ price }}
+                                Choose Your Tier
                             </Link>
                         </div>
                     </div>
@@ -195,16 +209,16 @@ const formatCurrency = (amount: number) => {
                                 </div>
                             </div>
 
-                            <!-- Bonuses -->
+                            <!-- Basic Tier Bonuses -->
                             <div class="border border-green-200 bg-green-50 rounded-lg p-4">
                                 <div class="flex items-start gap-3">
                                     <span class="text-3xl">🎁</span>
                                     <div class="flex-1">
-                                        <h4 class="font-semibold text-gray-900 mb-2">Instant Bonuses</h4>
+                                        <h4 class="font-semibold text-gray-900 mb-2">Basic Tier (K{{ basicTier.price }})</h4>
                                         <ul class="space-y-1 text-sm text-gray-600">
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>K{{ shopCredit }} Shop Credit (90 days)</span>
+                                                <span>K{{ basicTier.shopCredit }} Shop Credit (90 days)</span>
                                             </li>
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
@@ -212,10 +226,39 @@ const formatCurrency = (amount: number) => {
                                             </li>
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>Achievement Badges</span>
+                                                <span>Full Platform Access</span>
                                             </li>
                                         </ul>
-                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ shopCredit }}</p>
+                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ basicTier.shopCredit }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Premium Tier Bonuses -->
+                            <div class="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-3xl">✨</span>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">Premium Tier (K{{ premiumTier.price }})</h4>
+                                        <ul class="space-y-1 text-sm text-gray-600">
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>K{{ premiumTier.shopCredit }} Shop Credit (90 days)</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>+37.5 Lifetime Points</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>LGR Qualification 🚀</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Quarterly Profit Sharing</span>
+                                            </li>
+                                        </ul>
+                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ premiumTier.shopCredit }} + LGR Access</p>
                                     </div>
                                 </div>
                             </div>
@@ -226,10 +269,10 @@ const formatCurrency = (amount: number) => {
                                 :href="purchaseUrl"
                                 class="inline-flex items-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                                Get Started - K{{ price }}
+                                Choose Your Tier
                             </Link>
                             <p class="text-sm text-gray-600 mt-3">
-                                Save K{{ totalContentValue + (shopCredit || 0) - (price || 0) }} ({{ Math.round(((totalContentValue + (shopCredit || 0) - (price || 0)) / (totalContentValue + (shopCredit || 0))) * 100) }}% off)
+                                Basic: K{{ basicTier.price }} • Premium: K{{ premiumTier.price }} (includes LGR qualification)
                             </p>
                         </div>
                     </div>
@@ -278,6 +321,42 @@ const formatCurrency = (amount: number) => {
                                 <BookOpenIcon class="w-5 h-5 mr-2" />
                                 Access Library
                             </Link>
+                        </div>
+                    </div>
+                    
+                    <!-- Upgrade to Premium Banner (for Basic tier members) -->
+                    <div v-if="user && user.starter_kit_tier === 'basic'" class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+                        <div class="flex items-start justify-between flex-wrap gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <StarIcon class="h-6 w-6 text-yellow-300" />
+                                    <h3 class="text-xl font-bold">Upgrade to Premium</h3>
+                                </div>
+                                <p class="text-purple-100 mb-4">Unlock LGR quarterly profit sharing and enhanced benefits for only K500!</p>
+                                <ul class="space-y-2 text-sm text-purple-100">
+                                    <li class="flex items-center gap-2">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-300" />
+                                        <span>LGR Qualification - Quarterly profit sharing</span>
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-300" />
+                                        <span>Additional K100 shop credit</span>
+                                    </li>
+                                    <li class="flex items-center gap-2">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-300" />
+                                        <span>Priority support access</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <Link
+                                    :href="route('mygrownet.starter-kit.upgrade')"
+                                    class="inline-flex items-center px-6 py-3 bg-white text-purple-600 font-bold rounded-lg hover:bg-purple-50 transition-colors shadow-lg"
+                                >
+                                    <StarIcon class="w-5 h-5 mr-2" />
+                                    Upgrade Now
+                                </Link>
+                            </div>
                         </div>
                     </div>
                     

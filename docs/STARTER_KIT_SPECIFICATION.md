@@ -1,24 +1,34 @@
 # MyGrowNet Starter Kit - Complete Specification
 
-**Version**: 1.0  
-**Date**: October 26, 2025  
-**Price**: K500 (One-time fee)  
+**Version**: 2.0  
+**Date**: November 1, 2025  
+**Price**: K500 (Basic) / K1000 (Premium) - One-time fee  
 **Type**: Digital Learning Package & Platform Access  
-**Status**: Ready for Implementation
+**Status**: Two-Tier System Implemented
 
 ---
 
 ## 1. Executive Summary
 
-The **MyGrowNet Starter Kit** is a comprehensive digital package that provides new members with immediate access to educational content, training materials, platform features, and business tools. It converts the K500 joining fee into tangible digital products, ensuring legal compliance and real member value.
+The **MyGrowNet Starter Kit** is a comprehensive digital package available in two tiers that provides new members with immediate access to educational content, training materials, platform features, and business tools. It converts the joining fee into tangible digital products, ensuring legal compliance and real member value.
 
-### Key Features:
+### Two-Tier System:
+
+#### Basic Tier (K500)
 - 📚 Digital learning courses and eBooks
 - 🎥 Video tutorials and training
 - 💳 K100 product credit for shop purchases
 - 🛠️ Marketing and business tools
 - 🌐 Full platform access and features
 - 🎓 Certificate of completion
+- 1.0x LGR qualification multiplier
+
+#### Premium Tier (K1000)
+- ✨ Everything in Basic Tier
+- 💰 K200 product credit (double the credit)
+- 🚀 1.5x LGR qualification multiplier
+- 🎯 Priority support access
+- 📈 Enhanced earning potential
 
 ### Legal Positioning:
 - **Product-based purchase** (not investment)
@@ -204,8 +214,9 @@ The **MyGrowNet Starter Kit** is a comprehensive digital package that provides n
 
 ### 2.2 Product Credits & Vouchers
 
-#### K100 MyGrow Shop Credit
-**Value**: K100  
+#### MyGrow Shop Credit
+**Basic Tier**: K100  
+**Premium Tier**: K200  
 **Type**: Platform wallet credit  
 **Expiry**: 90 days from activation  
 **Usage**: Any products in MyGrow Shop
@@ -483,31 +494,34 @@ The **MyGrowNet Starter Kit** is a comprehensive digital package that provides n
 
 ### 3.1 Detailed Value Analysis
 
-| Component | Retail Value | Included |
-|-----------|--------------|----------|
-| **Learning & Training** | | |
-| Entrepreneurship Course (3 modules) | K200 | ✅ |
-| MyGrowNet Success Guide (eBook) | K50 | ✅ |
-| Video Tutorial Series (3 videos) | K50 | ✅ |
-| Digital Library Access (30 days) | K100 | ✅ |
-| **Product Credits** | | |
-| MyGrow Shop Credit | K100 | ✅ |
-| **Platform Access** | | |
-| Member Dashboard (lifetime) | K50 | ✅ |
-| Referral System Tools | K50 | ✅ |
-| Weekly Webinars (1 month) | K100 | ✅ |
-| Points System Activation | K50 | ✅ |
-| **Business Tools** | | |
-| Digital Marketing Toolkit | K100 | ✅ |
-| Pitch Deck & Presentations | K50 | ✅ |
-| Pre-Written Content Library | K50 | ✅ |
-| **Bonus Features** | | |
-| Progressive Unlocking System | K30 | ✅ |
-| Achievement Badges & Certificates | K20 | ✅ |
-| Community Access (lifetime) | K50 | ✅ |
-| **TOTAL RETAIL VALUE** | **K1,050** | |
-| **MEMBER PRICE** | **K500** | |
-| **YOU SAVE** | **K550 (52%)** | |
+| Component | Retail Value | Basic Tier | Premium Tier |
+|-----------|--------------|------------|--------------|
+| **Learning & Training** | | | |
+| Entrepreneurship Course (3 modules) | K200 | ✅ | ✅ |
+| MyGrowNet Success Guide (eBook) | K50 | ✅ | ✅ |
+| Video Tutorial Series (3 videos) | K50 | ✅ | ✅ |
+| Digital Library Access (30 days) | K100 | ✅ | ✅ |
+| **Product Credits** | | | |
+| MyGrow Shop Credit | K100/K200 | K100 | K200 |
+| **Platform Access** | | | |
+| Member Dashboard (lifetime) | K50 | ✅ | ✅ |
+| Referral System Tools | K50 | ✅ | ✅ |
+| Weekly Webinars (1 month) | K100 | ✅ | ✅ |
+| Points System Activation | K50 | ✅ | ✅ |
+| **Business Tools** | | | |
+| Digital Marketing Toolkit | K100 | ✅ | ✅ |
+| Pitch Deck & Presentations | K50 | ✅ | ✅ |
+| Pre-Written Content Library | K50 | ✅ | ✅ |
+| **Bonus Features** | | | |
+| Progressive Unlocking System | K30 | ✅ | ✅ |
+| Achievement Badges & Certificates | K20 | ✅ | ✅ |
+| Community Access (lifetime) | K50 | ✅ | ✅ |
+| **LGR Benefits** | | | |
+| LGR Qualification Multiplier | - | 1.0x | 1.5x |
+| Priority Support | K50 | ❌ | ✅ |
+| **TOTAL RETAIL VALUE** | | **K1,050** | **K1,200** |
+| **MEMBER PRICE** | | **K500** | **K1,000** |
+| **YOU SAVE** | | **K550 (52%)** | **K200 (17%)** |
 
 ---
 

@@ -27,8 +27,20 @@ class StarterKitController extends Controller
 
         return Inertia::render('StarterKit/Index', [
             'hasStarterKit' => $user->has_starter_kit ?? false,
-            'price' => StarterKitService::PRICE,
-            'shopCredit' => StarterKitService::SHOP_CREDIT,
+            'tiers' => [
+                'basic' => [
+                    'name' => 'Basic Starter Kit',
+                    'price' => StarterKitService::PRICE_BASIC,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                    'lgrMultiplier' => 1.0,
+                ],
+                'premium' => [
+                    'name' => 'Premium Starter Kit',
+                    'price' => StarterKitService::PRICE_PREMIUM,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                    'lgrMultiplier' => 1.5,
+                ],
+            ],
             'valueBreakdown' => $this->getValueBreakdown(),
         ]);
     }
@@ -46,7 +58,20 @@ class StarterKitController extends Controller
         }
 
         return Inertia::render('StarterKit/Purchase', [
-            'price' => StarterKitService::PRICE,
+            'tiers' => [
+                'basic' => [
+                    'name' => 'Basic Starter Kit',
+                    'price' => StarterKitService::PRICE_BASIC,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                    'lgrMultiplier' => 1.0,
+                ],
+                'premium' => [
+                    'name' => 'Premium Starter Kit',
+                    'price' => StarterKitService::PRICE_PREMIUM,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                    'lgrMultiplier' => 1.5,
+                ],
+            ],
             'valueBreakdown' => $this->getValueBreakdown(),
             'paymentMethods' => $this->getPaymentMethods(),
         ]);
@@ -58,6 +83,7 @@ class StarterKitController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'tier' => 'required|string|in:basic,premium',
             'payment_method' => 'required|string|in:mobile_money,bank_transfer,wallet',
             'payment_reference' => 'required|string|max:100',
             'terms_accepted' => 'required|accepted',
@@ -74,7 +100,8 @@ class StarterKitController extends Controller
             $purchase = $this->starterKitService->purchaseStarterKit(
                 $user,
                 $validated['payment_method'],
-                $validated['payment_reference']
+                $validated['payment_reference'],
+                $validated['tier']
             );
 
             // Update terms acceptance

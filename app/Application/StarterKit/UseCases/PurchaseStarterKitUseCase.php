@@ -25,10 +25,12 @@ class PurchaseStarterKitUseCase
     public function execute(
         User $user,
         string $paymentMethod,
-        ?string $paymentReference = null
+        ?string $paymentReference = null,
+        string $tier = 'basic'
     ): array {
-        // Create value objects
-        $price = Money::fromKwacha(self::PRICE_KWACHA);
+        // Get price based on tier
+        $priceKwacha = $tier === 'premium' ? 1000 : 500;
+        $price = Money::fromKwacha($priceKwacha);
         
         // Calculate wallet balance dynamically
         $walletBalanceKwacha = $this->calculateWalletBalance($user);
@@ -55,11 +57,11 @@ class PurchaseStarterKitUseCase
 
         // For wallet payments, process immediately
         if ($paymentMethod === 'wallet') {
-            return $this->processWalletPayment($user, $price);
+            return $this->processWalletPayment($user, $price, $tier);
         }
 
         // For other payments, create pending purchase
-        return $this->createPendingPurchase($user, $price, $paymentMethod, $paymentReference);
+        return $this->createPendingPurchase($user, $price, $paymentMethod, $paymentReference, $tier);
     }
 
     private function calculateWalletBalance(User $user): int
@@ -85,11 +87,11 @@ class PurchaseStarterKitUseCase
         return (int) ($totalEarnings - $totalWithdrawals - $workshopExpenses - $transactionExpenses);
     }
 
-    private function processWalletPayment(User $user, Money $price): array
+    private function processWalletPayment(User $user, Money $price, string $tier): array
     {
         // Use existing service for now (will refactor later)
         // Note: purchaseStarterKit already calls completePurchase for wallet payments
-        $purchase = $this->starterKitService->purchaseStarterKit($user, 'wallet');
+        $purchase = $this->starterKitService->purchaseStarterKit($user, 'wallet', null, $tier);
 
         return [
             'success' => true,
@@ -103,13 +105,15 @@ class PurchaseStarterKitUseCase
         User $user,
         Money $price,
         string $paymentMethod,
-        ?string $paymentReference
+        ?string $paymentReference,
+        string $tier
     ): array {
         // Use existing service for now (will refactor later)
         $purchase = $this->starterKitService->purchaseStarterKit(
             $user,
             $paymentMethod,
-            $paymentReference
+            $paymentReference,
+            $tier
         );
 
         return [
@@ -119,7 +123,7 @@ class PurchaseStarterKitUseCase
             'redirect' => route('mygrownet.payments.create', [
                 'type' => 'product',
                 'amount' => $price->toKwacha(),
-                'description' => 'Starter Kit Purchase',
+                'description' => 'Starter Kit Purchase (' . ucfirst($tier) . ' Tier)',
             ]),
         ];
     }

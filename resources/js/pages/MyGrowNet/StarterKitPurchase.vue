@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
-import { ShoppingBagIcon, CheckCircleIcon, AlertCircleIcon } from 'lucide-vue-next';
+import { ShoppingBagIcon, CheckCircleIcon, AlertCircleIcon, BanknoteIcon } from 'lucide-vue-next';
 
 interface ContentItem {
     id: number;
@@ -14,9 +14,18 @@ interface ContentItem {
     category_label: string;
 }
 
-interface Props {
+interface Tier {
+    name: string;
     price: number;
     shopCredit: number;
+    lgrMultiplier?: number;
+}
+
+interface Props {
+    tiers: {
+        basic: Tier;
+        premium: Tier;
+    };
     walletBalance: number;
     paymentMethods: Array<{
         id: string;
@@ -29,6 +38,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Get selected tier based on form
+const selectedTier = computed(() => form.tier === 'premium' ? props.tiers.premium : props.tiers.basic);
+const price = computed(() => selectedTier.value.price);
+const shopCredit = computed(() => selectedTier.value.shopCredit);
+
 const totalValue = computed(() => {
     let total = 0;
     Object.values(props.contentItems).forEach(items => {
@@ -36,7 +50,7 @@ const totalValue = computed(() => {
             total += item.estimated_value;
         });
     });
-    return total + props.shopCredit;
+    return total + shopCredit.value;
 });
 
 const getCategoryIcon = (category: string) => {
@@ -51,11 +65,27 @@ const getCategoryIcon = (category: string) => {
 };
 
 const form = useForm({
-    payment_method: 'mobile_money',
-    terms_accepted: false,
+    tier: 'basic',
+    payment_method: 'wallet', // Always wallet
+    terms_accepted: false, // MUST be false - user must actively consent
 });
 
+const attemptedSubmit = ref(false);
+
 const submit = () => {
+    attemptedSubmit.value = true;
+    
+    // Validate terms acceptance
+    if (!form.terms_accepted) {
+        // Scroll to terms section
+        const termsSection = document.querySelector('input[type="checkbox"]');
+        if (termsSection) {
+            termsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            termsSection.focus();
+        }
+        return;
+    }
+    
     form.post(route('mygrownet.starter-kit.store'));
 };
 
@@ -92,17 +122,115 @@ const formatCurrency = (amount: number) => {
                         <p class="mt-2 text-blue-100">Get instant access to your Starter Kit</p>
                     </div>
 
+                    <!-- Tier Selection -->
+                    <div class="px-6 py-6 bg-white border-b">
+                        <h3 class="font-semibold text-gray-900 mb-4">Choose Your Tier</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Basic Tier -->
+                            <div
+                                @click="form.tier = 'basic'"
+                                :class="[
+                                    'border-2 rounded-lg p-6 cursor-pointer transition',
+                                    form.tier === 'basic'
+                                        ? 'border-green-600 bg-green-50'
+                                        : 'border-gray-200 hover:border-green-300'
+                                ]"
+                            >
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 class="text-lg font-bold text-gray-900">Basic Tier</h4>
+                                        <p class="text-2xl font-bold text-green-600 mt-1">{{ formatCurrency(tiers.basic.price) }}</p>
+                                    </div>
+                                    <div v-if="form.tier === 'basic'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-6 h-6 text-green-600" />
+                                    </div>
+                                </div>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>All educational content</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.basic.shopCredit) }} shop credit</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>+37.5 Lifetime Points</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>Full platform access</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Premium Tier -->
+                            <div
+                                @click="form.tier = 'premium'"
+                                :class="[
+                                    'border-2 rounded-lg p-6 cursor-pointer transition relative',
+                                    form.tier === 'premium'
+                                        ? 'border-purple-600 bg-purple-50'
+                                        : 'border-gray-200 hover:border-purple-300'
+                                ]"
+                            >
+                                <div class="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
+                                    RECOMMENDED
+                                </div>
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 class="text-lg font-bold text-gray-900">Premium Tier</h4>
+                                        <p class="text-2xl font-bold text-purple-600 mt-1">{{ formatCurrency(tiers.premium.price) }}</p>
+                                    </div>
+                                    <div v-if="form.tier === 'premium'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-6 h-6 text-purple-600" />
+                                    </div>
+                                </div>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>All educational content</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.premium.shopCredit) }} shop credit</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>+37.5 Lifetime Points</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">LGR Qualification 🚀</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">Quarterly Profit Sharing</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Value Summary -->
                     <div class="px-6 py-6 bg-gray-50 border-b">
                         <div class="flex justify-between items-center mb-6">
                             <div>
-                                <h2 class="text-xl font-semibold text-gray-900">MyGrowNet Starter Kit</h2>
+                                <h2 class="text-xl font-semibold text-gray-900">
+                                    {{ form.tier === 'premium' ? 'Premium' : 'Basic' }} Starter Kit
+                                </h2>
                                 <p class="text-sm text-gray-600">Total Value: {{ formatCurrency(totalValue) }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-600 line-through">{{ formatCurrency(totalValue) }}</p>
-                                <p class="text-3xl font-bold text-green-600">{{ formatCurrency(price) }}</p>
-                                <p class="text-sm text-green-600">Save {{ formatCurrency(totalValue - price) }} ({{ Math.round((totalValue - price) / totalValue * 100) }}%)</p>
+                                <p class="text-3xl font-bold text-green-600">
+                                    {{ formatCurrency(form.tier === 'premium' ? tiers.premium.price : tiers.basic.price) }}
+                                </p>
+                                <p class="text-sm text-green-600">
+                                    Save {{ formatCurrency(totalValue - (form.tier === 'premium' ? tiers.premium.price : tiers.basic.price)) }} 
+                                    ({{ Math.round((totalValue - (form.tier === 'premium' ? tiers.premium.price : tiers.basic.price)) / totalValue * 100) }}%)
+                                </p>
                             </div>
                         </div>
 
@@ -141,11 +269,15 @@ const formatCurrency = (amount: number) => {
                                         <div>
                                             <h4 class="font-semibold text-gray-900">🎁 Instant Bonuses</h4>
                                             <ul class="text-sm text-gray-600 mt-1 space-y-1">
-                                                <li>• K{{ shopCredit }} Shop Credit (90 days)</li>
+                                                <li>• {{ formatCurrency(form.tier === 'premium' ? tiers.premium.shopCredit : tiers.basic.shopCredit) }} Shop Credit (90 days)</li>
                                                 <li>• +37.5 Lifetime Points</li>
                                                 <li>• Achievement Badges</li>
+                                                <li v-if="form.tier === 'premium'" class="font-semibold text-purple-700">• LGR Qualification 🚀</li>
                                             </ul>
-                                            <p class="text-xs text-gray-500 mt-2">Value: {{ formatCurrency(shopCredit) }}</p>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Value: {{ formatCurrency(form.tier === 'premium' ? tiers.premium.shopCredit : tiers.basic.shopCredit) }}
+                                                <span v-if="form.tier === 'premium'"> + LGR Access</span>
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -155,116 +287,57 @@ const formatCurrency = (amount: number) => {
 
                     <!-- Form -->
                     <form @submit.prevent="submit" class="px-6 py-8">
-                        <!-- Wallet Balance Alert -->
+                        <!-- Wallet Balance Check -->
                         <div v-if="walletBalance >= price" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
                             <div class="flex items-start">
                                 <CheckCircleIcon class="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                <div>
-                                    <h4 class="font-semibold text-green-900">You have sufficient wallet balance!</h4>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-green-900">✓ Sufficient Wallet Balance</h4>
                                     <p class="text-sm text-green-700 mt-1">
                                         Your wallet balance: <span class="font-semibold">{{ formatCurrency(walletBalance) }}</span>
                                     </p>
-                                    <p class="text-sm text-green-700">
-                                        You can pay directly from your wallet for instant access.
+                                    <p class="text-sm text-green-700 mt-1">
+                                        {{ formatCurrency(price) }} will be deducted from your wallet.
+                                    </p>
+                                    <p class="text-sm text-green-700 mt-1">
+                                        New balance after purchase: <span class="font-semibold">{{ formatCurrency(walletBalance - price) }}</span>
+                                    </p>
+                                    <p class="text-sm text-green-700 mt-2 font-semibold">
+                                        You'll get instant access - no waiting for verification!
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div v-else-if="walletBalance > 0" class="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <!-- Insufficient Balance - Redirect to Top Up -->
+                        <div v-else class="mb-6 bg-amber-50 border-2 border-amber-300 rounded-lg p-6">
                             <div class="flex items-start">
-                                <AlertCircleIcon class="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
-                                <div>
-                                    <h4 class="font-semibold text-amber-900">Insufficient wallet balance</h4>
-                                    <p class="text-sm text-amber-700 mt-1">
+                                <AlertCircleIcon class="w-6 h-6 text-amber-600 mt-0.5 mr-3 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-amber-900 text-lg">Insufficient Wallet Balance</h4>
+                                    <p class="text-sm text-amber-700 mt-2">
                                         Your current balance: <span class="font-semibold">{{ formatCurrency(walletBalance) }}</span>
                                     </p>
-                                    <p class="text-sm text-amber-700">
-                                        You need {{ formatCurrency(price - walletBalance) }} more. Please use Mobile Money or Bank Transfer.
+                                    <p class="text-sm text-amber-700 mt-1">
+                                        Required amount: <span class="font-semibold">{{ formatCurrency(price) }}</span>
+                                    </p>
+                                    <p class="text-sm text-amber-700 mt-1">
+                                        You need: <span class="font-semibold text-amber-900">{{ formatCurrency(price - walletBalance) }} more</span>
+                                    </p>
+                                    <div class="mt-4">
+                                        <Link
+                                            :href="route('mygrownet.payments.create', { type: 'wallet_topup', amount: price - walletBalance })"
+                                            class="inline-flex items-center px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors"
+                                        >
+                                            <BanknoteIcon class="w-5 h-5 mr-2" />
+                                            Top Up Wallet
+                                        </Link>
+                                    </div>
+                                    <p class="text-xs text-amber-600 mt-3">
+                                        All purchases are made from your wallet balance. Please top up to continue.
                                     </p>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Payment Method -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Payment Method *
-                            </label>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <!-- Wallet Balance Payment Option -->
-                                <div
-                                    @click="walletBalance >= price ? form.payment_method = 'wallet' : null"
-                                    :class="[
-                                        'border-2 rounded-lg p-4 transition',
-                                        form.payment_method === 'wallet'
-                                            ? 'border-green-600 bg-green-50'
-                                            : 'border-gray-200',
-                                        walletBalance >= price ? 'cursor-pointer hover:border-green-300' : 'cursor-not-allowed opacity-60'
-                                    ]"
-                                >
-                                    <div class="text-3xl mb-2">💰</div>
-                                    <h3 class="font-semibold text-gray-900">Wallet Balance</h3>
-                                    <p class="text-sm text-gray-600">Instant payment</p>
-                                    <p class="text-xs text-gray-500 mt-1">Available: {{ formatCurrency(walletBalance) }}</p>
-                                    <p v-if="walletBalance >= price" class="text-xs text-green-600 font-semibold mt-1">✓ Instant Access</p>
-                                    <p v-else class="text-xs text-red-600 mt-1">Need {{ formatCurrency(price - walletBalance) }} more</p>
-                                </div>
-
-                                <!-- Other Payment Methods -->
-                                <div
-                                    v-for="method in paymentMethods"
-                                    :key="method.id"
-                                    @click="form.payment_method = method.id"
-                                    :class="[
-                                        'border-2 rounded-lg p-4 cursor-pointer transition',
-                                        form.payment_method === method.id
-                                            ? 'border-blue-600 bg-blue-50'
-                                            : 'border-gray-200 hover:border-blue-300'
-                                    ]"
-                                >
-                                    <div class="text-3xl mb-2">{{ method.icon }}</div>
-                                    <h3 class="font-semibold text-gray-900">{{ method.name }}</h3>
-                                    <p class="text-sm text-gray-600">{{ method.description }}</p>
-                                </div>
-                            </div>
-                            <p v-if="form.errors.payment_method" class="mt-2 text-sm text-red-600">{{ form.errors.payment_method }}</p>
-                        </div>
-
-                        <!-- Payment Instructions -->
-                        <div v-if="form.payment_method !== 'wallet'" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h4 class="font-semibold text-blue-900 mb-2">Next Step: Submit Payment</h4>
-                            <p class="text-sm text-blue-700 mb-3">
-                                After clicking "Continue", you'll be redirected to submit your payment details for verification.
-                            </p>
-                            <div class="space-y-2 text-sm text-blue-700">
-                                <div class="flex items-start">
-                                    <span class="font-semibold mr-2">1.</span>
-                                    <span>Make payment of {{ formatCurrency(price) }} via {{ form.payment_method === 'mobile_money' ? 'MTN MoMo or Airtel Money' : 'Bank Transfer' }}</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <span class="font-semibold mr-2">2.</span>
-                                    <span>Submit your payment reference and details</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <span class="font-semibold mr-2">3.</span>
-                                    <span>Admin will verify and grant access (usually within 24 hours)</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Wallet Payment Confirmation -->
-                        <div v-else class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                            <h4 class="font-semibold text-green-900 mb-2">✓ Instant Access with Wallet</h4>
-                            <p class="text-sm text-green-700">
-                                {{ formatCurrency(price) }} will be deducted from your wallet balance.
-                            </p>
-                            <p class="text-sm text-green-700 mt-1">
-                                New balance after purchase: <span class="font-semibold">{{ formatCurrency(walletBalance - price) }}</span>
-                            </p>
-                            <p class="text-sm text-green-700 mt-2 font-semibold">
-                                You'll get instant access - no waiting for verification!
-                            </p>
                         </div>
 
                         <!-- Terms and Conditions -->
@@ -276,26 +349,34 @@ const formatCurrency = (amount: number) => {
                                     <ul class="list-disc list-inside space-y-1 ml-2">
                                         <li>This is a one-time purchase of digital products and services</li>
                                         <li>All digital content is delivered instantly and is non-refundable once accessed</li>
-                                        <li>K{{ shopCredit }} shop credit expires in 90 days</li>
+                                        <li>{{ formatCurrency(shopCredit) }} shop credit expires in 90 days</li>
                                         <li>Digital library access is valid for 30 days (renewable)</li>
                                         <li>Content is for personal use only and cannot be resold</li>
                                         <li>This is NOT an investment and does not guarantee any returns</li>
+                                        <li v-if="form.tier === 'premium'">Premium tier includes LGR qualification for quarterly profit sharing</li>
                                     </ul>
                                 </div>
                             </div>
 
-                            <label class="flex items-start mt-4 cursor-pointer">
+                            <label class="flex items-start mt-4 cursor-pointer group">
                                 <input
                                     v-model="form.terms_accepted"
                                     type="checkbox"
-                                    class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    required
+                                    class="mt-1 h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                    :class="{ 'border-red-500': form.errors.terms_accepted }"
                                 />
-                                <span class="ml-2 text-sm text-gray-700">
-                                    I have read and agree to the Terms and Conditions and understand that this purchase is non-refundable once I access the digital content.
+                                <span class="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
+                                    I have read and agree to the Terms and Conditions above and understand that this purchase is <strong>non-refundable</strong> once I access the digital content.
                                 </span>
                             </label>
-                            <p v-if="form.errors.terms_accepted" class="mt-2 text-sm text-red-600">{{ form.errors.terms_accepted }}</p>
+                            <p v-if="form.errors.terms_accepted" class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                                <AlertCircleIcon class="w-4 h-4" />
+                                {{ form.errors.terms_accepted }}
+                            </p>
+                            <p v-if="!form.terms_accepted && attemptedSubmit" class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                                <AlertCircleIcon class="w-4 h-4" />
+                                You must accept the terms and conditions to continue
+                            </p>
                         </div>
 
                         <!-- Submit Button -->
@@ -307,14 +388,22 @@ const formatCurrency = (amount: number) => {
                                 Cancel
                             </Link>
                             <button
+                                v-if="walletBalance >= price"
                                 type="submit"
                                 :disabled="form.processing"
                                 class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
                             >
                                 <span v-if="form.processing">Processing...</span>
-                                <span v-else-if="form.payment_method === 'wallet'">Complete Purchase - {{ formatCurrency(price) }}</span>
-                                <span v-else>Continue to Payment Submission</span>
+                                <span v-else>Complete Purchase - {{ formatCurrency(price) }}</span>
                             </button>
+                            <Link
+                                v-else
+                                :href="route('mygrownet.payments.create', { type: 'wallet_topup', amount: price - walletBalance })"
+                                class="px-8 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors inline-flex items-center"
+                            >
+                                <BanknoteIcon class="w-5 h-5 mr-2" />
+                                Top Up Wallet
+                            </Link>
                         </div>
                     </form>
                 </div>
@@ -333,7 +422,7 @@ const formatCurrency = (amount: number) => {
                         <div class="flex items-start">
                             <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">✓</div>
                             <div class="ml-4">
-                                <p class="font-medium text-blue-900">K{{ shopCredit }} Shop Credit</p>
+                                <p class="font-medium text-blue-900">{{ formatCurrency(shopCredit) }} Shop Credit</p>
                                 <p class="text-sm text-blue-700">Use in MyGrowNet shop (valid 90 days)</p>
                             </div>
                         </div>

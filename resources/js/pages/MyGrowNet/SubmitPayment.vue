@@ -59,34 +59,62 @@ const submit = () => {
                 <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 shadow-md">
                     <h3 class="font-semibold text-blue-900 mb-4 flex items-center gap-2 text-lg">
                         <BanknoteIcon class="h-6 w-6" />
-                        Send Money To:
+                        How to Make Payment:
                     </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- MTN - Withdraw Method -->
                         <div class="bg-white rounded-lg p-4 border-2 border-yellow-400 shadow-sm">
                             <div class="flex items-center gap-2 mb-3">
                                 <PhoneIcon class="h-5 w-5 text-yellow-600" />
                                 <span class="font-bold text-gray-900 text-lg">MTN Mobile Money</span>
                             </div>
-                            <div class="space-y-2">
+                            <div class="space-y-3">
                                 <div class="bg-yellow-50 rounded px-3 py-2">
-                                    <p class="text-xs text-gray-600 mb-1">Phone Number</p>
-                                    <p class="text-2xl font-bold text-gray-900 tracking-wide">0963426511</p>
+                                    <p class="text-xs text-gray-600 mb-1">Company Number</p>
+                                    <p class="text-2xl font-bold text-gray-900 tracking-wide">0760491206</p>
                                 </div>
-                                <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Kafula Mbulo</strong></p>
+                                <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Rockshield Investments Ltd</strong></p>
+                                <div class="bg-yellow-100 border border-yellow-300 rounded p-3 mt-2">
+                                    <p class="text-xs font-semibold text-yellow-900 mb-1">⚠️ IMPORTANT:</p>
+                                    <p class="text-xs text-yellow-800">This is a registered company account. You must <strong>WITHDRAW</strong> from this number to your phone, not send money to it.</p>
+                                </div>
+                                <div class="text-xs text-gray-700 space-y-1 mt-2">
+                                    <p class="font-semibold">Steps:</p>
+                                    <p>1. Dial *115# and call</p>
+                                    <p>2. Choose option 2 (Withdraw)</p>
+                                    <p>3. Choose Cash Out</p>
+                                    <p>4. Enter 1 to choose Agent Number</p>
+                                    <p>5. Enter Agent Number: 0760491206</p>
+                                    <p>6. Enter the amount</p>
+                                    <p>7. Enter your PIN</p>
+                                </div>
                             </div>
                         </div>
                         
+                        <!-- Airtel - Send Money Method -->
                         <div class="bg-white rounded-lg p-4 border-2 border-red-400 shadow-sm">
                             <div class="flex items-center gap-2 mb-3">
                                 <PhoneIcon class="h-5 w-5 text-red-600" />
                                 <span class="font-bold text-gray-900 text-lg">Airtel Money</span>
                             </div>
-                            <div class="space-y-2">
+                            <div class="space-y-3">
                                 <div class="bg-red-50 rounded px-3 py-2">
                                     <p class="text-xs text-gray-600 mb-1">Phone Number</p>
                                     <p class="text-2xl font-bold text-gray-900 tracking-wide">0979230669</p>
                                 </div>
                                 <p class="text-sm text-gray-700">Name: <strong class="text-gray-900">Kafula Mbulo</strong></p>
+                                <div class="bg-red-100 border border-red-300 rounded p-3 mt-2">
+                                    <p class="text-xs font-semibold text-red-900 mb-1">📱 Regular Account:</p>
+                                    <p class="text-xs text-red-800">Send money normally to this number using Airtel Money.</p>
+                                </div>
+                                <div class="text-xs text-gray-700 space-y-1 mt-2">
+                                    <p class="font-semibold">Steps:</p>
+                                    <p>1. Dial *115#</p>
+                                    <p>2. Select "Send Money"</p>
+                                    <p>3. Enter: 0979230669</p>
+                                    <p>4. Enter amount</p>
+                                    <p>5. Confirm transaction</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -94,7 +122,7 @@ const submit = () => {
                     <div class="mt-4 pt-4 border-t border-blue-200">
                         <p class="text-sm font-medium text-blue-900 flex items-start gap-2">
                             <span class="text-lg">💡</span>
-                            <span>After sending money, fill out the form below with your transaction details for verification.</span>
+                            <span>After completing your transaction, fill out the form below with your transaction details for verification.</span>
                         </p>
                     </div>
                 </div>

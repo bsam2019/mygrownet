@@ -432,6 +432,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/my-starter-kit', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'show'])->name('starter-kit.show');
         Route::get('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'purchase'])->name('starter-kit.purchase');
         Route::post('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
+        Route::get('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
+        Route::post('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
         
         // Library Routes (requires starter kit)
         Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');

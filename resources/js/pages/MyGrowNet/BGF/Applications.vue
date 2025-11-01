@@ -1,5 +1,5 @@
 <template>
-  <AuthenticatedLayout>
+  <MemberLayout>
     <template #header>
       <h2 class="text-xl font-semibold leading-tight text-gray-900">
         My BGF Applications
@@ -154,12 +154,12 @@
         </div>
       </div>
     </div>
-  </AuthenticatedLayout>
+  </MemberLayout>
 </template>
 
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import MemberLayout from '@/layouts/MemberLayout.vue';
 
 interface Props {
   applications: {

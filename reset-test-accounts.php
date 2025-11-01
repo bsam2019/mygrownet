@@ -81,13 +81,16 @@ foreach ($users as $user) {
         echo "  ✓ Deleted {$deletedAchievements} achievement(s)\n";
     }
     
-    // 5. Delete withdrawals created for wallet payments
+    // 5. Delete withdrawals created for wallet payments and upgrades
     $deletedWithdrawals = DB::table('withdrawals')
         ->where('user_id', $user->id)
-        ->where('withdrawal_method', 'wallet_payment')
+        ->where(function($query) {
+            $query->where('withdrawal_method', 'wallet_payment')
+                  ->orWhere('reason', 'LIKE', '%Upgrade%');
+        })
         ->delete();
     if ($deletedWithdrawals > 0) {
-        echo "  ✓ Deleted {$deletedWithdrawals} wallet payment withdrawal(s)\n";
+        echo "  ✓ Deleted {$deletedWithdrawals} wallet payment/upgrade withdrawal(s)\n";
     }
     
     // 6. Reset user starter kit flags
@@ -95,6 +98,7 @@ foreach ($users as $user) {
         ->where('id', $user->id)
         ->update([
             'has_starter_kit' => false,
+            'starter_kit_tier' => null,
             'starter_kit_purchased_at' => null,
             'starter_kit_shop_credit' => 0,
             'starter_kit_credit_expiry' => null,
@@ -102,7 +106,7 @@ foreach ($users as $user) {
             'starter_kit_terms_accepted_at' => null,
             'library_access_until' => null,
         ]);
-    echo "  ✓ Reset starter kit flags\n";
+    echo "  ✓ Reset starter kit flags and tier\n";
     
     // 7. Show preserved wallet balance
     $walletTopups = DB::table('member_payments')

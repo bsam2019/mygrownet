@@ -26,6 +26,8 @@ class StarterKitController extends Controller
     public function show(Request $request): Response
     {
         $user = $request->user();
+        // Refresh user to get latest data (especially after upgrade)
+        $user->refresh();
         
         // Check if user has purchased starter kit
         if (!$user->has_starter_kit) {
@@ -53,8 +55,16 @@ class StarterKitController extends Controller
                         'payment_reference' => $pendingPayment->payment_reference,
                         'submitted_at' => $pendingPayment->created_at->format('M j, Y H:i'),
                     ],
-                    'price' => StarterKitService::PRICE,
-                    'shopCredit' => StarterKitService::SHOP_CREDIT,
+                    'tiers' => [
+                        'basic' => [
+                            'price' => StarterKitService::PRICE_BASIC,
+                            'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                        ],
+                        'premium' => [
+                            'price' => StarterKitService::PRICE_PREMIUM,
+                            'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                        ],
+                    ],
                     'contentItems' => $contentItems,
                 ]);
             }
@@ -68,8 +78,16 @@ class StarterKitController extends Controller
             return Inertia::render('MyGrowNet/StarterKit', [
                 'hasStarterKit' => false,
                 'hasPendingPayment' => false,
-                'price' => StarterKitService::PRICE,
-                'shopCredit' => StarterKitService::SHOP_CREDIT,
+                'tiers' => [
+                    'basic' => [
+                        'price' => StarterKitService::PRICE_BASIC,
+                        'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                    ],
+                    'premium' => [
+                        'price' => StarterKitService::PRICE_PREMIUM,
+                        'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                    ],
+                ],
                 'purchaseUrl' => route('mygrownet.starter-kit.purchase'),
                 'contentItems' => $contentItems,
             ]);
@@ -159,6 +177,7 @@ class StarterKitController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'joined_at' => $user->created_at->format('M j, Y'),
+                'starter_kit_tier' => $user->starter_kit_tier,
             ],
         ]);
     }
@@ -197,8 +216,20 @@ class StarterKitController extends Controller
             ->groupBy('category');
         
         return Inertia::render('MyGrowNet/StarterKitPurchase', [
-            'price' => StarterKitService::PRICE,
-            'shopCredit' => StarterKitService::SHOP_CREDIT,
+            'tiers' => [
+                'basic' => [
+                    'name' => 'Basic Starter Kit',
+                    'price' => StarterKitService::PRICE_BASIC,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                    'lgrMultiplier' => 1.0,
+                ],
+                'premium' => [
+                    'name' => 'Premium Starter Kit',
+                    'price' => StarterKitService::PRICE_PREMIUM,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                    'lgrMultiplier' => 1.5,
+                ],
+            ],
             'walletBalance' => $walletBalance,
             'paymentMethods' => $this->getPaymentMethods(),
             'contentItems' => $contentItems,
@@ -211,6 +242,7 @@ class StarterKitController extends Controller
     public function storePurchase(Request $request)
     {
         $validated = $request->validate([
+            'tier' => 'required|string|in:basic,premium',
             'payment_method' => 'required|string|in:mobile_money,bank_transfer,wallet',
             'terms_accepted' => 'required|accepted',
         ]);
@@ -227,7 +259,9 @@ class StarterKitController extends Controller
             // Use the Purchase Use Case (DDD)
             $result = $this->purchaseUseCase->execute(
                 $user,
-                $validated['payment_method']
+                $validated['payment_method'],
+                null,
+                $validated['tier']
             );
             
             return redirect($result['redirect'])
@@ -242,6 +276,147 @@ class StarterKitController extends Controller
             ]);
             
             return back()->with('error', 'Purchase failed. Please try again.');
+        }
+    }
+    
+    /**
+     * Show upgrade page for Basic to Premium
+     */
+    public function showUpgrade(Request $request): Response|\Illuminate\Http\RedirectResponse
+    {
+        $user = $request->user();
+        
+        // Check if user has basic tier
+        if (!$user->has_starter_kit || $user->starter_kit_tier !== 'basic') {
+            return redirect()->route('mygrownet.starter-kit.show')
+                ->with('info', 'Upgrade is only available for Basic tier members.');
+        }
+        
+        // Calculate wallet balance
+        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
+        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
+        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+            ->where('payment_type', 'wallet_topup')
+            ->where('status', 'verified')
+            ->sum('amount') ?? 0);
+        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
+        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
+            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
+            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
+            ->sum('workshops.price') ?? 0);
+        $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+        
+        $upgradeCost = StarterKitService::PRICE_PREMIUM - StarterKitService::PRICE_BASIC; // K500
+        
+        return Inertia::render('MyGrowNet/StarterKitUpgrade', [
+            'currentTier' => 'basic',
+            'upgradeCost' => $upgradeCost,
+            'walletBalance' => $walletBalance,
+            'premiumBenefits' => [
+                'Double shop credit (K200 instead of K100)',
+                'LGR Qualification - Quarterly profit sharing',
+                'Priority support access',
+                'Enhanced earning potential',
+            ],
+        ]);
+    }
+    
+    /**
+     * Process upgrade from Basic to Premium
+     */
+    public function processUpgrade(Request $request)
+    {
+        $validated = $request->validate([
+            'terms_accepted' => 'required|accepted',
+        ]);
+        
+        $user = $request->user();
+        
+        // Verify user has basic tier
+        if (!$user->has_starter_kit || $user->starter_kit_tier !== 'basic') {
+            return back()->with('error', 'Upgrade is only available for Basic tier members.');
+        }
+        
+        $upgradeCost = StarterKitService::PRICE_PREMIUM - StarterKitService::PRICE_BASIC;
+        
+        // Calculate wallet balance
+        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
+        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
+        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+            ->where('payment_type', 'wallet_topup')
+            ->where('status', 'verified')
+            ->sum('amount') ?? 0);
+        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
+        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
+            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
+            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
+            ->sum('workshops.price') ?? 0);
+        $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+        
+        // Check sufficient balance
+        if ($walletBalance < $upgradeCost) {
+            return back()->with('error', 'Insufficient wallet balance. Please top up your wallet.');
+        }
+        
+        try {
+            \DB::transaction(function () use ($user, $upgradeCost) {
+                // Create withdrawal record to deduct from wallet
+                \DB::table('withdrawals')->insert([
+                    'user_id' => $user->id,
+                    'amount' => $upgradeCost,
+                    'status' => 'approved',
+                    'withdrawal_method' => 'wallet_payment',
+                    'reason' => 'Starter Kit Upgrade: Basic to Premium',
+                    'processed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // Update user tier and shop credit in one update
+                $currentCredit = $user->starter_kit_shop_credit ?? 0;
+                $user->update([
+                    'starter_kit_tier' => 'premium',
+                    'starter_kit_shop_credit' => $currentCredit + 100,
+                ]);
+                
+                // Update LGR qualification
+                $lgrService = app(\App\Application\Services\LoyaltyReward\LgrQualificationService::class);
+                $lgrService->checkQualification($user->id);
+                
+                // Send upgrade notification
+                $notificationService = app(\App\Application\Notification\UseCases\SendNotificationUseCase::class);
+                $notificationService->execute(
+                    userId: $user->id,
+                    type: 'starter_kit.upgraded',
+                    data: [
+                        'title' => '⭐ Upgraded to Premium!',
+                        'message' => 'Congratulations! You\'ve been upgraded to Premium tier. You now have access to LGR quarterly profit sharing and received an additional K100 shop credit!',
+                        'action_url' => '/mygrownet/my-starter-kit',
+                        'action_text' => 'View Benefits'
+                    ]
+                );
+                
+                \Log::info('Starter Kit upgraded to Premium', [
+                    'user_id' => $user->id,
+                    'upgrade_cost' => $upgradeCost,
+                ]);
+            });
+            
+            // Refresh the user model to get updated data
+            $user->refresh();
+            
+            return redirect()->route('mygrownet.starter-kit.show')
+                ->with('success', 'Congratulations! You have been upgraded to Premium tier with LGR access!');
+                
+        } catch (\Exception $e) {
+            \Log::error('Starter Kit upgrade failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            return back()->with('error', 'Upgrade failed. Please try again.');
         }
     }
     

@@ -96,8 +96,11 @@ class VerifyPaymentUseCase
                 ]);
             }
             
-            // Handle Starter Kit payment (product type with K500 amount)
-            if ($paymentType === 'product' && $payment->amount()->value() == 500 && !$user->has_starter_kit) {
+            // Handle Starter Kit payment (product type with K500 or K1000 amount)
+            $amount = $payment->amount()->value();
+            $isStarterKitPayment = $paymentType === 'product' && ($amount == 500 || $amount == 1000) && !$user->has_starter_kit;
+            
+            if ($isStarterKitPayment) {
                 // Check if purchase already exists for this payment
                 $existingPurchase = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::where('user_id', $user->id)
                     ->where('payment_reference', $payment->paymentReference())
@@ -141,10 +144,15 @@ class VerifyPaymentUseCase
         try {
             $starterKitService = app(\App\Services\StarterKitService::class);
             
+            // Determine tier based on payment amount
+            $amount = $payment->amount()->value();
+            $tier = $amount == 1000 ? 'premium' : 'basic';
+            
             // Create purchase record with 'completed' status since payment is already verified
             $purchase = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::create([
                 'user_id' => $user->id,
-                'amount' => 500,
+                'tier' => $tier,
+                'amount' => $amount,
                 'payment_method' => $payment->paymentMethod()->value,
                 'payment_reference' => $payment->paymentReference(),
                 'status' => 'completed',
@@ -158,6 +166,8 @@ class VerifyPaymentUseCase
             \Log::info('Starter Kit purchase completed via payment verification', [
                 'user_id' => $user->id,
                 'payment_id' => $payment->id(),
+                'tier' => $tier,
+                'amount' => $amount,
                 'invoice' => $purchase->invoice_number,
             ]);
         } catch (\Exception $e) {
