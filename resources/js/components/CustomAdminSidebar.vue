@@ -46,13 +46,6 @@ const safeRoute = (routeName: string, fallback: string = '#') => {
 };
 
 // Menu structure
-const investmentNavItems: NavItem[] = [
-    { title: 'Dashboard', href: safeRoute('admin.dashboard'), icon: LayoutGrid },
-    { title: 'Investment Requests', href: safeRoute('admin.investments.index'), icon: FileText },
-    { title: 'Investment Metrics', href: safeRoute('admin.investments.metrics'), icon: Activity },
-    { title: 'Investment Categories', href: safeRoute('admin.categories.index'), icon: Folder },
-    { title: 'Investment Tiers', href: safeRoute('admin.investment-tiers.index'), icon: LayoutGrid },
-];
 
 const userManagementNavItems: NavItem[] = [
     { title: 'Users', href: safeRoute('admin.users.index'), icon: Users },
@@ -247,40 +240,6 @@ onMounted(() => {
         <!-- Navigation Links -->
         <div class="py-4 overflow-y-auto flex-grow">
             <nav>
-                <!-- Investments Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('investments')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'Investments')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <LayoutGrid class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">Investments</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.investments }" />
-                    </button>
-
-                    <div v-if="showSubmenu.investments" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in investmentNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
                 <!-- User Management Section -->
                 <div class="pt-2">
                     <button @click="toggleSubmenu('userManagement')"
