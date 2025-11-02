@@ -95,8 +95,8 @@ class DashboardController extends Controller
                 'joined_at' => $user->created_at->format('M d, Y'),
             ],
             'points' => [
-                'lifetime_points' => $user->lifetime_points ?? 0,
-                'bonus_points' => $user->bonus_points ?? 0,
+                'lifetime_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->sum('lp_amount'),
+                'bonus_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('bp_amount'),
                 'monthly_bp_target' => $this->getMonthlyBPTarget($user),
                 'bp_progress_percentage' => $this->calculateBPProgress($user),
             ],
@@ -262,9 +262,9 @@ class DashboardController extends Controller
     
     private function getWalletBalance($user)
     {
-        $totalEarnings = $this->getTotalLifetimeEarnings($user);
-        $totalWithdrawals = $user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0;
-        return $totalEarnings - $totalWithdrawals;
+        // Use centralized WalletService for consistent calculation
+        $walletService = app(\App\Services\WalletService::class);
+        return $walletService->calculateBalance($user);
     }
     
     private function getRecentActivities($user)

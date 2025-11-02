@@ -381,6 +381,19 @@ class StarterKitController extends Controller
                     'starter_kit_shop_credit' => $currentCredit + 100,
                 ]);
                 
+                // Award 25 LP for upgrade
+                \DB::table('point_transactions')->insert([
+                    'user_id' => $user->id,
+                    'lp_amount' => 25,
+                    'bp_amount' => 0,
+                    'source' => 'starter_kit_upgrade',
+                    'description' => 'Starter Kit Upgrade: Basic to Premium',
+                    'reference_type' => 'starter_kit',
+                    'reference_id' => $user->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
                 // Update LGR qualification
                 $lgrService = app(\App\Application\Services\LoyaltyReward\LgrQualificationService::class);
                 $lgrService->checkQualification($user->id);

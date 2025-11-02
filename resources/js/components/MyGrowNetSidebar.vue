@@ -94,9 +94,7 @@ const networkNavItems: NavItem[] = [
 
 const financeNavItems: NavItem[] = [
     { title: 'My Wallet', href: route('mygrownet.wallet.index'), icon: BanknoteIcon },
-    { title: 'Loyalty Growth Reward', href: route('mygrownet.loyalty-reward.index'), icon: StarIcon },
-    { title: 'Earnings & Bonuses', href: route('mygrownet.earnings.index'), icon: GiftIcon },
-    { title: 'Quarterly Profit Shares', href: route('mygrownet.profit-shares'), icon: TrendingUpIcon },
+    { title: 'My Earnings', href: route('mygrownet.earnings.hub'), icon: TrendingUpIcon },
     { title: 'My Receipts', href: route('receipts.index'), icon: FileTextIcon },
     { title: 'Withdrawals', href: route('withdrawals.index'), icon: ArrowRightLeftIcon },
     { title: 'Transaction History', href: route('transactions'), icon: HistoryIcon },

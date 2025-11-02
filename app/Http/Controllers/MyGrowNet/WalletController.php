@@ -15,30 +15,18 @@ class WalletController extends Controller
         // Reset daily withdrawal limit if needed
         $this->resetDailyWithdrawalIfNeeded($user);
         
-        // Get wallet balance (sum of all earnings + topups minus withdrawals and expenses)
-        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
-        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
-        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
-            ->where('payment_type', 'wallet_topup')
-            ->where('status', 'verified')
-            ->sum('amount') ?? 0);
-        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
-        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        // Use WalletService for consistent balance calculation
+        $walletService = app(\App\Services\WalletService::class);
+        $breakdown = $walletService->getWalletBreakdown($user);
         
-        // Deduct workshop expenses (paid from wallet)
-        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-            ->sum('workshops.price') ?? 0);
-        
-        // Deduct transactions (starter kit purchases, etc.)
-        $transactionExpenses = (float) (\Illuminate\Support\Facades\DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->where('transaction_type', 'withdrawal')
-            ->sum('amount') ?? 0);
-        
-        $balance = $totalEarnings - $totalWithdrawals - $workshopExpenses - $transactionExpenses;
+        $balance = $breakdown['balance'];
+        $totalEarnings = $breakdown['earnings']['total'];
+        $commissionEarnings = $breakdown['earnings']['commissions'];
+        $profitEarnings = $breakdown['earnings']['profit_shares'];
+        $walletTopups = $breakdown['earnings']['topups'];
+        $totalWithdrawals = $breakdown['expenses']['withdrawals'];
+        $workshopExpenses = $breakdown['expenses']['workshops'];
+        $starterKitExpenses = $breakdown['expenses']['starter_kits'];
         
         // Get verification limits
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');

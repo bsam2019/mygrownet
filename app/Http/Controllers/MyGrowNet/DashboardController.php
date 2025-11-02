@@ -399,7 +399,9 @@ class DashboardController extends Controller
         
         if (!$nextLevel) {
             return [
+                'current_tier' => $currentLevel, // Use current_tier for Vue compatibility
                 'current_level' => $currentLevel,
+                'next_tier' => null,
                 'next_level' => null,
                 'lifetime_points' => $lifetimePoints,
                 'progress_percentage' => 100,
@@ -415,7 +417,9 @@ class DashboardController extends Controller
             : 0;
         
         return [
+            'current_tier' => $currentLevel, // Use current_tier for Vue compatibility
             'current_level' => $currentLevel,
+            'next_tier' => $nextLevel,
             'next_level' => $nextLevel,
             'lifetime_points' => $lifetimePoints,
             'progress_percentage' => round($progressPercentage, 1),

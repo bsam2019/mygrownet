@@ -460,6 +460,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
         Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
         Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
+        
+        // Earnings Hub - Central page for all earnings
+        Route::get('/my-earnings', fn() => Inertia::render('MyGrowNet/MyEarnings'))->name('earnings.hub');
         Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
         Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
         
