@@ -15,37 +15,42 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button 
-                                @click="activeTab = 'members'"
+                                @click="changeTab('members')"
                                 :class="tabButtonClasses('members')"
                                 class="text-sm md:text-base"
+                                type="button"
                             >
                                 My Team List
                             </button>
                             <button 
-                                @click="activeTab = 'overview'"
+                                @click="changeTab('overview')"
                                 :class="tabButtonClasses('overview')"
                                 class="text-sm md:text-base"
+                                type="button"
                             >
                                 Team Overview
                             </button>
                             <button 
-                                @click="activeTab = 'matrix'"
+                                @click="changeTab('matrix')"
                                 :class="tabButtonClasses('matrix')"
                                 class="text-sm md:text-base"
+                                type="button"
                             >
                                 Network Structure
                             </button>
                             <button 
-                                @click="activeTab = 'spillover'"
+                                @click="changeTab('spillover')"
                                 :class="tabButtonClasses('spillover')"
                                 class="text-sm md:text-base"
+                                type="button"
                             >
                                 Growth Opportunities
                             </button>
                             <button 
-                                @click="activeTab = 'sharing'"
+                                @click="changeTab('sharing')"
                                 :class="tabButtonClasses('sharing')"
                                 class="text-sm md:text-base"
+                                type="button"
                             >
                                 Invite Partners
                             </button>
@@ -297,12 +302,18 @@ const props = defineProps<Props>();
 
 const activeTab = ref<'members' | 'overview' | 'matrix' | 'spillover' | 'sharing'>('members');
 
+// Function to change tab with logging
+const changeTab = (tab: 'members' | 'overview' | 'matrix' | 'spillover' | 'sharing') => {
+    console.log('Changing tab to:', tab);
+    activeTab.value = tab;
+};
+
 // Computed classes for tab buttons
 const tabButtonClasses = (tab: string) => [
     'px-4 py-2 text-sm font-medium rounded-md transition-colors',
     activeTab.value === tab
-        ? 'bg-blue-100 text-blue-700'
-        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        ? 'bg-blue-600 text-white'
+        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100 bg-white border border-gray-300'
 ];
 
 
