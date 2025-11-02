@@ -63,8 +63,8 @@ class DashboardController extends Controller
         // Get current subscription
         $currentSubscription = $user->subscriptions()->where('status', 'active')->first();
         
-        // Get membership tier progress
-        $membershipProgress = $this->getMembershipProgress($user);
+        // Get professional level progress
+        $membershipProgress = $this->getProfessionalLevelProgress($user);
         
         // Get learning progress
         $learningProgress = $this->getLearningProgress($user);
@@ -249,7 +249,8 @@ class DashboardController extends Controller
                 'community_projects_count' => $user->community_projects_count ?? 0,
                 'courses_completed' => $user->courses_completed ?? 0,
                 'lifetime_investment_returns' => $user->total_project_returns ?? 0,
-                'lifetime_points' => $user->total_points ?? 0,
+                'lifetime_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->sum('lp_amount'),
+                'business_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('bp_amount'),
                 'lifetime_referrals' => $user->referral_count ?? 0,
                 'total_referral_earnings' => $user->total_referral_earnings ?? 0,
                 'active_referrals' => $user->directReferrals()
@@ -378,7 +379,52 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get membership tier progress
+     * Get professional level progress (NEW - MyGrowNet Points System)
+     */
+    private function getProfessionalLevelProgress(User $user): array
+    {
+        // Calculate lifetime points from transactions
+        $lifetimePoints = (int) \DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->sum('lp_amount');
+        
+        // Get current level
+        $currentLevelSlug = $user->current_professional_level ?? 'associate';
+        $currentLevel = \App\Models\ProfessionalLevel::where('slug', $currentLevelSlug)->first();
+        
+        // Get next level
+        $nextLevel = \App\Models\ProfessionalLevel::where('level', '>', $currentLevel->level)
+            ->orderBy('level')
+            ->first();
+        
+        if (!$nextLevel) {
+            return [
+                'current_level' => $currentLevel,
+                'next_level' => null,
+                'lifetime_points' => $lifetimePoints,
+                'progress_percentage' => 100,
+                'points_needed' => 0,
+                'message' => 'Congratulations! You\'ve reached the highest level.'
+            ];
+        }
+        
+        // Calculate progress
+        $pointsNeeded = $nextLevel->lp_required - $lifetimePoints;
+        $progressPercentage = $nextLevel->lp_required > 0 
+            ? min(100, ($lifetimePoints / $nextLevel->lp_required) * 100)
+            : 0;
+        
+        return [
+            'current_level' => $currentLevel,
+            'next_level' => $nextLevel,
+            'lifetime_points' => $lifetimePoints,
+            'progress_percentage' => round($progressPercentage, 1),
+            'points_needed' => max(0, $pointsNeeded),
+        ];
+    }
+
+    /**
+     * Get membership tier progress (OLD - VBIF System - Keep for backward compatibility)
      */
     private function getMembershipProgress(User $user): array
     {

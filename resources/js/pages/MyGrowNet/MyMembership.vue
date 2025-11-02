@@ -2,19 +2,19 @@
     <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                My Business Profile
+                My Membership
             </h2>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <!-- Business Profile Card -->
+                <!-- Member Profile Card -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                             <div class="flex-1">
                                 <h3 class="text-2xl font-bold text-gray-900">{{ user.name }}</h3>
-                                <p class="text-gray-600 mt-1">Business Partner since {{ user.joined_at }}</p>
+                                <p class="text-gray-600 mt-1">Member since {{ user.joined_at }}</p>
                                 <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                     <span v-if="user.email" class="text-sm text-gray-500 break-all">{{ user.email }}</span>
                                     <span v-if="user.phone" class="text-sm text-gray-500">{{ user.phone }}</span>
@@ -22,7 +22,7 @@
                             </div>
                             <div class="md:text-right">
                                 <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-lg">
-                                    <span class="text-sm font-medium text-blue-800">Business ID:</span>
+                                    <span class="text-sm font-medium text-blue-800">Member ID:</span>
                                     <span class="ml-2 text-lg font-bold text-blue-900">{{ user.referral_code }}</span>
                                 </div>
                             </div>
@@ -30,12 +30,12 @@
                     </div>
                 </div>
 
-                <!-- Current Level Card -->
+                <!-- Current Professional Level Card -->
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 md:p-8 text-white">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                             <div class="flex-1">
-                                <p class="text-blue-100 text-sm font-medium mb-2">Current Business Level</p>
+                                <p class="text-blue-100 text-sm font-medium mb-2">Current Professional Level</p>
                                 <h2 class="text-3xl md:text-4xl font-bold mb-2">{{ currentLevel.name }}</h2>
                                 <p class="text-blue-100 text-base md:text-lg">{{ currentLevel.role }}</p>
                                 <div class="mt-4 grid grid-cols-2 gap-4 md:flex md:items-center md:gap-6">
@@ -44,7 +44,7 @@
                                         <p class="text-xl md:text-2xl font-bold">{{ currentLevel.networkSize }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-blue-100 text-sm">Profit Share</p>
+                                        <p class="text-blue-100 text-sm">Profit Share Weight</p>
                                         <p class="text-xl md:text-2xl font-bold">{{ currentLevel.profitShareMultiplier }}</p>
                                     </div>
                                 </div>
@@ -85,15 +85,15 @@
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <p class="text-sm font-medium text-gray-500">Monthly Points</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ points.monthly }} / {{ points.required_monthly }} MAP</p>
+                                    <p class="text-sm font-medium text-gray-500">Business Points (This Month)</p>
+                                    <p class="text-2xl font-bold text-gray-900">{{ points.business }} / {{ points.required_business }} BP</p>
                                 </div>
                             </div>
                             <div class="mt-3">
                                 <div class="w-full bg-gray-200 rounded-full h-2">
                                     <div 
                                         class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                        :style="{ width: `${Math.min(100, (points.monthly / points.required_monthly) * 100)}%` }"
+                                        :style="{ width: `${Math.min(100, (points.business / points.required_business) * 100)}%` }"
                                     ></div>
                                 </div>
                             </div>
@@ -181,7 +181,7 @@
                                 </svg>
                             </div>
                             <h4 class="font-semibold text-gray-900 mb-1">View Points History</h4>
-                            <p class="text-sm text-gray-600">Track your LP & MAP</p>
+                            <p class="text-sm text-gray-600">Track your LP & BP</p>
                         </div>
                     </Link>
 
@@ -195,8 +195,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                 </svg>
                             </div>
-                            <h4 class="font-semibold text-gray-900 mb-1">All Levels</h4>
-                            <p class="text-sm text-gray-600">View progression path</p>
+                            <h4 class="font-semibold text-gray-900 mb-1">Professional Levels</h4>
+                            <p class="text-sm text-gray-600">View 7-level progression</p>
                         </div>
                     </Link>
 
@@ -236,8 +236,8 @@ interface Props {
     nextLevel: any;
     points: {
         lifetime: number;
-        monthly: number;
-        required_monthly: number;
+        business: number;
+        required_business: number;
     };
     progress: {
         percentage: number;

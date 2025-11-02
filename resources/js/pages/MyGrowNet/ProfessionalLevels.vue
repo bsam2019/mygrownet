@@ -2,7 +2,7 @@
     <MemberLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Business Growth Levels
+                Professional Levels
             </h2>
         </template>
 
@@ -10,8 +10,8 @@
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Header -->
                 <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">7-Level Business Growth Path</h1>
-                    <p class="text-lg text-gray-600">Your entrepreneurial journey from Associate to Ambassador</p>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">7-Level Professional Progression System</h1>
+                    <p class="text-lg text-gray-600">Your growth journey from Associate to Ambassador</p>
                     <div class="mt-4 inline-flex items-center px-4 py-2 bg-blue-100 rounded-lg">
                         <span class="text-sm font-medium text-blue-800">Your Lifetime Points:</span>
                         <span class="ml-2 text-xl font-bold text-blue-900">{{ lifetimePoints.toLocaleString() }} LP</span>
@@ -74,7 +74,7 @@
                             </div>
                             <div class="text-center">
                                 <div class="text-sm text-gray-600 mb-1">Monthly Qualification</div>
-                                <div class="text-lg font-bold text-blue-600">{{ level.mapRequired }} MAP</div>
+                                <div class="text-lg font-bold text-blue-600">{{ level.bpRequired }} BP</div>
                             </div>
                             <div class="text-center">
                                 <div class="text-sm text-gray-600 mb-1">Minimum Time</div>
@@ -110,9 +110,9 @@
                             <div class="text-lg font-bold text-green-600">{{ level.milestoneBonus }}</div>
                         </div>
 
-                        <!-- Profit Share Multiplier -->
+                        <!-- Profit Share Weight -->
                         <div class="mb-6 text-center">
-                            <div class="text-xs text-gray-600 mb-1">Profit Share Multiplier</div>
+                            <div class="text-xs text-gray-600 mb-1">Profit Share Weight</div>
                             <div class="text-lg font-bold text-purple-600">{{ level.profitShareMultiplier }}</div>
                         </div>
 
@@ -166,7 +166,7 @@
                                 </svg>
                             </div>
                             <h3 class="font-semibold text-lg mb-2 text-gray-900">Stay Active</h3>
-                            <p class="text-gray-600 text-sm">Meet monthly MAP requirements through daily logins, purchases, and community engagement.</p>
+                            <p class="text-gray-600 text-sm">Meet monthly BP requirements through purchases, training, and community engagement.</p>
                         </div>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                         :href="route('mygrownet.membership.show')" 
                         class="inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-lg font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
-                        View My Business Profile
+                        View My Membership
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>

@@ -14,21 +14,21 @@ class MembershipController extends Controller
      */
     public function show(): Response
     {
-        $user = auth()->user()->load('points', 'directReferrals');
+        $user = auth()->user()->load('directReferrals');
         
-        // Ensure user has a points record
-        if (!$user->points) {
-            $user->points()->create([
-                'lifetime_points' => 0,
-                'monthly_points' => 0,
-            ]);
-            $user->load('points');
-        }
+        // Calculate points from transactions (source of truth)
+        $lifetimePoints = \DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->sum('lp_amount');
+            
+        $businessPoints = \DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->sum('bp_amount');
         
-        // Get user's current professional level and points
+        // Get user's current professional level
         $currentLevel = $user->current_professional_level ?? 'associate';
-        $lifetimePoints = $user->points->lifetime_points ?? 0;
-        $monthlyPoints = $user->points->monthly_points ?? 0;
         
         // Define level requirements
         $levels = $this->getLevelRequirements();
@@ -53,7 +53,7 @@ class MembershipController extends Controller
             'user_id' => $user->id,
             'user_name' => $user->name,
             'lifetime_points' => $lifetimePoints,
-            'monthly_points' => $monthlyPoints,
+            'business_points' => $businessPoints,
             'direct_referrals' => $directReferralsCount,
             'total_network' => $totalNetworkSize,
         ]);
@@ -69,9 +69,9 @@ class MembershipController extends Controller
             'currentLevel' => $currentLevelData,
             'nextLevel' => $nextLevelData,
             'points' => [
-                'lifetime' => $lifetimePoints,
-                'monthly' => $monthlyPoints,
-                'required_monthly' => $currentLevelData['mapRequired'],
+                'lifetime' => (int) $lifetimePoints,
+                'business' => (int) $businessPoints,
+                'required_business' => $currentLevelData['bpRequired'],
             ],
             'progress' => [
                 'percentage' => round($progressPercentage, 1),
@@ -89,19 +89,14 @@ class MembershipController extends Controller
      */
     public function levels(): Response
     {
-        $user = auth()->user()->load('points');
+        $user = auth()->user();
         
-        // Ensure user has a points record
-        if (!$user->points) {
-            $user->points()->create([
-                'lifetime_points' => 0,
-                'monthly_points' => 0,
-            ]);
-            $user->load('points');
-        }
+        // Calculate lifetime points from transactions (source of truth)
+        $lifetimePoints = \DB::table('point_transactions')
+            ->where('user_id', $user->id)
+            ->sum('lp_amount');
         
         $currentLevel = $user->current_professional_level ?? 'associate';
-        $lifetimePoints = $user->points->lifetime_points ?? 0;
         
         $levels = $this->getLevelRequirements();
         
@@ -117,16 +112,41 @@ class MembershipController extends Controller
         return Inertia::render('MyGrowNet/ProfessionalLevels', [
             'levels' => $levels,
             'currentLevel' => $currentLevel,
-            'lifetimePoints' => $lifetimePoints,
+            'lifetimePoints' => (int) $lifetimePoints,
         ]);
     }
     
     /**
-     * Get level requirements data
+     * Get level requirements data from database
      * Based on official MyGrowNet Points System documentation
      */
     private function getLevelRequirements(): array
     {
+        // Fetch from database
+        $dbLevels = \App\Models\ProfessionalLevel::active()->ordered()->get();
+        
+        if ($dbLevels->isNotEmpty()) {
+            return $dbLevels->map(function ($level) {
+                return [
+                    'level' => $level->level,
+                    'name' => $level->name,
+                    'slug' => $level->slug,
+                    'networkSize' => $level->network_size,
+                    'role' => $level->role,
+                    'bpRequired' => $level->bp_required,
+                    'lpRequired' => $level->lp_required,
+                    'minTime' => $level->min_time,
+                    'additionalReqs' => $level->additional_requirements,
+                    'milestoneBonus' => $level->milestone_bonus,
+                    'profitShareMultiplier' => $level->profit_share_multiplier,
+                    'commissionRate' => $level->commission_rate,
+                    'color' => $level->color,
+                    'benefits' => $level->benefits,
+                ];
+            })->toArray();
+        }
+        
+        // Fallback to hardcoded values if database is empty
         return [
             [
                 'level' => 1,
@@ -134,7 +154,7 @@ class MembershipController extends Controller
                 'slug' => 'associate',
                 'networkSize' => '3',
                 'role' => 'New member, learning',
-                'mapRequired' => 100,
+                'bpRequired' => 100,
                 'lpRequired' => 0,
                 'minTime' => 'Immediate',
                 'additionalReqs' => 'Registration complete',
@@ -146,7 +166,7 @@ class MembershipController extends Controller
                     'Basic educational content',
                     'Peer circle access',
                     '7-level commission structure (15%)',
-                    'Monthly qualification: 100 MAP',
+                    'Monthly qualification: 100 BP',
                     'Profit-sharing: 1.0x base share'
                 ]
             ],
@@ -156,7 +176,7 @@ class MembershipController extends Controller
                 'slug' => 'professional',
                 'networkSize' => '9',
                 'role' => 'Skilled member, applying',
-                'mapRequired' => 200,
+                'bpRequired' => 200,
                 'lpRequired' => 500,
                 'minTime' => '1 month active',
                 'additionalReqs' => '3 direct referrals',
@@ -168,7 +188,7 @@ class MembershipController extends Controller
                     'Advanced educational content',
                     'Group mentorship access',
                     'Level 2 commissions (10%)',
-                    'Monthly qualification: 200 MAP',
+                    'Monthly qualification: 200 BP',
                     'Profit-sharing: 1.2x base share',
                     'Promotion bonus: K500'
                 ]
@@ -179,7 +199,7 @@ class MembershipController extends Controller
                 'slug' => 'senior',
                 'networkSize' => '27',
                 'role' => 'Experienced, team building',
-                'mapRequired' => 300,
+                'bpRequired' => 300,
                 'lpRequired' => 1500,
                 'minTime' => '3 months active',
                 'additionalReqs' => '2 active direct referrals, 1 course completed',
@@ -192,7 +212,7 @@ class MembershipController extends Controller
                     '1-on-1 mentorship sessions',
                     'Level 3 commissions (8%)',
                     'Team building bonuses',
-                    'Monthly qualification: 300 MAP',
+                    'Monthly qualification: 300 BP',
                     'Profit-sharing: 1.5x base share',
                     'Promotion bonus: K1,500'
                 ]
@@ -203,7 +223,7 @@ class MembershipController extends Controller
                 'slug' => 'manager',
                 'networkSize' => '81',
                 'role' => 'Team leader',
-                'mapRequired' => 400,
+                'bpRequired' => 400,
                 'lpRequired' => 4000,
                 'minTime' => '6 months active',
                 'additionalReqs' => '1 Professional in downline, 3 courses completed',
@@ -216,7 +236,7 @@ class MembershipController extends Controller
                     'Level 4 commissions (6%)',
                     'Team performance bonuses',
                     'Booster fund: K5,000',
-                    'Monthly qualification: 400 MAP',
+                    'Monthly qualification: 400 BP',
                     'Profit-sharing: 2.0x base share',
                     'Promotion bonus: K5,000'
                 ]
@@ -227,7 +247,7 @@ class MembershipController extends Controller
                 'slug' => 'director',
                 'networkSize' => '243',
                 'role' => 'Strategic leader',
-                'mapRequired' => 500,
+                'bpRequired' => 500,
                 'lpRequired' => 10000,
                 'minTime' => '12 months active',
                 'additionalReqs' => '1 Senior in downline, 5 courses completed',
@@ -240,7 +260,7 @@ class MembershipController extends Controller
                     'Level 5 commissions (4%)',
                     'Business facilitation services',
                     'Booster fund: K15,000',
-                    'Monthly qualification: 500 MAP',
+                    'Monthly qualification: 500 BP',
                     'Profit-sharing: 2.5x base share',
                     'Promotion bonus: K15,000'
                 ]
@@ -251,7 +271,7 @@ class MembershipController extends Controller
                 'slug' => 'executive',
                 'networkSize' => '729',
                 'role' => 'Top performer',
-                'mapRequired' => 600,
+                'bpRequired' => 600,
                 'lpRequired' => 25000,
                 'minTime' => '18 months active',
                 'additionalReqs' => '1 Manager in downline, 10 courses completed',
@@ -264,7 +284,7 @@ class MembershipController extends Controller
                     'Level 6 commissions (3%)',
                     'Innovation lab participation',
                     'Booster fund: K50,000',
-                    'Monthly qualification: 600 MAP',
+                    'Monthly qualification: 600 BP',
                     'Profit-sharing: 3.0x base share',
                     'Promotion bonus: K50,000'
                 ]
@@ -275,7 +295,7 @@ class MembershipController extends Controller
                 'slug' => 'ambassador',
                 'networkSize' => '2,187',
                 'role' => 'Brand representative',
-                'mapRequired' => 800,
+                'bpRequired' => 800,
                 'lpRequired' => 50000,
                 'minTime' => '24 months active',
                 'additionalReqs' => '1 Director in downline, 15 courses, 1 project participation',
@@ -288,7 +308,7 @@ class MembershipController extends Controller
                     'Level 7 commissions (2%)',
                     'Exclusive events & retreats',
                     'Booster fund: K150,000',
-                    'Monthly qualification: 800 MAP',
+                    'Monthly qualification: 800 BP',
                     'Profit-sharing: 4.0x base share (MAX)',
                     'Promotion bonus: K150,000'
                 ]

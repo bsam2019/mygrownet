@@ -423,13 +423,16 @@ class StarterKitService
      */
     protected function awardRegistrationBonus(User $user): void
     {
-        // 1. Award 25 LP for starter kit purchase
+        // 1. Award LP for starter kit purchase based on tier
+        // Basic (K500) = 25 LP, Premium (K1000) = 50 LP
+        $lpAmount = $user->starter_kit_tier === 'premium' ? 50 : 25;
+        
         DB::table('point_transactions')->insert([
             'user_id' => $user->id,
-            'lp_amount' => 25,
+            'lp_amount' => $lpAmount,
             'bp_amount' => 0,
             'source' => 'starter_kit_purchase',
-            'description' => 'Starter Kit Purchase Bonus',
+            'description' => 'Starter Kit Purchase Bonus (' . ucfirst($user->starter_kit_tier) . ')',
             'reference_type' => 'starter_kit',
             'reference_id' => $user->id,
             'created_at' => now(),
@@ -438,7 +441,8 @@ class StarterKitService
 
         Log::info('Starter kit bonus awarded', [
             'user_id' => $user->id,
-            'lp_awarded' => 25,
+            'tier' => $user->starter_kit_tier,
+            'lp_awarded' => $lpAmount,
         ]);
 
         // 2. Award retroactive points for existing verified referrals
