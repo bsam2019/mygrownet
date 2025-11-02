@@ -2,6 +2,17 @@
   <AppLayout title="Business Growth Fund">
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <!-- Back Button (Mobile) -->
+        <button
+          @click="goBack"
+          class="mb-4 flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 md:hidden"
+        >
+          <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </button>
+        
         <!-- Header -->
         <div class="mb-8">
           <div class="flex items-start justify-between">
@@ -13,7 +24,7 @@
             </div>
             <Link
               :href="route('bgf.about')"
-              class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border border-blue-200"
+              class="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border border-blue-200"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -171,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 
 defineProps<{
@@ -186,6 +197,14 @@ defineProps<{
   recentApplications: any[];
   activeProjects: any[];
 }>();
+
+const goBack = () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    router.visit(route('dashboard'));
+  }
+};
 
 const formatMoney = (amount: number) => {
   return new Intl.NumberFormat('en-ZM', {

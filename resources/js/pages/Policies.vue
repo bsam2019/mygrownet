@@ -2,6 +2,17 @@
   <GuestLayout>
     <div class="min-h-screen bg-gray-50 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Back Button -->
+        <button
+          @click="goBack"
+          class="mb-6 flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+        >
+          <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </button>
+        
         <!-- Header -->
         <div class="text-center mb-12">
           <h1 class="text-4xl font-bold text-gray-900 mb-4">
@@ -284,6 +295,14 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import GuestLayout from '@/layouts/GuestLayout.vue';
+
+const goBack = () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    router.visit(route('home'));
+  }
+};
 </script>

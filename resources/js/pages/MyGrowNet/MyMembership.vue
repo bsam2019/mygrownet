@@ -11,16 +11,16 @@
                 <!-- Business Profile Card -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-start justify-between">
-                            <div>
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div class="flex-1">
                                 <h3 class="text-2xl font-bold text-gray-900">{{ user.name }}</h3>
                                 <p class="text-gray-600 mt-1">Business Partner since {{ user.joined_at }}</p>
-                                <div class="mt-2 flex items-center gap-4">
-                                    <span v-if="user.email" class="text-sm text-gray-500">{{ user.email }}</span>
+                                <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                    <span v-if="user.email" class="text-sm text-gray-500 break-all">{{ user.email }}</span>
                                     <span v-if="user.phone" class="text-sm text-gray-500">{{ user.phone }}</span>
                                 </div>
                             </div>
-                            <div class="text-right">
+                            <div class="md:text-right">
                                 <div class="inline-flex items-center px-4 py-2 bg-blue-100 rounded-lg">
                                     <span class="text-sm font-medium text-blue-800">Business ID:</span>
                                     <span class="ml-2 text-lg font-bold text-blue-900">{{ user.referral_code }}</span>
@@ -32,26 +32,26 @@
 
                 <!-- Current Level Card -->
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-8 text-white">
-                        <div class="flex items-center justify-between">
-                            <div>
+                    <div class="p-6 md:p-8 text-white">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                            <div class="flex-1">
                                 <p class="text-blue-100 text-sm font-medium mb-2">Current Business Level</p>
-                                <h2 class="text-4xl font-bold mb-2">{{ currentLevel.name }}</h2>
-                                <p class="text-blue-100 text-lg">{{ currentLevel.role }}</p>
-                                <div class="mt-4 flex items-center gap-6">
+                                <h2 class="text-3xl md:text-4xl font-bold mb-2">{{ currentLevel.name }}</h2>
+                                <p class="text-blue-100 text-base md:text-lg">{{ currentLevel.role }}</p>
+                                <div class="mt-4 grid grid-cols-2 gap-4 md:flex md:items-center md:gap-6">
                                     <div>
                                         <p class="text-blue-100 text-sm">Network Size</p>
-                                        <p class="text-2xl font-bold">{{ currentLevel.networkSize }}</p>
+                                        <p class="text-xl md:text-2xl font-bold">{{ currentLevel.networkSize }}</p>
                                     </div>
                                     <div>
                                         <p class="text-blue-100 text-sm">Profit Share</p>
-                                        <p class="text-2xl font-bold">{{ currentLevel.profitShareMultiplier }}</p>
+                                        <p class="text-xl md:text-2xl font-bold">{{ currentLevel.profitShareMultiplier }}</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                    <span class="text-6xl font-bold">{{ currentLevel.level }}</span>
+                            <div class="flex justify-center md:justify-end">
+                                <div class="w-24 h-24 md:w-32 md:h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <span class="text-5xl md:text-6xl font-bold">{{ currentLevel.level }}</span>
                                 </div>
                             </div>
                         </div>

@@ -31,8 +31,27 @@
           </div>
         </div>
 
+        <!-- Premium Tier Required Message -->
+        <div v-if="qualification.qualified === false" class="overflow-hidden bg-yellow-50 border border-yellow-200 shadow-sm sm:rounded-lg">
+          <div class="p-6 text-center">
+            <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 class="mt-4 text-lg font-semibold text-gray-900">Premium Tier Required</h3>
+            <p class="mt-2 text-sm text-gray-600">
+              {{ qualification.reason }}
+            </p>
+            <Link
+              :href="route('mygrownet.starter-kit.show')"
+              class="mt-4 inline-flex items-center rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Upgrade to Premium
+            </Link>
+          </div>
+        </div>
+
         <!-- Qualification Status -->
-        <div v-if="!qualification.fully_qualified" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+        <div v-else-if="!qualification.fully_qualified" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <div class="p-6">
             <h4 class="text-lg font-semibold text-gray-900">Qualification Requirements</h4>
             <p class="mt-2 text-sm text-gray-600">
@@ -145,7 +164,7 @@
                   <div>
                     <p class="font-medium text-gray-900">Build First-Level Team (3 Members)</p>
                     <p class="text-sm text-gray-500">
-                      Current: {{ qualification.progress.network.current }} / 3 members
+                      Current: {{ qualification.progress?.network?.current || 0 }} / 3 members
                     </p>
                   </div>
                 </div>
@@ -181,7 +200,7 @@
                   <div>
                     <p class="font-medium text-gray-900">Complete 2 Platform Activities</p>
                     <p class="text-sm text-gray-500">
-                      Current: {{ qualification.progress.activities.current }} / 2 activities
+                      Current: {{ qualification.progress?.activities?.current || 0 }} / 2 activities
                     </p>
                   </div>
                 </div>
@@ -191,7 +210,7 @@
         </div>
 
         <!-- Active Cycle Dashboard -->
-        <div v-if="qualification.fully_qualified && cycle.has_active_cycle" class="space-y-6">
+        <div v-if="qualification.qualified !== false && qualification.fully_qualified && cycle.has_active_cycle" class="space-y-6">
           <!-- Stats Cards -->
           <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -314,7 +333,7 @@
         </div>
 
         <!-- Start Cycle Button -->
-        <div v-if="qualification.fully_qualified && !cycle.has_active_cycle" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+        <div v-if="qualification.qualified !== false && qualification.fully_qualified && !cycle.has_active_cycle" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <div class="p-6 text-center">
             <h4 class="text-lg font-semibold text-gray-900">You're Qualified!</h4>
             <p class="mt-2 text-sm text-gray-600">

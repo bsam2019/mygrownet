@@ -42,6 +42,14 @@ const props = defineProps<{
 const search = ref(props.filters.search || '');
 const categoryFilter = ref(props.filters.category || '');
 
+const goBack = () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    router.visit(route('dashboard'));
+  }
+};
+
 const searchVentures = () => {
     router.get(route('ventures.index'), {
         search: search.value,
@@ -84,6 +92,17 @@ const truncateText = (text: string, length: number = 150) => {
         <Navigation />
         <div class="py-12">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <!-- Back Button (Mobile) -->
+                <button
+                    @click="goBack"
+                    class="mb-4 flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 md:hidden"
+                >
+                    <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back
+                </button>
+                
                 <!-- Header -->
                 <div class="mb-8">
                     <div class="flex items-start justify-between">
@@ -95,7 +114,7 @@ const truncateText = (text: string, length: number = 150) => {
                         </div>
                         <Link
                             :href="route('ventures.about')"
-                            class="flex items-center space-x-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                            class="hidden md:flex items-center space-x-2 rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
                         >
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
