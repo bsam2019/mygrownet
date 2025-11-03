@@ -92,11 +92,11 @@ class ReverseInvalidWithdrawals extends Command
         // Create a reversal transaction
         DB::table('transactions')->insert([
             'user_id' => $user->id,
-            'type' => 'credit',
+            'transaction_type' => 'credit',
             'amount' => $totalWithdrawn,
+            'reference_number' => 'REVERSAL-' . now()->format('YmdHis'),
             'description' => "Reversal of invalid withdrawals (K{$totalWithdrawn}) - withdrawn before starter kit purchase",
             'status' => 'completed',
-            'reference' => 'REVERSAL-' . now()->format('YmdHis'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import MemberLayout from '@/Layouts/MemberLayout.vue';
-import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon } from 'lucide-vue-next';
+import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon, InfoIcon } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface Transaction {
@@ -55,11 +55,45 @@ const props = withDefaults(defineProps<{
 
 // Now we can safely use props
 const showPolicyModal = ref(!props.policyAccepted);
+const showLgrTransferModal = ref(false);
+const transferAmount = ref(0);
+const transferProcessing = ref(false);
 
 const acceptPolicy = () => {
     router.post(route('mygrownet.wallet.accept-policy'), {}, {
         onSuccess: () => {
             showPolicyModal.value = false;
+        }
+    });
+};
+
+const submitLgrTransfer = () => {
+    if (transferAmount.value <= 0) {
+        alert('Please enter a valid amount');
+        return;
+    }
+    
+    if (transferAmount.value > props.loyaltyPoints) {
+        alert('Insufficient LGR balance');
+        return;
+    }
+    
+    transferProcessing.value = true;
+    
+    router.post(route('mygrownet.wallet.lgr-transfer'), {
+        amount: transferAmount.value
+    }, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            console.log('Transfer success:', page);
+            showLgrTransferModal.value = false;
+            transferAmount.value = 0;
+            transferProcessing.value = false;
+        },
+        onError: (errors) => {
+            console.error('Transfer error:', errors);
+            alert('Transfer failed: ' + (errors.amount || errors.error || 'Unknown error'));
+            transferProcessing.value = false;
         }
     });
 };
@@ -339,8 +373,8 @@ const formatCurrency = (amount: number | undefined | null) => {
                     <div class="flex items-center gap-2">
                         <TrophyIcon class="h-5 w-5 text-blue-200" />
                         <div>
-                            <p class="text-xs text-blue-100">Loyalty Points</p>
-                            <p class="text-sm font-semibold">{{ loyaltyPoints.toFixed(0) }} pts</p>
+                            <p class="text-xs text-blue-100">LGR Balance</p>
+                            <p class="text-sm font-semibold">{{ formatCurrency(loyaltyPoints) }}</p>
                         </div>
                     </div>
                 </div>
@@ -364,6 +398,104 @@ const formatCurrency = (amount: number | undefined | null) => {
                     >
                         History
                     </Link>
+                </div>
+            </div>
+
+            <!-- Balance Breakdown -->
+            <div class="mb-6 bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Balance Breakdown</h3>
+                    <p class="text-sm text-gray-600 mt-1">Your available funds across different balance types</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <!-- Main Wallet -->
+                        <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-blue-600 p-2 rounded-lg">
+                                    <BanknoteIcon class="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Main Wallet</p>
+                                    <p class="text-xs text-gray-600">From commissions & profit shares</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-gray-900">{{ formatCurrency(balance) }}</p>
+                                <p class="text-xs text-green-600 font-medium">100% withdrawable</p>
+                            </div>
+                        </div>
+
+                        <!-- LGR Balance -->
+                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-yellow-500 p-2 rounded-lg">
+                                        <TrophyIcon class="h-5 w-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">LGR Balance</p>
+                                        <p class="text-xs text-gray-600">Loyalty Growth Reward credits</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-bold text-gray-900">{{ formatCurrency(loyaltyPoints) }}</p>
+                                    <p class="text-xs text-amber-600 font-medium">Up to {{ formatCurrency(loyaltyPoints * 0.4) }} withdrawable (40%)</p>
+                                </div>
+                            </div>
+                            <button
+                                v-if="loyaltyPoints > 0"
+                                @click="showLgrTransferModal = true"
+                                class="w-full px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-semibold rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all shadow-sm"
+                            >
+                                Transfer to Main Wallet
+                            </button>
+                        </div>
+
+                        <!-- Bonus Balance -->
+                        <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-600 p-2 rounded-lg">
+                                    <GiftIcon class="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900">Bonus Balance</p>
+                                    <p class="text-xs text-gray-600">Promotional credits</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-gray-900">{{ formatCurrency(bonusBalance) }}</p>
+                                <p class="text-xs text-gray-600 font-medium">Platform use only</p>
+                            </div>
+                        </div>
+
+                        <!-- Total Available -->
+                        <div class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-300">
+                            <div>
+                                <p class="font-semibold text-gray-900">Total Available</p>
+                                <p class="text-xs text-gray-600">All balances combined</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-700">{{ formatCurrency(balance + loyaltyPoints + bonusBalance) }}</p>
+                                <p class="text-xs text-green-600 font-medium">Max withdrawable: {{ formatCurrency(balance + (loyaltyPoints * 0.4)) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info Note -->
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex gap-2">
+                            <InfoIcon class="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div class="text-xs text-blue-800">
+                                <p class="font-medium mb-1">Withdrawal Rules:</p>
+                                <ul class="space-y-1 ml-4 list-disc">
+                                    <li>Main Wallet: Withdraw 100% anytime</li>
+                                    <li>LGR Balance: Withdraw up to 40% as cash, use 100% on platform</li>
+                                    <li>Bonus Balance: Platform purchases only (not withdrawable)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -547,5 +679,64 @@ const formatCurrency = (amount: number | undefined | null) => {
             </div>
         </div>
     </div>
+
+    <!-- LGR Transfer Modal -->
+    <div v-if="showLgrTransferModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Transfer LGR to Wallet</h3>
+                <button @click="showLgrTransferModal = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Available LGR Balance:</p>
+                <p class="text-2xl font-bold text-yellow-600">{{ formatCurrency(loyaltyPoints) }}</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Transfer Amount
+                </label>
+                <input
+                    v-model.number="transferAmount"
+                    type="number"
+                    step="0.01"
+                    min="10"
+                    :max="loyaltyPoints"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    placeholder="Enter amount"
+                />
+                <p class="text-xs text-gray-500 mt-1">Minimum: K10.00</p>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-blue-800">
+                    <strong>Note:</strong> Transferred funds will be added to your main wallet balance and can be used for purchases or withdrawn.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button
+                    @click="showLgrTransferModal = false"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    @click="submitLgrTransfer"
+                    :disabled="transferProcessing || transferAmount <= 0"
+                    class="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span v-if="transferProcessing">Processing...</span>
+                    <span v-else>Transfer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     </MemberLayout>
 </template>

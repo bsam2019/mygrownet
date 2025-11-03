@@ -261,8 +261,6 @@ CEO/Founder
 - Training: K5,000 - K10,000
 - **Total:** K20,000 - K45,000
 
-
-
 ---
 
 ## MEDIUM TERM (6-18 Months) - Scaling & Specialization

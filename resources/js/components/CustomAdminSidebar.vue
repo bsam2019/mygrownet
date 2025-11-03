@@ -22,7 +22,8 @@ import {
     CreditCard,
     ChevronDown,
     TrendingUp,
-    Star
+    Star,
+    Settings
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -53,10 +54,18 @@ const userManagementNavItems: NavItem[] = [
     { title: 'Packages', href: safeRoute('admin.packages.index'), icon: BookOpen },
     { title: 'Starter Kits', href: safeRoute('admin.starter-kit.dashboard'), icon: BookOpen },
     { title: 'Library Resources', href: safeRoute('admin.library.resources.index'), icon: BookOpen },
-    { title: 'LGR Management', href: safeRoute('admin.lgr.index'), icon: Star },
     { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
     { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
     { title: 'Points Management', href: '/admin/points', icon: Target },
+];
+
+const lgrNavItems: NavItem[] = [
+    { title: 'Overview', href: safeRoute('admin.lgr.index'), icon: LayoutGrid },
+    { title: 'Manual Awards', href: safeRoute('admin.lgr.awards.index'), icon: Star },
+    { title: 'Cycles', href: safeRoute('admin.lgr.cycles'), icon: Activity },
+    { title: 'Qualifications', href: safeRoute('admin.lgr.qualifications'), icon: Target },
+    { title: 'Pool Management', href: safeRoute('admin.lgr.pool'), icon: DollarSign },
+    { title: 'Settings', href: safeRoute('admin.lgr.settings'), icon: Shield }, // Temporarily using Shield icon
 ];
 
 const financeNavItems: NavItem[] = [
@@ -261,6 +270,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.userManagement" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in userManagementNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- LGR Management Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('lgr')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'LGR Management')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <Star class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">LGR Management</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.lgr }" />
+                    </button>
+
+                    <div v-if="showSubmenu.lgr" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in lgrNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

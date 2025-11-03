@@ -9,19 +9,29 @@ import {
     InfoIcon
 } from 'lucide-vue-next';
 
+interface Props {
+    totalEarnings: number;
+    thisMonth: number;
+    pending: number;
+    lgrRewards: number;
+    commissions: number;
+    profitShares: number;
+}
+
+const props = defineProps<Props>();
+
 const breadcrumbs = [
     { label: 'Dashboard', href: route('dashboard') },
     { label: 'My Earnings', href: route('mygrownet.earnings.hub') }
 ];
 
-// TODO: These will be passed from the controller with real data
 const earningsData = {
-    totalEarnings: 0,
-    thisMonth: 0,
-    pending: 0,
-    lgrRewards: 0,
-    commissions: 0,
-    profitShares: 0
+    totalEarnings: props.totalEarnings,
+    thisMonth: props.thisMonth,
+    pending: props.pending,
+    lgrRewards: props.lgrRewards,
+    commissions: props.commissions,
+    profitShares: props.profitShares
 };
 </script>
 

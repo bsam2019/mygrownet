@@ -48,9 +48,17 @@ class WithdrawalApprovalController extends Controller
                 return back()->with('error', 'This withdrawal cannot be approved.');
             }
 
+            // Check if user has sufficient balance
+            if ($withdrawal->user->balance < $withdrawal->amount) {
+                return back()->with('error', 'User has insufficient balance for this withdrawal.');
+            }
+
             DB::beginTransaction();
 
             try {
+                // Deduct amount from user's balance
+                $withdrawal->user->decrement('balance', $withdrawal->amount);
+
                 // Update withdrawal status
                 $withdrawal->update([
                     'status' => 'approved',
@@ -71,7 +79,7 @@ class WithdrawalApprovalController extends Controller
                 // $withdrawal->user->notify(new WithdrawalApproved($withdrawal));
 
                 DB::commit();
-                return back()->with('success', 'Withdrawal approved successfully');
+                return back()->with('success', 'Withdrawal approved successfully. Amount deducted from user balance.');
             } catch (\Exception $e) {
                 DB::rollBack();
                 \Log::error('Withdrawal approval failed: ' . $e->getMessage());

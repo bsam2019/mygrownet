@@ -1,116 +1,160 @@
-# Quick Reference Card
+# MyGrowNet Quick Reference
 
-## One-Command Setup
+## Balance Types
 
-```bash
-php artisan setup:referral-system
+### 💰 Currency (Kwacha)
+
+| Balance | Display | Withdrawable | Use |
+|---------|---------|--------------|-----|
+| **Main Wallet** | K5,000.00 | 100% | Commissions + Profit Shares |
+| **LGR Balance** | K1,500.00 | 40% | Loyalty Growth Reward |
+| **Bonus Balance** | K200.00 | 0% | Promotional credits |
+
+### 📊 Points (Not Currency)
+
+| Points | Display | Expires | Purpose |
+|--------|---------|---------|---------|
+| **LP** (Lifetime Points) | 1,500 LP | Never | Level advancement |
+| **BP** (Bonus Points) | 800 BP | Monthly | Qualification |
+
+## Key Differences
+
+### LGR Balance vs LP
+
+| Feature | LGR Balance | LP (Lifetime Points) |
+|---------|-------------|---------------------|
+| **Type** | Currency (K) | Points |
+| **Display** | K1,500.00 | 1,500 LP |
+| **Field** | `users.loyalty_points` | `user_points.lifetime_points` |
+| **Withdraw** | Up to 40% | No (not currency) |
+| **Purpose** | Reward credits | Level progression |
+
+## Member Pages
+
+### My Wallet (`/mygrownet/wallet`)
+- Shows all currency balances
+- Recent transactions
+- Withdrawal interface
+- Top-up options
+
+### My Earnings (`/mygrownet/my-earnings`)
+- Total earnings breakdown
+- This month earnings
+- Pending earnings
+- LGR rewards
+- Commission history
+- Profit shares
+
+### LGR Dashboard (`/mygrownet/loyalty-reward`)
+- Active cycle status
+- Daily activity tracking
+- Qualification progress
+- LGR balance
+
+## Admin Features
+
+### LGR Manual Awards
+**Access:** Admin → LGR Management → Manual Awards
+
+**Award Amounts:**
+- Minimum: K10
+- Maximum: K2,100
+- Recommended: K500 for early adopters
+
+**Award Types:**
+- Early Adopter
+- Performance
+- Marketing
+- Special
+
+## Display Rules
+
+### ✅ Correct
+
+```vue
+<!-- Currency -->
+<p>K{{ amount.toFixed(2) }}</p>
+
+<!-- Points -->
+<p>{{ points }} LP</p>
+<p>{{ points }} BP</p>
+
+<!-- LGR (it's currency!) -->
+<p>K{{ lgrBalance.toFixed(2) }}</p>
 ```
 
----
+### ❌ Incorrect
 
-## What Was Fixed Today
+```vue
+<!-- Don't show LGR as points -->
+<p>{{ lgrBalance }} pts</p>
 
-1. ✅ **7-Level Referral System** - Now processes all 7 levels (was 2)
-2. ✅ **Subscription System** - Created Package & Subscription models
-3. ✅ **Database Columns** - Added status, last_login_at
-4. ✅ **Matrix Labels** - Fixed to show depth not levels
-5. ✅ **Roles System** - Added 'member' role, updated permissions
+<!-- Don't show points as currency -->
+<p>K{{ lifetimePoints }}</p>
 
----
-
-## Commission Rates (Fixed)
-
-| Level | Rate | Before |
-|-------|------|--------|
-| 1 | 15% | 5% ❌ |
-| 2 | 10% | 2% ❌ |
-| 3 | 8% | Not processed ❌ |
-| 4 | 6% | Not processed ❌ |
-| 5 | 4% | Not processed ❌ |
-| 6 | 3% | Not processed ❌ |
-| 7 | 2% | Not processed ❌ |
-
-**Total**: 48% (was 7%)
-
----
-
-## Packages Created
-
-- Basic: K100/month
-- Professional: K250/month
-- Senior: K500/month
-- Manager: K1,000/month
-- Director: K2,000/month
-- Executive: K3,500/month
-- Ambassador: K5,000/month
-- Professional Annual: K2,500/year
-- Senior Annual: K5,000/year
-
----
-
-## System Roles (Access Control)
-
-- **admin** - Platform administrators
-- **member** - Regular users (NEW ✅)
-- **investor** - Legacy (use member instead)
-
-**IMPORTANT**: Only 2 main roles!
-
----
-
-## Professional Levels (Progression, NOT Roles!)
-
-Stored in `users.professional_level` (1-7):
-
-1. Associate
-2. Professional
-3. Senior
-4. Manager
-5. Director
-6. Executive
-7. Ambassador
-
-**These are NOT roles!** They are progression levels.
-
----
-
-## Test Commands
-
-```bash
-# Test referral system
-php artisan test:referral-system
-
-# Test points system
-php artisan test:points-system
-
-# Update roles
-php artisan db:seed --class=RoleSeeder
+<!-- Don't mix terminology -->
+<p>{{ loyaltyPoints }} LP</p> <!-- Ambiguous! -->
 ```
 
----
+## Database Fields
 
-## Verify Pages
+```sql
+-- Currency fields (decimal)
+users.wallet_balance
+users.bonus_balance
+users.loyalty_points  -- ⚠️ Actually LGR currency!
 
-- `/admin/users` - Should work now
-- `/admin/matrix` - Labels should be correct
-- `/admin/points` - Points management
+-- Points fields (integer)
+user_points.lifetime_points  -- LP
+user_points.monthly_points   -- BP
+```
 
----
+## Common Mistakes
 
-## Documentation
+### ❌ Mistake 1: Treating LGR as Points
+```vue
+<p>Loyalty Points: {{ user.loyalty_points }} pts</p>
+```
 
-- **QUICK_START.md** - Setup guide
-- **FINAL_SESSION_SUMMARY.md** - Complete overview
-- **SETUP_COMPLETE.md** - Verification
-- Plus 16 more detailed guides
+### ✅ Correct:
+```vue
+<p>LGR Balance: K{{ user.loyalty_points.toFixed(2) }}</p>
+```
 
----
+### ❌ Mistake 2: Confusing LP and LGR
+- LP = Lifetime Points (for levels)
+- LGR = Loyalty Growth Reward (currency)
 
-## Status
+### ✅ Correct:
+- "You have 1,500 LP for level advancement"
+- "Your LGR balance is K1,500.00"
 
-✅ **All Systems Operational**
+## Quick Formulas
 
----
+### Total Available Balance
+```
+Total = Main Wallet + LGR Balance + Bonus Balance
+```
 
-**Date**: October 18, 2025  
-**Status**: Production Ready
+### Withdrawable Amount
+```
+Withdrawable = Main Wallet (100%) + LGR Balance (40%)
+```
+
+### Monthly Qualification
+```
+Qualified = BP >= Required BP for Level
+```
+
+## Support
+
+**Documentation:**
+- Technical: `docs/LGR_MANUAL_AWARDS.md`
+- Admin Guide: `docs/LGR_MANUAL_AWARDS_QUICKSTART.md`
+- Terminology: `docs/POINTS_TERMINOLOGY_CORRECTION.md`
+- Complete Fixes: `docs/COMPLETE_FIXES_SUMMARY.md`
+
+**Key Files:**
+- Wallet: `resources/js/pages/MyGrowNet/Wallet.vue`
+- Earnings: `resources/js/pages/MyGrowNet/MyEarnings.vue`
+- LGR Dashboard: `resources/js/pages/MyGrowNet/LoyaltyReward/Dashboard.vue`

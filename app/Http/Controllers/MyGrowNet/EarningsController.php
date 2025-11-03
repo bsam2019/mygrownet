@@ -8,6 +8,51 @@ use Inertia\Inertia;
 
 class EarningsController extends Controller
 {
+    public function hub(Request $request)
+    {
+        $user = $request->user();
+        
+        // Calculate total earnings
+        $commissions = (float) $user->referralCommissions()
+            ->where('status', 'paid')
+            ->sum('amount');
+            
+        $profitShares = (float) $user->profitShares()
+            ->sum('amount');
+            
+        $lgrRewards = (float) ($user->loyalty_points ?? 0);
+        
+        $totalEarnings = $commissions + $profitShares + $lgrRewards;
+        
+        // This month earnings
+        $thisMonthCommissions = (float) $user->referralCommissions()
+            ->where('status', 'paid')
+            ->whereYear('created_at', date('Y'))
+            ->whereMonth('created_at', date('m'))
+            ->sum('amount');
+            
+        $thisMonthProfits = (float) $user->profitShares()
+            ->whereYear('created_at', date('Y'))
+            ->whereMonth('created_at', date('m'))
+            ->sum('amount');
+            
+        $thisMonth = $thisMonthCommissions + $thisMonthProfits;
+        
+        // Pending earnings (unpaid commissions)
+        $pending = (float) $user->referralCommissions()
+            ->where('status', 'pending')
+            ->sum('amount');
+        
+        return Inertia::render('MyGrowNet/MyEarnings', [
+            'totalEarnings' => $totalEarnings,
+            'thisMonth' => $thisMonth,
+            'pending' => $pending,
+            'lgrRewards' => $lgrRewards,
+            'commissions' => $commissions,
+            'profitShares' => $profitShares,
+        ]);
+    }
+    
     public function index(Request $request)
     {
         $user = $request->user();

@@ -141,6 +141,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/activities', [App\Http\Controllers\Admin\LgrAdminController::class, 'activities'])->name('activities');
         Route::get('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'settings'])->name('settings');
         Route::put('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'updateSettings'])->name('settings.update');
+        
+        // Manual Award Routes
+        Route::get('/awards', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'index'])->name('awards.index');
+        Route::get('/awards/create', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'create'])->name('awards.create');
+        Route::post('/awards', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'store'])->name('awards.store');
+        Route::get('/awards/{award}', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'show'])->name('awards.show');
+        
+        // Settings Routes
+        Route::get('/settings', [App\Http\Controllers\Admin\LgrSettingsController::class, 'index'])->name('settings');
+        Route::post('/settings', [App\Http\Controllers\Admin\LgrSettingsController::class, 'update'])->name('settings.update');
     });
     
     // Leave impersonation - no admin middleware needed (user is impersonated)
@@ -460,9 +470,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
         Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
         Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
+        Route::post('/wallet/lgr-transfer', function(Illuminate\Http\Request $request) {
+            \Log::info('LGR Transfer Request', $request->all());
+            
+            $user = auth()->user();
+            \Log::info('User LGR Balance', ['user_id' => $user->id, 'balance' => $user->loyalty_points]);
+            
+            $validated = $request->validate(['amount' => 'required|numeric|min:10']);
+            $amount = $validated['amount'];
+            
+            \Log::info('Validated amount', ['amount' => $amount]);
+            
+            if ($user->loyalty_points < $amount) {
+                \Log::warning('Insufficient balance', ['has' => $user->loyalty_points, 'needs' => $amount]);
+                return back()->withErrors(['amount' => 'Insufficient LGR balance']);
+            }
+
+            DB::beginTransaction();
+            try {
+                $user->decrement('loyalty_points', $amount);
+                $user->increment('wallet_balance', $amount);
+                
+                $reference = 'LGR-TRANSFER-' . strtoupper(uniqid());
+                
+                DB::table('transactions')->insert([
+                    'user_id' => $user->id,
+                    'transaction_type' => 'lgr_transfer',
+                    'amount' => $amount,
+                    'reference_number' => $reference,
+                    'description' => "Transfer from LGR to Wallet",
+                    'status' => 'completed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                DB::commit();
+                \Log::info('LGR Transfer Success', ['amount' => $amount, 'reference' => $reference]);
+                
+                return redirect()->route('mygrownet.wallet.index')
+                    ->with('success', "Successfully transferred K{$amount} to your wallet");
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('LGR Transfer Failed', ['error' => $e->getMessage()]);
+                return back()->withErrors(['error' => 'Transfer failed: ' . $e->getMessage()]);
+            }
+        })->name('wallet.lgr-transfer');
         
         // Earnings Hub - Central page for all earnings
-        Route::get('/my-earnings', fn() => Inertia::render('MyGrowNet/MyEarnings'))->name('earnings.hub');
+        Route::get('/my-earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'hub'])->name('earnings.hub');
         Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');
         Route::get('/profit-sharing', fn() => app(App\Http\Controllers\MyGrowNet\PlaceholderController::class)->comingSoon('profit-sharing'))->name('profit-sharing.index');
         
