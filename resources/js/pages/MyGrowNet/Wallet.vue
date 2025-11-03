@@ -440,7 +440,7 @@ const formatCurrency = (amount: number | undefined | null) => {
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xl font-bold text-gray-900">{{ formatCurrency(loyaltyPoints) }}</p>
-                                    <p class="text-xs text-amber-600 font-medium">Up to {{ formatCurrency(loyaltyPoints * 0.4) }} withdrawable (40%)</p>
+                                    <p class="text-xs text-amber-600 font-medium">Up to {{ formatCurrency(loyaltyPoints * 1.0) }} withdrawable (100%)</p>
                                 </div>
                             </div>
                             <button
@@ -477,7 +477,7 @@ const formatCurrency = (amount: number | undefined | null) => {
                             </div>
                             <div class="text-right">
                                 <p class="text-2xl font-bold text-green-700">{{ formatCurrency(balance + loyaltyPoints + bonusBalance) }}</p>
-                                <p class="text-xs text-green-600 font-medium">Max withdrawable: {{ formatCurrency(balance + (loyaltyPoints * 0.4)) }}</p>
+                                <p class="text-xs text-green-600 font-medium">Max withdrawable: {{ formatCurrency(balance + (loyaltyPoints * 1.0)) }}</p>
                             </div>
                         </div>
                     </div>

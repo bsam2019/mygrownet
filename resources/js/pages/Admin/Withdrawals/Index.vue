@@ -109,64 +109,64 @@
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Money</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="withdrawal in filteredWithdrawals" :key="withdrawal.id" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10">
-                        <img class="h-10 w-10 rounded-full" :src="withdrawal.user.profile_photo_url" :alt="withdrawal.user.name">
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ withdrawal.user.name }}</div>
-                        <div class="text-sm text-gray-500">{{ withdrawal.user.email }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ formatKwacha(withdrawal.amount) }}</div>
-                    <div class="text-sm text-gray-500">Balance: {{ formatKwacha(withdrawal.user.balance) }}</div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-900">{{ withdrawal.wallet_address || 'N/A' }}</div>
-                    <div class="text-xs text-gray-500">Mobile Money</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="[
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      withdrawal.status === 'approved' || withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                      withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'
-                    ]">
-                      {{ withdrawal.status === 'completed' || withdrawal.status === 'approved' ? 'Approved' : withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1) }}
-                    </span>
-                    <div v-if="withdrawal.reason" class="mt-1 text-xs text-gray-500">
-                      {{ withdrawal.reason }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ formatDate(withdrawal.created_at) }}</div>
-                    <div class="text-sm text-gray-500">{{ formatTime(withdrawal.created_at) }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap space-x-2">
-                    <button
-                      v-if="withdrawal.status === 'pending'"
-                      @click="approveWithdrawal(withdrawal.id)"
-                      class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
+          <!-- Mobile View -->
+          <div class="block lg:hidden space-y-4">
+            <div v-for="withdrawal in filteredWithdrawals" :key="withdrawal.id" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center">
+                  <img class="h-10 w-10 rounded-full" :src="withdrawal.user.profile_photo_url" :alt="withdrawal.user.name">
+                  <div class="ml-3">
+                    <div class="text-sm font-medium text-gray-900">{{ withdrawal.user.name }}</div>
+                    <div class="text-xs text-gray-500">{{ withdrawal.user.email }}</div>
+                  </div>
+                </div>
+                <span :class="[
+                  'px-2 py-1 text-xs font-medium rounded-full',
+                  withdrawal.status === 'approved' || withdrawal.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                  withdrawal.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                  'bg-yellow-100 text-yellow-800'
+                ]">
+                  {{ withdrawal.status === 'completed' || withdrawal.status === 'approved' ? 'Approved' : withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1) }}
+                </span>
+              </div>
+              
+              <div class="space-y-2 mb-3">
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-500">Amount:</span>
+                  <span class="text-sm font-medium text-gray-900">{{ formatKwacha(withdrawal.amount) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-500">Balance:</span>
+                  <span class="text-sm text-gray-700">{{ formatKwacha(withdrawal.user.balance) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-500">Mobile Money:</span>
+                  <span class="text-sm text-gray-700">{{ withdrawal.wallet_address || 'N/A' }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-500">Date:</span>
+                  <span class="text-sm text-gray-700">{{ formatDate(withdrawal.created_at) }}</span>
+                </div>
+              </div>
+              
+              <div v-if="withdrawal.reason" class="mb-3 p-2 bg-red-50 rounded text-xs text-red-700">
+                <span class="font-medium">Reason:</span> {{ withdrawal.reason }}
+              </div>
+              
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-if="withdrawal.status === 'pending'"
+                  @click="approveWithdrawal(withdrawal.id)"
+                  class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Approve
+                </button>
+                <button
+                  v-if="withdrawal.status === 'pending'"
+                  @click="rejectWithdrawal(withdrawal.id)"
+                  class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                       Approve
                     </button>
                     <button
