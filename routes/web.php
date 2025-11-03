@@ -139,8 +139,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/qualifications', [App\Http\Controllers\Admin\LgrAdminController::class, 'qualifications'])->name('qualifications');
         Route::get('/pool', [App\Http\Controllers\Admin\LgrAdminController::class, 'pool'])->name('pool');
         Route::get('/activities', [App\Http\Controllers\Admin\LgrAdminController::class, 'activities'])->name('activities');
-        Route::get('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'settings'])->name('settings');
-        Route::put('/settings', [App\Http\Controllers\Admin\LgrAdminController::class, 'updateSettings'])->name('settings.update');
         
         // Manual Award Routes
         Route::get('/awards', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'index'])->name('awards.index');
@@ -148,7 +146,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/awards', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'store'])->name('awards.store');
         Route::get('/awards/{award}', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'show'])->name('awards.show');
         
-        // Settings Routes
+        // Settings Routes (using new LgrSettingsController)
         Route::get('/settings', [App\Http\Controllers\Admin\LgrSettingsController::class, 'index'])->name('settings');
         Route::post('/settings', [App\Http\Controllers\Admin\LgrSettingsController::class, 'update'])->name('settings.update');
     });
