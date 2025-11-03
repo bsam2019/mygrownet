@@ -8,6 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('lgr_settings')) {
+            return;
+        }
+
+        if (Schema::hasColumn('lgr_settings', 'group')) {
+            return;
+        }
+
         Schema::table('lgr_settings', function (Blueprint $table) {
             $table->string('group')->default('general')->after('type');
             $table->string('label')->after('group');
