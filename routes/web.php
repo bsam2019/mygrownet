@@ -470,51 +470,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/wallet', [App\Http\Controllers\MyGrowNet\WalletController::class, 'index'])->name('wallet.index');
         Route::post('/wallet/accept-policy', [App\Http\Controllers\MyGrowNet\WalletController::class, 'acceptPolicy'])->name('wallet.accept-policy');
         Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
-        Route::post('/wallet/lgr-transfer', function(Illuminate\Http\Request $request) {
-            \Log::info('LGR Transfer Request', $request->all());
-            
-            $user = auth()->user();
-            \Log::info('User LGR Balance', ['user_id' => $user->id, 'balance' => $user->loyalty_points]);
-            
-            $validated = $request->validate(['amount' => 'required|numeric|min:10']);
-            $amount = $validated['amount'];
-            
-            \Log::info('Validated amount', ['amount' => $amount]);
-            
-            if ($user->loyalty_points < $amount) {
-                \Log::warning('Insufficient balance', ['has' => $user->loyalty_points, 'needs' => $amount]);
-                return back()->withErrors(['amount' => 'Insufficient LGR balance']);
-            }
-
-            DB::beginTransaction();
-            try {
-                $user->decrement('loyalty_points', $amount);
-                $user->increment('wallet_balance', $amount);
-                
-                $reference = 'LGR-TRANSFER-' . strtoupper(uniqid());
-                
-                DB::table('transactions')->insert([
-                    'user_id' => $user->id,
-                    'transaction_type' => 'lgr_transfer',
-                    'amount' => $amount,
-                    'reference_number' => $reference,
-                    'description' => "Transfer from LGR to Wallet",
-                    'status' => 'completed',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                
-                DB::commit();
-                \Log::info('LGR Transfer Success', ['amount' => $amount, 'reference' => $reference]);
-                
-                return redirect()->route('mygrownet.wallet.index')
-                    ->with('success', "Successfully transferred K{$amount} to your wallet");
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error('LGR Transfer Failed', ['error' => $e->getMessage()]);
-                return back()->withErrors(['error' => 'Transfer failed: ' . $e->getMessage()]);
-            }
-        })->name('wallet.lgr-transfer');
+        Route::post('/wallet/lgr-transfer', [App\Http\Controllers\MyGrowNet\LgrTransferController::class, 'store'])->name('wallet.lgr-transfer');
         
         // Earnings Hub - Central page for all earnings
         Route::get('/my-earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'hub'])->name('earnings.hub');

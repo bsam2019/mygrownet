@@ -38,6 +38,7 @@ class WalletService
      * 1. Referral commissions (paid status)
      * 2. Profit shares
      * 3. Wallet topups (verified payments)
+     * 4. Wallet topups from transactions table (LGR transfers, etc.)
      * 
      * @param User $user
      * @return float
@@ -56,7 +57,14 @@ class WalletService
             ->where('status', 'verified')
             ->sum('amount');
         
-        return $commissionEarnings + $profitEarnings + $walletTopups;
+        // Include wallet topups from transactions table (e.g., LGR transfers)
+        $transactionTopups = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'wallet_topup')
+            ->where('status', 'completed')
+            ->sum('amount');
+        
+        return $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups;
     }
     
     /**
@@ -115,6 +123,11 @@ class WalletService
             ->where('payment_type', 'wallet_topup')
             ->where('status', 'verified')
             ->sum('amount');
+        $transactionTopups = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'wallet_topup')
+            ->where('status', 'completed')
+            ->sum('amount');
         
         $totalWithdrawals = (float) $user->withdrawals()->where('status', 'approved')->sum('amount');
         $workshopExpenses = (float) \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
@@ -131,8 +144,8 @@ class WalletService
             'earnings' => [
                 'commissions' => $commissionEarnings,
                 'profit_shares' => $profitEarnings,
-                'topups' => $walletTopups,
-                'total' => $commissionEarnings + $profitEarnings + $walletTopups,
+                'topups' => $walletTopups + $transactionTopups,
+                'total' => $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups,
             ],
             'expenses' => [
                 'withdrawals' => $totalWithdrawals,

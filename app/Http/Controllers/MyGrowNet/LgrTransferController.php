@@ -32,17 +32,17 @@ class LgrTransferController extends Controller
             $fee = ($amount * $feePercentage) / 100;
             $netAmount = $amount - $fee;
 
+            $baseReference = 'LGR-' . strtoupper(uniqid('', true)) . '-' . time();
+
             // Deduct from loyalty points
             $user->decrement('loyalty_points', $amount);
-
-            $reference = 'LGR-TRANSFER-' . strtoupper(uniqid());
 
             // Record LGR deduction
             DB::table('transactions')->insert([
                 'user_id' => $user->id,
                 'transaction_type' => 'lgr_transfer_out',
                 'amount' => -$amount,
-                'reference_number' => $reference,
+                'reference_number' => $baseReference . '-OUT',
                 'description' => "LGR Transfer to Wallet",
                 'status' => 'completed',
                 'created_at' => now(),
@@ -54,7 +54,7 @@ class LgrTransferController extends Controller
                 'user_id' => $user->id,
                 'transaction_type' => 'wallet_topup',
                 'amount' => $netAmount,
-                'reference_number' => $reference,
+                'reference_number' => $baseReference . '-IN',
                 'description' => "LGR Transfer to Wallet" . ($fee > 0 ? " (Fee: K{$fee})" : ""),
                 'status' => 'completed',
                 'created_at' => now(),
