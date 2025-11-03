@@ -8,11 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('lgr_settings')) {
-            return;
-        }
-
-        Schema::create('lgr_settings', function (Blueprint $table) {
+        $tableExists = Schema::hasTable('lgr_settings');
+        
+        if (!$tableExists) {
+            Schema::create('lgr_settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
             $table->text('value');
@@ -22,9 +21,11 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
+        }
 
-        // Insert default settings
-        DB::table('lgr_settings')->insert([
+        // Insert default settings (only if table is empty)
+        if (DB::table('lgr_settings')->count() === 0) {
+            DB::table('lgr_settings')->insert([
             // Withdrawal Settings
             [
                 'key' => 'lgr_withdrawal_enabled',
@@ -163,6 +164,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
         ]);
+        }
     }
 
     public function down(): void
