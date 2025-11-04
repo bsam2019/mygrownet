@@ -29,3 +29,6 @@ Thumbs.db
 
 # Deployment credentials (DO NOT COMMIT)
 .deploy-credentials
+
+# Scripts folder (temporary admin scripts)
+/scripts/
