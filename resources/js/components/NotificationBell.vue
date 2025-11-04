@@ -131,7 +131,7 @@ onMounted(() => {
         <!-- Dropdown -->
         <div
             v-if="showDropdown"
-            class="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+            class="fixed md:absolute right-0 md:right-0 left-0 md:left-auto mt-2 md:w-96 w-screen md:max-w-md bg-white rounded-none md:rounded-lg shadow-lg border-t md:border border-gray-200 z-50 max-h-[80vh] md:max-h-none"
             @click.stop
         >
             <!-- Header -->

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\LoanManagementController;
 use App\Http\Controllers\Admin\AdminInvestmentController;
 use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
@@ -62,6 +63,12 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::post('users/{user}/update-password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
     Route::post('users/{user}/lgr-restrictions', [UserManagementController::class, 'updateLgrRestrictions'])->name('users.lgr-restrictions');
     Route::resource('users', UserManagementController::class)->names('users');
+    
+    // Loan management
+    Route::get('loans', [LoanManagementController::class, 'index'])->name('loans.index');
+    Route::post('loans/{user}/issue', [LoanManagementController::class, 'issueLoan'])->name('loans.issue');
+    Route::get('loans/{user}/summary', [LoanManagementController::class, 'getLoanSummary'])->name('loans.summary');
+    Route::get('loans/members-with-loans', [LoanManagementController::class, 'getMembersWithLoans'])->name('loans.members');
 
     // User profile management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

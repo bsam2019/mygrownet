@@ -55,6 +55,17 @@ const props = withDefaults(defineProps<{
     verificationLimits?: VerificationLimits;
     remainingDailyLimit?: number;
     policyAccepted?: boolean;
+    loanSummary?: {
+        has_loan: boolean;
+        loan_balance: number;
+        total_issued: number;
+        total_repaid: number;
+        repayment_progress: number;
+        issued_at: string;
+        issued_by: any;
+        notes: string;
+        can_withdraw: boolean;
+    };
 }>(), {
     balance: 0,
     bonusBalance: 0,
@@ -77,6 +88,17 @@ const props = withDefaults(defineProps<{
     verificationLimits: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
     remainingDailyLimit: 1000,
     policyAccepted: false,
+    loanSummary: () => ({
+        has_loan: false,
+        loan_balance: 0,
+        total_issued: 0,
+        total_repaid: 0,
+        repayment_progress: 100,
+        issued_at: '',
+        issued_by: null,
+        notes: '',
+        can_withdraw: true,
+    }),
 });
 
 // Now we can safely use props
@@ -370,6 +392,45 @@ const formatCurrency = (amount: number | undefined | null) => {
                             >
                                 I Accept - Continue to Wallet
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan Warning Banner -->
+            <div v-if="loanSummary?.has_loan" class="mb-4 bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <AlertCircleIcon class="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-amber-900 mb-1">Outstanding Loan</h3>
+                        <p class="text-sm text-amber-800 mb-3">
+                            You have an outstanding loan of <strong>{{ formatCurrency(loanSummary.loan_balance) }}</strong>. 
+                            All future earnings will automatically go towards loan repayment.
+                        </p>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs text-amber-700">
+                                <span>Repayment Progress</span>
+                                <span class="font-medium">{{ loanSummary.repayment_progress.toFixed(0) }}%</span>
+                            </div>
+                            <div class="w-full bg-amber-200 rounded-full h-2">
+                                <div 
+                                    class="bg-amber-600 h-2 rounded-full transition-all duration-300"
+                                    :style="{ width: `${loanSummary.repayment_progress}%` }"
+                                ></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-amber-700 mt-2">
+                                <div>
+                                    <span class="block text-amber-600">Total Issued:</span>
+                                    <span class="font-medium">{{ formatCurrency(loanSummary.total_issued) }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-amber-600">Repaid:</span>
+                                    <span class="font-medium">{{ formatCurrency(loanSummary.total_repaid) }}</span>
+                                </div>
+                            </div>
+                            <p v-if="loanSummary.notes" class="text-xs text-amber-700 italic mt-2">
+                                Note: {{ loanSummary.notes }}
+                            </p>
                         </div>
                     </div>
                 </div>

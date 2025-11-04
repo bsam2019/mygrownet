@@ -74,6 +74,7 @@ const financeNavItems: NavItem[] = [
     { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
+    { title: 'Loan Management', href: safeRoute('admin.loans.index'), icon: CreditCard },
 ];
 
 const ventureBuilderNavItems: NavItem[] = [

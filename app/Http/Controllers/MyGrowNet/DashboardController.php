@@ -224,6 +224,10 @@ class DashboardController extends Controller
         // Get community project data
         $communityProjectData = $this->getCommunityProjectData($user);
 
+        // Get loan summary
+        $loanService = app(\App\Domain\Financial\Services\LoanService::class);
+        $loanSummary = $loanService->getLoanSummary($user);
+
         return Inertia::render('MyGrowNet/Dashboard', [
             'user' => $user,
             'subscription' => $currentSubscription,
@@ -243,6 +247,7 @@ class DashboardController extends Controller
             'networkData' => $networkData,
             'assetData' => $assetData,
             'communityProjectData' => $communityProjectData,
+            'loanSummary' => $loanSummary,
             'stats' => [
                 'total_earnings' => $user->calculateTotalEarnings(),
                 'achievement_count' => $user->achievements_count ?? 0,

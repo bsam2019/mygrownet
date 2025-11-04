@@ -103,6 +103,10 @@ class WalletController extends Controller
             $lgrWithdrawable = 0;
         }
         
+        // Get loan summary
+        $loanService = app(\App\Domain\Financial\Services\LoanService::class);
+        $loanSummary = $loanService->getLoanSummary($user);
+        
         return Inertia::render('MyGrowNet/Wallet', [
             'balance' => $balance,
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
@@ -125,6 +129,7 @@ class WalletController extends Controller
             'verificationLimits' => $limits,
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
             'policyAccepted' => (bool) ($user->wallet_policy_accepted ?? false),
+            'loanSummary' => $loanSummary,
         ]);
     }
     

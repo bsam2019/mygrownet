@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { router, usePage, Link, Head, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import Swal from 'sweetalert2'
@@ -12,6 +12,7 @@ import {
     ShieldExclamationIcon
 } from '@heroicons/vue/24/outline'
 import LgrRestrictionModal from '@/components/Admin/LgrRestrictionModal.vue'
+import LoanModal from '@/components/Admin/LoanModal.vue'
 
 const page = usePage()
 const props = defineProps({
@@ -20,6 +21,39 @@ const props = defineProps({
   filters: Object,
   professionalLevels: Object
 })
+
+// Handle flash messages
+const showFlashMessage = () => {
+  if (page.props.flash?.success) {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: page.props.flash.success,
+      timer: 3000,
+      showConfirmButton: false,
+    })
+  }
+  if (page.props.flash?.error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error!',
+      text: page.props.flash.error,
+      timer: 3000,
+      showConfirmButton: false,
+    })
+  }
+}
+
+onMounted(() => {
+  showFlashMessage()
+})
+
+// Watch for flash message changes
+watch(() => page.props.flash, (newFlash) => {
+  if (newFlash) {
+    showFlashMessage()
+  }
+}, { deep: true })
 
 const filters = ref({
   search: props.filters?.search || '',
@@ -32,6 +66,7 @@ const filters = ref({
 
 const showFilters = ref(false)
 const showLgrModal = ref(false)
+const showLoanModal = ref(false)
 const showMobileActionsModal = ref(false)
 const selectedUser = ref(null)
 
@@ -120,6 +155,16 @@ const openLgrModal = (user) => {
 
 const closeLgrModal = () => {
   showLgrModal.value = false
+  selectedUser.value = null
+}
+
+const openLoanModal = (user) => {
+  selectedUser.value = user
+  showLoanModal.value = true
+}
+
+const closeLoanModal = () => {
+  showLoanModal.value = false
   selectedUser.value = null
 }
 
@@ -385,6 +430,12 @@ const impersonateUser = (userId) => {
                       LGR
                     </button>
                     <button 
+                      @click="openLoanModal(user)"
+                      class="px-3 py-1 text-sm text-white bg-emerald-600 rounded hover:bg-emerald-700"
+                      title="Issue Loan">
+                      Loan
+                    </button>
+                    <button 
                       v-if="user.role !== 'admin'"
                       @click="impersonateUser(user.id)"
                       class="px-3 py-1 text-sm text-white bg-amber-600 rounded hover:bg-amber-700">
@@ -540,6 +591,13 @@ const impersonateUser = (userId) => {
       @updated="closeLgrModal"
     />
     
+    <!-- Loan Modal -->
+    <LoanModal
+      :is-open="showLoanModal"
+      :user="selectedUser"
+      @close="closeLoanModal"
+    />
+    
     <!-- Mobile Actions Modal -->
     <div v-if="showMobileActionsModal && selectedUser" class="fixed inset-0 z-50 md:hidden flex items-end">
       <!-- Background Overlay -->
@@ -613,6 +671,16 @@ const impersonateUser = (userId) => {
             >
               <span>LGR Restrictions</span>
               <ShieldExclamationIcon class="h-5 w-5" />
+            </button>
+            
+            <button
+              @click="openLoanModal(selectedUser); showMobileActionsModal = false"
+              class="w-full px-4 py-3 text-left text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 flex items-center justify-between"
+            >
+              <span>Issue Loan</span>
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </button>
             
             <button

@@ -168,6 +168,13 @@ class User extends Authenticatable
         'starter_kit_terms_accepted_at',
         'starter_kit_shop_credit',
         'starter_kit_credit_expiry',
+        // Loan fields
+        'loan_balance',
+        'total_loan_issued',
+        'total_loan_repaid',
+        'loan_issued_at',
+        'loan_issued_by',
+        'loan_notes',
     ];
 
     protected $hidden = [
@@ -209,6 +216,11 @@ class User extends Authenticatable
         'starter_kit_credit_expiry' => 'date',
         'subscription_start_date' => 'date',
         'subscription_end_date' => 'date',
+        // Loan casts
+        'loan_balance' => 'decimal:2',
+        'total_loan_issued' => 'decimal:2',
+        'total_loan_repaid' => 'decimal:2',
+        'loan_issued_at' => 'datetime',
     ];
 
     /**
@@ -1708,5 +1720,16 @@ class User extends Authenticatable
             'admin' => 'Administrator',
             default => 'Member',
         };
+    }
+
+    // Loan relationships
+    public function loanIssuedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'loan_issued_by');
+    }
+
+    public function issuedLoans(): HasMany
+    {
+        return $this->hasMany(User::class, 'loan_issued_by');
     }
 }
