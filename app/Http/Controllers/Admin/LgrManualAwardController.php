@@ -121,9 +121,10 @@ class LgrManualAwardController extends Controller
 
             \Log::info('Award created', ['award_id' => $award->id]);
 
-            // Credit to user's loyalty points
+            // Credit to user's loyalty points and track total awarded
             $oldBalance = $user->loyalty_points;
             $user->increment('loyalty_points', $validated['amount']);
+            $user->increment('loyalty_points_awarded_total', $validated['amount']);
             $user->refresh();
             
             \Log::info('User balance updated', [

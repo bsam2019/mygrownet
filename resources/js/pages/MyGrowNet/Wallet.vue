@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import MemberLayout from '@/Layouts/MemberLayout.vue';
-import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon, InfoIcon } from 'lucide-vue-next';
+import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon, InfoIcon, XIcon } from 'lucide-vue-next';
 import { ref } from 'vue';
+
+// Toast notification state
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref<'success' | 'error' | 'warning'>('success');
+
+const showNotification = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
+    toastMessage.value = message;
+    toastType.value = type;
+    showToast.value = true;
+    setTimeout(() => {
+        showToast.value = false;
+    }, 5000);
+};
 
 interface Transaction {
     id: number;
@@ -23,6 +37,12 @@ const props = withDefaults(defineProps<{
     balance?: number;
     bonusBalance?: number;
     loyaltyPoints?: number;
+    lgrWithdrawable?: number;
+    lgrWithdrawablePercentage?: number;
+    lgrAwardedTotal?: number;
+    lgrWithdrawnTotal?: number;
+    lgrWithdrawalBlocked?: boolean;
+    lgrRestrictionReason?: string;
     totalEarnings?: number;
     totalWithdrawals?: number;
     recentTransactions?: Transaction[];
@@ -39,6 +59,12 @@ const props = withDefaults(defineProps<{
     balance: 0,
     bonusBalance: 0,
     loyaltyPoints: 0,
+    lgrWithdrawable: 0,
+    lgrWithdrawablePercentage: 100,
+    lgrAwardedTotal: 0,
+    lgrWithdrawnTotal: 0,
+    lgrWithdrawalBlocked: false,
+    lgrRestrictionReason: undefined,
     totalEarnings: 0,
     totalWithdrawals: 0,
     recentTransactions: () => [],
@@ -69,12 +95,17 @@ const acceptPolicy = () => {
 
 const submitLgrTransfer = () => {
     if (transferAmount.value <= 0) {
-        alert('Please enter a valid amount');
+        showNotification('Please enter a valid amount', 'warning');
+        return;
+    }
+    
+    if (transferAmount.value > props.lgrWithdrawable) {
+        showNotification(`You can only transfer up to K${props.lgrWithdrawable?.toFixed(2)} (${props.lgrWithdrawablePercentage}% of awarded LGR)`, 'warning');
         return;
     }
     
     if (transferAmount.value > props.loyaltyPoints) {
-        alert('Insufficient LGR balance');
+        showNotification('Insufficient LGR balance', 'error');
         return;
     }
     
@@ -440,15 +471,40 @@ const formatCurrency = (amount: number | undefined | null) => {
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xl font-bold text-gray-900">{{ formatCurrency(loyaltyPoints) }}</p>
-                                    <p class="text-xs text-amber-600 font-medium">Up to {{ formatCurrency(loyaltyPoints * 1.0) }} withdrawable (100%)</p>
+                                    <p v-if="!lgrWithdrawalBlocked" class="text-xs text-amber-600 font-medium">
+                                        Up to {{ formatCurrency(lgrWithdrawable) }} withdrawable ({{ lgrWithdrawablePercentage }}% of awarded)
+                                    </p>
+                                    <p v-else class="text-xs text-red-600 font-medium">
+                                        Withdrawals restricted
+                                    </p>
                                 </div>
                             </div>
+                            
+                            <!-- Restriction Notice -->
+                            <div v-if="lgrWithdrawalBlocked" class="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <div class="flex items-start gap-2">
+                                    <AlertCircleIcon class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p class="text-sm font-medium text-red-800">LGR Withdrawals Restricted</p>
+                                        <p v-if="lgrRestrictionReason" class="text-xs text-red-700 mt-1">{{ lgrRestrictionReason }}</p>
+                                        <p v-else class="text-xs text-red-700 mt-1">Please contact support for more information.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <button
-                                v-if="loyaltyPoints > 0"
+                                v-if="loyaltyPoints > 0 && !lgrWithdrawalBlocked"
                                 @click="showLgrTransferModal = true"
                                 class="w-full px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-sm font-semibold rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all shadow-sm"
                             >
                                 Transfer to Main Wallet
+                            </button>
+                            <button
+                                v-else-if="loyaltyPoints > 0 && lgrWithdrawalBlocked"
+                                disabled
+                                class="w-full px-4 py-2 bg-gray-300 text-gray-500 text-sm font-semibold rounded-lg cursor-not-allowed"
+                            >
+                                Transfer Disabled
                             </button>
                         </div>
 
@@ -477,7 +533,7 @@ const formatCurrency = (amount: number | undefined | null) => {
                             </div>
                             <div class="text-right">
                                 <p class="text-2xl font-bold text-green-700">{{ formatCurrency(balance + loyaltyPoints + bonusBalance) }}</p>
-                                <p class="text-xs text-green-600 font-medium">Max withdrawable: {{ formatCurrency(balance + (loyaltyPoints * 1.0)) }}</p>
+                                <p class="text-xs text-green-600 font-medium">Max withdrawable: {{ formatCurrency(balance + lgrWithdrawable) }}</p>
                             </div>
                         </div>
                     </div>
@@ -737,6 +793,62 @@ const formatCurrency = (amount: number | undefined | null) => {
             </div>
         </div>
     </div>
+
+    <!-- Toast Notification -->
+    <Transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="translate-y-2 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-2 opacity-0"
+    >
+        <div
+            v-if="showToast"
+            class="fixed bottom-4 right-4 z-50 max-w-md"
+        >
+            <div
+                :class="[
+                    'rounded-lg shadow-lg p-4 flex items-start gap-3',
+                    toastType === 'success' ? 'bg-green-50 border border-green-200' : '',
+                    toastType === 'error' ? 'bg-red-50 border border-red-200' : '',
+                    toastType === 'warning' ? 'bg-amber-50 border border-amber-200' : ''
+                ]"
+            >
+                <AlertCircleIcon
+                    :class="[
+                        'h-5 w-5 flex-shrink-0',
+                        toastType === 'success' ? 'text-green-600' : '',
+                        toastType === 'error' ? 'text-red-600' : '',
+                        toastType === 'warning' ? 'text-amber-600' : ''
+                    ]"
+                />
+                <div class="flex-1">
+                    <p
+                        :class="[
+                            'text-sm font-medium',
+                            toastType === 'success' ? 'text-green-800' : '',
+                            toastType === 'error' ? 'text-red-800' : '',
+                            toastType === 'warning' ? 'text-amber-800' : ''
+                        ]"
+                    >
+                        {{ toastMessage }}
+                    </p>
+                </div>
+                <button
+                    @click="showToast = false"
+                    :class="[
+                        'flex-shrink-0',
+                        toastType === 'success' ? 'text-green-600 hover:text-green-800' : '',
+                        toastType === 'error' ? 'text-red-600 hover:text-red-800' : '',
+                        toastType === 'warning' ? 'text-amber-600 hover:text-amber-800' : ''
+                    ]"
+                >
+                    <XIcon class="h-5 w-5" />
+                </button>
+            </div>
+        </div>
+    </Transition>
 
     </MemberLayout>
 </template>

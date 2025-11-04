@@ -60,6 +60,7 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     // User management
     Route::patch('users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::post('users/{user}/update-password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
+    Route::post('users/{user}/lgr-restrictions', [UserManagementController::class, 'updateLgrRestrictions'])->name('users.lgr-restrictions');
     Route::resource('users', UserManagementController::class)->names('users');
 
     // User profile management

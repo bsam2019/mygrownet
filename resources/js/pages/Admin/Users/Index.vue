@@ -8,8 +8,10 @@ import {
     PencilIcon, 
     TrashIcon,
     CheckCircleIcon,
-    XCircleIcon
+    XCircleIcon,
+    ShieldExclamationIcon
 } from '@heroicons/vue/24/outline'
+import LgrRestrictionModal from '@/components/Admin/LgrRestrictionModal.vue'
 
 const page = usePage()
 const props = defineProps({
@@ -29,6 +31,9 @@ const filters = ref({
 })
 
 const showFilters = ref(false)
+const showLgrModal = ref(false)
+const showMobileActionsModal = ref(false)
+const selectedUser = ref(null)
 
 const applyFilters = () => {
   router.get(route('admin.users.index'), filters.value, {
@@ -102,6 +107,22 @@ const closeEditModal = () => {
   form.reset()
 }
 
+const openLgrModal = (user) => {
+  console.log('Opening LGR modal for user:', user)
+  console.log('LGR fields:', {
+    loyalty_points: user.loyalty_points,
+    awarded: user.loyalty_points_awarded_total,
+    withdrawn: user.loyalty_points_withdrawn_total
+  })
+  selectedUser.value = user
+  showLgrModal.value = true
+}
+
+const closeLgrModal = () => {
+  showLgrModal.value = false
+  selectedUser.value = null
+}
+
 const submitEdit = () => {
   form.put(route('admin.users.update', editingUser.value.id), {
     onSuccess: () => {
@@ -152,7 +173,7 @@ const impersonateUser = (userId) => {
   ]">
     <Head title="User Management" />
     
-    <div class="py-6">
+    <div class="py-2 md:py-6">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-lg shadow">
           <div class="p-6 border-b border-gray-200">
@@ -259,6 +280,52 @@ const impersonateUser = (userId) => {
             </div>
           </div>
 
+          <!-- Mobile Card View -->
+          <div class="md:hidden space-y-4">
+            <div v-for="user in users.data" :key="user.id" class="bg-white rounded-lg shadow p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500">ID: {{ user.id }}</span>
+                    <span :class="[
+                      'px-2 py-1 text-xs rounded-full',
+                      getStatusColor(user.status)
+                    ]">
+                      {{ user.status }}
+                    </span>
+                  </div>
+                  <Link
+                    :href="route('admin.users.show', user.id)"
+                    class="text-base font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {{ user.name }}
+                  </Link>
+                </div>
+                <button
+                  @click="selectedUser = user; showMobileActionsModal = true"
+                  class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                  Actions
+                </button>
+              </div>
+            </div>
+            
+            <!-- Pagination for mobile -->
+            <div v-if="users.links" class="flex justify-center gap-2 mt-4 flex-wrap">
+              <component
+                :is="link.url ? Link : 'span'"
+                v-for="(link, index) in users.links"
+                :key="index"
+                :href="link.url || undefined"
+                :class="[
+                  'px-3 py-2 text-sm rounded',
+                  link.active ? 'bg-blue-600 text-white' : link.url ? 'bg-white text-gray-700 hover:bg-gray-50' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ]"
+                v-html="link.label"
+              />
+            </div>
+          </div>
+
           <!-- Desktop Table View -->
           <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -310,6 +377,12 @@ const impersonateUser = (userId) => {
                       class="px-3 py-1 text-sm text-white rounded"
                       :class="user.status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'">
                       {{ user.status === 'active' ? 'Suspend' : 'Activate' }}
+                    </button>
+                    <button 
+                      @click="openLgrModal(user)"
+                      class="px-3 py-1 text-sm text-white bg-purple-600 rounded hover:bg-purple-700"
+                      title="LGR Restrictions">
+                      LGR
                     </button>
                     <button 
                       v-if="user.role !== 'admin'"
@@ -456,6 +529,102 @@ const impersonateUser = (userId) => {
           </form>
         </div>
       </div>
+    </div>
+    
+    <!-- LGR Restriction Modal -->
+    <LgrRestrictionModal
+      :show="showLgrModal"
+      :user="selectedUser"
+      :global-percentage="40"
+      @close="closeLgrModal"
+      @updated="closeLgrModal"
+    />
+    
+    <!-- Mobile Actions Modal -->
+    <div v-if="showMobileActionsModal && selectedUser" class="fixed inset-0 z-50 md:hidden flex items-end">
+      <!-- Background Overlay -->
+      <div class="absolute inset-0 bg-gray-500 bg-opacity-75" @click="showMobileActionsModal = false"></div>
+      
+      <!-- Modal Content -->
+      <div class="relative w-full bg-white rounded-t-2xl shadow-xl p-4 max-h-[80vh] overflow-y-auto">
+          <!-- Header -->
+          <div class="mb-3 pb-3 border-b">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-gray-900">{{ selectedUser.name }}</h3>
+              <button @click="showMobileActionsModal = false" class="text-gray-400 hover:text-gray-600">
+                <XCircleIcon class="h-5 w-5" />
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">ID: {{ selectedUser.id }}</p>
+          </div>
+          
+          <!-- User Info -->
+          <div class="mb-4 space-y-2">
+            <div>
+              <p class="text-xs text-gray-500">Email</p>
+              <p class="text-sm font-medium">{{ selectedUser.email || 'N/A' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Phone</p>
+              <p class="text-sm font-medium">{{ selectedUser.phone || 'N/A' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Role</p>
+              <span class="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                {{ selectedUser.role }}
+              </span>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500">Status</p>
+              <span :class="[
+                'inline-block px-2 py-1 text-xs rounded-full',
+                getStatusColor(selectedUser.status)
+              ]">
+                {{ selectedUser.status }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div class="space-y-2">
+            <button
+              @click="openEditModal(selectedUser); showMobileActionsModal = false"
+              class="w-full px-4 py-3 text-left text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center justify-between"
+            >
+              <span>Edit User</span>
+              <PencilIcon class="h-5 w-5" />
+            </button>
+            
+            <button
+              @click="toggleStatus(selectedUser); showMobileActionsModal = false"
+              :class="[
+                'w-full px-4 py-3 text-left text-sm font-medium text-white rounded-lg flex items-center justify-between',
+                selectedUser.status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
+              ]"
+            >
+              <span>{{ selectedUser.status === 'active' ? 'Suspend User' : 'Activate User' }}</span>
+              <CheckCircleIcon v-if="selectedUser.status !== 'active'" class="h-5 w-5" />
+              <XCircleIcon v-else class="h-5 w-5" />
+            </button>
+            
+            <button
+              @click="openLgrModal(selectedUser); showMobileActionsModal = false"
+              class="w-full px-4 py-3 text-left text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 flex items-center justify-between"
+            >
+              <span>LGR Restrictions</span>
+              <ShieldExclamationIcon class="h-5 w-5" />
+            </button>
+            
+            <button
+              v-if="selectedUser.role !== 'admin'"
+              @click="impersonateUser(selectedUser.id); showMobileActionsModal = false"
+              class="w-full px-4 py-3 text-left text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 flex items-center justify-between"
+            >
+              <span>Login As User</span>
+              <UserIcon class="h-5 w-5" />
+            </button>
+          </div>
+        </div>
     </div>
   </AdminLayout>
 </template>

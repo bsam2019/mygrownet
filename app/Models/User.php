@@ -143,6 +143,11 @@ class User extends Authenticatable
         'wallet_policy_accepted_at',
         'bonus_balance',
         'loyalty_points',
+        'loyalty_points_awarded_total',
+        'loyalty_points_withdrawn_total',
+        'lgr_custom_withdrawable_percentage',
+        'lgr_withdrawal_blocked',
+        'lgr_restriction_reason',
         'verification_level',
         'verification_completed_at',
         'daily_withdrawal_used',
@@ -205,6 +210,31 @@ class User extends Authenticatable
         'subscription_start_date' => 'date',
         'subscription_end_date' => 'date',
     ];
+
+    /**
+     * Accessor: Alias for loyalty_points (LGR Balance)
+     * Makes code more readable - use $user->lgr_balance instead of $user->loyalty_points
+     */
+    public function getLgrBalanceAttribute()
+    {
+        return $this->loyalty_points;
+    }
+
+    /**
+     * Accessor: Alias for loyalty_points_awarded_total
+     */
+    public function getLgrAwardedTotalAttribute()
+    {
+        return $this->loyalty_points_awarded_total;
+    }
+
+    /**
+     * Accessor: Alias for loyalty_points_withdrawn_total
+     */
+    public function getLgrWithdrawnTotalAttribute()
+    {
+        return $this->loyalty_points_withdrawn_total;
+    }
 
     public function profile(): HasOne
     {

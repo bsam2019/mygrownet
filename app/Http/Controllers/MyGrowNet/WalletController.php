@@ -87,10 +87,32 @@ class WalletController extends Controller
             ->take(10)
             ->values();
         
+        // Calculate LGR withdrawable amount
+        // Use custom percentage if set, otherwise use global setting
+        $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
+            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+        
+        $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
+        $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
+        $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
+        $lgrWithdrawable = min($user->loyalty_points, max(0, $lgrMaxWithdrawable));
+        
+        // Check if user is blocked from LGR withdrawals
+        $lgrWithdrawalBlocked = (bool) ($user->lgr_withdrawal_blocked ?? false);
+        if ($lgrWithdrawalBlocked) {
+            $lgrWithdrawable = 0;
+        }
+        
         return Inertia::render('MyGrowNet/Wallet', [
             'balance' => $balance,
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'loyaltyPoints' => (float) ($user->loyalty_points ?? 0),
+            'lgrWithdrawable' => $lgrWithdrawable,
+            'lgrWithdrawablePercentage' => $lgrWithdrawablePercentage,
+            'lgrAwardedTotal' => $lgrAwardedTotal,
+            'lgrWithdrawnTotal' => $lgrWithdrawnTotal,
+            'lgrWithdrawalBlocked' => $lgrWithdrawalBlocked,
+            'lgrRestrictionReason' => $user->lgr_restriction_reason ?? null,
             'totalEarnings' => $totalEarnings,
             'totalWithdrawals' => $totalWithdrawals,
             'recentTransactions' => $recentTransactions,

@@ -55,7 +55,12 @@ class UserManagementController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $query
-                ->select(['id', 'name', 'email', 'phone', 'status', 'current_professional_level', 'last_login_at', 'created_at'])
+                ->select([
+                    'id', 'name', 'email', 'phone', 'status', 'current_professional_level', 
+                    'last_login_at', 'created_at',
+                    'loyalty_points', 'loyalty_points_awarded_total', 'loyalty_points_withdrawn_total',
+                    'lgr_custom_withdrawable_percentage', 'lgr_withdrawal_blocked', 'lgr_restriction_reason'
+                ])
                 ->paginate(50)
                 ->withQueryString()
                 ->through(fn ($user) => [
@@ -67,7 +72,13 @@ class UserManagementController extends Controller
                     'role' => $user->roles->first()?->name ?? 'user',
                     'level' => $user->current_professional_level,
                     'created_at' => $user->created_at,
-                    'last_login_at' => $user->last_login_at
+                    'last_login_at' => $user->last_login_at,
+                    'loyalty_points' => $user->loyalty_points,
+                    'loyalty_points_awarded_total' => $user->loyalty_points_awarded_total,
+                    'loyalty_points_withdrawn_total' => $user->loyalty_points_withdrawn_total,
+                    'lgr_custom_withdrawable_percentage' => $user->lgr_custom_withdrawable_percentage,
+                    'lgr_withdrawal_blocked' => $user->lgr_withdrawal_blocked,
+                    'lgr_restriction_reason' => $user->lgr_restriction_reason,
                 ]),
             'roles' => \App\Models\Role::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'status', 'role', 'level', 'date_from', 'date_to', 'sort', 'direction']),
@@ -188,5 +199,25 @@ class UserManagementController extends Controller
         $user->syncRoles([$validated['role']]);
 
         return back()->with('success', 'Role assigned successfully');
+    }
+    
+    /**
+     * Update LGR withdrawal restrictions for a user
+     */
+    public function updateLgrRestrictions(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'lgr_withdrawal_blocked' => 'boolean',
+            'lgr_custom_withdrawable_percentage' => 'nullable|numeric|min:0|max:100',
+            'lgr_restriction_reason' => 'nullable|string|max:500'
+        ]);
+
+        $user->update([
+            'lgr_withdrawal_blocked' => $validated['lgr_withdrawal_blocked'] ?? false,
+            'lgr_custom_withdrawable_percentage' => $validated['lgr_custom_withdrawable_percentage'],
+            'lgr_restriction_reason' => $validated['lgr_restriction_reason']
+        ]);
+
+        return back()->with('success', 'LGR restrictions updated successfully');
     }
 }
