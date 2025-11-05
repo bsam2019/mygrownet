@@ -393,4 +393,29 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/export', [\App\Http\Controllers\Admin\SubscriptionController::class, 'export'])->name('export');
     });
 
+    // Organizational Structure Management
+    Route::prefix('organization')->name('organization.')->group(function () {
+        // Organizational Chart
+        Route::get('/', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'index'])->name('index');
+        Route::get('/positions/{position}', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'positionDetails'])->name('positions.show');
+        
+        // KPI Management
+        Route::get('/kpis', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'kpis'])->name('kpis.index');
+        Route::post('/kpis', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'storeKpi'])->name('kpis.store');
+        Route::patch('/kpis/{kpi}', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'updateKpi'])->name('kpis.update');
+        
+        // Employee KPI Tracking
+        Route::get('/employees/{employee}/kpis', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'employeeKpis'])->name('employees.kpis');
+        Route::post('/employees/{employee}/kpis', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'recordEmployeeKpi'])->name('employees.kpis.record');
+        
+        // Hiring Roadmap
+        Route::get('/hiring-roadmap', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'hiringRoadmap'])->name('hiring.index');
+        Route::post('/hiring-roadmap', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'storeHiringRoadmap'])->name('hiring.store');
+        Route::patch('/hiring-roadmap/{roadmap}', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'updateHiringRoadmap'])->name('hiring.update');
+        
+        // Position Responsibilities
+        Route::post('/positions/{position}/responsibilities', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'storeResponsibility'])->name('responsibilities.store');
+        Route::patch('/responsibilities/{responsibility}', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'updateResponsibility'])->name('responsibilities.update');
+    });
+
 });

@@ -32,6 +32,8 @@ class PositionModel extends Model
         'performance_commission_rate',
         'permissions',
         'level',
+        'organizational_level',
+        'reports_to_position_id',
         'is_active',
     ];
 
@@ -92,5 +94,57 @@ class PositionModel extends Model
     public function scopeWithEmployeeCount($query)
     {
         return $query->withCount('employees');
+    }
+
+    // Organizational structure relationships
+    public function reportsTo(): BelongsTo
+    {
+        return $this->belongsTo(PositionModel::class, 'reports_to_position_id');
+    }
+
+    public function directReports(): HasMany
+    {
+        return $this->hasMany(PositionModel::class, 'reports_to_position_id');
+    }
+
+    public function kpis(): HasMany
+    {
+        return $this->hasMany(\App\Models\PositionKpi::class, 'position_id');
+    }
+
+    public function responsibilities(): HasMany
+    {
+        return $this->hasMany(\App\Models\PositionResponsibility::class, 'position_id');
+    }
+
+    public function hiringRoadmap(): HasMany
+    {
+        return $this->hasMany(\App\Models\HiringRoadmap::class, 'position_id');
+    }
+
+    // Scopes for organizational levels
+    public function scopeCLevel($query)
+    {
+        return $query->where('organizational_level', 'c_level');
+    }
+
+    public function scopeDirector($query)
+    {
+        return $query->where('organizational_level', 'director');
+    }
+
+    public function scopeManager($query)
+    {
+        return $query->where('organizational_level', 'manager');
+    }
+
+    public function scopeTeamLead($query)
+    {
+        return $query->where('organizational_level', 'team_lead');
+    }
+
+    public function scopeIndividual($query)
+    {
+        return $query->where('organizational_level', 'individual');
     }
 }
