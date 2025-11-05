@@ -211,6 +211,9 @@ const selectedMember = ref<Member | null>(null);
 const showDropdown = ref(false);
 const processing = ref(false);
 
+// Debounce timer for preventing rapid submissions
+let lastSubmitTime = 0;
+
 const filteredMembers = computed(() => {
   if (!searchQuery.value) return props.eligibleMembers;
   
@@ -246,6 +249,31 @@ const submitAward = async () => {
     return;
   }
 
+  // Prevent double submission
+  if (processing.value) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Processing',
+      text: 'Award is already being processed. Please wait.',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    return;
+  }
+
+  // Prevent rapid submissions (minimum 3 seconds between awards)
+  const now = Date.now();
+  if (now - lastSubmitTime < 3000) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Please Wait',
+      text: 'Please wait a moment before submitting another award.',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    return;
+  }
+
   const result = await Swal.fire({
     title: 'Confirm Award',
     html: `Award <strong>K${form.amount}</strong> to <strong>${selectedMember.value.name}</strong>?`,
@@ -258,6 +286,8 @@ const submitAward = async () => {
   });
 
   if (!result.isConfirmed) return;
+
+  lastSubmitTime = now;
 
   console.log('Submitting form data:', {
     user_id: form.user_id,

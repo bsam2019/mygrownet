@@ -5,11 +5,17 @@ namespace App\Http\Controllers\MyGrowNet;
 use App\Http\Controllers\Controller;
 use App\Models\LgrSetting;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
+use App\Services\IdempotencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LgrTransferController extends Controller
 {
+    public function __construct(
+        private readonly IdempotencyService $idempotencyService
+    ) {}
+    
     public function store(Request $request)
     {
         $user = auth()->user();
@@ -50,8 +56,66 @@ class LgrTransferController extends Controller
             ]);
         }
 
-        DB::beginTransaction();
+        // Generate idempotency key based on user, amount, and timestamp (rounded to minute)
+        $timestamp = floor(time() / 60) * 60; // Round to nearest minute
+        $idempotencyKey = $this->idempotencyService->generateKey(
+            $user->id,
+            'lgr_transfer',
+            ['amount' => $amount, 'timestamp' => $timestamp]
+        );
+        
+        // Check if this exact transfer was already completed recently
+        if ($this->idempotencyService->wasCompleted($idempotencyKey)) {
+            Log::warning('Duplicate LGR transfer attempt detected', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            return redirect()->back()
+                ->with('info', 'This transfer was already processed. Please check your wallet.');
+        }
+        
+        // Check if transfer is currently in progress
+        if ($this->idempotencyService->isInProgress($idempotencyKey)) {
+            Log::warning('LGR transfer already in progress', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            return redirect()->back()
+                ->withErrors(['amount' => 'Transfer is already in progress. Please wait.']);
+        }
+
         try {
+            // Execute transfer with idempotency protection
+            $result = $this->idempotencyService->execute(
+                $idempotencyKey,
+                function () use ($user, $amount, $feePercentage) {
+                    return $this->executeTransfer($user, $amount, $feePercentage);
+                },
+                lockDuration: 30, // 30 seconds lock
+                keyTtl: 300 // Remember for 5 minutes
+            );
+            
+            return redirect()->back()
+                ->with('success', $result['message']);
+                
+        } catch (\Exception $e) {
+            Log::error('LGR Transfer Failed', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
+            return redirect()->back()->withErrors(['error' => 'Transfer failed: ' . $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Execute the actual transfer operation
+     */
+    private function executeTransfer($user, $amount, $feePercentage): array
+    {
+        return DB::transaction(function () use ($user, $amount, $feePercentage) {
             $fee = ($amount * $feePercentage) / 100;
             $netAmount = $amount - $fee;
 
@@ -85,8 +149,6 @@ class LgrTransferController extends Controller
                 'updated_at' => now(),
             ]);
 
-            DB::commit();
-
             try {
                 $notificationService = app(SendNotificationUseCase::class);
                 $notificationService->execute(
@@ -102,16 +164,15 @@ class LgrTransferController extends Controller
                     ]
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send notification', ['error' => $e->getMessage()]);
+                Log::warning('Failed to send notification', ['error' => $e->getMessage()]);
             }
 
-            return redirect()->back()
-                ->with('success', "Successfully transferred K{$netAmount} to your wallet");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('LGR Transfer Failed', ['error' => $e->getMessage()]);
-            return redirect()->back()->withErrors(['error' => 'Transfer failed: ' . $e->getMessage()]);
-        }
+            return [
+                'success' => true,
+                'message' => "Successfully transferred K{$netAmount} to your wallet",
+                'net_amount' => $netAmount,
+                'fee' => $fee,
+            ];
+        });
     }
 }

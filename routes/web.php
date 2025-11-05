@@ -470,6 +470,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/wallet/check-withdrawal-limit', [App\Http\Controllers\MyGrowNet\WalletController::class, 'checkWithdrawalLimit'])->name('wallet.check-withdrawal-limit');
         Route::post('/wallet/lgr-transfer', [App\Http\Controllers\MyGrowNet\LgrTransferController::class, 'store'])->name('wallet.lgr-transfer');
         
+        // Loan Application Routes
+        Route::get('/loans', [App\Http\Controllers\MyGrowNet\LoanApplicationController::class, 'index'])->name('loans.index');
+        Route::post('/loans/apply', [App\Http\Controllers\MyGrowNet\LoanApplicationController::class, 'store'])->name('loans.apply');
+        
         // Earnings Hub - Central page for all earnings
         Route::get('/my-earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'hub'])->name('earnings.hub');
         Route::get('/earnings', [App\Http\Controllers\MyGrowNet\EarningsController::class, 'index'])->name('earnings.index');

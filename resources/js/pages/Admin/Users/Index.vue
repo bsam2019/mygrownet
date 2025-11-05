@@ -13,6 +13,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import LgrRestrictionModal from '@/components/Admin/LgrRestrictionModal.vue'
 import LoanModal from '@/components/Admin/LoanModal.vue'
+import LoanLimitModal from '@/components/Admin/LoanLimitModal.vue'
 
 const page = usePage()
 const props = defineProps({
@@ -67,6 +68,7 @@ const filters = ref({
 const showFilters = ref(false)
 const showLgrModal = ref(false)
 const showLoanModal = ref(false)
+const showLoanLimitModal = ref(false)
 const showMobileActionsModal = ref(false)
 const selectedUser = ref(null)
 
@@ -155,6 +157,21 @@ const openLgrModal = (user) => {
 
 const closeLgrModal = () => {
   showLgrModal.value = false
+  selectedUser.value = null
+}
+
+const openLoanLimitModal = (user) => {
+  router.get(route('admin.users.index'), filters.value, {
+    preserveState: true,
+    preserveScroll: true,
+    only: ['users']
+  })
+  selectedUser.value = user
+  showLoanLimitModal.value = true
+}
+
+const closeLoanLimitModal = () => {
+  showLoanLimitModal.value = false
   selectedUser.value = null
 }
 
@@ -436,6 +453,12 @@ const impersonateUser = (userId) => {
                       Loan
                     </button>
                     <button 
+                      @click="openLoanLimitModal(user)"
+                      class="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                      title="Set Loan Limit">
+                      Limit
+                    </button>
+                    <button 
                       v-if="user.role !== 'admin'"
                       @click="impersonateUser(user.id)"
                       class="px-3 py-1 text-sm text-white bg-amber-600 rounded hover:bg-amber-700">
@@ -694,5 +717,13 @@ const impersonateUser = (userId) => {
           </div>
         </div>
     </div>
+    
+    <!-- Loan Limit Modal -->
+    <LoanLimitModal
+      :show="showLoanLimitModal"
+      :user="selectedUser"
+      @close="closeLoanLimitModal"
+      @updated="closeLoanLimitModal"
+    />
   </AdminLayout>
 </template>

@@ -57,9 +57,10 @@ class UserManagementController extends Controller
             'users' => $query
                 ->select([
                     'id', 'name', 'email', 'phone', 'status', 'current_professional_level', 
-                    'last_login_at', 'created_at',
+                    'last_login_at', 'created_at', 'starter_kit_tier',
                     'loyalty_points', 'loyalty_points_awarded_total', 'loyalty_points_withdrawn_total',
-                    'lgr_custom_withdrawable_percentage', 'lgr_withdrawal_blocked', 'lgr_restriction_reason'
+                    'lgr_custom_withdrawable_percentage', 'lgr_withdrawal_blocked', 'lgr_restriction_reason',
+                    'loan_balance', 'loan_limit'
                 ])
                 ->paginate(50)
                 ->withQueryString()
@@ -79,6 +80,9 @@ class UserManagementController extends Controller
                     'lgr_custom_withdrawable_percentage' => $user->lgr_custom_withdrawable_percentage,
                     'lgr_withdrawal_blocked' => $user->lgr_withdrawal_blocked,
                     'lgr_restriction_reason' => $user->lgr_restriction_reason,
+                    'starter_kit_tier' => $user->starter_kit_tier,
+                    'loan_balance' => $user->loan_balance,
+                    'loan_limit' => $user->loan_limit,
                 ]),
             'roles' => \App\Models\Role::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'status', 'role', 'level', 'date_from', 'date_to', 'sort', 'direction']),
@@ -219,5 +223,28 @@ class UserManagementController extends Controller
         ]);
 
         return back()->with('success', 'LGR restrictions updated successfully');
+    }
+    
+    /**
+     * Update loan limit for a user
+     */
+    public function updateLoanLimit(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'loan_limit' => 'required|numeric|min:0|max:50000',
+        ]);
+
+        $user->update([
+            'loan_limit' => $validated['loan_limit'],
+        ]);
+        
+        \Log::info('Loan limit updated', [
+            'user_id' => $user->id,
+            'old_limit' => $user->getOriginal('loan_limit'),
+            'new_limit' => $validated['loan_limit'],
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return back()->with('success', "Loan limit updated to K" . number_format($validated['loan_limit'], 2));
     }
 }

@@ -20,7 +20,127 @@ class LoanManagementController extends Controller
      */
     public function index()
     {
-        return Inertia::render('Admin/Loans/Index');
+        // Get pending loan applications
+        $pendingApplications = \DB::table('loan_applications')
+            ->join('users', 'loan_applications.user_id', '=', 'users.id')
+            ->where('loan_applications.status', 'pending')
+            ->select(
+                'loan_applications.*',
+                'users.name as user_name',
+                'users.email as user_email',
+                'users.phone as user_phone',
+                'users.loan_balance',
+                'users.loan_limit'
+            )
+            ->orderByDesc('loan_applications.created_at')
+            ->get();
+        
+        return Inertia::render('Admin/Loans/Index', [
+            'pendingApplications' => $pendingApplications,
+        ]);
+    }
+    
+    /**
+     * Approve a loan application
+     */
+    public function approveApplication(Request $request, int $applicationId)
+    {
+        $application = \DB::table('loan_applications')->find($applicationId);
+        
+        if (!$application || $application->status !== 'pending') {
+            return back()->withErrors(['error' => 'Application not found or already processed']);
+        }
+        
+        $user = User::find($application->user_id);
+        
+        try {
+            \DB::beginTransaction();
+            
+            // Issue the loan
+            $this->loanService->issueLoan(
+                member: $user,
+                amount: LoanAmount::fromFloat($application->amount),
+                issuedBy: $request->user(),
+                notes: "Approved from application #{$applicationId}"
+            );
+            
+            // Update application status
+            \DB::table('loan_applications')
+                ->where('id', $applicationId)
+                ->update([
+                    'status' => 'approved',
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            
+            \DB::commit();
+            
+            return back()->with('success', "Loan approved and issued to {$user->name}");
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Failed to approve loan application', [
+                'application_id' => $applicationId,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->withErrors(['error' => 'Failed to approve application: ' . $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Reject a loan application
+     */
+    public function rejectApplication(Request $request, int $applicationId)
+    {
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|min:10|max:500',
+        ]);
+        
+        $application = \DB::table('loan_applications')->find($applicationId);
+        
+        if (!$application || $application->status !== 'pending') {
+            return back()->withErrors(['error' => 'Application not found or already processed']);
+        }
+        
+        try {
+            // Update application status
+            \DB::table('loan_applications')
+                ->where('id', $applicationId)
+                ->update([
+                    'status' => 'rejected',
+                    'reviewed_by' => $request->user()->id,
+                    'reviewed_at' => now(),
+                    'rejection_reason' => $validated['rejection_reason'],
+                    'updated_at' => now(),
+                ]);
+            
+            // Notify user
+            $user = User::find($application->user_id);
+            $notificationService = app(\App\Application\Notification\UseCases\SendNotificationUseCase::class);
+            $notificationService->execute(
+                userId: $user->id,
+                type: 'loan.application.rejected',
+                data: [
+                    'title' => 'Loan Application Rejected',
+                    'message' => "Your loan application for K{$application->amount} has been rejected. Reason: {$validated['rejection_reason']}",
+                    'amount' => 'K' . number_format($application->amount, 2),
+                    'reason' => $validated['rejection_reason'],
+                    'action_url' => route('mygrownet.loans.index'),
+                    'action_text' => 'View Details',
+                    'priority' => 'normal'
+                ]
+            );
+            
+            return back()->with('success', 'Loan application rejected');
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to reject loan application', [
+                'application_id' => $applicationId,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->withErrors(['error' => 'Failed to reject application: ' . $e->getMessage()]);
+        }
     }
 
     /**

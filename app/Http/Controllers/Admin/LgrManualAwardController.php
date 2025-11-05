@@ -6,13 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\LgrManualAward;
 use App\Models\User;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
+use App\Services\IdempotencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LgrManualAwardController extends Controller
 {
+    public function __construct(
+        private readonly IdempotencyService $idempotencyService
+    ) {}
+    
     public function index(): Response
     {
         $awards = LgrManualAward::with(['user', 'awardedBy'])
@@ -84,7 +90,7 @@ class LgrManualAwardController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('LGR Award Request Received', $request->all());
+        Log::info('LGR Award Request Received', $request->all());
         
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -93,20 +99,87 @@ class LgrManualAwardController extends Controller
             'reason' => 'required|string|min:10|max:500',
         ]);
 
-        \Log::info('LGR Award Validated', $validated);
+        Log::info('LGR Award Validated', $validated);
 
         // Verify user is premium
         $user = User::findOrFail($validated['user_id']);
-        \Log::info('User Found', ['id' => $user->id, 'tier' => $user->starter_kit_tier]);
+        Log::info('User Found', ['id' => $user->id, 'tier' => $user->starter_kit_tier]);
         
         if ($user->starter_kit_tier !== 'premium') {
-            \Log::warning('User not premium', ['user_id' => $user->id, 'tier' => $user->starter_kit_tier]);
+            Log::warning('User not premium', ['user_id' => $user->id, 'tier' => $user->starter_kit_tier]);
             return back()->withErrors(['user_id' => 'Only premium members are eligible for LGR awards']);
         }
 
-        DB::beginTransaction();
+        // Generate idempotency key based on admin, user, amount, and timestamp
+        $timestamp = floor(time() / 60) * 60; // Round to nearest minute
+        $idempotencyKey = $this->idempotencyService->generateKey(
+            auth()->id(),
+            'lgr_manual_award',
+            [
+                'user_id' => $validated['user_id'],
+                'amount' => $validated['amount'],
+                'timestamp' => $timestamp
+            ]
+        );
+        
+        // Check if this exact award was already processed recently
+        if ($this->idempotencyService->wasCompleted($idempotencyKey)) {
+            Log::warning('Duplicate LGR award attempt detected', [
+                'admin_id' => auth()->id(),
+                'user_id' => $validated['user_id'],
+                'amount' => $validated['amount'],
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            return redirect()
+                ->route('admin.lgr.awards.index')
+                ->with('info', 'This award was already processed. Please check the awards list.');
+        }
+        
+        // Check if award is currently in progress
+        if ($this->idempotencyService->isInProgress($idempotencyKey)) {
+            Log::warning('LGR award already in progress', [
+                'admin_id' => auth()->id(),
+                'user_id' => $validated['user_id'],
+                'amount' => $validated['amount'],
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            return back()->withErrors(['error' => 'Award is already being processed. Please wait.']);
+        }
+
         try {
-            \Log::info('Starting transaction');
+            // Execute award with idempotency protection
+            $result = $this->idempotencyService->execute(
+                $idempotencyKey,
+                function () use ($user, $validated) {
+                    return $this->executeAward($user, $validated);
+                },
+                lockDuration: 30, // 30 seconds lock
+                keyTtl: 300 // Remember for 5 minutes
+            );
+            
+            return redirect()
+                ->route('admin.lgr.awards.index')
+                ->with('success', $result['message']);
+                
+        } catch (\Exception $e) {
+            Log::error('LGR Award Failed', [
+                'admin_id' => auth()->id(),
+                'user_id' => $validated['user_id'],
+                'amount' => $validated['amount'],
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Failed to process award: ' . $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Execute the actual award operation
+     */
+    private function executeAward(User $user, array $validated): array
+    {
+        return DB::transaction(function () use ($user, $validated) {
+            Log::info('Starting award transaction');
             
             // Create award record
             $award = LgrManualAward::create([
@@ -119,7 +192,7 @@ class LgrManualAwardController extends Controller
                 'credited_at' => now(),
             ]);
 
-            \Log::info('Award created', ['award_id' => $award->id]);
+            Log::info('Award created', ['award_id' => $award->id]);
 
             // Credit to user's loyalty points and track total awarded
             $oldBalance = $user->loyalty_points;
@@ -127,7 +200,7 @@ class LgrManualAwardController extends Controller
             $user->increment('loyalty_points_awarded_total', $validated['amount']);
             $user->refresh();
             
-            \Log::info('User balance updated', [
+            Log::info('User balance updated', [
                 'user_id' => $user->id,
                 'old_balance' => $oldBalance,
                 'new_balance' => $user->loyalty_points,
@@ -146,7 +219,7 @@ class LgrManualAwardController extends Controller
                 'updated_at' => now(),
             ]);
 
-            \Log::info('Transaction created', ['transaction_id' => $transactionId]);
+            Log::info('Transaction created', ['transaction_id' => $transactionId]);
 
             // Send notification to user
             try {
@@ -165,30 +238,23 @@ class LgrManualAwardController extends Controller
                         'priority' => 'high'
                     ]
                 );
-                \Log::info('Notification sent to user', ['user_id' => $user->id]);
+                Log::info('Notification sent to user', ['user_id' => $user->id]);
             } catch (\Exception $e) {
-                \Log::warning('Failed to send notification', [
+                Log::warning('Failed to send notification', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage()
                 ]);
                 // Don't fail the award if notification fails
             }
 
-            DB::commit();
-            \Log::info('Transaction committed successfully');
-
-            return redirect()
-                ->route('admin.lgr.awards.index')
-                ->with('success', "Successfully awarded K{$validated['amount']} to {$user->name}");
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('LGR Award Failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->withErrors(['error' => 'Failed to process award: ' . $e->getMessage()]);
-        }
+            Log::info('Award transaction committed successfully');
+            
+            return [
+                'success' => true,
+                'message' => "Successfully awarded K{$validated['amount']} to {$user->name}",
+                'award_id' => $award->id,
+            ];
+        });
     }
 
     public function show(LgrManualAward $award): Response

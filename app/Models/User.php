@@ -170,6 +170,7 @@ class User extends Authenticatable
         'starter_kit_credit_expiry',
         // Loan fields
         'loan_balance',
+        'loan_limit',
         'total_loan_issued',
         'total_loan_repaid',
         'loan_issued_at',

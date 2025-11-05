@@ -115,6 +115,10 @@ const acceptPolicy = () => {
     });
 };
 
+// Debounce timer for preventing rapid submissions
+let transferDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let lastTransferTime = 0;
+
 const submitLgrTransfer = () => {
     if (transferAmount.value <= 0) {
         showNotification('Please enter a valid amount', 'warning');
@@ -131,6 +135,20 @@ const submitLgrTransfer = () => {
         return;
     }
     
+    // Prevent double submission
+    if (transferProcessing.value) {
+        showNotification('Transfer is already in progress. Please wait.', 'warning');
+        return;
+    }
+    
+    // Prevent rapid submissions (minimum 3 seconds between transfers)
+    const now = Date.now();
+    if (now - lastTransferTime < 3000) {
+        showNotification('Please wait a moment before submitting another transfer.', 'warning');
+        return;
+    }
+    lastTransferTime = now;
+    
     transferProcessing.value = true;
     
     router.post(route('mygrownet.wallet.lgr-transfer'), {
@@ -141,11 +159,18 @@ const submitLgrTransfer = () => {
             console.log('Transfer success:', page);
             showLgrTransferModal.value = false;
             transferAmount.value = 0;
-            transferProcessing.value = false;
+            
+            // Reset processing state after a delay to prevent rapid resubmission
+            if (transferDebounceTimer) {
+                clearTimeout(transferDebounceTimer);
+            }
+            transferDebounceTimer = setTimeout(() => {
+                transferProcessing.value = false;
+            }, 2000); // 2 second cooldown
         },
         onError: (errors) => {
             console.error('Transfer error:', errors);
-            alert('Transfer failed: ' + (errors.amount || errors.error || 'Unknown error'));
+            showNotification('Transfer failed: ' + (errors.amount || errors.error || 'Unknown error'), 'error');
             transferProcessing.value = false;
         }
     });
@@ -490,6 +515,53 @@ const formatCurrency = (amount: number | undefined | null) => {
                     >
                         History
                     </Link>
+                </div>
+            </div>
+
+            <!-- Loan Application Card -->
+            <div class="mb-6 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold mb-2">Need Financial Support?</h3>
+                        <p class="text-purple-100 text-sm mb-4">
+                            Apply for a short-term loan to support your business growth. Interest-free for premium members!
+                        </p>
+                        <div class="flex flex-wrap gap-2 text-xs text-purple-100 mb-4">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Interest-free
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Quick approval
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Flexible repayment
+                            </span>
+                        </div>
+                        <Link
+                            :href="route('mygrownet.loans.index')"
+                            class="inline-flex items-center gap-2 bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-all shadow-md"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Apply for Loan
+                        </Link>
+                    </div>
+                    <div class="hidden sm:block">
+                        <svg class="w-24 h-24 text-purple-300 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
                 </div>
             </div>
 
@@ -846,7 +918,7 @@ const formatCurrency = (amount: number | undefined | null) => {
                 <button
                     @click="submitLgrTransfer"
                     :disabled="transferProcessing || transferAmount <= 0"
-                    class="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white rounded-lg hover:from-yellow-600 hover:to-amber-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     <span v-if="transferProcessing">Processing...</span>
                     <span v-else>Transfer</span>

@@ -12,6 +12,85 @@
           </p>
         </div>
 
+        <!-- Pending Applications -->
+        <div v-if="pendingApplications && pendingApplications.length > 0" class="mb-6 bg-white rounded-lg shadow overflow-hidden">
+          <div class="bg-amber-50 px-6 py-4 border-b border-amber-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-amber-900">Pending Loan Applications</h2>
+                <p class="text-sm text-amber-700 mt-1">{{ pendingApplications.length }} application(s) awaiting review</p>
+              </div>
+              <span class="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                {{ pendingApplications.length }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Member</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Repayment Plan</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Loan</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="app in pendingApplications" :key="app.id" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ formatDate(app.created_at) }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">{{ app.user_name }}</div>
+                    <div class="text-sm text-gray-500">{{ app.user_email }}</div>
+                    <div class="text-xs text-gray-400">{{ app.user_phone }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-bold text-gray-900">K{{ formatNumber(app.amount) }}</div>
+                    <div class="text-xs text-gray-500">Limit: K{{ formatNumber(app.loan_limit) }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {{ app.repayment_plan.replace('_', ' ') }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                    <div class="truncate" :title="app.purpose">
+                      {{ app.purpose }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span v-if="app.loan_balance > 0" class="text-red-600 font-medium">
+                      K{{ formatNumber(app.loan_balance) }}
+                    </span>
+                    <span v-else class="text-green-600">
+                      None
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <div class="flex gap-2">
+                      <button
+                        @click="approveApplication(app)"
+                        class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        @click="rejectApplication(app)"
+                        class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div class="bg-white rounded-lg shadow p-4">
@@ -141,9 +220,17 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+
+const props = defineProps({
+  pendingApplications: {
+    type: Array,
+    default: () => []
+  }
+});
 
 const loans = ref([]);
 const stats = ref({
@@ -180,6 +267,86 @@ const loadLoans = async () => {
     };
   } catch (error) {
     console.error('Failed to load loans:', error);
+  }
+};
+
+const approveApplication = async (application) => {
+  const result = await Swal.fire({
+    title: 'Approve Loan Application?',
+    html: `
+      <div class="text-left">
+        <p class="mb-2"><strong>Member:</strong> ${application.user_name}</p>
+        <p class="mb-2"><strong>Amount:</strong> K${parseFloat(application.amount).toFixed(2)}</p>
+        <p class="mb-2"><strong>Purpose:</strong> ${application.purpose}</p>
+        <p class="text-sm text-gray-600 mt-3">This will issue the loan immediately and credit the member's wallet.</p>
+      </div>
+    `,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#10b981',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Yes, Approve',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (result.isConfirmed) {
+    router.post(route('admin.loans.applications.approve', application.id), {}, {
+      preserveScroll: true,
+      onSuccess: () => {
+        Swal.fire('Approved!', 'Loan has been issued to the member.', 'success');
+        // Reload both pending applications and loans list
+        loadLoans();
+        router.reload({ only: ['pendingApplications'] });
+      },
+      onError: (errors) => {
+        Swal.fire('Error', errors.error || 'Failed to approve application', 'error');
+      }
+    });
+  }
+};
+
+const rejectApplication = async (application) => {
+  const { value: reason } = await Swal.fire({
+    title: 'Reject Loan Application',
+    html: `
+      <div class="text-left mb-3">
+        <p class="mb-2"><strong>Member:</strong> ${application.user_name}</p>
+        <p class="mb-2"><strong>Amount:</strong> K${parseFloat(application.amount).toFixed(2)}</p>
+      </div>
+    `,
+    input: 'textarea',
+    inputLabel: 'Rejection Reason',
+    inputPlaceholder: 'Explain why this application is being rejected...',
+    inputAttributes: {
+      'aria-label': 'Rejection reason',
+      'rows': 3
+    },
+    showCancelButton: true,
+    confirmButtonColor: '#dc2626',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: 'Reject Application',
+    cancelButtonText: 'Cancel',
+    inputValidator: (value) => {
+      if (!value || value.length < 10) {
+        return 'Please provide a detailed reason (minimum 10 characters)';
+      }
+    }
+  });
+
+  if (reason) {
+    router.post(route('admin.loans.applications.reject', application.id), {
+      rejection_reason: reason
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        Swal.fire('Rejected', 'Application has been rejected and member notified.', 'success');
+        // Reload pending applications list
+        router.reload({ only: ['pendingApplications'] });
+      },
+      onError: (errors) => {
+        Swal.fire('Error', errors.error || 'Failed to reject application', 'error');
+      }
+    });
   }
 };
 

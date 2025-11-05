@@ -62,6 +62,7 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::patch('users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::post('users/{user}/update-password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
     Route::post('users/{user}/lgr-restrictions', [UserManagementController::class, 'updateLgrRestrictions'])->name('users.lgr-restrictions');
+    Route::post('users/{user}/loan-limit', [UserManagementController::class, 'updateLoanLimit'])->name('users.loan-limit');
     Route::resource('users', UserManagementController::class)->names('users');
     
     // Loan management
@@ -69,6 +70,8 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::post('loans/{user}/issue', [LoanManagementController::class, 'issueLoan'])->name('loans.issue');
     Route::get('loans/{user}/summary', [LoanManagementController::class, 'getLoanSummary'])->name('loans.summary');
     Route::get('loans/members-with-loans', [LoanManagementController::class, 'getMembersWithLoans'])->name('loans.members');
+    Route::post('loans/applications/{application}/approve', [LoanManagementController::class, 'approveApplication'])->name('loans.applications.approve');
+    Route::post('loans/applications/{application}/reject', [LoanManagementController::class, 'rejectApplication'])->name('loans.applications.reject');
 
     // User profile management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
