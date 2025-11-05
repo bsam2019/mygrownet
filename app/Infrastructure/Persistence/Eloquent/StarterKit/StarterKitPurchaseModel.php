@@ -15,6 +15,7 @@ class StarterKitPurchaseModel extends Model
 
     protected $fillable = [
         'user_id',
+        'tier',
         'amount',
         'payment_method',
         'payment_reference',

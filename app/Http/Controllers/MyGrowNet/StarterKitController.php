@@ -238,6 +238,12 @@ class StarterKitController extends Controller
         
         $user = $request->user();
         
+        \Log::info('Starter Kit purchase request', [
+            'user_id' => $user->id,
+            'tier' => $validated['tier'],
+            'payment_method' => $validated['payment_method'],
+        ]);
+        
         try {
             // Update terms acceptance
             $user->update([

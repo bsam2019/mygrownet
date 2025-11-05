@@ -39,6 +39,7 @@ class WalletService
      * 2. Profit shares
      * 3. Wallet topups (verified payments)
      * 4. Wallet topups from transactions table (LGR transfers, etc.)
+     * 5. Loan disbursements
      * 
      * @param User $user
      * @return float
@@ -64,7 +65,14 @@ class WalletService
             ->where('status', 'completed')
             ->sum('amount');
         
-        return $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups;
+        // Include loan disbursements
+        $loanDisbursements = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'loan_disbursement')
+            ->where('status', 'completed')
+            ->sum('amount');
+        
+        return $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups + $loanDisbursements;
     }
     
     /**
@@ -75,6 +83,7 @@ class WalletService
      * 2. Workshop registrations paid via wallet
      * 3. Transaction expenses (from transactions table)
      * 4. Starter kit purchases paid via wallet
+     * 5. Loan repayments
      * 
      * @param User $user
      * @return float
@@ -106,7 +115,14 @@ class WalletService
             ->where('status', 'completed')
             ->sum('amount');
         
-        return $totalWithdrawals + $workshopExpenses + $transactionExpenses + $starterKitExpenses;
+        // Loan repayments
+        $loanRepayments = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'loan_repayment')
+            ->where('status', 'completed')
+            ->sum('amount');
+        
+        return $totalWithdrawals + $workshopExpenses + $transactionExpenses + $starterKitExpenses + $loanRepayments;
     }
     
     /**
@@ -128,6 +144,11 @@ class WalletService
             ->where('transaction_type', 'wallet_topup')
             ->where('status', 'completed')
             ->sum('amount');
+        $loanDisbursements = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'loan_disbursement')
+            ->where('status', 'completed')
+            ->sum('amount');
         
         $totalWithdrawals = (float) $user->withdrawals()->where('status', 'approved')->sum('amount');
         $workshopExpenses = (float) \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
@@ -139,19 +160,26 @@ class WalletService
             ->where('payment_method', 'wallet')
             ->where('status', 'completed')
             ->sum('amount');
+        $loanRepayments = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'loan_repayment')
+            ->where('status', 'completed')
+            ->sum('amount');
         
         return [
             'earnings' => [
                 'commissions' => $commissionEarnings,
                 'profit_shares' => $profitEarnings,
                 'topups' => $walletTopups + $transactionTopups,
-                'total' => $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups,
+                'loans' => $loanDisbursements,
+                'total' => $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups + $loanDisbursements,
             ],
             'expenses' => [
                 'withdrawals' => $totalWithdrawals,
                 'workshops' => $workshopExpenses,
                 'starter_kits' => $starterKitExpenses,
-                'total' => $totalWithdrawals + $workshopExpenses + $starterKitExpenses,
+                'loan_repayments' => $loanRepayments,
+                'total' => $totalWithdrawals + $workshopExpenses + $starterKitExpenses + $loanRepayments,
             ],
             'balance' => $this->calculateBalance($user),
         ];

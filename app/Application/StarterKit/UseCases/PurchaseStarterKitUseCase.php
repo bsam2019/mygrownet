@@ -19,7 +19,8 @@ class PurchaseStarterKitUseCase
 
     public function __construct(
         private readonly PurchasePolicy $purchasePolicy,
-        private readonly StarterKitService $starterKitService // Keep for now, will refactor later
+        private readonly StarterKitService $starterKitService, // Keep for now, will refactor later
+        private readonly \App\Services\WalletService $walletService
     ) {}
 
     public function execute(
@@ -32,8 +33,8 @@ class PurchaseStarterKitUseCase
         $priceKwacha = $tier === 'premium' ? 1000 : 500;
         $price = Money::fromKwacha($priceKwacha);
         
-        // Calculate wallet balance dynamically
-        $walletBalanceKwacha = $this->calculateWalletBalance($user);
+        // Calculate wallet balance using WalletService (includes loan transactions)
+        $walletBalanceKwacha = (int) $this->walletService->calculateBalance($user);
         $walletBalance = Money::fromKwacha($walletBalanceKwacha);
 
         // Check if purchase is allowed
@@ -64,28 +65,7 @@ class PurchaseStarterKitUseCase
         return $this->createPendingPurchase($user, $price, $paymentMethod, $paymentReference, $tier);
     }
 
-    private function calculateWalletBalance(User $user): int
-    {
-        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
-        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
-        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
-            ->where('payment_type', 'wallet_topup')
-            ->where('status', 'verified')
-            ->sum('amount') ?? 0);
-        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
-        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
-        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-            ->sum('workshops.price') ?? 0);
-        $transactionExpenses = (float) (\Illuminate\Support\Facades\DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->where('transaction_type', 'withdrawal')
-            ->sum('amount') ?? 0);
-        
-        return (int) ($totalEarnings - $totalWithdrawals - $workshopExpenses - $transactionExpenses);
-    }
+
 
     private function processWalletPayment(User $user, Money $price, string $tier): array
     {

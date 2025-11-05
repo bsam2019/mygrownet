@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 class StarterKitService
 {
     public function __construct(
-        private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService
+        private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService,
+        private readonly WalletService $walletService
     ) {}
     
     /**
@@ -53,26 +54,26 @@ class StarterKitService
         string $paymentReference = null,
         string $tier = self::TIER_BASIC
     ): StarterKitPurchaseModel {
+        Log::info('StarterKitService::purchaseStarterKit called', [
+            'user_id' => $user->id,
+            'tier' => $tier,
+            'payment_method' => $paymentMethod,
+        ]);
+        
         return DB::transaction(function () use ($user, $paymentMethod, $paymentReference, $tier) {
             // Get price based on tier
             $price = $tier === self::TIER_PREMIUM ? self::PRICE_PREMIUM : self::PRICE_BASIC;
             $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+            
+            Log::info('Tier pricing calculated', [
+                'tier' => $tier,
+                'price' => $price,
+                'shop_credit' => $shopCredit,
+            ]);
             // Handle wallet payment
             if ($paymentMethod === 'wallet') {
-                // Calculate current wallet balance
-                $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
-                $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
-                $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
-                    ->where('payment_type', 'wallet_topup')
-                    ->where('status', 'verified')
-                    ->sum('amount') ?? 0);
-                $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
-                $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
-                $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-                    ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-                    ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-                    ->sum('workshops.price') ?? 0);
-                $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+                // Calculate current wallet balance using WalletService (includes loan transactions)
+                $walletBalance = $this->walletService->calculateBalance($user);
                 
                 if ($walletBalance < $price) {
                     throw new \Exception('Insufficient wallet balance');
@@ -116,6 +117,8 @@ class StarterKitService
                 'user_id' => $user->id,
                 'invoice' => $purchase->invoice_number,
                 'payment_method' => $paymentMethod,
+                'tier' => $tier,
+                'amount' => $price,
             ]);
             
             // For wallet payments, complete the purchase immediately

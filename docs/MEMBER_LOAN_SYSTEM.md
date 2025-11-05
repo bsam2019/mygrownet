@@ -453,3 +453,22 @@ For questions or issues:
 
 **Implementation Complete** ✅  
 Simple, effective loan system using DDD principles.
+
+
+## Changelog
+
+### 2025-11-05
+- **Fixed wallet balance calculation** - Updated `WalletService` to include loan transactions
+- Loan disbursements now properly added to wallet earnings
+- Loan repayments now properly deducted from wallet balance
+- **Fixed starter kit purchase** - Updated `StarterKitService` and `PurchaseStarterKitUseCase` to use centralized `WalletService`
+- All wallet balance calculations now go through single source of truth
+- Starter kit purchases now work correctly with loan funds
+- **Fixed starter kit tier bug** - Added `tier` to `StarterKitPurchaseModel` fillable array (users were being charged for Premium but receiving Basic)
+
+### 2025-11-04
+- Initial implementation of Member Loan System
+- Created domain-driven design structure
+- Implemented admin interface with loan management
+- Added automatic repayment system
+- Integrated notification system
