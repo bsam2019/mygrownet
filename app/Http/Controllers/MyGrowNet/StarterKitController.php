@@ -194,20 +194,9 @@ class StarterKitController extends Controller
                 ->with('info', 'You already have the Starter Kit!');
         }
         
-        // Calculate wallet balance (same logic as WalletController)
-        $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
-        $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
-        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
-            ->where('payment_type', 'wallet_topup')
-            ->where('status', 'verified')
-            ->sum('amount') ?? 0);
-        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
-        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
-        $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-            ->sum('workshops.price') ?? 0);
-        $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+        // Calculate wallet balance using WalletService for consistency
+        $walletService = app(\App\Services\WalletService::class);
+        $walletBalance = $walletService->calculateBalance($user);
         
         // Load content items from database
         $contentItems = ContentItemModel::active()
