@@ -26,7 +26,7 @@ class WalletController extends Controller
         $walletTopups = $breakdown['earnings']['topups'];
         $totalWithdrawals = $breakdown['expenses']['withdrawals'];
         $workshopExpenses = $breakdown['expenses']['workshops'];
-        $starterKitExpenses = $breakdown['expenses']['starter_kits'];
+        // Note: starter_kits removed - already included in withdrawals
         
         // Get verification limits
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
@@ -125,6 +125,7 @@ class WalletController extends Controller
             'profitEarnings' => $profitEarnings,
             'walletTopups' => $walletTopups,
             'workshopExpenses' => $workshopExpenses,
+            'starterKitExpenses' => 0, // Deprecated - now included in withdrawals
             'verificationLevel' => $user->verification_level ?? 'basic',
             'verificationLimits' => $limits,
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
