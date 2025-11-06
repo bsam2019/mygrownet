@@ -243,17 +243,27 @@ class StarterKitService
     
     /**
      * Process MLM commissions for starter kit purchase
+     * 
+     * IMPORTANT: Commissions are always based on K500, regardless of tier.
+     * - Basic tier (K500): Commission on K500
+     * - Premium tier (K1000): Commission on K500 only (extra K500 is for content, not commissionable)
      */
     protected function processStarterKitCommissions(User $user, float $amount): void
     {
         try {
+            // Always use K500 as the commission base, regardless of actual purchase amount
+            $commissionableAmount = 500.00;
+            
             $mlmService = app(MLMCommissionService::class);
-            $commissions = $mlmService->processMLMCommissions($user, $amount, 'starter_kit');
+            $commissions = $mlmService->processMLMCommissions($user, $commissionableAmount, 'starter_kit');
             
             Log::info('Starter kit commissions processed', [
                 'user_id' => $user->id,
+                'purchase_amount' => $amount,
+                'commissionable_amount' => $commissionableAmount,
                 'commissions_count' => count($commissions),
                 'total_commission' => collect($commissions)->sum('amount'),
+                'note' => 'Commissions based on K500 base amount only',
             ]);
         } catch (\Exception $e) {
             // Log but don't fail the purchase if commission processing fails
@@ -423,11 +433,17 @@ class StarterKitService
     /**
      * Award registration bonus points.
      * This includes starter kit bonus + retroactive referral bonuses.
+     * 
+     * IMPORTANT: 
+     * - Basic tier (K500): 25 LP
+     * - Premium tier (K1000): 50 LP (member gets full points for their investment)
+     * - BUT referral commissions to uplines are ALWAYS based on K500 only
      */
     protected function awardRegistrationBonus(User $user): void
     {
         // 1. Award LP for starter kit purchase based on tier
         // Basic (K500) = 25 LP, Premium (K1000) = 50 LP
+        // Member gets full points for their investment
         $lpAmount = $user->starter_kit_tier === 'premium' ? 50 : 25;
         
         DB::table('point_transactions')->insert([
@@ -446,6 +462,7 @@ class StarterKitService
             'user_id' => $user->id,
             'tier' => $user->starter_kit_tier,
             'lp_awarded' => $lpAmount,
+            'note' => 'Member receives full LP for their tier, but upline commissions based on K500 only',
         ]);
 
         // 2. Award retroactive points for existing verified referrals

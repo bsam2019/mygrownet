@@ -191,25 +191,48 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     })->name('test-employees');
 
     // Employee Management Routes
-    Route::prefix('employees')->name('employees.')->middleware(['permission:view-employees'])->group(function () {
+    Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/', [App\Http\Controllers\Employee\EmployeeController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Employee\EmployeeController::class, 'create'])
-            ->middleware('permission:create-employees')->name('create');
-        Route::post('/', [App\Http\Controllers\Employee\EmployeeController::class, 'store'])
-            ->middleware('permission:create-employees')->name('store');
+        Route::get('/create', [App\Http\Controllers\Employee\EmployeeController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Employee\EmployeeController::class, 'store'])->name('store');
         Route::get('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'show'])->name('show');
-        Route::get('/{employee}/edit', [App\Http\Controllers\Employee\EmployeeController::class, 'edit'])
-            ->middleware('permission:edit-employees')->name('edit');
-        Route::put('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'update'])
-            ->middleware('permission:edit-employees')->name('update');
-        Route::patch('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'update'])
-            ->middleware('permission:edit-employees');
-        Route::delete('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'destroy'])
-            ->middleware('permission:delete-employees')->name('destroy');
+        Route::get('/{employee}/edit', [App\Http\Controllers\Employee\EmployeeController::class, 'edit'])->name('edit');
+        Route::put('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'update'])->name('update');
+        Route::patch('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'update']);
+        Route::delete('/{employee}', [App\Http\Controllers\Employee\EmployeeController::class, 'destroy'])->name('destroy');
         
         // Employee invitation routes
-        Route::post('/{employee}/invite', [App\Http\Controllers\Employee\EmployeeController::class, 'inviteToPortal'])
-            ->middleware('permission:invite-employees')->name('invite');
+        Route::post('/{employee}/invite', [App\Http\Controllers\Employee\EmployeeController::class, 'inviteToPortal'])->name('invite');
+    });
+
+    // Department Management Routes
+    Route::prefix('departments')->name('departments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Employee\DepartmentController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Employee\DepartmentController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Employee\DepartmentController::class, 'store'])->name('store');
+        Route::get('/{department}', [App\Http\Controllers\Employee\DepartmentController::class, 'show'])->name('show');
+        Route::get('/{department}/edit', [App\Http\Controllers\Employee\DepartmentController::class, 'edit'])->name('edit');
+        Route::put('/{department}', [App\Http\Controllers\Employee\DepartmentController::class, 'update'])->name('update');
+    });
+
+    // Position Management Routes
+    Route::prefix('positions')->name('positions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Employee\PositionController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Employee\PositionController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Employee\PositionController::class, 'store'])->name('store');
+        Route::get('/{position}', [App\Http\Controllers\Employee\PositionController::class, 'show'])->name('show');
+        Route::get('/{position}/edit', [App\Http\Controllers\Employee\PositionController::class, 'edit'])->name('edit');
+        Route::put('/{position}', [App\Http\Controllers\Employee\PositionController::class, 'update'])->name('update');
+    });
+
+    // Performance Management Routes
+    Route::prefix('performance')->name('performance.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Employee\PerformanceController::class, 'index'])->name('index');
+    });
+
+    // Commission Management Routes
+    Route::prefix('commissions')->name('commissions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Employee\CommissionController::class, 'index'])->name('index');
     });
 
     // MLM Administration Routes
@@ -309,51 +332,6 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::patch('/{jobPosting}/toggle-status', [App\Http\Controllers\Admin\JobPostingsController::class, 'toggleStatus'])->name('toggle-status');
     });
     */
-
-    Route::get('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'index'])
-        ->name('employees.index');
-    Route::get('/employees/create', [\App\Http\Controllers\Employee\EmployeeController::class, 'create'])
-        ->name('employees.create');
-    Route::post('/employees', [\App\Http\Controllers\Employee\EmployeeController::class, 'store'])
-        ->name('employees.store');
-    Route::get('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'show'])
-        ->name('employees.show');
-    Route::get('/employees/{employee}/edit', [\App\Http\Controllers\Employee\EmployeeController::class, 'edit'])
-        ->name('employees.edit');
-    Route::put('/employees/{employee}', [\App\Http\Controllers\Employee\EmployeeController::class, 'update'])
-        ->name('employees.update');
-
-    Route::get('/departments', [\App\Http\Controllers\Employee\DepartmentController::class, 'index'])
-        ->name('departments.index');
-    Route::get('/departments/create', [\App\Http\Controllers\Employee\DepartmentController::class, 'create'])
-        ->name('departments.create');
-    Route::post('/departments', [\App\Http\Controllers\Employee\DepartmentController::class, 'store'])
-        ->name('departments.store');
-    Route::get('/departments/{department}', [\App\Http\Controllers\Employee\DepartmentController::class, 'show'])
-        ->name('departments.show');
-    Route::get('/departments/{department}/edit', [\App\Http\Controllers\Employee\DepartmentController::class, 'edit'])
-        ->name('departments.edit');
-    Route::put('/departments/{department}', [\App\Http\Controllers\Employee\DepartmentController::class, 'update'])
-        ->name('departments.update');
-
-    Route::get('/positions', [\App\Http\Controllers\Employee\PositionController::class, 'index'])
-        ->name('positions.index');
-    Route::get('/positions/create', [\App\Http\Controllers\Employee\PositionController::class, 'create'])
-        ->name('positions.create');
-    Route::post('/positions', [\App\Http\Controllers\Employee\PositionController::class, 'store'])
-        ->name('positions.store');
-    Route::get('/positions/{position}', [\App\Http\Controllers\Employee\PositionController::class, 'show'])
-        ->name('positions.show');
-    Route::get('/positions/{position}/edit', [\App\Http\Controllers\Employee\PositionController::class, 'edit'])
-        ->name('positions.edit');
-    Route::put('/positions/{position}', [\App\Http\Controllers\Employee\PositionController::class, 'update'])
-        ->name('positions.update');
-
-    Route::get('/performance', [\App\Http\Controllers\Employee\PerformanceController::class, 'index'])
-        ->name('performance.index');
-
-    Route::get('/commissions', [\App\Http\Controllers\Employee\CommissionController::class, 'index'])
-        ->name('commissions.index');
 
     // Points System Settings (LP & BP)
     Route::prefix('settings/bonus-points')->name('settings.bp.')->group(function () {

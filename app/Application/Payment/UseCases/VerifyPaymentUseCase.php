@@ -107,6 +107,8 @@ class VerifyPaymentUseCase
                     ->first();
                 
                 if (!$existingPurchase) {
+                    // IMPORTANT: For K1000 payments, points and commissions are based on K500 only
+                    // This is handled in StarterKitService::completePurchase()
                     $this->completeStarterKitPurchase($user, $payment);
                 } else {
                     \Log::info('Starter Kit purchase already exists for this payment', [

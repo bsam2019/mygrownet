@@ -376,18 +376,44 @@ class StarterKitController extends Controller
                     'starter_kit_shop_credit' => $currentCredit + 100,
                 ]);
                 
-                // Award 25 LP for upgrade
+                // Award 25 LP for upgrade (member gets additional points)
+                // BUT NO referral commissions to uplines (upgrade is for content only)
                 \DB::table('point_transactions')->insert([
                     'user_id' => $user->id,
                     'lp_amount' => 25,
                     'bp_amount' => 0,
                     'source' => 'starter_kit_upgrade',
-                    'description' => 'Starter Kit Upgrade: Basic to Premium',
+                    'description' => 'Starter Kit Upgrade: Basic to Premium (+25 LP)',
                     'reference_type' => 'starter_kit',
                     'reference_id' => $user->id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+                
+                // Recalculate user's total points
+                $totalLP = \DB::table('point_transactions')
+                    ->where('user_id', $user->id)
+                    ->sum('lp_amount');
+                $totalBP = \DB::table('point_transactions')
+                    ->where('user_id', $user->id)
+                    ->sum('bp_amount');
+                
+                $user->update([
+                    'life_points' => $totalLP,
+                    'bonus_points' => $totalBP,
+                ]);
+                
+                // Update user_points table if exists
+                $userPoints = \DB::table('user_points')->where('user_id', $user->id)->first();
+                if ($userPoints) {
+                    \DB::table('user_points')
+                        ->where('user_id', $user->id)
+                        ->update([
+                            'lifetime_points' => $totalLP,
+                            'monthly_points' => $totalBP,
+                            'updated_at' => now(),
+                        ]);
+                }
                 
                 // Update LGR qualification
                 $lgrService = app(\App\Application\Services\LoyaltyReward\LgrQualificationService::class);
@@ -409,6 +435,8 @@ class StarterKitController extends Controller
                 \Log::info('Starter Kit upgraded to Premium', [
                     'user_id' => $user->id,
                     'upgrade_cost' => $upgradeCost,
+                    'lp_awarded' => 25,
+                    'note' => 'Member receives 25 LP, but NO referral commissions to uplines',
                 ]);
             });
             

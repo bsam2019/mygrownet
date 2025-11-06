@@ -23,7 +23,9 @@ import {
     ChevronDown,
     TrendingUp,
     Star,
-    Settings
+    Settings,
+    Calendar,
+    BarChart3
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -107,9 +109,12 @@ const reportsNavItems: NavItem[] = [
 ];
 
 const employeeNavItems: NavItem[] = [
-    { title: 'Employees', href: safeRoute('admin.employees.index'), icon: UserCheck },
+    { title: 'All Employees', href: safeRoute('admin.employees.index'), icon: UserCheck },
     { title: 'Departments', href: safeRoute('admin.departments.index'), icon: Building2 },
     { title: 'Positions', href: safeRoute('admin.positions.index'), icon: Briefcase },
+    { title: 'Organizational Chart', href: safeRoute('admin.organization.index'), icon: Users },
+    { title: 'KPI Management', href: safeRoute('admin.organization.kpis.index'), icon: BarChart3 },
+    { title: 'Hiring Roadmap', href: safeRoute('admin.organization.hiring.index'), icon: Calendar },
     { title: 'Performance', href: safeRoute('admin.performance.index'), icon: Target },
     { title: 'Commissions', href: safeRoute('admin.commissions.index'), icon: DollarSign },
 ];
@@ -189,6 +194,17 @@ onMounted(() => {
         } catch (e) {
             console.warn('Failed to parse saved submenu states');
         }
+    }
+    
+    // Auto-expand Employees submenu if on organizational structure pages
+    const currentUrl = page.url;
+    if (currentUrl.includes('/admin/organization') || 
+        currentUrl.includes('/admin/employees') || 
+        currentUrl.includes('/admin/departments') || 
+        currentUrl.includes('/admin/positions') ||
+        currentUrl.includes('/admin/performance') ||
+        currentUrl.includes('/admin/commissions')) {
+        showSubmenu.value.employees = true;
     }
 });
 </script>
