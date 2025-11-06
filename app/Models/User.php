@@ -1742,3 +1742,62 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'loan_issued_by');
     }
 }
+
+    /**
+     * Find the best placement position for a new user in the 3x3 forced matrix.
+     * Uses breadth-first search to find the first available spot (spillover).
+     * 
+     * @param int $referrerId The ID of the referring user
+     * @return int The ID of the user who will be the direct sponsor (referrer_id)
+     */
+    public static function findMatrixPlacement(int $referrerId): int
+    {
+        // Check if referrer has space for direct downline
+        $directDownlineCount = static::where('referrer_id', $referrerId)->count();
+        
+        if ($directDownlineCount < 3) {
+            // Referrer has space, place directly under them
+            \Log::info("Matrix placement: Direct placement under referrer {$referrerId}");
+            return $referrerId;
+        }
+
+        // Referrer is full, find available spot in their downline tree (spillover)
+        \Log::info("Matrix placement: Referrer {$referrerId} is full, searching for spillover position");
+        
+        $queue = [$referrerId];
+        $visited = [];
+        $maxIterations = 1000; // Prevent infinite loops
+        $iterations = 0;
+
+        while (!empty($queue) && $iterations < $maxIterations) {
+            $currentId = array_shift($queue);
+            $iterations++;
+
+            // Skip if already visited
+            if (in_array($currentId, $visited)) {
+                continue;
+            }
+            $visited[] = $currentId;
+
+            // Check if this user has space
+            $downlineCount = static::where('referrer_id', $currentId)->count();
+            
+            if ($downlineCount < 3) {
+                \Log::info("Matrix placement: Found available spot under user {$currentId}");
+                return $currentId;
+            }
+
+            // Add this user's downlines to the queue (breadth-first)
+            $downlines = static::where('referrer_id', $currentId)
+                ->orderBy('id')
+                ->pluck('id')
+                ->toArray();
+            
+            $queue = array_merge($queue, $downlines);
+        }
+
+        // Fallback: return referrer if no spot found (shouldn't happen in normal operation)
+        \Log::warning("Matrix placement: No available spot found in tree, falling back to referrer {$referrerId}");
+        return $referrerId;
+    }
+}

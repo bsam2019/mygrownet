@@ -68,19 +68,22 @@ class RegisteredUserController extends Controller
         }
 
         // Find referrer if referral code provided
-        $referrerId = null;
+        $originalReferrerId = null;
         if ($request->referral_code) {
             $referrer = User::where('referral_code', $request->referral_code)->first();
             if ($referrer) {
-                $referrerId = $referrer->id;
+                $originalReferrerId = $referrer->id;
             }
         } else {
             // If no referral code provided, use default sponsor (admin/company)
             $defaultSponsor = $defaultSponsorService->getDefaultSponsor();
             if ($defaultSponsor) {
-                $referrerId = $defaultSponsor->id;
+                $originalReferrerId = $defaultSponsor->id;
             }
         }
+
+        // Find the best placement position in the 3x3 matrix (with spillover)
+        $actualReferrerId = $originalReferrerId ? User::findMatrixPlacement($originalReferrerId) : null;
 
         try {
             $user = User::create([
@@ -88,7 +91,7 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'phone' => $normalizedPhone,
                 'password' => Hash::make($request->password),
-                'referrer_id' => $referrerId,
+                'referrer_id' => $actualReferrerId,
             ]);
 
             event(new Registered($user));
