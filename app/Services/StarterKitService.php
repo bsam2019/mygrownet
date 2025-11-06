@@ -82,15 +82,14 @@ class StarterKitService
                 // Generate payment reference for wallet transaction
                 $paymentReference = 'WALLET-' . now()->format('YmdHis') . '-' . $user->id;
                 
-                // Create withdrawal record to deduct from wallet
-                // Note: Using withdrawals table for backward compatibility with existing data
-                DB::table('withdrawals')->insert([
+                // Create transaction record to deduct from wallet
+                DB::table('transactions')->insert([
                     'user_id' => $user->id,
-                    'amount' => $price,
-                    'status' => 'approved',
-                    'withdrawal_method' => 'wallet_payment',
-                    'reason' => 'Starter Kit Purchase - Wallet Payment',
-                    'processed_at' => now(),
+                    'transaction_type' => 'starter_kit_purchase',
+                    'amount' => -$price, // Negative for debit
+                    'reference_number' => 'SK-' . strtoupper(uniqid()),
+                    'description' => ucfirst($tier) . ' Starter Kit Purchase - Wallet Payment',
+                    'status' => 'completed',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

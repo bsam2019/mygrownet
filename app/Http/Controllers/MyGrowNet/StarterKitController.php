@@ -357,15 +357,14 @@ class StarterKitController extends Controller
         
         try {
             \DB::transaction(function () use ($user, $upgradeCost) {
-                // Create withdrawal record to deduct from wallet
-                // Note: Using withdrawals table for backward compatibility with existing data
-                \DB::table('withdrawals')->insert([
+                // Create transaction record to deduct from wallet
+                \DB::table('transactions')->insert([
                     'user_id' => $user->id,
-                    'amount' => $upgradeCost,
-                    'status' => 'approved',
-                    'withdrawal_method' => 'wallet_payment',
-                    'reason' => 'Starter Kit Upgrade: Basic to Premium',
-                    'processed_at' => now(),
+                    'transaction_type' => 'starter_kit_upgrade',
+                    'amount' => -$upgradeCost, // Negative for debit
+                    'reference_number' => 'SK-UPGRADE-' . strtoupper(uniqid()),
+                    'description' => 'Starter Kit Upgrade: Basic to Premium',
+                    'status' => 'completed',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
