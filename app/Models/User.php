@@ -1741,7 +1741,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(User::class, 'loan_issued_by');
     }
-}
 
     /**
      * Find the best placement position for a new user in the 3x3 forced matrix.
