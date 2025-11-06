@@ -358,6 +358,7 @@ class StarterKitController extends Controller
         try {
             \DB::transaction(function () use ($user, $upgradeCost) {
                 // Create withdrawal record to deduct from wallet
+                // Note: Using withdrawals table for backward compatibility with existing data
                 \DB::table('withdrawals')->insert([
                     'user_id' => $user->id,
                     'amount' => $upgradeCost,

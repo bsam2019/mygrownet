@@ -18,7 +18,9 @@ class WalletService
      * 
      * Formula:
      * Balance = (Commissions + Profit Shares + Wallet Topups) 
-     *         - (Approved Withdrawals + Workshop Expenses + Transaction Expenses + Starter Kit Purchases)
+     *         - (Approved Withdrawals + Workshop Expenses + Transaction Expenses)
+     * 
+     * Note: Starter kit purchases via wallet are already included in Approved Withdrawals
      * 
      * @param User $user
      * @return float
@@ -79,18 +81,20 @@ class WalletService
      * Calculate total expenses (debits from wallet)
      * 
      * Sources:
-     * 1. Approved withdrawals
+     * 1. Approved withdrawals (includes starter kit purchases via wallet_payment method)
      * 2. Workshop registrations paid via wallet
      * 3. Transaction expenses (from transactions table)
-     * 4. Starter kit purchases paid via wallet
-     * 5. Loan repayments
+     * 4. Loan repayments
+     * 
+     * NOTE: Starter kit purchases are NOT counted separately because they are already
+     * recorded as withdrawals with withdrawal_method='wallet_payment'
      * 
      * @param User $user
      * @return float
      */
     public function calculateTotalExpenses(User $user): float
     {
-        // Approved withdrawals
+        // Approved withdrawals (includes starter kit wallet payments)
         $totalWithdrawals = (float) $user->withdrawals()
             ->where('status', 'approved')
             ->sum('amount');
@@ -108,13 +112,6 @@ class WalletService
             ->where('transaction_type', 'withdrawal')
             ->sum('amount');
         
-        // Starter kit purchases via wallet
-        $starterKitExpenses = (float) DB::table('starter_kit_purchases')
-            ->where('user_id', $user->id)
-            ->where('payment_method', 'wallet')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
         // Loan repayments
         $loanRepayments = (float) DB::table('transactions')
             ->where('user_id', $user->id)
@@ -122,7 +119,7 @@ class WalletService
             ->where('status', 'completed')
             ->sum('amount');
         
-        return $totalWithdrawals + $workshopExpenses + $transactionExpenses + $starterKitExpenses + $loanRepayments;
+        return $totalWithdrawals + $workshopExpenses + $transactionExpenses + $loanRepayments;
     }
     
     /**
@@ -155,11 +152,6 @@ class WalletService
             ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price');
-        $starterKitExpenses = (float) DB::table('starter_kit_purchases')
-            ->where('user_id', $user->id)
-            ->where('payment_method', 'wallet')
-            ->where('status', 'completed')
-            ->sum('amount');
         $loanRepayments = (float) DB::table('transactions')
             ->where('user_id', $user->id)
             ->where('transaction_type', 'loan_repayment')
@@ -177,9 +169,8 @@ class WalletService
             'expenses' => [
                 'withdrawals' => $totalWithdrawals,
                 'workshops' => $workshopExpenses,
-                'starter_kits' => $starterKitExpenses,
                 'loan_repayments' => $loanRepayments,
-                'total' => $totalWithdrawals + $workshopExpenses + $starterKitExpenses + $loanRepayments,
+                'total' => $totalWithdrawals + $workshopExpenses + $loanRepayments,
             ],
             'balance' => $this->calculateBalance($user),
         ];
