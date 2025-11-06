@@ -35,4 +35,29 @@ class Withdrawal extends Model
     {
         return $this->morphMany(ActivityLog::class, 'loggable');
     }
+    
+    /**
+     * Scope to exclude starter kit wallet payments
+     * These are internal transactions that should appear in transactions, not withdrawals
+     */
+    public function scopeExcludeStarterKit($query)
+    {
+        return $query->where(function($q) {
+            $q->where('withdrawal_method', '!=', 'wallet_payment')
+              ->orWhereNull('withdrawal_method')
+              ->orWhere(function($q2) {
+                  $q2->where('withdrawal_method', 'wallet_payment')
+                     ->where('reason', 'NOT LIKE', '%Starter Kit%')
+                     ->where('reason', 'NOT LIKE', '%starter kit%');
+              });
+        });
+    }
+    
+    /**
+     * Scope for actual withdrawals only (money leaving the system)
+     */
+    public function scopeActualWithdrawals($query)
+    {
+        return $query->excludeStarterKit();
+    }
 }

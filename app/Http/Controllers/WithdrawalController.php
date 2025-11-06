@@ -12,8 +12,8 @@ class WithdrawalController extends Controller
     {
         $user = auth()->user();
         
-        // Get withdrawals
-        $withdrawals = $user->withdrawals()->latest()->paginate(10);
+        // Get actual withdrawals (excluding starter kit wallet payments)
+        $withdrawals = $user->actualWithdrawals()->latest()->paginate(10);
         
         // Calculate available balance (total earnings - total withdrawals)
         $totalEarnings = $user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0;

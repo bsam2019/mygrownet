@@ -384,6 +384,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Withdrawal::class);
     }
+    
+    /**
+     * Get actual withdrawals (excluding starter kit wallet payments)
+     */
+    public function actualWithdrawals(): HasMany
+    {
+        return $this->hasMany(Withdrawal::class)->actualWithdrawals();
+    }
 
     public function profitShares(): HasMany
     {

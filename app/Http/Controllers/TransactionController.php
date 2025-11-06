@@ -50,7 +50,7 @@ class TransactionController extends Controller
                 ];
             });
         
-        $withdrawals = $user->withdrawals()
+        $withdrawals = $user->actualWithdrawals()
             ->select('id', 'amount', 'status', 'created_at')
             ->get()
             ->map(function ($withdrawal) {
