@@ -129,35 +129,47 @@ class TransactionController extends Controller
         $total = $allTransactions->count();
         $transactions = $allTransactions->forPage($currentPage, $perPage);
         
-        // Calculate wallet balance from BOTH old and new transaction systems
+        // Calculate wallet balance - PRIMARY SOURCE: transactions table
+        // EXCLUDE LGR transactions (they stay in LGR balance until transferred)
         
-        // OLD SYSTEM (Legacy tables)
+        // NEW SYSTEM (transactions table) - Single source of truth
+        $balance = (float) (\DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('transaction_type', 'NOT LIKE', '%lgr%')
+            ->sum('amount') ?? 0);
+        
+        // OLD SYSTEM (Legacy tables) - Only for items NOT in transactions
+        // Note: Deposits are now in transactions table via migration
+        // Only add old system items that haven't been migrated yet
         $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
         $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
-        $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
-            ->where('payment_type', 'wallet_topup')
-            ->where('status', 'verified')
+        
+        // Check if we have any old withdrawals not in transactions
+        $oldWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        $newWithdrawals = (float) (\DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'withdrawal')
+            ->where('status', 'completed')
             ->sum('amount') ?? 0);
-        $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
+        
+        // Only add old withdrawals if they're not already in transactions
+        if ($oldWithdrawals > 0 && abs($newWithdrawals) < $oldWithdrawals) {
+            $balance -= ($oldWithdrawals - abs($newWithdrawals));
+        }
+        
+        // Workshop expenses (if not in transactions)
         $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
             ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price') ?? 0);
         
-        $oldSystemBalance = $commissionEarnings + $profitEarnings + $walletTopups - $totalWithdrawals - $workshopExpenses;
+        if ($workshopExpenses > 0) {
+            $balance -= $workshopExpenses;
+        }
         
-        // NEW SYSTEM (transactions table)
-        // Sum all completed transactions (positive = credit, negative = debit)
-        $newSystemBalance = (float) (\DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->sum('amount') ?? 0);
-        
-        // COMBINED BALANCE
-        // Note: We're combining both systems until full migration is complete
-        // Old system handles: commissions, profit shares, old withdrawals, workshops
-        // New system handles: deposits, starter kits, LGR awards, new transactions
-        $balance = $oldSystemBalance + $newSystemBalance;
+        // Add old commissions and profit shares (these are typically not in transactions yet)
+        $balance += $commissionEarnings + $profitEarnings;
         
         return Inertia::render('Transactions/Index', [
             'transactions' => [
