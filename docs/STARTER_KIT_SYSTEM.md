@@ -1,284 +1,113 @@
-# Starter Kit System Documentation
+# Starter Kit System
+
+**Last Updated:** November 6, 2025  
+**Status:** ✅ Complete
 
 ## Overview
 
-The Starter Kit System automatically provides new members with a welcome package upon registration. This system is designed to streamline onboarding and ensure every new member receives their initial benefits, including Life Points (LP) and access to basic platform features.
+Two-tier starter kit system with Basic (K500) and Premium (K1000) options, including progressive content unlocking, shop credits, and MLM commissions.
 
-## Features
+## Tiers
 
-### Automatic Assignment
-- **Trigger**: Automatically assigned when a new user registers
-- **Package**: "Starter Kit - Associate" package
-- **Cost**: K150 (Registration fee K50 + First month Basic K100)
-- **Duration**: One-time purchase with 1-month Basic membership included
+### Basic Tier (K500)
+- **Price:** K500
+- **Shop Credit:** K100 (90-day expiry)
+- **Lifetime Points:** 25 LP
+- **Library Access:** 30 days free
+- **Content:** Progressive unlock over 30 days
+- **MLM Commissions:** Uplines receive commissions on K500
 
-### Initial Benefits
-- **Life Points**: 100 LP awarded upon registration
-- **Bonus Points**: 0 MAP (Monthly Activity Points start accumulating through activities)
-- **Membership**: First month of Basic membership included
-- **Resources**: Welcome learning pack, getting started guide, community access
+### Premium Tier (K1000)
+- **Price:** K1000
+- **Shop Credit:** K200 (90-day expiry)
+- **Lifetime Points:** 50 LP
+- **Library Access:** 30 days free
+- **Content:** All Basic content + premium materials
+- **LGR Qualification:** Eligible for quarterly profit sharing
+- **MLM Commissions:** Uplines receive commissions on K500 only (extra K500 is for premium content)
 
-### Package Contents
-The Starter Kit includes:
-1. One-time registration fee
-2. First month Basic membership
-3. Welcome learning pack
-4. Getting started guide
-5. Community access
-6. Initial mentorship session
-7. Starter resources bundle
+### Upgrade (Basic → Premium)
+- **Upgrade Fee:** K500
+- **Additional LP:** 25 LP (total 50 LP)
+- **Shop Credit:** +K100 (total K200)
+- **LGR Access:** Granted
+- **MLM Commissions:** NO commissions to uplines (upgrade is for content only)
 
-## Technical Implementation
+## Points and Commission Logic
 
-### Components
+### Registration Points
+- **Basic (K500):** Member receives 25 LP
+- **Premium (K1000):** Member receives 50 LP (full points for their investment)
 
-#### 1. StarterKitService
-**Location**: `app/Services/StarterKitService.php`
+### Upgrade Points
+- **Basic → Premium:** Member receives 25 LP (additional)
+- **Total after upgrade:** 50 LP (same as direct Premium registration)
 
-**Methods**:
-- `processStarterKit(User $user)`: Processes starter kit for new member
-- `hasStarterKit(User $user)`: Checks if user has received starter kit
-- `getStarterKitDetails()`: Returns starter kit package details
+### MLM Commissions
+- **All tiers:** Commissions always based on K500 only
+- **Premium rationale:** Extra K500 is for premium content/benefits, not commissionable
+- **Upgrade:** NO commissions (upgrade is for content, not a new referral)
 
-**Process Flow**:
-```php
-1. Retrieve starter kit package from database
-2. Create subscription record for the user
-3. Record transaction in transaction history
-4. Fire UserRegistered event for points system
-5. Log the operation
-```
+## Implementation
 
-#### 2. UserRegistered Event
-**Location**: `app/Events/UserRegistered.php`
+### Key Files
+- `app/Services/StarterKitService.php` - Core purchase and completion logic
+- `app/Http/Controllers/MyGrowNet/StarterKitController.php` - Purchase and upgrade endpoints
+- `app/Infrastructure/Persistence/Eloquent/StarterKit/StarterKitPurchaseModel.php` - Purchase records
 
-Fired when a new user completes registration. This event triggers the points system to award initial Life Points.
+### Payment Methods
+- **Mobile Money:** MoMo/Airtel Money (pending verification)
+- **Wallet:** Instant completion using wallet balance (includes loan funds)
 
-#### 3. AwardRegistrationPoints Listener
-**Location**: `app/Listeners/AwardRegistrationPoints.php`
+### Progressive Unlocking
+Content unlocks over 30 days:
+- **Day 1:** Module 1, eBook 1, Video 1
+- **Day 8:** Module 2, eBook 2, Video 2
+- **Day 15:** Module 3, eBook 3, Video 3
+- **Day 22:** Marketing tools, pitch deck, social media pack
+- **Day 30:** Digital library access (50+ eBooks)
 
-Listens for UserRegistered event and awards:
-- **100 LP** (Life Points) - Initial registration bonus
-- **0 MAP** (Monthly Activity Points) - Start fresh each month
+## Recent Fixes
 
-#### 4. RegisteredUserController
-**Location**: `app/Http/Controllers/Auth/RegisteredUserController.php`
+### Tier Bug Fix (November 5, 2025)
+**Problem:** Premium tier selection not being saved  
+**Cause:** `tier` field missing from `$fillable` array  
+**Fix:** Added `tier` to fillable array  
+**Impact:** Premium purchases now correctly grant K200 credit and LGR access
 
-Updated to automatically call `StarterKitService::processStarterKit()` after user creation.
+### Wallet Balance Fix (November 6, 2025)
+**Problem:** Wallet showing negative balance after purchase  
+**Cause:** Double-counting starter kit expenses  
+**Fix:** Removed duplicate expense calculation  
+**Impact:** Wallet balances now accurate
 
-### Database Schema
+### Points/Commission Fix (November 6, 2025)
+**Problem:** Unclear commission structure for Premium tier  
+**Fix:** Clarified that Premium members get 50 LP but uplines only get K500 commissions  
+**Impact:** Fair and sustainable commission structure
 
-#### Packages Table
-```sql
-- id: Primary key
-- name: Package name
-- slug: Unique identifier (starter-kit-associate)
-- description: Package description
-- price: Package price (150.00)
-- billing_cycle: one-time
-- duration_months: 1
-- features: JSON array of features
-- is_active: Boolean
-- sort_order: Integer
-```
+## Migration
 
-#### Package Subscriptions Table
-```sql
-- id: Primary key
-- user_id: Foreign key to users
-- package_id: Foreign key to packages
-- amount: Subscription amount
-- status: active|expired|cancelled|pending
-- start_date: Subscription start
-- end_date: Subscription end
-- renewal_date: Next renewal date
-- auto_renew: Boolean (false for starter kit)
-```
+Starter kit purchases migrated from `withdrawals` table to `transactions` table for better organization:
 
-#### Transactions Table
-Records the starter kit assignment as a transaction:
-```sql
-- type: 'subscription'
-- description: 'Welcome Package - Starter Kit (Associate)'
-- amount: 150.00
-- status: 'completed'
-```
+**Script:** `scripts/simple-migrate.php`
 
-## Admin Interface
-
-### Starter Kit Management Page
-**Route**: `/admin/starter-kits`
-**Controller**: `App\Http\Controllers\Admin\StarterKitController`
-**View**: `resources/js/pages/Admin/StarterKits/Index.vue`
-
-**Features**:
-- View starter kit package details
-- Monitor assignment statistics
-- Track recent assignments
-- View assignment rate across all members
-
-**Statistics Displayed**:
-1. Total Assigned: Number of starter kits assigned
-2. Total Members: Total registered members
-3. Assignment Rate: Percentage of members with starter kits
-
-## User Flow
-
-### Registration Process
-```
-1. User fills registration form
-   ↓
-2. User account created
-   ↓
-3. Laravel Registered event fired
-   ↓
-4. StarterKitService processes starter kit
-   ↓
-5. Subscription created (status: active)
-   ↓
-6. Transaction recorded
-   ↓
-7. UserRegistered event fired
-   ↓
-8. AwardRegistrationPoints listener awards 100 LP
-   ↓
-9. User logged in and redirected to dashboard
-```
-
-### Member Dashboard
-New members will see:
-- Welcome message with starter kit details
-- Initial 100 LP in their points balance
-- Access to Basic membership features
-- Getting started guide and resources
-
-## Points System Integration
-
-### Initial Points Award
-- **Life Points (LP)**: 100 LP
-  - Purpose: Long-term growth tracking
-  - Never expires
-  - Contributes to professional level advancement
-  
-- **Monthly Activity Points (MAP)**: 0 MAP
-  - Purpose: Monthly earnings calculation
-  - Resets on 1st of each month
-  - Earned through activities
-
-### Points Tracking
-All points are tracked in the `point_transactions` table:
-```sql
-- user_id: Member receiving points
-- source: 'registration'
-- lp_amount: 100
-- map_amount: 0
-- description: "Welcome to MyGrowNet! Initial registration bonus"
-```
-
-## Configuration
-
-### Package Seeder
-**Location**: `database/seeders/PackageSeeder.php`
-
-The starter kit package is seeded with:
-```php
-[
-    'name' => 'Starter Kit - Associate',
-    'slug' => 'starter-kit-associate',
-    'price' => 150.00,
-    'billing_cycle' => 'one-time',
-    'duration_months' => 1,
-    'features' => [
-        'One-time registration fee',
-        'First month Basic membership included',
-        'Welcome learning pack',
-        'Getting started guide',
-        'Community access',
-        'Initial mentorship session',
-        'Starter resources bundle'
-    ],
-]
-```
-
-### Event Registration
-**Location**: `app/Providers/EventServiceProvider.php`
-
-```php
-\App\Events\UserRegistered::class => [
-    \App\Listeners\AwardRegistrationPoints::class,
-],
-```
+**Migration:**
+- Finds all starter kit withdrawals
+- Creates corresponding transaction records
+- Reference format: `SK-MIG-{withdrawal_id}`
+- Transaction types: `starter_kit_purchase` or `starter_kit_upgrade`
 
 ## Testing
 
-### Manual Testing
-1. Register a new user account
-2. Verify subscription created in `package_subscriptions` table
-3. Verify transaction recorded in `transactions` table
-4. Verify 100 LP awarded in `point_transactions` table
-5. Check admin starter kits page for new assignment
-
-### Test Accounts
-After seeding, test with:
-- Email: `test@example.com`
-- Password: `password`
-
-## Troubleshooting
-
-### Common Issues
-
-#### Starter Kit Not Assigned
-**Symptoms**: New user registered but no starter kit subscription
-**Solutions**:
-1. Check if starter kit package exists: `php artisan db:seed --class=PackageSeeder`
-2. Check application logs for errors
-3. Verify StarterKitService is being called in RegisteredUserController
-
-#### Points Not Awarded
-**Symptoms**: Starter kit assigned but no LP awarded
-**Solutions**:
-1. Verify UserRegistered event is registered in EventServiceProvider
-2. Check queue worker is running: `php artisan queue:work`
-3. Check `point_transactions` table for failed transactions
-
-#### Transaction Not Recorded
-**Symptoms**: Subscription created but no transaction record
-**Solutions**:
-1. Check database transaction rollback in logs
-2. Verify transactions table exists and is accessible
-3. Check user permissions and database constraints
-
-## Future Enhancements
-
-### Planned Features
-1. **Customizable Starter Kits**: Allow different starter kits based on referral source
-2. **Welcome Email**: Automated email with starter kit details
-3. **Onboarding Checklist**: Track completion of initial setup tasks
-4. **Referrer Bonus**: Award bonus points to referrer when referee completes starter kit
-5. **Analytics Dashboard**: Detailed analytics on starter kit conversion and engagement
-
-### Potential Improvements
-- Add starter kit expiration tracking
-- Implement starter kit upgrade paths
-- Create starter kit completion metrics
-- Add A/B testing for different starter kit configurations
+### Test Scenarios
+1. New Basic registration (K500) - 25 LP, K100 credit, K500 commissions
+2. New Premium registration (K1000) - 50 LP, K200 credit, K500 commissions, LGR access
+3. Upgrade Basic → Premium (K500) - +25 LP, +K100 credit, NO commissions, LGR access
+4. Wallet payment - Instant completion, balance deducted correctly
+5. Loan funds - Can use loan to purchase starter kit
 
 ## Related Documentation
 
-- [Points System Specification](POINTS_SYSTEM_SPECIFICATION.md)
-- [MyGrowNet Platform Concept](MYGROWNET_PLATFORM_CONCEPT.md)
-- [Unified Products & Services](UNIFIED_PRODUCTS_SERVICES.md)
-- [Level Structure](LEVEL_STRUCTURE.md)
-
-## Support
-
-For issues or questions about the starter kit system:
-1. Check application logs: `storage/logs/laravel.log`
-2. Review this documentation
-3. Contact development team
-
----
-
-**Last Updated**: October 21, 2025
-**Version**: 1.0
-**Status**: Production Ready
+- `docs/STARTER_KIT_TIER_BUG_FIX.md` - Tier bug fix details
+- `docs/MEMBER_LOAN_SYSTEM.md` - Loan integration

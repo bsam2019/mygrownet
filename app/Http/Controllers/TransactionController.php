@@ -64,7 +64,7 @@ class TransactionController extends Controller
                 ];
             });
         
-        // Get wallet top-ups
+        // Get wallet top-ups from old system
         $topups = \App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
             ->where('payment_type', 'wallet_topup')
             ->select('id', 'amount', 'status', 'created_at')
@@ -77,6 +77,22 @@ class TransactionController extends Controller
                     'status' => $topup->status,
                     'created_at' => $topup->created_at->toISOString(),
                     'description' => 'Wallet Top-up',
+                ];
+            });
+        
+        // Get transactions from new system (transactions table)
+        $newTransactions = \DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->select('id', 'transaction_type', 'amount', 'status', 'created_at', 'description')
+            ->get()
+            ->map(function ($txn) {
+                return [
+                    'id' => 'TXN-' . $txn->id,
+                    'type' => $txn->transaction_type,
+                    'amount' => (float) $txn->amount,
+                    'status' => $txn->status,
+                    'created_at' => \Carbon\Carbon::parse($txn->created_at)->toISOString(),
+                    'description' => $txn->description ?? $txn->transaction_type,
                 ];
             });
         
@@ -97,12 +113,13 @@ class TransactionController extends Controller
                 ];
             });
         
-        // Combine and sort by date
+        // Combine and sort by date (including new transactions table)
         $allTransactions = $commissions
             ->concat($profitShares)
             ->concat($withdrawals)
             ->concat($topups)
             ->concat($workshops)
+            ->concat($newTransactions)
             ->sortByDesc('created_at')
             ->values();
         
@@ -112,20 +129,35 @@ class TransactionController extends Controller
         $total = $allTransactions->count();
         $transactions = $allTransactions->forPage($currentPage, $perPage);
         
-        // Calculate wallet balance
+        // Calculate wallet balance from BOTH old and new transaction systems
+        
+        // OLD SYSTEM (Legacy tables)
         $commissionEarnings = (float) ($user->referralCommissions()->where('status', 'paid')->sum('amount') ?? 0);
         $profitEarnings = (float) ($user->profitShares()->sum('amount') ?? 0);
         $walletTopups = (float) (\App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
             ->where('payment_type', 'wallet_topup')
             ->where('status', 'verified')
             ->sum('amount') ?? 0);
-        $totalEarnings = $commissionEarnings + $profitEarnings + $walletTopups;
         $totalWithdrawals = (float) ($user->withdrawals()->where('status', 'approved')->sum('amount') ?? 0);
         $workshopExpenses = (float) (\App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
             ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price') ?? 0);
-        $balance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
+        
+        $oldSystemBalance = $commissionEarnings + $profitEarnings + $walletTopups - $totalWithdrawals - $workshopExpenses;
+        
+        // NEW SYSTEM (transactions table)
+        // Sum all completed transactions (positive = credit, negative = debit)
+        $newSystemBalance = (float) (\DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->sum('amount') ?? 0);
+        
+        // COMBINED BALANCE
+        // Note: We're combining both systems until full migration is complete
+        // Old system handles: commissions, profit shares, old withdrawals, workshops
+        // New system handles: deposits, starter kits, LGR awards, new transactions
+        $balance = $oldSystemBalance + $newSystemBalance;
         
         return Inertia::render('Transactions/Index', [
             'transactions' => [
