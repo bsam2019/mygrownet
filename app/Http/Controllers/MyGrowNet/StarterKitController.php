@@ -122,7 +122,7 @@ class StarterKitController extends Controller
                 'days_since_purchase' => $purchase->purchased_at ? (int) $purchase->purchased_at->diffInDays(now()) : ($purchase->created_at ? (int) $purchase->created_at->diffInDays(now()) : 0),
             ],
             'shopCredit' => [
-                'amount' => $user->starter_kit_shop_credit ?? 0,
+                'amount' => (float) ($user->starter_kit_shop_credit ?? 0),
                 'expiry' => $user->starter_kit_credit_expiry?->format('M j, Y'),
                 'days_remaining' => $user->starter_kit_credit_expiry ? (int) now()->diffInDays($user->starter_kit_credit_expiry, false) : 0,
             ],
@@ -259,15 +259,27 @@ class StarterKitController extends Controller
                 $validated['tier']
             );
             
+            // Check if this is a mobile request (AJAX/Inertia)
+            if ($request->wantsJson() || $request->header('X-Inertia')) {
+                // For mobile, return success without redirect
+                return back()->with('success', $result['message']);
+            }
+            
+            // For desktop, redirect as normal
             return redirect($result['redirect'])
                 ->with('success', $result['message']);
                 
         } catch (\InvalidArgumentException $e) {
+            \Log::error('Starter Kit purchase validation failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
             return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             \Log::error('Starter Kit purchase failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             
             return back()->with('error', 'Purchase failed. Please try again.');

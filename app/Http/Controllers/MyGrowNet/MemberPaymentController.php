@@ -73,6 +73,11 @@ class MemberPaymentController extends Controller
 
             $this->submitPaymentUseCase->execute($dto);
 
+            // Check if request is from mobile
+            if ($request->input('_mobile') || $request->header('X-Mobile-Request')) {
+                return back()->with('success', 'Payment submitted successfully! We will verify it shortly.');
+            }
+
             return redirect()
                 ->route('mygrownet.payments.index')
                 ->with('success', 'Payment submitted successfully! We will verify it shortly.');

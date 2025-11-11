@@ -2,6 +2,7 @@
 import AppSidebar from '@/components/MyGrowNetSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
+import InstallPrompt from '@/Components/Mobile/InstallPrompt.vue';
 import type { BreadcrumbItemType, NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted } from 'vue';
@@ -64,5 +65,8 @@ onMounted(() => {
                 </main>
             </div>
         </div>
+        
+        <!-- PWA Install Prompt -->
+        <InstallPrompt />
     </div>
 </template>

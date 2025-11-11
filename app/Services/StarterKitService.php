@@ -168,15 +168,37 @@ class StarterKitService
             // Award registration bonus points
             $this->awardRegistrationBonus($user);
             
+            // Create congratulations announcement
+            try {
+                $announcementService = app(\App\Domain\Announcement\Services\EventBasedAnnouncementService::class);
+                $announcementService->createStarterKitCongratulations($user->id);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to create starter kit announcement', ['error' => $e->getMessage()]);
+            }
+            
             // Process MLM commissions for uplines (7 levels)
             // Only uplines who have purchased starter kit will receive commissions
             $this->processStarterKitCommissions($user, $purchase->amount);
             
-            // Generate receipt
-            $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
+            // Generate receipt (wrapped in try-catch to prevent purchase failure)
+            try {
+                $this->generateStarterKitReceipt($user, $purchase->payment_method, $purchase->payment_reference);
+            } catch (\Exception $e) {
+                \Log::warning('Receipt generation failed but purchase succeeded', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
-            // Send notification
-            $this->sendPurchaseNotification($user, $tier);
+            // Send notification (wrapped in try-catch to prevent purchase failure)
+            try {
+                $this->sendPurchaseNotification($user, $tier);
+            } catch (\Exception $e) {
+                \Log::warning('Notification failed but purchase succeeded', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             // Update LGR qualification status
             $this->updateLgrQualification($user);
@@ -658,6 +680,14 @@ class StarterKitService
     protected function sendPurchaseNotification(User $user, string $tier): void
     {
         try {
+            // Check if email is configured
+            if (!config('mail.from.address')) {
+                Log::warning('Email not configured, skipping starter kit notification', [
+                    'user_id' => $user->id,
+                ]);
+                return;
+            }
+            
             $tierName = $tier === self::TIER_PREMIUM ? 'Premium' : 'Basic';
             $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
             

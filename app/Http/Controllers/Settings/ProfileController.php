@@ -81,4 +81,58 @@ class ProfileController extends Controller
 
         return redirect('/');
     }
+
+    /**
+     * Update notification settings (for mobile)
+     */
+    public function updateNotificationSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'notifications' => 'boolean',
+            'email_notifications' => 'boolean',
+            'sms_notifications' => 'boolean',
+        ]);
+
+        $user = $request->user();
+        
+        // Update or create notification preferences
+        $user->notificationPreferences()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'push_enabled' => $validated['notifications'] ?? true,
+                'email_enabled' => $validated['email_notifications'] ?? true,
+                'sms_enabled' => $validated['sms_notifications'] ?? false,
+            ]
+        );
+
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification settings updated successfully',
+            ]);
+        }
+
+        return back()->with('success', 'Notification settings updated successfully');
+    }
+
+    /**
+     * Update dashboard preference (mobile vs desktop)
+     */
+    public function updateDashboardPreference(Request $request)
+    {
+        $validated = $request->validate([
+            'preference' => 'required|in:auto,mobile,desktop',
+        ]);
+
+        $user = $request->user();
+        $user->update([
+            'dashboard_preference' => $validated['preference'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard preference updated successfully',
+            'preference' => $validated['preference'],
+        ]);
+    }
 }

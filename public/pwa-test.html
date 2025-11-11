@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Test - MyGrowNet</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ccc;
+        }
+        .test-item.pass {
+            border-left-color: #22c55e;
+        }
+        .test-item.fail {
+            border-left-color: #ef4444;
+        }
+        .test-item.warn {
+            border-left-color: #f59e0b;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        pre {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 MyGrowNet PWA Test</h1>
+    <p>This page tests if your PWA is configured correctly.</p>
+
+    <div id="results"></div>
+
+    <h2>Actions</h2>
+    <button onclick="testInstall()">Test Install Prompt</button>
+    <button onclick="testServiceWorker()">Test Service Worker</button>
+    <button onclick="testManifest()">Test Manifest</button>
+    <button onclick="window.location.reload()">Refresh Tests</button>
+
+    <script>
+        const results = document.getElementById('results');
+        let deferredPrompt;
+
+        function addResult(title, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-item ${status}`;
+            div.innerHTML = `
+                <strong>${status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠️'} ${title}</strong>
+                <p>${message}</p>
+            `;
+            results.appendChild(div);
+        }
+
+        // Test HTTPS
+        if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            addResult('HTTPS/Localhost', 'pass', `Running on ${location.protocol}//${location.host}`);
+        } else {
+            addResult('HTTPS/Localhost', 'fail', 'PWA requires HTTPS or localhost. Use ngrok for testing.');
+        }
+
+        // Test Manifest
+        fetch('/manifest.json')
+            .then(res => res.json())
+            .then(manifest => {
+                addResult('Manifest', 'pass', `Found: ${manifest.name} - ${manifest.description}`);
+                console.log('Manifest:', manifest);
+            })
+            .catch(err => {
+                addResult('Manifest', 'fail', `Error loading manifest.json: ${err.message}`);
+            });
+
+        // Test Service Worker
+        if ('serviceWorker' in navigator) {
+            addResult('Service Worker Support', 'pass', 'Browser supports service workers');
+            
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                if (registrations.length > 0) {
+                    addResult('Service Worker Registration', 'pass', `${registrations.length} service worker(s) registered`);
+                    registrations.forEach(reg => {
+                        console.log('Service Worker:', reg);
+                    });
+                } else {
+                    addResult('Service Worker Registration', 'warn', 'No service workers registered yet. Registering now...');
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(reg => {
+                            addResult('Service Worker Registration', 'pass', 'Service worker registered successfully!');
+                        })
+                        .catch(err => {
+                            addResult('Service Worker Registration', 'fail', `Error: ${err.message}`);
+                        });
+                }
+            });
+        } else {
+            addResult('Service Worker Support', 'fail', 'Browser does not support service workers');
+        }
+
+        // Test Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            addResult('Install Prompt', 'pass', 'Install prompt is available! Click "Test Install Prompt" button.');
+        });
+
+        // Test if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            addResult('Installation Status', 'pass', 'App is currently running as installed PWA!');
+        } else {
+            addResult('Installation Status', 'warn', 'App is running in browser (not installed)');
+        }
+
+        // Test Icons
+        fetch('/images/icon-192x192.png')
+            .then(res => {
+                if (res.ok) {
+                    addResult('App Icons', 'pass', 'Icons are accessible');
+                } else {
+                    addResult('App Icons', 'warn', 'Some icons may be missing');
+                }
+            })
+            .catch(() => {
+                addResult('App Icons', 'fail', 'Icons not found in /images/ directory');
+            });
+
+        function testInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        addResult('Install Test', 'pass', 'User accepted the install prompt!');
+                    } else {
+                        addResult('Install Test', 'warn', 'User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert('Install prompt not available. This could mean:\n\n1. App is already installed\n2. Not served over HTTPS/localhost\n3. Manifest or service worker issues\n4. Browser doesn\'t support PWA install');
+            }
+        }
+
+        function testServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    alert(`Service Workers: ${registrations.length}\n\nCheck console for details.`);
+                    console.log('Service Worker Registrations:', registrations);
+                });
+            } else {
+                alert('Service workers not supported in this browser');
+            }
+        }
+
+        function testManifest() {
+            fetch('/manifest.json')
+                .then(res => res.json())
+                .then(manifest => {
+                    alert('Manifest loaded successfully!\n\nCheck console for details.');
+                    console.log('Manifest:', manifest);
+                })
+                .catch(err => {
+                    alert(`Error loading manifest: ${err.message}`);
+                });
+        }
+
+        // Log everything to console
+        console.log('PWA Test Page Loaded');
+        console.log('Location:', location.href);
+        console.log('Protocol:', location.protocol);
+        console.log('Is Standalone:', window.matchMedia('(display-mode: standalone)').matches);
+    </script>
+</body>
+</html>

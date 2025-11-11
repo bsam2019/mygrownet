@@ -108,6 +108,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/impersonate/{user}', [App\Http\Controllers\Admin\ImpersonateController::class, 'impersonate'])->name('impersonate');
     });
 
+    // Admin Announcement Management Routes
+    Route::middleware(['admin'])->prefix('admin/announcements')->name('admin.announcements.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'update'])->name('update');
+        Route::post('/{id}/toggle', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'toggleActive'])->name('toggle');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/stats', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'stats'])->name('stats');
+    });
+
     // Admin Starter Kit Management Routes
     Route::middleware(['admin'])->prefix('admin/starter-kit')->name('admin.starter-kit.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'dashboard'])->name('dashboard');
@@ -238,6 +248,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('settings', '/settings/profile');
     Route::get('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('settings/profile/notification-settings', [\App\Http\Controllers\Settings\ProfileController::class, 'updateNotificationSettings'])->name('profile.notification-settings');
     Route::delete('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'update'])->name('password.update');
@@ -428,6 +439,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tiers/compare', [App\Http\Controllers\TierController::class, 'compare'])->name('tiers.compare');
     Route::get('/tiers/{tier}', [App\Http\Controllers\TierController::class, 'show'])->name('tiers.show');
     
+    // Mobile Dashboard - STANDALONE (outside group to avoid conflicts)
+    Route::get('/mobile-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])
+        ->middleware(['auth'])
+        ->name('mygrownet.mobile-dashboard');
+    
     // MyGrowNet Dashboard Routes
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('dashboard');
@@ -442,6 +458,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/my-starter-kit/purchase', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'storePurchase'])->name('starter-kit.store');
         Route::get('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'showUpgrade'])->name('starter-kit.upgrade');
         Route::post('/my-starter-kit/upgrade', [App\Http\Controllers\MyGrowNet\StarterKitController::class, 'processUpgrade'])->name('starter-kit.upgrade.process');
+        
+        // Gift Starter Kit Routes
+        Route::post('/gifts/starter-kit', [App\Http\Controllers\MyGrowNet\GiftController::class, 'giftStarterKit'])->name('gifts.starter-kit');
+        Route::get('/gifts/limits', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getLimits'])->name('gifts.limits');
+        Route::get('/gifts/history', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getHistory'])->name('gifts.history');
+        Route::get('/network/level/{level}/members', [App\Http\Controllers\MyGrowNet\GiftController::class, 'getLevelMembers'])->name('network.level.members');
         
         // Library Routes (requires starter kit)
         Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');
@@ -506,6 +528,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // API Routes for Dashboard Data
         Route::prefix('api')->name('api.')->group(function () {
+            // User preferences
+            Route::post('/user/dashboard-preference', [App\Http\Controllers\Settings\ProfileController::class, 'updateDashboardPreference'])->name('user.dashboard-preference');
+            
+            // Announcements
+            Route::get('/announcements', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'index'])->name('announcements.index');
+            Route::get('/announcements/unread-count', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'unreadCount'])->name('announcements.unread-count');
+            Route::post('/announcements/{id}/read', [App\Http\Controllers\MyGrowNet\AnnouncementController::class, 'markAsRead'])->name('announcements.mark-read');
+            
             Route::get('/dashboard-stats', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getDashboardStats'])->name('dashboard-stats');
             Route::get('/network-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getNetworkData'])->name('network-data');
             Route::get('/commission-summary', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getCommissionSummary'])->name('commission-summary');

@@ -186,19 +186,94 @@ class ReferralController extends Controller
         ]);
     }
 
-    public function referralsByLevel()
+    public function referralsByLevel(Request $request)
     {
         $user = Auth::user();
+        $selectedLevel = $request->get('level', 1);
         
-        $byLevel = [];
+        // Get team members by level using recursive query
+        $teamByLevel = $this->getTeamMembersByLevel($user->id, 7);
+        
+        // Format for display
+        $levelSummary = [];
         for ($level = 1; $level <= 7; $level++) {
-            $byLevel[$level] = $user->referralCommissions()
-                ->where('level', $level)
-                ->with(['referred'])
-                ->get();
+            $members = $teamByLevel[$level] ?? [];
+            $levelSummary[] = [
+                'level' => $level,
+                'count' => count($members),
+                'members' => $members,
+            ];
         }
         
-        return response()->json($byLevel);
+        return inertia('Referrals/ByLevel', [
+            'levelSummary' => $levelSummary,
+            'selectedLevel' => $selectedLevel,
+            'totalTeamSize' => array_sum(array_map('count', $teamByLevel)),
+        ]);
+    }
+    
+    /**
+     * Get team members organized by level
+     */
+    private function getTeamMembersByLevel(int $userId, int $maxLevel = 7): array
+    {
+        $teamByLevel = [];
+        
+        for ($level = 1; $level <= $maxLevel; $level++) {
+            $teamByLevel[$level] = [];
+        }
+        
+        // Level 1: Direct referrals
+        $level1 = User::where('referrer_id', $userId)
+            ->select('id', 'name', 'email', 'phone', 'referrer_id', 'created_at', 'starter_kit_tier')
+            ->get()
+            ->map(function ($member) use ($userId) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'phone' => $member->phone ?? 'N/A',
+                    'referrer_id' => $member->referrer_id,
+                    'referrer_name' => 'You',
+                    'joined_date' => $member->created_at->format('M d, Y'),
+                    'tier' => $member->starter_kit_tier ?? 'None',
+                    'level' => 1,
+                ];
+            })
+            ->toArray();
+        
+        $teamByLevel[1] = $level1;
+        
+        // Levels 2-7: Recursive downline
+        $currentLevelIds = array_column($level1, 'id');
+        
+        for ($level = 2; $level <= $maxLevel; $level++) {
+            if (empty($currentLevelIds)) break;
+            
+            $nextLevel = User::whereIn('referrer_id', $currentLevelIds)
+                ->select('id', 'name', 'email', 'phone', 'referrer_id', 'created_at', 'starter_kit_tier')
+                ->get()
+                ->map(function ($member) use ($level) {
+                    $referrer = User::find($member->referrer_id);
+                    return [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'email' => $member->email,
+                        'phone' => $member->phone ?? 'N/A',
+                        'referrer_id' => $member->referrer_id,
+                        'referrer_name' => $referrer->name ?? 'Unknown',
+                        'joined_date' => $member->created_at->format('M d, Y'),
+                        'tier' => $member->starter_kit_tier ?? 'None',
+                        'level' => $level,
+                    ];
+                })
+                ->toArray();
+            
+            $teamByLevel[$level] = $nextLevel;
+            $currentLevelIds = array_column($nextLevel, 'id');
+        }
+        
+        return $teamByLevel;
     }
 
     public function performanceReport()

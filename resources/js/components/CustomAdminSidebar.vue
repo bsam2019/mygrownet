@@ -25,7 +25,8 @@ import {
     Star,
     Settings,
     Calendar,
-    BarChart3
+    BarChart3,
+    Bell
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -120,6 +121,7 @@ const employeeNavItems: NavItem[] = [
 ];
 
 const systemNavItems: NavItem[] = [
+    { title: 'Announcements', href: safeRoute('admin.announcements.index'), icon: Bell },
     { title: 'Bonus Points Settings', href: safeRoute('admin.settings.bp.index'), icon: Target },
     { title: 'Roles', href: safeRoute('admin.role-management.roles.index'), icon: Shield },
     { title: 'Permissions', href: safeRoute('admin.role-management.permissions.index'), icon: Key },

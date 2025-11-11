@@ -12,8 +12,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
-import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon } from 'lucide-vue-next';
+import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon, Smartphone as SmartphoneIcon } from 'lucide-vue-next';
 import type { BreadcrumbItemType } from '@/types';
+import axios from 'axios';
 
 defineProps<{
   breadcrumbs?: BreadcrumbItemType[];
@@ -22,6 +23,7 @@ defineProps<{
 // Derive current user name from Inertia props if available
 const page = usePage();
 const userName = (page?.props as any)?.auth?.user?.name ?? 'User';
+const userDashboardPreference = ref((page?.props as any)?.auth?.user?.dashboard_preference ?? 'auto');
 
 // Simple dark mode toggle with persistence
 const isDark = ref(false);
@@ -44,6 +46,27 @@ onMounted(() => {
 
 const goto = (href: string) => router.visit(href);
 const logout = () => router.post('/logout');
+
+// Dashboard preference toggle
+const toggleMobileDashboard = async () => {
+  try {
+    const isCurrentlyMobile = userDashboardPreference.value === 'mobile';
+    const newPreference = isCurrentlyMobile ? 'desktop' : 'mobile';
+    
+    console.log('Toggling dashboard preference:', { from: userDashboardPreference.value, to: newPreference });
+    
+    await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: newPreference });
+    userDashboardPreference.value = newPreference;
+    
+    // Redirect to mobile dashboard if enabled
+    if (newPreference === 'mobile') {
+      console.log('Redirecting to mobile dashboard...');
+      router.visit(route('mygrownet.mobile-dashboard'));
+    }
+  } catch (error) {
+    console.error('Failed to update dashboard preference:', error);
+  }
+};
 </script>
 
 <template>
@@ -105,6 +128,17 @@ const logout = () => router.post('/logout');
             <MoonIcon class="mr-2 h-4 w-4" />
             <span>Dark mode</span>
           </DropdownMenuCheckboxItem>
+          <DropdownMenuItem as-child>
+            <button 
+              type="button"
+              class="w-full"
+              @click.prevent="toggleMobileDashboard"
+            >
+              <SmartphoneIcon class="mr-2 h-4 w-4" />
+              <span>Mobile Dashboard</span>
+              <span v-if="userDashboardPreference === 'mobile'" class="ml-auto text-primary">✓</span>
+            </button>
+          </DropdownMenuItem>
         </div>
         <DropdownMenuSeparator />
         <div class="py-1">

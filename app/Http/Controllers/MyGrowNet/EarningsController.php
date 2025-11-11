@@ -20,16 +20,20 @@ class EarningsController extends Controller
         $profitShares = (float) $user->profitShares()
             ->sum('amount');
             
+        // LGR current balance (what they have now)
         $lgrRewards = (float) ($user->loyalty_points ?? 0);
+        
+        // LGR total awarded (for total earnings calculation)
+        $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
+        $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         
         // Calculate LGR withdrawable amount
         $lgrWithdrawablePercentage = \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
-        $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
-        $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
         $lgrWithdrawable = min($lgrRewards, max(0, $lgrMaxWithdrawable));
         
-        $totalEarnings = $commissions + $profitShares + $lgrRewards;
+        // Total earnings = commissions + profit shares + total LGR awarded (not just current balance)
+        $totalEarnings = $commissions + $profitShares + $lgrAwardedTotal;
         
         // This month earnings
         $thisMonthCommissions = (float) $user->referralCommissions()

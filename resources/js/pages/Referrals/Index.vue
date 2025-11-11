@@ -22,6 +22,12 @@
                             >
                                 My Team List
                             </button>
+                            <Link 
+                                :href="route('my-team.by-level')"
+                                class="px-4 py-2 text-sm md:text-base font-medium rounded-lg transition-colors bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                            >
+                                By Level
+                            </Link>
                             <button 
                                 @click="changeTab('overview')"
                                 :class="tabButtonClasses('overview')"

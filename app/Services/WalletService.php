@@ -10,201 +10,192 @@ use Illuminate\Support\Facades\DB;
  * 
  * This service handles all wallet balance calculations and operations.
  * The wallet balance is calculated dynamically from multiple sources.
+ * 
+ * USES: EarningsService for all earnings calculations (no duplication)
  */
 class WalletService
 {
+    protected EarningsService $earningsService;
+    
+    public function __construct(EarningsService $earningsService)
+    {
+        $this->earningsService = $earningsService;
+    }
+    
     /**
      * Calculate user's wallet balance
      * 
-     * PRIMARY SOURCE: transactions table (single source of truth)
-     * EXCLUDES: LGR awards (they stay in LGR balance until transferred)
+     * Balance = Total Credits - Total Debits
      * 
      * @param User $user
      * @return float
      */
     public function calculateBalance(User $user): float
     {
-        // Get balance from transactions table, EXCLUDING LGR transactions
-        // LGR awards stay in LGR balance until user transfers them to wallet
-        $transactionsBalance = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('status', 'completed')
-            ->where('transaction_type', 'NOT LIKE', '%lgr%')
-            ->sum('amount');
+        $credits = $this->calculateTotalCredits($user);
+        $debits = $this->calculateTotalDebits($user);
         
-        // Add old system data (commissions, profit shares) if not in transactions
-        $commissionEarnings = (float) $user->referralCommissions()->where('status', 'paid')->sum('amount');
-        $profitEarnings = (float) $user->profitShares()->sum('amount');
-        
-        // Workshop expenses (if not in transactions)
-        $workshopExpenses = (float) \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-            ->sum('workshops.price');
-        
-        return $transactionsBalance + $commissionEarnings + $profitEarnings - $workshopExpenses;
+        return $credits - $debits;
     }
     
     /**
-     * Calculate total earnings (credits to wallet)
-     * 
-     * Sources:
-     * 1. Referral commissions (paid status)
-     * 2. Profit shares
-     * 3. Wallet topups (verified payments)
-     * 4. Wallet topups from transactions table (LGR transfers, etc.)
-     * 5. Loan disbursements
+     * Calculate total credits (money IN to wallet)
      * 
      * @param User $user
      * @return float
      */
-    public function calculateTotalEarnings(User $user): float
+    private function calculateTotalCredits(User $user): float
     {
-        $commissionEarnings = (float) $user->referralCommissions()
-            ->where('status', 'paid')
-            ->sum('amount');
+        // Get ALL earnings from EarningsService (no duplication!)
+        $earnings = $this->earningsService->calculateTotalEarnings($user);
         
-        $profitEarnings = (float) $user->profitShares()
-            ->sum('amount');
+        // Add deposits/topups
+        $deposits = $this->getDeposits($user);
         
-        $walletTopups = (float) \App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+        // Add loan disbursements
+        $loans = $this->getLoanDisbursements($user);
+        
+        return $earnings + $deposits + $loans;
+    }
+    
+    /**
+     * Calculate total debits (money OUT from wallet)
+     * 
+     * @param User $user
+     * @return float
+     */
+    private function calculateTotalDebits(User $user): float
+    {
+        return $this->getWithdrawals($user)
+             + $this->getExpenses($user)
+             + $this->getLoanRepayments($user);
+    }
+    
+    /**
+     * Get deposits/topups (external money added to wallet)
+     * 
+     * @param User $user
+     * @return float
+     */
+    private function getDeposits(User $user): float
+    {
+        // Verified wallet topups from member_payments
+        $memberPaymentTopups = (float) \App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
             ->where('payment_type', 'wallet_topup')
             ->where('status', 'verified')
             ->sum('amount');
         
-        // Include wallet topups from transactions table (e.g., LGR transfers)
+        // Wallet topups from transactions table (e.g., LGR transfers)
         $transactionTopups = (float) DB::table('transactions')
             ->where('user_id', $user->id)
             ->where('transaction_type', 'wallet_topup')
             ->where('status', 'completed')
             ->sum('amount');
         
-        // Include loan disbursements
-        $loanDisbursements = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'loan_disbursement')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        return $commissionEarnings + $profitEarnings + $walletTopups + $transactionTopups + $loanDisbursements;
+        return $memberPaymentTopups + $transactionTopups;
     }
     
     /**
-     * Calculate total expenses (debits from wallet)
-     * 
-     * Sources:
-     * 1. Approved withdrawals (includes starter kit purchases via wallet_payment method)
-     * 2. Workshop registrations paid via wallet
-     * 3. Transaction expenses (from transactions table)
-     * 4. Loan repayments
-     * 
-     * NOTE: Starter kit purchases are NOT counted separately because they are already
-     * recorded as withdrawals with withdrawal_method='wallet_payment'
+     * Get loan disbursements
      * 
      * @param User $user
      * @return float
      */
-    public function calculateTotalExpenses(User $user): float
+    private function getLoanDisbursements(User $user): float
     {
-        // Approved withdrawals (includes starter kit wallet payments)
-        $totalWithdrawals = (float) $user->withdrawals()
+        return (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('transaction_type', 'loan_disbursement')
+            ->where('status', 'completed')
+            ->sum('amount');
+    }
+    
+    /**
+     * Get withdrawals
+     * 
+     * @param User $user
+     * @return float
+     */
+    private function getWithdrawals(User $user): float
+    {
+        // Approved withdrawals from withdrawals table
+        $withdrawalsTable = (float) $user->withdrawals()
             ->where('status', 'approved')
             ->sum('amount');
         
+        // Withdrawals from transactions table
+        $transactionWithdrawals = (float) DB::table('transactions')
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('transaction_type', 'withdrawal')
+            ->sum('amount');
+        
+        return $withdrawalsTable + abs($transactionWithdrawals);
+    }
+    
+    /**
+     * Get expenses (workshops, products, etc.)
+     * 
+     * @param User $user
+     * @return float
+     */
+    private function getExpenses(User $user): float
+    {
         // Workshop expenses
         $workshopExpenses = (float) \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
             ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
             ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
             ->sum('workshops.price');
         
-        // Transaction expenses
-        $transactionExpenses = (float) DB::table('transactions')
+        // Starter kit purchases from transactions
+        $starterKitExpenses = (float) DB::table('transactions')
             ->where('user_id', $user->id)
+            ->where('transaction_type', 'LIKE', '%starter_kit%')
             ->where('status', 'completed')
-            ->where('transaction_type', 'withdrawal')
             ->sum('amount');
         
-        // Loan repayments
-        $loanRepayments = (float) DB::table('transactions')
+        return $workshopExpenses + abs($starterKitExpenses);
+    }
+    
+    /**
+     * Get loan repayments
+     * 
+     * @param User $user
+     * @return float
+     */
+    private function getLoanRepayments(User $user): float
+    {
+        return (float) DB::table('transactions')
             ->where('user_id', $user->id)
             ->where('transaction_type', 'loan_repayment')
             ->where('status', 'completed')
             ->sum('amount');
-        
-        return $totalWithdrawals + $workshopExpenses + $transactionExpenses + $loanRepayments;
     }
     
     /**
      * Get wallet breakdown for display
-     * 
-     * Uses transactions table as primary source
+     * Uses EarningsService for earnings breakdown (no duplication!)
      * 
      * @param User $user
      * @return array
      */
     public function getWalletBreakdown(User $user): array
     {
-        // Get breakdown from transactions table
-        $deposits = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->whereIn('transaction_type', ['deposit', 'wallet_topup'])
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        $lgrAwards = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'LIKE', '%lgr%')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        $loanDisbursements = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'loan_disbursement')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        $withdrawals = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'withdrawal')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        $starterKits = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'LIKE', '%starter_kit%')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        $loanRepayments = (float) DB::table('transactions')
-            ->where('user_id', $user->id)
-            ->where('transaction_type', 'loan_repayment')
-            ->where('status', 'completed')
-            ->sum('amount');
-        
-        // Old system data (not yet in transactions)
-        $commissionEarnings = (float) $user->referralCommissions()->where('status', 'paid')->sum('amount');
-        $profitEarnings = (float) $user->profitShares()->sum('amount');
-        
-        $workshopExpenses = (float) \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::where('workshop_registrations.user_id', $user->id)
-            ->whereIn('workshop_registrations.status', ['registered', 'attended', 'completed'])
-            ->join('workshops', 'workshop_registrations.workshop_id', '=', 'workshops.id')
-            ->sum('workshops.price');
+        // Get earnings breakdown from EarningsService
+        $earningsBreakdown = $this->earningsService->getEarningsBreakdown($user);
         
         return [
-            'earnings' => [
-                'commissions' => $commissionEarnings,
-                'profit_shares' => $profitEarnings,
-                'topups' => $deposits,
-                'lgr' => $lgrAwards,
-                'loans' => $loanDisbursements,
-                'total' => $commissionEarnings + $profitEarnings + $deposits + $lgrAwards + $loanDisbursements,
+            'credits' => [
+                'earnings' => $earningsBreakdown, // From EarningsService
+                'deposits' => $this->getDeposits($user),
+                'loans' => $this->getLoanDisbursements($user),
+                'total' => $this->calculateTotalCredits($user),
             ],
-            'expenses' => [
-                'withdrawals' => abs($withdrawals),
-                'starter_kits' => abs($starterKits),
-                'workshops' => $workshopExpenses,
-                'loan_repayments' => abs($loanRepayments),
-                'total' => abs($withdrawals) + abs($starterKits) + $workshopExpenses + abs($loanRepayments),
+            'debits' => [
+                'withdrawals' => $this->getWithdrawals($user),
+                'expenses' => $this->getExpenses($user),
+                'loan_repayments' => $this->getLoanRepayments($user),
+                'total' => $this->calculateTotalDebits($user),
             ],
             'balance' => $this->calculateBalance($user),
         ];

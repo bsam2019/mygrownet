@@ -5,6 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
         <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+        
+        <!-- PWA Meta Tags -->
+        <meta name="theme-color" content="#2563eb">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="MyGrowNet">
+        <link rel="manifest" href="/manifest.json">
+        <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-192x192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

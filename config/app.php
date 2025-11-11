@@ -146,6 +146,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\EmployeeDomainServiceProvider::class, // Re-enabled for employee functionality
+        App\Providers\AnnouncementServiceProvider::class,
     ])->toArray(),
 
     /*

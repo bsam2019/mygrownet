@@ -24,6 +24,7 @@ use App\Models\ProjectContribution;
 use App\Models\ProjectVote;
 use App\Models\ProjectProfitDistribution;
 use Carbon\Carbon;
+use App\Application\UseCases\Announcement\GetUserAnnouncementsUseCase;
 
 class DashboardController extends Controller
 {
@@ -31,22 +32,37 @@ class DashboardController extends Controller
     protected MyGrowNetTierAdvancementService $tierAdvancementService;
     protected AssetIncomeTrackingService $assetIncomeTrackingService;
     protected CommunityProjectService $communityProjectService;
+    protected \App\Services\WalletService $walletService;
+    protected \App\Services\EarningsService $earningsService;
+    protected GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase;
 
     public function __construct(
         MLMCommissionService $mlmCommissionService,
         MyGrowNetTierAdvancementService $tierAdvancementService,
         AssetIncomeTrackingService $assetIncomeTrackingService,
-        CommunityProjectService $communityProjectService
+        CommunityProjectService $communityProjectService,
+        \App\Services\WalletService $walletService,
+        \App\Services\EarningsService $earningsService,
+        GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase
     ) {
         $this->mlmCommissionService = $mlmCommissionService;
         $this->tierAdvancementService = $tierAdvancementService;
         $this->assetIncomeTrackingService = $assetIncomeTrackingService;
         $this->communityProjectService = $communityProjectService;
+        $this->walletService = $walletService;
+        $this->earningsService = $earningsService;
+        $this->getUserAnnouncementsUseCase = $getUserAnnouncementsUseCase;
     }
 
     public function index(Request $request)
     {
         $user = $request->user();
+        
+        // Check if we should redirect based on dashboard preference
+        $shouldRedirect = $this->shouldRedirectToDashboard($request, $user);
+        if ($shouldRedirect) {
+            return redirect()->route($shouldRedirect);
+        }
         
         // Load user with necessary relationships
         $user = $user->load([
@@ -57,7 +73,8 @@ class DashboardController extends Controller
             'achievements',
             'directReferrals',
             'referralCommissions',
-            'teamVolume'
+            'teamVolume',
+            'notificationPreferences'
         ]);
 
         // Get current subscription
@@ -69,8 +86,8 @@ class DashboardController extends Controller
         // Get learning progress
         $learningProgress = $this->getLearningProgress($user);
         
-        // Get referral stats with five-level tracking
-        $referralStats = $this->getFiveLevelReferralStats($user);
+        // Get referral stats with seven-level tracking
+        $referralStats = $this->getSevenLevelReferralStats($user);
         
         // Get leaderboard position
         $leaderboardPosition = $this->getLeaderboardPosition($user);
@@ -202,7 +219,7 @@ class DashboardController extends Controller
         }
         
         // Check for tier upgrade eligibility
-        if ($membershipProgress['eligibility']) {
+        if (isset($membershipProgress['eligibility']) && $membershipProgress['eligibility']) {
             $notifications->push([
                 'type' => 'tier_upgrade',
                 'title' => 'Tier Upgrade Available',
@@ -271,9 +288,374 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get five-level referral statistics with team volume tracking
+     * Mobile-optimized dashboard
      */
-    private function getFiveLevelReferralStats(User $user): array
+    public function mobileIndex(Request $request)
+    {
+        $user = $request->user();
+        
+        // Check if we should redirect based on dashboard preference
+        $shouldRedirect = $this->shouldRedirectToDashboard($request, $user);
+        if ($shouldRedirect) {
+            return redirect()->route($shouldRedirect);
+        }
+        
+        // DEBUG: Log that we're in mobile dashboard
+        \Log::info('Mobile Dashboard Accessed', [
+            'user_id' => $user->id,
+            'url' => $request->fullUrl()
+        ]);
+        
+        // Try to prepare data, catch any errors
+        try {
+            $data = $this->prepareIndexData($request);
+        } catch (\Exception $e) {
+            // Log the error
+            \Log::error('Mobile Dashboard Error', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            // Show error to user
+            dd('Error loading mobile dashboard', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ]);
+        }
+        
+        // Add wallet balance using WalletService
+        $data['walletBalance'] = $this->walletService->calculateBalance($user);
+        
+        // Get verification limits
+        $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
+        $data['verificationLimits'] = $limits;
+        $data['remainingDailyLimit'] = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
+        
+        // Get pending withdrawals
+        $data['pendingWithdrawals'] = \App\Models\WithdrawalRequest::where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->sum('amount');
+        
+        // Get loan summary (if exists)
+        try {
+            if (class_exists(\App\Domain\Financial\Services\LoanService::class)) {
+                $loanService = app(\App\Domain\Financial\Services\LoanService::class);
+                $data['loanSummary'] = $loanService->getLoanSummary($user);
+            } else {
+                $data['loanSummary'] = [
+                    'has_loan' => false,
+                    'can_withdraw' => true,
+                ];
+            }
+        } catch (\Exception $e) {
+            $data['loanSummary'] = [
+                'has_loan' => false,
+                'can_withdraw' => true,
+            ];
+        }
+        
+        // Get all wallet top-ups (including pending) for mobile
+        $data['recentTopups'] = \App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel::where('user_id', $user->id)
+            ->where('payment_type', 'wallet_topup')
+            ->whereIn('status', ['verified', 'pending', 'processing', 'rejected'])
+            ->latest()
+            ->take(50) // Increased limit for mobile view
+            ->get()
+            ->map(function ($topup) {
+                return [
+                    'id' => $topup->id,
+                    'amount' => (float) $topup->amount,
+                    'status' => $topup->status,
+                    'payment_method' => $topup->payment_method,
+                    'payment_reference' => $topup->payment_reference,
+                    'date' => $topup->created_at->format('M d, Y'),
+                    'time' => $topup->created_at->format('h:i A'),
+                ];
+            })
+            ->toArray();
+        
+        // Add earnings breakdown for mobile
+        $data['earningsBreakdown'] = $this->getEarningsBreakdown($user);
+        
+        // Add LGR data for mobile
+        $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
+            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+        $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
+        $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
+        $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
+        $lgrWithdrawable = (float) min($user->loyalty_points ?? 0, max(0, $lgrMaxWithdrawable));
+        $lgrWithdrawalBlocked = (bool) ($user->lgr_withdrawal_blocked ?? false);
+        if ($lgrWithdrawalBlocked) {
+            $lgrWithdrawable = 0.0;
+        }
+        
+        $data['loyaltyPoints'] = (float) ($user->loyalty_points ?? 0);
+        $data['lgrWithdrawable'] = (float) $lgrWithdrawable;
+        $data['lgrWithdrawablePercentage'] = (int) $lgrWithdrawablePercentage;
+        $data['lgrWithdrawalBlocked'] = $lgrWithdrawalBlocked;
+        
+        // Get announcements for user
+        $userTier = $user->currentMembershipTier->name ?? 'Associate';
+        $data['announcements'] = $this->getUserAnnouncementsUseCase->execute($user->id, $userTier);
+        
+        // DEBUG: Add a flag to identify mobile dashboard
+        $data['isMobileDashboard'] = true;
+        $data['debugInfo'] = [
+            'component' => 'MyGrowNet/MobileDashboard',
+            'timestamp' => now()->toDateTimeString(),
+            'user' => $user->name,
+            'walletBalance' => $data['walletBalance']
+        ];
+        
+        \Log::info('Rendering Mobile Dashboard', [
+            'component' => 'MyGrowNet/MobileDashboard',
+            'data_keys' => array_keys($data),
+            'walletBalance' => $data['walletBalance']
+        ]);
+        
+        // Render the mobile dashboard component instead
+        return Inertia::render('MyGrowNet/MobileDashboard', $data);
+    }
+
+    /**
+     * Prepare dashboard data (shared between desktop and mobile)
+     */
+    private function prepareIndexData(Request $request): array
+    {
+        $user = $request->user();
+        
+        // Load user with necessary relationships
+        $user = $user->load([
+            'currentMembershipTier',
+            'subscriptions' => function ($query) {
+                $query->where('status', 'active')->with('package');
+            },
+            'achievements',
+            'projectInvestments'
+        ]);
+
+        // Get current subscription
+        $currentSubscription = $user->subscriptions()->where('status', 'active')->first();
+        
+        // Get professional level progress
+        $membershipProgress = $this->getProfessionalLevelProgress($user);
+        
+        // Get learning progress
+        $learningProgress = $this->getLearningProgress($user);
+        
+        // Get referral statistics
+        $referralStats = $this->getSevenLevelReferralStats($user);
+        
+        // Get leaderboard position
+        $leaderboardPosition = $this->getLeaderboardPosition($user);
+        
+        // Get recent achievements
+        $recentAchievements = $user->achievements()
+            ->latest()
+            ->limit(5)
+            ->get();
+        
+        // Get upcoming workshops
+        $upcomingWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopModel::where('status', 'published')
+            ->where('start_date', '>', now())
+            ->orderBy('start_date')
+            ->limit(3)
+            ->get()
+            ->map(function ($workshop) {
+                return [
+                    'id' => $workshop->id,
+                    'title' => $workshop->title,
+                    'start_date' => $workshop->start_date->format('M d, Y'),
+                    'price' => $workshop->price,
+                    'lp_reward' => $workshop->lp_reward,
+                    'bp_reward' => $workshop->bp_reward,
+                ];
+            });
+        
+        // Get user's workshop registrations
+        $myWorkshops = \App\Infrastructure\Persistence\Eloquent\Workshop\WorkshopRegistrationModel::with('workshop')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['registered', 'attended'])
+            ->latest()
+            ->limit(3)
+            ->get()
+            ->map(function ($registration) {
+                return [
+                    'id' => $registration->id,
+                    'workshop_title' => $registration->workshop->title,
+                    'status' => $registration->status,
+                    'attended_at' => $registration->attended_at?->format('M d, Y'),
+                ];
+            });
+        
+        // Get starter kit information
+        $starterKit = \App\Models\Subscription::with('package')
+            ->where('user_id', $user->id)
+            ->whereHas('package', function ($query) {
+                $query->where('slug', 'starter-kit-associate');
+            })
+            ->first();
+        
+        $starterKitInfo = null;
+        if ($starterKit) {
+            $starterKitInfo = [
+                'has_kit' => true,
+                'tier' => $user->starter_kit_tier ?? 'associate',
+                'purchased_at' => $user->starter_kit_purchased_at?->format('M d, Y'),
+                'status' => $starterKit->status,
+            ];
+        }
+        
+        // Get available community projects
+        $availableProjects = CommunityProject::where('status', 'funding')
+            ->latest()
+            ->limit(3)
+            ->get();
+        
+        // Get user project investments
+        $userInvestments = $user->projectInvestments()
+            ->with(['project'])
+            ->where('status', 'confirmed')
+            ->latest()
+            ->limit(5)
+            ->get();
+        
+        // Get monthly stats for charts
+        $monthlyStats = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthlyStats[] = [
+                'month' => $month->format('M Y'),
+                'direct_referrals' => $user->directReferrals()
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->count(),
+                'project_investments' => $user->projectInvestments()
+                    ->whereMonth('invested_at', $month->month)
+                    ->whereYear('invested_at', $month->year)
+                    ->sum('amount'),
+                'team_volume' => $this->getMonthlyTeamVolume($user, $month),
+                'commissions_earned' => $user->referralCommissions()
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->sum('amount')
+            ];
+        }
+        
+        // Prepare notifications
+        $notifications = collect();
+        
+        // Check for new community projects
+        $newProjects = CommunityProject::where('created_at', '>=', now()->subDays(7))->count();
+        if ($newProjects > 0) {
+            $notifications->push([
+                'type' => 'new_projects',
+                'title' => 'New Community Projects',
+                'message' => "$newProjects new community projects available for investment",
+                'action_url' => route('mygrownet.projects.index'),
+                'priority' => 'medium'
+            ]);
+        }
+        
+        // Check for tier upgrade eligibility
+        if (isset($membershipProgress['eligibility']) && $membershipProgress['eligibility']) {
+            $notifications->push([
+                'type' => 'tier_upgrade',
+                'title' => 'Tier Upgrade Available',
+                'message' => "You're eligible to upgrade to {$membershipProgress['next_tier']['name']}!",
+                'action_url' => route('mygrownet.membership.upgrade'),
+                'priority' => 'high'
+            ]);
+        }
+
+        // Get team volume visualization data
+        $teamVolumeData = $this->getTeamVolumeData($request);
+        
+        // Get network data (use direct method, not API endpoint)
+        $networkData = $this->getNetworkStructureData($user);
+        
+        // Get asset data (use local method instead of service)
+        $assetData = $this->getAssetTrackingData($user);
+        
+        // Get community project data
+        $communityProjectData = $this->getCommunityProjectData($user);
+        
+        // Get loan summary (with fallback if service doesn't exist)
+        try {
+            if (class_exists(\App\Domain\Financial\Services\LoanService::class)) {
+                $loanService = app(\App\Domain\Financial\Services\LoanService::class);
+                $loanSummary = $loanService->getLoanSummary($user);
+            } else {
+                // Fallback: basic loan data from user model
+                $loanSummary = [
+                    'total_borrowed' => (float) ($user->loan_balance ?? 0),
+                    'total_repaid' => (float) ($user->total_loan_repaid ?? 0),
+                    'outstanding_balance' => (float) ($user->loan_balance ?? 0),
+                    'loan_limit' => (float) ($user->loan_limit ?? 0),
+                    'available_credit' => (float) max(0, ($user->loan_limit ?? 0) - ($user->loan_balance ?? 0)),
+                    'loan_balance' => (float) ($user->loan_balance ?? 0),
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fallback on error
+            $loanSummary = [
+                'total_borrowed' => 0.0,
+                'total_repaid' => 0.0,
+                'outstanding_balance' => 0.0,
+                'loan_limit' => 0.0,
+                'available_credit' => 0.0,
+                'loan_balance' => 0.0,
+            ];
+        }
+
+        return [
+            'user' => $user,
+            'subscription' => $currentSubscription,
+            'starterKit' => $starterKitInfo,
+            'membershipProgress' => $membershipProgress,
+            'learningProgress' => $learningProgress,
+            'referralStats' => $referralStats,
+            'leaderboardPosition' => $leaderboardPosition,
+            'recentAchievements' => $recentAchievements,
+            'availableProjects' => $availableProjects,
+            'userInvestments' => $userInvestments,
+            'upcomingWorkshops' => $upcomingWorkshops,
+            'myWorkshops' => $myWorkshops,
+            'monthlyStats' => $monthlyStats,
+            'notifications' => $notifications->values(),
+            'teamVolumeData' => $teamVolumeData,
+            'networkData' => $networkData,
+            'assetData' => $assetData,
+            'communityProjectData' => $communityProjectData,
+            'loanSummary' => $loanSummary,
+            'stats' => [
+                'total_earnings' => $user->calculateTotalEarnings(),
+                'achievement_count' => $user->achievements_count ?? 0,
+                'community_projects_count' => $user->community_projects_count ?? 0,
+                'courses_completed' => $user->courses_completed ?? 0,
+                'lifetime_investment_returns' => $user->total_project_returns ?? 0,
+                'lifetime_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->sum('lp_amount'),
+                'business_points' => (int) \DB::table('point_transactions')->where('user_id', $user->id)->whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->sum('bp_amount'),
+                'lifetime_referrals' => $user->referral_count ?? 0,
+                'total_referral_earnings' => $user->total_referral_earnings ?? 0,
+                'active_referrals' => $user->directReferrals()
+                    ->whereHas('subscriptions', function ($query) {
+                        $query->where('status', 'active');
+                    })->count(),
+                'this_month_referrals' => $user->directReferrals()
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count()
+            ]
+        ];
+    }
+
+    /**
+     * Get seven-level referral statistics with team volume tracking
+     */
+    private function getSevenLevelReferralStats(User $user): array
     {
         $stats = [
             'total_referrals' => $user->referral_count ?? 0,
@@ -290,8 +672,9 @@ class DashboardController extends Controller
             'levels' => []
         ];
 
-        // Get five-level commission breakdown
-        for ($level = 1; $level <= 5; $level++) {
+        // Get seven-level commission breakdown
+        $levelsData = [];
+        for ($level = 1; $level <= 7; $level++) {
             $levelCommissions = $user->referralCommissions()
                 ->where('level', $level)
                 ->where('status', 'paid')
@@ -304,14 +687,41 @@ class DashboardController extends Controller
                 ->whereYear('created_at', now()->year)
                 ->get();
 
-            $stats['levels'][$level] = [
+            // Get actual users at this level
+            $usersAtLevel = UserNetwork::where('referrer_id', $user->id)
+                ->where('level', $level)
+                ->with(['user' => function($query) {
+                    $query->select('id', 'name', 'email', 'phone', 'created_at')
+                        ->with(['currentMembershipTier:id,name', 'subscriptions' => function($q) {
+                            $q->where('status', 'active')->select('id', 'user_id', 'status');
+                        }]);
+                }])
+                ->get()
+                ->map(function($network) {
+                    $user = $network->user;
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'phone' => $user->phone,
+                        'tier' => $user->currentMembershipTier->name ?? 'Associate',
+                        'is_active' => $user->subscriptions->count() > 0,
+                        'joined_date' => $user->created_at->format('M d, Y'),
+                    ];
+                })
+                ->toArray();
+
+            $levelsData[] = [
                 'level' => $level,
                 'count' => $this->getReferralCountAtLevel($user, $level),
                 'total_earnings' => $levelCommissions->sum('amount'),
                 'this_month_earnings' => $thisMonthCommissions->sum('amount'),
-                'team_volume' => $this->getTeamVolumeAtLevel($user, $level)
+                'team_volume' => $this->getTeamVolumeAtLevel($user, $level),
+                'members' => $usersAtLevel
             ];
         }
+        
+        $stats['levels'] = $levelsData;
 
         return $stats;
     }
@@ -411,6 +821,7 @@ class DashboardController extends Controller
                 'lifetime_points' => $lifetimePoints,
                 'progress_percentage' => 100,
                 'points_needed' => 0,
+                'eligibility' => false, // No next level to be eligible for
                 'message' => 'Congratulations! You\'ve reached the highest level.'
             ];
         }
@@ -429,6 +840,7 @@ class DashboardController extends Controller
             'lifetime_points' => $lifetimePoints,
             'progress_percentage' => round($progressPercentage, 1),
             'points_needed' => max(0, $pointsNeeded),
+            'eligibility' => $pointsNeeded <= 0, // Eligible if enough points
         ];
     }
 
@@ -505,7 +917,7 @@ class DashboardController extends Controller
         }
         
         // Fallback implementation
-        return UserNetwork::where('sponsor_id', $user->id)
+        return UserNetwork::where('referrer_id', $user->id)
             ->where('level', $level)
             ->count();
     }
@@ -517,7 +929,7 @@ class DashboardController extends Controller
         }
         
         // Fallback implementation
-        $networkMembers = UserNetwork::where('sponsor_id', $user->id)
+        $networkMembers = UserNetwork::where('referrer_id', $user->id)
             ->where('level', $level)
             ->pluck('user_id');
             
@@ -564,13 +976,13 @@ class DashboardController extends Controller
                 return $user->tierUpgrades()
                     ->whereMonth('created_at', $currentMonth->month)
                     ->whereYear('created_at', $currentMonth->year)
-                    ->sum('amount_paid');
+                    ->sum('total_investment_amount');
                     
             case 'renewals':
                 return $user->subscriptions()
                     ->where('status', 'active')
-                    ->whereMonth('renewed_at', $currentMonth->month)
-                    ->whereYear('renewed_at', $currentMonth->year)
+                    ->whereMonth('renewal_date', $currentMonth->month)
+                    ->whereYear('renewal_date', $currentMonth->year)
                     ->sum('amount');
                     
             default:
@@ -596,17 +1008,17 @@ class DashboardController extends Controller
 
     private function getNetworkDepth(User $user): int
     {
-        return UserNetwork::where('sponsor_id', $user->id)->max('level') ?? 0;
+        return UserNetwork::where('referrer_id', $user->id)->max('level') ?? 0;
     }
 
     private function getTotalNetworkSize(User $user): int
     {
-        return UserNetwork::where('sponsor_id', $user->id)->count();
+        return UserNetwork::where('referrer_id', $user->id)->count();
     }
 
     private function getActiveNetworkMembers(User $user): int
     {
-        return UserNetwork::where('sponsor_id', $user->id)
+        return UserNetwork::where('referrer_id', $user->id)
             ->whereHas('user.subscriptions', function ($query) {
                 $query->where('status', 'active');
             })->count();
@@ -614,7 +1026,7 @@ class DashboardController extends Controller
 
     private function getTeamSize(User $user): int
     {
-        return UserNetwork::where('sponsor_id', $user->id)->count();
+        return UserNetwork::where('referrer_id', $user->id)->count();
     }
 
     private function getNetworkGrowthData(User $user): array
@@ -624,7 +1036,7 @@ class DashboardController extends Controller
             $month = now()->subMonths($i);
             $growth[] = [
                 'month' => $month->format('M Y'),
-                'new_members' => UserNetwork::where('sponsor_id', $user->id)
+                'new_members' => UserNetwork::where('referrer_id', $user->id)
                     ->whereMonth('created_at', $month->month)
                     ->whereYear('created_at', $month->year)
                     ->count()
@@ -636,12 +1048,12 @@ class DashboardController extends Controller
     private function getNetworkLevelBreakdown(User $user): array
     {
         $breakdown = [];
-        for ($level = 1; $level <= 5; $level++) {
-            $levelMembers = UserNetwork::where('sponsor_id', $user->id)
+        for ($level = 1; $level <= 7; $level++) {
+            $levelMembers = UserNetwork::where('referrer_id', $user->id)
                 ->where('level', $level)
                 ->count();
                 
-            $activeMembers = UserNetwork::where('sponsor_id', $user->id)
+            $activeMembers = UserNetwork::where('referrer_id', $user->id)
                 ->where('level', $level)
                 ->whereHas('user.subscriptions', function ($query) {
                     $query->where('status', 'active');
@@ -666,7 +1078,7 @@ class DashboardController extends Controller
         $user = $request->user();
         
         return response()->json([
-            'total_earnings' => $user->calculateTotalEarnings(),
+            'total_earnings' => $this->earningsService->calculateTotalEarnings($user),
             'this_month_earnings' => $this->getThisMonthEarnings($user),
             'team_size' => $this->getTotalNetworkSize($user),
             'active_team_members' => $this->getActiveNetworkMembers($user),
@@ -686,7 +1098,7 @@ class DashboardController extends Controller
         
         return response()->json([
             'network_structure' => $this->getNetworkStructureData($user),
-            'referral_stats' => $this->getFiveLevelReferralStats($user),
+            'referral_stats' => $this->getSevenLevelReferralStats($user),
             'growth_trend' => $this->getNetworkGrowthData($user)
         ]);
     }
@@ -718,14 +1130,14 @@ class DashboardController extends Controller
     }
 
     /**
-     * API endpoint for five-level commission data
+     * API endpoint for seven-level commission data
      */
     public function getFiveLevelCommissionData(Request $request)
     {
         $user = $request->user();
         
         return response()->json([
-            'referral_stats' => $this->getFiveLevelReferralStats($user),
+            'referral_stats' => $this->getSevenLevelReferralStats($user),
             'commission_breakdown' => $this->getFiveLevelCommissionBreakdown($user),
             'level_performance' => $this->getLevelPerformanceMetrics($user)
         ]);
@@ -750,29 +1162,23 @@ class DashboardController extends Controller
 
     private function getThisMonthEarnings(User $user): float
     {
-        return $user->referralCommissions()
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->where('status', 'paid')
-            ->sum('amount');
+        return $this->earningsService->getThisMonthEarnings($user);
     }
 
     private function getThisMonthCommissions(User $user): float
     {
-        return $this->getThisMonthEarnings($user);
+        return $this->earningsService->getThisMonthEarnings($user);
     }
 
     private function getPendingCommissions(User $user): float
     {
-        return $user->referralCommissions()
-            ->where('status', 'pending')
-            ->sum('amount');
+        return $this->earningsService->getPendingEarnings($user);
     }
 
     private function getFiveLevelCommissionSummary(User $user): array
     {
         $summary = [];
-        for ($level = 1; $level <= 5; $level++) {
+        for ($level = 1; $level <= 7; $level++) {
             $summary[$level] = [
                 'level' => $level,
                 'count' => $this->getReferralCountAtLevel($user, $level),
@@ -788,7 +1194,7 @@ class DashboardController extends Controller
     private function getFiveLevelCommissionBreakdown(User $user): array
     {
         $breakdown = [];
-        for ($level = 1; $level <= 5; $level++) {
+        for ($level = 1; $level <= 7; $level++) {
             $commissions = $user->referralCommissions()
                 ->where('level', $level)
                 ->get();
@@ -854,11 +1260,15 @@ class DashboardController extends Controller
             $node = [
                 'id' => $referral->id,
                 'name' => $referral->name,
+                'email' => $referral->email,
+                'phone' => $referral->phone,
                 'tier' => $referral->currentMembershipTier->name ?? 'None',
                 'status' => $referral->hasActiveSubscription() ? 'active' : 'inactive',
                 'joined_date' => $referral->created_at->format('M Y'),
                 'personal_volume' => $latestTeamVolume->personal_volume ?? 0,
                 'team_size' => $this->getTeamSize($referral),
+                'has_starter_kit' => $referral->starterKitPurchases()->exists(),
+                'direct_referrals' => $referral->directReferrals()->count(),
                 'level' => $currentLevel,
                 'children' => []
             ];
@@ -880,12 +1290,12 @@ class DashboardController extends Controller
         $currentMonth = now();
         $lastMonth = now()->subMonth();
         
-        $currentMonthGrowth = UserNetwork::where('sponsor_id', $user->id)
+        $currentMonthGrowth = UserNetwork::where('referrer_id', $user->id)
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
             
-        $lastMonthGrowth = UserNetwork::where('sponsor_id', $user->id)
+        $lastMonthGrowth = UserNetwork::where('referrer_id', $user->id)
             ->whereMonth('created_at', $lastMonth->month)
             ->whereYear('created_at', $lastMonth->year)
             ->count();
@@ -920,7 +1330,7 @@ class DashboardController extends Controller
      */
     private function getAverageNetworkDepth(User $user): float
     {
-        $networkMembers = UserNetwork::where('sponsor_id', $user->id)->get();
+        $networkMembers = UserNetwork::where('referrer_id', $user->id)->get();
         
         if ($networkMembers->isEmpty()) {
             return 0;
@@ -1202,7 +1612,7 @@ class DashboardController extends Controller
         // Get user's profit distributions
         $profitDistributions = ProjectProfitDistribution::where('user_id', $user->id)
             ->with(['project'])
-            ->orderBy('distribution_date', 'desc')
+            ->orderBy('paid_at', 'desc')
             ->get();
 
         // Get available projects for user's tier
@@ -1260,8 +1670,8 @@ class DashboardController extends Controller
                     'amount' => $distribution->distribution_amount,
                     'distribution_type' => $distribution->distribution_type,
                     'status' => $distribution->status,
-                    'distribution_date' => $distribution->distribution_date->format('M d, Y'),
-                    'period_label' => $distribution->period_label
+                    'distribution_date' => $distribution->paid_at ? $distribution->paid_at->format('M d, Y') : 'Pending',
+                    'period_label' => $distribution->distribution_period_label ?? 'N/A'
                 ];
             }),
             'available_projects' => $availableProjects,
@@ -1339,8 +1749,8 @@ class DashboardController extends Controller
 
             $monthlyReturns = ProjectProfitDistribution::where('user_id', $user->id)
                 ->where('status', 'paid')
-                ->whereMonth('distribution_date', $month->month)
-                ->whereYear('distribution_date', $month->year)
+                ->whereMonth('paid_at', $month->month)
+                ->whereYear('paid_at', $month->year)
                 ->sum('distribution_amount');
 
             $trends[] = [
@@ -1526,5 +1936,132 @@ class DashboardController extends Controller
         $analytics = $this->communityProjectService->getProjectAnalytics($project);
         
         return response()->json($analytics);
+    }
+
+    /**
+     * Get verification limits based on user's verification level
+     */
+    private function getVerificationLimits(string $level): array
+    {
+        $limits = [
+            'basic' => [
+                'daily_withdrawal' => 1000,
+                'monthly_withdrawal' => 10000,
+                'single_transaction' => 500,
+            ],
+            'verified' => [
+                'daily_withdrawal' => 5000,
+                'monthly_withdrawal' => 50000,
+                'single_transaction' => 2000,
+            ],
+            'premium' => [
+                'daily_withdrawal' => 20000,
+                'monthly_withdrawal' => 200000,
+                'single_transaction' => 10000,
+            ],
+        ];
+
+        return $limits[$level] ?? $limits['basic'];
+    }
+
+    /**
+     * Get earnings breakdown for mobile dashboard
+     * Uses EarningsService for consistency
+     */
+    private function getEarningsBreakdown(User $user): array
+    {
+        // Get base earnings from service
+        $breakdown = $this->earningsService->getEarningsBreakdown($user);
+        
+        // Team performance (purchases and subscriptions from team)
+        // This includes commissions from team member purchases and subscriptions
+        $teamPerformance = \DB::table('referral_commissions')
+            ->where('referrer_id', $user->id)
+            ->where('status', 'paid')
+            ->whereIn('package_type', ['subscription', 'product_purchase', 'starter_kit'])
+            ->sum('amount');
+
+        // Get pending earnings from service
+        $pendingEarnings = $this->earningsService->getPendingEarnings($user);
+        
+        // Get LGR info from service
+        $lgrInfo = $this->earningsService->getLgrWithdrawableInfo($user);
+
+        return [
+            'referral_commissions' => (float) $breakdown['commissions'],
+            'profit_shares' => (float) $breakdown['profit_shares'],
+            'team_performance' => (float) $teamPerformance,
+            'pending_earnings' => (float) $pendingEarnings,
+            'lgr_daily_bonus' => (float) $lgrInfo['balance'],
+            'lgr_withdrawable' => (float) $lgrInfo['withdrawable'],
+            'lgr_percentage' => (float) $lgrInfo['percentage'],
+            'lgr_blocked' => (bool) $lgrInfo['blocked'],
+            'total_earnings' => (float) ($breakdown['commissions'] + $breakdown['profit_shares'] + $teamPerformance),
+        ];
+    }
+
+    /**
+     * Determine if user should be redirected to a different dashboard
+     * 
+     * @param Request $request
+     * @param User $user
+     * @return string|null Route name to redirect to, or null if no redirect needed
+     */
+    private function shouldRedirectToDashboard(Request $request, User $user): ?string
+    {
+        // Check for session override (temporary preference)
+        if ($request->session()->has('dashboard_override')) {
+            return null; // Don't redirect if user has temporary override
+        }
+
+        $preference = $user->preferred_dashboard ?? 'auto';
+        $currentRoute = $request->route()->getName();
+        $isMobile = $this->isMobileDevice($request);
+
+        // Handle based on preference
+        switch ($preference) {
+            case 'mobile':
+                // User prefers mobile, redirect if on desktop
+                return ($currentRoute === 'mygrownet.dashboard') ? 'mygrownet.mobile' : null;
+                
+            case 'desktop':
+                // User prefers desktop, redirect if on mobile
+                return ($currentRoute === 'mygrownet.mobile') ? 'mygrownet.dashboard' : null;
+                
+            case 'auto':
+            default:
+                // Auto-detect based on device
+                if ($isMobile && $currentRoute === 'mygrownet.dashboard') {
+                    return 'mygrownet.mobile';
+                } elseif (!$isMobile && $currentRoute === 'mygrownet.mobile') {
+                    return 'mygrownet.dashboard';
+                }
+                return null;
+        }
+    }
+
+    /**
+     * Detect if request is from a mobile device
+     * 
+     * @param Request $request
+     * @return bool
+     */
+    private function isMobileDevice(Request $request): bool
+    {
+        $userAgent = $request->header('User-Agent');
+        
+        // Check for mobile keywords in user agent
+        $mobileKeywords = [
+            'Mobile', 'Android', 'iPhone', 'iPad', 'iPod',
+            'BlackBerry', 'Windows Phone', 'webOS', 'Opera Mini'
+        ];
+        
+        foreach ($mobileKeywords as $keyword) {
+            if (stripos($userAgent, $keyword) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

@@ -102,6 +102,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'preferred_dashboard',
         'phone',
         'phone_verified_at',
         'referrer_id',
@@ -249,6 +250,68 @@ class User extends Authenticatable
         return $this->loyalty_points_withdrawn_total;
     }
 
+    /**
+     * Accessor: Get loan limit with automatic default based on tier
+     * Returns default loan limit if not explicitly set
+     */
+    public function getLoanLimitAttribute($value)
+    {
+        // If loan_limit is explicitly set and > 0, use it
+        if ($value && $value > 0) {
+            return (float) $value;
+        }
+        
+        // Otherwise, return default based on membership tier
+        $tierName = $this->currentMembershipTier->name ?? 'Associate';
+        
+        $defaultLimits = [
+            'Associate' => 1000,
+            'Professional' => 2000,
+            'Senior' => 3000,
+            'Manager' => 4000,
+            'Director' => 5000,
+            'Executive' => 7500,
+            'Ambassador' => 10000,
+        ];
+        
+        return (float) ($defaultLimits[$tierName] ?? 1000);
+    }
+
+    /**
+     * Initialize loan limit based on tier if not set
+     * Called on login to persist default values
+     */
+    public function initializeLoanLimit(): void
+    {
+        // Only initialize if loan_limit is 0 or null
+        $currentValue = $this->getAttributes()['loan_limit'] ?? 0;
+        
+        if ($currentValue <= 0) {
+            $tierName = $this->currentMembershipTier->name ?? 'Associate';
+            
+            $defaultLimits = [
+                'Associate' => 1000,
+                'Professional' => 2000,
+                'Senior' => 3000,
+                'Manager' => 4000,
+                'Director' => 5000,
+                'Executive' => 7500,
+                'Ambassador' => 10000,
+            ];
+            
+            $defaultLimit = $defaultLimits[$tierName] ?? 1000;
+            
+            // Update without triggering events
+            $this->updateQuietly(['loan_limit' => $defaultLimit]);
+            
+            \Log::info('Initialized loan limit', [
+                'user_id' => $this->id,
+                'tier' => $tierName,
+                'loan_limit' => $defaultLimit,
+            ]);
+        }
+    }
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
@@ -313,6 +376,14 @@ class User extends Authenticatable
         return $this->hasMany(TeamVolume::class);
     }
 
+    // Current team volume (singular) - for eager loading current period
+    public function teamVolume(): HasOne
+    {
+        return $this->hasOne(TeamVolume::class)
+            ->whereBetween('period_start', [now()->startOfMonth(), now()->endOfMonth()])
+            ->latestOfMany();
+    }
+
     public function networkMembers(): HasMany
     {
         return $this->hasMany(UserNetwork::class, 'referrer_id');
@@ -342,6 +413,14 @@ class User extends Authenticatable
     public function badges(): HasMany
     {
         return $this->hasMany(UserBadge::class);
+    }
+
+    /**
+     * Get notification preferences
+     */
+    public function notificationPreferences(): HasOne
+    {
+        return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\Notification\NotificationPreferencesModel::class);
     }
 
     /**
@@ -543,10 +622,22 @@ class User extends Authenticatable
         return $this->currentInvestmentTier();
     }
 
-    // Get current tier for educational content access
+    // Current Membership Tier relationship (for eager loading)
+    public function currentMembershipTier()
+    {
+        return $this->belongsTo(InvestmentTier::class, 'current_investment_tier_id');
+    }
+
+    // Tier upgrades history
+    public function tierUpgrades(): HasMany
+    {
+        return $this->hasMany(TierUpgrade::class);
+    }
+
+    // Get current tier for educational content access (relationship)
     public function currentTier()
     {
-        return $this->currentInvestmentTier;
+        return $this->belongsTo(InvestmentTier::class, 'current_investment_tier_id');
     }
 
     // Investment Tier Methods
@@ -596,9 +687,15 @@ class User extends Authenticatable
         $this->save();
     }
 
+    /**
+     * Calculate total earnings using EarningsService
+     * 
+     * @return float
+     */
     public function calculateTotalEarnings()
     {
-        return $this->total_referral_earnings + $this->total_profit_earnings;
+        $earningsService = app(\App\Services\EarningsService::class);
+        return $earningsService->calculateTotalEarnings($this);
     }
 
     public function generateReferralCode(): string
@@ -1028,6 +1125,16 @@ class User extends Authenticatable
         return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel::class);
     }
 
+    public function giftsGiven(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel::class, 'gifter_id');
+    }
+
+    public function giftsReceived(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel::class, 'recipient_id');
+    }
+
     // Venture Builder relationships
     public function ventureInvestments(): HasMany
     {
@@ -1261,53 +1368,46 @@ class User extends Authenticatable
         return User::where('referral_code', $code)->first();
     }
 
-    // Enhanced earnings calculation methods
+    /**
+     * Get detailed earnings breakdown using EarningsService
+     * 
+     * @return array
+     */
     public function calculateTotalEarningsDetailed(): array
     {
-        $referralEarnings = $this->referralCommissions()
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        $profitEarnings = $this->profitShares()
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        // For matrix commissions, we'll use level > 1 as indicator since there's no type column
-        $matrixCommissions = $this->referralCommissions()
-            ->where('level', '>', 1)
-            ->where('status', 'paid')
-            ->sum('amount');
-
-        // Reinvestment bonuses would need a separate table or identifier
-        $reinvestmentBonuses = 0; // Will implement when we have the proper structure
-
-        return [
-            'referral_commissions' => $referralEarnings,
-            'profit_shares' => $profitEarnings,
-            'matrix_commissions' => $matrixCommissions,
-            'reinvestment_bonuses' => $reinvestmentBonuses,
-            'total_earnings' => $referralEarnings + $profitEarnings + $matrixCommissions + $reinvestmentBonuses,
-            'pending_earnings' => $this->calculatePendingEarnings()
-        ];
+        $earningsService = app(\App\Services\EarningsService::class);
+        return $earningsService->getEarningsBreakdown($this);
     }
 
+    /**
+     * Calculate pending earnings using EarningsService
+     * 
+     * @return float
+     */
     public function calculatePendingEarnings(): float
     {
-        return $this->referralCommissions()
-            ->where('status', 'pending')
-            ->sum('amount') +
-            $this->profitShares()
-            ->where('status', 'pending')
-            ->sum('amount');
+        $earningsService = app(\App\Services\EarningsService::class);
+        return $earningsService->getPendingEarnings($this);
     }
 
+    /**
+     * Update cached total earnings fields
+     * Uses EarningsService for calculation
+     * 
+     * @return void
+     */
     public function updateTotalEarnings(): void
     {
-        $earnings = $this->calculateTotalEarningsDetailed();
+        $earningsService = app(\App\Services\EarningsService::class);
+        $breakdown = $earningsService->getEarningsBreakdown($this);
         
         $this->update([
-            'total_referral_earnings' => $earnings['referral_commissions'] + $earnings['matrix_commissions'],
-            'total_profit_earnings' => $earnings['profit_shares'] + $earnings['reinvestment_bonuses']
+            'total_referral_earnings' => $breakdown['commissions'] 
+                                       + $breakdown['subscriptions'] 
+                                       + $breakdown['product_sales'] 
+                                       + $breakdown['starter_kits'],
+            'total_profit_earnings' => $breakdown['profit_shares'] 
+                                     + $breakdown['bonuses']
         ]);
     }
 

@@ -33,6 +33,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Initialize loan limit for existing users on login
+        $user = $request->user();
+        if ($user) {
+            $user->initializeLoanLimit();
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

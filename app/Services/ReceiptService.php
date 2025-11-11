@@ -164,11 +164,29 @@ class ReceiptService
      */
     public function emailReceipt(User $user, string $receiptPath, string $subject): void
     {
-        Mail::send('emails.receipt', ['user' => $user], function ($message) use ($user, $receiptPath, $subject) {
-            $message->to($user->email, $user->name)
-                ->subject($subject)
-                ->attach($receiptPath);
-        });
+        // Check if email is configured
+        if (!config('mail.from.address') || !config('mail.from.name')) {
+            \Log::warning('Email not configured, skipping receipt email', [
+                'user_id' => $user->id,
+                'receipt' => $receiptPath,
+            ]);
+            return;
+        }
+
+        try {
+            Mail::send('emails.receipt', ['user' => $user], function ($message) use ($user, $receiptPath, $subject) {
+                $message->to($user->email, $user->name)
+                    ->subject($subject)
+                    ->attach($receiptPath);
+            });
+        } catch (\Throwable $e) {
+            \Log::error('Failed to send receipt email', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // Don't rethrow - allow purchase to continue
+        }
     }
     
     /**
