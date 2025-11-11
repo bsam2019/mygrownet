@@ -904,15 +904,15 @@ class User extends Authenticatable
             return [];
         }
 
-        return User::where('network_path', 'LIKE', $this->network_path . '.%')
+        $members = User::where('network_path', 'LIKE', $this->network_path . '.%')
                    ->where('network_level', '<=', $this->network_level + $maxLevel)
                    ->where('network_level', '>', $this->network_level)
                    ->select('id', 'name', 'email', 'network_level', 'current_investment_tier_id')
-                   ->chunk(100, function($users) {
-                       return $users->groupBy(function($user) {
-                           return $user->network_level - $this->network_level;
-                       });
-                   });
+                   ->get();
+        
+        return $members->groupBy(function($user) {
+            return $user->network_level - $this->network_level;
+        })->toArray();
     }
 
     /**
