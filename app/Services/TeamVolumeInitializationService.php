@@ -137,6 +137,7 @@ class TeamVolumeInitializationService
 
     /**
      * Create UserNetwork entries for a user based on their network path
+     * Level represents the distance from each ancestor (1 = direct, 2 = 2nd level, etc.)
      */
     private function createUserNetworkEntries(int $userId, string $networkPath): void
     {
@@ -145,12 +146,17 @@ class TeamVolumeInitializationService
         // Skip the user's own ID (last part)
         array_pop($pathParts);
         
-        foreach ($pathParts as $level => $referrerId) {
+        // Reverse to calculate distance from each ancestor
+        $pathParts = array_reverse($pathParts);
+        
+        foreach ($pathParts as $index => $referrerId) {
+            $distanceFromReferrer = $index + 1; // 1 = direct, 2 = 2nd level, etc.
+            
             UserNetwork::updateOrCreate([
                 'user_id' => $userId,
                 'referrer_id' => (int) $referrerId,
-                'level' => $level + 1
             ], [
+                'level' => $distanceFromReferrer,
                 'path' => $networkPath,
                 'created_at' => now(),
                 'updated_at' => now()
