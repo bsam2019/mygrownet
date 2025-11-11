@@ -807,6 +807,21 @@ class DashboardController extends Controller
         $currentLevelSlug = $user->current_professional_level ?? 'associate';
         $currentLevel = \App\Models\ProfessionalLevel::where('slug', $currentLevelSlug)->first();
         
+        // If current level not found, return default
+        if (!$currentLevel) {
+            return [
+                'current_tier' => null,
+                'current_level' => null,
+                'next_tier' => null,
+                'next_level' => null,
+                'lifetime_points' => 0,
+                'progress_percentage' => 0,
+                'points_needed' => 0,
+                'eligibility' => false,
+                'message' => 'Professional level not configured. Please contact support.'
+            ];
+        }
+        
         // Get next level
         $nextLevel = \App\Models\ProfessionalLevel::where('level', '>', $currentLevel->level)
             ->orderBy('level')
