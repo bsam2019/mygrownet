@@ -868,7 +868,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import BalanceCard from '@/components/Mobile/BalanceCard.vue';
 import StatCard from '@/components/Mobile/StatCard.vue';
@@ -1031,8 +1031,13 @@ const ensureSevenLevels = (levels: any[] | undefined) => {
   return result;
 };
 
-// Make displayLevels computed so it updates when props change
-const displayLevels = computed(() => ensureSevenLevels(props.referralStats?.levels));
+// Initialize displayLevels as ref and watch for prop changes
+const displayLevels = ref(ensureSevenLevels(props.referralStats?.levels));
+
+// Watch for changes in referralStats and update displayLevels
+watch(() => props.referralStats?.levels, (newLevels) => {
+  displayLevels.value = ensureSevenLevels(newLevels);
+}, { deep: true });
 
 const handleTabChange = (tab: string) => {
   activeTab.value = tab;
@@ -1198,25 +1203,18 @@ const handleLogout = () => {
 };
 
 const confirmLogout = () => {
-  showLogoutModal.value = false;
-  
-  // Create a form and submit it directly to avoid CSRF token issues with PWA caching
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = route('logout');
-  
-  // Add CSRF token
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  if (csrfToken) {
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = '_token';
-    csrfInput.value = csrfToken;
-    form.appendChild(csrfInput);
-  }
-  
-  document.body.appendChild(form);
-  form.submit();
+  router.post(route('logout'), {}, {
+    onStart: () => {
+      showLogoutModal.value = false;
+    },
+    onSuccess: () => {
+      // Logout successful, will redirect to login
+    },
+    onError: (errors) => {
+      console.error('Logout failed:', errors);
+      showToastMessage('Logout failed. Please try again.', 'error');
+    },
+  });
 };
 
 // PWA Install functionality
