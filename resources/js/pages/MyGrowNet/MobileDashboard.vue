@@ -1200,19 +1200,23 @@ const handleLogout = () => {
 const confirmLogout = () => {
   showLogoutModal.value = false;
   
-  // Use router.post with preserveState: false to ensure fresh CSRF token
-  router.post(route('logout'), {}, {
-    preserveState: false,
-    preserveScroll: false,
-    onSuccess: () => {
-      // Logout successful, will redirect to login
-      window.location.href = '/login';
-    },
-    onError: (errors) => {
-      console.error('Logout failed:', errors);
-      showToastMessage('Logout failed. Please try again.', 'error');
-    },
-  });
+  // Create a form and submit it directly to avoid CSRF token issues with PWA caching
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = route('logout');
+  
+  // Add CSRF token
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+  
+  document.body.appendChild(form);
+  form.submit();
 };
 
 // PWA Install functionality
