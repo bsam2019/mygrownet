@@ -737,6 +737,18 @@
           </button>
 
           <button
+            v-if="showInstallButton"
+            @click="installPWA"
+            class="w-full flex items-center justify-between p-4 hover:bg-blue-50 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <ArrowDownTrayIcon class="h-5 w-5 text-blue-600" />
+              <span class="text-sm font-medium text-blue-600">Install App</span>
+            </div>
+            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
+          </button>
+
+          <button
             @click="handleLogout"
             class="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-colors"
           >
@@ -897,6 +909,7 @@ import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   SparklesIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/vue/24/outline';
 
 // Props - same as original dashboard
@@ -948,6 +961,10 @@ const showHelpSupportModal = ref(false);
 const showStarterKitModal = ref(false);
 const showLogoutModal = ref(false);
 const showLgrTransferModal = ref(false);
+
+// PWA Install
+const deferredPrompt = ref<any>(null);
+const showInstallButton = ref(false);
 const showLoanApplicationModal = ref(false);
 const selectedLevel = ref(1);
 const levelDownlines = ref<any[]>([]);
@@ -1181,12 +1198,15 @@ const handleLogout = () => {
 };
 
 const confirmLogout = () => {
+  showLogoutModal.value = false;
+  
+  // Use router.post with preserveState: false to ensure fresh CSRF token
   router.post(route('logout'), {}, {
-    onStart: () => {
-      showLogoutModal.value = false;
-    },
+    preserveState: false,
+    preserveScroll: false,
     onSuccess: () => {
       // Logout successful, will redirect to login
+      window.location.href = '/login';
     },
     onError: (errors) => {
       console.error('Logout failed:', errors);
@@ -1194,6 +1214,52 @@ const confirmLogout = () => {
     },
   });
 };
+
+// PWA Install functionality
+const installPWA = async () => {
+  if (!deferredPrompt.value) {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      showToastMessage('App is already installed!', 'info');
+    } else {
+      // Show instructions for iOS or unsupported browsers
+      showToastMessage('To install: Tap the share button and select "Add to Home Screen"', 'info');
+    }
+    return;
+  }
+
+  // Show the install prompt
+  deferredPrompt.value.prompt();
+  
+  // Wait for the user to respond to the prompt
+  const { outcome } = await deferredPrompt.value.userChoice;
+  
+  if (outcome === 'accepted') {
+    showToastMessage('App installed successfully!', 'success');
+  }
+  
+  // Clear the deferredPrompt
+  deferredPrompt.value = null;
+  showInstallButton.value = false;
+};
+
+// Listen for the beforeinstallprompt event
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt.value = e;
+    // Show the install button
+    showInstallButton.value = true;
+  });
+
+  // Check if already installed
+  window.addEventListener('appinstalled', () => {
+    showInstallButton.value = false;
+    deferredPrompt.value = null;
+  });
+}
 
 const showComingSoon = (feature: string) => {
   showToastMessage(`${feature} feature coming soon in mobile view!`, 'info');
