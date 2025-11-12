@@ -1014,7 +1014,8 @@ const ensureSevenLevels = (levels: any[] | undefined) => {
   return result;
 };
 
-const displayLevels = ref(ensureSevenLevels(props.referralStats?.levels));
+// Make displayLevels computed so it updates when props change
+const displayLevels = computed(() => ensureSevenLevels(props.referralStats?.levels));
 
 const handleTabChange = (tab: string) => {
   activeTab.value = tab;
