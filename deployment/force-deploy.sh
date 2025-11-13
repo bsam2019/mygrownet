@@ -26,6 +26,13 @@ php artisan migrate --force
 echo "🧹 Clearing caches..."
 php artisan optimize:clear
 
+echo "📦 Ensuring Vite manifest is in correct location..."
+mkdir -p public/build/.vite
+if [ -f public/build/manifest.json ]; then
+    cp public/build/manifest.json public/build/.vite/manifest.json
+    echo "✅ Vite manifest copied to .vite directory"
+fi
+
 echo "🔧 Fixing permissions..."
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache

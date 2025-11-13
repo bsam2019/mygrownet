@@ -26,7 +26,10 @@ import {
     Settings,
     Calendar,
     BarChart3,
-    Bell
+    Bell,
+    Mail as MailIcon,
+    Send as SendIcon,
+    Ticket as TicketIcon
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -59,6 +62,7 @@ const userManagementNavItems: NavItem[] = [
     { title: 'Library Resources', href: safeRoute('admin.library.resources.index'), icon: BookOpen },
     { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
     { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
+    { title: 'Network Management', href: safeRoute('admin.network.index'), icon: Activity },
     { title: 'Points Management', href: '/admin/points', icon: Target },
 ];
 
@@ -118,6 +122,12 @@ const employeeNavItems: NavItem[] = [
     { title: 'Hiring Roadmap', href: safeRoute('admin.organization.hiring.index'), icon: Calendar },
     { title: 'Performance', href: safeRoute('admin.performance.index'), icon: Target },
     { title: 'Commissions', href: safeRoute('admin.commissions.index'), icon: DollarSign },
+];
+
+const communicationNavItems: NavItem[] = [
+    { title: 'Messages', href: safeRoute('admin.messages.index'), icon: 'MailIcon' },
+    { title: 'Compose Message', href: safeRoute('admin.messages.compose'), icon: 'SendIcon' },
+    { title: 'Support Tickets', href: '#', icon: 'TicketIcon' }, // TODO: Implement support tickets
 ];
 
 const systemNavItems: NavItem[] = [
@@ -501,6 +511,45 @@ onMounted(() => {
                             ]"
                         >
                             <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Communication Section -->
+                <div class="pt-2">
+                    <button @click="isCollapsed ? toggleSidebar() : toggleSubmenu('communication')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Communication')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <MailIcon class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Communication</span>
+                            <span v-if="page.props.messagingData?.unread_count > 0 && (!isCollapsed || isMobile)"
+                                class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            >
+                                {{ page.props.messagingData.unread_count }}
+                            </span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.communication }" />
+                    </button>
+
+                    <div v-if="showSubmenu.communication && !isCollapsed" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in communicationNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon === 'MailIcon' ? MailIcon : item.icon === 'SendIcon' ? SendIcon : TicketIcon" class="h-4 w-4" />
                             <span class="ml-3">{{ item.title }}</span>
                         </Link>
                     </div>

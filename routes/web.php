@@ -118,6 +118,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/stats', [App\Http\Controllers\Admin\AnnouncementManagementController::class, 'stats'])->name('stats');
     });
 
+    // Admin Messaging Routes
+    Route::middleware(['admin'])->prefix('admin/messages')->name('admin.messages.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\MessageController::class, 'index'])->name('index');
+        Route::get('/compose', [App\Http\Controllers\Admin\MessageController::class, 'compose'])->name('compose');
+        Route::get('/{id}', [App\Http\Controllers\Admin\MessageController::class, 'show'])->name('show');
+        Route::post('/', [App\Http\Controllers\Admin\MessageController::class, 'store'])->name('store');
+        Route::post('/{id}/read', [App\Http\Controllers\Admin\MessageController::class, 'markAsRead'])->name('read');
+    });
+
     // Admin Starter Kit Management Routes
     Route::middleware(['admin'])->prefix('admin/starter-kit')->name('admin.starter-kit.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'dashboard'])->name('dashboard');
@@ -140,6 +149,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/resources', [App\Http\Controllers\Admin\LibraryResourceController::class, 'store'])->name('resources.store');
         Route::put('/resources/{resource}', [App\Http\Controllers\Admin\LibraryResourceController::class, 'update'])->name('resources.update');
         Route::delete('/resources/{resource}', [App\Http\Controllers\Admin\LibraryResourceController::class, 'destroy'])->name('resources.destroy');
+    });
+    
+    // Admin Network Management Routes
+    Route::middleware(['admin'])->prefix('admin/network')->name('admin.network.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\NetworkManagementController::class, 'index'])->name('index');
+        Route::get('/search-users', [App\Http\Controllers\Admin\NetworkManagementController::class, 'searchUsers'])->name('search-users');
+        Route::get('/user/{userId}/network', [App\Http\Controllers\Admin\NetworkManagementController::class, 'getUserNetwork'])->name('user-network');
+        Route::get('/user/{userId}/stats', [App\Http\Controllers\Admin\NetworkManagementController::class, 'getNetworkStats'])->name('user-stats');
+        Route::get('/user/{userId}/history', [App\Http\Controllers\Admin\NetworkManagementController::class, 'getUserHistory'])->name('user-history');
+        Route::get('/history', [App\Http\Controllers\Admin\NetworkManagementController::class, 'getHistory'])->name('history');
+        Route::post('/check-move', [App\Http\Controllers\Admin\NetworkManagementController::class, 'checkMove'])->name('check-move');
+        Route::post('/move-user', [App\Http\Controllers\Admin\NetworkManagementController::class, 'moveUser'])->name('move-user');
     });
     
     // Admin LGR Management Routes
@@ -476,6 +497,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/notifications/list', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/{id}/read', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        
+        // Messaging Routes
+        Route::get('/messages', [App\Http\Controllers\MyGrowNet\MessageController::class, 'index'])->name('messages.index');
+        Route::get('/messages/{id}', [App\Http\Controllers\MyGrowNet\MessageController::class, 'show'])->name('messages.show');
+        Route::post('/messages', [App\Http\Controllers\MyGrowNet\MessageController::class, 'store'])->name('messages.store');
+        Route::post('/messages/{id}/read', [App\Http\Controllers\MyGrowNet\MessageController::class, 'markAsRead'])->name('messages.read');
         
         // Loyalty Growth Reward (LGR) Routes
         Route::prefix('loyalty-reward')->name('loyalty-reward.')->group(function () {

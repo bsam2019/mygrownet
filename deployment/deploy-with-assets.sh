@@ -29,6 +29,14 @@ fi
 
 echo "📦 Assets built successfully!"
 
+# Ensure manifest is in correct location before upload
+echo "📦 Ensuring Vite manifest is in correct location..."
+mkdir -p public/build/.vite
+if [ -f public/build/manifest.json ]; then
+    cp public/build/manifest.json public/build/.vite/manifest.json
+    echo "✅ Vite manifest copied to .vite directory"
+fi
+
 # Copy built assets to droplet
 echo "📤 Uploading built assets to droplet..."
 scp -r public/build ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
@@ -56,6 +64,14 @@ cd ${PROJECT_PATH}
 # # Pull latest changes
 # echo "📥 Pulling from GitHub..."
 # git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
+
+# Verify manifest location on server
+echo "📦 Verifying Vite manifest location..."
+mkdir -p public/build/.vite
+if [ -f public/build/manifest.json ]; then
+    cp public/build/manifest.json public/build/.vite/manifest.json
+    echo "✅ Vite manifest verified in .vite directory"
+fi
 
 # Clear caches
 echo "🧹 Clearing caches..."

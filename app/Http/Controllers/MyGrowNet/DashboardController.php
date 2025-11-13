@@ -25,6 +25,8 @@ use App\Models\ProjectVote;
 use App\Models\ProjectProfitDistribution;
 use Carbon\Carbon;
 use App\Application\UseCases\Announcement\GetUserAnnouncementsUseCase;
+use App\Domain\Messaging\Services\MessagingService;
+use App\Domain\Messaging\ValueObjects\UserId;
 
 class DashboardController extends Controller
 {
@@ -35,6 +37,7 @@ class DashboardController extends Controller
     protected \App\Services\WalletService $walletService;
     protected \App\Services\EarningsService $earningsService;
     protected GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase;
+    protected MessagingService $messagingService;
 
     public function __construct(
         MLMCommissionService $mlmCommissionService,
@@ -43,7 +46,8 @@ class DashboardController extends Controller
         CommunityProjectService $communityProjectService,
         \App\Services\WalletService $walletService,
         \App\Services\EarningsService $earningsService,
-        GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase
+        GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase,
+        MessagingService $messagingService
     ) {
         $this->mlmCommissionService = $mlmCommissionService;
         $this->tierAdvancementService = $tierAdvancementService;
@@ -52,6 +56,7 @@ class DashboardController extends Controller
         $this->walletService = $walletService;
         $this->earningsService = $earningsService;
         $this->getUserAnnouncementsUseCase = $getUserAnnouncementsUseCase;
+        $this->messagingService = $messagingService;
     }
 
     public function index(Request $request)
@@ -245,6 +250,9 @@ class DashboardController extends Controller
         $loanService = app(\App\Domain\Financial\Services\LoanService::class);
         $loanSummary = $loanService->getLoanSummary($user);
 
+        // Get messaging data
+        $messagingData = $this->getMessagingData($user);
+
         return Inertia::render('MyGrowNet/Dashboard', [
             'user' => $user,
             'subscription' => $currentSubscription,
@@ -399,6 +407,9 @@ class DashboardController extends Controller
         // Get announcements for user
         $userTier = $user->currentMembershipTier->name ?? 'Associate';
         $data['announcements'] = $this->getUserAnnouncementsUseCase->execute($user->id, $userTier);
+        
+        // Get messaging data for mobile
+        $data['messagingData'] = $this->getMessagingData($user);
         
         // DEBUG: Add a flag to identify mobile dashboard
         $data['isMobileDashboard'] = true;
@@ -2078,5 +2089,64 @@ class DashboardController extends Controller
         }
         
         return false;
+    }
+
+    /**
+     * Get messaging data for dashboard
+     */
+    private function getMessagingData(User $user): array
+    {
+        $userId = UserId::fromInt($user->id);
+        
+        // Get unread message count
+        $unreadCount = $this->messagingService->getUnreadCount($userId);
+        
+        // Get recent messages (last 5)
+        $recentMessages = $this->messagingService->getInbox($userId, 5);
+        
+        // Transform to simple array for frontend
+        $messages = [];
+        foreach ($recentMessages as $message) {
+            $sender = User::find($message->senderId()->value());
+            $messages[] = [
+                'id' => $message->id()->value(),
+                'sender_name' => $sender ? $sender->name : 'Unknown',
+                'subject' => $message->content()->subject(),
+                'preview' => $message->content()->preview(50),
+                'is_read' => $message->isRead(),
+                'created_at' => $message->createdAt()->format('M j, g:i A'),
+                'created_at_human' => $this->getHumanReadableTime($message->createdAt()),
+            ];
+        }
+        
+        return [
+            'unread_count' => $unreadCount,
+            'recent_messages' => $messages,
+            'has_messages' => count($messages) > 0,
+        ];
+    }
+
+    /**
+     * Get human readable time difference
+     */
+    private function getHumanReadableTime(\DateTimeImmutable $dateTime): string
+    {
+        $now = new \DateTimeImmutable();
+        $diff = $now->getTimestamp() - $dateTime->getTimestamp();
+        
+        if ($diff < 60) {
+            return 'Just now';
+        } elseif ($diff < 3600) {
+            $mins = floor($diff / 60);
+            return $mins . 'm ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . 'h ago';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return $days . 'd ago';
+        } else {
+            return $dateTime->format('M j');
+        }
     }
 }

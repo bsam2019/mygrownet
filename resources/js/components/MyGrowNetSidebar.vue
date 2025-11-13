@@ -25,7 +25,8 @@ import {
     Palette as PaletteIcon,
     ShoppingBagIcon,
     ArrowRightLeftIcon,
-    ChevronDownIcon
+    ChevronDownIcon,
+    Mail as MailIcon
 } from 'lucide-vue-next';
 
 interface Props {
@@ -110,6 +111,10 @@ const learningNavItems: NavItem[] = [
     { title: 'Resource Library', href: route('mygrownet.library.index'), icon: BookOpenIcon },
     { title: 'Workshops & Training', href: route('mygrownet.workshops.index'), icon: BookOpenIcon },
     { title: 'My Workshops', href: route('mygrownet.workshops.my-workshops'), icon: GraduationCapIcon },
+];
+
+const communicationNavItems: NavItem[] = [
+    { title: 'Messages', href: route('mygrownet.messages.index'), icon: 'MailIcon' },
 ];
 
 const accountNavItems: NavItem[] = [
@@ -505,6 +510,32 @@ onMounted(() => {
                         >
                             <component :is="item.icon" class="h-4 w-4" />
                             <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Communication Section -->
+                <div class="pt-2">
+                    <div class="space-y-1">
+                        <Link v-for="item in communicationNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                            @mouseenter="showItemTooltip($event, item.title)"
+                            @mouseleave="hideTooltip"
+                        >
+                            <div class="flex items-center">
+                                <MailIcon class="h-5 w-5" />
+                                <span v-show="!isCollapsed || isMobile" class="ml-3">{{ item.title }}</span>
+                            </div>
+                            <span v-if="page.props.messagingData?.unread_count > 0 && (!isCollapsed || isMobile)"
+                                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            >
+                                {{ page.props.messagingData.unread_count }}
+                            </span>
                         </Link>
                     </div>
                 </div>

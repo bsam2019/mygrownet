@@ -23,6 +23,13 @@ npm ci --production=false
 echo "🔨 Building frontend assets..."
 npm run build
 
+echo "📦 Ensuring Vite manifest is in correct location..."
+mkdir -p public/build/.vite
+if [ -f public/build/manifest.json ]; then
+    cp public/build/manifest.json public/build/.vite/manifest.json
+    echo "✅ Vite manifest copied to .vite directory"
+fi
+
 echo "🔄 Running migrations..."
 php artisan migrate --force
 

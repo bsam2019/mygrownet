@@ -22,6 +22,9 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        manifest: '.vite/manifest.json',
+    },
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './resources/js'),

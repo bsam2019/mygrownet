@@ -193,6 +193,15 @@
               iconColorClass="text-green-600"
             />
             <QuickActionCard
+              title="Messages"
+              :subtitle="messagingData?.unread_count > 0 ? `${messagingData.unread_count} unread` : 'No new messages'"
+              @click="navigateToMessages"
+              :icon="EnvelopeIcon"
+              iconBgClass="bg-blue-50"
+              iconColorClass="text-blue-600"
+              :badge="messagingData?.unread_count"
+            />
+            <QuickActionCard
               title="Transaction History"
               subtitle="View all transactions"
               @click="activeTab = 'wallet'"
@@ -857,6 +866,12 @@
       @error="handleToastError"
     />
 
+    <!-- Messages Modal -->
+    <MessagesModal
+      :show="showMessagesModal"
+      @close="showMessagesModal = false"
+    />
+
     <!-- Toast Notification -->
     <Toast
       :show="showToast"
@@ -889,6 +904,7 @@ import EarningsBreakdown from '@/components/Mobile/EarningsBreakdown.vue';
 import NotificationBell from '@/components/Mobile/NotificationBell.vue';
 import Toast from '@/components/Mobile/Toast.vue';
 import AnnouncementBanner from '@/components/Mobile/AnnouncementBanner.vue';
+import MessagesModal from '@/components/Mobile/MessagesModal.vue';
 import {
   ArrowPathIcon,
   CurrencyDollarIcon,
@@ -909,6 +925,7 @@ import {
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   SparklesIcon,
+  EnvelopeIcon,
   ArrowDownTrayIcon,
 } from '@heroicons/vue/24/outline';
 
@@ -938,6 +955,7 @@ const props = withDefaults(defineProps<{
   lgrWithdrawablePercentage?: number;
   lgrWithdrawalBlocked?: boolean;
   announcements?: any[];
+  messagingData?: any;
 }>(), {
   stats: () => ({ total_earnings: 0, this_month_earnings: 0, total_deposits: 0, total_withdrawals: 0 }),
   referralStats: () => ({ levels: [] }),
@@ -947,6 +965,7 @@ const props = withDefaults(defineProps<{
   notifications: () => [],
   walletBalance: 0,
   announcements: () => [],
+  messagingData: () => ({ unread_count: 0 }),
 });
 
 const loading = ref(false);
@@ -961,6 +980,7 @@ const showHelpSupportModal = ref(false);
 const showStarterKitModal = ref(false);
 const showLogoutModal = ref(false);
 const showLgrTransferModal = ref(false);
+const showMessagesModal = ref(false);
 
 // PWA Install
 const deferredPrompt = ref<any>(null);
@@ -1107,6 +1127,11 @@ const refreshData = () => {
   // Inertia reload
   window.location.reload();
   setTimeout(() => loading.value = false, 1000);
+};
+
+const navigateToMessages = () => {
+  // Open messages modal instead of navigating
+  showMessagesModal.value = true;
 };
 
 const getLevelBgClass = (level: number) => {

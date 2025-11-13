@@ -523,10 +523,11 @@ const impersonateUser = (userId) => {
                 Showing {{ users.from }} to {{ users.to }} of {{ users.total }} users
               </div>
               <div class="flex space-x-1">
-                <Link
+                <component
+                  :is="link.url ? Link : 'span'"
                   v-for="(link, index) in users.links"
                   :key="index"
-                  :href="link.url"
+                  :href="link.url || undefined"
                   :class="[
                     'px-3 py-2 text-sm rounded-md',
                     link.active
@@ -536,7 +537,6 @@ const impersonateUser = (userId) => {
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   ]"
                   v-html="link.label"
-                  :disabled="!link.url"
                 />
               </div>
             </div>

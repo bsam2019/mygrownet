@@ -8,6 +8,7 @@ return [
     App\Providers\LibraryServiceProvider::class,
     App\Providers\StarterKitServiceProvider::class,
     App\Providers\NotificationServiceProvider::class,
+    App\Providers\MessagingServiceProvider::class,
     // App\Providers\EmployeeServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\EmployeeCacheServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\MLMRepositoryServiceProvider::class, // Disabled - causing memory issues

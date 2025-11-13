@@ -10,7 +10,15 @@
       <h3 class="text-sm font-semibold text-gray-900">{{ title }}</h3>
       <p class="text-xs text-gray-500 mt-0.5">{{ subtitle }}</p>
     </div>
-    <ChevronRightIcon class="h-5 w-5 text-gray-400 flex-shrink-0" />
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <span
+        v-if="badge && badge > 0"
+        class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white min-w-[20px]"
+      >
+        {{ badge }}
+      </span>
+      <ChevronRightIcon class="h-5 w-5 text-gray-400" />
+    </div>
   </button>
 </template>
 
@@ -24,6 +32,7 @@ interface Props {
   iconBgClass?: string;
   iconColorClass?: string;
   href?: string;
+  badge?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
