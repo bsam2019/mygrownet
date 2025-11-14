@@ -193,23 +193,17 @@ const replyInput = ref<HTMLTextAreaElement | null>(null);
 
 async function loadConversation() {
     if (!props.messageId) {
-        console.log('❌ No messageId provided');
         return;
     }
     
     loading.value = true;
     try {
-        console.log('🔄 Loading conversation for message:', props.messageId);
         const response = await axios.get(route('mygrownet.messages.show', props.messageId), {
             headers: { 
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-        
-        console.log('📦 Conversation response:', response.data);
-        console.log('📋 Response keys:', Object.keys(response.data));
-        console.log('📧 Messages array:', response.data.messages);
         
         // Handle both direct data and props.messages structure
         if (response.data.messages && Array.isArray(response.data.messages)) {
@@ -224,19 +218,9 @@ async function loadConversation() {
             conversation.value = allMessages.filter(m => 
                 m.id === rootMessageId || m.parentId === rootMessageId
             ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-            
-            console.log('✅ Loaded', conversation.value.length, 'messages in thread');
-            if (conversation.value.length > 0) {
-                console.log('📧 Root message:', conversation.value[0]);
-            } else {
-                console.warn('⚠️ No messages in thread!');
-            }
         } else if (Array.isArray(response.data)) {
             conversation.value = response.data;
-            console.log('✅ Loaded', conversation.value.length, 'messages from array');
         } else {
-            console.error('❌ Unexpected response structure');
-            console.log('📋 Full response:', JSON.stringify(response.data, null, 2));
             conversation.value = [];
         }
         
@@ -393,7 +377,14 @@ watch(() => props.show, (newVal) => {
         conversation.value = [];
         replyBody.value = '';
     }
-});
+}, { immediate: true });
+
+// Also watch messageId changes while modal is open
+watch(() => props.messageId, (newVal) => {
+    if (props.show && newVal) {
+        loadConversation();
+    }
+}, { immediate: true });
 </script>
 
 <style scoped>

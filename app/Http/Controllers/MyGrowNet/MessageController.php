@@ -85,15 +85,15 @@ class MessageController extends Controller
         // Get the conversation with this user
         $messages = $this->getConversationUseCase->execute($userId, $otherUserId);
         
-        // If this is an AJAX/API request, return JSON
-        if ($request->wantsJson() || $request->ajax()) {
+        // If this is an AJAX/API request (not Inertia), return JSON
+        if (($request->wantsJson() || $request->ajax()) && !$request->header('X-Inertia')) {
             return response()->json([
                 'messages' => $messages,
                 'otherUserId' => $otherUserId,
             ]);
         }
         
-        // Otherwise, render Inertia page
+        // Otherwise, render Inertia page (for both Inertia requests and regular page loads)
         $isMobile = $request->get('mobile') || $this->isMobileDevice($request);
 
         // Use mobile view if requested or detected

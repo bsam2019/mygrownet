@@ -41,6 +41,11 @@ class SendMessageUseCase
         $sender = User::find($dto->senderId);
         $recipient = User::find($dto->recipientId);
 
+        // Determine the correct route based on recipient's role
+        $actionUrl = ($recipient->hasRole('admin') || $recipient->hasRole('Administrator'))
+            ? route('admin.messages.show', $message->id()->value())
+            : route('mygrownet.messages.show', $message->id()->value());
+
         // Send notification to recipient
         $this->sendNotificationUseCase->execute(
             userId: $dto->recipientId,
@@ -48,7 +53,7 @@ class SendMessageUseCase
             data: [
                 'title' => 'New Message',
                 'message' => "New message from {$sender->name}: {$dto->subject}",
-                'action_url' => route('mygrownet.messages.show', $message->id()->value()),
+                'action_url' => $actionUrl,
                 'action_text' => 'View Message',
                 'message_id' => $message->id()->value(),
                 'sender_name' => $sender->name ?? 'Unknown',

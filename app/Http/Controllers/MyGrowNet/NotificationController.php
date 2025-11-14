@@ -43,10 +43,12 @@ class NotificationController extends Controller
             return response()->json([
                 'notifications' => array_map(fn($n) => [
                     'id' => $n->id(),
+                    'type' => $n->type()->value(),
                     'title' => $n->title(),
                     'message' => $n->message(),
                     'action_url' => $n->actionUrl(),
                     'action_text' => $n->actionText(),
+                    'data' => $n->data(), // Include data field for notification handling
                     'priority' => $n->priority()->value,
                     'read_at' => $n->readAt()?->format('Y-m-d H:i:s'),
                     'created_at' => $n->createdAt()->format('Y-m-d H:i:s'),
