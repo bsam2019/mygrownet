@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Application\Messaging\DTOs\SendMessageDTO;
+use App\Application\Messaging\UseCases\BroadcastMessageUseCase;
 use App\Application\Messaging\UseCases\GetConversationUseCase;
 use App\Application\Messaging\UseCases\GetInboxUseCase;
 use App\Application\Messaging\UseCases\GetSentMessagesUseCase;
@@ -21,7 +22,8 @@ class MessageController extends Controller
         private GetSentMessagesUseCase $getSentMessagesUseCase,
         private GetConversationUseCase $getConversationUseCase,
         private SendMessageUseCase $sendMessageUseCase,
-        private MarkMessageAsReadUseCase $markMessageAsReadUseCase
+        private MarkMessageAsReadUseCase $markMessageAsReadUseCase,
+        private BroadcastMessageUseCase $broadcastMessageUseCase
     ) {}
 
     public function index(Request $request)
@@ -122,3 +124,49 @@ class MessageController extends Controller
         }
     }
 }
+
+    /**
+     * Show broadcast message form
+     */
+    public function broadcast()
+    {
+        return Inertia::render('Admin/Messages/Broadcast', [
+            'stats' => [
+                'total_members' => User::role('Member')->count(),
+                'active_subscriptions' => User::whereHas('subscription', fn($q) => $q->where('status', 'active'))->count(),
+                'with_starter_kit' => User::where('has_starter_kit', true)->count(),
+            ]
+        ]);
+    }
+
+    /**
+     * Send broadcast message
+     */
+    public function sendBroadcast(Request $request)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string',
+            'filters' => 'nullable|array',
+            'filters.role' => 'nullable|string',
+            'filters.has_starter_kit' => 'nullable|boolean',
+            'filters.professional_level' => 'nullable|integer',
+            'filters.active_subscription' => 'nullable|boolean',
+        ]);
+
+        try {
+            $result = $this->broadcastMessageUseCase->execute(
+                auth()->id(),
+                $validated['subject'],
+                $validated['body'],
+                $validated['filters'] ?? []
+            );
+
+            return back()->with('success', "Broadcast sent successfully to {$result['success_count']} members!");
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            \Log::error('Broadcast failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to send broadcast message');
+        }
+    }

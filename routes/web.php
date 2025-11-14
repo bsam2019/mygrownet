@@ -122,6 +122,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['admin'])->prefix('admin/messages')->name('admin.messages.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\MessageController::class, 'index'])->name('index');
         Route::get('/compose', [App\Http\Controllers\Admin\MessageController::class, 'compose'])->name('compose');
+        Route::get('/broadcast', [App\Http\Controllers\Admin\MessageController::class, 'broadcast'])->name('broadcast');
+        Route::post('/broadcast', [App\Http\Controllers\Admin\MessageController::class, 'sendBroadcast'])->name('broadcast.send');
         Route::get('/{id}', [App\Http\Controllers\Admin\MessageController::class, 'show'])->name('show');
         Route::post('/', [App\Http\Controllers\Admin\MessageController::class, 'store'])->name('store');
         Route::post('/{id}/read', [App\Http\Controllers\Admin\MessageController::class, 'markAsRead'])->name('read');
