@@ -504,6 +504,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/messages', [App\Http\Controllers\MyGrowNet\MessageController::class, 'store'])->name('messages.store');
         Route::post('/messages/{id}/read', [App\Http\Controllers\MyGrowNet\MessageController::class, 'markAsRead'])->name('messages.read');
         
+        // Network Routes (for messaging) - uses existing ReferralController
+        Route::get('/network/downlines', [App\Http\Controllers\ReferralController::class, 'getDownlinesForMessaging'])->name('network.downlines');
+        
         // Loyalty Growth Reward (LGR) Routes
         Route::prefix('loyalty-reward')->name('loyalty-reward.')->group(function () {
             Route::get('/', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'index'])->name('index');

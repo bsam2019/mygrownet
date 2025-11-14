@@ -52,12 +52,23 @@ class MessageController extends Controller
     {
         $userId = auth()->id();
         
+        // First, get the message to find out who the other user is
+        $message = \App\Infrastructure\Persistence\Eloquent\Messaging\MessageModel::findOrFail($id);
+        
+        // Determine the other user ID (if we sent it, other user is recipient, otherwise sender)
+        $otherUserId = $message->sender_id === $userId ? $message->recipient_id : $message->sender_id;
+        
         // Get the conversation with this user
-        $messages = $this->getConversationUseCase->execute($userId, $id);
+        $messages = $this->getConversationUseCase->execute($userId, $otherUserId);
+        
+        // Mark message as read if we're the recipient
+        if ($message->recipient_id === $userId && !$message->is_read) {
+            $this->markMessageAsReadUseCase->execute($id, $userId);
+        }
 
         return Inertia::render('Admin/Messages/Show', [
             'messages' => $messages,
-            'otherUserId' => $id,
+            'otherUserId' => $otherUserId,
         ]);
     }
 
@@ -87,6 +98,12 @@ class MessageController extends Controller
 
             $message = $this->sendMessageUseCase->execute($dto);
 
+            // If it's a reply (has parent_id), stay on the conversation page
+            if ($request->validated('parent_id')) {
+                return back()->with('success', 'Reply sent successfully!');
+            }
+
+            // Otherwise redirect to inbox
             return redirect()->route('admin.messages.index')
                 ->with('success', 'Message sent successfully!');
         } catch (\DomainException $e) {

@@ -118,8 +118,24 @@ class MessageController extends Controller
 
             $message = $this->sendMessageUseCase->execute($dto);
 
+            // Return JSON for AJAX requests (from modals)
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Message sent successfully'
+                ]);
+            }
+
             return back()->with('success', 'Message sent successfully');
         } catch (\DomainException $e) {
+            // Return JSON error for AJAX requests
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+            
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }

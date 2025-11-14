@@ -45,7 +45,42 @@ class EloquentNotificationPreferencesRepository implements NotificationPreferenc
 
     private function toDomainEntity(NotificationPreferencesModel $model): NotificationPreferences
     {
-        return NotificationPreferences::createDefault($model->user_id);
-        // Note: In a full implementation, we'd reconstruct with actual values from the model
+        // Load actual preferences from database
+        $categoryPreferences = [
+            'wallet' => (bool) $model->notify_wallet,
+            'commissions' => (bool) $model->notify_commissions,
+            'withdrawals' => (bool) $model->notify_withdrawals,
+            'subscriptions' => (bool) $model->notify_subscriptions,
+            'referrals' => (bool) $model->notify_referrals,
+            'workshops' => (bool) $model->notify_workshops,
+            'ventures' => (bool) $model->notify_ventures,
+            'bgf' => (bool) $model->notify_bgf,
+            'points' => (bool) $model->notify_points,
+            'security' => (bool) $model->notify_security,
+            'marketing' => (bool) $model->notify_marketing,
+            'messages' => (bool) ($model->notify_messages ?? true), // Default to true for messages
+        ];
+
+        // Use reflection to create entity with actual database values
+        $reflection = new \ReflectionClass(NotificationPreferences::class);
+        $instance = $reflection->newInstanceWithoutConstructor();
+        
+        $this->setProperty($instance, 'userId', $model->user_id);
+        $this->setProperty($instance, 'emailEnabled', (bool) $model->email_enabled);
+        $this->setProperty($instance, 'smsEnabled', (bool) $model->sms_enabled);
+        $this->setProperty($instance, 'pushEnabled', (bool) $model->push_enabled);
+        $this->setProperty($instance, 'inAppEnabled', (bool) $model->in_app_enabled);
+        $this->setProperty($instance, 'categoryPreferences', $categoryPreferences);
+        $this->setProperty($instance, 'digestFrequency', $model->digest_frequency ?? 'instant');
+        
+        return $instance;
+    }
+    
+    private function setProperty(object $object, string $property, mixed $value): void
+    {
+        $reflection = new \ReflectionClass($object);
+        $prop = $reflection->getProperty($property);
+        $prop->setAccessible(true);
+        $prop->setValue($object, $value);
     }
 }

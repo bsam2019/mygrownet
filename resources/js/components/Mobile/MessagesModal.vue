@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import ComposeMessageModal from '@/Components/Mobile/ComposeMessageModal.vue';
 import MessageViewModal from '@/Components/Mobile/MessageViewModal.vue';
@@ -243,11 +243,32 @@ function openMessage(message: Message) {
     showMessageView.value = true;
 }
 
+function openMessageById(messageId: number) {
+    selectedMessageId.value = messageId;
+    showMessageView.value = true;
+}
+
 function closeMessageView() {
     showMessageView.value = false;
     selectedMessageId.value = null;
     loadMessages(); // Refresh messages
 }
+
+// Listen for notification clicks to open specific message
+const handleOpenMessageFromNotification = (event: CustomEvent) => {
+    const { messageId } = event.detail;
+    if (messageId) {
+        openMessageById(messageId);
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('open-message-modal', handleOpenMessageFromNotification as EventListener);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('open-message-modal', handleOpenMessageFromNotification as EventListener);
+});
 
 function handleComposeClose() {
     showComposeModal.value = false;

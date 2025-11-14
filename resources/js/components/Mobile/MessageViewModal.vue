@@ -1,6 +1,6 @@
 <template>
     <Transition name="slide-up">
-        <div v-if="show" class="fixed inset-0 z-[60] bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col">
+        <div v-if="show" class="fixed top-0 left-0 right-0 flex flex-col" style="background-color: #e5ddd5; z-index: 9999; bottom: 70px;">
             <!-- Modern Header -->
             <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-2xl flex-shrink-0">
                 <div class="px-4 py-4 backdrop-blur-sm bg-white/10">
@@ -34,77 +34,115 @@
                 <p class="text-gray-600 mt-6 font-medium">Loading conversation...</p>
             </div>
 
-            <!-- Messages Thread -->
-            <div v-else class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-                <!-- Messages -->
+            <!-- Messages Thread (WhatsApp style) -->
+            <div v-if="!loading" class="flex-1 overflow-y-auto px-3 py-4 space-y-3">
+                <!-- Messages as chat bubbles -->
                 <div
                     v-for="(message, index) in conversation"
                     :key="message.id"
-                    class="animate-fade-in"
-                    :style="{ animationDelay: `${index * 0.05}s` }"
+                    :class="[
+                        'flex',
+                        message.senderId === $page.props.auth.user.id ? 'justify-end' : 'justify-start'
+                    ]"
                 >
-                    <!-- Message Card -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow duration-200">
-                        <!-- Message Header -->
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                                <span class="text-white font-bold text-sm">
-                                    {{ message.senderName.charAt(0).toUpperCase() }}
-                                </span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-bold text-gray-900">{{ message.senderName }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">{{ formatDateTime(message.createdAt) }}</p>
-                            </div>
-                            <!-- Reply indicator for threaded messages -->
-                            <div v-if="index > 0" class="flex-shrink-0">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    Reply
-                                </span>
-                            </div>
-                        </div>
+                    <!-- Message Bubble -->
+                    <div
+                        :class="[
+                            'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
+                            message.senderId === $page.props.auth.user.id
+                                ? 'bg-blue-500 text-white rounded-br-sm'
+                                : 'bg-white text-gray-900 rounded-bl-sm'
+                        ]"
+                    >
+                        <!-- Sender name (only for received messages) -->
+                        <p 
+                            v-if="message.senderId !== $page.props.auth.user.id" 
+                            class="text-xs font-semibold text-blue-600 mb-1"
+                        >
+                            {{ message.senderName }}
+                        </p>
                         
-                        <!-- Message Body -->
-                        <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed pl-14">
+                        <!-- Message text -->
+                        <p class="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                             {{ message.body }}
+                        </p>
+                        
+                        <!-- Timestamp with read status -->
+                        <div 
+                            :class="[
+                                'flex items-center justify-end gap-1 mt-1',
+                                message.senderId === $page.props.auth.user.id
+                                    ? 'text-blue-100'
+                                    : 'text-gray-500'
+                            ]"
+                        >
+                            <span class="text-[11px]">
+                                {{ formatTime(message.createdAt) }}
+                            </span>
+                            <!-- Read receipts (only for sent messages) -->
+                            <span v-if="message.senderId === $page.props.auth.user.id" class="flex items-center ml-1">
+                                <!-- Double gray checks for delivered but not read -->
+                                <svg 
+                                    v-if="!message.isRead"
+                                    class="w-[18px] h-4 text-blue-100"
+                                    fill="none" 
+                                    viewBox="0 0 20 16" 
+                                    stroke="currentColor" 
+                                    stroke-width="2"
+                                >
+                                    <!-- First check -->
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M1 8l3 3 6-6" />
+                                    <!-- Second check (slightly offset) -->
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 8l3 3 6-6" />
+                                </svg>
+                                <!-- Double blue checks for read -->
+                                <svg 
+                                    v-else
+                                    class="w-[18px] h-4 text-blue-400"
+                                    fill="none" 
+                                    viewBox="0 0 20 16" 
+                                    stroke="currentColor" 
+                                    stroke-width="2"
+                                >
+                                    <!-- First check -->
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M1 8l3 3 6-6" />
+                                    <!-- Second check (slightly offset) -->
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 8l3 3 6-6" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Reply Input (Compact inline design like WhatsApp) -->
-            <div v-if="conversation.length > 0" class="flex-shrink-0 bg-white border-t border-gray-200 shadow-lg">
+            <!-- Reply Input (WhatsApp style) -->
+            <div v-if="!loading && conversation.length > 0" class="flex-shrink-0 bg-gray-100 border-t border-gray-300 safe-bottom" style="position: relative; z-index: 10000;">
                 <form @submit.prevent="sendReply" class="p-3">
-                    <div class="flex items-end gap-2">
-                        <div class="flex-1 relative">
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1">
                             <textarea
                                 ref="replyInput"
                                 v-model="replyBody"
                                 rows="1"
-                                class="w-full rounded-2xl border-2 border-gray-300 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-30 resize-none transition-all duration-200 px-4 py-2.5 pr-12 text-sm max-h-24 overflow-y-auto"
-                                placeholder="Type a reply..."
+                                class="w-full rounded-3xl border-2 border-gray-300 bg-white focus:border-blue-500 focus:outline-none resize-none px-4 py-3 text-base max-h-32 overflow-y-auto"
+                                placeholder="Type a message..."
                                 :disabled="sending"
-                                required
                                 @input="autoResize"
+                                @keydown.enter.exact.prevent="sendReply"
                             ></textarea>
-                            <!-- Character count inside textarea -->
-                            <div class="absolute bottom-2 right-3 text-xs text-gray-400 pointer-events-none">
-                                {{ replyBody.length }}
-                            </div>
                         </div>
-                        <!-- Send button as circular icon -->
+                        <!-- Send button -->
                         <button
                             type="submit"
                             :disabled="sending || !replyBody.trim()"
-                            class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center"
-                            :class="{ 'animate-pulse': sending }"
+                            class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed active:scale-95 transition-all flex items-center justify-center shadow-lg"
                         >
                             <svg v-if="sending" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 74 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <svg v-else class="w-5 h-5 transform rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-2-9-9-2-9 2 2 9 9-2zm0 0v-8" />
+                            <svg v-else class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                             </svg>
                         </button>
                     </div>
@@ -116,8 +154,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+
+const page = usePage();
 
 interface Message {
     id: number;
@@ -229,37 +270,70 @@ function autoResize() {
 async function sendReply() {
     if (!replyBody.value.trim() || !conversation.value[0]) return;
     
+    const messageText = replyBody.value;
+    const originalMessage = conversation.value[0];
+    
+    // Optimistically add message to conversation (WhatsApp style)
+    const tempMessage = {
+        id: Date.now(), // Temporary ID
+        senderId: page.props.auth.user.id,
+        senderName: page.props.auth.user.name,
+        recipientId: originalMessage.senderId,
+        recipientName: originalMessage.senderName,
+        subject: originalMessage.subject.startsWith('Re:') 
+            ? originalMessage.subject 
+            : `Re: ${originalMessage.subject}`,
+        body: messageText,
+        preview: messageText.substring(0, 100),
+        isRead: false,
+        readAt: null,
+        parentId: originalMessage.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+    
+    // Add to conversation immediately
+    conversation.value.push(tempMessage);
+    
+    // Clear input
+    replyBody.value = '';
+    if (replyInput.value) {
+        replyInput.value.style.height = 'auto';
+    }
+    
+    // Scroll to bottom
+    setTimeout(() => {
+        const messagesContainer = document.querySelector('.overflow-y-auto');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }, 100);
+    
+    // Send to server in background
     sending.value = true;
     try {
-        const originalMessage = conversation.value[0];
-        
-        await axios.post(route('mygrownet.messages.store'), {
+        const response = await axios.post(route('mygrownet.messages.store'), {
             recipient_id: originalMessage.senderId,
-            subject: originalMessage.subject.startsWith('Re:') 
-                ? originalMessage.subject 
-                : `Re: ${originalMessage.subject}`,
-            body: replyBody.value,
+            subject: tempMessage.subject,
+            body: messageText,
             parent_id: originalMessage.id,
         });
         
-        replyBody.value = '';
-        if (replyInput.value) {
-            replyInput.value.style.height = 'auto';
+        // Update temp message with real ID from server if needed
+        if (response.data.message?.id) {
+            const index = conversation.value.findIndex(m => m.id === tempMessage.id);
+            if (index !== -1) {
+                conversation.value[index].id = response.data.message.id;
+            }
         }
-        await loadConversation();
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Reply Sent!',
-            text: 'Your reply has been sent successfully',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-        });
     } catch (error) {
         console.error('Failed to send reply:', error);
+        // Remove the optimistic message on error
+        const index = conversation.value.findIndex(m => m.id === tempMessage.id);
+        if (index !== -1) {
+            conversation.value.splice(index, 1);
+        }
+        // Show error toast only on failure
         Swal.fire({
             icon: 'error',
             title: 'Failed to send',
@@ -272,6 +346,15 @@ async function sendReply() {
     } finally {
         sending.value = false;
     }
+}
+
+function formatTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function formatDateTime(dateString: string): string {
@@ -362,5 +445,10 @@ watch(() => props.show, (newVal) => {
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
     background: rgba(156, 163, 175, 0.5);
+}
+
+/* Safe area for mobile devices */
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
 }
 </style>

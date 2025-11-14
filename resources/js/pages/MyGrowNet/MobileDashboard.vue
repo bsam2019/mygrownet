@@ -905,6 +905,7 @@ import NotificationBell from '@/components/Mobile/NotificationBell.vue';
 import Toast from '@/components/Mobile/Toast.vue';
 import AnnouncementBanner from '@/components/Mobile/AnnouncementBanner.vue';
 import MessagesModal from '@/components/Mobile/MessagesModal.vue';
+import { onMounted, onUnmounted } from 'vue';
 import {
   ArrowPathIcon,
   CurrencyDollarIcon,
@@ -1133,6 +1134,20 @@ const navigateToMessages = () => {
   // Open messages modal instead of navigating
   showMessagesModal.value = true;
 };
+
+// Listen for notification clicks to open message modal
+const handleOpenMessageModal = (event: CustomEvent) => {
+  showMessagesModal.value = true;
+  // The MessagesModal will handle opening the specific message
+};
+
+onMounted(() => {
+  window.addEventListener('open-message-modal', handleOpenMessageModal as EventListener);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('open-message-modal', handleOpenMessageModal as EventListener);
+});
 
 const getLevelBgClass = (level: number) => {
   const classes = [

@@ -360,4 +360,52 @@ class ReferralController extends Controller
             'commissions' => $commissions,
         ]);
     }
+    
+    /**
+     * Get all downlines for messaging (all levels, recursive)
+     */
+    public function getDownlinesForMessaging()
+    {
+        $user = Auth::user();
+        
+        // Get all downlines recursively (all levels)
+        $allDownlines = $this->getAllDownlinesRecursive($user->id);
+        
+        // Format for messaging
+        $downlines = User::whereIn('id', $allDownlines)
+            ->select('id', 'name', 'email', 'phone')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($downline) {
+                return [
+                    'id' => $downline->id,
+                    'name' => $downline->name,
+                    'email' => $downline->email,
+                    'phone' => $downline->phone ?? '',
+                ];
+            });
+        
+        return response()->json([
+            'downlines' => $downlines
+        ]);
+    }
+    
+    /**
+     * Recursively get all downline IDs
+     */
+    private function getAllDownlinesRecursive($userId, &$collected = [])
+    {
+        $directReferrals = User::where('referrer_id', $userId)
+            ->pluck('id')
+            ->toArray();
+        
+        foreach ($directReferrals as $referralId) {
+            if (!in_array($referralId, $collected)) {
+                $collected[] = $referralId;
+                $this->getAllDownlinesRecursive($referralId, $collected);
+            }
+        }
+        
+        return $collected;
+    }
 } 

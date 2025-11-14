@@ -210,9 +210,15 @@ const handleNotificationClick = (notification: Notification) => {
   const isMobile = window.location.pathname.includes('/mobile');
   
   if (isMobile) {
-    // For mobile: just close the panel and mark as read
+    // Handle message notifications specially - open message modal
+    if (notification.type === 'messages.received' && notification.data?.message_id) {
+      // Emit event to open message modal
+      window.dispatchEvent(new CustomEvent('open-message-modal', {
+        detail: { messageId: notification.data.message_id }
+      }));
+    }
+    // For other notifications: just close the panel and mark as read
     // User stays on current page - better mobile UX
-    // They can navigate to relevant section using bottom nav if needed
   } else {
     // Desktop: navigate to action URL if provided
     if (notification.action_url) {
