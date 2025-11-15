@@ -74,7 +74,8 @@ const markAllAsRead = async () => {
 
 const toggleDropdown = () => {
     showDropdown.value = !showDropdown.value;
-    if (showDropdown.value && notifications.value.length === 0) {
+    if (showDropdown.value) {
+        // Always fetch fresh notifications when opening dropdown
         fetchNotifications();
     }
 };

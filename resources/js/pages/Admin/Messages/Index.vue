@@ -247,7 +247,13 @@ const showComposeModal = ref(false);
 const page = usePage();
 
 const unreadCount = computed(() => {
-    return props.messages.filter(m => !m.isRead).length;
+    // Only count unread received messages (inbox)
+    if (props.tab === 'inbox') {
+        return props.messages.filter(m => !m.isRead).length;
+    }
+    // When on sent tab, we don't have inbox data, so return 0
+    // The backend should ideally pass this separately
+    return 0;
 });
 
 // Show success toast if there's a success message

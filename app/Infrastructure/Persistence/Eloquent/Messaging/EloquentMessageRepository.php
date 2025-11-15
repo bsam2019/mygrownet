@@ -83,13 +83,18 @@ class EloquentMessageRepository implements MessageRepository
     public function findConversation(UserId $user1, UserId $user2, int $limit = 50): array
     {
         $models = MessageModel::where(function ($query) use ($user1, $user2) {
-            $query->where('sender_id', $user1->value())
-                ->where('recipient_id', $user2->value());
-        })->orWhere(function ($query) use ($user1, $user2) {
-            $query->where('sender_id', $user2->value())
-                ->where('recipient_id', $user1->value());
+            // Messages from user1 to user2
+            $query->where(function ($q) use ($user1, $user2) {
+                $q->where('sender_id', $user1->value())
+                  ->where('recipient_id', $user2->value());
+            })
+            // OR messages from user2 to user1
+            ->orWhere(function ($q) use ($user1, $user2) {
+                $q->where('sender_id', $user2->value())
+                  ->where('recipient_id', $user1->value());
+            });
         })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc') // Changed to asc for chronological order
             ->limit($limit)
             ->get();
 

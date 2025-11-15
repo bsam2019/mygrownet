@@ -67,18 +67,22 @@ class BroadcastMessageUseCase
                         ? route('admin.messages.show', $message->id()->value())
                         : route('mygrownet.messages.show', $message->id()->value());
 
+                    // Create a preview of the message body (first 100 characters)
+                    $preview = strlen($body) > 100 ? substr($body, 0, 100) . '...' : $body;
+
                     $this->sendNotificationUseCase->execute(
                         userId: $recipient->id,
                         type: 'messages.received',
                         data: [
-                            'title' => 'Broadcast Message',
-                            'message' => "Broadcast from {$sender->name}: {$subject}",
+                            'title' => $subject, // Use the actual message subject as title
+                            'message' => $preview, // Show preview of the message content
                             'action_url' => $actionUrl,
-                            'action_text' => 'View Message',
+                            'action_text' => 'Read Message',
                             'message_id' => $message->id()->value(),
                             'sender_name' => $sender->name,
                             'subject' => $subject,
-                            'preview' => substr($body, 0, 100),
+                            'preview' => $preview,
+                            'is_broadcast' => true, // Flag to indicate it's a broadcast
                         ]
                     );
 
@@ -131,18 +135,18 @@ class BroadcastMessageUseCase
             $query->role($filters['role']);
         }
 
-        if (isset($filters['has_starter_kit'])) {
-            $query->where('has_starter_kit', $filters['has_starter_kit']);
+        if (isset($filters['has_starter_kit']) && $filters['has_starter_kit']) {
+            $query->where('has_starter_kit', true);
         }
 
         if (isset($filters['professional_level'])) {
             $query->where('professional_level', $filters['professional_level']);
         }
 
-        if (isset($filters['active_subscription'])) {
-            $query->whereHas('subscription', function ($q) {
-                $q->where('status', 'active');
-            });
+        // For now, active_subscription is the same as has_starter_kit
+        // When subscription system is implemented, update this condition
+        if (isset($filters['active_subscription']) && $filters['active_subscription']) {
+            $query->where('has_starter_kit', true);
         }
 
         return $query->select('id', 'name', 'email')->get();

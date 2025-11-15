@@ -13,7 +13,7 @@ class GetSentMessagesUseCase
         private MessagingService $messagingService
     ) {}
 
-    public function execute(int $userId, int $limit = 50, int $offset = 0): array
+    public function execute(int $userId, int $limit = 100, int $offset = 0): array
     {
         $messages = $this->messagingService->getSent(
             UserId::fromInt($userId),

@@ -46,19 +46,23 @@ class SendMessageUseCase
             ? route('admin.messages.show', $message->id()->value())
             : route('mygrownet.messages.show', $message->id()->value());
 
+        // Create a preview of the message body (first 100 characters)
+        $preview = strlen($dto->body) > 100 ? substr($dto->body, 0, 100) . '...' : $dto->body;
+
         // Send notification to recipient
         $this->sendNotificationUseCase->execute(
             userId: $dto->recipientId,
             type: 'messages.received',
             data: [
-                'title' => 'New Message',
-                'message' => "New message from {$sender->name}: {$dto->subject}",
+                'title' => $dto->subject, // Use the actual message subject as title
+                'message' => "From {$sender->name}: {$preview}", // Show sender and preview
                 'action_url' => $actionUrl,
-                'action_text' => 'View Message',
+                'action_text' => 'Read Message',
                 'message_id' => $message->id()->value(),
                 'sender_name' => $sender->name ?? 'Unknown',
                 'subject' => $dto->subject,
-                'preview' => substr($dto->body, 0, 100),
+                'preview' => $preview,
+                'is_broadcast' => false,
             ]
         );
 

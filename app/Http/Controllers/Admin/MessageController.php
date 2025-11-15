@@ -29,12 +29,19 @@ class MessageController extends Controller
     public function index(Request $request)
     {
         $tab = $request->get('tab', 'inbox');
+        $page = max(1, (int) $request->get('page', 1));
+        $perPage = 50;
+        $offset = ($page - 1) * $perPage;
         $userId = auth()->id();
 
         $messages = match ($tab) {
-            'sent' => $this->getSentMessagesUseCase->execute($userId),
-            default => $this->getInboxUseCase->execute($userId),
+            'sent' => $this->getSentMessagesUseCase->execute($userId, $perPage, $offset),
+            default => $this->getInboxUseCase->execute($userId, $perPage, $offset),
         };
+
+        // Always get unread inbox count regardless of active tab
+        $inboxMessages = $this->getInboxUseCase->execute($userId, 1000, 0); // Get all inbox messages for count
+        $unreadCount = count(array_filter($inboxMessages, fn($m) => !$m->isRead));
 
         // Get all users for compose modal
         $users = User::select('id', 'name', 'email')
@@ -47,6 +54,12 @@ class MessageController extends Controller
             'messages' => $messages,
             'tab' => $tab,
             'users' => $users,
+            'unreadCount' => $unreadCount,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'has_more' => count($messages) === $perPage,
+            ],
         ]);
     }
 
@@ -129,11 +142,22 @@ class MessageController extends Controller
      */
     public function broadcast()
     {
+        $totalMembers = User::where('id', '!=', auth()->id())->count();
+        $withStarterKit = User::where('id', '!=', auth()->id())
+            ->where('has_starter_kit', true)
+            ->count();
+        
+        // For now, active_subscription is the same as has_starter_kit
+        // When subscription system is implemented, update this query
+        $activeSubscriptions = $withStarterKit;
+        $bothFilters = $withStarterKit; // Same since both filters check starter kit for now
+
         return Inertia::render('Admin/Messages/Broadcast', [
             'stats' => [
-                'total_members' => User::role('Member')->count(),
-                'active_subscriptions' => User::whereHas('subscription', fn($q) => $q->where('status', 'active'))->count(),
-                'with_starter_kit' => User::where('has_starter_kit', true)->count(),
+                'total_members' => $totalMembers,
+                'with_starter_kit' => $withStarterKit,
+                'active_subscriptions' => $activeSubscriptions,
+                'both_filters' => $bothFilters,
             ]
         ]);
     }
@@ -169,4 +193,4 @@ class MessageController extends Controller
             return back()->with('error', 'Failed to send broadcast message');
         }
     }
-}
+} 
