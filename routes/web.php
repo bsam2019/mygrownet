@@ -124,6 +124,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/compose', [App\Http\Controllers\Admin\MessageController::class, 'compose'])->name('compose');
         Route::get('/broadcast', [App\Http\Controllers\Admin\MessageController::class, 'broadcast'])->name('broadcast');
         Route::post('/broadcast', [App\Http\Controllers\Admin\MessageController::class, 'sendBroadcast'])->name('broadcast.send');
+        
+        // Message Templates
+        Route::get('/templates', [App\Http\Controllers\Admin\MessageTemplateController::class, 'index'])->name('templates.index');
+        Route::get('/templates/create', [App\Http\Controllers\Admin\MessageTemplateController::class, 'create'])->name('templates.create');
+        Route::post('/templates', [App\Http\Controllers\Admin\MessageTemplateController::class, 'store'])->name('templates.store');
+        Route::get('/templates/{template}/edit', [App\Http\Controllers\Admin\MessageTemplateController::class, 'edit'])->name('templates.edit');
+        Route::put('/templates/{template}', [App\Http\Controllers\Admin\MessageTemplateController::class, 'update'])->name('templates.update');
+        Route::delete('/templates/{template}', [App\Http\Controllers\Admin\MessageTemplateController::class, 'destroy'])->name('templates.destroy');
+        Route::get('/templates/{template}', [App\Http\Controllers\Admin\MessageTemplateController::class, 'show'])->name('templates.show');
         Route::get('/{id}', [App\Http\Controllers\Admin\MessageController::class, 'show'])->name('show');
         Route::post('/', [App\Http\Controllers\Admin\MessageController::class, 'store'])->name('store');
         Route::post('/{id}/read', [App\Http\Controllers\Admin\MessageController::class, 'markAsRead'])->name('read');

@@ -196,8 +196,8 @@ Open → In Progress → Waiting (for member) → Resolved → Closed
 
 ### Phase 3: Admin Interface (Week 2)
 - [x] Message management dashboard - ✅ COMPLETED (admin can view/send individual messages)
-- [ ] Broadcast messaging - NOT IMPLEMENTED (send to all members at once)
-- [ ] Targeted group messaging - NOT IMPLEMENTED (send to specific groups by level/tier)
+- [x] Broadcast messaging - ✅ COMPLETED (send to all members with optional filters)
+- [ ] Targeted group messaging - PARTIALLY IMPLEMENTED (filters available in broadcast)
 - [ ] Message templates - NOT IMPLEMENTED (pre-written templates)
 - [ ] Ticket management dashboard - Next Phase
 - [ ] Ticket assignment interface - Next Phase
