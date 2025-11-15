@@ -123,7 +123,6 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 403);
         }
     }
-}
 
     /**
      * Show broadcast message form
@@ -170,3 +169,4 @@ class MessageController extends Controller
             return back()->with('error', 'Failed to send broadcast message');
         }
     }
+}
