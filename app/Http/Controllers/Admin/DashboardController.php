@@ -9,11 +9,13 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Domain\Messaging\Services\MessagingService;
 use App\Domain\Messaging\ValueObjects\UserId;
+use App\Domain\Support\Repositories\TicketRepository;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        private MessagingService $messagingService
+        private MessagingService $messagingService,
+        private TicketRepository $ticketRepository
     ) {}
 
     public function index()
@@ -27,6 +29,7 @@ class DashboardController extends Controller
             'alerts' => $this->getAlerts(),
             'investments' => $this->getRecentInvestments(),
             'messagingData' => $this->getMessagingData($user),
+            'supportData' => $this->getSupportData(),
         ]);
     }
 
@@ -79,7 +82,25 @@ class DashboardController extends Controller
             'pending_approvals' => Investment::where('status', 'pending')->count(),
             'pending_withdrawals' => \App\Models\Withdrawal::where('status', 'pending')->count(),
             'withdrawal_amount' => \App\Models\Withdrawal::where('status', 'pending')->sum('amount'),
+            'open_tickets' => count($this->ticketRepository->findByStatus(\App\Domain\Support\ValueObjects\TicketStatus::open())),
+            'urgent_tickets' => count($this->ticketRepository->findOverdue(4)),
             'system_alerts' => $this->getSystemAlerts(),
+        ];
+    }
+
+    private function getSupportData(): array
+    {
+        $allTickets = $this->ticketRepository->findAll();
+        
+        $openTickets = array_filter($allTickets, fn($t) => $t->status()->isOpen());
+        $inProgressTickets = array_filter($allTickets, fn($t) => $t->status()->isInProgress());
+        $urgentTickets = $this->ticketRepository->findOverdue(4);
+        
+        return [
+            'total_tickets' => count($allTickets),
+            'open_tickets' => count($openTickets),
+            'in_progress_tickets' => count($inProgressTickets),
+            'urgent_tickets' => count($urgentTickets),
         ];
     }
 

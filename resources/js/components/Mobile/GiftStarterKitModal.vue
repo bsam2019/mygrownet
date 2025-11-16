@@ -160,11 +160,18 @@
             </div>
         </Dialog>
     </TransitionRoot>
+
+    <Toast
+        :show="showToast"
+        :message="toastMessage"
+        :type="toastType"
+        @close="showToast = false"
+    />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import {
     Dialog,
     DialogPanel,
@@ -174,6 +181,7 @@ import {
 } from '@headlessui/vue';
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
+import Toast from './Toast.vue';
 
 interface Recipient {
     id: number;
@@ -205,10 +213,20 @@ const emit = defineEmits<{
     (e: 'success'): void;
 }>();
 
+const page = usePage();
 const selectedTier = ref<'basic' | 'premium'>('basic');
 const processing = ref(false);
 const limits = ref<GiftLimits | null>(null);
 const validationError = ref('');
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastType = ref<'success' | 'error' | 'warning' | 'info'>('success');
+
+const showToastMessage = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+  toastMessage.value = message;
+  toastType.value = type;
+  showToast.value = true;
+};
 
 const giftAmount = computed(() => selectedTier.value === 'premium' ? 1000 : 500);
 
@@ -370,12 +388,18 @@ function confirmGift() {
                 
                 // Always close modal and emit success after gift submission
                 // (even if no flash message, the page reload indicates success)
+                showToastMessage(`🎁 Starter kit gifted to ${props.recipient.name} successfully!`, 'success');
                 emit('success');
-                closeModal();
+                processing.value = false;
+                emit('close');
+                selectedTier.value = 'basic';
+                validationError.value = '';
             },
             onError: (errors) => {
                 console.error('❌ Gift failed:', errors);
-                validationError.value = errors.message || Object.values(errors).flat().join(', ') || 'Failed to gift starter kit. Please try again.';
+                const errorMsg = errors.message || Object.values(errors).flat().join(', ') || 'Failed to gift starter kit. Please try again.';
+                validationError.value = errorMsg;
+                showToastMessage(errorMsg, 'error');
             },
             onFinish: () => {
                 console.log('Gift request finished');

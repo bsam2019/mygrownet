@@ -138,6 +138,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{id}/read', [App\Http\Controllers\Admin\MessageController::class, 'markAsRead'])->name('read');
     });
 
+    // Admin Support Ticket Routes
+    Route::middleware(['admin'])->prefix('admin/support')->name('admin.support.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\SupportTicketController::class, 'index'])->name('index');
+        Route::get('/{id}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('show');
+        Route::post('/{id}/assign', [App\Http\Controllers\Admin\SupportTicketController::class, 'assign'])->name('assign');
+        Route::post('/{id}/status', [App\Http\Controllers\Admin\SupportTicketController::class, 'updateStatus'])->name('status');
+        Route::post('/{id}/comment', [App\Http\Controllers\Admin\SupportTicketController::class, 'addComment'])->name('comment');
+    });
+
     // Admin Starter Kit Management Routes
     Route::middleware(['admin'])->prefix('admin/starter-kit')->name('admin.starter-kit.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'dashboard'])->name('dashboard');
@@ -514,6 +523,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/messages/{id}', [App\Http\Controllers\MyGrowNet\MessageController::class, 'show'])->name('messages.show');
         Route::post('/messages', [App\Http\Controllers\MyGrowNet\MessageController::class, 'store'])->name('messages.store');
         Route::post('/messages/{id}/read', [App\Http\Controllers\MyGrowNet\MessageController::class, 'markAsRead'])->name('messages.read');
+        
+        // Support Ticket Routes
+        Route::get('/support', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'index'])->name('support.index');
+        Route::get('/support/create', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'create'])->name('support.create');
+        Route::post('/support', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'store'])->name('support.store');
+        Route::get('/support/{id}', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'show'])->name('support.show');
+        Route::post('/support/{id}/comment', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'addComment'])->name('support.comment');
+        Route::get('/api/support/tickets/{id}/comments', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'getComments'])->name('support.comments');
         
         // Network Routes (for messaging) - uses existing ReferralController
         Route::get('/network/downlines', [App\Http\Controllers\ReferralController::class, 'getDownlinesForMessaging'])->name('network.downlines');

@@ -115,6 +115,7 @@ const learningNavItems: NavItem[] = [
 
 const communicationNavItems: NavItem[] = [
     { title: 'Messages', href: route('mygrownet.messages.index'), icon: 'MailIcon' },
+    { title: 'Support', href: route('mygrownet.support.index'), icon: 'LifeBuoyIcon' },
 ];
 
 const accountNavItems: NavItem[] = [

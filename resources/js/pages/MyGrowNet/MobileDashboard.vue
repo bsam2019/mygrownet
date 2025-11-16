@@ -461,6 +461,12 @@
                               {{ member.tier }}
                             </span>
                             <span 
+                              v-if="member.starter_kit_tier"
+                              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                            >
+                              {{ member.starter_kit_tier }} Kit
+                            </span>
+                            <span 
                               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
                               :class="member.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
                             >
@@ -735,6 +741,32 @@
           </button>
 
           <button
+            @click="router.visit(route('mygrownet.messages.index', { mobile: 1 }))"
+            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span class="text-sm font-medium text-gray-900">Messages</span>
+            </div>
+            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
+          </button>
+
+          <button
+            @click="showSupportModal = true"
+            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span class="text-sm font-medium text-gray-900">Support Tickets</span>
+            </div>
+            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
+          </button>
+
+          <button
             @click="showHelpSupportModal = true"
             class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
           >
@@ -872,6 +904,13 @@
       @close="showMessagesModal = false"
     />
 
+    <!-- Support Tickets Modal -->
+    <SupportTicketsModal
+      :is-open="showSupportModal"
+      :tickets="supportTickets"
+      @close="showSupportModal = false"
+    />
+
     <!-- Toast Notification -->
     <Toast
       :show="showToast"
@@ -905,6 +944,7 @@ import NotificationBell from '@/components/Mobile/NotificationBell.vue';
 import Toast from '@/components/Mobile/Toast.vue';
 import AnnouncementBanner from '@/components/Mobile/AnnouncementBanner.vue';
 import MessagesModal from '@/components/Mobile/MessagesModal.vue';
+import SupportTicketsModal from '@/components/Mobile/SupportTicketsModal.vue';
 import { onMounted, onUnmounted } from 'vue';
 import {
   ArrowPathIcon,
@@ -957,6 +997,7 @@ const props = withDefaults(defineProps<{
   lgrWithdrawalBlocked?: boolean;
   announcements?: any[];
   messagingData?: any;
+  supportTickets?: any[];
 }>(), {
   stats: () => ({ total_earnings: 0, this_month_earnings: 0, total_deposits: 0, total_withdrawals: 0 }),
   referralStats: () => ({ levels: [] }),
@@ -982,6 +1023,7 @@ const showStarterKitModal = ref(false);
 const showLogoutModal = ref(false);
 const showLgrTransferModal = ref(false);
 const showMessagesModal = ref(false);
+const showSupportModal = ref(false);
 
 // PWA Install
 const deferredPrompt = ref<any>(null);

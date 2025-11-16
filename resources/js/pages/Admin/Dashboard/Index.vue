@@ -67,6 +67,41 @@
                     />
                 </div>
 
+                <!-- Support Tickets Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard
+                        title="Total Tickets"
+                        :value="formatNumber(supportData.total_tickets)"
+                        :subtitle="'All time'"
+                        icon="ticket"
+                        color="blue"
+                    />
+                    
+                    <StatCard
+                        title="Open Tickets"
+                        :value="formatNumber(supportData.open_tickets)"
+                        :subtitle="'Needs attention'"
+                        icon="exclamation-circle"
+                        color="amber"
+                    />
+                    
+                    <StatCard
+                        title="In Progress"
+                        :value="formatNumber(supportData.in_progress_tickets)"
+                        :subtitle="'Being handled'"
+                        icon="clock"
+                        color="blue"
+                    />
+                    
+                    <StatCard
+                        title="Urgent Tickets"
+                        :value="formatNumber(supportData.urgent_tickets)"
+                        :subtitle="'Overdue'"
+                        icon="fire"
+                        color="red"
+                    />
+                </div>
+
                 <!-- Workshop & Starter Kit Stats Row -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <StatCard
@@ -246,6 +281,7 @@ const props = defineProps<{
     matrixMetrics: any;
     financialMetrics: any;
     workshopMetrics: any;
+    supportData: any;
     professionalLevelDistribution: any[];
     memberGrowthTrend: any[];
     revenueGrowthTrend: any[];

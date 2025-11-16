@@ -26,7 +26,9 @@ use App\Models\ProjectProfitDistribution;
 use Carbon\Carbon;
 use App\Application\UseCases\Announcement\GetUserAnnouncementsUseCase;
 use App\Domain\Messaging\Services\MessagingService;
-use App\Domain\Messaging\ValueObjects\UserId;
+use App\Domain\Messaging\ValueObjects\UserId as MessagingUserId;
+use App\Domain\Support\ValueObjects\UserId as SupportUserId;
+use App\Domain\Support\Repositories\TicketRepository;
 
 class DashboardController extends Controller
 {
@@ -38,6 +40,7 @@ class DashboardController extends Controller
     protected \App\Services\EarningsService $earningsService;
     protected GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase;
     protected MessagingService $messagingService;
+    protected \App\Domain\Support\Repositories\TicketRepository $ticketRepository;
 
     public function __construct(
         MLMCommissionService $mlmCommissionService,
@@ -47,7 +50,8 @@ class DashboardController extends Controller
         \App\Services\WalletService $walletService,
         \App\Services\EarningsService $earningsService,
         GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase,
-        MessagingService $messagingService
+        MessagingService $messagingService,
+        \App\Domain\Support\Repositories\TicketRepository $ticketRepository
     ) {
         $this->mlmCommissionService = $mlmCommissionService;
         $this->tierAdvancementService = $tierAdvancementService;
@@ -57,6 +61,7 @@ class DashboardController extends Controller
         $this->earningsService = $earningsService;
         $this->getUserAnnouncementsUseCase = $getUserAnnouncementsUseCase;
         $this->messagingService = $messagingService;
+        $this->ticketRepository = $ticketRepository;
     }
 
     public function index(Request $request)
@@ -411,6 +416,18 @@ class DashboardController extends Controller
         // Get messaging data for mobile
         $data['messagingData'] = $this->getMessagingData($user);
         
+        // Get support tickets for mobile
+        $tickets = $this->ticketRepository->findByUserId(SupportUserId::fromInt($user->id));
+        $data['supportTickets'] = array_map(fn($ticket) => [
+            'id' => $ticket->id()->value(),
+            'subject' => $ticket->subject(),
+            'description' => $ticket->description()->value(),
+            'category' => $ticket->category()->value,
+            'priority' => $ticket->priority()->value,
+            'status' => $ticket->status()->value,
+            'createdAt' => $ticket->createdAt()->format('Y-m-d H:i:s'),
+        ], $tickets);
+        
         // DEBUG: Add a flag to identify mobile dashboard
         $data['isMobileDashboard'] = true;
         $data['debugInfo'] = [
@@ -702,7 +719,7 @@ class DashboardController extends Controller
             $usersAtLevel = UserNetwork::where('referrer_id', $user->id)
                 ->where('level', $level)
                 ->with(['user' => function($query) {
-                    $query->select('id', 'name', 'email', 'phone', 'created_at')
+                    $query->select('id', 'name', 'email', 'phone', 'created_at', 'has_starter_kit', 'starter_kit_tier')
                         ->with(['currentMembershipTier:id,name', 'subscriptions' => function($q) {
                             $q->where('status', 'active')->select('id', 'user_id', 'status');
                         }]);
@@ -718,6 +735,8 @@ class DashboardController extends Controller
                         'tier' => $user->currentMembershipTier->name ?? 'Associate',
                         'is_active' => $user->subscriptions->count() > 0,
                         'joined_date' => $user->created_at->format('M d, Y'),
+                        'has_starter_kit' => $user->has_starter_kit ?? false,
+                        'starter_kit_tier' => $user->starter_kit_tier ?? null,
                     ];
                 })
                 ->toArray();
@@ -1277,11 +1296,14 @@ class DashboardController extends Controller
         }
         
         $directReferrals = $user->directReferrals()
-            ->with(['currentMembershipTier', 'subscriptions', 'teamVolume'])
+            ->with(['currentMembershipTier', 'subscriptions', 'teamVolume', 'starterKitPurchases'])
             ->get();
             
         return $directReferrals->map(function ($referral) use ($currentLevel, $maxDepth) {
             $latestTeamVolume = $referral->teamVolume()->latest()->first();
+            
+            // Get latest starter kit from eager loaded relationship
+            $latestStarterKit = $referral->starterKitPurchases->sortByDesc('created_at')->first();
             
             $node = [
                 'id' => $referral->id,
@@ -1293,7 +1315,8 @@ class DashboardController extends Controller
                 'joined_date' => $referral->created_at->format('M Y'),
                 'personal_volume' => $latestTeamVolume->personal_volume ?? 0,
                 'team_size' => $this->getTeamSize($referral),
-                'has_starter_kit' => $referral->starterKitPurchases()->exists(),
+                'has_starter_kit' => $latestStarterKit !== null,
+                'starter_kit_tier' => $latestStarterKit?->tier,
                 'direct_referrals' => $referral->directReferrals()->count(),
                 'level' => $currentLevel,
                 'children' => []
@@ -2096,7 +2119,7 @@ class DashboardController extends Controller
      */
     private function getMessagingData(User $user): array
     {
-        $userId = UserId::fromInt($user->id);
+        $userId = MessagingUserId::fromInt($user->id);
         
         // Get unread message count
         $unreadCount = $this->messagingService->getUnreadCount($userId);

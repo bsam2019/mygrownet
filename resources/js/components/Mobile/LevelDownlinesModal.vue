@@ -80,7 +80,10 @@
                         <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                           {{ member.tier || 'Associate' }}
                         </span>
-                        <span v-if="member.has_starter_kit" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        <span v-if="member.starter_kit_tier" class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                          {{ member.starter_kit_tier }} Kit
+                        </span>
+                        <span v-else-if="member.has_starter_kit" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                           ✓ Kit
                         </span>
                         <span v-else class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
@@ -189,6 +192,7 @@ interface Member {
   direct_referrals?: number;
   team_size?: number;
   has_starter_kit?: boolean;
+  starter_kit_tier?: string;
 }
 
 interface Props {

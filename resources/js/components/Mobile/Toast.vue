@@ -3,7 +3,7 @@
     <Transition name="toast">
       <div
         v-if="show"
-        class="fixed top-20 left-1/2 -translate-x-1/2 z-[100001] max-w-sm w-full px-4"
+        class="fixed top-20 left-1/2 -translate-x-1/2 z-[999999] max-w-sm w-full px-4"
       >
         <div
           class="rounded-xl shadow-2xl p-4 flex items-center gap-3 backdrop-blur-sm"

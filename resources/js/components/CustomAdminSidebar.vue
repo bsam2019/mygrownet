@@ -127,7 +127,7 @@ const employeeNavItems: NavItem[] = [
 const communicationNavItems: NavItem[] = [
     { title: 'Messages', href: safeRoute('admin.messages.index'), icon: 'MailIcon' },
     { title: 'Compose Message', href: safeRoute('admin.messages.compose'), icon: 'SendIcon' },
-    { title: 'Support Tickets', href: '#', icon: 'TicketIcon' }, // TODO: Implement support tickets
+    { title: 'Support Tickets', href: safeRoute('admin.support.index'), icon: 'TicketIcon' },
 ];
 
 const systemNavItems: NavItem[] = [

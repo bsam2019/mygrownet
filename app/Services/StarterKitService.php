@@ -121,12 +121,13 @@ class StarterKitService
                 'amount' => $price,
             ]);
             
-            // For wallet payments, complete the purchase immediately
-            if ($paymentMethod === 'wallet') {
+            // For wallet and gift payments, complete the purchase immediately
+            if ($paymentMethod === 'wallet' || $paymentMethod === 'gift') {
                 $this->completePurchase($purchase);
-                Log::info('Wallet purchase completed immediately', [
+                Log::info('Purchase completed immediately', [
                     'user_id' => $user->id,
                     'invoice' => $purchase->invoice_number,
+                    'payment_method' => $paymentMethod,
                 ]);
             }
 
