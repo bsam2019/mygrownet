@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
-import { BookOpenIcon, VideoIcon, FileTextIcon, ToolIcon, DownloadIcon, EyeIcon, LockIcon, CrownIcon } from 'lucide-vue-next';
+import { BookOpenIcon, VideoIcon, FileTextIcon, WrenchIcon, DownloadIcon, EyeIcon, LockIcon, CrownIcon } from 'lucide-vue-next';
 
 interface ContentItem {
     id: number;
@@ -34,7 +34,7 @@ const getCategoryIcon = (category: string) => {
         training: BookOpenIcon,
         ebook: FileTextIcon,
         video: VideoIcon,
-        tool: ToolIcon,
+        tool: WrenchIcon,
         library: BookOpenIcon,
     };
     return icons[category] || FileTextIcon;
