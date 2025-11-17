@@ -30,6 +30,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\RefreshCsrfToken::class, // Refresh CSRF token on every request for PWA
             // \App\Http\Middleware\DetectFraudulentActivity::class, // DISABLED - potential circular dependency
             // \App\Http\Middleware\PerformanceMonitoring::class, // DISABLED - constructor injection causing early service resolution
         ],

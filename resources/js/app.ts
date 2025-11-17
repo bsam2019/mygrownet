@@ -22,6 +22,59 @@ declare module 'vite/client' {
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+// Initialize service worker registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .then((registration) => {
+                console.log('[App] Service Worker registered:', registration);
+                
+                // Check for updates periodically
+                setInterval(() => {
+                    registration.update();
+                }, 60000); // Every minute
+            })
+            .catch((error) => {
+                console.warn('[App] Service Worker registration failed:', error);
+            });
+    });
+}
+
+// Handle 419 (CSRF token expired) errors with better logic
+let redirecting = false;
+
+window.addEventListener('error', (event) => {
+    if (event.message && event.message.includes('419')) {
+        console.warn('[App] Session expired (419)');
+        if (!redirecting) {
+            redirecting = true;
+            window.location.href = '/login';
+        }
+    }
+});
+
+// Intercept fetch errors for 419 responses
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+    return originalFetch.apply(this, args).then((response) => {
+        if (response.status === 419) {
+            console.warn('[App] Session expired (419 from fetch)');
+            if (!redirecting) {
+                redirecting = true;
+                // Redirect to login after a short delay
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 500);
+            }
+        }
+        return response;
+    }).catch((error) => {
+        console.error('[App] Fetch error:', error);
+        throw error;
+    });
+};
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),

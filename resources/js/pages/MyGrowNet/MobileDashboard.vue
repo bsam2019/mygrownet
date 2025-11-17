@@ -741,7 +741,7 @@
           </button>
 
           <button
-            @click="router.visit(route('mygrownet.messages.index', { mobile: 1 }))"
+            @click="navigateToMessages"
             class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
           >
             <div class="flex items-center gap-3">
@@ -749,6 +749,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span class="text-sm font-medium text-gray-900">Messages</span>
+              <span 
+                v-if="messagingData?.unread_count > 0"
+                class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"
+              >
+                {{ messagingData.unread_count }}
+              </span>
             </div>
             <ChevronRightIcon class="h-5 w-5 text-gray-400" />
           </button>
@@ -918,6 +924,12 @@
       :type="toastType"
       @close="showToast = false"
     />
+
+    <!-- PWA Update Notification -->
+    <UpdateNotification />
+
+    <!-- PWA Install Prompt -->
+    <InstallPrompt />
   </div>
 </template>
 
@@ -945,6 +957,8 @@ import Toast from '@/components/Mobile/Toast.vue';
 import AnnouncementBanner from '@/components/Mobile/AnnouncementBanner.vue';
 import MessagesModal from '@/components/Mobile/MessagesModal.vue';
 import SupportTicketsModal from '@/components/Mobile/SupportTicketsModal.vue';
+import UpdateNotification from '@/components/Mobile/UpdateNotification.vue';
+import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
 import { onMounted, onUnmounted } from 'vue';
 import {
   ArrowPathIcon,
