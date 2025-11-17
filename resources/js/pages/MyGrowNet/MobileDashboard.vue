@@ -169,6 +169,70 @@
           />
         </div>
 
+        <!-- Starter Kit Content (if user has starter kit) -->
+        <div v-if="user?.has_starter_kit" class="animate-fade-in" style="animation-delay: 0.25s; animation-fill-mode: both;">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+              <BookOpenIcon class="h-5 w-5 text-blue-600" />
+              My Learning Resources
+            </h2>
+            <button
+              @click="activeTab = 'learn'"
+              class="text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1"
+            >
+              View All
+              <ChevronRightIcon class="h-4 w-4" />
+            </button>
+          </div>
+          
+          <!-- Content Quick Access Grid -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <button
+              @click="activeTab = 'learn'"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-blue-100"
+            >
+              <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
+                <FileTextIcon class="h-6 w-6 text-blue-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">E-Books</span>
+              <span class="text-xs text-gray-500 mt-1">Digital library</span>
+            </button>
+            
+            <button
+              @click="activeTab = 'learn'"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-purple-100"
+            >
+              <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
+                <VideoIcon class="h-6 w-6 text-purple-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">Videos</span>
+              <span class="text-xs text-gray-500 mt-1">Training series</span>
+            </button>
+            
+            <button
+              @click="activeTab = 'learn'"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-green-100"
+            >
+              <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                <CalculatorIcon class="h-6 w-6 text-green-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">Calculator</span>
+              <span class="text-xs text-gray-500 mt-1">Plan earnings</span>
+            </button>
+            
+            <button
+              @click="activeTab = 'learn'"
+              class="flex flex-col items-center p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-orange-100"
+            >
+              <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-2">
+                <ToolIcon class="h-6 w-6 text-orange-600" />
+              </div>
+              <span class="text-sm font-semibold text-gray-900">Templates</span>
+              <span class="text-xs text-gray-500 mt-1">Marketing tools</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="animate-fade-in" style="animation-delay: 0.3s; animation-fill-mode: both;">
           <div class="flex items-center justify-between mb-4">
@@ -639,42 +703,389 @@
       </div>
 
       <!-- LEARN TAB -->
-      <div v-show="activeTab === 'learn'" class="space-y-6">
-        <div class="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
-          <h2 class="text-xl font-bold mb-2">Learning Center</h2>
-          <p class="text-sm opacity-90">Grow your skills and knowledge</p>
+      <div v-show="activeTab === 'learn'" class="space-y-4">
+        <!-- Full-Screen Tool Display -->
+        <div v-if="activeTool && activeTool !== 'content'" class="fixed inset-0 bg-white z-[60] flex flex-col">
+          <div class="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 p-4 flex items-center justify-between shadow-lg">
+            <h3 class="text-white font-bold text-lg">{{ getToolTitle(activeTool) }}</h3>
+            <button
+              @click="activeTool = 'content'"
+              class="text-white hover:bg-white/20 rounded-lg px-3 py-2 transition-colors font-semibold"
+            >
+              ✕ Close
+            </button>
+          </div>
+          
+          <div class="flex-1 overflow-y-auto pb-20">
+            <!-- Embedded Mobile Tools (No Layout) -->
+            <EarningsCalculatorEmbedded 
+              v-if="activeTool === 'calculator'"
+              :user-tier="user?.starter_kit_tier"
+              :current-network="networkStats"
+            />
+            <GoalTrackerEmbedded 
+              v-if="activeTool === 'goals'"
+              :goals="[]"
+              :current-earnings="stats.this_month_earnings || 0"
+              :user-tier="user?.starter_kit_tier"
+              @success="showToastMessage($event, 'success')"
+              @error="showToastMessage($event, 'error')"
+            />
+            <NetworkVisualizerEmbedded 
+              v-if="activeTool === 'network'"
+              :network-tree="networkTree"
+              :network-stats="networkStats"
+              :user-tier="user?.starter_kit_tier"
+              :all-levels="displayLevels"
+              :level-counts="levelCounts"
+            />
+          </div>
         </div>
 
-        <!-- Learning Categories -->
-        <div class="grid grid-cols-2 gap-3">
-          <button class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95">
-            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
-              <AcademicCapIcon class="h-6 w-6 text-blue-600" />
+        <!-- Header (only show when no tool is active) -->
+        <div v-if="!activeTool || activeTool === 'content'" class="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+          <h2 class="text-xl font-bold mb-2">Learning & Tools</h2>
+          <p class="text-sm opacity-90">
+            {{ user?.has_starter_kit ? 'Access your resources and tools' : 'Get your starter kit to unlock content' }}
+          </p>
+        </div>
+        
+        <!-- Tool Selector (if has starter kit) -->
+        <div v-if="user?.has_starter_kit && (!activeTool || activeTool === 'content')" class="bg-white rounded-xl shadow-sm p-3">
+          <div class="grid grid-cols-4 gap-2">
+            <button
+              @click="activeTool = 'content'"
+              :class="activeTool === 'content' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
+            >
+              📚 Content
+            </button>
+            <button
+              @click="activeTool = 'calculator'"
+              :class="activeTool === 'calculator' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
+            >
+              🧮 Calc
+            </button>
+            <button
+              @click="activeTool = 'goals'"
+              :class="activeTool === 'goals' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
+            >
+              🎯 Goals
+            </button>
+            <button
+              @click="activeTool = 'network'"
+              :class="activeTool === 'network' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
+            >
+              🌐 Network
+            </button>
+          </div>
+        </div>
+        
+        <!-- CONTENT SECTION -->
+        <div v-if="user?.has_starter_kit && activeTool === 'content'" class="space-y-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h3 class="text-base font-bold text-gray-900 mb-3">Quick Access</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <Link
+                :href="route('mygrownet.content.index')"
+                class="flex flex-col items-center p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
+              >
+                <FileTextIcon class="h-8 w-8 text-blue-600 mb-2" />
+                <span class="text-sm font-semibold text-gray-900">E-Books</span>
+              </Link>
+              <Link
+                :href="route('mygrownet.content.index')"
+                class="flex flex-col items-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100"
+              >
+                <VideoIcon class="h-8 w-8 text-purple-600 mb-2" />
+                <span class="text-sm font-semibold text-gray-900">Videos</span>
+              </Link>
             </div>
-            <h3 class="text-sm font-semibold text-gray-900">Courses</h3>
-            <p class="text-xs text-gray-500 mt-1">12 available</p>
-          </button>
-
-          <button class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95">
-            <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-3">
-              <BuildingOffice2Icon class="h-6 w-6 text-green-600" />
-            </div>
-            <h3 class="text-sm font-semibold text-gray-900">Resources</h3>
-            <p class="text-xs text-gray-500 mt-1">25 items</p>
-          </button>
+          </div>
         </div>
 
-        <!-- Featured Content -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h3 class="text-base font-bold text-gray-900 mb-4">Featured Content</h3>
-          <div class="space-y-3">
-            <div class="flex gap-4 p-3 bg-gray-50 rounded-lg">
-              <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex-shrink-0"></div>
-              <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-semibold text-gray-900 mb-1">Getting Started Guide</h4>
-                <p class="text-xs text-gray-500">Learn the basics of MyGrowNet</p>
+        <!-- CALCULATOR SECTION (EMBEDDED) -->
+        <div v-if="user?.has_starter_kit && activeTool === 'calculator'" class="space-y-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <CalculatorIcon class="h-5 w-5 text-green-600" />
+              Earnings Calculator
+            </h3>
+            
+            <!-- Earning Type Selector -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <button
+                @click="calcEarningType = 'referral'"
+                :class="calcEarningType === 'referral' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+              >
+                💰 Referral
+              </button>
+              <button
+                @click="calcEarningType = 'lgr'"
+                :class="calcEarningType === 'lgr' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+              >
+                🏆 LGR
+              </button>
+            </div>
+
+            <!-- Referral Calculator -->
+            <div v-if="calcEarningType === 'referral'" class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Team Size (Level 1)</label>
+                <input
+                  v-model.number="calcTeamSize"
+                  type="number"
+                  min="0"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Active %</label>
+                <input
+                  v-model.number="calcActivePercent"
+                  type="range"
+                  min="0"
+                  max="100"
+                  class="w-full"
+                />
+                <div class="text-center text-xs text-gray-600">{{ calcActivePercent }}%</div>
+              </div>
+              <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p class="text-xs text-gray-600 mb-1">Monthly Projection</p>
+                <p class="text-2xl font-bold text-green-600">
+                  K{{ Math.floor(calcTeamSize * (calcActivePercent / 100) * 500 * 0.1).toLocaleString() }}
+                </p>
               </div>
             </div>
+
+            <!-- LGR Calculator -->
+            <div v-if="calcEarningType === 'lgr'" class="space-y-3">
+              <div v-if="user?.starter_kit_tier !== 'premium'" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p class="text-sm text-purple-800">
+                  🔒 Upgrade to Premium tier to qualify for LGR profit sharing!
+                </p>
+              </div>
+              <div v-else>
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Quarterly Profit (K)</label>
+                  <input
+                    v-model.number="calcLgrProfit"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <p class="text-xs text-gray-600 mb-1">Your Monthly Share</p>
+                  <p class="text-2xl font-bold text-purple-600">
+                    K{{ Math.floor((calcLgrProfit * 0.6) / 100 / 3).toLocaleString() }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1">Based on 100 qualified members</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GOALS SECTION (EMBEDDED) -->
+        <div v-if="user?.has_starter_kit && activeTool === 'goals'" class="space-y-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                <TargetIcon class="h-5 w-5 text-purple-600" />
+                My Goals
+              </h3>
+              <button
+                @click="showCreateGoalModal = true"
+                class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-semibold"
+              >
+                + New
+              </button>
+            </div>
+
+            <!-- Sample Goals (Replace with real data) -->
+            <div class="space-y-3">
+              <div class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-gray-900">💰 Monthly Income</span>
+                  <span class="text-xs text-gray-600">75%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div class="bg-purple-600 h-2 rounded-full" style="width: 75%"></div>
+                </div>
+                <p class="text-xs text-gray-600">K3,750 / K5,000</p>
+              </div>
+
+              <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-semibold text-gray-900">👥 Team Size</span>
+                  <span class="text-xs text-gray-600">40%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div class="bg-blue-600 h-2 rounded-full" style="width: 40%"></div>
+                </div>
+                <p class="text-xs text-gray-600">20 / 50 members</p>
+              </div>
+
+              <div class="text-center py-4">
+                <p class="text-sm text-gray-600">Create your first goal to start tracking!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NETWORK SECTION (EMBEDDED) -->
+        <div v-if="user?.has_starter_kit && activeTool === 'network'" class="space-y-4">
+          <div class="bg-white rounded-xl shadow-sm p-4">
+            <h3 class="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <UsersIcon class="h-5 w-5 text-orange-600" />
+              My Network
+            </h3>
+
+            <!-- Network Stats -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-3">
+                <p class="text-xs text-gray-600 mb-1">Total Members</p>
+                <p class="text-2xl font-bold text-blue-600">{{ networkData?.total_network_size || 0 }}</p>
+              </div>
+              <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3">
+                <p class="text-xs text-gray-600 mb-1">Active</p>
+                <p class="text-2xl font-bold text-green-600">{{ Math.floor((networkData?.total_network_size || 0) * 0.6) }}</p>
+              </div>
+            </div>
+
+            <!-- Level Breakdown -->
+            <div class="space-y-2">
+              <h4 class="text-sm font-semibold text-gray-900">By Level</h4>
+              <div v-for="level in 7" :key="level" class="flex items-center justify-between py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-700">Level {{ level }}</span>
+                <span class="text-sm font-semibold text-gray-900">{{ Math.pow(3, level) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starter Kit Banner (if not purchased) -->
+        <div
+          v-if="!user?.has_starter_kit"
+          @click="showStarterKitModal = true"
+          class="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:shadow-xl transition-all active:scale-[0.98]"
+        >
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 bg-white/25 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/30">
+              <SparklesIcon class="h-7 w-7 text-white" />
+            </div>
+            <div class="flex-1">
+              <h3 class="text-white font-bold text-lg">Get Your Starter Kit</h3>
+              <p class="text-blue-100 text-sm mt-1.5">
+                Unlock e-books, videos, tools, and more. Starting at K500!
+              </p>
+              <div class="mt-4 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 w-fit border border-white/30">
+                <span class="text-white text-sm font-bold">Purchase Now →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starter Kit Content (if purchased) -->
+        <div v-if="user?.has_starter_kit" class="space-y-6">
+          <!-- Learning Categories -->
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              @click="showContentLibraryModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
+                <FileTextIcon class="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">E-Books</h3>
+              <p class="text-xs text-gray-500 mt-1">Digital library</p>
+            </button>
+
+            <button
+              @click="showContentLibraryModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-3">
+                <VideoIcon class="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">Videos</h3>
+              <p class="text-xs text-gray-500 mt-1">Training series</p>
+            </button>
+
+            <button
+              @click="showCalculatorModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-3">
+                <CalculatorIcon class="h-6 w-6 text-green-600" />
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">Calculator</h3>
+              <p class="text-xs text-gray-500 mt-1">Plan earnings</p>
+            </button>
+
+            <button
+              @click="showContentLibraryModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-3">
+                <ToolIcon class="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">Templates</h3>
+              <p class="text-xs text-gray-500 mt-1">Marketing tools</p>
+            </button>
+          </div>
+
+          <!-- Featured Content -->
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-base font-bold text-gray-900 mb-4">Your Content</h3>
+            <div class="space-y-3">
+              <div class="flex gap-4 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex-shrink-0 flex items-center justify-center">
+                  <FileTextIcon class="h-8 w-8 text-white" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-semibold text-gray-900 mb-1">MyGrowNet Success Guide</h4>
+                  <p class="text-xs text-gray-500">Complete platform guide</p>
+                  <button @click="showContentLibraryModal = true" class="mt-2 text-xs text-blue-600 font-semibold">View →</button>
+                </div>
+              </div>
+
+              <div class="flex gap-4 p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex-shrink-0 flex items-center justify-center">
+                  <VideoIcon class="h-8 w-8 text-white" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-semibold text-gray-900 mb-1">Welcome Training Series</h4>
+                  <p class="text-xs text-gray-500">5 video tutorials</p>
+                  <button @click="showContentLibraryModal = true" class="mt-2 text-xs text-purple-600 font-semibold">Watch →</button>
+                </div>
+              </div>
+
+              <div class="flex gap-4 p-3 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex-shrink-0 flex items-center justify-center">
+                  <CalculatorIcon class="h-8 w-8 text-white" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-semibold text-gray-900 mb-1">Commission Calculator</h4>
+                  <p class="text-xs text-gray-500">Plan your earnings</p>
+                  <button @click="showCalculatorModal = true" class="mt-2 text-xs text-green-600 font-semibold">Calculate →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coming Soon (if no content yet) -->
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-sm text-yellow-800">
+              <strong>📚 Content Coming Soon!</strong> We're preparing amazing resources for you. Check back soon!
+            </p>
           </div>
         </div>
       </div>
@@ -917,6 +1328,167 @@
       @close="showSupportModal = false"
     />
 
+    <!-- Content Library Modal (Coming Soon) -->
+    <div v-if="showContentLibraryModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click="showContentLibraryModal = false">
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full" @click.stop>
+        <div class="text-center">
+          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <BookOpenIcon class="h-8 w-8 text-blue-600" />
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Content Library</h3>
+          <p class="text-gray-600 mb-6">
+            Your digital content library is being prepared. Upload your e-books, videos, and templates via the admin panel to make them available here.
+          </p>
+          <div class="space-y-2">
+            <Link
+              :href="route('mygrownet.content.index')"
+              class="block w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            >
+              Open Full Library
+            </Link>
+            <button
+              @click="showContentLibraryModal = false"
+              class="block w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calculator Modal (Embedded) -->
+    <div v-if="showCalculatorModal" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center" @click="showCalculatorModal = false">
+      <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto" @click.stop>
+        <!-- Header -->
+        <div class="sticky top-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 rounded-t-3xl sm:rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <CalculatorIcon class="h-6 w-6" />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold">Commission Calculator</h3>
+                <p class="text-xs text-green-100">Plan your earnings</p>
+              </div>
+            </div>
+            <button
+              @click="showCalculatorModal = false"
+              class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center hover:bg-white/30 transition-colors"
+            >
+              <span class="text-xl">×</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Calculator Content -->
+        <div class="p-4 space-y-4">
+          <!-- Assumptions -->
+          <div class="bg-gray-50 rounded-xl p-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3">Assumptions</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                  Subscription Price (K)
+                </label>
+                <input
+                  v-model.number="calcSubscriptionPrice"
+                  type="number"
+                  min="0"
+                  step="50"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                  Starter Kit Price (K)
+                </label>
+                <input
+                  v-model.number="calcStarterKitPrice"
+                  type="number"
+                  min="0"
+                  step="50"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                  Active Members ({{ calcActivePercentage }}%)
+                </label>
+                <input
+                  v-model.number="calcActivePercentage"
+                  type="range"
+                  min="0"
+                  max="100"
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Size Inputs -->
+          <div class="bg-gray-50 rounded-xl p-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3">Team Size by Level</h4>
+            <div class="grid grid-cols-2 gap-2">
+              <div v-for="level in 7" :key="level">
+                <label class="block text-xs font-medium text-gray-700 mb-1">
+                  Level {{ level }}
+                </label>
+                <input
+                  v-model.number="calcTeamSizes[`level_${level}`]"
+                  type="number"
+                  min="0"
+                  class="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="space-y-3">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+                <p class="text-xs opacity-90">Monthly</p>
+                <p class="text-2xl font-bold mt-1">K{{ formatCalcCurrency(calcMonthlyProjection) }}</p>
+              </div>
+              <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+                <p class="text-xs opacity-90">Yearly</p>
+                <p class="text-2xl font-bold mt-1">K{{ formatCalcCurrency(calcYearlyProjection) }}</p>
+              </div>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-900">Commission Breakdown</h4>
+              </div>
+              <div class="divide-y divide-gray-200">
+                <div v-for="result in calcResults" :key="result.level" class="px-4 py-2 flex items-center justify-between text-xs">
+                  <span class="font-medium text-gray-700">Level {{ result.level }}</span>
+                  <div class="flex items-center gap-3">
+                    <span class="text-gray-500">{{ result.activeMembers }} active</span>
+                    <span class="font-semibold text-green-600">K{{ formatCalcCurrency(result.levelTotal) }}</span>
+                  </div>
+                </div>
+                <div class="px-4 py-2 flex items-center justify-between text-sm font-bold bg-green-50">
+                  <span class="text-gray-900">Total Monthly</span>
+                  <span class="text-green-600">K{{ formatCalcCurrency(calcTotalCommission) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p class="text-xs text-yellow-800">
+              <strong>Note:</strong> These are projections based on your inputs. Actual earnings may vary.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notification -->
     <Toast
       :show="showToast"
@@ -959,6 +1531,11 @@ import MessagesModal from '@/components/Mobile/MessagesModal.vue';
 import SupportTicketsModal from '@/components/Mobile/SupportTicketsModal.vue';
 import UpdateNotification from '@/components/Mobile/UpdateNotification.vue';
 import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
+
+// Mobile-Embedded Tools (without MemberLayout)
+import EarningsCalculatorEmbedded from '@/Components/Mobile/Tools/EarningsCalculatorEmbedded.vue';
+import GoalTrackerEmbedded from '@/Components/Mobile/Tools/GoalTrackerEmbedded.vue';
+import NetworkVisualizerEmbedded from '@/Components/Mobile/Tools/NetworkVisualizerEmbedded.vue';
 import { onMounted, onUnmounted } from 'vue';
 import {
   ArrowPathIcon,
@@ -982,6 +1559,12 @@ import {
   SparklesIcon,
   EnvelopeIcon,
   ArrowDownTrayIcon,
+  BookOpenIcon,
+  DocumentTextIcon as FileTextIcon,
+  VideoCameraIcon as VideoIcon,
+  CalculatorIcon,
+  WrenchScrewdriverIcon as ToolIcon,
+  FlagIcon as TargetIcon,
 } from '@heroicons/vue/24/outline';
 
 // Props - same as original dashboard
@@ -1026,6 +1609,91 @@ const props = withDefaults(defineProps<{
 
 const loading = ref(false);
 const activeTab = ref('home');
+const activeTool = ref<'content' | 'calculator' | 'goals' | 'network' | 'commission' | null>('content');
+
+// Calculator state
+const calcEarningType = ref<'referral' | 'lgr'>('referral');
+const calcTeamSize = ref(10);
+const calcActivePercent = ref(50);
+const calcLgrProfit = ref(50000);
+
+// Network stats for tools - using real data
+const networkStats = computed(() => {
+    // Calculate active members (only those with starter kits) from all levels
+    let activeCount = 0;
+    displayLevels.value.forEach(level => {
+        if (level.members && Array.isArray(level.members)) {
+            activeCount += level.members.filter((m: any) => m.has_starter_kit).length;
+        }
+    });
+    
+    // Calculate total team earnings from all levels
+    let totalTeamEarnings = 0;
+    displayLevels.value.forEach(level => {
+        totalTeamEarnings += level.total_earnings || 0;
+    });
+    
+    return {
+        level_1: displayLevels.value[0]?.count || 0,
+        level_2: displayLevels.value[1]?.count || 0,
+        level_3: displayLevels.value[2]?.count || 0,
+        level_4: displayLevels.value[3]?.count || 0,
+        level_5: displayLevels.value[4]?.count || 0,
+        level_6: displayLevels.value[5]?.count || 0,
+        level_7: displayLevels.value[6]?.count || 0,
+        total_members: props.networkData?.total_network_size || 0,
+        active_members: activeCount,
+        // Use team volume if available, otherwise use team earnings
+        total_volume: props.teamVolumeData?.current_month?.total_volume || totalTeamEarnings || 0,
+        this_month_volume: props.teamVolumeData?.current_month?.team_volume || props.stats?.this_month_earnings || 0,
+    };
+});
+
+// Network tree for visualizer - using real member data from displayLevels
+const networkTree = computed(() => {
+    // Get Level 1 members (direct referrals)
+    const level1Members = displayLevels.value[0]?.members || [];
+    
+    return level1Members.map((member: any) => ({
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        tier: member.tier || member.starter_kit_tier,
+        has_starter_kit: member.has_starter_kit,
+        is_active: member.is_active,
+        joined_at: member.created_at || member.joined_date,
+        joined_date: member.joined_date,
+        children: [], // Level 2+ members would go here if available
+    }));
+});
+
+// Get level counts for visualizer
+const levelCounts = computed(() => {
+    return {
+        1: displayLevels.value[0]?.count || 0,
+        2: displayLevels.value[1]?.count || 0,
+        3: displayLevels.value[2]?.count || 0,
+        4: displayLevels.value[3]?.count || 0,
+        5: displayLevels.value[4]?.count || 0,
+        6: displayLevels.value[5]?.count || 0,
+        7: displayLevels.value[6]?.count || 0,
+    };
+});
+
+// Helper function to get tool title
+const getToolTitle = (tool: string) => {
+    const titles: Record<string, string> = {
+        'calculator': 'Earnings Calculator',
+        'goals': 'Goal Tracker',
+        'network': 'Network Visualizer',
+        'commission': 'Commission Calculator',
+        'content': 'Learning Content',
+    };
+    return titles[tool] || 'Tool';
+};
+
+// Goals state
+const showCreateGoalModal = ref(false);
 const showDepositModal = ref(false);
 const showWithdrawalModal = ref(false);
 const showAllTransactions = ref(false);
@@ -1043,6 +1711,86 @@ const showSupportModal = ref(false);
 const deferredPrompt = ref<any>(null);
 const showInstallButton = ref(false);
 const showLoanApplicationModal = ref(false);
+const showContentLibraryModal = ref(false);
+const showCalculatorModal = ref(false);
+
+// Calculator state
+const calcTeamSizes = ref({
+    level_1: 3,
+    level_2: 9,
+    level_3: 27,
+    level_4: 81,
+    level_5: 243,
+    level_6: 729,
+    level_7: 2187,
+});
+const calcSubscriptionPrice = ref(500);
+const calcStarterKitPrice = ref(500);
+const calcActivePercentage = ref(50);
+
+// Commission rates (hardcoded for mobile)
+const commissionRates = {
+    subscription: {
+        level_1: 10,
+        level_2: 5,
+        level_3: 3,
+        level_4: 2,
+        level_5: 1,
+        level_6: 1,
+        level_7: 1,
+    },
+    starter_kit: {
+        level_1: 10,
+        level_2: 5,
+        level_3: 3,
+        level_4: 2,
+        level_5: 1,
+        level_6: 1,
+        level_7: 1,
+    },
+};
+
+// Calculator computed values
+const calcResults = computed(() => {
+    const results: any[] = [];
+    
+    for (let level = 1; level <= 7; level++) {
+        const levelKey = `level_${level}`;
+        const teamSize = calcTeamSizes.value[levelKey as keyof typeof calcTeamSizes.value];
+        const activeMembers = Math.floor(teamSize * (calcActivePercentage.value / 100));
+        
+        const subRate = commissionRates.subscription[levelKey as keyof typeof commissionRates.subscription] || 0;
+        const subCommission = activeMembers * calcSubscriptionPrice.value * (subRate / 100);
+        
+        const skRate = commissionRates.starter_kit[levelKey as keyof typeof commissionRates.starter_kit] || 0;
+        const skCommission = activeMembers * calcStarterKitPrice.value * (skRate / 100);
+        
+        const levelTotal = subCommission + skCommission;
+        
+        results.push({
+            level,
+            teamSize,
+            activeMembers,
+            subRate,
+            skRate,
+            levelTotal,
+        });
+    }
+    
+    return results;
+});
+
+const calcTotalCommission = computed(() => {
+    return calcResults.value.reduce((sum, result) => sum + result.levelTotal, 0);
+});
+
+const calcMonthlyProjection = computed(() => calcTotalCommission.value);
+const calcYearlyProjection = computed(() => calcTotalCommission.value * 12);
+
+const formatCalcCurrency = (amount: number) => {
+    return amount.toLocaleString('en-ZM', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
 const selectedLevel = ref(1);
 const levelDownlines = ref<any[]>([]);
 const expandedLevels = ref<number[]>([]);
@@ -1115,6 +1863,17 @@ const displayLevels = ref(ensureSevenLevels(props.referralStats?.levels));
 watch(() => props.referralStats?.levels, (newLevels) => {
   displayLevels.value = ensureSevenLevels(newLevels);
 }, { deep: true });
+
+// Watch activeTool to control body scroll
+watch(activeTool, (newValue) => {
+  if (newValue && newValue !== 'content') {
+    // Tool is open - hide body scroll
+    document.body.style.overflow = 'hidden';
+  } else {
+    // Tool is closed - restore body scroll
+    document.body.style.overflow = '';
+  }
+});
 
 const handleTabChange = (tab: string) => {
   activeTab.value = tab;
@@ -1203,6 +1962,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('open-message-modal', handleOpenMessageModal as EventListener);
+  // Restore body scroll on unmount
+  document.body.style.overflow = '';
 });
 
 const getLevelBgClass = (level: number) => {

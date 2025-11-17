@@ -5,147 +5,248 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class StarterKitContentController extends Controller
 {
+    /**
+     * Display list of all content items
+     */
     public function index()
     {
-        $items = ContentItemModel::query()
-            ->ordered()
+        $contentItems = ContentItemModel::orderBy('sort_order')
+            ->orderBy('category')
+            ->orderBy('title')
             ->get()
-            ->groupBy('category');
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'category' => $item->category,
+                    'category_label' => $item->category_label,
+                    'tier_restriction' => $item->tier_restriction,
+                    'unlock_day' => $item->unlock_day,
+                    'estimated_value' => $item->estimated_value,
+                    'download_count' => $item->download_count,
+                    'is_downloadable' => $item->is_downloadable,
+                    'is_active' => $item->is_active,
+                    'has_file' => !empty($item->file_path) || !empty($item->file_url),
+                    'file_type' => $item->file_type,
+                    'file_size' => $item->file_size,
+                    'sort_order' => $item->sort_order,
+                ];
+            });
 
-        $stats = [
-            'total_items' => ContentItemModel::count(),
-            'active_items' => ContentItemModel::active()->count(),
-            'total_value' => ContentItemModel::active()->sum('estimated_value'),
-            'by_category' => ContentItemModel::active()
-                ->selectRaw('category, count(*) as count, sum(estimated_value) as value')
-                ->groupBy('category')
-                ->get()
-                ->keyBy('category'),
-        ];
-
-        return Inertia::render('Admin/StarterKit/Content', [
-            'items' => $items,
-            'stats' => $stats,
+        return Inertia::render('Admin/StarterKitContent/Index', [
+            'contentItems' => $contentItems,
         ]);
     }
 
+    /**
+     * Show create form
+     */
+    public function create()
+    {
+        return Inertia::render('Admin/StarterKitContent/Form', [
+            'categories' => ['training', 'ebook', 'video', 'tool', 'library'],
+            'tiers' => ['all', 'premium'],
+        ]);
+    }
+
+    /**
+     * Store new content item
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:training,ebook,video,tool,library',
+            'tier_restriction' => 'required|in:all,premium',
             'unlock_day' => 'required|integer|min:0|max:30',
-            'file' => 'nullable|file|max:102400', // 100MB max
-            'thumbnail' => 'nullable|image|max:2048', // 2MB max
             'estimated_value' => 'required|integer|min:0',
-            'sort_order' => 'nullable|integer',
+            'is_downloadable' => 'boolean',
             'is_active' => 'boolean',
+            'file' => 'nullable|file|max:102400', // 100MB max
+            'file_url' => 'nullable|url',
+            'thumbnail' => 'nullable|image|max:2048', // 2MB max
         ]);
 
         // Handle file upload
+        $filePath = null;
+        $fileType = null;
+        $fileSize = null;
+
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('starter-kit/content', $filename, 'public');
-            $validated['file_path'] = $path;
-            $validated['file_type'] = $file->getClientOriginalExtension();
-            $validated['file_size'] = round($file->getSize() / 1024); // Convert to KB
+            $filePath = $file->store('starter-kit/' . $validated['category'], 'private');
+            $fileType = $file->getClientOriginalExtension();
+            $fileSize = $file->getSize();
         }
 
         // Handle thumbnail upload
+        $thumbnailPath = null;
         if ($request->hasFile('thumbnail')) {
             $thumbnail = $request->file('thumbnail');
-            $thumbnailName = time() . '_thumb_' . $thumbnail->getClientOriginalName();
-            $thumbnailPath = $thumbnail->storeAs('starter-kit/thumbnails', $thumbnailName, 'public');
-            $validated['thumbnail'] = $thumbnailPath;
+            $thumbnailPath = $thumbnail->store('starter-kit/thumbnails', 'public');
         }
 
-        $item = ContentItemModel::create($validated);
+        // Get next sort order
+        $maxSortOrder = ContentItemModel::max('sort_order') ?? 0;
 
-        return redirect()->back()->with('success', 'Content item created successfully!');
+        $content = ContentItemModel::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'category' => $validated['category'],
+            'tier_restriction' => $validated['tier_restriction'],
+            'unlock_day' => $validated['unlock_day'],
+            'estimated_value' => $validated['estimated_value'],
+            'is_downloadable' => $validated['is_downloadable'] ?? true,
+            'is_active' => $validated['is_active'] ?? true,
+            'file_path' => $filePath,
+            'file_url' => $validated['file_url'] ?? null,
+            'file_type' => $fileType,
+            'file_size' => $fileSize,
+            'thumbnail' => $thumbnailPath,
+            'sort_order' => $maxSortOrder + 1,
+        ]);
+
+        return redirect()
+            ->route('admin.starter-kit-content.index')
+            ->with('success', 'Content item created successfully!');
     }
 
-    public function update(Request $request, ContentItemModel $item)
+    /**
+     * Show edit form
+     */
+    public function edit(int $id)
     {
+        $content = ContentItemModel::findOrFail($id);
+
+        return Inertia::render('Admin/StarterKitContent/Form', [
+            'content' => [
+                'id' => $content->id,
+                'title' => $content->title,
+                'description' => $content->description,
+                'category' => $content->category,
+                'tier_restriction' => $content->tier_restriction,
+                'unlock_day' => $content->unlock_day,
+                'estimated_value' => $content->estimated_value,
+                'is_downloadable' => $content->is_downloadable,
+                'is_active' => $content->is_active,
+                'file_url' => $content->file_url,
+                'has_file' => !empty($content->file_path),
+                'file_type' => $content->file_type,
+                'file_size' => $content->file_size,
+                'thumbnail' => $content->thumbnail,
+                'sort_order' => $content->sort_order,
+            ],
+            'categories' => ['training', 'ebook', 'video', 'tool', 'library'],
+            'tiers' => ['all', 'premium'],
+        ]);
+    }
+
+    /**
+     * Update content item
+     */
+    public function update(Request $request, int $id)
+    {
+        $content = ContentItemModel::findOrFail($id);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:training,ebook,video,tool,library',
+            'tier_restriction' => 'required|in:all,premium',
             'unlock_day' => 'required|integer|min:0|max:30',
-            'file' => 'nullable|file|max:102400', // 100MB max
-            'thumbnail_file' => 'nullable|image|max:2048', // 2MB max
             'estimated_value' => 'required|integer|min:0',
-            'sort_order' => 'nullable|integer',
+            'is_downloadable' => 'boolean',
             'is_active' => 'boolean',
+            'file' => 'nullable|file|max:102400',
+            'file_url' => 'nullable|url',
+            'thumbnail' => 'nullable|image|max:2048',
+            'remove_file' => 'boolean',
         ]);
 
-        // Handle file upload
+        // Handle file replacement
         if ($request->hasFile('file')) {
-            // Delete old file if exists
-            if ($item->file_path && \Storage::disk('public')->exists($item->file_path)) {
-                \Storage::disk('public')->delete($item->file_path);
+            // Delete old file
+            if ($content->file_path && Storage::exists($content->file_path)) {
+                Storage::delete($content->file_path);
             }
-            
+
             $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('starter-kit/content', $filename, 'public');
-            $validated['file_path'] = $path;
+            $validated['file_path'] = $file->store('starter-kit/' . $validated['category'], 'private');
             $validated['file_type'] = $file->getClientOriginalExtension();
-            $validated['file_size'] = round($file->getSize() / 1024); // Convert to KB
-        }
-
-        // Handle thumbnail upload
-        if ($request->hasFile('thumbnail_file')) {
-            // Delete old thumbnail if exists
-            if ($item->thumbnail && \Storage::disk('public')->exists($item->thumbnail)) {
-                \Storage::disk('public')->delete($item->thumbnail);
+            $validated['file_size'] = $file->getSize();
+        } elseif ($request->input('remove_file')) {
+            // Delete file if requested
+            if ($content->file_path && Storage::exists($content->file_path)) {
+                Storage::delete($content->file_path);
             }
-            
-            $thumbnail = $request->file('thumbnail_file');
-            $thumbnailName = time() . '_thumb_' . $thumbnail->getClientOriginalName();
-            $thumbnailPath = $thumbnail->storeAs('starter-kit/thumbnails', $thumbnailName, 'public');
-            $validated['thumbnail'] = $thumbnailPath;
+            $validated['file_path'] = null;
+            $validated['file_type'] = null;
+            $validated['file_size'] = null;
         }
 
-        $item->update($validated);
+        // Handle thumbnail replacement
+        if ($request->hasFile('thumbnail')) {
+            // Delete old thumbnail
+            if ($content->thumbnail && Storage::disk('public')->exists($content->thumbnail)) {
+                Storage::disk('public')->delete($content->thumbnail);
+            }
 
-        return redirect()->back()->with('success', 'Content item updated successfully!');
+            $thumbnail = $request->file('thumbnail');
+            $validated['thumbnail'] = $thumbnail->store('starter-kit/thumbnails', 'public');
+        }
+
+        $content->update($validated);
+
+        return redirect()
+            ->route('admin.starter-kit-content.index')
+            ->with('success', 'Content item updated successfully!');
     }
 
-    public function destroy(ContentItemModel $item)
+    /**
+     * Delete content item
+     */
+    public function destroy(int $id)
     {
-        // Delete associated files
-        if ($item->file_path && \Storage::disk('public')->exists($item->file_path)) {
-            \Storage::disk('public')->delete($item->file_path);
-        }
-        
-        if ($item->thumbnail && \Storage::disk('public')->exists($item->thumbnail)) {
-            \Storage::disk('public')->delete($item->thumbnail);
-        }
-        
-        $item->delete();
+        $content = ContentItemModel::findOrFail($id);
 
-        return redirect()->back()->with('success', 'Content item deleted successfully!');
+        // Delete associated files
+        if ($content->file_path && Storage::exists($content->file_path)) {
+            Storage::delete($content->file_path);
+        }
+
+        if ($content->thumbnail && Storage::disk('public')->exists($content->thumbnail)) {
+            Storage::disk('public')->delete($content->thumbnail);
+        }
+
+        $content->delete();
+
+        return redirect()
+            ->route('admin.starter-kit-content.index')
+            ->with('success', 'Content item deleted successfully!');
     }
 
+    /**
+     * Reorder content items
+     */
     public function reorder(Request $request)
     {
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.id' => 'required|exists:starter_kit_content_items,id',
-            'items.*.sort_order' => 'required|integer',
+            'items.*.sort_order' => 'required|integer|min:0',
         ]);
 
-        foreach ($validated['items'] as $itemData) {
-            ContentItemModel::where('id', $itemData['id'])
-                ->update(['sort_order' => $itemData['sort_order']]);
+        foreach ($validated['items'] as $item) {
+            ContentItemModel::where('id', $item['id'])
+                ->update(['sort_order' => $item['sort_order']]);
         }
 
-        return redirect()->back()->with('success', 'Items reordered successfully!');
+        return response()->json(['message' => 'Order updated successfully']);
     }
 }

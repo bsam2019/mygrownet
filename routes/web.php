@@ -74,6 +74,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{id}/reject', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'reject'])->name('reject');
         Route::post('/{id}/reset', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'reset'])->name('reset');
     });
+    
+    // Admin Starter Kit Content Management
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::resource('starter-kit-content', App\Http\Controllers\Admin\StarterKitContentController::class);
+        Route::post('starter-kit-content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])
+            ->name('starter-kit-content.reorder');
+    });
 
     // Admin Profit Sharing Routes
     Route::middleware(['admin'])->prefix('admin/profit-sharing')->name('admin.profit-sharing.')->group(function () {
@@ -510,6 +517,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');
         Route::get('/library/{resource}', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'show'])->name('library.show');
         Route::post('/library/{resource}/complete', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'markCompleted'])->name('library.complete');
+        
+        // Starter Kit Content Routes (NO middleware - check in controller)
+        Route::get('/content', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'index'])->name('content.index');
+        Route::get('/content/{id}', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'show'])->name('content.show');
+        Route::get('/content/{id}/download', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'download'])->name('content.download');
+        Route::get('/content/{id}/stream', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'stream'])->name('content.stream');
+        
+        // Web Tools Routes (NO middleware - check in controller)
+        Route::prefix('tools')->name('tools.')->group(function () {
+            Route::get('/commission-calculator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'commissionCalculator'])->name('commission-calculator');
+            Route::get('/goal-tracker', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'goalTracker'])->name('goal-tracker');
+            Route::post('/goals', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'storeGoal'])->name('goals.store');
+            Route::patch('/goals/{goalId}', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'updateGoalProgress'])->name('goals.update');
+            Route::get('/network-visualizer', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'networkVisualizer'])->name('network-visualizer');
+            
+            // Premium Tools
+            Route::get('/business-plan-generator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'businessPlanGenerator'])->name('business-plan-generator');
+            Route::post('/business-plan', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'generateBusinessPlan'])->name('business-plan.generate');
+            Route::get('/roi-calculator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'roiCalculator'])->name('roi-calculator');
+        });
         
         // Notification Routes
         Route::get('/notifications', [App\Http\Controllers\MyGrowNet\NotificationController::class, 'center'])->name('notifications.center');

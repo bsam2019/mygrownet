@@ -15,22 +15,32 @@ class ContentItemModel extends Model
         'title',
         'description',
         'category',
+        'tier_restriction',
         'unlock_day',
         'file_path',
+        'file_url',
         'file_type',
         'file_size',
+        'is_downloadable',
+        'access_duration_days',
         'thumbnail',
         'estimated_value',
+        'download_count',
         'sort_order',
         'is_active',
+        'last_updated_at',
     ];
 
     protected $casts = [
         'unlock_day' => 'integer',
         'file_size' => 'integer',
         'estimated_value' => 'integer',
+        'download_count' => 'integer',
+        'access_duration_days' => 'integer',
         'sort_order' => 'integer',
         'is_active' => 'boolean',
+        'is_downloadable' => 'boolean',
+        'last_updated_at' => 'datetime',
     ];
 
     public function getCategoryLabelAttribute(): string

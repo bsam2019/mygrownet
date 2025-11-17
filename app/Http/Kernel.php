@@ -60,5 +60,7 @@ class Kernel extends HttpKernel
         'fraud.detection' => \App\Http\Middleware\DetectFraudulentActivity::class,
         'id.verification' => \App\Http\Middleware\RequireIdVerification::class,
         'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
+        'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
+        'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
     ];
 }
