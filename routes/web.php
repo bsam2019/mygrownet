@@ -53,19 +53,25 @@ Route::get('/membership', function () {
 
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Temporary debug route
-    Route::get('/debug-dashboard', function() {
-        $user = auth()->user();
+    // Temporary debug route - NO AUTH to test
+    Route::get('/test-routes', function() {
         return response()->json([
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'is_admin' => $user->is_admin ?? false,
-            'preferred_dashboard' => $user->preferred_dashboard ?? 'not set',
+            'message' => 'Routes are working',
             'routes_exist' => [
                 'dashboard' => \Route::has('dashboard'),
                 'mygrownet.dashboard' => \Route::has('mygrownet.dashboard'),
                 'mygrownet.classic-dashboard' => \Route::has('mygrownet.classic-dashboard'),
+                'admin.dashboard' => \Route::has('admin.dashboard'),
             ],
+            'all_dashboard_routes' => collect(\Route::getRoutes())->filter(function($route) {
+                return str_contains($route->getName() ?? '', 'dashboard');
+            })->map(function($route) {
+                return [
+                    'name' => $route->getName(),
+                    'uri' => $route->uri(),
+                    'methods' => $route->methods(),
+                ];
+            })->values(),
         ]);
     });
     
