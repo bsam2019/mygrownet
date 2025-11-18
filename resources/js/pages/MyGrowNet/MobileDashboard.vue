@@ -34,8 +34,18 @@
               @click="refreshData"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
               :disabled="loading"
+              title="Refresh"
             >
               <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
+            </button>
+            <button
+              @click="switchToClassicView"
+              class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20 hidden md:block"
+              title="Switch to Classic View"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
             </button>
           </div>
         </div>
@@ -1140,6 +1150,19 @@
             <ChevronRightIcon class="h-5 w-5 text-gray-400" />
           </button>
 
+          <Link
+            :href="route('password.edit')"
+            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <span class="text-sm font-medium text-gray-900">Change Password</span>
+            </div>
+            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
+          </Link>
+
           <button
             @click="showSettingsModal = true"
             class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
@@ -1278,7 +1301,7 @@
       :show="showStarterKitModal"
       :hasStarterKit="user?.has_starter_kit || false"
       :tier="user?.starter_kit_tier"
-      :shopCredit="user?.starter_kit_shop_credit"
+      :shopCredit="parseFloat(user?.starter_kit_shop_credit) || 0"
       :creditExpiry="user?.starter_kit_credit_expiry"
       :purchaseDate="user?.starter_kit_purchased_at"
       :walletBalance="walletBalance"
@@ -1508,6 +1531,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import BalanceCard from '@/components/Mobile/BalanceCard.vue';
 import StatCard from '@/components/Mobile/StatCard.vue';
 import QuickActionCard from '@/components/Mobile/QuickActionCard.vue';
@@ -1609,7 +1633,7 @@ const props = withDefaults(defineProps<{
 
 const loading = ref(false);
 const activeTab = ref('home');
-const activeTool = ref<'content' | 'calculator' | 'goals' | 'network' | 'commission' | null>('content');
+const activeTool = ref<'content' | 'calculator' | 'goals' | 'network' | 'commission' | null>(null);
 
 // Calculator state
 const calcEarningType = ref<'referral' | 'lgr'>('referral');
@@ -1889,8 +1913,8 @@ const formatCurrency = (value: number | undefined | null) => {
 };
 
 // Loan eligibility computed values
-const loanLimit = computed(() => props.user?.loan_limit || 0);
-const loanBalance = computed(() => props.loanSummary?.loan_balance || 0);
+const loanLimit = computed(() => parseFloat(props.user?.loan_limit) || 0);
+const loanBalance = computed(() => parseFloat(props.loanSummary?.loan_balance) || 0);
 const availableCredit = computed(() => loanLimit.value - loanBalance.value);
 
 const loanEligibility = computed(() => {
@@ -1943,6 +1967,23 @@ const refreshData = () => {
   // Inertia reload
   window.location.reload();
   setTimeout(() => loading.value = false, 1000);
+};
+
+const switchToClassicView = async () => {
+  try {
+    // Update user preference to desktop (classic) using axios
+    await axios.post(route('mygrownet.api.user.dashboard-preference'), {
+      preference: 'desktop'
+    });
+    
+    // Redirect to classic dashboard
+    window.location.href = route('mygrownet.classic-dashboard');
+  } catch (error) {
+    console.error('Switch view error:', error);
+    // If error, save preference in localStorage as fallback and redirect anyway
+    localStorage.setItem('preferred_dashboard', 'desktop');
+    window.location.href = route('mygrownet.classic-dashboard');
+  }
 };
 
 const navigateToMessages = () => {

@@ -223,7 +223,7 @@ onMounted(() => {
         <div class="flex h-16 min-h-[64px] items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
             <div class="flex items-center justify-between w-full h-full">
                 <Link
-                    :href="route('dashboard')"
+                    :href="route('mygrownet.dashboard')"
                     class="flex items-center h-full flex-shrink-0 focus:outline-none"
                     v-show="!isCollapsed"
                 >
@@ -271,7 +271,7 @@ onMounted(() => {
             <nav>
                 <!-- Dashboard -->
                 <Link
-                    :href="route('dashboard')"
+                    :href="route('mygrownet.dashboard')"
                     :class="[
                         'flex items-center px-4 py-2 text-sm font-medium transition-colors duration-200 mb-1',
                         isUrlActive(['/dashboard', '/']) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',

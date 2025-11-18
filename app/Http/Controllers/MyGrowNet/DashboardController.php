@@ -68,11 +68,14 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // Check if we should redirect based on dashboard preference
-        $shouldRedirect = $this->shouldRedirectToDashboard($request, $user);
-        if ($shouldRedirect) {
-            return redirect()->route($shouldRedirect);
+        // This is now the CLASSIC dashboard - only show if user explicitly prefers it
+        $preference = $user->preferred_dashboard ?? 'mobile';
+        if ($preference !== 'classic' && $preference !== 'desktop') {
+            // Redirect to main dashboard (mobile-first)
+            return redirect()->route('mygrownet.dashboard');
         }
+        
+        // User prefers classic, show it
         
         // Load user with necessary relationships
         $user = $user->load([
@@ -301,17 +304,20 @@ class DashboardController extends Controller
     }
 
     /**
-     * Mobile-optimized dashboard
+     * Main Dashboard (Mobile-first, responsive design)
+     * This is now the primary dashboard experience
      */
     public function mobileIndex(Request $request)
     {
         $user = $request->user();
         
-        // Check if we should redirect based on dashboard preference
-        $shouldRedirect = $this->shouldRedirectToDashboard($request, $user);
-        if ($shouldRedirect) {
-            return redirect()->route($shouldRedirect);
+        // Only redirect to classic if user explicitly prefers it
+        $preference = $user->preferred_dashboard ?? 'mobile';
+        if ($preference === 'classic' || $preference === 'desktop') {
+            return redirect()->route('mygrownet.classic-dashboard');
         }
+        
+        // Show main dashboard (mobile-first design)
         
         // DEBUG: Log that we're in mobile dashboard
         \Log::info('Mobile Dashboard Accessed', [
@@ -2063,29 +2069,34 @@ class DashboardController extends Controller
             return null; // Don't redirect if user has temporary override
         }
 
-        $preference = $user->preferred_dashboard ?? 'auto';
+        $preference = $user->preferred_dashboard ?? 'mobile'; // Changed default from 'auto' to 'mobile'
         $currentRoute = $request->route()->getName();
         $isMobile = $this->isMobileDevice($request);
 
         // Handle based on preference
         switch ($preference) {
             case 'mobile':
-                // User prefers mobile, redirect if on desktop
-                return ($currentRoute === 'mygrownet.dashboard') ? 'mygrownet.mobile' : null;
+                // User prefers mobile (NEW DEFAULT), redirect if on desktop dashboard
+                return ($currentRoute === 'mygrownet.dashboard') ? 'mygrownet.mobile-dashboard' : null;
                 
+            case 'classic':
             case 'desktop':
-                // User prefers desktop, redirect if on mobile
-                return ($currentRoute === 'mygrownet.mobile') ? 'mygrownet.dashboard' : null;
+                // User prefers classic desktop, redirect if on mobile
+                return ($currentRoute === 'mygrownet.mobile-dashboard') ? 'mygrownet.dashboard' : null;
                 
             case 'auto':
-            default:
-                // Auto-detect based on device
+                // Auto-detect based on device (legacy option)
                 if ($isMobile && $currentRoute === 'mygrownet.dashboard') {
-                    return 'mygrownet.mobile';
-                } elseif (!$isMobile && $currentRoute === 'mygrownet.mobile') {
-                    return 'mygrownet.dashboard';
+                    return 'mygrownet.mobile-dashboard';
+                } elseif (!$isMobile && $currentRoute === 'mygrownet.mobile-dashboard') {
+                    // Even on desktop, stay on mobile dashboard (it's responsive)
+                    return null;
                 }
                 return null;
+                
+            default:
+                // Default to mobile dashboard for all users
+                return ($currentRoute === 'mygrownet.dashboard') ? 'mygrownet.mobile-dashboard' : null;
         }
     }
 

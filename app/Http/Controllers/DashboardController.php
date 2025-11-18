@@ -64,8 +64,17 @@ class DashboardController extends Controller
             return redirect()->route('manager.dashboard');
         }
         
-        // Default investor dashboard
-        return $this->investorDashboard();
+        // Default: Redirect to appropriate dashboard based on preference
+        $preference = $user->preferred_dashboard ?? 'mobile';
+        
+        if ($preference === 'classic' || $preference === 'desktop') {
+            // User prefers classic dashboard
+            return redirect()->route('mygrownet.classic-dashboard');
+        }
+        
+        // Default to mobile dashboard for all regular users
+        // Forward to MyGrowNet DashboardController's mobileIndex method
+        return app(\App\Http\Controllers\MyGrowNet\DashboardController::class)->mobileIndex(request());
     }
 
     /**

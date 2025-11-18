@@ -13,6 +13,16 @@
             </div>
             <div class="flex items-center space-x-4">
               <button
+                @click="switchToMobileView"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                title="Switch to Mobile View"
+              >
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Mobile View
+              </button>
+              <button
                 @click="refreshData"
                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 :disabled="loading"
@@ -1002,6 +1012,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import axios from 'axios'
 import AppLayout from '@/layouts/AppLayout.vue'
 import {
   ArrowPathIcon,
@@ -1094,6 +1105,23 @@ const refreshData = async () => {
     router.reload({ only: ['stats', 'referralStats', 'teamVolumeData', 'networkData', 'assetData', 'communityProjectData'] })
   } finally {
     loading.value = false
+  }
+}
+
+const switchToMobileView = async () => {
+  try {
+    // Update user preference to mobile using axios
+    await axios.post('/mygrownet/api/user/dashboard-preference', {
+      preference: 'mobile'
+    });
+    
+    // Redirect to mobile dashboard
+    window.location.href = '/dashboard';
+  } catch (error) {
+    console.error('Switch view error:', error);
+    // If error, save preference in localStorage as fallback and redirect anyway
+    localStorage.setItem('preferred_dashboard', 'mobile');
+    window.location.href = '/dashboard';
   }
 }
 

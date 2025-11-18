@@ -58,10 +58,13 @@ const toggleMobileDashboard = async () => {
     await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: newPreference });
     userDashboardPreference.value = newPreference;
     
-    // Redirect to mobile dashboard if enabled
+    // Redirect to appropriate dashboard
     if (newPreference === 'mobile') {
       console.log('Redirecting to mobile dashboard...');
-      router.visit(route('mygrownet.mobile-dashboard'));
+      window.location.href = '/dashboard';
+    } else {
+      console.log('Redirecting to classic dashboard...');
+      window.location.href = '/classic-dashboard';
     }
   } catch (error) {
     console.error('Failed to update dashboard preference:', error);
@@ -116,6 +119,12 @@ const toggleMobileDashboard = async () => {
           <DropdownMenuItem @click="goto('/profile')">
             <UserIcon class="mr-2 h-4 w-4" />
             <span>Profile</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem @click="goto(route('password.edit'))">
+            <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span>Change Password</span>
           </DropdownMenuItem>
           <DropdownMenuItem @click="goto('/settings')">
             <SettingsIcon class="mr-2 h-4 w-4" />

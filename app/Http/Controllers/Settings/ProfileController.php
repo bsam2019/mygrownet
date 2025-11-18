@@ -125,14 +125,21 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        
+        // Map 'classic' to 'desktop' for backward compatibility
+        $preference = $validated['preference'];
+        if ($preference === 'classic') {
+            $preference = 'desktop';
+        }
+        
         $user->update([
-            'dashboard_preference' => $validated['preference'],
+            'preferred_dashboard' => $preference,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Dashboard preference updated successfully',
-            'preference' => $validated['preference'],
+            'preference' => $preference,
         ]);
     }
 }

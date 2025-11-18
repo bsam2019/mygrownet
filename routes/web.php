@@ -487,14 +487,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tiers/compare', [App\Http\Controllers\TierController::class, 'compare'])->name('tiers.compare');
     Route::get('/tiers/{tier}', [App\Http\Controllers\TierController::class, 'show'])->name('tiers.show');
     
-    // Mobile Dashboard - STANDALONE (outside group to avoid conflicts)
-    Route::get('/mobile-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])
-        ->middleware(['auth'])
-        ->name('mygrownet.mobile-dashboard');
+    // Dashboard Routes (Clean URLs without prefix)
+    Route::middleware(['auth'])->group(function () {
+        // Classic Dashboard (Alternative desktop view)
+        Route::get('/classic-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('mygrownet.classic-dashboard');
+    });
     
-    // MyGrowNet Dashboard Routes
+    // MyGrowNet Feature Routes
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('dashboard');
         
         // Member Membership Routes
         Route::get('/my-membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'show'])->name('membership.show');

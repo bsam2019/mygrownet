@@ -95,15 +95,18 @@ class PersonalizedAnnouncementService
     {
         $key = $this->extractAnnouncementKey($announcementId);
         
-        \DB::table('personalized_announcement_dismissals')->updateOrInsert(
+        // Use upsert to handle duplicate key constraint properly
+        \DB::table('personalized_announcement_dismissals')->upsert(
             [
-                'user_id' => $userId,
-                'announcement_key' => $key,
+                [
+                    'user_id' => $userId,
+                    'announcement_key' => $key,
+                    'dismissed_at' => now(),
+                    'expires_at' => now()->addDays($daysUntilExpiry),
+                ]
             ],
-            [
-                'dismissed_at' => now(),
-                'expires_at' => now()->addDays($daysUntilExpiry),
-            ]
+            ['user_id', 'announcement_key'], // Unique keys
+            ['dismissed_at', 'expires_at'] // Columns to update
         );
     }
 
