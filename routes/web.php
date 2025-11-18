@@ -489,6 +489,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Dashboard Routes (Clean URLs without prefix)
     Route::middleware(['auth'])->group(function () {
+        // Mobile Dashboard (handled separately to avoid conflicts with main /dashboard route)
+        Route::get('/dashboard-mobile', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])->name('mygrownet.dashboard');
+        
         // Classic Dashboard (Alternative desktop view)
         Route::get('/classic-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('mygrownet.classic-dashboard');
     });

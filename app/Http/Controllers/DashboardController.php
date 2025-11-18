@@ -73,8 +73,7 @@ class DashboardController extends Controller
         }
         
         // Default to mobile dashboard for all regular users
-        // Forward to MyGrowNet DashboardController's mobileIndex method
-        return app(\App\Http\Controllers\MyGrowNet\DashboardController::class)->mobileIndex(request());
+        return redirect()->route('mygrownet.dashboard');
     }
 
     /**
