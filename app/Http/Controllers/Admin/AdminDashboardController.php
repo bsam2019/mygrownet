@@ -512,7 +512,6 @@ class AdminDashboardController extends Controller
             'total_revenue' => $totalRevenue,
         ];
     }
-}
 
     /**
      * Get support ticket metrics
@@ -554,3 +553,5 @@ class AdminDashboardController extends Controller
             ];
         }
     }
+
+}
