@@ -26,6 +26,7 @@ class AdminDashboardController extends Controller
             'matrixMetrics' => $this->getMatrixMetrics(),
             'financialMetrics' => $this->getFinancialMetrics(),
             'workshopMetrics' => $this->getWorkshopMetrics(),
+            'supportMetrics' => $this->getSupportMetrics(),
             'professionalLevelDistribution' => $this->getProfessionalLevelDistribution(),
             'memberGrowthTrend' => $this->getMemberGrowthTrend(),
             'revenueGrowthTrend' => $this->getRevenueGrowthTrend(),
@@ -512,3 +513,44 @@ class AdminDashboardController extends Controller
         ];
     }
 }
+
+    /**
+     * Get support ticket metrics
+     */
+    private function getSupportMetrics(): array
+    {
+        try {
+            // Check if support tickets table exists
+            if (!DB::getSchemaBuilder()->hasTable('support_tickets')) {
+                return [
+                    'total_tickets' => 0,
+                    'open_tickets' => 0,
+                    'pending_tickets' => 0,
+                    'resolved_tickets' => 0,
+                    'avg_response_time' => 0,
+                ];
+            }
+
+            $totalTickets = DB::table('support_tickets')->count();
+            $openTickets = DB::table('support_tickets')->where('status', 'open')->count();
+            $pendingTickets = DB::table('support_tickets')->where('status', 'pending')->count();
+            $resolvedTickets = DB::table('support_tickets')->where('status', 'resolved')->count();
+
+            return [
+                'total_tickets' => $totalTickets,
+                'open_tickets' => $openTickets,
+                'pending_tickets' => $pendingTickets,
+                'resolved_tickets' => $resolvedTickets,
+                'avg_response_time' => 0, // Can be calculated if needed
+            ];
+        } catch (\Exception $e) {
+            // Return default values if there's any error
+            return [
+                'total_tickets' => 0,
+                'open_tickets' => 0,
+                'pending_tickets' => 0,
+                'resolved_tickets' => 0,
+                'avg_response_time' => 0,
+            ];
+        }
+    }
