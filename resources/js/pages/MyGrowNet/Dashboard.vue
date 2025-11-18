@@ -1111,17 +1111,17 @@ const refreshData = async () => {
 const switchToMobileView = async () => {
   try {
     // Update user preference to mobile using axios
-    await axios.post('/mygrownet/api/user/dashboard-preference', {
+    await axios.post(route('mygrownet.api.user.dashboard-preference'), {
       preference: 'mobile'
     });
     
     // Redirect to mobile dashboard
-    window.location.href = '/dashboard';
+    window.location.href = route('dashboard');
   } catch (error) {
     console.error('Switch view error:', error);
     // If error, save preference in localStorage as fallback and redirect anyway
     localStorage.setItem('preferred_dashboard', 'mobile');
-    window.location.href = '/dashboard';
+    window.location.href = route('dashboard');
   }
 }
 

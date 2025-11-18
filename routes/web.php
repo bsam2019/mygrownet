@@ -76,12 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     
     // Dashboard - Role-based routing
-    // This route handles all dashboard access and routes based on user role/preference
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Alias for backward compatibility with frontend code
-    // This allows route('mygrownet.dashboard') to work alongside route('dashboard')
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('mygrownet.dashboard');
 
     // Points System Routes
     Route::prefix('points')->name('points.')->group(function () {
