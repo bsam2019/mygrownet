@@ -1,35 +1,24 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Models\User;
-
-// Debug route to check user statuses and payments
-Route::get('/debug/user-statuses', function() {
-    $users = User::with('memberPayments')->get();
+// Temporary debug route - REMOVE IN PRODUCTION
+Route::get('/debug-dashboard', function() {
+    $user = auth()->user();
     
-    $data = [];
-    foreach ($users as $user) {
-        $data[] = [
-            'id' => $user->id,
-            'name' => $user->name,
-            'status' => $user->status,
-            'referrer_id' => $user->referrer_id,
-            'referrer_name' => $user->referrer?->name,
-            'payment_count' => $user->memberPayments->count(),
-            'verified_payments' => $user->memberPayments->where('status', 'verified')->count(),
-            'pending_payments' => $user->memberPayments->where('status', 'pending')->count(),
-            'has_active_subscription' => $user->hasActiveSubscription(),
-            'payments' => $user->memberPayments->map(function($payment) {
-                return [
-                    'id' => $payment->id,
-                    'amount' => $payment->amount,
-                    'payment_type' => $payment->payment_type,
-                    'status' => $payment->status,
-                    'created_at' => $payment->created_at->format('Y-m-d H:i:s'),
-                ];
-            })->toArray()
-        ];
+    if (!$user) {
+        return response()->json(['error' => 'Not authenticated']);
     }
     
-    return response()->json($data, 200, [], JSON_PRETTY_PRINT);
+    return response()->json([
+        'user_id' => $user->id,
+        'user_name' => $user->name,
+        'is_admin' => $user->is_admin ?? false,
+        'has_role_admin' => $user->hasRole('Administrator') ?? false,
+        'preferred_dashboard' => $user->preferred_dashboard ?? 'not set',
+        'routes' => [
+            'dashboard' => route('dashboard'),
+            'mygrownet.dashboard' => route('mygrownet.dashboard'),
+            'mygrownet.classic-dashboard' => route('mygrownet.classic-dashboard'),
+            'admin.dashboard' => $user->is_admin ? route('admin.dashboard') : 'N/A',
+        ],
+    ]);
 })->middleware('auth');
