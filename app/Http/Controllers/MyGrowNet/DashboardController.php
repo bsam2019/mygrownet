@@ -309,43 +309,52 @@ class DashboardController extends Controller
      */
     public function mobileIndex(Request $request)
     {
-        $user = $request->user();
-        
-        // Only redirect to classic if user explicitly prefers it
-        $preference = $user->preferred_dashboard ?? 'mobile';
-        if ($preference === 'classic' || $preference === 'desktop') {
-            return redirect()->route('mygrownet.classic-dashboard');
-        }
-        
-        // Show main dashboard (mobile-first design)
-        
-        // DEBUG: Log that we're in mobile dashboard
-        \Log::info('Mobile Dashboard Accessed', [
-            'user_id' => $user->id,
-            'url' => $request->fullUrl()
-        ]);
-        
-        // Try to prepare data, catch any errors
         try {
-            $data = $this->prepareIndexData($request);
-        } catch (\Exception $e) {
-            // Log the error
-            \Log::error('Mobile Dashboard Error', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+            $user = $request->user();
+            
+            if (!$user) {
+                \Log::error('Mobile Dashboard: No authenticated user');
+                return redirect()->route('login');
+            }
+            
+            // Only redirect to classic if user explicitly prefers it
+            $preference = $user->preferred_dashboard ?? 'mobile';
+            if ($preference === 'classic' || $preference === 'desktop') {
+                return redirect()->route('mygrownet.classic-dashboard');
+            }
+            
+            // Show main dashboard (mobile-first design)
+            \Log::info('Mobile Dashboard Accessed', [
+                'user_id' => $user->id,
+                'url' => $request->fullUrl()
             ]);
             
-            // Show error to user
-            dd('Error loading mobile dashboard', [
+            // Try to prepare data, catch any errors
+            $data = $this->prepareIndexData($request);
+            
+        } catch (\Exception $e) {
+            // Log the full error with stack trace
+            \Log::error('Mobile Dashboard Fatal Error', [
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'file' => basename($e->getFile())
+                'trace' => $e->getTraceAsString()
             ]);
+            
+            // Return a user-friendly error page
+            return response()->view('errors.500', [
+                'message' => 'Unable to load dashboard. Please try again or contact support.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
         
-        // Add wallet balance using WalletService
-        $data['walletBalance'] = $this->walletService->calculateBalance($user);
+        try {
+            // Add wallet balance using WalletService
+            $data['walletBalance'] = $this->walletService->calculateBalance($user);
+        } catch (\Exception $e) {
+            \Log::error('Wallet Service Error', ['error' => $e->getMessage()]);
+            $data['walletBalance'] = 0;
+        }
         
         // Get verification limits
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
