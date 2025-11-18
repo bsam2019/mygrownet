@@ -76,7 +76,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     
     // Dashboard - Role-based routing
+    // This route handles all dashboard access and routes based on user role/preference
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Alias for backward compatibility with frontend code
+    // This allows route('mygrownet.dashboard') to work alongside route('dashboard')
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('mygrownet.dashboard');
 
     // Points System Routes
     Route::prefix('points')->name('points.')->group(function () {
@@ -509,11 +514,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tiers/compare', [App\Http\Controllers\TierController::class, 'compare'])->name('tiers.compare');
     Route::get('/tiers/{tier}', [App\Http\Controllers\TierController::class, 'show'])->name('tiers.show');
     
-    // Dashboard Routes (Clean URLs without prefix)
+    // MyGrowNet Dashboard Routes (Clean URLs)
+    // Note: Main /dashboard route at line 79 handles role-based routing
+    // For regular members, it renders the mobile dashboard directly
     Route::middleware(['auth'])->group(function () {
-        // Mobile Dashboard (handled separately to avoid conflicts with main /dashboard route)
-        Route::get('/dashboard-mobile', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])->name('mygrownet.dashboard');
-        
         // Classic Dashboard (Alternative desktop view)
         Route::get('/classic-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('mygrownet.classic-dashboard');
     });

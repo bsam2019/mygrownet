@@ -68,14 +68,9 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // This is now the CLASSIC dashboard - only show if user explicitly prefers it
-        $preference = $user->preferred_dashboard ?? 'mobile';
-        if ($preference !== 'classic' && $preference !== 'desktop') {
-            // Redirect to main dashboard (mobile-first)
-            return redirect()->route('mygrownet.dashboard');
-        }
-        
-        // User prefers classic, show it
+        // This is the CLASSIC dashboard
+        // Users reach here via /classic-dashboard or preference setting
+        // No need to check preference - if they're here, show the classic dashboard
         
         // Load user with necessary relationships
         $user = $user->load([
