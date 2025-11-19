@@ -99,8 +99,23 @@
             </div>
           </div>
 
-          <!-- Mobile menu button -->
-          <div class="md:hidden">
+          <!-- Mobile menu button and auth links -->
+          <div class="md:hidden flex items-center gap-2">
+            <!-- Mobile Auth Links (visible on mobile) -->
+            <Link
+              :href="route('register')"
+              class="hidden sm:inline-block px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              Register
+            </Link>
+            <Link
+              :href="route('login')"
+              class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+            >
+              Login
+            </Link>
+            
+            <!-- Menu button -->
             <button
               @click="isMobileMenuOpen = !isMobileMenuOpen"
               class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
@@ -179,12 +194,21 @@
             </Link>
           </div>
 
-          <Link
-            :href="route('login')"
-            class="block w-full text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 mt-4"
-          >
-            Login
-          </Link>
+          <!-- Auth buttons in mobile menu -->
+          <div class="flex gap-2 mt-4 pt-4 border-t border-gray-700">
+            <Link
+              :href="route('register')"
+              class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-300"
+            >
+              Register
+            </Link>
+            <Link
+              :href="route('login')"
+              class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+            >
+              Login
+            </Link>
+          </div>
         </div>
       </div>
     </nav>

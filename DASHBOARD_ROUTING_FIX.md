@@ -143,6 +143,8 @@ const switchToMobileView = async () => {
 5. ✅ No Ziggy route errors
 6. ✅ No redirect loops
 7. ✅ Admin/Manager routing still works
+8. ✅ Login redirect to `route('dashboard')` works
+9. ✅ Production deployment successful
 
 ## Files Modified
 
@@ -154,12 +156,15 @@ const switchToMobileView = async () => {
 
 ## Deployment
 
-Changes are ready for production deployment. Run:
-```bash
-bash deployment/deploy-with-assets.sh
-```
+✅ **Deployed to production successfully**
+
+Changes pushed to GitHub and pulled on droplet:
+- Commit: `30db425`
+- All caches cleared
+- Routes verified on production
 
 ---
 
-**Status:** ✅ Complete
+**Status:** ✅ Complete & Live
 **Date:** November 18, 2025
+**Production:** https://mygrownet.com/dashboard
