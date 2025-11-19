@@ -92,13 +92,26 @@
                 margin-bottom: 48px;
             }
             
-            .splash-loader {
-                width: 48px;
-                height: 48px;
-                border: 4px solid rgba(255, 255, 255, 0.2);
-                border-top-color: white;
-                border-radius: 50%;
-                animation: splash-spin 1s linear infinite;
+            .splash-progress-container {
+                width: 240px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 2px;
+                overflow: hidden;
+            }
+            
+            .splash-progress-bar {
+                height: 100%;
+                background: white;
+                border-radius: 2px;
+                width: 0%;
+                animation: splash-progress 2s ease-in-out infinite;
+            }
+            
+            @keyframes splash-progress {
+                0% { width: 0%; }
+                50% { width: 70%; }
+                100% { width: 100%; }
             }
             
             @keyframes splash-bounce {
@@ -126,24 +139,55 @@
             <div class="splash-logo">🌱</div>
             <div class="splash-text">MyGrowNet</div>
             <div class="splash-tagline">Grow Together, Succeed Together</div>
-            <div class="splash-loader"></div>
+            <div class="splash-progress-container">
+                <div class="splash-progress-bar"></div>
+            </div>
         </div>
         
         @inertia
         
         <script>
-            // Hide splash screen when app is loaded
+            // Hide splash screen when Inertia page is loaded
+            let appLoaded = false;
+            let minTimeElapsed = false;
+            
+            // Ensure splash shows for at least 800ms for smooth experience
+            setTimeout(function() {
+                minTimeElapsed = true;
+                if (appLoaded) {
+                    hideSplash();
+                }
+            }, 800);
+            
+            // Listen for Inertia page load
             document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    const splash = document.getElementById('app-splash');
-                    if (splash) {
-                        splash.classList.add('hidden');
-                        setTimeout(function() {
-                            splash.remove();
-                        }, 500);
+                // Wait for Inertia to finish loading
+                const checkInertia = setInterval(function() {
+                    if (document.querySelector('[data-page]')) {
+                        clearInterval(checkInertia);
+                        appLoaded = true;
+                        if (minTimeElapsed) {
+                            hideSplash();
+                        }
                     }
-                }, 1000); // Show splash for at least 1 second
+                }, 50);
+                
+                // Fallback: hide after 3 seconds max
+                setTimeout(function() {
+                    clearInterval(checkInertia);
+                    hideSplash();
+                }, 3000);
             });
+            
+            function hideSplash() {
+                const splash = document.getElementById('app-splash');
+                if (splash && !splash.classList.contains('hidden')) {
+                    splash.classList.add('hidden');
+                    setTimeout(function() {
+                        splash.remove();
+                    }, 500);
+                }
+            }
         </script>
     </body>
 </html>
