@@ -93,12 +93,15 @@ export function usePWA() {
 
     // Listen for app installed event
     window.addEventListener('appinstalled', () => {
-      console.log('[PWA] App installed');
+      console.log('[PWA] App installed successfully');
       isInstalled.value = true;
       showInstallPrompt.value = false;
       deferredPrompt.value = null;
       localStorage.setItem(INSTALL_STATE_KEY, 'true');
       localStorage.removeItem(INSTALL_PROMPT_STORAGE_KEY);
+      
+      // Show success notification only after actual installation
+      showInstallationSuccess();
     });
 
     // Handle visibility changes to check for updates
@@ -151,12 +154,16 @@ export function usePWA() {
     }
 
     try {
+      // Show the native install prompt
       deferredPrompt.value.prompt();
+      
+      // Wait for user choice
       const { outcome } = await deferredPrompt.value.userChoice;
       
       if (outcome === 'accepted') {
         console.log('[PWA] User accepted the install prompt');
-        isInstalled.value = true;
+        // Don't set isInstalled here - wait for appinstalled event
+        // The appinstalled event will fire when installation is actually complete
       } else {
         console.log('[PWA] User dismissed the install prompt');
         dismissInstallPrompt();

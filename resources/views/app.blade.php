@@ -13,7 +13,7 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="MyGrowNet">
         <meta name="app-version" content="{{ config('app.version', '1.0.0') }}">
-        <link rel="manifest" href="/manifest.json">
+        <link rel="manifest" href="/manifest.json?v={{ config('app.version', '1.0.0') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-192x192.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
 
