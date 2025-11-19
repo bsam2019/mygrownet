@@ -2,7 +2,7 @@
   <Transition name="slide-up">
     <div
       v-if="showNotification"
-      class="fixed bottom-20 md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-96 z-50 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-2xl p-4"
+      class="fixed bottom-24 md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-96 z-50 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-2xl p-4"
     >
       <div class="flex items-start gap-3">
         <div class="flex-shrink-0 mt-0.5">

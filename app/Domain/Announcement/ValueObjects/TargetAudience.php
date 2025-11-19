@@ -58,6 +58,21 @@ class TargetAudience
         return $this->value === 'starter_kit_owners';
     }
 
+    public function isUserSpecific(): bool
+    {
+        return str_starts_with($this->value, 'user:');
+    }
+
+    public function getUserId(): ?int
+    {
+        if (!$this->isUserSpecific()) {
+            return null;
+        }
+        
+        $userPart = substr($this->value, 5); // Remove 'user:' prefix
+        return (int) $userPart;
+    }
+
     public function isTierSpecific(): bool
     {
         return str_starts_with($this->value, 'tier:');

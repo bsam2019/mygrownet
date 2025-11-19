@@ -23,8 +23,12 @@ class GetUserAnnouncementsUseCase
 
     public function execute(int $userId, string $userTier): array
     {
+        // Get user to check starter kit status
+        $user = User::find($userId);
+        $hasStarterKit = $user ? $user->has_starter_kit : false;
+        
         // Get admin-created announcements
-        $adminAnnouncements = $this->announcementService->getUnreadAnnouncementsForUser($userId, $userTier);
+        $adminAnnouncements = $this->announcementService->getUnreadAnnouncementsForUser($userId, $userTier, $hasStarterKit);
 
         $adminAnnouncementsArray = array_map(function ($announcement) {
             return [
@@ -42,7 +46,6 @@ class GetUserAnnouncementsUseCase
         $eventBasedAnnouncements = $this->eventBasedAnnouncementService->getUserSpecificAnnouncements($userId);
         
         // Get personalized announcements (dynamic, generated on-the-fly)
-        $user = User::find($userId);
         $personalizedAnnouncements = [];
         
         if ($user) {
@@ -70,15 +73,18 @@ class GetUserAnnouncementsUseCase
 
     public function getUnreadCount(int $userId, string $userTier): int
     {
+        // Get user to check starter kit status
+        $user = User::find($userId);
+        $hasStarterKit = $user ? $user->has_starter_kit : false;
+        
         // Count admin announcements
-        $adminCount = $this->announcementService->getUnreadCount($userId, $userTier);
+        $adminCount = $this->announcementService->getUnreadCount($userId, $userTier, $hasStarterKit);
         
         // Count event-based announcements
         $eventBasedAnnouncements = $this->eventBasedAnnouncementService->getUserSpecificAnnouncements($userId);
         $eventBasedCount = count($eventBasedAnnouncements);
         
         // Count personalized announcements
-        $user = User::find($userId);
         $personalizedCount = 0;
         
         if ($user) {

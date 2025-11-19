@@ -20,23 +20,40 @@ class AnnouncementService
     /**
      * Get active announcements for a specific user
      */
-    public function getActiveAnnouncementsForUser(int $userId, string $userTier): array
+    public function getActiveAnnouncementsForUser(int $userId, string $userTier, bool $hasStarterKit = false): array
     {
         $now = new DateTimeImmutable();
         $allAnnouncements = $this->repository->getActiveAnnouncements();
 
         return array_filter(
             $allAnnouncements,
-            fn(Announcement $announcement) => $announcement->isVisibleToUser($userTier, $now)
+            function(Announcement $announcement) use ($userId, $userTier, $now, $hasStarterKit) {
+                // First check basic visibility (active, dates, tier)
+                if (!$announcement->isVisibleToUser($userTier, $now)) {
+                    return false;
+                }
+                
+                // Check for user-specific targeting
+                if ($announcement->getTargetAudience()->isUserSpecific()) {
+                    return $announcement->getTargetAudience()->getUserId() === $userId;
+                }
+                
+                // Check for starter kit owners
+                if ($announcement->getTargetAudience()->isStarterKitOwners()) {
+                    return $hasStarterKit;
+                }
+                
+                return true;
+            }
         );
     }
 
     /**
      * Get unread announcements for a user
      */
-    public function getUnreadAnnouncementsForUser(int $userId, string $userTier): array
+    public function getUnreadAnnouncementsForUser(int $userId, string $userTier, bool $hasStarterKit = false): array
     {
-        $activeAnnouncements = $this->getActiveAnnouncementsForUser($userId, $userTier);
+        $activeAnnouncements = $this->getActiveAnnouncementsForUser($userId, $userTier, $hasStarterKit);
         $readAnnouncementIds = $this->repository->getReadAnnouncementIds($userId);
 
         return array_filter(
@@ -56,8 +73,8 @@ class AnnouncementService
     /**
      * Get count of unread announcements
      */
-    public function getUnreadCount(int $userId, string $userTier): int
+    public function getUnreadCount(int $userId, string $userTier, bool $hasStarterKit = false): int
     {
-        return count($this->getUnreadAnnouncementsForUser($userId, $userTier));
+        return count($this->getUnreadAnnouncementsForUser($userId, $userTier, $hasStarterKit));
     }
 }

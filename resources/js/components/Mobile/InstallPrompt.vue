@@ -2,7 +2,7 @@
   <Transition name="slide-up">
     <div
       v-if="showPrompt"
-      class="fixed bottom-20 md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-96 z-50 bg-white rounded-lg shadow-2xl overflow-hidden"
+      class="fixed bottom-24 md:bottom-8 left-4 right-4 md:left-auto md:right-8 md:w-96 z-50 bg-white rounded-lg shadow-2xl overflow-hidden"
     >
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
         <div class="flex items-start gap-3">
