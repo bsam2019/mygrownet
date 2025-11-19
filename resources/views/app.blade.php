@@ -41,6 +41,74 @@
             html.dark {
                 background-color: oklch(0.145 0 0);
             }
+            
+            /* Elegant splash screen for PWA */
+            #app-splash {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                transition: opacity 0.5s ease-out;
+            }
+            
+            #app-splash.hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+            
+            .splash-logo {
+                width: 120px;
+                height: 120px;
+                background: white;
+                border-radius: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 64px;
+                margin-bottom: 32px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                animation: splash-bounce 1.5s ease-in-out infinite;
+            }
+            
+            .splash-text {
+                color: white;
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 16px;
+                letter-spacing: -0.5px;
+            }
+            
+            .splash-tagline {
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 16px;
+                font-weight: 500;
+                margin-bottom: 48px;
+            }
+            
+            .splash-loader {
+                width: 48px;
+                height: 48px;
+                border: 4px solid rgba(255, 255, 255, 0.2);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: splash-spin 1s linear infinite;
+            }
+            
+            @keyframes splash-bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-10px); }
+            }
+            
+            @keyframes splash-spin {
+                to { transform: rotate(360deg); }
+            }
         </style>
 
         <title inertia>{{ config('app.name', 'MyGrowNet') }}</title>
@@ -53,6 +121,29 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        <!-- Elegant Splash Screen -->
+        <div id="app-splash">
+            <div class="splash-logo">🌱</div>
+            <div class="splash-text">MyGrowNet</div>
+            <div class="splash-tagline">Grow Together, Succeed Together</div>
+            <div class="splash-loader"></div>
+        </div>
+        
         @inertia
+        
+        <script>
+            // Hide splash screen when app is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    const splash = document.getElementById('app-splash');
+                    if (splash) {
+                        splash.classList.add('hidden');
+                        setTimeout(function() {
+                            splash.remove();
+                        }, 500);
+                    }
+                }, 1000); // Show splash for at least 1 second
+            });
+        </script>
     </body>
 </html>

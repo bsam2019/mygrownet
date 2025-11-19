@@ -76,6 +76,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Dashboard - Role-based routing
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Redirect old mobile-dashboard route to new dashboard route
+    Route::get('/mobile-dashboard', function () {
+        return redirect('/dashboard');
+    });
 
     // Points System Routes
     Route::prefix('points')->name('points.')->group(function () {
