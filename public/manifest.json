@@ -2,7 +2,7 @@
   "name": "MyGrowNet",
   "short_name": "MyGrowNet",
   "description": "Community empowerment and growth platform",
-  "start_url": "/mobile-dashboard",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
@@ -64,7 +64,7 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View your dashboard",
-      "url": "/mobile-dashboard",
+      "url": "/dashboard",
       "icons": [{ "src": "/images/icon-96x96.png", "sizes": "96x96" }]
     },
     {

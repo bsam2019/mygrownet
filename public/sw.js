@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.2';
+const CACHE_VERSION = 'v1.0.3';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -11,7 +11,7 @@ let updateNotified = false;
 // Assets to cache on install
 const ASSETS_TO_CACHE = [
   '/',
-  '/mobile-dashboard',
+  '/dashboard',
   '/manifest.json',
   '/logo.png',
   '/images/icon-192x192.png',
