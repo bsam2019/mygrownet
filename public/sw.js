@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.1';
+const CACHE_VERSION = 'v1.0.2';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -122,11 +122,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets - Cache first, fallback to network
+  // Static assets - Network first for build assets (to get latest), cache first for images
   if (
     url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/i) ||
     url.pathname.includes('/images/')
   ) {
+    // For build assets (JS/CSS with hashes), always fetch fresh to ensure updates
+    if (url.pathname.includes('/build/')) {
+      event.respondWith(
+        fetch(request)
+          .then((response) => {
+            if (response.status === 200) {
+              const cache = caches.open(RUNTIME_CACHE);
+              cache.then((c) => c.put(request, response.clone()));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Fallback to cache only if network fails
+            return caches.match(request);
+          })
+      );
+      return;
+    }
+    
+    // For other static assets (images, fonts), use cache first
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) {
