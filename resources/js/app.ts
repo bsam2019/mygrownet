@@ -34,6 +34,24 @@ if ('serviceWorker' in navigator) {
                 setInterval(() => {
                     registration.update();
                 }, 60000); // Every minute
+                
+                // Listen for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New service worker available
+                                console.log('[App] New version available!');
+                                // Auto-reload after 3 seconds
+                                setTimeout(() => {
+                                    console.log('[App] Reloading to get new version...');
+                                    window.location.reload();
+                                }, 3000);
+                            }
+                        });
+                    }
+                });
             })
             .catch((error) => {
                 console.warn('[App] Service Worker registration failed:', error);

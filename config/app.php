@@ -20,6 +20,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | This version number is used for cache busting. Increment this whenever
+    | you deploy new code to force clients to reload cached assets.
+    |
+    */
+
+    'version' => env('APP_VERSION', date('Y.m.d.His')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
