@@ -66,7 +66,7 @@ class VerifyPaymentUseCase
                         'message' => 'Your subscription has been activated and is now active',
                         'amount' => 'K' . number_format($payment->amount()->value(), 2),
                         'expiry_date' => now()->addMonth()->format('M d, Y'),
-                        'action_url' => route('mygrownet.dashboard'),
+                        'action_url' => route('dashboard'),
                         'action_text' => 'View Dashboard'
                     ]
                 );

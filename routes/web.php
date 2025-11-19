@@ -59,7 +59,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'message' => 'Routes are working',
             'routes_exist' => [
                 'dashboard' => \Route::has('dashboard'),
-                'mygrownet.dashboard' => \Route::has('mygrownet.dashboard'),
                 'mygrownet.classic-dashboard' => \Route::has('mygrownet.classic-dashboard'),
                 'admin.dashboard' => \Route::has('admin.dashboard'),
             ],

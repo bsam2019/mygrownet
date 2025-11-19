@@ -16,7 +16,6 @@ Route::get('/debug-dashboard', function() {
         'preferred_dashboard' => $user->preferred_dashboard ?? 'not set',
         'routes' => [
             'dashboard' => route('dashboard'),
-            'mygrownet.dashboard' => route('mygrownet.dashboard'),
             'mygrownet.classic-dashboard' => route('mygrownet.classic-dashboard'),
             'admin.dashboard' => $user->is_admin ? route('admin.dashboard') : 'N/A',
         ],
