@@ -115,7 +115,7 @@ class UserManagementController extends Controller
                 'last_login_at' => $user->last_login_at
             ],
             'profile' => $user->profile ? [
-                'phone_number' => $user->profile->phone_number,
+                'phone_number' => $user->profile->phone_number ?? $user->phone,
                 'address' => $user->profile->address,
                 'city' => $user->profile->city,
                 'country' => $user->profile->country,
@@ -123,7 +123,16 @@ class UserManagementController extends Controller
                 'payment_details' => $user->profile->payment_details ?? [],
                 'avatar' => $user->profile->avatar,
                 'kyc_status' => $user->profile->kyc_status ?? 'not_started'
-            ] : null,
+            ] : [
+                'phone_number' => $user->phone,
+                'address' => null,
+                'city' => null,
+                'country' => null,
+                'preferred_payment_method' => null,
+                'payment_details' => [],
+                'avatar' => null,
+                'kyc_status' => 'not_started'
+            ],
             'roles' => \App\Models\Role::select('id', 'name')->get()
         ]);
     }
@@ -173,14 +182,31 @@ class UserManagementController extends Controller
 
     public function updatePassword(Request $request, User $user)
     {
+        \Log::info('Password update request received', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'request_data' => $request->except('password', 'password_confirmation')
+        ]);
+
         $validated = $request->validate([
             'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        \Log::info('Password validation passed', [
+            'user_id' => $user->id,
+            'password_length' => strlen($validated['password'])
         ]);
 
         // Don't use bcrypt() here because the User model has 'password' => 'hashed' cast
         // which automatically hashes the password
         $user->update([
             'password' => $validated['password']
+        ]);
+
+        \Log::info('Password updated successfully', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'updated_at' => $user->updated_at
         ]);
 
         return back()->with('success', 'Password updated successfully');

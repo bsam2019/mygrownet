@@ -26,7 +26,7 @@ class AdminDashboardController extends Controller
             'matrixMetrics' => $this->getMatrixMetrics(),
             'financialMetrics' => $this->getFinancialMetrics(),
             'workshopMetrics' => $this->getWorkshopMetrics(),
-            'supportMetrics' => $this->getSupportMetrics(),
+            'supportData' => $this->getSupportMetrics(),
             'professionalLevelDistribution' => $this->getProfessionalLevelDistribution(),
             'memberGrowthTrend' => $this->getMemberGrowthTrend(),
             'revenueGrowthTrend' => $this->getRevenueGrowthTrend(),

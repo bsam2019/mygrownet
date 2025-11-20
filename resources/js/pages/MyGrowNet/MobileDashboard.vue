@@ -2101,18 +2101,8 @@ const handleLogout = () => {
 };
 
 const confirmLogout = () => {
-  router.post(route('logout'), {}, {
-    onStart: () => {
-      showLogoutModal.value = false;
-    },
-    onSuccess: () => {
-      // Logout successful, will redirect to login
-    },
-    onError: (errors) => {
-      console.error('Logout failed:', errors);
-      showToastMessage('Logout failed. Please try again.', 'error');
-    },
-  });
+  // Use Inertia's router which automatically handles CSRF tokens
+  router.post(route('logout'));
 };
 
 // PWA Install functionality

@@ -7,6 +7,30 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 
+// Cache buster - Clear old caches on app load
+(function() {
+    if ('serviceWorker' in navigator) {
+        // Unregister old service workers
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => {
+                registration.unregister();
+            });
+        });
+
+        // Clear all caches
+        if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                    caches.delete(cacheName);
+                });
+            });
+        }
+
+        // Clear localStorage
+        localStorage.clear();
+    }
+})();
+
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
     interface ImportMetaEnv {

@@ -15,8 +15,8 @@
                     <!-- Total Members -->
                     <StatCard
                         title="Total Members"
-                        :value="formatNumber(memberMetrics.total)"
-                        :change="memberMetrics.growth_rate"
+                        :value="formatNumber(memberMetrics?.total || 0)"
+                        :change="memberMetrics?.growth_rate || 0"
                         icon="users"
                         color="blue"
                     />
@@ -24,8 +24,8 @@
                     <!-- Active Subscriptions -->
                     <StatCard
                         title="Active Subscriptions"
-                        :value="formatNumber(subscriptionMetrics.active)"
-                        :subtitle="`K${formatNumber(subscriptionMetrics.monthly_revenue)} revenue`"
+                        :value="formatNumber(subscriptionMetrics?.active || 0)"
+                        :subtitle="`K${formatNumber(subscriptionMetrics?.monthly_revenue || 0)} revenue`"
                         icon="credit-card"
                         color="green"
                     />
@@ -33,8 +33,8 @@
                     <!-- Monthly Revenue -->
                     <StatCard
                         title="Monthly Revenue"
-                        :value="`K${formatNumber(subscriptionMetrics.monthly_revenue)}`"
-                        :change="subscriptionMetrics.growth_rate"
+                        :value="`K${formatNumber(subscriptionMetrics?.monthly_revenue || 0)}`"
+                        :change="subscriptionMetrics?.growth_rate || 0"
                         icon="currency-dollar"
                         color="emerald"
                     />
@@ -42,8 +42,8 @@
                     <!-- Points Awarded -->
                     <StatCard
                         title="Points This Month"
-                        :value="`${formatNumber(pointsMetrics.this_month_lp + pointsMetrics.this_month_map)}`"
-                        :subtitle="`${pointsMetrics.qualification_rate}% qualified`"
+                        :value="`${formatNumber((pointsMetrics?.this_month_lp || 0) + (pointsMetrics?.this_month_map || 0))}`"
+                        :subtitle="`${pointsMetrics?.qualification_rate || 0}% qualified`"
                         icon="star"
                         color="purple"
                     />
@@ -51,8 +51,8 @@
                     <!-- Matrix Fill Rate -->
                     <StatCard
                         title="Matrix Fill Rate"
-                        :value="`${matrixMetrics.fill_rate}%`"
-                        :subtitle="`${formatNumber(matrixMetrics.filled_positions)}/${formatNumber(matrixMetrics.total_positions)}`"
+                        :value="`${matrixMetrics?.fill_rate || 0}%`"
+                        :subtitle="`${formatNumber(matrixMetrics?.filled_positions || 0)}/${formatNumber(matrixMetrics?.total_positions || 0)}`"
                         icon="grid"
                         color="indigo"
                     />
@@ -60,7 +60,7 @@
                     <!-- Profit Distributed -->
                     <StatCard
                         title="Profit Distributed"
-                        :value="`K${formatNumber(financialMetrics.profit_distributed)}`"
+                        :value="`K${formatNumber(financialMetrics?.profit_distributed || 0)}`"
                         :subtitle="'This month'"
                         icon="banknotes"
                         color="amber"
@@ -71,7 +71,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard
                         title="Total Tickets"
-                        :value="formatNumber(supportData.total_tickets)"
+                        :value="formatNumber(supportData?.total_tickets || 0)"
                         :subtitle="'All time'"
                         icon="ticket"
                         color="blue"
@@ -79,7 +79,7 @@
                     
                     <StatCard
                         title="Open Tickets"
-                        :value="formatNumber(supportData.open_tickets)"
+                        :value="formatNumber(supportData?.open_tickets || 0)"
                         :subtitle="'Needs attention'"
                         icon="exclamation-circle"
                         color="amber"
@@ -87,18 +87,18 @@
                     
                     <StatCard
                         title="In Progress"
-                        :value="formatNumber(supportData.in_progress_tickets)"
+                        :value="formatNumber(supportData?.pending_tickets || 0)"
                         :subtitle="'Being handled'"
                         icon="clock"
                         color="blue"
                     />
                     
                     <StatCard
-                        title="Urgent Tickets"
-                        :value="formatNumber(supportData.urgent_tickets)"
-                        :subtitle="'Overdue'"
-                        icon="fire"
-                        color="red"
+                        title="Resolved Tickets"
+                        :value="formatNumber(supportData?.resolved_tickets || 0)"
+                        :subtitle="'Completed'"
+                        icon="check-circle"
+                        color="green"
                     />
                 </div>
 
@@ -106,23 +106,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <StatCard
                         title="Total Workshops"
-                        :value="formatNumber(workshopMetrics.total_workshops)"
-                        :subtitle="`${workshopMetrics.upcoming} upcoming`"
+                        :value="formatNumber(workshopMetrics?.total_workshops || 0)"
+                        :subtitle="`${workshopMetrics?.upcoming || 0} upcoming`"
                         icon="academic-cap"
                         color="blue"
                     />
                     
                     <StatCard
                         title="Total Registrations"
-                        :value="formatNumber(workshopMetrics.total_registrations)"
-                        :subtitle="`${workshopMetrics.this_month_registrations} this month`"
+                        :value="formatNumber(workshopMetrics?.total_registrations || 0)"
+                        :subtitle="`${workshopMetrics?.this_month_registrations || 0} this month`"
                         icon="users"
                         color="green"
                     />
                     
                     <StatCard
                         title="Workshop Revenue"
-                        :value="`K${formatNumber(workshopMetrics.total_revenue)}`"
+                        :value="`K${formatNumber(workshopMetrics?.total_revenue || 0)}`"
                         :subtitle="'All time'"
                         icon="currency-dollar"
                         color="emerald"
@@ -130,8 +130,8 @@
                     
                     <StatCard
                         title="Starter Kits"
-                        :value="formatNumber(starterKitMetrics.total_assigned)"
-                        :subtitle="`${starterKitMetrics.assignment_rate}% of members`"
+                        :value="formatNumber(starterKitMetrics?.total_assigned || 0)"
+                        :subtitle="`${starterKitMetrics?.assignment_rate || 0}% of members`"
                         icon="gift"
                         color="purple"
                     />
@@ -237,19 +237,19 @@
                     <h3 class="text-lg font-semibold mb-4">Platform Overview</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <div class="text-2xl font-bold">{{ memberMetrics.active_percentage }}%</div>
+                            <div class="text-2xl font-bold">{{ memberMetrics?.active_percentage || 0 }}%</div>
                             <div class="text-sm opacity-90">Active Members</div>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold">{{ subscriptionMetrics.conversion_rate }}%</div>
+                            <div class="text-2xl font-bold">{{ subscriptionMetrics?.conversion_rate || 0 }}%</div>
                             <div class="text-sm opacity-90">Subscription Rate</div>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold">{{ pointsMetrics.qualification_rate }}%</div>
+                            <div class="text-2xl font-bold">{{ pointsMetrics?.qualification_rate || 0 }}%</div>
                             <div class="text-sm opacity-90">Qualification Rate</div>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold">{{ financialMetrics.commission_ratio }}%</div>
+                            <div class="text-2xl font-bold">{{ financialMetrics?.commission_ratio || 0 }}%</div>
                             <div class="text-sm opacity-90">Commission Ratio</div>
                         </div>
                     </div>
@@ -262,6 +262,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import StatCard from '@/components/StatCard.vue';
 import LineChart from '@/components/LineChart.vue';
@@ -273,21 +274,35 @@ import {
     CreditCardIcon,
 } from '@heroicons/vue/24/outline';
 
-const props = defineProps<{
-    memberMetrics: any;
-    subscriptionMetrics: any;
-    starterKitMetrics: any;
-    pointsMetrics: any;
-    matrixMetrics: any;
-    financialMetrics: any;
-    workshopMetrics: any;
-    supportData: any;
-    professionalLevelDistribution: any[];
-    memberGrowthTrend: any[];
-    revenueGrowthTrend: any[];
-    recentActivity: any[];
-    alerts: any[];
-}>();
+const props = withDefaults(defineProps<{
+    memberMetrics?: any;
+    subscriptionMetrics?: any;
+    starterKitMetrics?: any;
+    pointsMetrics?: any;
+    matrixMetrics?: any;
+    financialMetrics?: any;
+    workshopMetrics?: any;
+    supportData?: any;
+    professionalLevelDistribution?: any[];
+    memberGrowthTrend?: any[];
+    revenueGrowthTrend?: any[];
+    recentActivity?: any[];
+    alerts?: any[];
+}>(), {
+    memberMetrics: () => ({ total: 0, active: 0, growth_rate: 0, active_percentage: 0 }),
+    subscriptionMetrics: () => ({ active: 0, monthly_revenue: 0, growth_rate: 0, conversion_rate: 0 }),
+    starterKitMetrics: () => ({ total_assigned: 0, assignment_rate: 0 }),
+    pointsMetrics: () => ({ this_month_lp: 0, this_month_map: 0, qualification_rate: 0 }),
+    matrixMetrics: () => ({ fill_rate: 0, filled_positions: 0, total_positions: 0 }),
+    financialMetrics: () => ({ profit_distributed: 0, commission_ratio: 0 }),
+    workshopMetrics: () => ({ total_workshops: 0, upcoming: 0, total_registrations: 0, this_month_registrations: 0, total_revenue: 0 }),
+    supportData: () => ({ total_tickets: 0, open_tickets: 0, pending_tickets: 0, resolved_tickets: 0 }),
+    professionalLevelDistribution: () => [],
+    memberGrowthTrend: () => [],
+    revenueGrowthTrend: () => [],
+    recentActivity: () => [],
+    alerts: () => [],
+});
 
 const currentDate = computed(() => {
     return new Date().toLocaleDateString('en-US', { 
@@ -299,20 +314,20 @@ const currentDate = computed(() => {
 });
 
 const memberGrowthData = computed(() => ({
-    labels: props.memberGrowthTrend.map(item => item.date),
+    labels: (props.memberGrowthTrend || []).map(item => item.date),
     datasets: [{
         label: 'New Members',
-        data: props.memberGrowthTrend.map(item => item.count),
+        data: (props.memberGrowthTrend || []).map(item => item.count),
         borderColor: '#2563eb',
         backgroundColor: 'rgba(37, 99, 235, 0.1)',
     }]
 }));
 
 const revenueGrowthData = computed(() => ({
-    labels: props.revenueGrowthTrend.map(item => item.date),
+    labels: (props.revenueGrowthTrend || []).map(item => item.date),
     datasets: [{
         label: 'Revenue (K)',
-        data: props.revenueGrowthTrend.map(item => item.revenue),
+        data: (props.revenueGrowthTrend || []).map(item => item.revenue),
         borderColor: '#059669',
         backgroundColor: 'rgba(5, 150, 105, 0.1)',
     }]

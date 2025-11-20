@@ -74,8 +74,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Skip non-GET requests - NEVER cache POST, PUT, DELETE, PATCH
   if (request.method !== 'GET') {
+    event.respondWith(fetch(request));
     return;
   }
 
@@ -84,7 +85,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests - Network first, fallback to cache
+  // API requests - Network first, fallback to cache (GET only)
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/mygrownet/')) {
     event.respondWith(
       fetch(request)
@@ -95,10 +96,13 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
           
-          // Only cache successful responses
-          if (response.status === 200) {
-            const cache = caches.open(API_CACHE);
-            cache.then((c) => c.put(request, response.clone()));
+          // Only cache successful GET responses
+          if (response.status === 200 && request.method === 'GET') {
+            // Clone BEFORE caching to avoid "body already used" error
+            const responseToCache = response.clone();
+            caches.open(API_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
           }
           return response;
         })
@@ -132,9 +136,12 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(
         fetch(request)
           .then((response) => {
-            if (response.status === 200) {
-              const cache = caches.open(RUNTIME_CACHE);
-              cache.then((c) => c.put(request, response.clone()));
+            if (response.status === 200 && request.method === 'GET') {
+              // Clone BEFORE caching to avoid "body already used" error
+              const responseToCache = response.clone();
+              caches.open(RUNTIME_CACHE).then((cache) => {
+                cache.put(request, responseToCache);
+              });
             }
             return response;
           })
@@ -153,9 +160,12 @@ self.addEventListener('fetch', (event) => {
           return cached;
         }
         return fetch(request).then((response) => {
-          if (response.status === 200) {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then((c) => c.put(request, response.clone()));
+          if (response.status === 200 && request.method === 'GET') {
+            // Clone BEFORE caching to avoid "body already used" error
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
           }
           return response;
         });
@@ -169,9 +179,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.status === 200) {
-            const cache = caches.open(RUNTIME_CACHE);
-            cache.then((c) => c.put(request, response.clone()));
+          if (response.status === 200 && request.method === 'GET') {
+            // Clone BEFORE caching to avoid "body already used" error
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
+            });
           }
           return response;
         })
@@ -192,13 +205,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default - Network first
+  // Default - Network first (GET only)
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.status === 200) {
-          const cache = caches.open(RUNTIME_CACHE);
-          cache.then((c) => c.put(request, response.clone()));
+        if (response.status === 200 && request.method === 'GET') {
+          // Clone BEFORE caching to avoid "body already used" error
+          const responseToCache = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(request, responseToCache);
+          });
         }
         return response;
       })
