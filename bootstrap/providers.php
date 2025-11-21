@@ -10,6 +10,8 @@ return [
     App\Providers\NotificationServiceProvider::class,
     App\Providers\MessagingServiceProvider::class,
     App\Providers\SupportServiceProvider::class,
+    App\Providers\EmailMarketingServiceProvider::class,
+    App\Providers\TelegramServiceProvider::class,
     // App\Providers\EmployeeServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\EmployeeCacheServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\MLMRepositoryServiceProvider::class, // Disabled - causing memory issues

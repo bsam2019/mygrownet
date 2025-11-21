@@ -158,6 +158,11 @@ class User extends Authenticatable
         'id_verified_at',
         'failed_login_attempts',
         'last_failed_login_at',
+        // Telegram fields
+        'telegram_chat_id',
+        'telegram_notifications',
+        'telegram_linked_at',
+        'telegram_link_code',
         'security_flags',
         'risk_score',
         'risk_assessed_at',
@@ -223,6 +228,9 @@ class User extends Authenticatable
         'total_loan_issued' => 'decimal:2',
         'total_loan_repaid' => 'decimal:2',
         'loan_issued_at' => 'datetime',
+        // Telegram casts
+        'telegram_notifications' => 'boolean',
+        'telegram_linked_at' => 'datetime',
     ];
 
     /**
@@ -368,6 +376,11 @@ class User extends Authenticatable
     public function receipts(): HasMany
     {
         return $this->hasMany(Receipt::class);
+    }
+
+    public function businessPlans(): HasMany
+    {
+        return $this->hasMany(BusinessPlan::class);
     }
 
     // MyGrowNet team volume relationships

@@ -26,7 +26,8 @@ import {
     ShoppingBagIcon,
     ArrowRightLeftIcon,
     ChevronDownIcon,
-    Mail as MailIcon
+    Mail as MailIcon,
+    Wrench as WrenchIcon
 } from 'lucide-vue-next';
 
 interface Props {
@@ -70,6 +71,8 @@ const investorNavItems: NavItem[] = [
 // Full member items
 const myBusinessNavItems: NavItem[] = [
     { title: 'My Business Profile', href: route('mygrownet.membership.show'), icon: BriefcaseIcon },
+    { title: 'Performance Analytics', href: route('mygrownet.analytics.index'), icon: ChartBarIcon },
+    { title: 'Business Tools', href: route('mygrownet.tools.index'), icon: WrenchIcon },
     { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
     { title: 'Business Growth Fund', href: route('mygrownet.bgf.index'), icon: BriefcaseIcon },
     { title: 'MyGrow Shop', href: route('shop.index'), icon: ShoppingBagIcon },

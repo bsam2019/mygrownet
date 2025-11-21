@@ -74,7 +74,8 @@ class DashboardController extends Controller
         
         // Default: Forward to MyGrowNet mobile dashboard controller
         // This renders the mobile dashboard at /dashboard (no redirect)
-        return app(\App\Http\Controllers\MyGrowNet\DashboardController::class)->mobileIndex(request());
+        $mobileController = app(\App\Http\Controllers\MyGrowNet\DashboardController::class);
+        return $mobileController->mobileIndex($request ?? request());
     }
 
     /**

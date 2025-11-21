@@ -187,7 +187,7 @@
               My Learning Resources
             </h2>
             <button
-              @click="activeTab = 'learn'"
+              @click="$inertia.visit(route('mygrownet.content.index'))"
               class="text-sm text-blue-600 font-semibold hover:text-blue-700 flex items-center gap-1"
             >
               View All
@@ -198,7 +198,7 @@
           <!-- Content Quick Access Grid -->
           <div class="grid grid-cols-2 gap-3 mb-6">
             <button
-              @click="activeTab = 'learn'"
+              @click="$inertia.visit(route('mygrownet.content.index'))"
               class="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-blue-100"
             >
               <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
@@ -209,7 +209,7 @@
             </button>
             
             <button
-              @click="activeTab = 'learn'"
+              @click="$inertia.visit(route('mygrownet.content.index'))"
               class="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-purple-100"
             >
               <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-2">
@@ -220,7 +220,7 @@
             </button>
             
             <button
-              @click="activeTab = 'learn'"
+              @click="$inertia.visit(route('mygrownet.tools.commission-calculator'))"
               class="flex flex-col items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-green-100"
             >
               <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-2">
@@ -231,7 +231,7 @@
             </button>
             
             <button
-              @click="activeTab = 'learn'"
+              @click="$inertia.visit(route('mygrownet.content.index'))"
               class="flex flex-col items-center p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl hover:shadow-md transition-all active:scale-95 border border-orange-100"
             >
               <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-2">
@@ -265,6 +265,14 @@
               :icon="UsersIcon"
               iconBgClass="bg-green-50"
               iconColorClass="text-green-600"
+            />
+            <QuickActionCard
+              title="Performance Analytics"
+              subtitle="View insights & recommendations"
+              @click="showAnalyticsModal = true"
+              :icon="ChartBarIcon"
+              iconBgClass="bg-gradient-to-r from-orange-50 to-red-50"
+              iconColorClass="text-orange-600"
             />
             <QuickActionCard
               title="Messages"
@@ -1050,6 +1058,35 @@
               <h3 class="text-sm font-semibold text-gray-900">Templates</h3>
               <p class="text-xs text-gray-500 mt-1">Marketing tools</p>
             </button>
+
+            <!-- Premium Tools -->
+            <button
+              v-if="user?.starter_kit_tier === 'premium'"
+              @click="showBusinessPlanModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mb-3">
+                <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">Business Plan</h3>
+              <p class="text-xs text-gray-500 mt-1">Premium tool</p>
+            </button>
+
+            <button
+              v-if="user?.starter_kit_tier === 'premium'"
+              @click="showROICalculatorModal = true"
+              class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
+            >
+              <div class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center mb-3">
+                <svg class="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 class="text-sm font-semibold text-gray-900">ROI Calculator</h3>
+              <p class="text-xs text-gray-500 mt-1">Premium tool</p>
+            </button>
           </div>
 
           <!-- Featured Content -->
@@ -1316,6 +1353,12 @@
       @cancel="showLogoutModal = false"
     />
 
+    <AnalyticsModal
+      :show="showAnalyticsModal"
+      :user-id="user?.id"
+      @close="showAnalyticsModal = false"
+    />
+
     <LgrTransferModal
       :show="showLgrTransferModal"
       :lgrBalance="loyaltyPoints || 0"
@@ -1525,6 +1568,23 @@
 
     <!-- PWA Install Prompt -->
     <InstallPrompt />
+
+    <!-- Business Plan Modal -->
+    <BusinessPlanModal
+      :show="showBusinessPlanModal"
+      :existing-plan="null"
+      @close="showBusinessPlanModal = false"
+    />
+
+    <!-- ROI Calculator Modal -->
+    <ROICalculatorModal
+      :show="showROICalculatorModal"
+      :investments="{
+        starter_kit: user?.starter_kit_tier === 'premium' ? 1000 : 500,
+        total_earnings: stats?.total_earnings || 0
+      }"
+      @close="showROICalculatorModal = false"
+    />
   </div>
 </template>
 
@@ -1553,13 +1613,16 @@ import Toast from '@/components/Mobile/Toast.vue';
 import AnnouncementBanner from '@/components/Mobile/AnnouncementBanner.vue';
 import MessagesModal from '@/components/Mobile/MessagesModal.vue';
 import SupportTicketsModal from '@/components/Mobile/SupportTicketsModal.vue';
+import AnalyticsModal from '@/components/Mobile/AnalyticsModal.vue';
 import UpdateNotification from '@/components/Mobile/UpdateNotification.vue';
+import BusinessPlanModal from '@/components/Mobile/Tools/BusinessPlanModal.vue';
+import ROICalculatorModal from '@/components/Mobile/Tools/ROICalculatorModal.vue';
 import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
 
 // Mobile-Embedded Tools (without MemberLayout)
-import EarningsCalculatorEmbedded from '@/Components/Mobile/Tools/EarningsCalculatorEmbedded.vue';
-import GoalTrackerEmbedded from '@/Components/Mobile/Tools/GoalTrackerEmbedded.vue';
-import NetworkVisualizerEmbedded from '@/Components/Mobile/Tools/NetworkVisualizerEmbedded.vue';
+import EarningsCalculatorEmbedded from '@/components/Mobile/Tools/EarningsCalculatorEmbedded.vue';
+import GoalTrackerEmbedded from '@/components/Mobile/Tools/GoalTrackerEmbedded.vue';
+import NetworkVisualizerEmbedded from '@/components/Mobile/Tools/NetworkVisualizerEmbedded.vue';
 import { onMounted, onUnmounted } from 'vue';
 import {
   ArrowPathIcon,
@@ -1730,6 +1793,7 @@ const showLogoutModal = ref(false);
 const showLgrTransferModal = ref(false);
 const showMessagesModal = ref(false);
 const showSupportModal = ref(false);
+const showAnalyticsModal = ref(false);
 
 // PWA Install
 const deferredPrompt = ref<any>(null);
@@ -1737,6 +1801,8 @@ const showInstallButton = ref(false);
 const showLoanApplicationModal = ref(false);
 const showContentLibraryModal = ref(false);
 const showCalculatorModal = ref(false);
+const showBusinessPlanModal = ref(false);
+const showROICalculatorModal = ref(false);
 
 // Calculator state
 const calcTeamSizes = ref({

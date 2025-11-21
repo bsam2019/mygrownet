@@ -160,6 +160,7 @@ return [
         App\Providers\EmployeeDomainServiceProvider::class, // Re-enabled for employee functionality
         App\Providers\AnnouncementServiceProvider::class,
         App\Providers\SupportServiceProvider::class,
+        App\Providers\EmailMarketingServiceProvider::class,
     ])->toArray(),
 
     /*

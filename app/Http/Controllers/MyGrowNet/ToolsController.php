@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\MyGrowNet;
 
+use App\Application\UseCases\Tools\CalculateUserROIUseCase;
+use App\Application\UseCases\Tools\CreateBusinessPlanUseCase;
+use App\Application\UseCases\Tools\GetUserBusinessPlanUseCase;
+use App\Application\UseCases\Tools\UpdateBusinessPlanUseCase;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,6 +14,18 @@ use Inertia\Inertia;
 
 class ToolsController extends Controller
 {
+    /**
+     * Tools Index Page
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        
+        return Inertia::render('MyGrowNet/Tools/Index', [
+            'userTier' => $user->starter_kit_tier ?? 'basic',
+        ]);
+    }
+    
     /**
      * Commission Calculator Tool
      */
@@ -170,6 +186,13 @@ class ToolsController extends Controller
     {
         $user = $request->user();
         
+        // Check premium access
+        if ($user->starter_kit_tier !== 'premium') {
+            return redirect()
+                ->route('mygrownet.starter-kit.purchase')
+                ->with('error', 'Business Plan Generator is a premium tool. Upgrade to access it.');
+        }
+        
         // Get user's existing business plan if any
         $existingPlan = DB::table('user_business_plans')
             ->where('user_id', $user->id)
@@ -233,6 +256,13 @@ class ToolsController extends Controller
     public function roiCalculator(Request $request)
     {
         $user = $request->user();
+        
+        // Check premium access
+        if ($user->starter_kit_tier !== 'premium') {
+            return redirect()
+                ->route('mygrownet.starter-kit.purchase')
+                ->with('error', 'ROI Calculator is a premium tool. Upgrade to access it.');
+        }
         
         // Get user's investment history
         $investments = [

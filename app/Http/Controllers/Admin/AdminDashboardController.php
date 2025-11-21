@@ -27,6 +27,8 @@ class AdminDashboardController extends Controller
             'financialMetrics' => $this->getFinancialMetrics(),
             'workshopMetrics' => $this->getWorkshopMetrics(),
             'supportData' => $this->getSupportMetrics(),
+            'emailMarketingMetrics' => $this->getEmailMarketingMetrics(),
+            'telegramMetrics' => $this->getTelegramMetrics(),
             'professionalLevelDistribution' => $this->getProfessionalLevelDistribution(),
             'memberGrowthTrend' => $this->getMemberGrowthTrend(),
             'revenueGrowthTrend' => $this->getRevenueGrowthTrend(),
@@ -550,6 +552,85 @@ class AdminDashboardController extends Controller
                 'pending_tickets' => 0,
                 'resolved_tickets' => 0,
                 'avg_response_time' => 0,
+            ];
+        }
+    }
+
+    /**
+     * Get email marketing metrics
+     */
+    private function getEmailMarketingMetrics(): array
+    {
+        try {
+            $totalCampaigns = DB::table('email_campaigns')->count();
+            $activeCampaigns = DB::table('email_campaigns')->where('status', 'active')->count();
+            $totalSubscribers = DB::table('campaign_subscribers')->distinct('user_id')->count();
+            
+            $analytics = DB::table('campaign_analytics')
+                ->select(
+                    DB::raw('SUM(emails_sent) as total_sent'),
+                    DB::raw('SUM(emails_opened) as total_opened'),
+                    DB::raw('SUM(emails_clicked) as total_clicked')
+                )
+                ->first();
+
+            $openRate = $analytics && $analytics->total_sent > 0 
+                ? ($analytics->total_opened / $analytics->total_sent) * 100 
+                : 0;
+
+            $clickRate = $analytics && $analytics->total_sent > 0 
+                ? ($analytics->total_clicked / $analytics->total_sent) * 100 
+                : 0;
+
+            return [
+                'total_campaigns' => $totalCampaigns,
+                'active_campaigns' => $activeCampaigns,
+                'total_subscribers' => $totalSubscribers,
+                'emails_sent' => $analytics->total_sent ?? 0,
+                'open_rate' => round($openRate, 1),
+                'click_rate' => round($clickRate, 1),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'total_campaigns' => 0,
+                'active_campaigns' => 0,
+                'total_subscribers' => 0,
+                'emails_sent' => 0,
+                'open_rate' => 0,
+                'click_rate' => 0,
+            ];
+        }
+    }
+
+    /**
+     * Get Telegram bot metrics
+     */
+    private function getTelegramMetrics(): array
+    {
+        try {
+            $totalLinked = User::whereNotNull('telegram_chat_id')
+                ->where('telegram_notifications', true)
+                ->count();
+            
+            $totalMembers = User::count();
+            $linkageRate = $totalMembers > 0 ? ($totalLinked / $totalMembers) * 100 : 0;
+            
+            $recentlyLinked = User::whereNotNull('telegram_chat_id')
+                ->where('telegram_linked_at', '>=', now()->subDays(7))
+                ->count();
+
+            return [
+                'total_linked' => $totalLinked,
+                'linkage_rate' => round($linkageRate, 1),
+                'recently_linked' => $recentlyLinked,
+                'total_members' => $totalMembers,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'total_linked' => 0,
+                'linkage_rate' => 0,
+                'recently_linked' => 0,
+                'total_members' => 0,
             ];
         }
     }

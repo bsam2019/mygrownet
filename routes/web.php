@@ -235,6 +235,66 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings', [App\Http\Controllers\Admin\LgrSettingsController::class, 'update'])->name('settings.update');
     });
     
+    // Admin Analytics Management Routes
+    Route::middleware(['admin'])->prefix('admin/analytics')->name('admin.analytics.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'index'])->name('index');
+        Route::get('/member/{userId}', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'memberAnalytics'])->name('member');
+        Route::post('/recommendations/generate', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'generateRecommendations'])->name('recommendations.generate');
+        Route::post('/recommendations/bulk-generate', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'bulkGenerateRecommendations'])->name('recommendations.bulk-generate');
+        Route::post('/cache/clear', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'clearCache'])->name('cache.clear');
+    });
+    
+    // Admin Email Marketing Routes
+    Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+        // Templates & Analytics (must come before {id} routes)
+        Route::get('email-campaigns/templates', [App\Http\Controllers\Admin\EmailMarketingController::class, 'templates'])->name('email-campaigns.templates');
+        Route::get('email-campaigns/analytics', [App\Http\Controllers\Admin\EmailMarketingController::class, 'analytics'])->name('email-campaigns.analytics');
+        
+        // Template Builder
+        Route::get('email-templates/create', [App\Http\Controllers\Admin\EmailMarketingController::class, 'createTemplate'])->name('email-templates.create');
+        Route::post('email-templates', [App\Http\Controllers\Admin\EmailMarketingController::class, 'storeTemplate'])->name('email-templates.store');
+        Route::get('email-templates/{id}/edit', [App\Http\Controllers\Admin\EmailMarketingController::class, 'editTemplate'])->name('email-templates.edit');
+        Route::put('email-templates/{id}', [App\Http\Controllers\Admin\EmailMarketingController::class, 'updateTemplate'])->name('email-templates.update');
+        Route::delete('email-templates/{id}', [App\Http\Controllers\Admin\EmailMarketingController::class, 'destroyTemplate'])->name('email-templates.destroy');
+        
+        // Campaign CRUD
+        Route::get('email-campaigns', [App\Http\Controllers\Admin\EmailMarketingController::class, 'index'])->name('email-campaigns.index');
+        Route::get('email-campaigns/create', [App\Http\Controllers\Admin\EmailMarketingController::class, 'create'])->name('email-campaigns.create');
+        Route::post('email-campaigns', [App\Http\Controllers\Admin\EmailMarketingController::class, 'store'])->name('email-campaigns.store');
+        Route::get('email-campaigns/{id}', [App\Http\Controllers\Admin\EmailMarketingController::class, 'show'])->name('email-campaigns.show');
+        Route::get('email-campaigns/{id}/edit', [App\Http\Controllers\Admin\EmailMarketingController::class, 'edit'])->name('email-campaigns.edit');
+        Route::put('email-campaigns/{id}', [App\Http\Controllers\Admin\EmailMarketingController::class, 'update'])->name('email-campaigns.update');
+        Route::delete('email-campaigns/{id}', [App\Http\Controllers\Admin\EmailMarketingController::class, 'destroy'])->name('email-campaigns.destroy');
+        
+        // Campaign Actions
+        Route::post('email-campaigns/{id}/activate', [App\Http\Controllers\Admin\EmailMarketingController::class, 'activate'])->name('email-campaigns.activate');
+        Route::post('email-campaigns/{id}/pause', [App\Http\Controllers\Admin\EmailMarketingController::class, 'pause'])->name('email-campaigns.pause');
+        Route::post('email-campaigns/{id}/resume', [App\Http\Controllers\Admin\EmailMarketingController::class, 'resume'])->name('email-campaigns.resume');
+    });
+    
+    // Email Tracking Routes (Public)
+    Route::get('/email/track/{token}/open', [App\Http\Controllers\EmailTrackingController::class, 'trackOpen'])->name('email.track.open');
+    Route::get('/email/track/{token}/click', [App\Http\Controllers\EmailTrackingController::class, 'trackClick'])->name('email.track.click');
+    Route::get('/email/unsubscribe/{token}', [App\Http\Controllers\EmailTrackingController::class, 'unsubscribe'])->name('email.unsubscribe');
+
+    // Telegram Bot Webhook (Public)
+    Route::post('/telegram/webhook', [App\Http\Controllers\TelegramBotController::class, 'webhook'])->name('telegram.webhook');
+    
+    // Debug route - REMOVE IN PRODUCTION
+    Route::get('/debug/analytics', function () {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'Not authenticated'], 401);
+            }
+            $service = new App\Services\AnalyticsService();
+            $result = $service->getMemberPerformance($user);
+            return response()->json(['success' => true, 'data' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => $e->getLine(), 'file' => $e->getFile()], 500);
+        }
+    })->middleware('auth');
+    
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
     Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
@@ -554,6 +614,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Web Tools Routes (NO middleware - check in controller)
         Route::prefix('tools')->name('tools.')->group(function () {
+            // Tools Index
+            Route::get('/', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'index'])->name('index');
+            
             Route::get('/commission-calculator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'commissionCalculator'])->name('commission-calculator');
             Route::get('/goal-tracker', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'goalTracker'])->name('goal-tracker');
             Route::post('/goals', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'storeGoal'])->name('goals.store');
@@ -561,8 +624,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/network-visualizer', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'networkVisualizer'])->name('network-visualizer');
             
             // Premium Tools
-            Route::get('/business-plan-generator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'businessPlanGenerator'])->name('business-plan-generator');
-            Route::post('/business-plan', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'generateBusinessPlan'])->name('business-plan.generate');
+            Route::get('/business-plan-generator', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'index'])->name('business-plan-generator');
+            Route::post('/business-plan/save', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'save'])->name('business-plan.save');
+            Route::post('/business-plan/complete', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'complete'])->name('business-plan.complete');
+            Route::post('/business-plan/generate-ai', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'generateAI'])->name('business-plan.generate-ai');
+            Route::post('/business-plan/export', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'export'])->name('business-plan.export');
+            Route::get('/business-plan/{planId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'view'])->name('business-plan.view');
+            Route::get('/business-plan/download/{exportId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'download'])->name('business-plan.download');
+            Route::get('/business-plans', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'list'])->name('business-plans.list');
             Route::get('/roi-calculator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'roiCalculator'])->name('roi-calculator');
         });
         
@@ -597,6 +666,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/activities', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'activities'])->name('activities');
             Route::post('/start-cycle', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'startCycle'])->name('start-cycle');
             Route::post('/record-activity', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'recordActivity'])->name('record-activity');
+        });
+        
+        // Analytics Routes
+        Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::get('/', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'index'])->name('index');
+            Route::get('/performance', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'performance'])->name('performance');
+            Route::get('/recommendations', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'recommendations'])->name('recommendations');
+            Route::post('/recommendations/{id}/dismiss', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'dismissRecommendation'])->name('recommendations.dismiss');
+            Route::get('/predictions', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'predictions'])->name('predictions');
+            Route::get('/growth-potential', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'growthPotential'])->name('growth-potential');
+            Route::get('/churn-risk', [App\Http\Controllers\MyGrowNet\AnalyticsController::class, 'churnRisk'])->name('churn-risk');
         });
         
         // Finance Routes

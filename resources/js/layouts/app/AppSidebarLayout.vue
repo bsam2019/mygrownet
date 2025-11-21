@@ -48,22 +48,20 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="flex min-h-screen w-full">
+    <div class="flex h-screen w-full overflow-hidden">
         <AppSidebar 
             :footer-nav-items="footerNavItems" 
             @update:collapsed="handleSidebarToggle"
         />
         <div 
-            class="flex-1 flex flex-col transition-all duration-300" 
+            class="flex-1 flex flex-col transition-all duration-300 overflow-hidden" 
             :class="isMobile ? 'ml-0' : (sidebarCollapsed ? 'ml-16' : 'ml-64')"
         >
             <ImpersonationBanner v-if="isImpersonating" :user-name="currentUserName" />
-            <div class="flex h-full w-full flex-col">
-                <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-                <main class="flex-1 p-6">
-                    <slot />
-                </main>
-            </div>
+            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+            <main class="flex-1 overflow-y-auto p-6">
+                <slot />
+            </main>
         </div>
         
         <!-- PWA Install Prompt -->

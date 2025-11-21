@@ -56,6 +56,7 @@ const safeRoute = (routeName: string, fallback: string = '#') => {
 
 const userManagementNavItems: NavItem[] = [
     { title: 'Users', href: safeRoute('admin.users.index'), icon: Users },
+    { title: 'Analytics', href: safeRoute('admin.analytics.index'), icon: Activity },
     { title: 'Subscriptions', href: safeRoute('admin.subscriptions.index'), icon: CreditCard },
     { title: 'Packages', href: safeRoute('admin.packages.index'), icon: BookOpen },
     { title: 'Starter Kits', href: safeRoute('admin.starter-kit.dashboard'), icon: BookOpen },
@@ -128,6 +129,8 @@ const communicationNavItems: NavItem[] = [
     { title: 'Messages', href: safeRoute('admin.messages.index'), icon: 'MailIcon' },
     { title: 'Compose Message', href: safeRoute('admin.messages.compose'), icon: 'SendIcon' },
     { title: 'Support Tickets', href: safeRoute('admin.support.index'), icon: 'TicketIcon' },
+    { title: 'Email Campaigns', href: safeRoute('admin.email-campaigns.index'), icon: 'SendIcon' },
+    { title: 'Telegram Bot (FREE)', href: '#telegram', icon: 'BellIcon', badge: 'FREE' },
 ];
 
 const systemNavItems: NavItem[] = [
