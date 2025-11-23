@@ -18,9 +18,10 @@
                 <h3 class="text-lg font-bold">Settings</h3>
                 <button
                   @click="emit('close')"
+                  aria-label="Close settings modal"
                   class="p-2 hover:bg-white/20 rounded-full transition-colors"
                 >
-                  <XMarkIcon class="h-5 w-5" />
+                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>

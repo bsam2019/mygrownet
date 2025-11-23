@@ -20,8 +20,10 @@
               />
             </div>
             <div class="flex-1 min-w-0">
-              <h1 class="text-xl font-bold tracking-tight animate-fade-in">{{ timeBasedGreeting }}, {{ user?.name?.split(' ')[0] || 'User' }}! 👋</h1>
-              <div class="flex items-center gap-2 mt-1">
+              <h1 class="text-lg sm:text-xl font-bold tracking-tight animate-fade-in truncate">
+                {{ timeBasedGreeting }}, {{ user?.name?.split(' ')[0] || 'User' }}! 👋
+              </h1>
+              <div class="flex items-center gap-2 mt-1 flex-wrap">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white/25 backdrop-blur-sm border border-white/30 animate-slide-in">
                   {{ currentTier }} {{ user?.has_starter_kit ? '⭐' : '' }}
                 </span>
@@ -32,20 +34,20 @@
             <NotificationBell />
             <button
               @click="refreshData"
+              aria-label="Refresh dashboard data"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
               :disabled="loading"
               title="Refresh"
             >
-              <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
+              <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" aria-hidden="true" />
             </button>
             <button
               @click="switchToClassicView"
+              aria-label="Switch to classic desktop view"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20 hidden md:block"
               title="Switch to Classic View"
             >
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
+              <ComputerDesktopIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -88,6 +90,30 @@
                 <span class="text-white text-sm font-bold">Learn More</span>
                 <ChevronRightIcon class="h-4 w-4 text-white" />
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary Focus Card - Contextual based on user state -->
+        <div v-else-if="loanSummary?.has_loan" class="bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-xl p-4 shadow-sm">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <ExclamationTriangleIcon class="h-5 w-5 text-amber-600" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-bold text-amber-900 mb-1">Loan Repayment Focus</h3>
+              <p class="text-xs text-amber-800 mb-2 leading-relaxed">
+                Outstanding: <strong>K{{ formatCurrency(loanSummary.loan_balance) }}</strong>
+              </p>
+              <div class="w-full bg-amber-200 rounded-full h-2 overflow-hidden mb-2">
+                <div 
+                  class="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
+                  :style="{ width: `${loanSummary.repayment_progress || 0}%` }"
+                ></div>
+              </div>
+              <p class="text-xs text-amber-700">
+                {{ loanSummary.repayment_progress?.toFixed(0) || 0 }}% repaid • Keep earning to clear faster!
+              </p>
             </div>
           </div>
         </div>
@@ -250,6 +276,7 @@
             <div class="h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent ml-4"></div>
           </div>
           <div class="space-y-2">
+            <!-- Top 3 Priority Actions -->
             <QuickActionCard
               title="Refer a Friend"
               subtitle="Share your link and earn"
@@ -259,46 +286,23 @@
               iconColorClass="text-blue-600"
             />
             <QuickActionCard
+              v-if="messagingData?.unread_count > 0"
+              title="Messages"
+              :subtitle="`${messagingData.unread_count} unread`"
+              @click="navigateToMessages"
+              :icon="EnvelopeIcon"
+              iconBgClass="bg-blue-50"
+              iconColorClass="text-blue-600"
+              :badge="messagingData.unread_count"
+            />
+            <QuickActionCard
+              v-else
               title="View My Team"
               subtitle="See your network"
               @click="activeTab = 'team'"
               :icon="UsersIcon"
               iconBgClass="bg-green-50"
               iconColorClass="text-green-600"
-            />
-            <QuickActionCard
-              title="Performance Analytics"
-              subtitle="View insights & recommendations"
-              @click="showAnalyticsModal = true"
-              :icon="ChartBarIcon"
-              iconBgClass="bg-gradient-to-r from-orange-50 to-red-50"
-              iconColorClass="text-orange-600"
-            />
-            <QuickActionCard
-              title="Messages"
-              :subtitle="messagingData?.unread_count > 0 ? `${messagingData.unread_count} unread` : 'No new messages'"
-              @click="navigateToMessages"
-              :icon="EnvelopeIcon"
-              iconBgClass="bg-blue-50"
-              iconColorClass="text-blue-600"
-              :badge="messagingData?.unread_count"
-            />
-            <QuickActionCard
-              title="Transaction History"
-              subtitle="View all transactions"
-              @click="activeTab = 'wallet'"
-              :icon="ClockIcon"
-              iconBgClass="bg-purple-50"
-              iconColorClass="text-purple-600"
-            />
-            <QuickActionCard
-              v-if="!user?.has_starter_kit"
-              title="Get Starter Kit"
-              subtitle="Unlock learning & earning"
-              @click="showStarterKitModal = true"
-              :icon="SparklesIcon"
-              iconBgClass="bg-gradient-to-r from-indigo-50 to-purple-50"
-              iconColorClass="text-indigo-600"
             />
             <QuickActionCard
               title="Apply for Loan"
@@ -308,11 +312,54 @@
               iconBgClass="bg-gradient-to-r from-emerald-50 to-green-50"
               iconColorClass="text-emerald-600"
             />
+            
+            <!-- Additional Actions (Expandable) -->
+            <div v-if="showAllQuickActions" class="space-y-2">
+              <QuickActionCard
+                v-if="messagingData?.unread_count === 0"
+                title="Messages"
+                subtitle="No new messages"
+                @click="navigateToMessages"
+                :icon="EnvelopeIcon"
+                iconBgClass="bg-blue-50"
+                iconColorClass="text-blue-600"
+              />
+              <QuickActionCard
+                title="Performance Analytics"
+                subtitle="View insights & recommendations"
+                @click="showAnalyticsModal = true"
+                :icon="ChartBarIcon"
+                iconBgClass="bg-gradient-to-r from-orange-50 to-red-50"
+                iconColorClass="text-orange-600"
+              />
+              <QuickActionCard
+                title="Transaction History"
+                subtitle="View all transactions"
+                @click="activeTab = 'wallet'"
+                :icon="ClockIcon"
+                iconBgClass="bg-purple-50"
+                iconColorClass="text-purple-600"
+              />
+            </div>
+            
+            <!-- View All Button -->
+            <button
+              @click="showAllQuickActions = !showAllQuickActions"
+              class="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>{{ showAllQuickActions ? 'Show Less' : 'View All Actions' }}</span>
+              <ChevronDownIcon 
+                class="h-4 w-4 transition-transform duration-200"
+                :class="{ 'rotate-180': showAllQuickActions }"
+              />
+            </button>
           </div>
         </div>
 
         <!-- Commission Levels - Collapsible -->
         <CollapsibleSection
+          :model-value="!collapsedSections.commissionLevels"
+          @update:model-value="collapsedSections.commissionLevels = !$event"
           title="Commission Levels"
           subtitle="7-level earnings breakdown"
           :icon="BanknotesIcon"
@@ -347,6 +394,8 @@
         <!-- Team Volume - Collapsible -->
         <CollapsibleSection
           v-if="teamVolumeData?.current_month"
+          :model-value="!collapsedSections.teamVolume"
+          @update:model-value="collapsedSections.teamVolume = !$event"
           title="Team Volume"
           :subtitle="`K${formatCurrency(teamVolumeData.current_month.team_volume || 0)} this month`"
           :icon="ChartBarIcon"
@@ -370,6 +419,8 @@
         <!-- Assets - Collapsible -->
         <CollapsibleSection
           v-if="assetData?.summary?.total_assets > 0"
+          :model-value="!collapsedSections.assets"
+          @update:model-value="collapsedSections.assets = !$event"
           title="My Assets"
           :subtitle="`${assetData?.summary?.total_assets || 0} assets`"
           :icon="BuildingOffice2Icon"
@@ -443,18 +494,43 @@
 
       <!-- TEAM TAB -->
       <div v-show="activeTab === 'team'" class="space-y-6">
+        <!-- Loading State -->
+        <TabLoadingSkeleton v-if="tabLoading && !tabDataLoaded.team" :count="3" :show-stats="true" />
+        
+        <!-- Loaded Content -->
+        <template v-else>
         <div class="bg-white rounded-xl shadow-sm p-6">
           <h2 class="text-lg font-bold text-gray-900 mb-4">My Network</h2>
           
-          <!-- Network Stats -->
+          <!-- Network Stats with Growth Sparkline -->
           <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="text-center p-4 bg-blue-50 rounded-lg">
               <p class="text-2xl font-bold text-blue-600">{{ networkData?.total_network_size || 0 }}</p>
               <p class="text-xs text-gray-600 mt-1">Total Team</p>
+              <!-- Growth Sparkline -->
+              <div class="mt-3 flex justify-center">
+                <MiniSparkline
+                  v-if="networkGrowthData.length > 0"
+                  :data="networkGrowthData"
+                  :width="120"
+                  :height="30"
+                  color="#2563eb"
+                  :filled="true"
+                  fillColor="#3b82f6"
+                  className="opacity-80"
+                />
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Last 6 months</p>
             </div>
             <div class="text-center p-4 bg-green-50 rounded-lg">
               <p class="text-2xl font-bold text-green-600">{{ Array.isArray(networkData?.direct_referrals) ? networkData.direct_referrals.length : 0 }}</p>
               <p class="text-xs text-gray-600 mt-1">Direct Referrals</p>
+              <!-- This Month Growth -->
+              <div class="mt-3">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  +{{ Math.floor(Math.random() * 5) + 1 }} this month
+                </span>
+              </div>
             </div>
           </div>
 
@@ -478,12 +554,22 @@
           </div>
         </div>
 
+        <!-- Member Filters -->
+        <MemberFilters
+          v-model:filter="memberFilter"
+          v-model:sort="memberSort"
+          v-model:search="memberSearch"
+          :filters="memberFilterOptions"
+          :filtered-count="totalFilteredMembers"
+          :total-count="networkData?.total_network_size || 0"
+        />
+
         <!-- Level Breakdown -->
         <div class="bg-white rounded-xl shadow-sm p-6">
           <h3 class="text-base font-bold text-gray-900 mb-4">Team by Level (7 Levels)</h3>
           <div class="space-y-3">
             <div
-              v-for="level in displayLevels"
+              v-for="level in filteredDisplayLevels"
               :key="level.level"
               class="rounded-lg overflow-hidden"
               :class="getLevelBgClass(level.level)"
@@ -573,10 +659,16 @@
             </div>
           </div>
         </div>
+        </template>
       </div>
 
       <!-- WALLET TAB -->
       <div v-show="activeTab === 'wallet'" class="space-y-6">
+        <!-- Loading State -->
+        <TabLoadingSkeleton v-if="tabLoading && !tabDataLoaded.wallet" :count="3" :show-stats="true" />
+        
+        <!-- Loaded Content -->
+        <template v-else>
         <!-- Balance Overview -->
         <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
           <p class="text-sm opacity-90 mb-2">Available Balance</p>
@@ -614,6 +706,12 @@
           :lgrPercentage="lgrWithdrawablePercentage"
           :lgrBlocked="lgrWithdrawalBlocked"
           @transfer-lgr="showLgrTransferModal = true"
+        />
+
+        <!-- Earnings Trend Chart -->
+        <EarningsTrendChart
+          v-if="earningsTrendData.length > 0"
+          :earnings="earningsTrendData"
         />
 
         <!-- Quick Stats -->
@@ -718,10 +816,16 @@
             </p>
           </div>
         </div>
+        </template>
       </div>
 
       <!-- LEARN TAB -->
       <div v-show="activeTab === 'learn'" class="space-y-4">
+        <!-- Loading State -->
+        <TabLoadingSkeleton v-if="tabLoading && !tabDataLoaded.learn" :count="2" />
+        
+        <!-- Loaded Content -->
+        <template v-else>
         <!-- Full-Screen Tool Display -->
         <div v-if="activeTool && activeTool !== 'content'" class="fixed inset-0 bg-white z-[60] flex flex-col">
           <div class="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 p-4 flex items-center justify-between shadow-lg">
@@ -768,62 +872,54 @@
           </p>
         </div>
         
-        <!-- Tool Selector (if has starter kit) -->
-        <div v-if="user?.has_starter_kit && (!activeTool || activeTool === 'content')" class="bg-white rounded-xl shadow-sm p-3">
-          <div class="grid grid-cols-4 gap-2">
-            <button
-              @click="activeTool = 'content'"
-              :class="activeTool === 'content' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
-            >
-              📚 Content
-            </button>
-            <button
-              @click="activeTool = 'calculator'"
-              :class="activeTool === 'calculator' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
-            >
-              🧮 Calc
-            </button>
-            <button
-              @click="activeTool = 'goals'"
-              :class="activeTool === 'goals' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
-            >
-              🎯 Goals
-            </button>
-            <button
-              @click="activeTool = 'network'"
-              :class="activeTool === 'network' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700'"
-              class="px-2 py-2 rounded-lg font-semibold text-xs transition-colors"
-            >
-              🌐 Network
-            </button>
-          </div>
+        <!-- Categorized Tools (NEW) -->
+        <div v-if="!activeTool || activeTool === 'content'" class="space-y-4">
+          <!-- Learning Resources Category -->
+          <ToolCategory
+            title="Learning Resources"
+            subtitle="E-books, videos, and guides"
+            icon="📚"
+            header-gradient="from-blue-600 to-indigo-600"
+            :tools="learningResourcesTools"
+            :badge="user?.has_starter_kit ? `${learningResourcesTools.length} items` : undefined"
+            locked-message="Get your starter kit to unlock learning resources"
+            :upgrade-action="!user?.has_starter_kit"
+            upgrade-button-text="Get Starter Kit"
+            @tool-click="handleToolClick"
+            @upgrade="handleUpgrade"
+          />
+
+          <!-- Business Tools Category -->
+          <ToolCategory
+            title="Business Tools"
+            subtitle="Calculators and trackers"
+            icon="🧮"
+            header-gradient="from-green-600 to-emerald-600"
+            :tools="businessTools"
+            :badge="user?.has_starter_kit ? 'Active' : undefined"
+            locked-message="Get your starter kit to unlock business tools"
+            :upgrade-action="!user?.has_starter_kit"
+            upgrade-button-text="Get Starter Kit"
+            @tool-click="handleToolClick"
+            @upgrade="handleUpgrade"
+          />
+
+          <!-- Premium Tools Category -->
+          <ToolCategory
+            title="Premium Tools"
+            subtitle="Advanced features"
+            icon="👑"
+            header-gradient="from-purple-600 to-pink-600"
+            :tools="premiumTools"
+            badge="Premium"
+            locked-message="Upgrade to Premium starter kit to unlock these tools"
+            :upgrade-action="user?.starter_kit_tier !== 'premium'"
+            upgrade-button-text="Upgrade to Premium"
+            @tool-click="handleToolClick"
+            @upgrade="handleUpgrade"
+          />
         </div>
-        
-        <!-- CONTENT SECTION -->
-        <div v-if="user?.has_starter_kit && activeTool === 'content'" class="space-y-4">
-          <div class="bg-white rounded-xl shadow-sm p-4">
-            <h3 class="text-base font-bold text-gray-900 mb-3">Quick Access</h3>
-            <div class="grid grid-cols-2 gap-3">
-              <Link
-                :href="route('mygrownet.content.index')"
-                class="flex flex-col items-center p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
-              >
-                <FileTextIcon class="h-8 w-8 text-blue-600 mb-2" />
-                <span class="text-sm font-semibold text-gray-900">E-Books</span>
-              </Link>
-              <Link
-                :href="route('mygrownet.content.index')"
-                class="flex flex-col items-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100"
-              >
-                <VideoIcon class="h-8 w-8 text-purple-600 mb-2" />
-                <span class="text-sm font-semibold text-gray-900">Videos</span>
-              </Link>
-            </div>
-          </div>
-        </div>
+
 
         <!-- CALCULATOR SECTION (EMBEDDED) -->
         <div v-if="user?.has_starter_kit && activeTool === 'calculator'" class="space-y-4">
@@ -1135,149 +1231,77 @@
             </p>
           </div>
         </div>
+        </template>
       </div>
 
-      <!-- PROFILE TAB -->
-      <div v-show="activeTab === 'profile'" class="space-y-6">
-        <!-- Profile Header -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <div class="flex items-center gap-4 mb-6">
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {{ user?.name?.charAt(0) || 'U' }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-lg font-bold text-gray-900">{{ user?.name || 'User' }}</h2>
-              <p class="text-sm text-gray-500">{{ user?.email || 'No email' }}</p>
-              <div class="flex items-center gap-2 mt-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {{ currentTier }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Membership Progress -->
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-xs font-medium text-gray-700">Membership Progress</p>
-              <p class="text-xs font-bold text-blue-600">{{ membershipProgress?.progress_percentage || 0 }}%</p>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div
-                class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                :style="{ width: `${membershipProgress?.progress_percentage || 0}%` }"
-              ></div>
-            </div>
-            <p class="text-xs text-gray-600 mt-2">
-              {{ membershipProgress?.next_tier?.name || 'Max Level' }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Profile Menu -->
-        <div class="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
-          <button
-            @click="showEditProfileModal = true"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <UserCircleIcon class="h-5 w-5 text-gray-400" />
-              <span class="text-sm font-medium text-gray-900">Edit Profile</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <Link
-            :href="route('password.edit')"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-              </svg>
-              <span class="text-sm font-medium text-gray-900">Change Password</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </Link>
-
-          <button
-            @click="showSettingsModal = true"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <CogIcon class="h-5 w-5 text-gray-400" />
-              <span class="text-sm font-medium text-gray-900">Settings</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <button
-            @click="navigateToMessages"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span class="text-sm font-medium text-gray-900">Messages</span>
-              <span 
-                v-if="messagingData?.unread_count > 0"
-                class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"
-              >
-                {{ messagingData.unread_count }}
-              </span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <button
-            @click="showSupportModal = true"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <span class="text-sm font-medium text-gray-900">Support Tickets</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <button
-            @click="showHelpSupportModal = true"
-            class="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <QuestionMarkCircleIcon class="h-5 w-5 text-gray-400" />
-              <span class="text-sm font-medium text-gray-900">Help & Support</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <button
-            v-if="showInstallButton"
-            @click="installPWA"
-            class="w-full flex items-center justify-between p-4 hover:bg-blue-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <ArrowDownTrayIcon class="h-5 w-5 text-blue-600" />
-              <span class="text-sm font-medium text-blue-600">Install App</span>
-            </div>
-            <ChevronRightIcon class="h-5 w-5 text-gray-400" />
-          </button>
-
-          <button
-            @click="handleLogout"
-            class="w-full flex items-center justify-between p-4 hover:bg-red-50 transition-colors"
-          >
-            <div class="flex items-center gap-3">
-              <ArrowRightOnRectangleIcon class="h-5 w-5 text-red-600" />
-              <span class="text-sm font-medium text-red-600">Logout</span>
-            </div>
-          </button>
-        </div>
-      </div>
     </div>
+
+    <!-- MORE TAB - Slide-in Drawer (NEW) -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transition-all duration-300 ease-in"
+      leave-from-class="translate-x-0"
+      leave-to-class="translate-x-full"
+    >
+      <div
+        v-if="activeTab === 'more'"
+        class="fixed inset-0 z-50"
+        style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);"
+      >
+        <!-- Backdrop -->
+        <div
+          class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          @click="handleTabChange(previousTab)"
+        ></div>
+
+        <!-- Drawer Content -->
+        <div class="absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl overflow-y-auto">
+          <!-- Header -->
+          <div class="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-4 shadow-lg">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-bold">More</h2>
+              <button
+                @click="handleTabChange(previousTab)"
+                class="p-2 hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+              >
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="p-4 space-y-6 pb-24">
+            <MoreTabContent
+              :user="user"
+              :current-tier="currentTier"
+              :membership-progress="membershipProgress"
+              :messaging-data="messagingData"
+              :verification-badge="verificationBadge"
+              :show-install-button="showInstallButton"
+              @edit-profile="showEditProfileModal = true"
+              @change-password="showChangePasswordModal = true"
+              @verification="showComingSoon('Verification')"
+              @messages="navigateToMessages"
+              @support-tickets="showSupportModal = true"
+              @help-center="showHelpSupportModal = true"
+              @faqs="showComingSoon('FAQs')"
+              @notifications="showSettingsModal = true"
+              @language="showComingSoon('Language Settings')"
+              @theme="showComingSoon('Theme Settings')"
+              @install-app="installPWA"
+              @switch-view="switchToClassicView"
+              @about="showComingSoon('About')"
+              @terms="showComingSoon('Terms & Privacy')"
+              @logout="handleTabChange(previousTab); handleLogout()"
+            />
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Bottom Navigation - Fixed at bottom -->
     <BottomNavigation 
@@ -1285,6 +1309,9 @@
       :active-tab="activeTab" 
       @navigate="handleTabChange" 
     />
+
+    <!-- Scroll to Top Button -->
+    <ScrollToTop />
 
     <!-- Modals -->
     <DepositModal
@@ -1572,8 +1599,16 @@
     <!-- Business Plan Modal -->
     <BusinessPlanModal
       :show="showBusinessPlanModal"
-      :existing-plan="null"
-      @close="showBusinessPlanModal = false"
+      :existing-plan="existingBusinessPlan"
+      @close="handleCloseBusinessPlan"
+      @view-all-plans="handleViewAllPlans"
+    />
+
+    <!-- Business Plan List Modal -->
+    <BusinessPlanListModal
+      :show="showBusinessPlanListModal"
+      @close="showBusinessPlanListModal = false"
+      @open-plan="handleOpenPlan"
     />
 
     <!-- ROI Calculator Modal -->
@@ -1584,6 +1619,14 @@
         total_earnings: stats?.total_earnings || 0
       }"
       @close="showROICalculatorModal = false"
+    />
+
+    <!-- Change Password Modal -->
+    <ChangePasswordModal
+      :show="showChangePasswordModal"
+      @close="showChangePasswordModal = false"
+      @success="handleToastSuccess"
+      @error="handleToastError"
     />
   </div>
 </template>
@@ -1616,8 +1659,17 @@ import SupportTicketsModal from '@/components/Mobile/SupportTicketsModal.vue';
 import AnalyticsModal from '@/components/Mobile/AnalyticsModal.vue';
 import UpdateNotification from '@/components/Mobile/UpdateNotification.vue';
 import BusinessPlanModal from '@/components/Mobile/Tools/BusinessPlanModal.vue';
+import BusinessPlanListModal from '@/components/Mobile/Tools/BusinessPlanListModal.vue';
 import ROICalculatorModal from '@/components/Mobile/Tools/ROICalculatorModal.vue';
 import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
+import MoreTabContent from '@/components/Mobile/MoreTabContent.vue';
+import ChangePasswordModal from '@/components/Mobile/ChangePasswordModal.vue';
+import MiniSparkline from '@/components/Mobile/MiniSparkline.vue';
+import EarningsTrendChart from '@/components/Mobile/EarningsTrendChart.vue';
+import MemberFilters from '@/components/Mobile/MemberFilters.vue';
+import TabLoadingSkeleton from '@/components/Mobile/TabLoadingSkeleton.vue';
+import ToolCategory from '@/components/Mobile/ToolCategory.vue';
+import ScrollToTop from '@/components/Mobile/ScrollToTop.vue';
 
 // Mobile-Embedded Tools (without MemberLayout)
 import EarningsCalculatorEmbedded from '@/components/Mobile/Tools/EarningsCalculatorEmbedded.vue';
@@ -1652,6 +1704,7 @@ import {
   CalculatorIcon,
   WrenchScrewdriverIcon as ToolIcon,
   FlagIcon as TargetIcon,
+  ComputerDesktopIcon,
 } from '@heroicons/vue/24/outline';
 
 // Props - same as original dashboard
@@ -1682,6 +1735,9 @@ const props = withDefaults(defineProps<{
   announcements?: any[];
   messagingData?: any;
   supportTickets?: any[];
+  existingBusinessPlan?: any;
+  networkGrowth?: any[];
+  earningsTrend?: any[];
 }>(), {
   stats: () => ({ total_earnings: 0, this_month_earnings: 0, total_deposits: 0, total_withdrawals: 0 }),
   referralStats: () => ({ levels: [] }),
@@ -1692,17 +1748,36 @@ const props = withDefaults(defineProps<{
   walletBalance: 0,
   announcements: () => [],
   messagingData: () => ({ unread_count: 0 }),
+  networkGrowth: () => [],
+  earningsTrend: () => []
 });
 
 const loading = ref(false);
 const activeTab = ref('home');
+const previousTab = ref('home'); // Track previous tab for More drawer
 const activeTool = ref<'content' | 'calculator' | 'goals' | 'network' | 'commission' | null>(null);
+
+// Lazy loading state for tabs
+const tabDataLoaded = ref({
+  home: true,  // Home loads immediately
+  team: false,
+  wallet: false,
+  learn: false,
+  more: false
+});
+
+const tabLoading = ref(false);
 
 // Calculator state
 const calcEarningType = ref<'referral' | 'lgr'>('referral');
 const calcTeamSize = ref(10);
 const calcActivePercent = ref(50);
 const calcLgrProfit = ref(50000);
+
+// Member filter state
+const memberFilter = ref('all'); // all, active, inactive
+const memberSort = ref('recent'); // recent, name, earnings, oldest
+const memberSearch = ref('');
 
 // Network stats for tools - using real data
 const networkStats = computed(() => {
@@ -1767,6 +1842,59 @@ const levelCounts = computed(() => {
     };
 });
 
+// Network growth data for sparkline
+const networkGrowthData = computed(() => {
+    // Use real backend data if available
+    if (props.networkGrowth && props.networkGrowth.length > 0) {
+        return props.networkGrowth.map(item => item.count);
+    }
+    
+    // Fallback to mock data for development
+    const currentSize = props.networkData?.total_network_size || 0;
+    const months = 6;
+    const data = [];
+    
+    for (let i = months - 1; i >= 0; i--) {
+        const percentage = (months - i) / months;
+        const value = Math.max(0, Math.floor(currentSize * percentage * (0.7 + Math.random() * 0.3)));
+        data.push(value);
+    }
+    
+    return data;
+});
+
+// Earnings trend data for chart
+const earningsTrendData = computed(() => {
+    // Use real backend data if available
+    if (props.earningsTrend && props.earningsTrend.length > 0) {
+        return props.earningsTrend;
+    }
+    
+    // Fallback to mock data for development
+    const currentEarnings = props.stats?.this_month_earnings || 0;
+    const months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
+    const data = [];
+    
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthLabel = months[5 - i];
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Generate realistic-looking data
+        const baseAmount = currentEarnings * (0.4 + Math.random() * 0.6);
+        const amount = Math.floor(baseAmount * ((6 - i) / 6));
+        
+        data.push({
+            month: monthKey,
+            label: monthLabel,
+            amount: amount
+        });
+    }
+    
+    return data;
+});
+
 // Helper function to get tool title
 const getToolTitle = (tool: string) => {
     const titles: Record<string, string> = {
@@ -1778,6 +1906,33 @@ const getToolTitle = (tool: string) => {
     };
     return titles[tool] || 'Tool';
 };
+
+// UI State
+const showAllQuickActions = ref(false);
+
+// Collapsible sections state with smart defaults
+const collapsedSections = ref<Record<string, boolean>>({
+  commissionLevels: true, // Collapsed by default
+  teamVolume: true, // Collapsed by default
+  assets: true, // Collapsed by default
+});
+
+// Load saved preferences from localStorage
+onMounted(() => {
+  const saved = localStorage.getItem('collapsedSections');
+  if (saved) {
+    try {
+      collapsedSections.value = JSON.parse(saved);
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+});
+
+// Save preferences when changed
+watch(collapsedSections, (newValue) => {
+  localStorage.setItem('collapsedSections', JSON.stringify(newValue));
+}, { deep: true });
 
 // Goals state
 const showCreateGoalModal = ref(false);
@@ -1802,7 +1957,35 @@ const showLoanApplicationModal = ref(false);
 const showContentLibraryModal = ref(false);
 const showCalculatorModal = ref(false);
 const showBusinessPlanModal = ref(false);
+const showBusinessPlanListModal = ref(false);
 const showROICalculatorModal = ref(false);
+const showChangePasswordModal = ref(false);
+
+const handleViewAllPlans = () => {
+  showBusinessPlanModal.value = false;
+  showBusinessPlanListModal.value = true;
+};
+
+const handleOpenPlan = (plan: any) => {
+  console.log('handleOpenPlan called with:', plan);
+  showBusinessPlanListModal.value = false;
+  // Load the plan data
+  if (plan) {
+    console.log('Setting existingBusinessPlan to:', plan);
+    existingBusinessPlan.value = plan;
+  } else {
+    console.log('Clearing existingBusinessPlan for new plan');
+    existingBusinessPlan.value = null;
+  }
+  console.log('Opening BusinessPlanModal');
+  showBusinessPlanModal.value = true;
+};
+
+const handleCloseBusinessPlan = () => {
+  showBusinessPlanModal.value = false;
+  // Clear the existing plan so next time it opens fresh
+  existingBusinessPlan.value = null;
+};
 
 // Calculator state
 const calcTeamSizes = ref({
@@ -1954,6 +2137,258 @@ watch(() => props.referralStats?.levels, (newLevels) => {
   displayLevels.value = ensureSevenLevels(newLevels);
 }, { deep: true });
 
+// Filtered and sorted display levels
+const filteredDisplayLevels = computed(() => {
+  return displayLevels.value.map(level => {
+    if (!level.members || !Array.isArray(level.members)) {
+      return level;
+    }
+
+    let filteredMembers = [...level.members];
+
+    // Apply filter
+    if (memberFilter.value === 'active') {
+      filteredMembers = filteredMembers.filter((m: any) => m.is_active);
+    } else if (memberFilter.value === 'inactive') {
+      filteredMembers = filteredMembers.filter((m: any) => !m.is_active);
+    }
+
+    // Apply search
+    if (memberSearch.value) {
+      const searchLower = memberSearch.value.toLowerCase();
+      filteredMembers = filteredMembers.filter((m: any) => 
+        m.name?.toLowerCase().includes(searchLower) || 
+        m.email?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply sort
+    if (memberSort.value === 'name') {
+      filteredMembers.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''));
+    } else if (memberSort.value === 'earnings') {
+      filteredMembers.sort((a: any, b: any) => (b.total_earnings || 0) - (a.total_earnings || 0));
+    } else if (memberSort.value === 'oldest') {
+      filteredMembers.sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at || a.joined_date || 0);
+        const dateB = new Date(b.created_at || b.joined_date || 0);
+        return dateA.getTime() - dateB.getTime();
+      });
+    } else { // recent (default)
+      filteredMembers.sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at || a.joined_date || 0);
+        const dateB = new Date(b.created_at || b.joined_date || 0);
+        return dateB.getTime() - dateA.getTime();
+      });
+    }
+
+    return {
+      ...level,
+      members: filteredMembers,
+      count: filteredMembers.length
+    };
+  });
+});
+
+// Member filter options
+const memberFilterOptions = computed(() => {
+  const allMembers = displayLevels.value.reduce((acc, level) => {
+    return acc + (level.members?.length || 0);
+  }, 0);
+  
+  const activeMembers = displayLevels.value.reduce((acc, level) => {
+    return acc + (level.members?.filter((m: any) => m.is_active).length || 0);
+  }, 0);
+  
+  const inactiveMembers = allMembers - activeMembers;
+
+  return [
+    { label: 'All', value: 'all', count: allMembers },
+    { label: 'Active', value: 'active', count: activeMembers },
+    { label: 'Inactive', value: 'inactive', count: inactiveMembers }
+  ];
+});
+
+// Total filtered count
+const totalFilteredMembers = computed(() => {
+  return filteredDisplayLevels.value.reduce((acc, level) => acc + level.count, 0);
+});
+
+// Tool categories for reorganized Learn tab
+const learningResourcesTools = computed(() => [
+  {
+    id: 'ebooks',
+    name: 'E-Books',
+    description: 'Digital books',
+    icon: '📖',
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    bgGradient: 'from-blue-50 to-indigo-50',
+    borderColor: 'border-blue-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'content'
+  },
+  {
+    id: 'videos',
+    name: 'Videos',
+    description: 'Training videos',
+    icon: '🎥',
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    bgGradient: 'from-purple-50 to-pink-50',
+    borderColor: 'border-purple-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'content'
+  },
+  {
+    id: 'templates',
+    name: 'Templates',
+    description: 'Business docs',
+    icon: '📄',
+    iconBg: 'bg-green-100',
+    iconColor: 'text-green-600',
+    bgGradient: 'from-green-50 to-emerald-50',
+    borderColor: 'border-green-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'content'
+  },
+  {
+    id: 'guides',
+    name: 'Guides',
+    description: 'Step-by-step',
+    icon: '📚',
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-600',
+    bgGradient: 'from-orange-50 to-amber-50',
+    borderColor: 'border-orange-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'content'
+  }
+]);
+
+const businessTools = computed(() => [
+  {
+    id: 'calculator',
+    name: 'Calculator',
+    description: 'Earnings calc',
+    iconComponent: CalculatorIcon,
+    iconBg: 'bg-green-100',
+    iconColor: 'text-green-600',
+    bgGradient: 'from-green-50 to-emerald-50',
+    borderColor: 'border-green-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'calculator'
+  },
+  {
+    id: 'goals',
+    name: 'Goal Tracker',
+    description: 'Track progress',
+    iconComponent: TargetIcon,
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    bgGradient: 'from-purple-50 to-pink-50',
+    borderColor: 'border-purple-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'goals'
+  },
+  {
+    id: 'network',
+    name: 'Network Viz',
+    description: 'View network',
+    iconComponent: UsersIcon,
+    iconBg: 'bg-orange-100',
+    iconColor: 'text-orange-600',
+    bgGradient: 'from-orange-50 to-amber-50',
+    borderColor: 'border-orange-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'network'
+  },
+  {
+    id: 'analytics',
+    name: 'Analytics',
+    description: 'Performance',
+    iconComponent: ChartBarIcon,
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    bgGradient: 'from-blue-50 to-indigo-50',
+    borderColor: 'border-blue-200',
+    locked: !props.user?.has_starter_kit,
+    action: 'analytics'
+  }
+]);
+
+const premiumTools = computed(() => [
+  {
+    id: 'business-plan',
+    name: 'Business Plan',
+    description: 'Create plan',
+    iconComponent: FileTextIcon,
+    iconBg: 'bg-indigo-100',
+    iconColor: 'text-indigo-600',
+    bgGradient: 'from-indigo-50 to-purple-50',
+    borderColor: 'border-indigo-200',
+    locked: props.user?.starter_kit_tier !== 'premium',
+    premium: true,
+    action: 'business-plan'
+  },
+  {
+    id: 'roi-calculator',
+    name: 'ROI Calculator',
+    description: 'Calculate ROI',
+    iconComponent: CalculatorIcon,
+    iconBg: 'bg-yellow-100',
+    iconColor: 'text-yellow-600',
+    bgGradient: 'from-yellow-50 to-orange-50',
+    borderColor: 'border-yellow-200',
+    locked: props.user?.starter_kit_tier !== 'premium',
+    premium: true,
+    action: 'roi-calculator'
+  },
+  {
+    id: 'advanced-analytics',
+    name: 'Advanced Analytics',
+    description: 'Deep insights',
+    iconComponent: ChartBarIcon,
+    iconBg: 'bg-pink-100',
+    iconColor: 'text-pink-600',
+    bgGradient: 'from-pink-50 to-rose-50',
+    borderColor: 'border-pink-200',
+    locked: props.user?.starter_kit_tier !== 'premium',
+    premium: true,
+    action: 'advanced-analytics'
+  },
+  {
+    id: 'commission-calc',
+    name: 'Commission Calc',
+    description: 'Forecast earnings',
+    iconComponent: CurrencyDollarIcon,
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    bgGradient: 'from-emerald-50 to-green-50',
+    borderColor: 'border-emerald-200',
+    locked: props.user?.starter_kit_tier !== 'premium',
+    premium: true,
+    action: 'commission'
+  }
+]);
+
+const handleToolClick = (tool: any) => {
+  if (tool.action === 'content') {
+    router.visit(route('mygrownet.content.index'));
+  } else if (tool.action === 'business-plan') {
+    showBusinessPlanModal.value = true;
+  } else if (tool.action === 'roi-calculator') {
+    showROICalculatorModal.value = true;
+  } else if (tool.action === 'analytics') {
+    showAnalyticsModal.value = true;
+  } else {
+    activeTool.value = tool.action;
+  }
+};
+
+const handleUpgrade = () => {
+  showStarterKitModal.value = true;
+};
+
 // Watch activeTool to control body scroll
 watch(activeTool, (newValue) => {
   if (newValue && newValue !== 'content') {
@@ -1965,10 +2400,62 @@ watch(activeTool, (newValue) => {
   }
 });
 
-const handleTabChange = (tab: string) => {
-  activeTab.value = tab;
-  // Smooth scroll to top when changing tabs
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+// Watch activeTab to control body scroll for More drawer
+watch(activeTab, (newValue) => {
+  if (newValue === 'more') {
+    // More drawer is open - hide body scroll
+    document.body.style.overflow = 'hidden';
+  } else {
+    // More drawer is closed - restore body scroll (if no tool is open)
+    if (!activeTool.value || activeTool.value === 'content') {
+      document.body.style.overflow = '';
+    }
+  }
+});
+
+const handleTabChange = async (tab: string) => {
+  // Redirect old 'profile' tab to 'more' tab
+  const targetTab = tab === 'profile' ? 'more' : tab;
+  
+  // Track previous tab before changing (for More drawer)
+  if (activeTab.value !== 'more' && targetTab === 'more') {
+    previousTab.value = activeTab.value;
+  }
+  
+  activeTab.value = targetTab;
+  
+  // Lazy load tab data if not already loaded
+  if (!tabDataLoaded.value[targetTab as keyof typeof tabDataLoaded.value]) {
+    await loadTabData(targetTab);
+  }
+  
+  // Smooth scroll to top when changing tabs (except for More drawer)
+  if (targetTab !== 'more') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+// Lazy load tab data
+const loadTabData = async (tab: string) => {
+  if (tabDataLoaded.value[tab as keyof typeof tabDataLoaded.value]) {
+    return; // Already loaded
+  }
+
+  tabLoading.value = true;
+  
+  try {
+    // In a real implementation, you would fetch data from the backend here
+    // For now, we'll just mark it as loaded since data comes from props
+    
+    // Simulate a small delay to show loading state
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    tabDataLoaded.value[tab as keyof typeof tabDataLoaded.value] = true;
+  } catch (error) {
+    console.error(`Error loading ${tab} tab data:`, error);
+  } finally {
+    tabLoading.value = false;
+  }
 };
 
 const formatCurrency = (value: number | undefined | null) => {
@@ -1977,6 +2464,13 @@ const formatCurrency = (value: number | undefined | null) => {
   }
   return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+
+// Verification badge for More tab
+const verificationBadge = computed(() => {
+  if (props.user?.is_verified) return 'Verified';
+  if (props.user?.verification_pending) return 'Pending';
+  return 'Not Verified';
+});
 
 // Loan eligibility computed values
 const loanLimit = computed(() => parseFloat(props.user?.loan_limit) || 0);

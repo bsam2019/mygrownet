@@ -9,6 +9,7 @@ use App\Services\BusinessPlan\AIGenerationService;
 use App\Services\BusinessPlan\ExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class BusinessPlanController extends Controller
@@ -22,10 +23,18 @@ class BusinessPlanController extends Controller
     {
         $user = $request->user();
         
-        // Get user's existing business plan
-        $existingPlan = BusinessPlan::where('user_id', $user->id)
-            ->latest()
-            ->first();
+        // If a specific plan ID is provided, load that plan
+        $planId = $request->query('plan');
+        if ($planId) {
+            $existingPlan = BusinessPlan::where('id', $planId)
+                ->where('user_id', $user->id)
+                ->first();
+        } else {
+            // Otherwise, get user's latest business plan
+            $existingPlan = BusinessPlan::where('user_id', $user->id)
+                ->latest()
+                ->first();
+        }
         
         return Inertia::render('MyGrowNet/Tools/BusinessPlanGenerator', [
             'existingPlan' => $existingPlan,
@@ -185,7 +194,7 @@ class BusinessPlanController extends Controller
 
         // Check premium access for PDF/Word
         if (in_array($validated['export_type'], ['pdf', 'word', 'pitch_deck']) && $user->starter_kit_tier !== 'premium') {
-            return back()->with('error', 'This export format is a premium feature.');
+            abort(403, 'This export format is a premium feature.');
         }
 
         $plan = BusinessPlan::where('id', $validated['business_plan_id'])
@@ -193,24 +202,40 @@ class BusinessPlanController extends Controller
             ->firstOrFail();
 
         try {
+            // Generate the file
             $filePath = $this->exportService->export($plan, $validated['export_type']);
+            $fullPath = storage_path('app/' . $filePath);
+            
+            if (!file_exists($fullPath)) {
+                abort(404, 'Export file not found');
+            }
 
-            // Save export record
-            $export = BusinessPlanExport::create([
+            // Save export record for tracking
+            BusinessPlanExport::create([
                 'business_plan_id' => $plan->id,
                 'user_id' => $user->id,
                 'export_type' => $validated['export_type'],
                 'file_path' => $filePath,
                 'download_count' => 1,
-                'last_downloaded_at' => now(),
             ]);
-
-            return back()->with([
-                'success' => 'Business plan exported successfully!',
-                'downloadUrl' => route('mygrownet.tools.business-plan.download', $export->id),
-            ]);
+            
+            // Determine file extension and name
+            $extension = match($validated['export_type']) {
+                'pdf' => 'pdf',
+                'word' => 'rtf',
+                'template' => 'html',
+                'pitch_deck' => 'html',
+            };
+            
+            $filename = Str::slug($plan->business_name) . '_business_plan.' . $extension;
+            
+            // Return file for download
+            return response()->download($fullPath, $filename);
+            
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to export business plan. Please try again.');
+            \Log::error('Business plan export failed: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            abort(500, 'Failed to export business plan: ' . $e->getMessage());
         }
     }
 
@@ -222,11 +247,20 @@ class BusinessPlanController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
+        $fullPath = storage_path('app/' . $export->file_path);
+        
+        if (!file_exists($fullPath)) {
+            \Log::error('Export file not found: ' . $fullPath);
+            abort(404, 'Export file not found');
+        }
+
         // Update download count
         $export->increment('download_count');
         $export->update(['last_downloaded_at' => now()]);
 
-        return response()->download(storage_path('app/' . $export->file_path));
+        $filename = "business_plan_{$export->business_plan_id}." . pathinfo($export->file_path, PATHINFO_EXTENSION);
+        
+        return response()->download($fullPath, $filename);
     }
 
     public function view(Request $request, int $planId)
@@ -255,5 +289,37 @@ class BusinessPlanController extends Controller
             'plans' => $plans,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
+    }
+
+    public function apiList(Request $request)
+    {
+        $user = $request->user();
+        
+        $plans = BusinessPlan::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'plans' => $plans,
+        ]);
+    }
+
+    public function delete(Request $request, int $planId)
+    {
+        $user = $request->user();
+        
+        $plan = BusinessPlan::where('id', $planId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        // Delete associated exports
+        BusinessPlanExport::where('business_plan_id', $planId)->delete();
+        
+        // Delete the plan
+        $plan->delete();
+
+        return redirect()
+            ->route('mygrownet.tools.business-plans.list')
+            ->with('success', 'Business plan deleted successfully');
     }
 }

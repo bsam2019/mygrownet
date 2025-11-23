@@ -11,8 +11,8 @@
                   <h3 class="text-lg font-bold">Transfer LGR to Wallet</h3>
                   <p class="text-xs text-yellow-100 mt-0.5">Convert loyalty rewards to cash</p>
                 </div>
-                <button @click="emit('close')" class="p-2 hover:bg-white/20 rounded-full">
-                  <XMarkIcon class="h-5 w-5" />
+                <button @click="emit('close')" aria-label="Close LGR transfer modal" class="p-2 hover:bg-white/20 rounded-full">
+                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>

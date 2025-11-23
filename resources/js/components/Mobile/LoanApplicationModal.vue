@@ -12,8 +12,8 @@
                   <h3 class="text-lg font-bold">Apply for Loan</h3>
                   <p class="text-xs text-blue-100 mt-0.5">Quick funding for your needs</p>
                 </div>
-                <button @click="emit('close')" class="p-2 hover:bg-white/20 rounded-full">
-                  <XMarkIcon class="h-5 w-5" />
+                <button @click="emit('close')" aria-label="Close loan application modal" class="p-2 hover:bg-white/20 rounded-full">
+                  <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>

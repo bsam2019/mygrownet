@@ -20,8 +20,8 @@
                         <div class="sticky top-0 text-white px-6 py-4 rounded-t-3xl flex-shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-lg font-bold">Support Tickets</h3>
-                                <button @click="closeModal" class="p-2 hover:bg-white/20 rounded-full transition-colors">
-                                    <XMarkIcon class="h-5 w-5" />
+                                <button @click="closeModal" aria-label="Close support tickets modal" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                                    <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                                 </button>
                             </div>
                         </div>

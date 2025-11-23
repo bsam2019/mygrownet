@@ -14,13 +14,48 @@ export function usePWA() {
   const swRegistration = ref<ServiceWorkerRegistration | null>(null);
 
   onMounted(() => {
-    // Check if already installed
-    isStandalone.value = window.matchMedia('(display-mode: standalone)').matches ||
-                         (window.navigator as any).standalone === true;
+    // Check if already installed using multiple methods
+    const isDisplayModeStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isInStandaloneMode = isDisplayModeStandalone || isIOSStandalone;
+    
+    // Additional check: if URL has ?source=pwa or running in app window
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPWASource = urlParams.get('source') === 'pwa';
+    
+    // Check if running in a PWA window (desktop Chrome/Edge)
+    const isDesktopPWA = window.matchMedia('(display-mode: window-controls-overlay)').matches;
+    
+    isStandalone.value = isInStandaloneMode || isDesktopPWA || isPWASource;
     
     // Check localStorage for install state
     const savedInstallState = localStorage.getItem(INSTALL_STATE_KEY);
     isInstalled.value = isStandalone.value || savedInstallState === 'true';
+    
+    // Log detection results for debugging
+    console.log('[PWA] Detection:', {
+      isDisplayModeStandalone,
+      isIOSStandalone,
+      isDesktopPWA,
+      isPWASource,
+      savedInstallState,
+      finalIsInstalled: isInstalled.value
+    });
+
+    // Additional check using getInstalledRelatedApps API (Chrome/Edge)
+    if ('getInstalledRelatedApps' in navigator) {
+      (navigator as any).getInstalledRelatedApps()
+        .then((relatedApps: any[]) => {
+          if (relatedApps.length > 0) {
+            console.log('[PWA] Detected installed via getInstalledRelatedApps');
+            isInstalled.value = true;
+            localStorage.setItem(INSTALL_STATE_KEY, 'true');
+          }
+        })
+        .catch((error: any) => {
+          console.warn('[PWA] getInstalledRelatedApps failed:', error);
+        });
+    }
 
     // Register service worker with update checking
     if ('serviceWorker' in navigator) {
@@ -227,6 +262,17 @@ export function usePWA() {
     );
     
     console.log('[PWA] Cache cleared');
+  };
+
+  const showInstallationSuccess = () => {
+    // Show a success message to the user
+    console.log('[PWA] Installation successful!');
+    
+    // You can trigger a toast notification here
+    // For now, just log it
+    if (typeof window !== 'undefined' && (window as any).showToast) {
+      (window as any).showToast('App installed successfully!', 'success');
+    }
   };
 
   return {

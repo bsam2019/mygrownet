@@ -648,6 +648,12 @@ class DashboardController extends Controller
             ];
         }
 
+        // NEW: Network growth data for sparkline (last 6 months)
+        $networkGrowth = $this->getNetworkGrowthData($user);
+        
+        // NEW: Earnings trend data for chart (last 6 months)
+        $earningsTrend = $this->getEarningsTrendData($user);
+
         return [
             'user' => $user,
             'subscription' => $currentSubscription,
@@ -668,6 +674,8 @@ class DashboardController extends Controller
             'assetData' => $assetData,
             'communityProjectData' => $communityProjectData,
             'loanSummary' => $loanSummary,
+            'networkGrowth' => $networkGrowth,
+            'earningsTrend' => $earningsTrend,
             'stats' => [
                 'total_earnings' => $user->calculateTotalEarnings(),
                 'achievement_count' => $user->achievements_count ?? 0,
@@ -743,7 +751,7 @@ class DashboardController extends Controller
                         'email' => $user->email,
                         'phone' => $user->phone,
                         'tier' => $user->currentMembershipTier->name ?? 'Associate',
-                        'is_active' => $user->subscriptions->count() > 0,
+                        'is_active' => $user->has_starter_kit ?? false, // Active = has starter kit
                         'joined_date' => $user->created_at->format('M d, Y'),
                         'has_starter_kit' => $user->has_starter_kit ?? false,
                         'starter_kit_tier' => $user->starter_kit_tier ?? null,
@@ -1087,17 +1095,63 @@ class DashboardController extends Controller
     private function getNetworkGrowthData(User $user): array
     {
         $growth = [];
+        $cumulativeCount = 0;
+        
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
+            
+            // Get cumulative count up to this month
+            $cumulativeCount = UserNetwork::where('referrer_id', $user->id)
+                ->where('created_at', '<=', $month->endOfMonth())
+                ->count();
+            
             $growth[] = [
-                'month' => $month->format('M Y'),
-                'new_members' => UserNetwork::where('referrer_id', $user->id)
-                    ->whereMonth('created_at', $month->month)
-                    ->whereYear('created_at', $month->year)
-                    ->count()
+                'month' => $month->format('Y-m'),
+                'count' => $cumulativeCount
             ];
         }
+        
         return $growth;
+    }
+
+    /**
+     * Get earnings trend data for the last 6 months
+     */
+    private function getEarningsTrendData(User $user): array
+    {
+        $trend = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            
+            // Get total earnings for this month from referral commissions
+            $referralEarnings = ReferralCommission::where('referrer_id', $user->id)
+                ->where('status', 'paid')
+                ->whereMonth('created_at', $month->month)
+                ->whereYear('created_at', $month->year)
+                ->sum('amount');
+            
+            // Get LGR/bonus earnings if available
+            $bonusEarnings = 0;
+            if (\Schema::hasTable('bonus_transactions')) {
+                $bonusEarnings = \DB::table('bonus_transactions')
+                    ->where('user_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->sum('amount');
+            }
+            
+            $totalAmount = (float) ($referralEarnings + $bonusEarnings);
+            
+            $trend[] = [
+                'month' => $month->format('Y-m'),
+                'label' => $month->format('M'),
+                'amount' => $totalAmount
+            ];
+        }
+        
+        return $trend;
     }
 
     private function getNetworkLevelBreakdown(User $user): array
@@ -2185,6 +2239,186 @@ class DashboardController extends Controller
             return $days . 'd ago';
         } else {
             return $dateTime->format('M j');
+        }
+    }
+
+    /**
+     * Get network growth data for the last 6 months
+     * API endpoint for sparkline chart
+     */
+    public function getNetworkGrowth(Request $request)
+    {
+        $user = $request->user();
+        
+        try {
+            // Get network growth for last 6 months
+            $networkGrowth = UserNetwork::where('referrer_id', $user->id)
+                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subMonths(6))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'month' => $item->month,
+                        'value' => $item->count
+                    ];
+                });
+
+            // Fill in missing months with 0
+            $months = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = now()->subMonths($i)->format('Y-m');
+                $existing = $networkGrowth->firstWhere('month', $month);
+                $months[] = [
+                    'month' => $month,
+                    'value' => $existing ? $existing['value'] : 0
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $months
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Network Growth API Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load network growth data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get earnings trend data for the last 6 months
+     * API endpoint for earnings chart
+     */
+    public function getEarningsTrend(Request $request)
+    {
+        $user = $request->user();
+        
+        try {
+            // Get earnings from referral commissions for last 6 months
+            $earningsTrend = ReferralCommission::where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as amount')
+                ->where('created_at', '>=', now()->subMonths(6))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            // Fill in missing months with 0 and format
+            $months = [];
+            $monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            for ($i = 5; $i >= 0; $i--) {
+                $date = now()->subMonths($i);
+                $month = $date->format('Y-m');
+                $existing = $earningsTrend->firstWhere('month', $month);
+                
+                $months[] = [
+                    'month' => $month,
+                    'label' => $monthLabels[$date->month - 1],
+                    'amount' => $existing ? (float)$existing->amount : 0
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $months
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Earnings Trend API Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load earnings trend data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get team tab data (lazy loading)
+     */
+    public function getTeamData(Request $request)
+    {
+        $user = $request->user();
+        
+        try {
+            $networkData = $this->getNetworkStructureData($user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $networkData
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Team Data API Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load team data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get wallet tab data (lazy loading)
+     */
+    public function getWalletData(Request $request)
+    {
+        $user = $request->user();
+        
+        try {
+            $walletBalance = $this->walletService->calculateBalance($user);
+            $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
+            
+            $data = [
+                'walletBalance' => $walletBalance,
+                'verificationLimits' => $limits,
+                'remainingDailyLimit' => $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0),
+                'pendingWithdrawals' => \App\Models\WithdrawalRequest::where('user_id', $user->id)
+                    ->where('status', 'pending')
+                    ->count()
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Wallet Data API Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load wallet data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get learn tab data (lazy loading)
+     */
+    public function getLearnData(Request $request)
+    {
+        $user = $request->user();
+        
+        try {
+            // For now, return basic data
+            // Can be expanded to include courses, resources, etc.
+            $data = [
+                'has_starter_kit' => $user->has_starter_kit ?? false,
+                'starter_kit_tier' => $user->starter_kit_tier ?? null,
+                'courses_completed' => 0, // TODO: Implement when courses are ready
+                'resources_available' => $user->has_starter_kit ? 12 : 0
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Learn Data API Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load learn data'
+            ], 500);
         }
     }
 }

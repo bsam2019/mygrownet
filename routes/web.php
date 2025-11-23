@@ -628,10 +628,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/business-plan/save', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'save'])->name('business-plan.save');
             Route::post('/business-plan/complete', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'complete'])->name('business-plan.complete');
             Route::post('/business-plan/generate-ai', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'generateAI'])->name('business-plan.generate-ai');
-            Route::post('/business-plan/export', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'export'])->name('business-plan.export');
-            Route::get('/business-plan/{planId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'view'])->name('business-plan.view');
+            Route::get('/business-plan/export', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'export'])->name('business-plan.export');
             Route::get('/business-plan/download/{exportId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'download'])->name('business-plan.download');
             Route::get('/business-plans', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'list'])->name('business-plans.list');
+            Route::get('/business-plans/api', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'apiList'])->name('business-plans.api');
+            Route::get('/business-plan/{planId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'view'])->name('business-plan.view');
+            Route::delete('/business-plan/{planId}', [App\Http\Controllers\MyGrowNet\BusinessPlanController::class, 'delete'])->name('business-plan.delete');
             Route::get('/roi-calculator', [App\Http\Controllers\MyGrowNet\ToolsController::class, 'roiCalculator'])->name('roi-calculator');
         });
         
@@ -743,6 +745,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/project-contribute/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'contributeToProject'])->name('project-contribute');
             Route::post('/project-vote/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'castProjectVote'])->name('project-vote');
             Route::get('/project-analytics/{project}', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getProjectAnalytics'])->name('project-analytics');
+            
+            // Mobile Dashboard Enhancement APIs
+            Route::get('/network-growth', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getNetworkGrowth'])->name('network-growth');
+            Route::get('/earnings-trend', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getEarningsTrend'])->name('earnings-trend');
+            Route::get('/team-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getTeamData'])->name('team-data');
+            Route::get('/wallet-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getWalletData'])->name('wallet-data');
+            Route::get('/learn-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getLearnData'])->name('learn-data');
         });
     });
 

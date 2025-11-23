@@ -24,10 +24,11 @@ class RefreshCsrfToken
         $response = $next($request);
 
         // Add CSRF token to response headers for PWA and AJAX requests
-        $response->header('X-CSRF-Token', csrf_token());
-        
-        // Also add to meta tag via header for Vue to pick up
-        $response->header('X-CSRF-Token-Meta', csrf_token());
+        // Skip for file downloads (BinaryFileResponse doesn't support headers)
+        if (!$response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+            $response->header('X-CSRF-Token', csrf_token());
+            $response->header('X-CSRF-Token-Meta', csrf_token());
+        }
 
         return $response;
     }

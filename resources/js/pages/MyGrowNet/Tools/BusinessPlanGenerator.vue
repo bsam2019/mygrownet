@@ -442,8 +442,15 @@
             <div class="flex items-start">
               <InformationCircleIcon class="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
               <div>
-                <h4 class="font-semibold text-blue-900">Auto-Calculated Metrics</h4>
-                <p class="text-sm text-blue-700 mt-1">Enter your costs and revenue. We'll calculate profit, break-even, and projections automatically.</p>
+                <h4 class="font-semibold text-blue-900">Smart Financial Calculator</h4>
+                <p class="text-sm text-blue-700 mt-1">Just enter your basic numbers - we'll do the math for you:</p>
+                <ul class="text-sm text-blue-700 mt-2 ml-4 list-disc space-y-1">
+                  <li><strong>Monthly Revenue</strong> = Price Per Unit × Sales Volume (auto-calculated)</li>
+                  <li><strong>Monthly Profit</strong> = Revenue - Operating Costs</li>
+                  <li><strong>Break-even Point</strong> = Months to recover startup costs</li>
+                  <li><strong>Profit Margin</strong> = Profit as % of revenue</li>
+                  <li><strong>Yearly Projections</strong> = Monthly profit × 12</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -471,17 +478,6 @@
               />
             </FormField>
 
-            <FormField label="Expected Monthly Revenue (K)" required>
-              <input
-                v-model.number="form.expected_monthly_revenue"
-                type="number"
-                min="0"
-                step="100"
-                class="form-input"
-                placeholder="25000"
-              />
-            </FormField>
-
             <FormField label="Price Per Unit/Service (K)" required>
               <input
                 v-model.number="form.price_per_unit"
@@ -501,6 +497,21 @@
                 class="form-input"
                 placeholder="50"
               />
+            </FormField>
+
+            <FormField label="Expected Monthly Revenue (K)" hint="Auto-calculated from Price × Volume">
+              <div class="relative">
+                <input
+                  :value="formatNumber(form.expected_monthly_revenue || 0)"
+                  type="text"
+                  readonly
+                  class="form-input bg-gray-50 cursor-not-allowed"
+                  placeholder="Auto-calculated"
+                />
+                <div class="absolute right-3 top-3 text-green-600">
+                  <SparklesIcon class="w-5 h-5" />
+                </div>
+              </div>
             </FormField>
 
             <FormField label="Staff Salaries (K/month)">
@@ -538,25 +549,45 @@
           </div>
 
           <!-- Financial Summary -->
-          <div v-if="financialCalculations" class="mt-8 bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Financial Projections</h3>
+          <div class="mt-8 bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <SparklesIcon class="w-5 h-5 mr-2 text-green-600" />
+              Financial Projections (Auto-Calculated)
+            </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="bg-white rounded-lg p-4 shadow-sm">
-                <p class="text-sm text-gray-600">Monthly Profit</p>
+                <p class="text-sm text-gray-600 mb-1">Monthly Profit</p>
                 <p class="text-2xl font-bold" :class="financialCalculations.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'">
                   K{{ formatNumber(financialCalculations.monthlyProfit) }}
                 </p>
+                <p class="text-xs text-gray-500 mt-1">Revenue - Operating Costs</p>
               </div>
               <div class="bg-white rounded-lg p-4 shadow-sm">
-                <p class="text-sm text-gray-600">Break-Even Point</p>
+                <p class="text-sm text-gray-600 mb-1">Break-Even Point</p>
                 <p class="text-2xl font-bold text-blue-600">
-                  {{ financialCalculations.breakEvenMonths }} months
+                  {{ financialCalculations.breakEvenMonths }} {{ financialCalculations.breakEvenMonths !== '∞' ? 'months' : '' }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">Time to recover startup costs</p>
+              </div>
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <p class="text-sm text-gray-600 mb-1">Profit Margin</p>
+                <p class="text-2xl font-bold text-purple-600">
+                  {{ financialCalculations.profitMargin }}%
+                </p>
+                <p class="text-xs text-gray-500 mt-1">Profit as % of revenue</p>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-white rounded-lg p-4 shadow-sm">
+                <p class="text-sm text-gray-600 mb-1">Yearly Profit Projection</p>
+                <p class="text-xl font-bold text-green-600">
+                  K{{ formatNumber(financialCalculations.yearlyProfit) }}
                 </p>
               </div>
               <div class="bg-white rounded-lg p-4 shadow-sm">
-                <p class="text-sm text-gray-600">Profit Margin</p>
-                <p class="text-2xl font-bold text-purple-600">
-                  {{ financialCalculations.profitMargin }}%
+                <p class="text-sm text-gray-600 mb-1">Revenue per Unit</p>
+                <p class="text-xl font-bold text-blue-600">
+                  K{{ formatNumber(form.price_per_unit || 0) }}
                 </p>
               </div>
             </div>
@@ -664,34 +695,19 @@
             </div>
           </div>
 
-          <!-- Export Options -->
-          <div class="mt-8">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Export Your Business Plan</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <ExportCard
-                title="Editable Template"
-                description="Download as editable MyGrowNet template"
-                icon="document"
-                badge="FREE"
-                @click="exportPlan('template')"
-              />
-              <ExportCard
-                title="PDF Document"
-                description="Professional PDF format"
-                icon="pdf"
-                badge="PREMIUM"
-                :locked="userTier !== 'premium'"
-                @click="exportPlan('pdf')"
-              />
-              <ExportCard
-                title="Word Document"
-                description="Editable Word format"
-                icon="word"
-                badge="PREMIUM"
-                :locked="userTier !== 'premium'"
-                @click="exportPlan('word')"
-              />
-            </div>
+          <!-- Preview & Download -->
+          <div class="mt-8 text-center">
+            <button
+              @click="showPreview = true"
+              class="inline-flex items-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+            >
+              <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview & Download Business Plan
+            </button>
+            <p class="mt-3 text-sm text-gray-500">Review your complete business plan before downloading</p>
           </div>
         </div>
       </div>
@@ -739,15 +755,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Preview Modal -->
+    <PreviewModal
+      :show="showPreview"
+      :plan="form"
+      :isPremium="userTier === 'premium'"
+      @close="showPreview = false"
+      @download="exportPlan"
+    />
   </MemberLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 import MemberLayout from '@/Layouts/MemberLayout.vue';
 import AIButton from '@/Components/BusinessPlan/AIButton.vue';
 import ExportCard from '@/Components/BusinessPlan/ExportCard.vue';
+import PreviewModal from '@/Components/BusinessPlan/PreviewModal.vue';
 import StepHeader from '@/Components/BusinessPlan/StepHeader.vue';
 import FormField from '@/Components/BusinessPlan/FormField.vue';
 import { 
@@ -766,11 +792,15 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Access page props for flash data
+const page = usePage();
+
 const totalSteps = 10;
 const currentStep = ref(1);
 const processing = ref(false);
 const saving = ref(false);
 const aiLoading = ref(false);
+const showPreview = ref(false);
 
 const steps = [
   { short: 'Info', full: 'Business Information' },
@@ -870,14 +900,14 @@ const form = ref({
   equipment_tools: '',
   supplier_list: '',
   operational_workflow: '',
-  startup_costs: 0,
-  monthly_operating_costs: 0,
-  expected_monthly_revenue: 0,
-  price_per_unit: 0,
-  expected_sales_volume: 0,
-  staff_salaries: 0,
-  inventory_costs: 0,
-  utilities_costs: 0,
+  startup_costs: null as number | null,
+  monthly_operating_costs: null as number | null,
+  expected_monthly_revenue: null as number | null,
+  price_per_unit: null as number | null,
+  expected_sales_volume: null as number | null,
+  staff_salaries: null as number | null,
+  inventory_costs: null as number | null,
+  utilities_costs: null as number | null,
   key_risks: '',
   mitigation_strategies: '',
   timeline: '',
@@ -890,22 +920,64 @@ const form = ref({
 // Load existing plan if available
 if (props.existingPlan) {
   Object.assign(form.value, props.existingPlan);
+  
+  // Parse JSON fields
   if (props.existingPlan.marketing_channels) {
     form.value.marketing_channels = JSON.parse(props.existingPlan.marketing_channels);
   }
   if (props.existingPlan.sales_channels) {
     form.value.sales_channels = JSON.parse(props.existingPlan.sales_channels);
   }
+  
+  // Convert numeric fields from strings to numbers
+  const numericFields = [
+    'startup_costs',
+    'monthly_operating_costs',
+    'expected_monthly_revenue',
+    'price_per_unit',
+    'expected_sales_volume',
+    'staff_salaries',
+    'inventory_costs',
+    'utilities_costs'
+  ];
+  
+  numericFields.forEach(field => {
+    if (props.existingPlan[field] !== null && props.existingPlan[field] !== undefined) {
+      form.value[field] = Number(props.existingPlan[field]);
+    }
+  });
+  
   currentStep.value = props.existingPlan.current_step || 1;
+  
+  // Recalculate revenue from price and volume if both exist
+  // This ensures the calculation is correct even if saved data is outdated
+  if (form.value.price_per_unit && form.value.expected_sales_volume) {
+    form.value.expected_monthly_revenue = form.value.price_per_unit * form.value.expected_sales_volume;
+  }
 }
+
+// Auto-calculate revenue from price and volume
+watch([() => form.value.price_per_unit, () => form.value.expected_sales_volume], ([price, volume]) => {
+  if (price && volume) {
+    form.value.expected_monthly_revenue = price * volume;
+  }
+});
+
+// Recalculate revenue on mount if price and volume exist
+onMounted(() => {
+  if (form.value.price_per_unit && form.value.expected_sales_volume) {
+    form.value.expected_monthly_revenue = form.value.price_per_unit * form.value.expected_sales_volume;
+  }
+});
 
 // Financial calculations
 const financialCalculations = computed(() => {
-  const revenue = form.value.expected_monthly_revenue;
-  const costs = form.value.monthly_operating_costs;
+  const revenue = Number(form.value.expected_monthly_revenue) || 0;
+  const costs = Number(form.value.monthly_operating_costs) || 0;
+  const startupCosts = Number(form.value.startup_costs) || 0;
   const monthlyProfit = revenue - costs;
-  const profitMargin = revenue > 0 ? ((monthlyProfit / revenue) * 100).toFixed(1) : 0;
-  const breakEvenMonths = monthlyProfit > 0 ? Math.ceil(form.value.startup_costs / monthlyProfit) : 0;
+  const profitMargin = revenue > 0 ? ((monthlyProfit / revenue) * 100).toFixed(1) : '0.0';
+  const breakEvenMonths = monthlyProfit > 0 ? Math.ceil(startupCosts / monthlyProfit) : '∞';
   
   return {
     monthlyProfit,
@@ -976,8 +1048,12 @@ const validateStep = (step: number): boolean => {
       }
       break;
     case 7:
-      if (form.value.startup_costs === 0 || form.value.expected_monthly_revenue === 0) {
-        alert('Please enter your financial projections');
+      if (!form.value.startup_costs || !form.value.monthly_operating_costs) {
+        alert('Please enter your startup costs and monthly operating costs');
+        return false;
+      }
+      if (!form.value.price_per_unit || !form.value.expected_sales_volume) {
+        alert('Please enter your price per unit and expected sales volume');
         return false;
       }
       break;
@@ -1068,23 +1144,24 @@ const generateAI = (field: string) => {
   });
 };
 
-// Export plan
+// Export plan - Direct download
 const exportPlan = (type: 'template' | 'pdf' | 'word') => {
+  // Check if plan is saved
+  if (!form.value.id) {
+    alert('Please save your business plan first before exporting.');
+    saveDraft();
+    return;
+  }
+
+  // Check premium access
   if ((type === 'pdf' || type === 'word') && props.userTier !== 'premium') {
     alert('PDF and Word exports are premium features. Upgrade to access them.');
     return;
   }
   
-  router.post(route('mygrownet.tools.business-plan.export'), {
-    business_plan_id: form.value.id,
-    export_type: type,
-  }, {
-    onSuccess: (page: any) => {
-      if (page.props.downloadUrl) {
-        window.open(page.props.downloadUrl, '_blank');
-      }
-    },
-  });
+  // Direct download - open in new window
+  const url = `/mygrownet/tools/business-plan/export?business_plan_id=${form.value.id}&export_type=${type}`;
+  window.open(url, '_blank');
 };
 
 // Utility
@@ -1094,6 +1171,13 @@ const formatNumber = (num: number) => {
     maximumFractionDigits: 0,
   }).format(num);
 };
+
+// Auto-calculate revenue from price and volume
+watch([() => form.value.price_per_unit, () => form.value.expected_sales_volume], ([price, volume]) => {
+  if (price && volume) {
+    form.value.expected_monthly_revenue = price * volume;
+  }
+});
 
 // Auto-save on step change
 watch(currentStep, () => {

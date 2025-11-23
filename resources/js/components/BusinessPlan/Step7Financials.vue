@@ -42,8 +42,8 @@
                 v-model.number="localForm.startupCosts[key]"
                 type="number"
                 min="0"
+                step="any"
                 class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg"
-                @input="calculateTotals"
               />
             </div>
           </div>
@@ -70,8 +70,8 @@
                 v-model.number="localForm.monthlyOperatingCosts[key]"
                 type="number"
                 min="0"
+                step="any"
                 class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg"
-                @input="calculateTotals"
               />
             </div>
           </div>
@@ -97,8 +97,8 @@
                 v-model.number="localForm.revenueProjections.pricePerUnit"
                 type="number"
                 min="0"
+                step="any"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                @input="calculateTotals"
               />
             </div>
             <div>
@@ -109,8 +109,8 @@
                 v-model.number="localForm.revenueProjections.monthlySalesVolume"
                 type="number"
                 min="0"
+                step="any"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                @input="calculateTotals"
               />
             </div>
           </div>
@@ -224,7 +224,30 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['update:modelValue', 'next', 'previous', 'save']);
 
-const localForm = ref({ ...props.modelValue });
+const localForm = ref({
+  startupCosts: {
+    equipment: 0,
+    inventory: 0,
+    licenses_permits: 0,
+    marketing: 0,
+    rent_deposit: 0,
+    other: 0,
+  },
+  monthlyOperatingCosts: {
+    rent: 0,
+    salaries: 0,
+    utilities: 0,
+    supplies: 0,
+    marketing: 0,
+    transport: 0,
+    other: 0,
+  },
+  revenueProjections: {
+    pricePerUnit: 0,
+    monthlySalesVolume: 0,
+  },
+  ...props.modelValue
+});
 
 // Initialize financial data if not present
 onMounted(() => {
@@ -255,6 +278,8 @@ onMounted(() => {
       monthlySalesVolume: 0,
     };
   }
+  // Emit initial values
+  emit('update:modelValue', localForm.value);
 });
 
 watch(localForm, (newVal) => {
@@ -304,11 +329,6 @@ const breakEvenMonths = computed(() => {
   if (monthlyProfit.value <= 0) return '∞';
   return Math.ceil(totalStartupCosts.value / monthlyProfit.value);
 });
-
-const calculateTotals = () => {
-  // Trigger reactivity
-  localForm.value = { ...localForm.value };
-};
 
 const formatNumber = (num: number) => {
   return new Intl.NumberFormat('en-US', {

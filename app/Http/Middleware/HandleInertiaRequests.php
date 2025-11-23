@@ -96,6 +96,7 @@ class HandleInertiaRequests extends Middleware
                 'message' => fn () => $request->session()->get('message'),
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                'downloadUrl' => fn () => $request->session()->get('downloadUrl'),
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
         ];

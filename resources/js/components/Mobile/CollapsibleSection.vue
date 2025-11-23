@@ -27,15 +27,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ChevronDownIcon } from '@heroicons/vue/24/outline';
 
-defineProps<{
+const props = withDefaults(defineProps<{
   title: string;
   subtitle?: string;
   icon?: any;
   defaultOpen?: boolean;
+  modelValue?: boolean;
+}>(), {
+  defaultOpen: false,
+});
+
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean];
 }>();
 
-const isOpen = ref(false);
+const isOpen = ref(props.modelValue ?? props.defaultOpen);
+
+// Watch for external changes
+watch(() => props.modelValue, (newValue) => {
+  if (newValue !== undefined) {
+    isOpen.value = newValue;
+  }
+});
+
+// Emit changes
+watch(isOpen, (newValue) => {
+  emit('update:modelValue', newValue);
+});
 </script>

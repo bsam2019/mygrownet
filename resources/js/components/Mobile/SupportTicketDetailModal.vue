@@ -15,8 +15,8 @@
                                     <h3 class="text-lg font-bold">Ticket #{{ ticket.id }}</h3>
                                     <p class="text-xs text-white/80">{{ getCategoryLabel(ticket.category) }}</p>
                                 </div>
-                                <button @click="closeModal" class="p-2 hover:bg-white/20 rounded-full transition-colors">
-                                    <XMarkIcon class="h-5 w-5" />
+                                <button @click="closeModal" aria-label="Close ticket detail modal" class="p-2 hover:bg-white/20 rounded-full transition-colors">
+                                    <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                                 </button>
                             </div>
                         </div>

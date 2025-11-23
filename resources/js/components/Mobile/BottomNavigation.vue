@@ -5,6 +5,8 @@
         v-for="item in navItems"
         :key="item.name"
         @click="emit('navigate', item.tab)"
+        :aria-label="`Navigate to ${item.name}`"
+        :aria-current="activeTab === item.tab ? 'page' : undefined"
         class="flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-xl relative group"
         :class="activeTab === item.tab ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 active:scale-95'"
       >
@@ -19,7 +21,7 @@
           class="p-1.5 rounded-xl transition-all duration-200"
           :class="activeTab === item.tab ? 'bg-blue-50' : 'group-hover:bg-gray-50'"
         >
-          <component :is="item.icon" class="h-6 w-6 stroke-current stroke-2" />
+          <component :is="item.icon" class="h-6 w-6 stroke-current stroke-2" aria-hidden="true" />
         </div>
         
         <span 
@@ -40,7 +42,8 @@ import {
   UsersIcon, 
   WalletIcon, 
   AcademicCapIcon,
-  UserCircleIcon 
+  UserCircleIcon,
+  EllipsisHorizontalIcon
 } from '@heroicons/vue/24/outline';
 
 import { computed } from 'vue';
@@ -62,6 +65,6 @@ const navItems = computed(() => [
   { name: 'Team', tab: 'team', icon: UsersIcon },
   { name: 'Wallet', tab: 'wallet', icon: WalletIcon },
   { name: 'Learn', tab: 'learn', icon: AcademicCapIcon },
-  { name: 'Profile', tab: 'profile', icon: UserCircleIcon },
+  { name: 'More', tab: 'more', icon: EllipsisHorizontalIcon },
 ]);
 </script>
