@@ -2346,32 +2346,33 @@ const premiumTools = computed(() => [
   {
     id: 'advanced-analytics',
     name: 'Advanced Analytics',
-    description: 'Deep insights',
+    description: 'Coming soon 🚀',
     iconComponent: ChartBarIcon,
     iconBg: 'bg-pink-100',
     iconColor: 'text-pink-600',
     bgGradient: 'from-pink-50 to-rose-50',
     borderColor: 'border-pink-200',
-    locked: props.user?.starter_kit_tier !== 'premium',
+    locked: true, // Always locked (coming soon)
     premium: true,
     action: 'advanced-analytics'
   },
   {
     id: 'commission-calc',
     name: 'Commission Calc',
-    description: 'Forecast earnings',
+    description: 'Coming soon 🚀',
     iconComponent: CurrencyDollarIcon,
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
     bgGradient: 'from-emerald-50 to-green-50',
     borderColor: 'border-emerald-200',
-    locked: props.user?.starter_kit_tier !== 'premium',
+    locked: true, // Always locked (coming soon)
     premium: true,
     action: 'commission'
   }
 ]);
 
 const handleToolClick = (tool: any) => {
+  // Implemented tools
   if (tool.action === 'content') {
     router.visit(route('mygrownet.content.index'));
   } else if (tool.action === 'business-plan') {
@@ -2380,8 +2381,27 @@ const handleToolClick = (tool: any) => {
     showROICalculatorModal.value = true;
   } else if (tool.action === 'analytics') {
     showAnalyticsModal.value = true;
-  } else {
+  } 
+  // Tools with embedded views
+  else if (['calculator', 'goals', 'network'].includes(tool.action)) {
     activeTool.value = tool.action;
+  }
+  // Coming soon tools
+  else if (['advanced-analytics', 'commission'].includes(tool.action)) {
+    showComingSoonToast(tool.name);
+  }
+  // Default: set active tool
+  else {
+    activeTool.value = tool.action;
+  }
+};
+
+const showComingSoonToast = (toolName: string) => {
+  // Show a toast notification
+  if (typeof window !== 'undefined' && (window as any).showToast) {
+    (window as any).showToast(`${toolName} coming soon! 🚀`, 'info');
+  } else {
+    alert(`${toolName} is coming soon! 🚀\n\nWe're working hard to bring you this feature.`);
   }
 };
 

@@ -122,9 +122,22 @@ const financeNavItems: NavItem[] = [
         href: safeRoute('admin.withdrawals.index'),
         icon: Activity,
     },
+];
+
+const investorRelationsNavItems: NavItem[] = [
     {
-        title: 'Receipts',
-        href: safeRoute('admin.receipts.index'),
+        title: 'Investment Rounds',
+        href: safeRoute('admin.investment-rounds.index'),
+        icon: Target,
+    },
+    {
+        title: 'Investor Accounts',
+        href: safeRoute('admin.investor-accounts.index'),
+        icon: UserCheck,
+    },
+    {
+        title: 'Investor Inquiries',
+        href: safeRoute('admin.investor-inquiries.index', '#'),
         icon: FileText,
     },
 ];
@@ -224,6 +237,7 @@ const systemNavItems: NavItem[] = [
 const navGroups: NavGroup[] = [
     { label: 'Venture Builder', items: ventureNavItems },
     { label: 'User Management', items: userManagementNavItems },
+    { label: 'Investor Relations', items: investorRelationsNavItems },
     { label: 'Finance', items: financeNavItems },
     { label: 'Reports & Analytics', items: reportsNavItems },
     { label: 'Employees', items: employeeNavItems },

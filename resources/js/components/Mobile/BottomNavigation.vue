@@ -41,7 +41,7 @@ import {
   HomeIcon, 
   UsersIcon, 
   WalletIcon, 
-  AcademicCapIcon,
+  WrenchScrewdriverIcon,
   UserCircleIcon,
   EllipsisHorizontalIcon
 } from '@heroicons/vue/24/outline';
@@ -64,7 +64,7 @@ const navItems = computed(() => [
   { name: 'Home', tab: 'home', icon: HomeIcon },
   { name: 'Team', tab: 'team', icon: UsersIcon },
   { name: 'Wallet', tab: 'wallet', icon: WalletIcon },
-  { name: 'Learn', tab: 'learn', icon: AcademicCapIcon },
+  { name: 'Tools', tab: 'learn', icon: WrenchScrewdriverIcon },
   { name: 'More', tab: 'more', icon: EllipsisHorizontalIcon },
 ]);
 </script>

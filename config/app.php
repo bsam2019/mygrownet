@@ -84,6 +84,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Maintenance Mode Bypass Token
+    |--------------------------------------------------------------------------
+    |
+    | This secret token allows administrators to bypass maintenance mode by
+    | appending ?bypass=TOKEN to any URL. The token is stored in session.
+    |
+    */
+
+    'maintenance_bypass_token' => env('MAINTENANCE_BYPASS_TOKEN', 'mygrownet-admin-2025'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

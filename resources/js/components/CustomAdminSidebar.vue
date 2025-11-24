@@ -85,6 +85,12 @@ const financeNavItems: NavItem[] = [
     { title: 'Loan Management', href: safeRoute('admin.loans.index'), icon: CreditCard },
 ];
 
+const investorRelationsNavItems: NavItem[] = [
+    { title: 'Investment Rounds', href: safeRoute('admin.investment-rounds.index'), icon: TrendingUp },
+    { title: 'Investor Accounts', href: safeRoute('admin.investor-accounts.index'), icon: UserCheck },
+    { title: 'Investor Inquiries', href: safeRoute('admin.investor-inquiries.index', '#'), icon: FileText },
+];
+
 const ventureBuilderNavItems: NavItem[] = [
     { title: 'Dashboard', href: safeRoute('admin.ventures.dashboard'), icon: LayoutGrid },
     { title: 'All Ventures', href: safeRoute('admin.ventures.index'), icon: Briefcase },
@@ -370,6 +376,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.finance" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in financeNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Investor Relations Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('investorRelations')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Investor Relations')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <TrendingUp class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Investor Relations</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.investorRelations }" />
+                    </button>
+
+                    <div v-if="showSubmenu.investorRelations" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in investorRelationsNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

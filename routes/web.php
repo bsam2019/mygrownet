@@ -23,6 +23,24 @@ use App\Http\Controllers\ComplianceController;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+
+// Public Investor Routes
+Route::prefix('investors')->name('investors.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Investor\PublicController::class, 'index'])->name('index');
+    Route::post('/inquiry', [App\Http\Controllers\Investor\PublicController::class, 'submitInquiry'])->name('inquiry');
+});
+
+// Investor Portal Routes (Login & Dashboard)
+Route::prefix('investor')->name('investor.')->group(function () {
+    // Login routes (no auth middleware - uses session-based investor auth)
+    Route::get('/login', [App\Http\Controllers\Investor\InvestorPortalController::class, 'showLogin'])->name('login');
+    Route::post('/login', [App\Http\Controllers\Investor\InvestorPortalController::class, 'login']);
+    
+    // Protected investor routes (requires investor session)
+    Route::get('/dashboard', [App\Http\Controllers\Investor\InvestorPortalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/documents', [App\Http\Controllers\Investor\InvestorPortalController::class, 'documents'])->name('documents');
+    Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
+});
 Route::get('/features', fn() => Inertia::render('Features'))->name('features');
 Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
 Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
@@ -120,6 +138,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Member Profit Sharing Routes
     Route::middleware(['auth'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
         Route::get('/profit-shares', [App\Http\Controllers\MyGrowNet\ProfitShareController::class, 'index'])->name('profit-shares');
+    });
+
+    // Admin Investment Rounds Management
+    Route::middleware(['admin'])->prefix('admin/investment-rounds')->name('admin.investment-rounds.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'update'])->name('update');
+        Route::post('/{id}/activate', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'activate'])->name('activate');
+        Route::post('/{id}/set-featured', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'setFeatured'])->name('set-featured');
+        Route::post('/{id}/close', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'close'])->name('close');
+        Route::post('/{id}/reopen', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'reopen'])->name('reopen');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\InvestmentRoundController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Investor Accounts Management
+    Route::middleware(['admin'])->prefix('admin/investor-accounts')->name('admin.investor-accounts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\InvestorAccountController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\InvestorAccountController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\InvestorAccountController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\InvestorAccountController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\InvestorAccountController::class, 'update'])->name('update');
+        Route::post('/{id}/convert', [App\Http\Controllers\Admin\InvestorAccountController::class, 'convertToShareholder'])->name('convert');
+        Route::post('/{id}/exit', [App\Http\Controllers\Admin\InvestorAccountController::class, 'markAsExited'])->name('exit');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\InvestorAccountController::class, 'destroy'])->name('destroy');
     });
 
     // Admin Points Management Routes
@@ -297,7 +341,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Leave impersonation - no admin middleware needed (user is impersonated)
     Route::post('/admin/leave-impersonation', [App\Http\Controllers\Admin\ImpersonateController::class, 'leave'])->name('admin.leave-impersonation');
-    Route::get('/investor/dashboard', [DashboardController::class, 'investorDashboard'])->name('investor.dashboard');
     Route::get('/dashboard/stats', [DashboardStatsController::class, 'index'])->name('dashboard.stats');
     
     // Dashboard API Endpoints (MyGrowNet)
