@@ -39,6 +39,9 @@ Route::prefix('investor')->name('investor.')->group(function () {
     // Protected investor routes (requires investor session)
     Route::get('/dashboard', [App\Http\Controllers\Investor\InvestorPortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/documents', [App\Http\Controllers\Investor\InvestorPortalController::class, 'documents'])->name('documents');
+    Route::get('/documents/{id}/download', [App\Http\Controllers\Investor\InvestorPortalController::class, 'downloadDocument'])->name('documents.download');
+    Route::post('/announcements/{id}/read', [App\Http\Controllers\Investor\InvestorPortalController::class, 'markAnnouncementAsRead'])->name('announcements.read');
+    Route::get('/messages', [App\Http\Controllers\Investor\InvestorPortalController::class, 'messages'])->name('messages');
     Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
 });
 Route::get('/features', fn() => Inertia::render('Features'))->name('features');
@@ -164,6 +167,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{id}/convert', [App\Http\Controllers\Admin\InvestorAccountController::class, 'convertToShareholder'])->name('convert');
         Route::post('/{id}/exit', [App\Http\Controllers\Admin\InvestorAccountController::class, 'markAsExited'])->name('exit');
         Route::delete('/{id}', [App\Http\Controllers\Admin\InvestorAccountController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Investor Documents Management
+    Route::middleware(['admin'])->prefix('admin/investor-documents')->name('admin.investor-documents.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'update'])->name('update');
+        Route::get('/{id}/download', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'download'])->name('download');
+        Route::post('/{id}/archive', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'archive'])->name('archive');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\InvestorDocumentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Admin Financial Reports Management
+    Route::middleware(['admin'])->prefix('admin/financial-reports')->name('admin.financial-reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\FinancialReportController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\FinancialReportController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\FinancialReportController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\Admin\FinancialReportController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\FinancialReportController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\FinancialReportController::class, 'update'])->name('update');
+        Route::post('/{id}/publish', [App\Http\Controllers\Admin\FinancialReportController::class, 'publish'])->name('publish');
+        Route::post('/{id}/unpublish', [App\Http\Controllers\Admin\FinancialReportController::class, 'unpublish'])->name('unpublish');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\FinancialReportController::class, 'destroy'])->name('destroy');
     });
 
     // Admin Points Management Routes

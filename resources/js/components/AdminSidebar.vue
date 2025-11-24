@@ -136,6 +136,11 @@ const investorRelationsNavItems: NavItem[] = [
         icon: UserCheck,
     },
     {
+        title: 'Investor Documents',
+        href: safeRoute('admin.investor-documents.index'),
+        icon: FolderOpen,
+    },
+    {
         title: 'Investor Inquiries',
         href: safeRoute('admin.investor-inquiries.index', '#'),
         icon: FileText,

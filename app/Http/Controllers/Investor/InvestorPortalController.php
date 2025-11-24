@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestmentRoundRepositoryInterface;
+use App\Domain\Investor\Services\DocumentManagementService;
+use App\Domain\Investor\Services\FinancialReportingService;
+use App\Domain\Announcement\Services\AnnouncementService;
+use App\Infrastructure\Persistence\Eloquent\Announcement\AnnouncementModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +18,10 @@ class InvestorPortalController extends Controller
 {
     public function __construct(
         private readonly InvestorAccountRepositoryInterface $accountRepository,
-        private readonly InvestmentRoundRepositoryInterface $roundRepository
+        private readonly InvestmentRoundRepositoryInterface $roundRepository,
+        private readonly DocumentManagementService $documentService,
+        private readonly FinancialReportingService $financialReportingService,
+        private readonly AnnouncementService $announcementService
     ) {}
 
     /**
@@ -120,6 +127,16 @@ class InvestorPortalController extends Controller
             $totalRaised = $investmentAmount;
         }
 
+        // Get financial reporting data
+        try {
+            $financialSummary = $this->financialReportingService->getFinancialSummary();
+            $performanceMetrics = $this->financialReportingService->getPerformanceMetrics();
+        } catch (\Exception $e) {
+            \Log::error('Financial Reporting Error: ' . $e->getMessage());
+            $financialSummary = null;
+            $performanceMetrics = null;
+        }
+
         // Build the data array
         $data = [
             'investor' => [
@@ -162,7 +179,38 @@ class InvestorPortalController extends Controller
                 'retention_rate' => $platformMetrics['retention'],
                 'revenue_growth' => $platformMetrics['revenueGrowth'],
             ],
+            'financialSummary' => $financialSummary,
+            'performanceMetrics' => $performanceMetrics,
         ];
+
+        // Get investor-relevant announcements
+        try {
+            $announcements = AnnouncementModel::active()
+                ->where(function ($query) use ($investor) {
+                    $query->where('target_audience', 'all')
+                          ->orWhere('target_audience', 'investors')
+                          ->orWhere('target_audience', 'like', '%investor%');
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function ($announcement) {
+                    return [
+                        'id' => $announcement->id,
+                        'title' => $announcement->title,
+                        'message' => $announcement->message,
+                        'type' => $announcement->type,
+                        'is_urgent' => $announcement->is_urgent,
+                        'created_at' => $announcement->created_at->format('Y-m-d H:i:s'),
+                        'created_at_human' => $announcement->created_at->diffForHumans(),
+                    ];
+                });
+            
+            $data['announcements'] = $announcements;
+        } catch (\Exception $e) {
+            \Log::error('Announcements Error: ' . $e->getMessage());
+            $data['announcements'] = [];
+        }
 
         // Debug: Log the complete data
         \Log::info('Investor Dashboard Complete Data', ['keys' => array_keys($data)]);
@@ -183,11 +231,128 @@ class InvestorPortalController extends Controller
 
         $investor = $this->accountRepository->findById($investorId);
 
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        // Get documents grouped by category
+        $groupedDocuments = $this->documentService->getDocumentsForInvestor(
+            $investor->getInvestmentRoundId()
+        );
+
+        // Get available categories for filtering
+        $categories = $this->documentService->getAvailableCategories();
+
         return Inertia::render('Investor/Documents', [
             'investor' => [
+                'id' => $investor->getId(),
+                'name' => $investor->getName(),
+                'email' => $investor->getEmail(),
+                'investment_date' => $investor->getInvestmentDate()->format('Y-m-d'),
+            ],
+            'groupedDocuments' => $groupedDocuments,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Download a document
+     */
+    public function downloadDocument(int $documentId)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        try {
+            $fileData = $this->documentService->downloadDocument(
+                documentId: $documentId,
+                investorAccountId: $investor->getId(),
+                ipAddress: request()->ip(),
+                userAgent: request()->userAgent()
+            );
+
+            return response()->download(
+                $fileData['path'],
+                $fileData['name'],
+                ['Content-Type' => $fileData['mime_type']]
+            );
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark announcement as read for investor
+     */
+    public function markAnnouncementAsRead($id)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        try {
+            // Use the existing announcement read tracking system
+            // Create a pseudo user ID for investors to track reads
+            $pseudoUserId = 'investor_' . $investorId;
+            
+            \DB::table('announcement_reads')->updateOrInsert(
+                [
+                    'announcement_id' => $id,
+                    'user_id' => $pseudoUserId,
+                ],
+                [
+                    'read_at' => now(),
+                ]
+            );
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Mark announcement as read error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to mark as read'], 500);
+        }
+    }
+
+    /**
+     * Show investor messages
+     */
+    public function messages()
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        // For now, return a simple messages page
+        // In the future, this could integrate with the messaging system
+        return Inertia::render('Investor/Messages', [
+            'investor' => [
+                'id' => $investor->getId(),
                 'name' => $investor->getName(),
                 'email' => $investor->getEmail(),
             ],
+            'messages' => [], // Placeholder for future implementation
         ]);
     }
 

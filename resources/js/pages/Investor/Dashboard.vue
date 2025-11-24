@@ -23,6 +23,12 @@
               Documents
             </Link>
             <Link
+              :href="route('investor.messages')"
+              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Messages
+            </Link>
+            <Link
               :href="route('investor.logout')"
               method="post"
               as="button"
@@ -37,6 +43,16 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Announcements -->
+      <div v-if="announcements && announcements.length > 0" class="mb-8 space-y-4">
+        <AnnouncementBanner
+          v-for="announcement in visibleAnnouncements"
+          :key="announcement.id"
+          :announcement="announcement"
+          @dismissed="dismissAnnouncement"
+        />
+      </div>
+
       <!-- Welcome Banner -->
       <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-6 mb-8 text-white">
         <div class="flex items-center justify-between">
@@ -223,9 +239,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import AnnouncementBanner from '@/components/Investor/AnnouncementBanner.vue';
 
 interface Investor {
   id: number;
@@ -274,12 +291,35 @@ interface PlatformMetrics {
   };
 }
 
+interface Announcement {
+  id: number;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'success' | 'urgent';
+  is_urgent: boolean;
+  created_at: string;
+  created_at_human: string;
+}
+
 const props = defineProps<{
   investor: Investor;
   investmentMetrics?: InvestmentMetrics;
   round?: InvestmentRound | null;
   platformMetrics?: PlatformMetrics;
+  announcements?: Announcement[];
 }>();
+
+// Announcement state
+const dismissedAnnouncements = ref<number[]>([]);
+
+const visibleAnnouncements = computed(() => {
+  if (!props.announcements) return [];
+  return props.announcements.filter(a => !dismissedAnnouncements.value.includes(a.id));
+});
+
+const dismissAnnouncement = (id: number) => {
+  dismissedAnnouncements.value.push(id);
+};
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
