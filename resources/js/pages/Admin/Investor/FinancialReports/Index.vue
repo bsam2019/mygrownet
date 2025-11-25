@@ -62,7 +62,7 @@
           <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
-                <TrendingUpIcon class="h-6 w-6 text-purple-600" aria-hidden="true" />
+                <ArrowTrendingUpIcon class="h-6 w-6 text-purple-600" aria-hidden="true" />
               </div>
               <div class="ml-4">
                 <p class="text-sm font-medium text-gray-500">Health Score</p>
@@ -184,7 +184,7 @@ import {
   DocumentTextIcon, 
   CheckCircleIcon,
   ClockIcon,
-  TrendingUpIcon
+  ArrowTrendingUpIcon
 } from '@heroicons/vue/24/outline';
 
 interface FinancialReport {
