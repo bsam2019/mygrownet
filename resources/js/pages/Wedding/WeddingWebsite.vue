@@ -25,17 +25,17 @@
   </Head>
 
   <div class="min-h-screen relative bg-white overflow-hidden">
-    <!-- Flora decorative background - top portion only -->
+    <!-- Flora decorative background - more visible on mobile -->
     <div class="absolute top-0 left-0 right-0 z-0 pointer-events-none">
-      <div class="h-[50vh] md:h-[60vh]">
+      <div class="h-[60vh] md:h-[60vh]">
         <img 
           src="/images/Wedding/flora.jpg" 
           alt="" 
           aria-hidden="true"
-          class="w-full h-full object-cover object-top opacity-35"
+          class="w-full h-full object-cover object-top opacity-50 md:opacity-35"
         />
         <!-- Gradient fade to white at bottom -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent from-30% via-white/50 via-70% to-white"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent from-20% via-white/40 via-60% to-white md:from-30% md:via-white/50 md:via-70%"></div>
       </div>
     </div>
 
@@ -112,7 +112,7 @@
             <span class="block w-6 h-0.5 bg-current"></span>
             <span class="block w-6 h-0.5 bg-current"></span>
           </div>
-          <XMarkIcon v-else class="h-5 w-5" aria-hidden="true" />
+          <XMarkIcon v-else class="h-7 w-7" aria-hidden="true" />
         </button>
         
         <!-- Active Tab Name - Centered -->
@@ -173,11 +173,11 @@
 
     <!-- Main Content Wrapper - sits above background -->
     <div class="relative z-10">
-    <!-- Top Spacing (accounts for fixed mobile header) -->
-    <div class="h-14 md:h-12 lg:h-16"></div>
+    <!-- Top Spacing (accounts for fixed mobile header) - reduced on mobile -->
+    <div class="h-12 md:h-12 lg:h-16"></div>
 
-    <!-- Header Section -->
-    <header class="relative pt-4 md:pt-12 pb-6 text-center">
+    <!-- Header Section - reduced top padding on mobile -->
+    <header class="relative pt-1 md:pt-12 pb-4 md:pb-6 text-center">
       <div class="max-w-4xl mx-auto px-4">
 
         <!-- Couple Names - Hidden on mobile, shown on desktop -->
@@ -334,7 +334,7 @@
     <!-- Tab Content -->
     <main class="min-h-screen">
       <!-- Home Tab -->
-      <section v-show="activeTab === 'home'" id="home" class="pt-2 pb-4 md:py-12 text-center bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'home'" id="home" class="pt-2 pb-4 md:py-12 text-center bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-4xl mx-auto px-4">
           <!-- Mobile Couple Names - Shown above hero on mobile only -->
           <div class="md:hidden text-center mb-4">
@@ -384,7 +384,7 @@
       </section>
 
       <!-- Our Story Tab -->
-      <section v-show="activeTab === 'story'" id="story" class="py-12 md:py-20 bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'story'" id="story" class="py-12 md:py-20 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-5xl mx-auto px-4">
           <!-- Elegant Header -->
           <div class="text-center mb-12 md:mb-16">
@@ -484,7 +484,7 @@
       </section>
 
       <!-- Wedding Program Tab -->
-      <section v-show="activeTab === 'program'" id="program" class="py-16 bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'program'" id="program" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-4xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">WEDDING PROGRAM</h2>
@@ -574,7 +574,7 @@
       </section>
 
       <!-- Q&A Tab -->
-      <section v-show="activeTab === 'qa'" id="qa" class="py-8 bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'qa'" id="qa" class="py-8 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-3xl mx-auto px-4">
           <div class="text-center mb-10">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">Q & A</h2>
@@ -600,7 +600,7 @@
       </section>
 
       <!-- Travel Tab -->
-      <section v-show="activeTab === 'travel'" id="travel" class="py-16 bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'travel'" id="travel" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-3xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">TRAVEL</h2>
@@ -629,7 +629,7 @@
       </section>
 
       <!-- RSVP Tab -->
-      <section v-show="activeTab === 'rsvp'" id="rsvp" class="py-16 bg-gradient-to-b from-transparent via-white/50 to-white/90">
+      <section v-show="activeTab === 'rsvp'" id="rsvp" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
         <div class="max-w-2xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">RSVP</h2>

@@ -33,10 +33,30 @@
         <meta name="description" content="{{ $page['props']['ogMeta']['description'] ?? 'You are invited to celebrate our wedding!' }}" />
         @endif
 
-        {{-- Inline style for clean white background --}}
+        {{-- Inline style for clean white background and prevent flash --}}
         <style>
-            html {
+            html, body {
                 background-color: #ffffff;
+            }
+            /* Hide content until Vue mounts to prevent flash */
+            #app:empty {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background-color: #ffffff;
+            }
+            #app:empty::after {
+                content: '';
+                width: 24px;
+                height: 24px;
+                border: 2px solid #e5e7eb;
+                border-top-color: #6b7280;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
             }
         </style>
 
