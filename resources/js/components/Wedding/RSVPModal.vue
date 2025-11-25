@@ -1,10 +1,17 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 overflow-y-auto bg-white">
-    <!-- Clean white background matching wedding page - FIXED position to cover entire viewport -->
-    <div class="fixed inset-0 bg-white z-0">
-      <!-- Subtle decorative line pattern -->
-      <div class="absolute inset-0 opacity-5">
-        <div class="h-full w-full" style="background-image: repeating-linear-gradient(45deg, #6b7280 0, #6b7280 1px, transparent 0, transparent 50%); background-size: 20px 20px;"></div>
+    <!-- Flora decorative background -->
+    <div class="fixed inset-0 z-0 bg-white">
+      <!-- Top flora decoration -->
+      <div class="absolute top-0 left-0 right-0 h-64 md:h-80">
+        <img 
+          src="/images/Wedding/flora.jpg" 
+          alt="" 
+          aria-hidden="true"
+          class="w-full h-full object-cover object-top opacity-40"
+        />
+        <!-- Gradient fade to white -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white"></div>
       </div>
     </div>
 
@@ -171,10 +178,22 @@
                     v-model="guestName"
                     type="text"
                     placeholder="Enter your full name"
-                    class="w-full px-5 py-4 text-base border border-gray-200 rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 text-center bg-white placeholder:text-gray-400"
+                    :class="[
+                      'w-full px-5 py-4 text-base border rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 text-center bg-white placeholder:text-gray-400',
+                      searchError ? 'border-red-300' : 'border-gray-200'
+                    ]"
                     @keyup.enter="searchGuest"
+                    @input="searchError = ''"
                   >
                 </div>
+                
+                <!-- Error Message -->
+                <div v-if="searchError" class="bg-red-50 border border-red-200 rounded-sm p-4 text-center">
+                  <p class="text-sm text-red-600 font-light leading-relaxed">
+                    {{ searchError }}
+                  </p>
+                </div>
+                
                 <button
                   @click="searchGuest"
                   :disabled="!guestName.trim() || isSearching"
@@ -198,16 +217,74 @@
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 mb-2">
                   <CheckIcon class="w-7 h-7 text-gray-500" aria-hidden="true" />
                 </div>
-                <p class="text-sm text-gray-400 tracking-[0.3em] uppercase">FOUND YOU</p>
-                <h2 class="text-2xl md:text-3xl font-light text-gray-600 tracking-[0.1em] font-serif">Guest Confirmation</h2>
+                <p class="text-sm text-gray-400 tracking-[0.3em] uppercase">
+                  {{ foundGuests.length > 1 ? 'MULTIPLE MATCHES' : 'FOUND YOU' }}
+                </p>
+                <h2 class="text-2xl md:text-3xl font-light text-gray-600 tracking-[0.1em] font-serif">
+                  {{ foundGuests.length > 1 ? 'Select Your Name' : 'Guest Confirmation' }}
+                </h2>
                 <p class="text-base text-gray-500 font-light leading-relaxed max-w-md mx-auto">
-                  Please confirm your name below to continue with your RSVP.
+                  {{ foundGuests.length > 1 
+                    ? 'We found multiple guests with similar names. Please select yourself from the list below.' 
+                    : 'Please confirm your name below to continue with your RSVP.' 
+                  }}
                 </p>
               </div>
 
               <div class="max-w-md mx-auto space-y-6">
-                <!-- Guest Name Confirmation -->
-                <div class="bg-gray-50 border border-gray-200 rounded-sm p-5 hover:border-gray-300 transition-colors">
+                <!-- Multiple Guests Selection -->
+                <div v-if="foundGuests.length > 1" class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                  <p class="text-xs text-gray-400 text-center sticky top-0 bg-white py-1">
+                    {{ foundGuests.length }} guests found
+                  </p>
+                  <div 
+                    v-for="guest in foundGuests" 
+                    :key="guest.id"
+                    @click="selectGuest(guest)"
+                    :class="[
+                      'bg-gray-50 border rounded-sm p-5 cursor-pointer transition-all duration-200',
+                      selectedGuestId === guest.id 
+                        ? 'border-gray-500 bg-gray-100 ring-2 ring-gray-300' 
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-100'
+                    ]"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-4">
+                        <div 
+                          :class="[
+                            'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
+                            selectedGuestId === guest.id 
+                              ? 'border-gray-500 bg-gray-500' 
+                              : 'border-gray-300'
+                          ]"
+                        >
+                          <CheckIcon v-if="selectedGuestId === guest.id" class="w-3 h-3 text-white" aria-hidden="true" />
+                        </div>
+                        <div class="text-left">
+                          <p class="text-lg font-light text-gray-700 tracking-wide">{{ guest.name }}</p>
+                          <!-- Differentiating info for guests with same name -->
+                          <div class="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                            <p v-if="guest.group_name" class="text-sm text-gray-500">
+                              {{ guest.group_name }}
+                            </p>
+                            <p v-if="guest.phone_hint" class="text-sm text-gray-400">
+                              {{ guest.phone_hint }}
+                            </p>
+                            <p v-else-if="guest.email_hint" class="text-sm text-gray-400">
+                              {{ guest.email_hint }}
+                            </p>
+                            <p v-if="guest.allowed_guests > 1" class="text-sm text-gray-400">
+                              Party of {{ guest.allowed_guests }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Single Guest Confirmation -->
+                <div v-else class="bg-gray-50 border border-gray-200 rounded-sm p-5 hover:border-gray-300 transition-colors">
                   <label class="flex items-center justify-center space-x-4 cursor-pointer">
                     <input
                       v-model="confirmGuest"
@@ -225,7 +302,7 @@
                 <div class="flex flex-col space-y-4">
                   <button
                     @click="confirmGuestIdentity"
-                    :disabled="!confirmGuest"
+                    :disabled="foundGuests.length > 1 ? !selectedGuestId : !confirmGuest"
                     class="w-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-4 px-8 text-sm font-medium tracking-[0.15em] transition-colors rounded-sm"
                   >
                     CONTINUE
@@ -458,7 +535,9 @@ const currentStep = ref(1)
 const totalSteps = 5
 const guestName = ref('')
 const confirmGuest = ref(false)
-const foundGuest = ref<{ name: string; id: number | null; firstName?: string; lastName?: string; allowedGuests?: number }>({ name: '', id: null })
+const foundGuest = ref<{ name: string; id: number | null; firstName?: string; lastName?: string; allowedGuests?: number; groupName?: string }>({ name: '', id: null })
+const foundGuests = ref<Array<{ id: number; name: string; first_name: string; last_name: string; allowed_guests: number; group_name?: string; email_hint?: string; phone_hint?: string }>>([])
+const selectedGuestId = ref<number | null>(null)
 const rsvpResponse = ref('')
 const sendEmailConfirmation = ref(true)
 const email = ref('')
@@ -625,11 +704,14 @@ const resetModal = () => {
   guestName.value = ''
   confirmGuest.value = false
   foundGuest.value = { name: '', id: null }
+  foundGuests.value = []
+  selectedGuestId.value = null
   rsvpResponse.value = ''
   sendEmailConfirmation.value = true
   email.value = ''
   isSearching.value = false
   isSending.value = false
+  searchError.value = ''
 }
 
 const searchGuest = async () => {
@@ -651,26 +733,32 @@ const searchGuest = async () => {
     const data = await response.json()
 
     if (data.success && data.found) {
-      // Guest found in invited list
-      foundGuest.value = { 
-        name: data.guest.name, 
-        id: data.guest.id,
-        firstName: data.guest.first_name,
-        lastName: data.guest.last_name,
-        allowedGuests: data.guest.allowed_guests
+      searchError.value = ''
+      
+      if (data.multiple && data.guests.length > 1) {
+        // Multiple guests found - show selection
+        foundGuests.value = data.guests
+        currentStep.value = 2
+      } else {
+        // Single guest found
+        const guest = data.guests[0]
+        foundGuest.value = { 
+          name: guest.name, 
+          id: guest.id,
+          firstName: guest.first_name,
+          lastName: guest.last_name,
+          allowedGuests: guest.allowed_guests
+        }
+        foundGuests.value = []
+        currentStep.value = 2
       }
-      currentStep.value = 2
     } else {
-      // Guest not found - allow them to proceed anyway (open RSVP)
-      // This allows uninvited guests to still RSVP
-      foundGuest.value = { name: guestName.value.trim(), id: null }
-      currentStep.value = 2
+      // Guest not found - show error message
+      searchError.value = "Oops! We're having trouble finding your invite. Please try another spelling of your name or contact the couple."
     }
   } catch (error) {
     console.error('Guest search failed:', error)
-    // On error, still allow them to proceed
-    foundGuest.value = { name: guestName.value.trim(), id: null }
-    currentStep.value = 2
+    searchError.value = "Something went wrong. Please try again or contact the couple."
   } finally {
     isSearching.value = false
   }
@@ -680,11 +768,33 @@ const searchAgain = () => {
   currentStep.value = 1
   guestName.value = ''
   confirmGuest.value = false
+  selectedGuestId.value = null
+  foundGuests.value = []
+}
+
+const selectGuest = (guest: { id: number; name: string; first_name: string; last_name: string; allowed_guests: number; group_name?: string; email_hint?: string; phone_hint?: string }) => {
+  selectedGuestId.value = guest.id
+  foundGuest.value = {
+    name: guest.name,
+    id: guest.id,
+    firstName: guest.first_name,
+    lastName: guest.last_name,
+    allowedGuests: guest.allowed_guests,
+    groupName: guest.group_name
+  }
 }
 
 const confirmGuestIdentity = () => {
-  if (confirmGuest.value) {
-    currentStep.value = 3
+  // For multiple guests, check if one is selected
+  if (foundGuests.value.length > 1) {
+    if (selectedGuestId.value) {
+      currentStep.value = 3
+    }
+  } else {
+    // For single guest, check the checkbox
+    if (confirmGuest.value) {
+      currentStep.value = 3
+    }
   }
 }
 

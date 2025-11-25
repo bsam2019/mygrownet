@@ -70,29 +70,42 @@ class EloquentWeddingGuestRepository implements WeddingGuestRepositoryInterface
     public function searchByName(int $weddingEventId, string $searchTerm): array
     {
         $searchTerm = trim($searchTerm);
+        $searchTermLower = strtolower($searchTerm);
         $nameParts = explode(' ', $searchTerm, 2);
         $firstName = $nameParts[0] ?? '';
         $lastName = $nameParts[1] ?? '';
 
         $query = WeddingGuestModel::where('wedding_event_id', $weddingEventId);
 
-        if ($lastName) {
-            // Full name search
-            $query->where(function ($q) use ($firstName, $lastName) {
-                $q->where(function ($inner) use ($firstName, $lastName) {
-                    $inner->whereRaw('LOWER(first_name) LIKE ?', ['%' . strtolower($firstName) . '%'])
-                        ->whereRaw('LOWER(last_name) LIKE ?', ['%' . strtolower($lastName) . '%']);
-                });
-            });
-        } else {
-            // Single term - search both fields
-            $query->where(function ($q) use ($firstName) {
-                $q->whereRaw('LOWER(first_name) LIKE ?', ['%' . strtolower($firstName) . '%'])
-                    ->orWhereRaw('LOWER(last_name) LIKE ?', ['%' . strtolower($firstName) . '%']);
-            });
-        }
+        // Use flexible OR-based search to find all potential matches
+        $query->where(function ($q) use ($searchTermLower, $firstName, $lastName) {
+            // Search 1: Full name concatenation (first + last)
+            $q->whereRaw("LOWER(first_name || ' ' || last_name) LIKE ?", ['%' . $searchTermLower . '%']);
+            
+            // Search 2: Reverse name concatenation (last + first)
+            $q->orWhereRaw("LOWER(last_name || ' ' || first_name) LIKE ?", ['%' . $searchTermLower . '%']);
+            
+            // Search 3: First name only
+            $q->orWhereRaw('LOWER(first_name) LIKE ?', ['%' . strtolower($firstName) . '%']);
+            
+            // Search 4: Last name only (using first search term)
+            $q->orWhereRaw('LOWER(last_name) LIKE ?', ['%' . strtolower($firstName) . '%']);
+            
+            // Search 5: If last name provided, also search it specifically
+            if ($lastName) {
+                $q->orWhereRaw('LOWER(last_name) LIKE ?', ['%' . strtolower($lastName) . '%']);
+            }
+        });
 
-        return $query->limit(10)
+        return $query->orderByRaw("
+            CASE 
+                WHEN LOWER(first_name || ' ' || last_name) = ? THEN 1
+                WHEN LOWER(first_name) = ? THEN 2
+                WHEN LOWER(first_name || ' ' || last_name) LIKE ? THEN 3
+                ELSE 4
+            END
+        ", [$searchTermLower, strtolower($firstName), $searchTermLower . '%'])
+            ->limit(10)
             ->get()
             ->map(fn($model) => $this->toDomainEntity($model))
             ->toArray();
@@ -144,7 +157,8 @@ class EloquentWeddingGuestRepository implements WeddingGuestRepositoryInterface
         string $status,
         int $confirmedGuests,
         ?string $dietaryRestrictions = null,
-        ?string $message = null
+        ?string $message = null,
+        ?string $email = null
     ): WeddingGuest {
         $model = WeddingGuestModel::find($guestId);
 
@@ -152,13 +166,20 @@ class EloquentWeddingGuestRepository implements WeddingGuestRepositoryInterface
             throw new \Exception('Guest not found');
         }
 
-        $model->update([
+        $updateData = [
             'rsvp_status' => $status,
             'confirmed_guests' => $confirmedGuests,
             'dietary_restrictions' => $dietaryRestrictions,
             'rsvp_message' => $message,
             'rsvp_submitted_at' => now(),
-        ]);
+        ];
+
+        // Only update email if provided (don't overwrite existing with null)
+        if ($email) {
+            $updateData['email'] = $email;
+        }
+
+        $model->update($updateData);
 
         return $this->toDomainEntity($model->fresh());
     }

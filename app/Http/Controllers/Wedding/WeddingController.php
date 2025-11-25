@@ -243,13 +243,14 @@ class WeddingController extends Controller
                 ], 404);
             }
 
-            // Update the guest's RSVP status
+            // Update the guest's RSVP status and email if provided
             $updatedGuest = $this->guestRepository->updateRsvpStatus(
                 guestId: $guest->getId(),
                 status: $status,
                 confirmedGuests: $confirmedGuests,
                 dietaryRestrictions: $validated['dietary_restrictions'] ?? null,
-                message: $validated['message'] ?? null
+                message: $validated['message'] ?? null,
+                email: $validated['email'] ?? null
             );
 
             \Log::info('RSVP Submitted', [
@@ -355,20 +356,24 @@ class WeddingController extends Controller
                 ]);
             }
 
-            // Return the first matching guest
-            $guest = $guests[0];
+            // Return all matching guests with differentiating info
+            $guestData = array_map(fn($guest) => [
+                'id' => $guest->getId(),
+                'name' => $guest->getFullName(),
+                'first_name' => $guest->getFirstName(),
+                'last_name' => $guest->getLastName(),
+                'email' => $guest->getEmail(),
+                'allowed_guests' => $guest->getAllowedGuests(),
+                'group_name' => $guest->getGroupName(),
+                'email_hint' => $guest->getEmail() ? $this->maskEmail($guest->getEmail()) : null,
+                'phone_hint' => $guest->getPhone() ? $this->maskPhone($guest->getPhone()) : null,
+            ], $guests);
 
             return response()->json([
                 'success' => true,
                 'found' => true,
-                'guest' => [
-                    'id' => $guest->getId(),
-                    'name' => $guest->getFullName(),
-                    'first_name' => $guest->getFirstName(),
-                    'last_name' => $guest->getLastName(),
-                    'email' => $guest->getEmail(),
-                    'allowed_guests' => $guest->getAllowedGuests(),
-                ],
+                'guests' => $guestData,
+                'multiple' => count($guests) > 1,
             ]);
         } catch (\Exception $e) {
             \Log::error('Guest search failed', [
@@ -381,5 +386,58 @@ class WeddingController extends Controller
                 'error' => 'Search failed. Please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Mask email for privacy while still allowing identification
+     * e.g., "john.smith@gmail.com" becomes "j***h@g***l.com"
+     */
+    private function maskEmail(string $email): string
+    {
+        $parts = explode('@', $email);
+        if (count($parts) !== 2) {
+            return '***@***.***';
+        }
+
+        $local = $parts[0];
+        $domain = $parts[1];
+
+        // Mask local part: show first and last char
+        if (strlen($local) <= 2) {
+            $maskedLocal = $local[0] . '***';
+        } else {
+            $maskedLocal = $local[0] . '***' . $local[strlen($local) - 1];
+        }
+
+        // Mask domain: show first char and TLD
+        $domainParts = explode('.', $domain);
+        if (count($domainParts) >= 2) {
+            $domainName = $domainParts[0];
+            $tld = end($domainParts);
+            $maskedDomain = $domainName[0] . '***.' . $tld;
+        } else {
+            $maskedDomain = $domain[0] . '***';
+        }
+
+        return $maskedLocal . '@' . $maskedDomain;
+    }
+
+    /**
+     * Mask phone number for privacy while still allowing identification
+     * e.g., "0977123456" becomes "***3456" (shows last 4 digits)
+     */
+    private function maskPhone(string $phone): string
+    {
+        // Remove any non-digit characters for processing
+        $digits = preg_replace('/\D/', '', $phone);
+
+        if (strlen($digits) < 4) {
+            return '***' . $digits;
+        }
+
+        // Show last 4 digits
+        $lastFour = substr($digits, -4);
+
+        return '***' . $lastFour;
     }
 }

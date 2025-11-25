@@ -25,7 +25,8 @@ interface WeddingGuestRepositoryInterface
         string $status,
         int $confirmedGuests,
         ?string $dietaryRestrictions = null,
-        ?string $message = null
+        ?string $message = null,
+        ?string $email = null
     ): WeddingGuest;
 
     public function delete(int $id): bool;
