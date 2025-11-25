@@ -25,17 +25,17 @@
   </Head>
 
   <div class="min-h-screen relative bg-white overflow-hidden">
-    <!-- Flora decorative background - more visible on mobile -->
+    <!-- Flora decorative background - top header decoration -->
     <div class="absolute top-0 left-0 right-0 z-0 pointer-events-none">
-      <div class="h-[60vh] md:h-[60vh]">
+      <div class="h-[45vh] md:h-[40vh]">
         <img 
           src="/images/Wedding/flora.jpg" 
           alt="" 
           aria-hidden="true"
-          class="w-full h-full object-cover object-top opacity-50 md:opacity-35"
+          class="w-full h-full object-cover object-top"
         />
-        <!-- Gradient fade to white at bottom -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent from-20% via-white/40 via-60% to-white md:from-30% md:via-white/50 md:via-70%"></div>
+        <!-- Smooth gradient fade to white at bottom -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-50% to-white"></div>
       </div>
     </div>
 
@@ -97,8 +97,8 @@
       </div>
     </div>
 
-    <!-- Fixed Mobile Header with Active Tab Name -->
-    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
+    <!-- Fixed Mobile Header with Active Tab Name - semi-transparent to show flora -->
+    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-white/70 backdrop-blur-sm border-b border-gray-100/50">
       <div class="flex items-center justify-between px-4 py-3">
         <!-- Hamburger Menu Button -->
         <button 
@@ -176,20 +176,20 @@
     <!-- Top Spacing (accounts for fixed mobile header) - reduced on mobile -->
     <div class="h-12 md:h-12 lg:h-16"></div>
 
-    <!-- Header Section - reduced top padding on mobile -->
-    <header class="relative pt-1 md:pt-12 pb-4 md:pb-6 text-center">
+    <!-- Header Section - transparent to show flora behind -->
+    <header class="relative pt-1 md:pt-20 lg:pt-24 pb-4 md:pb-6 text-center">
       <div class="max-w-4xl mx-auto px-4">
 
         <!-- Couple Names - Hidden on mobile, shown on desktop -->
-        <h1 class="hidden md:block text-3xl md:text-5xl lg:text-6xl font-light text-gray-500 mb-4 tracking-[0.3em] font-serif">
+        <h1 class="hidden md:block text-3xl md:text-5xl lg:text-6xl font-light text-gray-600 mb-4 tracking-[0.3em] font-serif drop-shadow-sm">
           {{ weddingEvent.groom_name.toUpperCase() }} & {{ weddingEvent.bride_name.toUpperCase() }}
         </h1>
         <p class="hidden md:block text-sm md:text-base text-gray-400 font-light tracking-[0.2em] mb-6 uppercase">
           {{ formatWeddingDate(weddingEvent.wedding_date) }}
         </p>
         
-        <!-- Desktop Navigation Tabs -->
-        <nav class="hidden md:block relative z-10 border-b border-gray-200">
+        <!-- Desktop Navigation Tabs - with subtle background for readability -->
+        <nav class="hidden md:block relative z-10 border-b border-gray-200/50 bg-white/60 backdrop-blur-sm rounded-t-lg -mx-4 px-4">
           <div class="flex justify-center items-center">
             <div class="flex space-x-6 md:space-x-10 text-xs md:text-sm font-normal tracking-[0.1em]">
               <a 
@@ -334,7 +334,7 @@
     <!-- Tab Content -->
     <main class="min-h-screen">
       <!-- Home Tab -->
-      <section v-show="activeTab === 'home'" id="home" class="pt-2 pb-4 md:py-12 text-center bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'home'" id="home" class="pt-2 pb-4 md:py-12 text-center">
         <div class="max-w-4xl mx-auto px-4">
           <!-- Mobile Couple Names - Shown above hero on mobile only -->
           <div class="md:hidden text-center mb-4">
@@ -384,7 +384,7 @@
       </section>
 
       <!-- Our Story Tab -->
-      <section v-show="activeTab === 'story'" id="story" class="py-12 md:py-20 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'story'" id="story" class="pt-4 pb-12 md:pt-6 md:pb-20">
         <div class="max-w-5xl mx-auto px-4">
           <!-- Elegant Header -->
           <div class="text-center mb-12 md:mb-16">
@@ -445,7 +445,7 @@
 
           <!-- Story Content - Elegant Card -->
           <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-sm shadow-lg border border-gray-100 p-8 md:p-12 relative">
+            <div class="bg-white/80 backdrop-blur-sm rounded-sm shadow-lg border border-gray-100 p-8 md:p-12 relative">
               <!-- Decorative Quote Mark -->
               <div class="absolute -top-4 left-8 md:left-12">
                 <span class="text-6xl md:text-7xl text-gray-200 font-serif leading-none">"</span>
@@ -484,7 +484,7 @@
       </section>
 
       <!-- Wedding Program Tab -->
-      <section v-show="activeTab === 'program'" id="program" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'program'" id="program" class="py-16">
         <div class="max-w-4xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">WEDDING PROGRAM</h2>
@@ -574,7 +574,7 @@
       </section>
 
       <!-- Q&A Tab -->
-      <section v-show="activeTab === 'qa'" id="qa" class="py-8 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'qa'" id="qa" class="py-8">
         <div class="max-w-3xl mx-auto px-4">
           <div class="text-center mb-10">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">Q & A</h2>
@@ -600,7 +600,7 @@
       </section>
 
       <!-- Travel Tab -->
-      <section v-show="activeTab === 'travel'" id="travel" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'travel'" id="travel" class="py-16">
         <div class="max-w-3xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">TRAVEL</h2>
@@ -629,7 +629,7 @@
       </section>
 
       <!-- RSVP Tab -->
-      <section v-show="activeTab === 'rsvp'" id="rsvp" class="py-16 bg-gradient-to-b from-white/40 via-white/70 to-white/95">
+      <section v-show="activeTab === 'rsvp'" id="rsvp" class="py-16">
         <div class="max-w-2xl mx-auto px-4">
           <div class="text-center mb-16">
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">RSVP</h2>
@@ -745,7 +745,7 @@
     </main>
 
     <!-- Monogram Section -->
-    <section class="py-8 md:py-16 bg-white">
+    <section class="py-8 md:py-16">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <!-- Elegant Monogram -->
         <div class="mb-3 md:mb-4">
@@ -768,7 +768,7 @@
     </section>
 
     <!-- Footer - Minimal -->
-    <footer class="py-6 bg-white border-t border-gray-100">
+    <footer class="py-6 border-t border-gray-100">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <p class="text-xs text-gray-300">© {{ new Date().getFullYear() }} Wedding Website</p>
       </div>

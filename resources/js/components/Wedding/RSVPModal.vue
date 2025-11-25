@@ -1,17 +1,16 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 overflow-y-auto bg-white">
-    <!-- Flora decorative background - more visible on mobile -->
+    <!-- Flora decorative background - top header decoration -->
     <div class="fixed inset-0 z-0 bg-white">
-      <!-- Top flora decoration -->
-      <div class="absolute top-0 left-0 right-0 h-72 md:h-80">
+      <div class="absolute top-0 left-0 right-0 h-[40vh]">
         <img 
           src="/images/Wedding/flora.jpg" 
           alt="" 
           aria-hidden="true"
-          class="w-full h-full object-cover object-top opacity-50 md:opacity-40"
+          class="w-full h-full object-cover object-top"
         />
-        <!-- Gradient fade to white -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent from-20% via-white/30 via-60% to-white"></div>
+        <!-- Smooth gradient fade to white at bottom -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-50% to-white"></div>
       </div>
     </div>
 
