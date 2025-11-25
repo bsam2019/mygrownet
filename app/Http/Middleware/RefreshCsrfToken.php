@@ -9,6 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
 class RefreshCsrfToken
 {
     /**
+     * Routes that should not have their CSRF token regenerated
+     */
+    protected array $excludeFromRegeneration = [
+        'wedding-admin/*',
+        'wedding/*/rsvp',
+        'wedding/*/search-guest',
+    ];
+
+    /**
      * Handle an incoming request.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
@@ -17,7 +26,8 @@ class RefreshCsrfToken
     {
         // Regenerate CSRF token on every request to prevent 419 errors
         // This is especially important for PWA where sessions may persist longer
-        if ($request->user()) {
+        // But skip for certain routes that use AJAX heavily
+        if ($request->user() && !$this->shouldSkipRegeneration($request)) {
             $request->session()->regenerateToken();
         }
 
@@ -31,5 +41,18 @@ class RefreshCsrfToken
         }
 
         return $response;
+    }
+
+    /**
+     * Check if the request should skip CSRF token regeneration
+     */
+    protected function shouldSkipRegeneration(Request $request): bool
+    {
+        foreach ($this->excludeFromRegeneration as $pattern) {
+            if ($request->is($pattern)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -48,6 +48,13 @@ Route::get('/features', fn() => Inertia::render('Features'))->name('features');
 Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
 Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
 Route::get('/privacy', fn() => Inertia::render('Privacy'))->name('privacy');
+
+// Wedding Platform Routes
+Route::prefix('weddings')->name('weddings.')->group(function () {
+    // Public wedding showcase
+    Route::get('/', [App\Http\Controllers\Wedding\WeddingController::class, 'publicLanding'])->name('public');
+    Route::get('/alinuswe-usonje', fn() => Inertia::render('Wedding/PublicLanding'))->name('showcase');
+});
 Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
 Route::get('/wallet/policy', fn() => Inertia::render('Wallet/Policy'))->name('wallet.policy');
 Route::get('/loyalty-reward/policy', fn() => Inertia::render('LoyaltyReward/Policy'))->name('loyalty-reward.policy');
@@ -973,3 +980,67 @@ require __DIR__.'/bgf.php';
         Route::post('/track-access', [App\Http\Controllers\StarterKitController::class, 'trackAccess'])->name('track-access');
         Route::post('/update-progress', [App\Http\Controllers\StarterKitController::class, 'updateProgress'])->name('update-progress');
     });
+
+// Wedding Platform Routes
+Route::prefix('weddings')->name('wedding.')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\Wedding\WeddingController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\Wedding\WeddingController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\Wedding\WeddingController::class, 'store'])->name('store');
+    Route::get('/{id}', [App\Http\Controllers\Wedding\WeddingController::class, 'show'])->name('show');
+    Route::get('/vendors/browse', [App\Http\Controllers\Wedding\WeddingController::class, 'vendors'])->name('vendors');
+    Route::get('/planning/tools', [App\Http\Controllers\Wedding\WeddingController::class, 'planning'])->name('planning');
+    Route::get('/budget/calculator', [App\Http\Controllers\Wedding\WeddingController::class, 'budgetCalculator'])->name('budget-calculator');
+    Route::post('/budget/calculate', [App\Http\Controllers\Wedding\WeddingController::class, 'calculateBudget'])->name('calculate-budget');
+});
+
+// Public Wedding Website Routes (no auth required)
+// Specific wedding URL - Kaoma & Mubanga Dec 2025
+Route::get('/kaoma-and-mubanga-dec-2025', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])->name('wedding.kaoma-mubanga');
+Route::get('/kaoma-and-mubanga-dec-2025/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])
+    ->where('tab', 'story|program|qa|travel|rsvp')
+    ->name('wedding.kaoma-mubanga.tab');
+
+Route::prefix('wedding')->name('wedding.')->group(function () {
+    Route::get('/demo', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])->name('demo');
+    Route::get('/demo/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])
+        ->where('tab', 'story|program|qa|travel|rsvp')
+        ->name('demo.tab');
+    Route::get('/{slug}', [App\Http\Controllers\Wedding\WeddingController::class, 'weddingWebsite'])->name('website');
+    Route::get('/{slug}/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'weddingWebsite'])
+        ->where('tab', 'story|program|qa|travel|rsvp')
+        ->name('website.tab');
+    Route::post('/{id}/rsvp', [App\Http\Controllers\Wedding\WeddingController::class, 'submitRSVP'])->name('rsvp.submit');
+    Route::post('/{id}/search-guest', [App\Http\Controllers\Wedding\WeddingController::class, 'searchGuest'])->name('guest.search');
+});
+
+// Wedding Admin Routes (private access with code)
+Route::middleware(['web'])->prefix('wedding-admin')->name('wedding.admin.')->group(function () {
+    Route::get('/{slug}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'accessPage'])->name('access');
+    Route::post('/{slug}/verify', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'verifyAccess'])->name('verify');
+    Route::get('/{slug}/dashboard', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'dashboard'])->name('dashboard');
+    
+    // RSVP management (responses)
+    Route::post('/{slug}/rsvps', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'addGuest'])->name('rsvps.add');
+    Route::put('/{slug}/rsvps/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'updateGuest'])->name('rsvps.update');
+    Route::delete('/{slug}/rsvps/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'deleteGuest'])->name('rsvps.delete');
+    
+    // Invited guest list management
+    Route::post('/{slug}/invited-guests', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'addInvitedGuest'])->name('invited.add');
+    Route::put('/{slug}/invited-guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'updateInvitedGuest'])->name('invited.update');
+    Route::delete('/{slug}/invited-guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'deleteInvitedGuest'])->name('invited.delete');
+    Route::post('/{slug}/invited-guests/import', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'importGuests'])->name('invited.import');
+    
+    // Exports
+    Route::get('/{slug}/export', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'exportCsv'])->name('export');
+    Route::get('/{slug}/export-guests', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'exportGuestsCsv'])->name('export.guests');
+    
+    // Access code management
+    Route::post('/{slug}/generate-code', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'generateAccessCode'])->name('generate.code');
+    
+    Route::post('/{slug}/logout', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'logout'])->name('logout');
+    
+    // Legacy routes for backward compatibility
+    Route::post('/{slug}/guests', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'addGuest'])->name('guests.add');
+    Route::put('/{slug}/guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'updateGuest'])->name('guests.update');
+    Route::delete('/{slug}/guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'deleteGuest'])->name('guests.delete');
+});

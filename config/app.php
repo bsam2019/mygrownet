@@ -173,6 +173,7 @@ return [
         App\Providers\AnnouncementServiceProvider::class,
         App\Providers\SupportServiceProvider::class,
         App\Providers\EmailMarketingServiceProvider::class,
+        App\Providers\WeddingServiceProvider::class,
     ])->toArray(),
 
     /*
