@@ -24,7 +24,7 @@
     <meta property="og:site_name" content="Wedding Invitation" />
   </Head>
 
-  <div class="min-h-screen relative bg-white overflow-hidden">
+  <div class="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 overflow-hidden">
     <!-- Flora decorative background - top header decoration -->
     <!-- On mobile: starts below the fixed nav (58px to account for border), on desktop: starts at top -->
     <div class="absolute top-[58px] md:top-0 left-0 right-0 z-0 pointer-events-none">
@@ -38,14 +38,14 @@
       </div>
     </div>
 
-    <!-- Fixed Mobile Header with Active Tab Name - transparent to show flora -->
-    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-transparent border-b border-transparent">
+    <!-- Fixed Mobile Header with Active Tab Name - with background -->
+    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm border-b border-purple-100 shadow-sm">
       <div class="flex items-center justify-between px-4 py-3">
         <!-- Hamburger Menu Button -->
         <button 
           @click="toggleMobileMenu"
           aria-label="Toggle navigation menu"
-          class="w-10 h-10 flex items-center justify-center rounded-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200"
+          class="w-10 h-10 flex items-center justify-center rounded-sm text-purple-600 hover:text-purple-800 hover:bg-purple-100 transition-all duration-200"
         >
           <!-- Custom Hamburger Icon with wider lines and more spacing -->
           <div v-if="!mobileMenuOpen" class="flex flex-col justify-center items-center space-y-1.5" aria-hidden="true">
@@ -57,7 +57,7 @@
         </button>
         
         <!-- Active Tab Name - Centered -->
-        <h2 class="text-sm font-medium text-gray-700 tracking-[0.15em] uppercase">
+        <h2 class="text-sm font-medium text-purple-700 tracking-[0.15em] uppercase">
           {{ activeTabLabel }}
         </h2>
         
@@ -65,7 +65,7 @@
         <button 
           @click="toggleShareMenu"
           aria-label="Share wedding invitation"
-          class="w-10 h-10 flex items-center justify-center rounded-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-200"
+          class="w-10 h-10 flex items-center justify-center rounded-sm text-purple-600 hover:text-purple-800 hover:bg-purple-100 transition-all duration-200"
         >
           <ShareIcon class="h-5 w-5" aria-hidden="true" />
         </button>
@@ -122,20 +122,22 @@
       <div class="max-w-4xl mx-auto px-4">
 
         <!-- Couple Names - Hidden on mobile, shown on desktop -->
-        <h1 class="hidden md:block text-4xl md:text-6xl lg:text-7xl text-gray-600 mb-4 drop-shadow-sm" style="font-family: 'Great Vibes', cursive;">
-          {{ weddingEvent.groom_name }} & {{ weddingEvent.bride_name }}
+        <h1 class="hidden md:flex md:flex-col md:items-center text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-4 drop-shadow-lg" style="font-family: 'Great Vibes', cursive;">
+          <span>{{ weddingEvent.groom_name }}</span>
+          <span class="text-2xl md:text-3xl bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">&</span>
+          <span>{{ weddingEvent.bride_name }}</span>
         </h1>
-        <p class="hidden md:block text-sm md:text-base text-gray-400 font-light tracking-[0.2em] mb-6 uppercase">
+        <p class="hidden md:block text-sm md:text-base text-purple-700 font-semibold tracking-[0.2em] mb-6 uppercase">
           {{ formatWeddingDate(weddingEvent.wedding_date) }}
         </p>
         
         <!-- Desktop Navigation Tabs - with subtle background for readability -->
-        <nav class="hidden md:block relative z-10 border-b border-gray-200/50 bg-white/60 backdrop-blur-sm rounded-t-lg -mx-4 px-4">
+        <nav class="hidden md:block relative z-10 border-b-2 border-purple-200 bg-white backdrop-blur-md rounded-t-lg -mx-4 px-4 shadow-md">
           <div class="flex justify-center items-center">
             <div class="flex space-x-6 md:space-x-10 text-xs md:text-sm font-normal tracking-[0.1em]">
               <a 
                 href="javascript:void(0)" 
-                :class="activeTab === 'home' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
+                :class="activeTab === 'home' ? 'text-purple-700 border-b-2 border-purple-500 pb-4 font-semibold' : 'text-purple-400 hover:text-purple-600 pb-4'"
                 @click.prevent="setActiveTab('home')"
                 class="transition-colors"
               >
@@ -143,7 +145,7 @@
               </a>
               <a 
                 href="javascript:void(0)" 
-                :class="activeTab === 'program' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
+                :class="activeTab === 'program' ? 'text-purple-700 border-b-2 border-purple-500 pb-4 font-semibold' : 'text-purple-400 hover:text-purple-600 pb-4'"
                 @click.prevent="setActiveTab('program')"
                 class="transition-colors"
               >
@@ -151,14 +153,22 @@
               </a>
               <a 
                 href="javascript:void(0)" 
-                :class="activeTab === 'qa' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
+                :class="activeTab === 'qa' ? 'text-purple-700 border-b-2 border-purple-500 pb-4 font-semibold' : 'text-purple-400 hover:text-purple-600 pb-4'"
                 @click.prevent="setActiveTab('qa')"
                 class="transition-colors"
               >
                 Q + A
               </a>
+              <a 
+                href="javascript:void(0)" 
+                :class="activeTab === 'location' ? 'text-purple-700 border-b-2 border-purple-500 pb-4 font-semibold' : 'text-purple-400 hover:text-purple-600 pb-4'"
+                @click.prevent="setActiveTab('location')"
+                class="transition-colors"
+              >
+                Location
+              </a>
               <button 
-                :class="activeTab === 'rsvp' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
+                :class="activeTab === 'rsvp' ? 'text-purple-700 border-b-2 border-purple-500 pb-4 font-semibold' : 'text-purple-400 hover:text-purple-600 pb-4'"
                 @click="openRSVPModal"
                 class="transition-colors"
               >
@@ -168,7 +178,7 @@
               <div class="relative">
                 <button 
                   @click="toggleShareMenu"
-                  class="text-gray-400 hover:text-gray-600 pb-4 transition-colors flex items-center gap-1"
+                  class="text-purple-400 hover:text-purple-600 pb-4 transition-colors flex items-center gap-1"
                   aria-label="Share wedding invitation"
                 >
                   <ShareIcon class="h-4 w-4" aria-hidden="true" />
@@ -227,6 +237,14 @@
               >
                 Q + A
               </a>
+              <a 
+                href="javascript:void(0)" 
+                :class="activeTab === 'location' ? 'text-gray-700' : 'text-gray-400'"
+                @click.prevent="setActiveTabMobile('location')"
+                class="hover:text-gray-600 transition-colors"
+              >
+                Location
+              </a>
               <button 
                 :class="activeTab === 'rsvp' ? 'text-gray-700' : 'text-gray-400'"
                 @click="openRSVPModalMobile"
@@ -247,80 +265,105 @@
         <div class="max-w-4xl mx-auto px-4">
           <!-- Mobile Couple Names - Shown above hero on mobile only -->
           <div class="md:hidden text-center mb-2">
-            <h1 class="flex flex-col items-center text-gray-600 mb-1" style="font-family: 'Great Vibes', cursive;">
-              <span class="text-5xl">{{ weddingEvent.groom_name }}</span>
-              <span class="text-3xl text-gray-400">&</span>
-              <span class="text-5xl">{{ weddingEvent.bride_name }}</span>
+            <h1 class="flex flex-col items-center mb-1" style="font-family: 'Great Vibes', cursive;">
+              <span class="text-5xl bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">{{ weddingEvent.groom_name }}</span>
+              <span class="text-3xl bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">&</span>
+              <span class="text-5xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{{ weddingEvent.bride_name }}</span>
             </h1>
-            <p class="text-xs text-gray-400 font-light tracking-[0.15em] uppercase">
+            <p class="text-xs text-purple-700 font-semibold tracking-[0.15em] uppercase">
               {{ formatWeddingDate(weddingEvent.wedding_date) }}
             </p>
           </div>
 
           <!-- Hero Image -->
-          <div class="relative w-full mx-auto mb-4 md:mb-10 -mx-4 md:mx-0 md:max-w-6xl lg:max-w-7xl">
-            <div class="aspect-[16/9] md:aspect-[12/5] overflow-hidden shadow-lg md:rounded-sm">
-              <img 
-                :src="weddingEvent.hero_image || '/images/Wedding/main.jpg'" 
-                :alt="`${weddingEvent.bride_name} and ${weddingEvent.groom_name}`"
-                class="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-
-          <!-- Wedding Ceremony Details -->
-          <div class="max-w-md mx-auto mb-6 md:mb-10">
-            <h2 class="text-sm font-normal text-gray-500 mb-3 md:mb-6 tracking-[0.2em] uppercase">Wedding Ceremony</h2>
-            
-            <div class="space-y-1 md:space-y-2 text-gray-400 text-sm leading-relaxed font-light italic">
-              <p>{{ weddingEvent.venue_name }}</p>
-              <p>{{ weddingEvent.venue_address }}</p>
-              
-              <div class="pt-3 md:pt-6">
-                <p>Kindly RSVP by {{ formatRSVPDate(weddingEvent.rsvp_deadline) }}</p>
+          <div class="relative w-full mx-auto mb-6 md:mb-10 -mx-4 md:mx-0">
+            <div class="flex justify-center">
+              <div class="w-full md:w-auto md:max-w-sm lg:max-w-md xl:max-w-lg">
+                <div class="overflow-hidden shadow-2xl md:rounded-lg border-4 border-white">
+                  <img 
+                    :src="weddingEvent.hero_image || '/images/Wedding/main.jpg'" 
+                    :alt="`${weddingEvent.bride_name} and ${weddingEvent.groom_name}`"
+                    class="w-full h-auto object-cover object-center"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Program Summary -->
-          <div class="max-w-2xl mx-auto mb-8 md:mb-12">
-            <h3 class="text-sm font-normal text-gray-500 mb-4 md:mb-6 tracking-[0.2em] uppercase">Program Highlights</h3>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              <!-- Ceremony -->
-              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
-                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
-                  <HeartIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+          <!-- Countdown Timer -->
+          <div class="max-w-md mx-auto mb-8 md:mb-10 px-2">
+            <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 border border-purple-100">
+              <p class="text-xs text-purple-600 tracking-[0.2em] uppercase mb-4 text-center font-medium">Counting Down To</p>
+              <div class="grid grid-cols-4 gap-2 md:gap-4">
+                <!-- Days -->
+                <div class="text-center">
+                  <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-sm p-2 md:p-3 border border-purple-200">
+                    <div class="text-xl md:text-3xl font-bold text-purple-700">
+                      {{ countdown.days }}
+                    </div>
+                    <div class="text-[10px] md:text-xs text-purple-600 mt-1 tracking-wide uppercase font-medium">Days</div>
+                  </div>
                 </div>
-                <p class="text-xs font-medium text-gray-600 tracking-wide">Ceremony</p>
-                <p class="text-xs text-gray-400 mt-1">11:00 AM</p>
+                <!-- Hours -->
+                <div class="text-center">
+                  <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-sm p-2 md:p-3 border border-purple-200">
+                    <div class="text-xl md:text-3xl font-bold text-purple-700">
+                      {{ countdown.hours }}
+                    </div>
+                    <div class="text-[10px] md:text-xs text-purple-600 mt-1 tracking-wide uppercase font-medium">Hours</div>
+                  </div>
+                </div>
+                <!-- Minutes -->
+                <div class="text-center">
+                  <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-sm p-2 md:p-3 border border-purple-200">
+                    <div class="text-xl md:text-3xl font-bold text-purple-700">
+                      {{ countdown.minutes }}
+                    </div>
+                    <div class="text-[10px] md:text-xs text-purple-600 mt-1 tracking-wide uppercase font-medium">Minutes</div>
+                  </div>
+                </div>
+                <!-- Seconds -->
+                <div class="text-center">
+                  <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-sm p-2 md:p-3 border border-purple-200">
+                    <div class="text-xl md:text-3xl font-bold text-purple-700">
+                      {{ countdown.seconds }}
+                    </div>
+                    <div class="text-[10px] md:text-xs text-purple-600 mt-1 tracking-wide uppercase font-medium">Seconds</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wedding Invitation Message -->
+          <div class="max-w-2xl mx-auto mb-8 md:mb-12 px-4">
+            <div class="text-center space-y-4 md:space-y-6">
+              <p class="text-gray-800 text-base md:text-lg leading-relaxed font-light">
+                Kaoma and Mubanga warmly invite you to join us as we celebrate the gift of love and the blessing of becoming one in Christ Jesus.
+              </p>
+              
+              <div class="py-4">
+                <div class="w-16 h-px bg-gray-400 mx-auto mb-4"></div>
+                <p class="text-gray-900 text-sm md:text-base font-normal tracking-wide">
+                  Saturday, 6th December 2035
+                </p>
+                <p class="text-gray-800 text-sm md:text-base mt-2">
+                  11:00 in the morning
+                </p>
+                <p class="text-gray-800 text-sm md:text-base mt-2 italic">
+                  3 Sixty Convention Centre
+                </p>
+                <div class="w-16 h-px bg-gray-400 mx-auto mt-4"></div>
               </div>
               
-              <!-- Photos -->
-              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
-                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
-                  <CameraIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                </div>
-                <p class="text-xs font-medium text-gray-600 tracking-wide">Photos</p>
-                <p class="text-xs text-gray-400 mt-1">12:00 PM</p>
-              </div>
+              <p class="text-gray-800 text-base md:text-lg leading-relaxed font-light">
+                A joyful reception will follow at the same venue as we continue the celebration with family and friends.
+              </p>
               
-              <!-- Reception -->
-              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
-                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
-                  <MusicalNoteIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                </div>
-                <p class="text-xs font-medium text-gray-600 tracking-wide">Reception</p>
-                <p class="text-xs text-gray-400 mt-1">1:30 PM</p>
-              </div>
-              
-              <!-- Celebration -->
-              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
-                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
-                  <SparklesIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                </div>
-                <p class="text-xs font-medium text-gray-600 tracking-wide">Celebration</p>
-                <p class="text-xs text-gray-400 mt-1">Until 4:00 PM</p>
+              <div class="pt-4">
+                <p class="text-gray-700 text-xs md:text-sm tracking-wider uppercase">
+                  Kindly RSVP by {{ formatRSVPDate(weddingEvent.rsvp_deadline) }}
+                </p>
               </div>
             </div>
           </div>
@@ -329,9 +372,9 @@
           <div class="mb-2 md:mb-10">
             <button 
               @click="openRSVPModal"
-              class="inline-block bg-gray-500 text-white px-10 py-3 text-xs font-medium tracking-[0.15em] hover:bg-gray-600 transition-colors"
+              class="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-4 text-sm font-semibold tracking-[0.15em] hover:from-pink-600 hover:to-purple-700 transition-all duration-300 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              RSVP
+              RSVP NOW
             </button>
           </div>
         </div>
@@ -347,20 +390,33 @@
           </div>
           
           <div class="space-y-4">
-            <!-- Marriage Blessing Ceremony -->
-            <div class="bg-gray-50 rounded-lg p-6">
-              <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <HeartIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
+            <!-- Arrival of Guests -->
+            <div class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg p-6 border border-rose-100">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 bg-rose-200 rounded-full flex items-center justify-center">
+                  <HeartIcon class="h-6 w-6 text-rose-700" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">MARRIAGE BLESSING CEREMONY</h3>
-                  <p class="text-sm text-gray-500">📍 Venue: The Chapel</p>
-                  <p class="text-sm text-gray-500">🕚 Time: 11:00 AM – 12:00 PM</p>
+                  <h3 class="text-base font-medium text-rose-900 tracking-[0.1em]">ARRIVAL OF GUESTS</h3>
+                  <p class="text-sm text-rose-700">📍 The Chapel</p>
+                  <p class="text-sm text-rose-600">� 10:20 AM -0 10:45 AM</p>
                 </div>
               </div>
-              <ul class="space-y-2 text-gray-600 text-sm ml-16">
-                <li>• Arrival of Guests</li>
+            </div>
+
+            <!-- Marriage Blessing Ceremony -->
+            <div class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-lg p-6 border border-rose-100">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 bg-rose-200 rounded-full flex items-center justify-center">
+                  <HeartIcon class="h-6 w-6 text-rose-700" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 class="text-base font-medium text-rose-900 tracking-[0.1em]">MARRIAGE BLESSING CEREMONY</h3>
+                  <p class="text-sm text-rose-700">📍 The Chapel</p>
+                  <p class="text-sm text-rose-600">🕚 11:00 AM - 12:00 PM</p>
+                </div>
+              </div>
+              <ul class="space-y-1.5 text-rose-800 text-sm ml-16">
                 <li>• Processional & Entry of the Bride</li>
                 <li>• Opening Prayer & Welcome</li>
                 <li>• Marriage Blessing</li>
@@ -369,62 +425,69 @@
             </div>
 
             <!-- Photography Session -->
-            <div class="bg-gray-50 rounded-lg p-6">
-              <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <CameraIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 border border-amber-100">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center">
+                  <CameraIcon class="h-6 w-6 text-amber-700" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">PHOTOGRAPHY SESSION</h3>
-                  <p class="text-sm text-gray-500">📍 Venue: Chapel Gardens</p>
-                  <p class="text-sm text-gray-500">🕛 Time: 12:00 PM – 1:00 PM</p>
+                  <h3 class="text-base font-medium text-amber-900 tracking-[0.1em]">PHOTOGRAPHY SESSION</h3>
+                  <p class="text-sm text-amber-700">📍 Chapel Gardens</p>
+                  <p class="text-sm text-amber-600">🕧 12:30 PM – 1:30 PM</p>
                 </div>
               </div>
-              <ul class="space-y-2 text-gray-600 text-sm ml-16">
+              <ul class="space-y-1.5 text-amber-800 text-sm ml-16">
                 <li>• Official Photos with the Bride and Groom</li>
                 <li>• Family and Bridal Party Portraits</li>
                 <li>• Guest Photo Moments</li>
               </ul>
             </div>
 
-            <!-- Transition -->
-            <div class="bg-gray-50 rounded-lg p-6">
-              <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <ArrowRightIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
+            <!-- Cocktail Hour -->
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-100">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center">
+                  <SparklesIcon class="h-6 w-6 text-emerald-700" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">TRANSITION TO RECEPTION</h3>
-                  <p class="text-sm text-gray-500">🕐 Time: 1:00 PM – 1:30 PM</p>
+                  <h3 class="text-base font-medium text-emerald-900 tracking-[0.1em]">COCKTAIL HOUR</h3>
+                  <p class="text-sm text-emerald-700">📍 Cocktail Area</p>
+                  <p class="text-sm text-emerald-600">🕜 1:30 PM – 2:30 PM</p>
                 </div>
               </div>
-              <ul class="space-y-2 text-gray-600 text-sm ml-16">
-                <li>• Guests Proceed to Reception Venue</li>
+              <ul class="space-y-1.5 text-emerald-800 text-sm ml-16">
+                <li>• Guests Proceed to Cocktail Area</li>
                 <li>• Light Refreshments</li>
               </ul>
             </div>
 
-            <!-- Wedding Reception -->
-            <div class="bg-gray-50 rounded-lg p-6">
-              <div class="flex items-center gap-4 mb-4">
-                <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <MusicalNoteIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
+            <!-- Main Reception -->
+            <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-lg p-6 border border-purple-200 shadow-md">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-fuchsia-500 rounded-full flex items-center justify-center shadow-md">
+                  <MusicalNoteIcon class="h-6 w-6 text-white" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">WEDDING RECEPTION</h3>
-                  <p class="text-sm text-gray-500">📍 Venue: Main Hall</p>
-                  <p class="text-sm text-gray-500">🕜 Time: 1:30 PM – 4:00 PM</p>
+                  <h3 class="text-base font-semibold text-purple-900 tracking-[0.1em]">MAIN RECEPTION</h3>
+                  <p class="text-sm text-purple-700">📍 Main Hall</p>
+                  <p class="text-sm text-purple-600">🕞 3:30 PM – 5:30 PM</p>
                 </div>
               </div>
-              <ul class="space-y-2 text-gray-600 text-sm ml-16">
+              <ul class="space-y-1.5 text-purple-800 text-sm ml-16">
                 <li>• Arrival of the Newlyweds</li>
                 <li>• Opening Remarks & Prayer</li>
-                <li>• Lunch Service</li>
+                <li>• Food & Drinks</li>
                 <li>• Toasts & Speeches</li>
                 <li>• Cutting of the Cake</li>
                 <li>• Entertainment & Guest Dancing</li>
                 <li>• Vote of Thanks & Closing</li>
               </ul>
+            </div>
+
+            <!-- End of Program -->
+            <div class="text-center py-4">
+              <p class="text-lg font-medium text-gray-700">🕕 6:00 PM</p>
+              <p class="text-sm text-gray-600 mt-1">End of Program</p>
             </div>
           </div>
         </div>
@@ -440,61 +503,112 @@
 
           <div class="space-y-12">
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">When is the RSVP deadline?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Please confirm your attendance by 28 November to help us finalise arrangements.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">When is the RSVP deadline?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">Please confirm your attendance by 28 November to help us finalise arrangements.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">Are children welcome?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">As much as we love little ones, this will be an adults-only celebration.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">Are children welcome?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">As much as we love little ones, this will be an adults-only celebration.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">Can I bring a plus-one?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Due to limited seating, we're only able to accommodate guests listed on the invitation.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">Can I bring a plus-one?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">Due to limited seating, we're only able to accommodate guests listed on the invitation.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">What is the dress code?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Formal / Smart Elegant.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">What is the dress code?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">Formal / Smart Elegant.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">What time should I arrive?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Guests are kindly requested to be seated by 11:00 AM.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">What time should I arrive?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">Guests are kindly requested to be seated by 11:00 AM.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">Will there be a reception after the ceremony?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Yes! Please join us immediately after the ceremony for a celebration of love, food, and joy.</p>
+              <h3 class="text-lg font-medium text-gray-800 mb-4">Will there be a reception after the ceremony?</h3>
+              <p class="text-gray-800 text-sm leading-relaxed">Yes! Please join us immediately after the ceremony for a celebration of love, food, and joy.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Travel Tab -->
-      <section v-show="activeTab === 'travel'" id="travel" class="py-16">
+      <!-- Location Tab -->
+      <section v-show="activeTab === 'location'" id="location" class="py-8 md:py-16">
         <div class="max-w-3xl mx-auto px-4">
-          <div class="text-center mb-16">
-            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">TRAVEL</h2>
+          <!-- Hidden on mobile since mobile header shows tab name -->
+          <div class="hidden md:block text-center mb-10">
+            <span class="text-3xl">📍</span>
+            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em] mt-2">LOCATION</h2>
           </div>
 
-          <div class="grid md:grid-cols-2 gap-12">
+          <!-- Venue Details -->
+          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6 md:p-8 mb-6 border border-purple-100">
+            <div class="text-center mb-6">
+              <h3 class="text-xl font-semibold text-purple-700 mb-2">{{ weddingEvent.venue_name }}</h3>
+              <p class="text-gray-700 text-sm md:text-base">{{ weddingEvent.venue_address }}</p>
+            </div>
+            
+            <!-- Map Placeholder -->
+            <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-6 border border-gray-200">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3846.123456789!2d28.123456!3d-15.123456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTXCsDA3JzI0LjQiUyAyOMKwMDcnMjQuNCJF!5e0!3m2!1sen!2szm!4v1234567890"
+                width="100%" 
+                height="100%" 
+                style="border:0;" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade"
+                class="w-full h-full"
+              ></iframe>
+            </div>
+
+            <!-- Directions Button -->
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">ACCOMMODATION</h3>
-              <div class="text-gray-600 text-sm space-y-2">
-                <p>We have reserved blocks of rooms at nearby hotels for your convenience.</p>
-                <p class="font-medium">Hotel Recommendations:</p>
-                <p>Contact us for booking details and group rates.</p>
+              <a 
+                :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(weddingEvent.venue_name + ' ' + weddingEvent.venue_address)}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Get Directions
+              </a>
+            </div>
+          </div>
+
+          <!-- Additional Info -->
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-purple-100">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-800 mb-1">Parking</h4>
+                  <p class="text-sm text-gray-600">Ample parking available at the venue for all guests.</p>
+                </div>
               </div>
             </div>
             
-            <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">TRANSPORTATION</h3>
-              <div class="text-gray-600 text-sm space-y-2">
-                <p>The venue is easily accessible by car and public transport.</p>
-                <p class="font-medium">Address:</p>
-                <p>{{ weddingEvent.venue_address }}</p>
+            <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-purple-100">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-800 mb-1">Arrival Time</h4>
+                  <p class="text-sm text-gray-600">Please arrive by 10:45 AM to be seated before the ceremony begins.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -505,8 +619,8 @@
       <section v-show="activeTab === 'rsvp'" id="rsvp" class="py-16">
         <div class="max-w-2xl mx-auto px-4">
           <div class="text-center mb-16">
-            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">RSVP</h2>
-            <p class="text-gray-600 text-sm">
+            <h2 class="text-2xl font-light text-gray-800 mb-4 tracking-[0.15em]">RSVP</h2>
+            <p class="text-gray-800 text-sm">
               Please let us know if you'll be joining us on our special day
             </p>
           </div>
@@ -721,13 +835,51 @@ const mobileMenuOpen = ref(false)
 const shareMenuOpen = ref(false)
 const linkCopied = ref(false)
 
+// Countdown timer
+const countdown = reactive({
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0
+})
+
+let countdownInterval = null
+
+const updateCountdown = () => {
+  const weddingDate = new Date(props.weddingEvent.wedding_date)
+  const now = new Date()
+  const difference = weddingDate - now
+
+  if (difference > 0) {
+    countdown.days = Math.floor(difference / (1000 * 60 * 60 * 24))
+    countdown.hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    countdown.minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+    countdown.seconds = Math.floor((difference % (1000 * 60)) / 1000)
+  } else {
+    countdown.days = 0
+    countdown.hours = 0
+    countdown.minutes = 0
+    countdown.seconds = 0
+    if (countdownInterval) {
+      clearInterval(countdownInterval)
+    }
+  }
+}
+
 onMounted(() => {
   initializeTabFromURL()
   window.addEventListener('popstate', handlePopState)
+  
+  // Initialize countdown
+  updateCountdown()
+  countdownInterval = setInterval(updateCountdown, 1000)
 })
 
 onUnmounted(() => {
   window.removeEventListener('popstate', handlePopState)
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+  }
 })
 
 // Tab labels mapping
@@ -735,6 +887,7 @@ const tabLabels = {
   home: 'Home',
   program: 'Wedding Program',
   qa: 'Q + A',
+  location: 'Location',
   rsvp: 'RSVP'
 }
 

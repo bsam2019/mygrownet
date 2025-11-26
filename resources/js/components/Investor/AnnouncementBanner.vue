@@ -2,7 +2,7 @@
   <div
     v-if="announcement"
     :class="[
-      'relative rounded-lg p-4 mb-4 border-l-4 shadow-sm w-full',
+      'relative rounded-lg p-4 border-l-4 shadow-sm',
       bannerClasses
     ]"
   >
@@ -16,9 +16,9 @@
     </button>
 
     <!-- Content -->
-    <div class="pr-8 w-full">
+    <div class="pr-8">
       <!-- Header -->
-      <div class="flex items-center gap-2 mb-2">
+      <div class="flex items-center gap-2 mb-2 flex-wrap">
         <component
           :is="iconComponent"
           class="h-5 w-5 flex-shrink-0"
@@ -34,10 +34,10 @@
       </div>
 
       <!-- Message -->
-      <p class="text-sm leading-relaxed mb-2">{{ announcement.message }}</p>
+      <p class="text-sm leading-relaxed mb-2 ml-7">{{ announcement.message }}</p>
 
       <!-- Timestamp -->
-      <p class="text-xs opacity-75">{{ announcement.created_at_human }}</p>
+      <p class="text-xs opacity-75 ml-7">{{ announcement.created_at_human }}</p>
     </div>
   </div>
 </template>

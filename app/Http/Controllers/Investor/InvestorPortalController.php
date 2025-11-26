@@ -200,6 +200,19 @@ class InvestorPortalController extends Controller
                 ->limit(5)
                 ->get()
                 ->map(function ($announcement) {
+                    $diff = now()->diffInMinutes($announcement->created_at);
+                    
+                    if ($diff < 1) {
+                        $humanTime = 'Just now';
+                    } elseif ($diff < 60) {
+                        $humanTime = $diff . ' min' . ($diff > 1 ? 's' : '') . ' ago';
+                    } elseif ($diff < 1440) { // Less than 24 hours
+                        $hours = floor($diff / 60);
+                        $humanTime = $hours . ' hr' . ($hours > 1 ? 's' : '') . ' ago';
+                    } else {
+                        $humanTime = $announcement->created_at->diffForHumans();
+                    }
+                    
                     return [
                         'id' => $announcement->id,
                         'title' => $announcement->title,
@@ -207,7 +220,7 @@ class InvestorPortalController extends Controller
                         'type' => $announcement->type,
                         'is_urgent' => $announcement->is_urgent,
                         'created_at' => $announcement->created_at->format('Y-m-d H:i:s'),
-                        'created_at_human' => $announcement->created_at->diffForHumans(),
+                        'created_at_human' => $humanTime,
                     ];
                 });
             
