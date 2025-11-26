@@ -40,7 +40,7 @@ return new class extends Migration
                 
                 $table->foreign('announcement_id')->references('id')->on('investor_announcements')->onDelete('cascade');
                 $table->foreign('investor_account_id')->references('id')->on('investor_accounts')->onDelete('cascade');
-                $table->unique(['announcement_id', 'investor_account_id']);
+                $table->unique(['announcement_id', 'investor_account_id'], 'ann_reads_unique');
             });
         }
     }
