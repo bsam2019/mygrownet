@@ -299,8 +299,8 @@ class WeddingController extends Controller
             'reception_address' => 'Twin Palm Road, Ibex Hill, Lusaka',
             'dress_code' => 'Formal Attire',
             'rsvp_deadline' => '2025-11-28',
-            'hero_image' => '/images/Wedding/main.jpg',
-            'story_image' => '/images/Wedding/main.jpg',
+            'hero_image' => '/images/Wedding/main.jpg?v=' . time(),
+            'story_image' => '/images/Wedding/main.jpg?v=' . time(),
             'how_we_met' => 'Our love story began in the most unexpected way when we met at a mutual friend\'s gathering. From that first conversation, we knew there was something special between us.',
             'proposal_story' => 'It was a beautiful evening surrounded by the people we love most. When Kaoma got down on one knee, time seemed to stand still - it was a moment we\'ll treasure forever.',
         ];
