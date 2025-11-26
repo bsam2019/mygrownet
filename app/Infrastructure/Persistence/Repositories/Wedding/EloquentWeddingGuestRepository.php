@@ -239,6 +239,45 @@ class EloquentWeddingGuestRepository implements WeddingGuestRepositoryInterface
         return $count;
     }
 
+    public function createPendingGuest(
+        int $weddingEventId,
+        string $name,
+        ?string $phone = null,
+        ?string $email = null,
+        ?string $message = null,
+        string $rsvpStatus = 'inquiry',
+        int $guestCount = 1
+    ): WeddingGuest {
+        // Parse name into first and last name
+        $nameParts = explode(' ', trim($name), 2);
+        $firstName = $nameParts[0] ?? $name;
+        $lastName = $nameParts[1] ?? '';
+
+        // Determine group name based on status
+        $groupName = match ($rsvpStatus) {
+            'attending_pending' => 'Pending Review - Attending',
+            'declined_pending' => 'Pending Review - Declined',
+            default => 'Pending Approval',
+        };
+
+        $model = WeddingGuestModel::create([
+            'wedding_event_id' => $weddingEventId,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
+            'phone' => $phone,
+            'allowed_guests' => 1,
+            'confirmed_guests' => $rsvpStatus === 'attending_pending' ? $guestCount : 0,
+            'group_name' => $groupName,
+            'notes' => $message ?: 'Unlisted guest RSVP - awaiting approval',
+            'invitation_sent' => false,
+            'rsvp_status' => $rsvpStatus,
+            'rsvp_submitted_at' => now(),
+        ]);
+
+        return $this->toDomainEntity($model);
+    }
+
     private function toDomainEntity(WeddingGuestModel $model): WeddingGuest
     {
         return WeddingGuest::fromArray([

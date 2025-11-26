@@ -451,4 +451,74 @@ class WeddingController extends Controller
 
         return '***' . $lastFour;
     }
+
+    /**
+     * Handle guest inquiry/RSVP for unlisted guests
+     * Stores the inquiry for the couple to review - guest doesn't know they're not on the list
+     */
+    public function guestInquiry(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|min:2|max:255',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+            'message' => 'nullable|string|max:1000',
+            'attending' => 'nullable|in:accepted,declined',
+            'guest_count' => 'nullable|integer|min:0|max:10',
+        ]);
+
+        try {
+            // Determine RSVP status from attending field
+            $rsvpStatus = 'inquiry';
+            if (isset($validated['attending'])) {
+                $rsvpStatus = $validated['attending'] === 'accepted' ? 'attending_pending' : 'declined_pending';
+            }
+
+            // Build message with RSVP info
+            $message = $validated['message'] ?? '';
+            if (isset($validated['attending'])) {
+                $attendingText = $validated['attending'] === 'accepted' ? 'Will attend' : 'Cannot attend';
+                $message = "RSVP Response: {$attendingText}" . ($message ? " | Note: {$message}" : '');
+            }
+
+            // Store the inquiry as a pending guest with their RSVP response
+            $guest = $this->guestRepository->createPendingGuest(
+                weddingEventId: (int) $id,
+                name: $validated['name'],
+                phone: $validated['phone'] ?? null,
+                email: $validated['email'] ?? null,
+                message: $message,
+                rsvpStatus: $rsvpStatus,
+                guestCount: $validated['guest_count'] ?? 1
+            );
+
+            \Log::info('Unlisted guest RSVP received', [
+                'wedding_event_id' => $id,
+                'name' => $validated['name'],
+                'phone' => $validated['phone'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'rsvp_status' => $rsvpStatus,
+            ]);
+
+            // Return success - guest doesn't know they're not on the list
+            $responseMessage = $validated['attending'] === 'accepted'
+                ? 'Thank you! We look forward to celebrating with you.'
+                : 'Thank you for letting us know. We\'ll miss you!';
+
+            return response()->json([
+                'success' => true,
+                'message' => $responseMessage,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Guest inquiry failed', [
+                'error' => $e->getMessage(),
+                'wedding_event_id' => $id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to send your message. Please try again or contact the couple directly.',
+            ], 500);
+        }
+    }
 }

@@ -34,8 +34,12 @@ class RefreshCsrfToken
         $response = $next($request);
 
         // Add CSRF token to response headers for PWA and AJAX requests
-        // Skip for file downloads (BinaryFileResponse doesn't support headers)
-        if (!$response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+        // Skip for file downloads and streamed responses (they don't support the header() method)
+        if (
+            !$response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse &&
+            !$response instanceof \Symfony\Component\HttpFoundation\StreamedResponse &&
+            method_exists($response, 'header')
+        ) {
             $response->header('X-CSRF-Token', csrf_token());
             $response->header('X-CSRF-Token-Meta', csrf_token());
         }

@@ -1050,6 +1050,7 @@ Route::prefix('wedding')->name('wedding.')->group(function () {
         ->name('website.tab');
     Route::post('/{id}/rsvp', [App\Http\Controllers\Wedding\WeddingController::class, 'submitRSVP'])->name('rsvp.submit');
     Route::post('/{id}/search-guest', [App\Http\Controllers\Wedding\WeddingController::class, 'searchGuest'])->name('guest.search');
+    Route::post('/{id}/guest-inquiry', [App\Http\Controllers\Wedding\WeddingController::class, 'guestInquiry'])->name('guest.inquiry');
 });
 
 // Wedding Admin Routes (private access with code)

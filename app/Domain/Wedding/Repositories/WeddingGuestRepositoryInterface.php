@@ -34,4 +34,14 @@ interface WeddingGuestRepositoryInterface
     public function getStats(int $weddingEventId): array;
 
     public function bulkImport(int $weddingEventId, array $guests): int;
+
+    public function createPendingGuest(
+        int $weddingEventId,
+        string $name,
+        ?string $phone = null,
+        ?string $email = null,
+        ?string $message = null,
+        string $rsvpStatus = 'inquiry',
+        int $guestCount = 1
+    ): WeddingGuest;
 }

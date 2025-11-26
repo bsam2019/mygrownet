@@ -24,10 +24,11 @@
     <meta property="og:site_name" content="Wedding Invitation" />
   </Head>
 
-  <div class="min-h-screen relative bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 overflow-hidden">
+  <div class="min-h-screen relative bg-white overflow-hidden">
     <!-- Flora decorative background - top header decoration -->
     <!-- On mobile: starts below the fixed nav (58px to account for border), on desktop: starts at top -->
-    <div class="absolute top-[58px] md:top-0 left-0 right-0 z-0 pointer-events-none">
+    <!-- Background color matches the flora image edges -->
+    <div class="absolute top-[58px] md:top-0 left-0 right-0 z-0 pointer-events-none bg-white">
       <div class="h-[30vh] md:h-[40vh]">
         <img 
           src="/images/Wedding/flora.jpg" 
@@ -130,9 +131,10 @@
         <p class="hidden md:block text-sm md:text-base text-purple-700 font-semibold tracking-[0.2em] mb-6 uppercase">
           {{ formatWeddingDate(weddingEvent.wedding_date) }}
         </p>
+      </div>
         
-        <!-- Desktop Navigation Tabs - with subtle background for readability -->
-        <nav class="hidden md:block relative z-10 border-b-2 border-purple-200 bg-white backdrop-blur-md rounded-t-lg -mx-4 px-4 shadow-md">
+      <!-- Desktop Navigation Tabs - FULL WIDTH to eliminate corner gaps -->
+      <nav class="hidden md:block relative z-10 border-b-2 border-purple-200 bg-white shadow-md">
           <div class="flex justify-center items-center">
             <div class="flex space-x-6 md:space-x-10 text-xs md:text-sm font-normal tracking-[0.1em]">
               <a 
@@ -187,9 +189,9 @@
               </div>
             </div>
           </div>
-        </nav>
+      </nav>
 
-        <!-- Mobile Menu Overlay -->
+      <!-- Mobile Menu Overlay -->
         <Transition
           enter-active-class="transition-all duration-300 ease-out"
           enter-from-class="-translate-y-full opacity-0"
@@ -255,7 +257,6 @@
             </nav>
           </div>
         </Transition>
-      </div>
     </header>
 
     <!-- Tab Content -->
@@ -339,7 +340,7 @@
           <div class="max-w-2xl mx-auto mb-8 md:mb-12 px-4">
             <div class="text-center space-y-4 md:space-y-6">
               <p class="text-gray-800 text-base md:text-lg leading-relaxed font-light">
-                Kaoma and Mubanga warmly invite you to join us as we celebrate the gift of love and the blessing of becoming one in Christ Jesus.
+               Together with our families, Kaoma and Mubanga invite you to celebrate with us as we unite in marriage under God’s gracious guidance.
               </p>
               
               <div class="py-4">
@@ -399,7 +400,7 @@
                 <div>
                   <h3 class="text-base font-medium text-rose-900 tracking-[0.1em]">ARRIVAL OF GUESTS</h3>
                   <p class="text-sm text-rose-700">📍 The Chapel</p>
-                  <p class="text-sm text-rose-600">� 10:20 AM -0 10:45 AM</p>
+                  <p class="text-sm text-rose-600">🕙 10:20 AM - 10:45 AM</p>
                 </div>
               </div>
             </div>

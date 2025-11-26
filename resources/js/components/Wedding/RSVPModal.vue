@@ -177,20 +177,9 @@
                     v-model="guestName"
                     type="text"
                     placeholder="Enter your full name"
-                    :class="[
-                      'w-full px-5 py-4 text-base border rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 text-center bg-white placeholder:text-gray-400',
-                      searchError ? 'border-red-300' : 'border-gray-200'
-                    ]"
+                    class="w-full px-5 py-4 text-base border border-gray-200 rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 text-center bg-white placeholder:text-gray-400"
                     @keyup.enter="searchGuest"
-                    @input="searchError = ''"
                   >
-                </div>
-                
-                <!-- Error Message -->
-                <div v-if="searchError" class="bg-red-50 border border-red-200 rounded-sm p-4 text-center">
-                  <p class="text-sm text-red-600 font-light leading-relaxed">
-                    {{ searchError }}
-                  </p>
                 </div>
                 
                 <button
@@ -391,34 +380,37 @@
               </div>
               
               <div class="max-w-md mx-auto space-y-5">
-                <!-- Email Confirmation Option -->
-                <div class="bg-gray-50 border border-gray-200 rounded-sm p-5 hover:border-gray-300 transition-colors">
-                  <label class="flex items-center justify-center space-x-4 cursor-pointer">
+                <!-- Contact Details - Always show for unlisted guests, optional for listed -->
+                <div class="space-y-4">
+                  <!-- Phone Number - Required for unlisted, optional for listed -->
+                  <div>
                     <input
-                      v-model="sendEmailConfirmation"
-                      type="checkbox"
-                      class="h-5 w-5 text-gray-500 rounded border-gray-300 focus:ring-gray-400"
+                      v-model="unlistedGuestPhone"
+                      type="tel"
+                      :placeholder="isUnlistedGuest ? 'Your phone number' : 'Phone number (optional)'"
+                      class="w-full px-5 py-4 text-base border border-gray-200 rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 bg-white placeholder:text-gray-400"
                     >
-                    <span class="text-base font-light text-gray-600">
-                      Send me an RSVP confirmation by email
-                    </span>
-                  </label>
-                </div>
-
-                <!-- Email Input -->
-                <div v-if="sendEmailConfirmation" class="space-y-2">
-                  <input
-                    v-model="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    class="w-full px-5 py-4 text-base border border-gray-200 rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 bg-white placeholder:text-gray-400"
-                  >
+                  </div>
+                  
+                  <!-- Email Input -->
+                  <div>
+                    <input
+                      v-model="email"
+                      type="email"
+                      :placeholder="isUnlistedGuest ? 'Your email address' : 'Email address (optional)'"
+                      class="w-full px-5 py-4 text-base border border-gray-200 rounded-sm focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 bg-white placeholder:text-gray-400"
+                    >
+                  </div>
+                  
+                  <p class="text-xs text-gray-400 text-center">
+                    {{ isUnlistedGuest ? 'We\'ll use this to send you event updates and confirmation.' : 'Optional - receive RSVP confirmation and event updates.' }}
+                  </p>
                 </div>
 
                 <!-- Send Button -->
                 <button
                   @click="sendRSVP"
-                  :disabled="isSending || (sendEmailConfirmation && !email)"
+                  :disabled="isSending || (isUnlistedGuest && !unlistedGuestPhone && !email)"
                   class="w-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-200 disabled:text-gray-400 text-white py-4 px-8 text-sm font-medium tracking-[0.15em] transition-colors rounded-sm"
                 >
                   <span v-if="isSending" class="flex items-center justify-center space-x-3">
@@ -543,6 +535,19 @@ const email = ref('')
 const isSearching = ref(false)
 const isSending = ref(false)
 const searchError = ref('')
+
+// Unlisted guest tracking (seamless flow - guest doesn't know they're not on list)
+const isUnlistedGuest = ref(false)
+const unlistedGuestPhone = ref('')
+
+// Contact form for unlisted guests (legacy - keeping for backwards compatibility)
+const showContactForm = ref(false)
+const contactName = ref('')
+const contactPhone = ref('')
+const contactEmail = ref('')
+const contactMessage = ref('')
+const isSendingContact = ref(false)
+const contactRequestSent = ref(false)
 
 // Balloon animation state
 const balloons = ref<Array<{
@@ -711,6 +716,17 @@ const resetModal = () => {
   isSearching.value = false
   isSending.value = false
   searchError.value = ''
+  // Reset unlisted guest state
+  isUnlistedGuest.value = false
+  unlistedGuestPhone.value = ''
+  // Reset contact form
+  showContactForm.value = false
+  contactName.value = ''
+  contactPhone.value = ''
+  contactEmail.value = ''
+  contactMessage.value = ''
+  isSendingContact.value = false
+  contactRequestSent.value = false
 }
 
 const searchGuest = async () => {
@@ -733,6 +749,7 @@ const searchGuest = async () => {
 
     if (data.success && data.found) {
       searchError.value = ''
+      isUnlistedGuest.value = false
       
       if (data.multiple && data.guests.length > 1) {
         // Multiple guests found - show selection
@@ -752,12 +769,38 @@ const searchGuest = async () => {
         currentStep.value = 2
       }
     } else {
-      // Guest not found - show error message
-      searchError.value = "Oops! We're having trouble finding your invite. Please try another spelling of your name or contact the couple."
+      // Guest not found - proceed seamlessly with their entered name
+      // They won't know they're not on the list
+      const nameParts = guestName.value.trim().split(' ')
+      const firstName = nameParts[0] || guestName.value.trim()
+      const lastName = nameParts.slice(1).join(' ') || ''
+      
+      foundGuest.value = {
+        name: guestName.value.trim(),
+        id: null, // No ID means unlisted guest
+        firstName: firstName,
+        lastName: lastName,
+        allowedGuests: 1
+      }
+      foundGuests.value = []
+      isUnlistedGuest.value = true
+      
+      // Skip step 2 (confirmation) and go directly to RSVP response
+      currentStep.value = 3
     }
   } catch (error) {
     console.error('Guest search failed:', error)
-    searchError.value = "Something went wrong. Please try again or contact the couple."
+    // On error, still let them proceed
+    const nameParts = guestName.value.trim().split(' ')
+    foundGuest.value = {
+      name: guestName.value.trim(),
+      id: null,
+      firstName: nameParts[0] || guestName.value.trim(),
+      lastName: nameParts.slice(1).join(' ') || '',
+      allowedGuests: 1
+    }
+    isUnlistedGuest.value = true
+    currentStep.value = 3
   } finally {
     isSearching.value = false
   }
@@ -808,26 +851,46 @@ const proceedToEmail = () => {
 }
 
 const sendRSVP = async () => {
-  if (sendEmailConfirmation.value && !email.value) return
+  // For unlisted guests, require at least phone or email
+  if (isUnlistedGuest.value && !unlistedGuestPhone.value && !email.value) return
   
   isSending.value = true
   
   try {
-    const response = await fetch(`/wedding/${props.weddingEventId}/rsvp`, {
+    // Determine which endpoint to use based on whether guest is listed or not
+    const endpoint = isUnlistedGuest.value 
+      ? `/wedding/${props.weddingEventId}/guest-inquiry`
+      : `/wedding/${props.weddingEventId}/rsvp`
+    
+    const payload = isUnlistedGuest.value
+      ? {
+          // Unlisted guest - submit as inquiry (couple will review)
+          name: foundGuest.value.name,
+          phone: unlistedGuestPhone.value || '',
+          email: email.value || '',
+          attending: rsvpResponse.value,
+          guest_count: rsvpResponse.value === 'accepted' ? 1 : 0,
+          message: `RSVP: ${rsvpResponse.value === 'accepted' ? 'Will attend' : 'Cannot attend'}`,
+        }
+      : {
+          // Listed guest - normal RSVP
+          guest_id: foundGuest.value.id,
+          first_name: foundGuest.value.firstName || foundGuest.value.name.split(' ')[0] || '',
+          last_name: foundGuest.value.lastName || foundGuest.value.name.split(' ').slice(1).join(' ') || '',
+          email: email.value || '',
+          phone: unlistedGuestPhone.value || '',
+          attending: rsvpResponse.value,
+          guest_count: rsvpResponse.value === 'accepted' ? (foundGuest.value.allowedGuests || 1) : 0,
+          message: '',
+        }
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
-      body: JSON.stringify({
-        guest_id: foundGuest.value.id,
-        first_name: foundGuest.value.firstName || foundGuest.value.name.split(' ')[0] || '',
-        last_name: foundGuest.value.lastName || foundGuest.value.name.split(' ').slice(1).join(' ') || '',
-        email: sendEmailConfirmation.value ? email.value : '',
-        attending: rsvpResponse.value,
-        guest_count: rsvpResponse.value === 'accepted' ? (foundGuest.value.allowedGuests || 1) : 0,
-        message: '',
-      })
+      body: JSON.stringify(payload)
     })
 
     const data = await response.json()
@@ -865,6 +928,48 @@ const addToCalendar = () => {
   const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate}/${endDate}`
   
   window.open(calendarUrl, '_blank')
+}
+
+// Send contact request for unlisted guests
+const sendContactRequest = async () => {
+  if (!contactName.value.trim()) return
+  
+  isSendingContact.value = true
+  
+  try {
+    const response = await fetch(`/wedding/${props.weddingEventId}/guest-inquiry`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify({
+        name: contactName.value.trim(),
+        phone: contactPhone.value.trim(),
+        email: contactEmail.value.trim(),
+        message: contactMessage.value.trim(),
+      })
+    })
+
+    const data = await response.json()
+
+    if (data.success) {
+      contactRequestSent.value = true
+      showContactForm.value = false
+      // Clear form
+      contactName.value = ''
+      contactPhone.value = ''
+      contactEmail.value = ''
+      contactMessage.value = ''
+    } else {
+      alert(data.error || 'Failed to send message. Please try again.')
+    }
+  } catch (error) {
+    console.error('Contact request failed:', error)
+    alert('Failed to send message. Please try again or contact the couple directly.')
+  } finally {
+    isSendingContact.value = false
+  }
 }
 </script>
 
