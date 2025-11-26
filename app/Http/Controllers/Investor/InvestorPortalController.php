@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestmentRoundRepositoryInterface;
+use App\Domain\Investor\Repositories\InvestorAnnouncementRepositoryInterface;
 use App\Domain\Investor\Services\DocumentManagementService;
 use App\Domain\Investor\Services\FinancialReportingService;
+use App\Domain\Investor\Services\AnnouncementService as InvestorAnnouncementService;
+use App\Domain\Investor\Services\InvestorMessagingService;
 use App\Domain\Announcement\Services\AnnouncementService;
 use App\Infrastructure\Persistence\Eloquent\Announcement\AnnouncementModel;
 use Illuminate\Http\Request;
@@ -21,7 +24,9 @@ class InvestorPortalController extends Controller
         private readonly InvestmentRoundRepositoryInterface $roundRepository,
         private readonly DocumentManagementService $documentService,
         private readonly FinancialReportingService $financialReportingService,
-        private readonly AnnouncementService $announcementService
+        private readonly AnnouncementService $announcementService,
+        private readonly ?InvestorAnnouncementService $investorAnnouncementService = null,
+        private readonly ?InvestorMessagingService $messagingService = null
     ) {}
 
     /**
@@ -212,6 +217,16 @@ class InvestorPortalController extends Controller
             $data['announcements'] = [];
         }
 
+        // Get unread messages count
+        try {
+            $data['unreadMessagesCount'] = $this->messagingService 
+                ? $this->messagingService->getUnreadCountForInvestor($investorId)
+                : 0;
+        } catch (\Exception $e) {
+            \Log::error('Unread Messages Count Error: ' . $e->getMessage());
+            $data['unreadMessagesCount'] = 0;
+        }
+
         // Debug: Log the complete data
         \Log::info('Investor Dashboard Complete Data', ['keys' => array_keys($data)]);
 
@@ -327,6 +342,99 @@ class InvestorPortalController extends Controller
     }
 
     /**
+     * Show investor financial reports
+     */
+    public function reports()
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        // Get published financial reports
+        $reports = $this->financialReportingService->getLatestReports(12);
+        $financialSummary = $this->financialReportingService->getFinancialSummary();
+        $performanceMetrics = $this->financialReportingService->getPerformanceMetrics();
+
+        return Inertia::render('Investor/Reports', [
+            'investor' => [
+                'id' => $investor->getId(),
+                'name' => $investor->getName(),
+                'email' => $investor->getEmail(),
+            ],
+            'reports' => array_map(fn($report) => $report->toArray(), $reports),
+            'financialSummary' => $financialSummary,
+            'performanceMetrics' => $performanceMetrics,
+        ]);
+    }
+
+    /**
+     * Show investor announcements
+     */
+    public function announcements()
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        // Get announcements with read status
+        $announcements = [];
+        if ($this->investorAnnouncementService) {
+            $announcements = $this->investorAnnouncementService->getAnnouncementsForInvestor($investorId);
+        }
+
+        // Get announcement types for filtering
+        $types = $this->investorAnnouncementService 
+            ? $this->investorAnnouncementService->getAnnouncementTypes()
+            : [];
+
+        return Inertia::render('Investor/Announcements', [
+            'investor' => [
+                'id' => $investor->getId(),
+                'name' => $investor->getName(),
+                'email' => $investor->getEmail(),
+            ],
+            'announcements' => $announcements,
+            'types' => $types,
+        ]);
+    }
+
+    /**
+     * Mark investor announcement as read
+     */
+    public function markInvestorAnnouncementAsRead(int $id)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        if ($this->investorAnnouncementService) {
+            $this->investorAnnouncementService->markAsRead($id, $investorId);
+        }
+
+        return back()->with('success', 'Announcement marked as read');
+    }
+
+    /**
      * Show investor messages
      */
     public function messages()
@@ -344,16 +452,154 @@ class InvestorPortalController extends Controller
             return redirect()->route('investor.login');
         }
 
-        // For now, return a simple messages page
-        // In the future, this could integrate with the messaging system
+        // Get messages for this investor
+        $messages = [];
+        $unreadCount = 0;
+        
+        if ($this->messagingService) {
+            $messages = $this->messagingService->getMessagesForInvestor($investorId);
+            $unreadCount = $this->messagingService->getUnreadCountForInvestor($investorId);
+        }
+
         return Inertia::render('Investor/Messages', [
             'investor' => [
                 'id' => $investor->getId(),
                 'name' => $investor->getName(),
                 'email' => $investor->getEmail(),
             ],
-            'messages' => [], // Placeholder for future implementation
+            'messages' => $messages,
+            'unreadCount' => $unreadCount,
         ]);
+    }
+
+    /**
+     * Store a new message from investor
+     */
+    public function storeMessage(Request $request)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'content' => 'required|string|max:10000',
+            'parent_id' => 'nullable|integer|exists:investor_messages,id',
+        ]);
+
+        if (!$this->messagingService) {
+            return back()->with('error', 'Messaging service unavailable');
+        }
+
+        try {
+            $this->messagingService->sendMessageFromInvestor(
+                investorAccountId: $investorId,
+                subject: $validated['subject'],
+                content: $validated['content'],
+                parentId: $validated['parent_id'] ?? null
+            );
+
+            return back()->with('success', 'Message sent successfully');
+        } catch (\Exception $e) {
+            \Log::error('Investor message error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to send message');
+        }
+    }
+
+    /**
+     * Mark a message as read
+     */
+    public function markMessageAsRead(int $id)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        if (!$this->messagingService) {
+            return response()->json(['error' => 'Messaging service unavailable'], 500);
+        }
+
+        try {
+            $this->messagingService->markAsRead($id, $investorId);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Show investor settings
+     */
+    public function settings()
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $investor = $this->accountRepository->findById($investorId);
+
+        if (!$investor) {
+            session()->forget(['investor_id', 'investor_email']);
+            return redirect()->route('investor.login');
+        }
+
+        // Get notification preferences
+        $preferenceRepository = app(\App\Domain\Investor\Repositories\InvestorNotificationPreferenceRepositoryInterface::class);
+        $preferences = $preferenceRepository->findOrCreateForInvestor($investorId);
+
+        return Inertia::render('Investor/Settings', [
+            'investor' => [
+                'id' => $investor->getId(),
+                'name' => $investor->getName(),
+                'email' => $investor->getEmail(),
+            ],
+            'preferences' => $preferences->toArray(),
+        ]);
+    }
+
+    /**
+     * Update notification preferences
+     */
+    public function updateNotificationPreferences(Request $request)
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return redirect()->route('investor.login');
+        }
+
+        $validated = $request->validate([
+            'email_announcements' => 'boolean',
+            'email_financial_reports' => 'boolean',
+            'email_dividends' => 'boolean',
+            'email_meetings' => 'boolean',
+            'email_messages' => 'boolean',
+            'email_urgent_only' => 'boolean',
+            'digest_frequency' => 'in:immediate,daily,weekly,none',
+        ]);
+
+        $preferenceRepository = app(\App\Domain\Investor\Repositories\InvestorNotificationPreferenceRepositoryInterface::class);
+        $preferences = $preferenceRepository->findOrCreateForInvestor($investorId);
+
+        $preferences->updatePreferences(
+            emailAnnouncements: $validated['email_announcements'] ?? true,
+            emailFinancialReports: $validated['email_financial_reports'] ?? true,
+            emailDividends: $validated['email_dividends'] ?? true,
+            emailMeetings: $validated['email_meetings'] ?? true,
+            emailMessages: $validated['email_messages'] ?? true,
+            emailUrgentOnly: $validated['email_urgent_only'] ?? false,
+            digestFrequency: $validated['digest_frequency'] ?? 'immediate'
+        );
+
+        $preferenceRepository->save($preferences);
+
+        return back()->with('success', 'Notification preferences updated');
     }
 
     /**

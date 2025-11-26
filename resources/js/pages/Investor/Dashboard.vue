@@ -20,13 +20,32 @@
               :href="route('investor.documents')"
               class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
+              <DocumentTextIcon class="h-5 w-5 mr-2" aria-hidden="true" />
               Documents
             </Link>
             <Link
-              :href="route('investor.messages')"
+              :href="route('investor.reports')"
               class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             >
+              <ChartBarIcon class="h-5 w-5 mr-2" aria-hidden="true" />
+              Reports
+            </Link>
+            <Link
+              :href="route('investor.messages')"
+              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative"
+            >
+              <ChatBubbleLeftRightIcon class="h-5 w-5 mr-2" aria-hidden="true" />
               Messages
+              <span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
+              </span>
+            </Link>
+            <Link
+              :href="route('investor.settings')"
+              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Cog6ToothIcon class="h-5 w-5 mr-2" aria-hidden="true" />
+              Settings
             </Link>
             <Link
               :href="route('investor.logout')"
@@ -193,6 +212,15 @@
         </div>
       </div>
 
+      <!-- Financial Performance Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Financial Summary Card -->
+        <FinancialSummaryCard :financial-summary="financialSummary" />
+        
+        <!-- Performance Chart -->
+        <PerformanceChart :performance-metrics="performanceMetrics" />
+      </div>
+
       <!-- Quick Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-xl shadow-lg p-6">
@@ -243,6 +271,9 @@ import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AnnouncementBanner from '@/components/Investor/AnnouncementBanner.vue';
+import FinancialSummaryCard from '@/components/Investor/FinancialSummaryCard.vue';
+import PerformanceChart from '@/components/Investor/PerformanceChart.vue';
+import { DocumentTextIcon, ChartBarIcon, ChatBubbleLeftRightIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline';
 
 interface Investor {
   id: number;
@@ -301,12 +332,42 @@ interface Announcement {
   created_at_human: string;
 }
 
+interface FinancialSummary {
+  latest_period: string;
+  latest_period_display: string;
+  total_revenue: number;
+  total_expenses: number;
+  net_profit: number;
+  profit_margin: number;
+  growth_rate: number | null;
+  growth_status: string;
+  health_score: number;
+  health_score_label: string;
+  health_score_color: string;
+  report_date_formatted: string;
+  revenue_breakdown: Array<{
+    source: string;
+    amount: number;
+    percentage: number;
+  }>;
+}
+
+interface PerformanceMetrics {
+  revenue_trend: { labels: string[]; data: number[] };
+  profit_trend: { labels: string[]; data: number[] };
+  member_growth: { labels: string[]; data: number[] };
+  health_score_trend: { labels: string[]; data: number[] };
+}
+
 const props = defineProps<{
   investor: Investor;
   investmentMetrics?: InvestmentMetrics;
   round?: InvestmentRound | null;
   platformMetrics?: PlatformMetrics;
   announcements?: Announcement[];
+  financialSummary?: FinancialSummary | null;
+  performanceMetrics?: PerformanceMetrics | null;
+  unreadMessagesCount?: number;
 }>();
 
 // Announcement state

@@ -184,14 +184,7 @@ class FinancialReportController extends Controller
         ]);
 
         try {
-            $report = $this->reportingService->getReportById($id);
-
-            if (!$report) {
-                return back()->with('error', 'Financial report not found.');
-            }
-
-            // For now, we'll need to recreate the report with updated data
-            // In a more sophisticated implementation, we'd have an update method
+            $this->reportingService->updateReport($id, $validated);
             
             return redirect()
                 ->route('admin.financial-reports.index')

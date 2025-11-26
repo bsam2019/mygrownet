@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import { BookOpen, Folder, LayoutGrid, Users, FileText, Settings, Activity, HelpCircle, BarChart3 as ChartBarIcon, UserCheck, Building2, Briefcase, Target, DollarSign, Shield, Key, CreditCard } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Users, FileText, Settings, Activity, HelpCircle, BarChart3 as ChartBarIcon, UserCheck, Building2, Briefcase, Target, DollarSign, Shield, Key, CreditCard, FolderOpen, MessageSquare, Megaphone } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 // Helper function to safely get route or return fallback
@@ -139,6 +139,26 @@ const investorRelationsNavItems: NavItem[] = [
         title: 'Investor Documents',
         href: safeRoute('admin.investor-documents.index'),
         icon: FolderOpen,
+    },
+    {
+        title: 'Financial Reports',
+        href: safeRoute('admin.financial-reports.index'),
+        icon: ChartBarIcon,
+    },
+    {
+        title: 'Investor Announcements',
+        href: safeRoute('admin.investor-announcements.index'),
+        icon: Megaphone,
+    },
+    {
+        title: 'Investor Messages',
+        href: safeRoute('admin.investor-messages.index'),
+        icon: MessageSquare,
+    },
+    {
+        title: 'Investor Analytics',
+        href: safeRoute('admin.investor-analytics.index'),
+        icon: ChartBarIcon,
     },
     {
         title: 'Investor Inquiries',

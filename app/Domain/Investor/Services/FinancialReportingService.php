@@ -133,6 +133,44 @@ class FinancialReportingService
         return $this->reportRepository->save($report);
     }
 
+    public function updateReport(int $reportId, array $data): FinancialReport
+    {
+        $report = $this->reportRepository->findById($reportId);
+        
+        if (!$report) {
+            throw new \Exception('Financial report not found');
+        }
+
+        $netProfit = $data['total_revenue'] - $data['total_expenses'];
+
+        $updatedReport = new FinancialReport(
+            id: $reportId,
+            title: $data['title'],
+            reportType: $report->getReportType(),
+            reportPeriod: $data['report_period'],
+            reportDate: new \DateTimeImmutable($data['report_date']),
+            totalRevenue: $data['total_revenue'],
+            totalExpenses: $data['total_expenses'],
+            netProfit: $netProfit,
+            grossMargin: $data['gross_margin'] ?? null,
+            operatingMargin: $data['operating_margin'] ?? null,
+            netMargin: $data['net_margin'] ?? null,
+            cashFlow: $data['cash_flow'] ?? null,
+            totalMembers: $data['total_members'] ?? null,
+            activeMembers: $data['active_members'] ?? null,
+            monthlyRecurringRevenue: $data['monthly_recurring_revenue'] ?? null,
+            customerAcquisitionCost: $data['customer_acquisition_cost'] ?? null,
+            lifetimeValue: $data['lifetime_value'] ?? null,
+            churnRate: $data['churn_rate'] ?? null,
+            growthRate: $data['growth_rate'] ?? null,
+            notes: $data['notes'] ?? null,
+            publishedAt: $report->getPublishedAt(),
+            revenueBreakdown: $data['revenue_breakdown'] ?? []
+        );
+
+        return $this->reportRepository->save($updatedReport);
+    }
+
     public function deleteReport(int $reportId): void
     {
         $this->reportRepository->delete($reportId);

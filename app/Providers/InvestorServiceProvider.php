@@ -45,6 +45,26 @@ class InvestorServiceProvider extends ServiceProvider
             \App\Domain\Investor\Repositories\FinancialReportRepositoryInterface::class,
             \App\Infrastructure\Persistence\Repositories\Investor\EloquentFinancialReportRepository::class
         );
+        
+        $this->app->bind(
+            \App\Domain\Investor\Repositories\InvestorAnnouncementRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorAnnouncementRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Domain\Investor\Repositories\InvestorMessageRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorMessageRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Domain\Investor\Repositories\InvestorNotificationPreferenceRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorNotificationPreferenceRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Domain\Investor\Repositories\InvestorEmailLogRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorEmailLogRepository::class
+        );
     }
 
     /**

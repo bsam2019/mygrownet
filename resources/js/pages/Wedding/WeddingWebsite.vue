@@ -26,79 +26,20 @@
 
   <div class="min-h-screen relative bg-white overflow-hidden">
     <!-- Flora decorative background - top header decoration -->
-    <div class="absolute top-0 left-0 right-0 z-0 pointer-events-none">
-      <div class="h-[45vh] md:h-[40vh]">
+    <!-- On mobile: starts below the fixed nav (58px to account for border), on desktop: starts at top -->
+    <div class="absolute top-[58px] md:top-0 left-0 right-0 z-0 pointer-events-none">
+      <div class="h-[30vh] md:h-[40vh]">
         <img 
           src="/images/Wedding/flora.jpg" 
           alt="" 
           aria-hidden="true"
           class="w-full h-full object-cover object-top"
         />
-        <!-- Smooth gradient fade to white at bottom -->
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-50% to-white"></div>
       </div>
     </div>
 
-    <!-- Animated Balloons Background -->
-    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-      <div
-        v-for="balloon in balloons"
-        :key="balloon.id"
-        class="balloon absolute"
-        :class="{ 'balloon-pop': balloon.popping }"
-        :style="{
-          left: balloon.x + '%',
-          bottom: balloon.startY + 'px',
-          '--float-duration': balloon.duration + 's',
-          '--float-delay': balloon.delay + 's',
-          '--sway-amount': balloon.sway + 'px',
-          '--balloon-color': balloon.color,
-          '--balloon-size': balloon.size + 'px',
-          animationDelay: balloon.delay + 's'
-        }"
-      >
-        <svg 
-          :width="balloon.size" 
-          :height="balloon.size * 1.2" 
-          viewBox="0 0 50 60" 
-          class="balloon-svg"
-        >
-          <!-- Balloon body -->
-          <ellipse 
-            cx="25" 
-            cy="22" 
-            rx="20" 
-            ry="22" 
-            :fill="balloon.color"
-            class="balloon-body"
-          />
-          <!-- Balloon highlight -->
-          <ellipse 
-            cx="18" 
-            cy="15" 
-            rx="6" 
-            ry="8" 
-            fill="rgba(255,255,255,0.3)"
-          />
-          <!-- Balloon knot -->
-          <polygon 
-            points="25,44 22,48 28,48" 
-            :fill="balloon.color"
-          />
-          <!-- Balloon string -->
-          <path 
-            d="M25,48 Q27,52 24,56 Q21,60 25,64" 
-            stroke="#999" 
-            stroke-width="1" 
-            fill="none"
-            class="balloon-string"
-          />
-        </svg>
-      </div>
-    </div>
-
-    <!-- Fixed Mobile Header with Active Tab Name - semi-transparent to show flora -->
-    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-white/70 backdrop-blur-sm border-b border-gray-100/50">
+    <!-- Fixed Mobile Header with Active Tab Name - transparent to show flora -->
+    <div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-transparent border-b border-transparent">
       <div class="flex items-center justify-between px-4 py-3">
         <!-- Hamburger Menu Button -->
         <button 
@@ -173,16 +114,16 @@
 
     <!-- Main Content Wrapper - sits above background -->
     <div class="relative z-10">
-    <!-- Top Spacing (accounts for fixed mobile header) - reduced on mobile -->
-    <div class="h-12 md:h-12 lg:h-16"></div>
+    <!-- Top Spacing (accounts for fixed mobile header + flora visibility) -->
+    <div class="h-[12vh] md:h-12 lg:h-16"></div>
 
     <!-- Header Section - transparent to show flora behind -->
     <header class="relative pt-1 md:pt-20 lg:pt-24 pb-4 md:pb-6 text-center">
       <div class="max-w-4xl mx-auto px-4">
 
         <!-- Couple Names - Hidden on mobile, shown on desktop -->
-        <h1 class="hidden md:block text-3xl md:text-5xl lg:text-6xl font-light text-gray-600 mb-4 tracking-[0.3em] font-serif drop-shadow-sm">
-          {{ weddingEvent.groom_name.toUpperCase() }} & {{ weddingEvent.bride_name.toUpperCase() }}
+        <h1 class="hidden md:block text-4xl md:text-6xl lg:text-7xl text-gray-600 mb-4 drop-shadow-sm" style="font-family: 'Great Vibes', cursive;">
+          {{ weddingEvent.groom_name }} & {{ weddingEvent.bride_name }}
         </h1>
         <p class="hidden md:block text-sm md:text-base text-gray-400 font-light tracking-[0.2em] mb-6 uppercase">
           {{ formatWeddingDate(weddingEvent.wedding_date) }}
@@ -202,19 +143,11 @@
               </a>
               <a 
                 href="javascript:void(0)" 
-                :class="activeTab === 'story' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
-                @click.prevent="setActiveTab('story')"
-                class="transition-colors"
-              >
-                Our Story
-              </a>
-              <a 
-                href="javascript:void(0)" 
                 :class="activeTab === 'program' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
                 @click.prevent="setActiveTab('program')"
                 class="transition-colors"
               >
-                Wedding Party
+                Wedding Program
               </a>
               <a 
                 href="javascript:void(0)" 
@@ -223,14 +156,6 @@
                 class="transition-colors"
               >
                 Q + A
-              </a>
-              <a 
-                href="javascript:void(0)" 
-                :class="activeTab === 'travel' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
-                @click.prevent="setActiveTab('travel')"
-                class="transition-colors"
-              >
-                Travel
               </a>
               <button 
                 :class="activeTab === 'rsvp' ? 'text-gray-700 border-b border-gray-400 pb-4' : 'text-gray-400 hover:text-gray-600 pb-4'"
@@ -288,19 +213,11 @@
               </a>
               <a 
                 href="javascript:void(0)" 
-                :class="activeTab === 'story' ? 'text-gray-700' : 'text-gray-400'"
-                @click.prevent="setActiveTabMobile('story')"
-                class="hover:text-gray-600 transition-colors"
-              >
-                Our Story
-              </a>
-              <a 
-                href="javascript:void(0)" 
                 :class="activeTab === 'program' ? 'text-gray-700' : 'text-gray-400'"
                 @click.prevent="setActiveTabMobile('program')"
                 class="hover:text-gray-600 transition-colors"
               >
-                Wedding Party
+                Wedding Program
               </a>
               <a 
                 href="javascript:void(0)" 
@@ -309,14 +226,6 @@
                 class="hover:text-gray-600 transition-colors"
               >
                 Q + A
-              </a>
-              <a 
-                href="javascript:void(0)" 
-                :class="activeTab === 'travel' ? 'text-gray-700' : 'text-gray-400'"
-                @click.prevent="setActiveTabMobile('travel')"
-                class="hover:text-gray-600 transition-colors"
-              >
-                Travel
               </a>
               <button 
                 :class="activeTab === 'rsvp' ? 'text-gray-700' : 'text-gray-400'"
@@ -332,14 +241,16 @@
     </header>
 
     <!-- Tab Content -->
-    <main class="min-h-screen">
+    <main>
       <!-- Home Tab -->
       <section v-show="activeTab === 'home'" id="home" class="pt-2 pb-4 md:py-12 text-center">
         <div class="max-w-4xl mx-auto px-4">
           <!-- Mobile Couple Names - Shown above hero on mobile only -->
-          <div class="md:hidden text-center mb-4">
-            <h1 class="text-2xl font-light text-gray-500 mb-2 tracking-[0.2em] font-serif">
-              {{ weddingEvent.groom_name.toUpperCase() }} & {{ weddingEvent.bride_name.toUpperCase() }}
+          <div class="md:hidden text-center mb-2">
+            <h1 class="flex flex-col items-center text-gray-600 mb-1" style="font-family: 'Great Vibes', cursive;">
+              <span class="text-5xl">{{ weddingEvent.groom_name }}</span>
+              <span class="text-3xl text-gray-400">&</span>
+              <span class="text-5xl">{{ weddingEvent.bride_name }}</span>
             </h1>
             <p class="text-xs text-gray-400 font-light tracking-[0.15em] uppercase">
               {{ formatWeddingDate(weddingEvent.wedding_date) }}
@@ -357,18 +268,8 @@
             </div>
           </div>
 
-          <!-- RSVP Button -->
-          <div class="mb-4 md:mb-10">
-            <button 
-              @click="openRSVPModal"
-              class="inline-block bg-gray-500 text-white px-10 py-3 text-xs font-medium tracking-[0.15em] hover:bg-gray-600 transition-colors"
-            >
-              RSVP
-            </button>
-          </div>
-
           <!-- Wedding Ceremony Details -->
-          <div class="max-w-md mx-auto">
+          <div class="max-w-md mx-auto mb-6 md:mb-10">
             <h2 class="text-sm font-normal text-gray-500 mb-3 md:mb-6 tracking-[0.2em] uppercase">Wedding Ceremony</h2>
             
             <div class="space-y-1 md:space-y-2 text-gray-400 text-sm leading-relaxed font-light italic">
@@ -380,105 +281,58 @@
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- Our Story Tab -->
-      <section v-show="activeTab === 'story'" id="story" class="pt-4 pb-12 md:pt-6 md:pb-20">
-        <div class="max-w-5xl mx-auto px-4">
-          <!-- Elegant Header -->
-          <div class="text-center mb-12 md:mb-16">
-            <p class="text-xs text-gray-400 tracking-[0.3em] uppercase mb-3">The Beginning</p>
-            <h2 class="text-2xl md:text-3xl font-light text-gray-700 tracking-[0.15em] font-serif">
-              MUBANGA & KAOMA
-            </h2>
-            <div class="flex items-center justify-center gap-4 mt-4">
-              <div class="w-16 h-px bg-gray-300"></div>
-              <HeartIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
-              <div class="w-16 h-px bg-gray-300"></div>
-            </div>
-          </div>
-
-          <!-- Photo Gallery - Elegant Masonry Style -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-12 md:mb-16">
-            <!-- Image 1 - Large -->
-            <div class="col-span-2 row-span-2">
-              <div class="aspect-square overflow-hidden rounded-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <img 
-                  src="/images/Wedding/story_1.jpg" 
-                  alt="Mubanga and Kaoma - Our Journey"
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-            <!-- Image 2 -->
-            <div class="col-span-1">
-              <div class="aspect-square overflow-hidden rounded-sm shadow-md hover:shadow-lg transition-shadow duration-300">
-                <img 
-                  src="/images/Wedding/story_2.jpg" 
-                  alt="Mubanga and Kaoma - Memories"
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-            <!-- Image 3 -->
-            <div class="col-span-1">
-              <div class="aspect-square overflow-hidden rounded-sm shadow-md hover:shadow-lg transition-shadow duration-300">
-                <img 
-                  src="/images/Wedding/story_3.jpg" 
-                  alt="Mubanga and Kaoma - Together"
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-            <!-- Image 4 -->
-            <div class="col-span-2">
-              <div class="aspect-[2/1] overflow-hidden rounded-sm shadow-md hover:shadow-lg transition-shadow duration-300">
-                <img 
-                  src="/images/Wedding/story_4.jpg" 
-                  alt="Mubanga and Kaoma - Love Story"
-                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Story Content - Elegant Card -->
-          <div class="max-w-3xl mx-auto">
-            <div class="bg-white/80 backdrop-blur-sm rounded-sm shadow-lg border border-gray-100 p-8 md:p-12 relative">
-              <!-- Decorative Quote Mark -->
-              <div class="absolute -top-4 left-8 md:left-12">
-                <span class="text-6xl md:text-7xl text-gray-200 font-serif leading-none">"</span>
+          <!-- Program Summary -->
+          <div class="max-w-2xl mx-auto mb-8 md:mb-12">
+            <h3 class="text-sm font-normal text-gray-500 mb-4 md:mb-6 tracking-[0.2em] uppercase">Program Highlights</h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              <!-- Ceremony -->
+              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
+                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                  <HeartIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </div>
+                <p class="text-xs font-medium text-gray-600 tracking-wide">Ceremony</p>
+                <p class="text-xs text-gray-400 mt-1">11:00 AM</p>
               </div>
               
-              <!-- Story Text -->
-              <div class="relative z-10 pt-6">
-                <p class="text-gray-600 text-base md:text-lg leading-relaxed md:leading-loose text-center font-light">
-                  Mubanga and Kaoma's journey is one that unfolded with quiet beauty and steady grace. What began as a simple connection grew into a partnership built on understanding, patience, and genuine care.
-                </p>
-                
-                <p class="text-gray-600 text-base md:text-lg leading-relaxed md:leading-loose text-center font-light mt-6">
-                  Through seasons of change and moments that shaped them both, they learned to appreciate the small things, support each other through challenges, and celebrate the milestones that came their way. Each chapter of their story has strengthened their bond and prepared them for the life they are choosing together.
-                </p>
-                
-                <p class="text-gray-600 text-base md:text-lg leading-relaxed md:leading-loose text-center font-light mt-6">
-                  Today, they stand ready to continue that journey—walking forward with gratitude for the past, joy in the present, and hope for everything the future holds.
-                </p>
+              <!-- Photos -->
+              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
+                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                  <CameraIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </div>
+                <p class="text-xs font-medium text-gray-600 tracking-wide">Photos</p>
+                <p class="text-xs text-gray-400 mt-1">12:00 PM</p>
               </div>
-
-              <!-- Decorative Closing Quote -->
-              <div class="absolute -bottom-4 right-8 md:right-12">
-                <span class="text-6xl md:text-7xl text-gray-200 font-serif leading-none rotate-180 inline-block">"</span>
+              
+              <!-- Reception -->
+              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
+                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                  <MusicalNoteIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </div>
+                <p class="text-xs font-medium text-gray-600 tracking-wide">Reception</p>
+                <p class="text-xs text-gray-400 mt-1">1:30 PM</p>
+              </div>
+              
+              <!-- Celebration -->
+              <div class="text-center p-4 bg-gray-50/50 rounded-lg">
+                <div class="w-10 h-10 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                  <SparklesIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </div>
+                <p class="text-xs font-medium text-gray-600 tracking-wide">Celebration</p>
+                <p class="text-xs text-gray-400 mt-1">Until 4:00 PM</p>
               </div>
             </div>
+          </div>
 
-            <!-- Signature Style Names -->
-            <div class="text-center mt-10">
-              <p class="text-xl md:text-2xl font-light text-gray-500 tracking-[0.1em] font-serif italic">
-                Mubanga & Kaoma
-              </p>
-              <div class="w-24 h-px bg-gray-300 mx-auto mt-4"></div>
-            </div>
+          <!-- RSVP Button -->
+          <div class="mb-2 md:mb-10">
+            <button 
+              @click="openRSVPModal"
+              class="inline-block bg-gray-500 text-white px-10 py-3 text-xs font-medium tracking-[0.15em] hover:bg-gray-600 transition-colors"
+            >
+              RSVP
+            </button>
           </div>
         </div>
       </section>
@@ -486,41 +340,44 @@
       <!-- Wedding Program Tab -->
       <section v-show="activeTab === 'program'" id="program" class="py-16">
         <div class="max-w-4xl mx-auto px-4">
-          <div class="text-center mb-16">
-            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">WEDDING PROGRAM</h2>
+          <!-- Hidden on mobile since mobile header shows tab name -->
+          <div class="hidden md:block text-center mb-16">
+            <span class="text-3xl">💒</span>
+            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em] mt-2">WEDDING PROGRAM</h2>
           </div>
           
-          <div class="space-y-12">
+          <div class="space-y-4">
             <!-- Marriage Blessing Ceremony -->
-            <div class="bg-gray-50 rounded-lg p-8">
-              <div class="flex items-center gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-6">
+              <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                   <HeartIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">MARRIAGE BLESSING CEREMONY</h3>
-                  <p class="text-sm text-gray-500">📍 The Chapel • 🕚 11:00 AM – 12:00 PM</p>
+                  <p class="text-sm text-gray-500">📍 Venue: The Chapel</p>
+                  <p class="text-sm text-gray-500">🕚 Time: 11:00 AM – 12:00 PM</p>
                 </div>
               </div>
               <ul class="space-y-2 text-gray-600 text-sm ml-16">
+                <li>• Arrival of Guests</li>
                 <li>• Processional & Entry of the Bride</li>
                 <li>• Opening Prayer & Welcome</li>
-                <li>• Exchange of Vows and Rings</li>
                 <li>• Marriage Blessing</li>
-                <li>• Signing of the Marriage Certificate</li>
                 <li>• Closing Prayer & Recessional</li>
               </ul>
             </div>
 
             <!-- Photography Session -->
-            <div class="bg-gray-50 rounded-lg p-8">
-              <div class="flex items-center gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-6">
+              <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                   <CameraIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">PHOTOGRAPHY SESSION</h3>
-                  <p class="text-sm text-gray-500">📍 Chapel Gardens • 🕛 12:00 PM – 1:00 PM</p>
+                  <p class="text-sm text-gray-500">📍 Venue: Chapel Gardens</p>
+                  <p class="text-sm text-gray-500">🕛 Time: 12:00 PM – 1:00 PM</p>
                 </div>
               </div>
               <ul class="space-y-2 text-gray-600 text-sm ml-16">
@@ -531,42 +388,42 @@
             </div>
 
             <!-- Transition -->
-            <div class="bg-gray-50 rounded-lg p-8">
-              <div class="flex items-center gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-6">
+              <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                   <ArrowRightIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
                 </div>
                 <div>
                   <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">TRANSITION TO RECEPTION</h3>
-                  <p class="text-sm text-gray-500">🕐 1:00 PM – 1:30 PM</p>
+                  <p class="text-sm text-gray-500">🕐 Time: 1:00 PM – 1:30 PM</p>
                 </div>
               </div>
               <ul class="space-y-2 text-gray-600 text-sm ml-16">
-                <li>• Guests Proceed to the Reception Venue</li>
-                <li>• Light Refreshments / Background Music</li>
+                <li>• Guests Proceed to Reception Venue</li>
+                <li>• Light Refreshments</li>
               </ul>
             </div>
 
             <!-- Wedding Reception -->
-            <div class="bg-gray-50 rounded-lg p-8">
-              <div class="flex items-center gap-4 mb-6">
+            <div class="bg-gray-50 rounded-lg p-6">
+              <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                   <MusicalNoteIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">WEDDING RECEPTION CELEBRATION</h3>
-                  <p class="text-sm text-gray-500">📍 Main Hall • 🕜 1:30 PM – 4:00 PM</p>
+                  <h3 class="text-lg font-medium text-gray-700 tracking-[0.1em]">WEDDING RECEPTION</h3>
+                  <p class="text-sm text-gray-500">📍 Venue: Main Hall</p>
+                  <p class="text-sm text-gray-500">🕜 Time: 1:30 PM – 4:00 PM</p>
                 </div>
               </div>
               <ul class="space-y-2 text-gray-600 text-sm ml-16">
                 <li>• Arrival of the Newlyweds</li>
                 <li>• Opening Remarks & Prayer</li>
-                <li>• Lunch / Dinner Service</li>
+                <li>• Lunch Service</li>
                 <li>• Toasts & Speeches</li>
                 <li>• Cutting of the Cake</li>
-                <li>• First Dance</li>
-                <li>• Entertainment & Dancing</li>
-                <li>• Closing Remarks & Vote of Thanks</li>
+                <li>• Entertainment & Guest Dancing</li>
+                <li>• Vote of Thanks & Closing</li>
               </ul>
             </div>
           </div>
@@ -576,24 +433,40 @@
       <!-- Q&A Tab -->
       <section v-show="activeTab === 'qa'" id="qa" class="py-8">
         <div class="max-w-3xl mx-auto px-4">
-          <div class="text-center mb-10">
-            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">Q & A</h2>
+          <!-- Hidden on mobile since mobile header shows tab name -->
+          <div class="hidden md:block text-center mb-10">
+            <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em]">Q + A</h2>
           </div>
 
           <div class="space-y-12">
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">What should I wear?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">{{ weddingEvent.dress_code || 'Formal attire is requested. We want you to feel comfortable and look your best!' }}</p>
+              <h3 class="text-lg font-medium text-gray-700 mb-4">When is the RSVP deadline?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Please confirm your attendance by 28 November to help us finalise arrangements.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">Will there be parking available?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Yes, there will be ample parking available at the venue for all our guests.</p>
+              <h3 class="text-lg font-medium text-gray-700 mb-4">Are children welcome?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">As much as we love little ones, this will be an adults-only celebration.</p>
             </div>
             
             <div class="text-center">
-              <h3 class="text-lg font-medium text-gray-700 mb-4">Can I bring a plus one?</h3>
-              <p class="text-gray-600 text-sm leading-relaxed">Please refer to your invitation for plus one details. If you have any questions, feel free to contact us directly.</p>
+              <h3 class="text-lg font-medium text-gray-700 mb-4">Can I bring a plus-one?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Due to limited seating, we're only able to accommodate guests listed on the invitation.</p>
+            </div>
+            
+            <div class="text-center">
+              <h3 class="text-lg font-medium text-gray-700 mb-4">What is the dress code?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Formal / Smart Elegant.</p>
+            </div>
+            
+            <div class="text-center">
+              <h3 class="text-lg font-medium text-gray-700 mb-4">What time should I arrive?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Guests are kindly requested to be seated by 11:00 AM.</p>
+            </div>
+            
+            <div class="text-center">
+              <h3 class="text-lg font-medium text-gray-700 mb-4">Will there be a reception after the ceremony?</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">Yes! Please join us immediately after the ceremony for a celebration of love, food, and joy.</p>
             </div>
           </div>
         </div>
@@ -745,21 +618,21 @@
     </main>
 
     <!-- Monogram Section -->
-    <section class="py-8 md:py-16">
+    <section class="pt-2 pb-4 md:py-8">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <!-- Elegant Monogram -->
-        <div class="mb-3 md:mb-4">
-          <h2 class="text-3xl md:text-5xl font-light text-gray-400 tracking-[0.2em] font-serif">
+        <div class="mb-2 md:mb-3">
+          <h2 class="text-2xl md:text-3xl font-light text-gray-400 tracking-[0.2em] font-serif">
             {{ getMonogramInitials() }}
           </h2>
-          <div class="w-24 md:w-32 h-px bg-gray-300 mx-auto mt-3 md:mt-4"></div>
+          <div class="w-16 md:w-24 h-px bg-gray-300 mx-auto mt-2 md:mt-3"></div>
         </div>
         
-        <p class="text-sm text-gray-400 tracking-[0.15em] mb-6 md:mb-12">{{ formatMonogramDate(weddingEvent.wedding_date) }}</p>
+        <p class="text-xs text-gray-400 tracking-[0.15em] mb-2 md:mb-6">{{ formatMonogramDate(weddingEvent.wedding_date) }}</p>
         
         <p class="text-xs text-gray-400 mb-4">Created on MyGrowNet</p>
         <p class="text-xs text-gray-400 leading-relaxed">
-          Getting married? <a href="/weddings" class="underline hover:no-underline">Create your wedding website for free.</a>
+          Getting married? <a href="/weddings" class="underline hover:no-underline">Create your wedding website now.</a>
         </p>
         <p class="text-xs text-gray-400 mt-2">
           <a href="#" class="underline hover:no-underline">Your Privacy Choices</a>
@@ -814,7 +687,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ShareIcon,
-  LinkIcon
+  LinkIcon,
+  SparklesIcon
 } from '@heroicons/vue/24/outline'
 import RSVPModal from '@/components/Wedding/RSVPModal.vue'
 
@@ -847,95 +721,20 @@ const mobileMenuOpen = ref(false)
 const shareMenuOpen = ref(false)
 const linkCopied = ref(false)
 
-// Balloon animation state
-const balloons = ref([])
-let balloonInterval = null
-let balloonIdCounter = 0
-
-// Wedding-themed pastel colors
-const balloonColors = [
-  '#F8BBD9', // Soft pink
-  '#E1BEE7', // Lavender
-  '#BBDEFB', // Light blue
-  '#C8E6C9', // Mint green
-  '#FFF9C4', // Cream yellow
-  '#FFCCBC', // Peach
-  '#D1C4E9', // Light purple
-  '#B2EBF2', // Aqua
-  '#F5F5F5', // White
-  '#FFE0B2'  // Light gold
-]
-
-const createBalloon = () => {
-  const id = balloonIdCounter++
-  const balloon = {
-    id,
-    x: Math.random() * 100,
-    startY: -100,
-    duration: 12 + Math.random() * 8, // 12-20 seconds to float up
-    delay: Math.random() * 2,
-    sway: 20 + Math.random() * 30, // Horizontal sway amount
-    color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
-    size: 30 + Math.random() * 25, // 30-55px
-    popping: false
-  }
-  
-  balloons.value.push(balloon)
-  
-  // Remove balloon after animation completes (with pop effect)
-  const totalTime = (balloon.duration + balloon.delay) * 1000
-  setTimeout(() => {
-    const idx = balloons.value.findIndex(b => b.id === id)
-    if (idx !== -1) {
-      // Trigger pop animation
-      balloons.value[idx].popping = true
-      // Remove after pop animation
-      setTimeout(() => {
-        balloons.value = balloons.value.filter(b => b.id !== id)
-      }, 300)
-    }
-  }, totalTime - 500) // Pop slightly before reaching top
-}
-
-const startBalloonAnimation = () => {
-  // Create initial balloons
-  for (let i = 0; i < 10; i++) {
-    setTimeout(() => createBalloon(), i * 500)
-  }
-  
-  // Continue creating balloons periodically
-  balloonInterval = setInterval(() => {
-    if (balloons.value.length < 25) { // Max 25 balloons at once
-      createBalloon()
-    }
-  }, 1500) // New balloon every 1.5 seconds
-}
-
-const stopBalloonAnimation = () => {
-  if (balloonInterval) {
-    clearInterval(balloonInterval)
-    balloonInterval = null
-  }
-}
-
 onMounted(() => {
-  startBalloonAnimation()
   initializeTabFromURL()
   window.addEventListener('popstate', handlePopState)
 })
 
 onUnmounted(() => {
-  stopBalloonAnimation()
   window.removeEventListener('popstate', handlePopState)
 })
 
 // Tab labels mapping
 const tabLabels = {
   home: 'Home',
-  story: 'Our Story',
-  program: 'Wedding Party',
+  program: 'Wedding Program',
   qa: 'Q + A',
-  travel: 'Travel',
   rsvp: 'RSVP'
 }
 
@@ -1010,7 +809,7 @@ const submitRSVP = async () => {
 const setActiveTab = (tab) => {
   activeTab.value = tab
   // Update URL without page reload using History API
-  const basePath = window.location.pathname.replace(/\/(story|program|qa|travel|rsvp)$/, '')
+  const basePath = window.location.pathname.replace(/\/(program|qa|travel|rsvp)$/, '')
   const newPath = tab === 'home' ? basePath : `${basePath}/${tab}`
   window.history.pushState({ tab }, '', newPath)
 }
@@ -1019,7 +818,7 @@ const setActiveTabMobile = (tab) => {
   activeTab.value = tab
   mobileMenuOpen.value = false
   // Update URL without page reload using History API
-  const basePath = window.location.pathname.replace(/\/(story|program|qa|travel|rsvp)$/, '')
+  const basePath = window.location.pathname.replace(/\/(program|qa|travel|rsvp)$/, '')
   const newPath = tab === 'home' ? basePath : `${basePath}/${tab}`
   window.history.pushState({ tab }, '', newPath)
 }
@@ -1078,7 +877,7 @@ const handlePopState = (event) => {
   } else {
     // Detect tab from URL
     const path = window.location.pathname
-    const match = path.match(/\/(story|program|qa|travel|rsvp)$/)
+    const match = path.match(/\/(program|qa|travel|rsvp)$/)
     activeTab.value = match ? match[1] : 'home'
   }
 }
@@ -1086,7 +885,7 @@ const handlePopState = (event) => {
 // Initialize tab from URL on mount
 const initializeTabFromURL = () => {
   const path = window.location.pathname
-  const match = path.match(/\/(story|program|qa|travel|rsvp)$/)
+  const match = path.match(/\/(program|qa|travel|rsvp)$/)
   if (match) {
     activeTab.value = match[1]
     // Set initial state
@@ -1167,97 +966,4 @@ document.addEventListener('DOMContentLoaded', () => {
   letter-spacing: 0.05em;
 }
 
-/* Balloon Animations */
-.balloon {
-  animation: 
-    floatUp var(--float-duration, 15s) linear forwards,
-    sway 3s ease-in-out infinite;
-  opacity: 0.7;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-  transform-origin: center bottom;
-}
-
-.balloon-svg {
-  transition: transform 0.3s ease;
-}
-
-.balloon:hover .balloon-svg {
-  transform: scale(1.1);
-}
-
-.balloon-string {
-  animation: stringWave 2s ease-in-out infinite;
-}
-
-/* Float up animation */
-@keyframes floatUp {
-  0% {
-    bottom: -100px;
-    opacity: 0;
-  }
-  5% {
-    opacity: 0.7;
-  }
-  90% {
-    opacity: 0.7;
-  }
-  100% {
-    bottom: 110vh;
-    opacity: 0;
-  }
-}
-
-/* Gentle side-to-side sway */
-@keyframes sway {
-  0%, 100% {
-    transform: translateX(0) rotate(-2deg);
-  }
-  25% {
-    transform: translateX(calc(var(--sway-amount, 20px) * 0.5)) rotate(1deg);
-  }
-  50% {
-    transform: translateX(var(--sway-amount, 20px)) rotate(2deg);
-  }
-  75% {
-    transform: translateX(calc(var(--sway-amount, 20px) * 0.5)) rotate(-1deg);
-  }
-}
-
-/* String wave animation */
-@keyframes stringWave {
-  0%, 100% {
-    d: path('M25,48 Q27,52 24,56 Q21,60 25,64');
-  }
-  50% {
-    d: path('M25,48 Q23,52 26,56 Q29,60 25,64');
-  }
-}
-
-/* Pop animation */
-.balloon-pop {
-  animation: pop 0.3s ease-out forwards !important;
-}
-
-@keyframes pop {
-  0% {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
-/* Reduce motion for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .balloon {
-    animation: none;
-    display: none;
-  }
-}
 </style>
