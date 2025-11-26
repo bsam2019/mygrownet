@@ -176,14 +176,25 @@ class WeddingController extends Controller
             ['url' => '/images/wedding/gallery/venue-2.jpg'],
         ];
 
-        Inertia::setRootView('wedding');
+        $groomName = auth()->user()->name ?? 'Groom';
+        $brideName = $weddingEvent->getPartnerName();
+        $weddingDate = $weddingEvent->getWeddingDate();
+        
+        // Open Graph meta data for social sharing
+        $ogMeta = [
+            'title' => "{$groomName} & {$brideName} Wedding - " . $weddingDate->format('F j, Y'),
+            'description' => "You are invited to celebrate the wedding of {$groomName} & {$brideName} on " . $weddingDate->format('F j, Y') . ".",
+            'image' => url('/images/wedding/default-couple.jpg'),
+            'url' => url()->current(),
+            'type' => 'website',
+        ];
         
         return Inertia::render('Wedding/WeddingWebsite', [
             'weddingEvent' => [
                 'id' => $weddingEvent->getId(),
-                'bride_name' => $weddingEvent->getPartnerName(),
-                'groom_name' => auth()->user()->name ?? 'Groom',
-                'wedding_date' => $weddingEvent->getWeddingDate()->format('Y-m-d'),
+                'bride_name' => $brideName,
+                'groom_name' => $groomName,
+                'wedding_date' => $weddingDate->format('Y-m-d'),
                 'venue_name' => $weddingEvent->getVenueName() ?? 'Beautiful Wedding Venue',
                 'venue_address' => $weddingEvent->getVenueLocation() ?? 'Lusaka, Zambia',
                 'guest_count' => $weddingEvent->getGuestCount(),
@@ -193,14 +204,15 @@ class WeddingController extends Controller
                 'reception_venue' => $weddingEvent->getVenueName() ?? 'Beautiful Wedding Venue',
                 'reception_address' => $weddingEvent->getVenueLocation() ?? 'Lusaka, Zambia',
                 'dress_code' => 'Formal Attire',
-                'rsvp_deadline' => $weddingEvent->getWeddingDate()->subDays(14)->format('Y-m-d'),
+                'rsvp_deadline' => $weddingDate->subDays(14)->format('Y-m-d'),
                 'hero_image' => '/images/wedding/default-couple.jpg',
                 'story_image' => '/images/wedding/couple-story.jpg',
                 'how_we_met' => 'Our love story began in the most unexpected way, and we knew from that moment that we were meant to be together.',
                 'proposal_story' => 'It was a moment we\'ll never forget - surrounded by love, laughter, and the promise of forever.',
             ],
-            'galleryImages' => $galleryImages
-        ]);
+            'galleryImages' => $galleryImages,
+            'ogMeta' => $ogMeta,
+        ])->rootView('wedding')->withViewData(['ogMeta' => $ogMeta]);
     }
 
     public function submitRSVP(Request $request, $id)
@@ -326,13 +338,12 @@ class WeddingController extends Controller
             'type' => 'website',
         ];
 
-        Inertia::setRootView('wedding');
-        
+        // Pass OG meta to the view for server-side rendering (important for social crawlers)
         return Inertia::render('Wedding/WeddingWebsite', [
             'weddingEvent' => $demoWeddingEvent,
             'galleryImages' => $galleryImages,
             'ogMeta' => $ogMeta,
-        ]);
+        ])->rootView('wedding')->withViewData(['ogMeta' => $ogMeta]);
     }
 
     /**

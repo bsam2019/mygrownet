@@ -12,25 +12,25 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
         <!-- Open Graph / Facebook (for WhatsApp, Facebook, etc.) -->
-        @if(isset($page['props']['ogMeta']))
-        <meta property="og:type" content="{{ $page['props']['ogMeta']['type'] ?? 'website' }}" />
-        <meta property="og:url" content="{{ $page['props']['ogMeta']['url'] ?? url()->current() }}" />
-        <meta property="og:title" content="{{ $page['props']['ogMeta']['title'] ?? 'Wedding Invitation' }}" />
-        <meta property="og:description" content="{{ $page['props']['ogMeta']['description'] ?? 'You are invited to celebrate our wedding!' }}" />
-        <meta property="og:image" content="{{ $page['props']['ogMeta']['image'] ?? '' }}" />
+        @if(isset($ogMeta))
+        <meta property="og:type" content="{{ $ogMeta['type'] ?? 'website' }}" />
+        <meta property="og:url" content="{{ $ogMeta['url'] ?? url()->current() }}" />
+        <meta property="og:title" content="{{ $ogMeta['title'] ?? 'Wedding Invitation' }}" />
+        <meta property="og:description" content="{{ $ogMeta['description'] ?? 'You are invited to celebrate our wedding!' }}" />
+        <meta property="og:image" content="{{ $ogMeta['image'] ?? '' }}" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="Wedding Invitation" />
         
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="{{ $page['props']['ogMeta']['url'] ?? url()->current() }}" />
-        <meta name="twitter:title" content="{{ $page['props']['ogMeta']['title'] ?? 'Wedding Invitation' }}" />
-        <meta name="twitter:description" content="{{ $page['props']['ogMeta']['description'] ?? 'You are invited to celebrate our wedding!' }}" />
-        <meta name="twitter:image" content="{{ $page['props']['ogMeta']['image'] ?? '' }}" />
+        <meta name="twitter:url" content="{{ $ogMeta['url'] ?? url()->current() }}" />
+        <meta name="twitter:title" content="{{ $ogMeta['title'] ?? 'Wedding Invitation' }}" />
+        <meta name="twitter:description" content="{{ $ogMeta['description'] ?? 'You are invited to celebrate our wedding!' }}" />
+        <meta name="twitter:image" content="{{ $ogMeta['image'] ?? '' }}" />
         
         <!-- General description -->
-        <meta name="description" content="{{ $page['props']['ogMeta']['description'] ?? 'You are invited to celebrate our wedding!' }}" />
+        <meta name="description" content="{{ $ogMeta['description'] ?? 'You are invited to celebrate our wedding!' }}" />
         @endif
 
         {{-- Inline style for clean white background and prevent flash --}}
