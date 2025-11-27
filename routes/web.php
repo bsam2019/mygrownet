@@ -1036,17 +1036,13 @@ Route::prefix('weddings')->name('wedding.')->middleware('auth')->group(function 
 // Specific wedding URL - Kaoma & Mubanga Dec 2025
 Route::get('/kaoma-and-mubanga-dec-2025', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])->name('wedding.kaoma-mubanga');
 Route::get('/kaoma-and-mubanga-dec-2025/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])
-    ->where('tab', 'story|program|qa|travel|rsvp')
+    ->where('tab', 'home|program|qa|location|rsvp')
     ->name('wedding.kaoma-mubanga.tab');
 
 Route::prefix('wedding')->name('wedding.')->group(function () {
-    Route::get('/demo', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])->name('demo');
-    Route::get('/demo/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'demoWebsite'])
-        ->where('tab', 'story|program|qa|travel|rsvp')
-        ->name('demo.tab');
     Route::get('/{slug}', [App\Http\Controllers\Wedding\WeddingController::class, 'weddingWebsite'])->name('website');
     Route::get('/{slug}/{tab}', [App\Http\Controllers\Wedding\WeddingController::class, 'weddingWebsite'])
-        ->where('tab', 'story|program|qa|travel|rsvp')
+        ->where('tab', 'home|program|qa|location|rsvp')
         ->name('website.tab');
     Route::post('/{id}/rsvp', [App\Http\Controllers\Wedding\WeddingController::class, 'submitRSVP'])->name('rsvp.submit');
     Route::post('/{id}/search-guest', [App\Http\Controllers\Wedding\WeddingController::class, 'searchGuest'])->name('guest.search');

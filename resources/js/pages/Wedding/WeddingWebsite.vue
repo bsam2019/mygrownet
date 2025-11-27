@@ -539,76 +539,90 @@
       <!-- Location Tab -->
       <section v-show="activeTab === 'location'" id="location" class="py-8 md:py-16">
         <div class="max-w-3xl mx-auto px-4">
+          <!-- Mobile header with icon -->
+          <div class="md:hidden text-center mb-6">
+            <span class="text-3xl">📍</span>
+          </div>
+          
           <!-- Hidden on mobile since mobile header shows tab name -->
           <div class="hidden md:block text-center mb-10">
             <span class="text-3xl">📍</span>
             <h2 class="text-2xl font-light text-gray-700 mb-4 tracking-[0.15em] mt-2">LOCATION</h2>
           </div>
 
-          <!-- Venue Details -->
-          <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6 md:p-8 mb-6 border border-purple-100">
-            <div class="text-center mb-6">
-              <h3 class="text-xl font-semibold text-purple-700 mb-2">{{ weddingEvent.venue_name }}</h3>
-              <p class="text-gray-700 text-sm md:text-base">{{ weddingEvent.venue_address }}</p>
+          <!-- Venue Details - More prominent -->
+          <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-6 md:p-8 mb-6 border-2 border-purple-200">
+            <!-- Venue Name & Address - More prominent -->
+            <div class="text-center mb-8">
+              <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mb-4 shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold text-purple-700 mb-3">{{ weddingEvent.venue_name }}</h3>
+              <p class="text-gray-700 text-base md:text-lg font-medium">{{ weddingEvent.venue_address }}</p>
             </div>
             
-            <!-- Map Placeholder -->
-            <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-6 border border-gray-200">
+            <!-- Map - Google Maps embed with search query -->
+            <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-6 border-2 border-purple-100 shadow-inner">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3846.123456789!2d28.123456!3d-15.123456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTXCsDA3JzI0LjQiUyAyOMKwMDcnMjQuNCJF!5e0!3m2!1sen!2szm!4v1234567890"
+                v-if="activeTab === 'location'"
+                :src="`https://maps.google.com/maps?q=${encodeURIComponent(weddingEvent.venue_name + ', ' + weddingEvent.venue_address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`"
                 width="100%" 
                 height="100%" 
                 style="border:0;" 
                 allowfullscreen="" 
-                loading="lazy" 
+                loading="eager"
                 referrerpolicy="no-referrer-when-downgrade"
                 class="w-full h-full"
+                title="Wedding venue location map"
               ></iframe>
             </div>
 
-            <!-- Directions Button -->
+            <!-- Directions Button - More prominent -->
             <div class="text-center">
               <a 
                 :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(weddingEvent.venue_name + ' ' + weddingEvent.venue_address)}`"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                class="inline-flex items-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full hover:from-purple-700 hover:to-pink-700 transition-all text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                Get Directions
+                Open in Google Maps
               </a>
             </div>
           </div>
 
           <!-- Additional Info -->
           <div class="grid md:grid-cols-2 gap-6">
-            <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-purple-100">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-purple-100">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                   </svg>
                 </div>
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-800 mb-1">Parking</h4>
-                  <p class="text-sm text-gray-600">Ample parking available at the venue for all guests.</p>
+                  <h4 class="text-base font-bold text-gray-800 mb-2">Parking</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">Ample parking available at the venue for all guests.</p>
                 </div>
               </div>
             </div>
             
-            <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-purple-100">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-purple-100">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h4 class="text-sm font-semibold text-gray-800 mb-1">Arrival Time</h4>
-                  <p class="text-sm text-gray-600">Please arrive by 10:45 AM to be seated before the ceremony begins.</p>
+                  <h4 class="text-base font-bold text-gray-800 mb-2">Arrival Time</h4>
+                  <p class="text-sm text-gray-600 leading-relaxed">Please arrive by 10:45 AM to be seated before the ceremony begins.</p>
                 </div>
               </div>
             </div>
@@ -963,7 +977,7 @@ const submitRSVP = async () => {
 const setActiveTab = (tab) => {
   activeTab.value = tab
   // Update URL without page reload using History API
-  const basePath = window.location.pathname.replace(/\/(program|qa|travel|rsvp)$/, '')
+  const basePath = window.location.pathname.replace(/\/(home|program|qa|location|rsvp)$/, '')
   const newPath = tab === 'home' ? basePath : `${basePath}/${tab}`
   window.history.pushState({ tab }, '', newPath)
 }
@@ -972,7 +986,7 @@ const setActiveTabMobile = (tab) => {
   activeTab.value = tab
   mobileMenuOpen.value = false
   // Update URL without page reload using History API
-  const basePath = window.location.pathname.replace(/\/(program|qa|travel|rsvp)$/, '')
+  const basePath = window.location.pathname.replace(/\/(home|program|qa|location|rsvp)$/, '')
   const newPath = tab === 'home' ? basePath : `${basePath}/${tab}`
   window.history.pushState({ tab }, '', newPath)
 }
@@ -1031,7 +1045,7 @@ const handlePopState = (event) => {
   } else {
     // Detect tab from URL
     const path = window.location.pathname
-    const match = path.match(/\/(program|qa|travel|rsvp)$/)
+    const match = path.match(/\/(home|program|qa|location|rsvp)$/)
     activeTab.value = match ? match[1] : 'home'
   }
 }
@@ -1039,7 +1053,7 @@ const handlePopState = (event) => {
 // Initialize tab from URL on mount
 const initializeTabFromURL = () => {
   const path = window.location.pathname
-  const match = path.match(/\/(program|qa|travel|rsvp)$/)
+  const match = path.match(/\/(home|program|qa|location|rsvp)$/)
   if (match) {
     activeTab.value = match[1]
     // Set initial state
