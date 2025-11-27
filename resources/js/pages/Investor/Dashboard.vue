@@ -1,265 +1,481 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex justify-between items-center">
-          <div>
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-lg">{{ getInitials(investor.name) }}</span>
-              </div>
-              <div>
-                <h1 class="text-xl font-bold text-gray-900">{{ investor.name }}</h1>
-                <p class="text-sm text-gray-600">Investor Portal</p>
-              </div>
-            </div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+    <!-- Sidebar Navigation -->
+    <aside class="fixed inset-y-0 left-0 w-72 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 z-40 hidden lg:block">
+      <!-- Logo & Brand -->
+      <div class="h-20 flex items-center px-6 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <BuildingOffice2Icon class="h-5 w-5 text-white" aria-hidden="true" />
           </div>
-          <div class="flex items-center gap-3">
-            <Link
-              :href="route('investor.documents')"
-              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <DocumentTextIcon class="h-5 w-5 mr-2" aria-hidden="true" />
-              Documents
-            </Link>
-            <Link
-              :href="route('investor.reports')"
-              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChartBarIcon class="h-5 w-5 mr-2" aria-hidden="true" />
-              Reports
-            </Link>
-            <Link
-              :href="route('investor.messages')"
-              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative"
-            >
-              <ChatBubbleLeftRightIcon class="h-5 w-5 mr-2" aria-hidden="true" />
-              Messages
-              <span v-if="unreadMessagesCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
-              </span>
-            </Link>
-            <Link
-              :href="route('investor.settings')"
-              class="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Cog6ToothIcon class="h-5 w-5 mr-2" aria-hidden="true" />
-              Settings
-            </Link>
-            <Link
-              :href="route('investor.logout')"
-              method="post"
-              as="button"
-              class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Logout
-            </Link>
+          <div>
+            <h1 class="text-lg font-bold text-gray-900">Investor Portal</h1>
+            <p class="text-xs text-gray-500">MyGrowNet</p>
           </div>
         </div>
+      </div>
+
+      <!-- User Profile Card -->
+      <div class="p-4">
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center ring-2 ring-white/30">
+              <span class="text-lg font-bold">{{ getInitials(investor.name) }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold truncate">{{ investor.name }}</p>
+              <p class="text-xs text-blue-200 truncate">{{ investor.email }}</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-blue-200">Status</span>
+            <span :class="statusBadgeClass" class="px-2 py-0.5 rounded-full font-medium">
+              {{ investor.status_label }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="px-3 py-2">
+        <div class="space-y-1">
+          <button
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-md shadow-blue-500/25"
+          >
+            <HomeIcon class="h-5 w-5" aria-hidden="true" />
+            Dashboard
+          </button>
+          
+          <Link
+            :href="route('investor.documents')"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200"
+          >
+            <DocumentTextIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Documents
+          </Link>
+          
+          <Link
+            :href="route('investor.reports')"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200"
+          >
+            <ChartBarIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Reports
+          </Link>
+          
+          <Link
+            :href="route('investor.messages')"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200 relative"
+          >
+            <ChatBubbleLeftRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Messages
+            <span v-if="unreadMessagesCount > 0" class="ml-auto w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
+            </span>
+          </Link>
+          
+          <Link
+            :href="route('investor.announcements')"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200"
+          >
+            <MegaphoneIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Announcements
+          </Link>
+          
+          <Link
+            :href="route('investor.settings')"
+            class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200"
+          >
+            <Cog6ToothIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Settings
+          </Link>
+        </div>
+      </nav>
+
+      <!-- Logout Button -->
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-white/50">
+        <Link
+          :href="route('investor.logout')"
+          method="post"
+          as="button"
+          class="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+        >
+          <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
+          Sign Out
+        </Link>
+      </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
+      <div class="flex items-center justify-between px-4 py-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+            <BuildingOffice2Icon class="h-5 w-5 text-white" aria-hidden="true" />
+          </div>
+          <span class="font-semibold text-gray-900">Investor Portal</span>
+        </div>
+        <button
+          @click="mobileMenuOpen = !mobileMenuOpen"
+          class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          :aria-label="mobileMenuOpen ? 'Close menu' : 'Open menu'"
+        >
+          <Bars3Icon v-if="!mobileMenuOpen" class="h-6 w-6" aria-hidden="true" />
+          <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
+        </button>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Announcements -->
-      <div v-if="announcements && announcements.length > 0" class="mb-8 space-y-4">
-        <AnnouncementBanner
-          v-for="announcement in visibleAnnouncements"
-          :key="announcement.id"
-          :announcement="announcement"
-          @dismissed="dismissAnnouncement"
-        />
-      </div>
+    <!-- Mobile Menu Overlay -->
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="mobileMenuOpen" class="lg:hidden fixed inset-0 z-40 bg-black/50" @click="mobileMenuOpen = false"></div>
+    </Transition>
 
-      <!-- Welcome Banner -->
-      <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-6 mb-8 text-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold mb-2">Welcome back, {{ investor.name }}!</h2>
-            <p class="text-blue-100">
-              You've been invested for {{ investor.holding_months }} months since {{ investor.investment_date_formatted }}
-            </p>
-          </div>
+    <!-- Mobile Menu Slide-in -->
+    <Transition
+      enter-active-class="transition-transform duration-300"
+      enter-from-class="-translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transition-transform duration-300"
+      leave-from-class="translate-x-0"
+      leave-to-class="-translate-x-full"
+    >
+      <aside v-if="mobileMenuOpen" class="lg:hidden fixed inset-y-0 left-0 w-72 bg-white z-50 shadow-2xl">
+        <!-- Same content as desktop sidebar -->
+        <div class="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+          <span class="font-semibold text-gray-900">Menu</span>
+          <button @click="mobileMenuOpen = false" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close menu">
+            <XMarkIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
+          </button>
         </div>
-      </div>
-
-      <!-- Investment Summary Card -->
-      <div v-if="investmentMetrics" class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-6 text-white mb-8">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Your Investment</h3>
-          <span :class="statusClass" class="px-3 py-1 rounded-full text-xs font-medium">
-            {{ investor.status_label }}
-          </span>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <p class="text-blue-100 text-sm mb-1">Current Value</p>
-            <p v-if="investor.status === 'ciu'" class="text-3xl font-bold">
-              K{{ formatNumber(investmentMetrics.initial_investment) }}
-              <span class="text-sm text-blue-200 block mt-1">CIU - Awaiting Conversion</span>
-            </p>
-            <p v-else class="text-3xl font-bold">K{{ formatNumber(investmentMetrics.current_value) }}</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 pt-4 border-t border-blue-500">
-            <div>
-              <p class="text-blue-100 text-xs mb-1">Initial Investment</p>
-              <p class="text-lg font-semibold">K{{ formatNumber(investmentMetrics.initial_investment) }}</p>
-            </div>
-            <div>
-              <p class="text-blue-100 text-xs mb-1">Return (ROI)</p>
-              <p v-if="investor.status === 'ciu'" class="text-sm font-semibold text-blue-200">
-                Pending Valuation
-              </p>
-              <p v-else class="text-lg font-semibold" :class="roiClass">
-                {{ investmentMetrics.roi_percentage >= 0 ? '+' : '' }}{{ investmentMetrics.roi_percentage }}%
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-blue-100 text-xs mb-1">Equity Ownership</p>
-              <p v-if="investor.status === 'ciu'" class="text-lg font-semibold">
-                <span class="text-sm">Pending Conversion</span>
-              </p>
-              <p v-else class="text-lg font-semibold">{{ investmentMetrics.equity_percentage }}%</p>
-            </div>
-            <div>
-              <p class="text-blue-100 text-xs mb-1">Holding Period</p>
-              <p class="text-lg font-semibold">{{ investor.holding_months }} {{ investor.holding_months === 1 ? 'month' : 'months' }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Two Column Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Investment Round Card -->
-        <div v-if="round" class="bg-white rounded-xl shadow-lg p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">{{ round.name }}</h3>
-            <span :class="roundStatusClass" class="px-3 py-1 rounded-full text-xs font-medium">
-              {{ round.status_label }}
+        <nav class="p-3 space-y-1">
+          <Link :href="route('investor.dashboard')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
+            <HomeIcon class="h-5 w-5" aria-hidden="true" />
+            Dashboard
+          </Link>
+          <Link :href="route('investor.documents')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl">
+            <DocumentTextIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Documents
+          </Link>
+          <Link :href="route('investor.reports')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl">
+            <ChartBarIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Reports
+          </Link>
+          <Link :href="route('investor.messages')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl relative">
+            <ChatBubbleLeftRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Messages
+            <span v-if="unreadMessagesCount > 0" class="ml-auto w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}
             </span>
-          </div>
+          </Link>
+          <Link :href="route('investor.settings')" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-xl">
+            <Cog6ToothIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Settings
+          </Link>
+          <Link :href="route('investor.logout')" method="post" as="button" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl">
+            <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
+            Sign Out
+          </Link>
+        </nav>
+      </aside>
+    </Transition>
 
-          <div class="space-y-4">
+    <!-- Main Content Area -->
+    <main class="lg:pl-72">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <!-- Announcements -->
+        <div v-if="announcements && announcements.length > 0" class="mb-6 space-y-3">
+          <AnnouncementBanner
+            v-for="announcement in visibleAnnouncements"
+            :key="announcement.id"
+            :announcement="announcement"
+            @dismissed="dismissAnnouncement"
+          />
+        </div>
+
+        <!-- Welcome Section -->
+        <div class="mb-8">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <div class="flex justify-between text-sm mb-2">
-                <span class="text-gray-600">Fundraising Progress</span>
-                <span class="font-semibold text-gray-900">{{ round.progress_percentage }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
-                  :style="{ width: `${Math.min(round.progress_percentage, 100)}%` }"
-                ></div>
-              </div>
-              <div class="flex justify-between text-xs text-gray-500 mt-1">
-                <span>K{{ formatNumber(round.raised_amount) }} raised</span>
-                <span>K{{ formatNumber(round.goal_amount) }} goal</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-              <div>
-                <p class="text-xs text-gray-500 mb-1">Company Valuation</p>
-                <p class="text-lg font-bold text-gray-900">K{{ formatNumber(round.valuation) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500 mb-1">Total Investors</p>
-                <p class="text-lg font-bold text-gray-900">{{ round.total_investors }}</p>
-              </div>
-            </div>
-
-            <div v-if="investmentMetrics" class="bg-blue-50 rounded-lg p-4">
-              <p class="text-sm font-medium text-blue-900">Your Position</p>
-              <p class="text-xs text-blue-700 mt-1">
-                You own {{ investmentMetrics.equity_percentage }}% of the company, valued at K{{ formatNumber(investmentMetrics.current_value) }}
+              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                Welcome back, {{ investor.name.split(' ')[0] }}! 👋
+              </h1>
+              <p class="mt-1 text-gray-600">
+                Here's an overview of your investment portfolio
               </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Platform Metrics Card -->
-        <div v-if="platformMetrics" class="bg-white rounded-xl shadow-lg p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-6">Platform Performance</h3>
-
-          <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-gray-50 rounded-lg p-4">
-              <p class="text-xs text-gray-500 font-medium mb-2">Total Members</p>
-              <p class="text-2xl font-bold text-gray-900">{{ formatNumber(platformMetrics.total_members) }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-4">
-              <p class="text-xs text-gray-500 font-medium mb-2">Monthly Revenue</p>
-              <p class="text-2xl font-bold text-gray-900">K{{ formatNumber(platformMetrics.monthly_revenue) }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-4">
-              <p class="text-xs text-gray-500 font-medium mb-2">Active Rate</p>
-              <p class="text-2xl font-bold text-gray-900">{{ platformMetrics.active_rate }}%</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-lg p-4">
-              <p class="text-xs text-gray-500 font-medium mb-2">Retention</p>
-              <p class="text-2xl font-bold text-gray-900">{{ platformMetrics.retention_rate }}%</p>
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <CalendarIcon class="h-4 w-4" aria-hidden="true" />
+              <span>Invested since {{ investor.investment_date_formatted }}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Financial Performance Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Financial Summary Card -->
-        <FinancialSummaryCard :financial-summary="financialSummary" />
-        
-        <!-- Performance Chart -->
-        <PerformanceChart :performance-metrics="performanceMetrics" />
-      </div>
+        <!-- Portfolio Value Hero Card -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl shadow-2xl shadow-blue-500/25 p-6 sm:p-8 mb-8">
+          <!-- Background Pattern -->
+          <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#grid)" />
+            </svg>
+          </div>
+          
+          <!-- Floating Orbs -->
+          <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-indigo-400/20 rounded-full blur-3xl"></div>
 
-      <!-- Quick Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <p class="text-sm text-gray-600 font-medium mb-2">Investment Date</p>
-          <p class="text-lg font-bold text-gray-900">{{ formatDate(investor.investment_date) }}</p>
+          <div class="relative">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <!-- Left: Portfolio Value -->
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-blue-200 text-sm font-medium">Portfolio Value</span>
+                  <span :class="statusPillClass" class="px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                    {{ investor.status_label }}
+                  </span>
+                </div>
+                
+                <div v-if="investor.status === 'ciu'" class="mb-4">
+                  <p class="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+                    K{{ formatNumber(investmentMetrics?.initial_investment || 0) }}
+                  </p>
+                  <p class="text-blue-200 text-sm mt-2 flex items-center gap-2">
+                    <ClockIcon class="h-4 w-4" aria-hidden="true" />
+                    CIU - Awaiting Conversion to Equity
+                  </p>
+                </div>
+                <div v-else class="mb-4">
+                  <p class="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+                    K{{ formatNumber(investmentMetrics?.current_value || 0) }}
+                  </p>
+                  <div class="flex items-center gap-3 mt-2">
+                    <span 
+                      :class="[
+                        'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold',
+                        (investmentMetrics?.roi_percentage || 0) >= 0 
+                          ? 'bg-emerald-400/20 text-emerald-300' 
+                          : 'bg-red-400/20 text-red-300'
+                      ]"
+                    >
+                      <ArrowTrendingUpIcon v-if="(investmentMetrics?.roi_percentage || 0) >= 0" class="h-4 w-4" aria-hidden="true" />
+                      <ArrowTrendingDownIcon v-else class="h-4 w-4" aria-hidden="true" />
+                      {{ (investmentMetrics?.roi_percentage || 0) >= 0 ? '+' : '' }}{{ investmentMetrics?.roi_percentage || 0 }}%
+                    </span>
+                    <span class="text-blue-200 text-sm">All-time return</span>
+                  </div>
+                </div>
+
+                <!-- Quick Stats Row -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/10">
+                  <div>
+                    <p class="text-blue-300 text-xs font-medium mb-1">Initial Investment</p>
+                    <p class="text-white font-semibold">K{{ formatNumber(investmentMetrics?.initial_investment || 0) }}</p>
+                  </div>
+                  <div>
+                    <p class="text-blue-300 text-xs font-medium mb-1">Equity Stake</p>
+                    <p v-if="investor.status === 'ciu'" class="text-blue-200 text-sm">Pending</p>
+                    <p v-else class="text-white font-semibold">{{ investmentMetrics?.equity_percentage || 0 }}%</p>
+                  </div>
+                  <div>
+                    <p class="text-blue-300 text-xs font-medium mb-1">Holding Period</p>
+                    <p class="text-white font-semibold">{{ investor.holding_months }} {{ investor.holding_months === 1 ? 'month' : 'months' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-blue-300 text-xs font-medium mb-1">Valuation</p>
+                    <p class="text-white font-semibold">K{{ formatNumber(investmentMetrics?.current_valuation || 0) }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Mini Chart Placeholder -->
+              <div class="hidden xl:block w-64 h-32 bg-white/5 rounded-2xl backdrop-blur border border-white/10 p-4">
+                <p class="text-blue-200 text-xs font-medium mb-2">Portfolio Growth</p>
+                <div class="h-16 flex items-end gap-1">
+                  <div v-for="(height, i) in miniChartData" :key="i" 
+                    class="flex-1 bg-gradient-to-t from-blue-400 to-blue-300 rounded-t opacity-80 transition-all duration-300 hover:opacity-100"
+                    :style="{ height: `${height}%` }"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <p class="text-sm text-gray-600 font-medium mb-2">Valuation</p>
-          <p class="text-lg font-bold text-gray-900">K{{ formatNumber(investmentMetrics?.current_valuation || 0) }}</p>
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            title="Investment Date"
+            :value="formatDate(investor.investment_date)"
+            icon="calendar"
+            color="blue"
+          />
+          <StatCard
+            title="Current Valuation"
+            :value="`K${formatNumber(investmentMetrics?.current_valuation || 0)}`"
+            icon="currency"
+            color="emerald"
+          />
+          <StatCard
+            title="Co-Investors"
+            :value="String(round?.total_investors || 0)"
+            icon="users"
+            color="violet"
+          />
+          <StatCard
+            title="Total Raised"
+            :value="`K${formatNumber(round?.total_raised || 0)}`"
+            icon="chart"
+            color="amber"
+          />
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <p class="text-sm text-gray-600 font-medium mb-2">Co-Investors</p>
-          <p class="text-lg font-bold text-gray-900">{{ round?.total_investors || 0 }}</p>
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+          <!-- Investment Round Card -->
+          <div v-if="round" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <RocketLaunchIcon class="h-5 w-5 text-white" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900">{{ round.name }}</h3>
+                    <p class="text-xs text-gray-500">Investment Round</p>
+                  </div>
+                </div>
+                <span :class="roundStatusBadgeClass" class="px-3 py-1 rounded-full text-xs font-semibold">
+                  {{ round.status_label }}
+                </span>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mb-6">
+                <div class="flex justify-between text-sm mb-2">
+                  <span class="text-gray-600">Fundraising Progress</span>
+                  <span class="font-semibold text-gray-900">{{ round.progress_percentage }}%</span>
+                </div>
+                <div class="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    class="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
+                    :style="{ width: `${Math.min(round.progress_percentage, 100)}%` }"
+                  ></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>K{{ formatNumber(round.raised_amount) }} raised</span>
+                  <span>K{{ formatNumber(round.goal_amount) }} goal</span>
+                </div>
+              </div>
+
+              <!-- Round Stats -->
+              <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <p class="text-xs text-gray-500 font-medium mb-1">Company Valuation</p>
+                  <p class="text-xl font-bold text-gray-900">K{{ formatNumber(round.valuation) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <p class="text-xs text-gray-500 font-medium mb-1">Total Investors</p>
+                  <p class="text-xl font-bold text-gray-900">{{ round.total_investors }}</p>
+                </div>
+              </div>
+
+              <!-- Your Position -->
+              <div v-if="investmentMetrics" class="mt-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-4 border border-violet-100">
+                <div class="flex items-center gap-2 mb-1">
+                  <SparklesIcon class="h-4 w-4 text-violet-600" aria-hidden="true" />
+                  <p class="text-sm font-semibold text-violet-900">Your Position</p>
+                </div>
+                <p class="text-sm text-violet-700">
+                  You own <span class="font-semibold">{{ investmentMetrics.equity_percentage }}%</span> of the company, 
+                  valued at <span class="font-semibold">K{{ formatNumber(investmentMetrics.current_value) }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Platform Metrics Card -->
+          <div v-if="platformMetrics" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                  <PresentationChartLineIcon class="h-5 w-5 text-white" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 class="font-semibold text-gray-900">Platform Performance</h3>
+                  <p class="text-xs text-gray-500">Key business metrics</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <MetricCard
+                  label="Total Members"
+                  :value="formatNumber(platformMetrics.total_members)"
+                  trend="+12%"
+                  trendUp
+                  icon="users"
+                />
+                <MetricCard
+                  label="Monthly Revenue"
+                  :value="`K${formatNumber(platformMetrics.monthly_revenue)}`"
+                  trend="+8%"
+                  trendUp
+                  icon="currency"
+                />
+                <MetricCard
+                  label="Active Rate"
+                  :value="`${platformMetrics.active_rate}%`"
+                  trend="+3%"
+                  trendUp
+                  icon="activity"
+                />
+                <MetricCard
+                  label="Retention"
+                  :value="`${platformMetrics.retention_rate}%`"
+                  trend="+5%"
+                  trendUp
+                  icon="refresh"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <p class="text-sm text-gray-600 font-medium mb-2">Total Raised</p>
-          <p class="text-lg font-bold text-gray-900">K{{ formatNumber(round?.total_raised || 0) }}</p>
+        <!-- Financial Performance Section -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+          <FinancialSummaryCard :financial-summary="financialSummary" />
+          <PerformanceChart :performance-metrics="performanceMetrics" />
         </div>
-      </div>
 
-      <!-- Info Banner -->
-      <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <div class="flex items-start gap-4">
-          <div>
-            <h3 class="text-lg font-semibold text-blue-900 mb-2">Stay Informed</h3>
-            <p class="text-sm text-blue-800 mb-3">
+        <!-- Info Banner -->
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <InformationCircleIcon class="h-6 w-6 text-blue-600" aria-hidden="true" />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-blue-900 mb-1">Stay Informed</h3>
+            <p class="text-sm text-blue-700">
               We'll keep you updated on company performance, financial reports, and important announcements. 
               Check the Documents section for quarterly reports and legal documents.
             </p>
-            <Link
-              :href="route('investor.documents')"
-              class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700"
-            >
-              View Documents →
-            </Link>
           </div>
+          <Link
+            :href="route('investor.documents')"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+          >
+            View Documents
+            <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </main>
@@ -273,7 +489,30 @@ import { route } from 'ziggy-js';
 import AnnouncementBanner from '@/components/Investor/AnnouncementBanner.vue';
 import FinancialSummaryCard from '@/components/Investor/FinancialSummaryCard.vue';
 import PerformanceChart from '@/components/Investor/PerformanceChart.vue';
-import { DocumentTextIcon, ChartBarIcon, ChatBubbleLeftRightIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline';
+import StatCard from '@/components/Investor/StatCard.vue';
+import MetricCard from '@/components/Investor/MetricCard.vue';
+import {
+  HomeIcon,
+  DocumentTextIcon,
+  ChartBarIcon,
+  ChatBubbleLeftRightIcon,
+  Cog6ToothIcon,
+  BuildingOffice2Icon,
+  ArrowRightOnRectangleIcon,
+  Bars3Icon,
+  XMarkIcon,
+  CalendarIcon,
+  ClockIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  RocketLaunchIcon,
+  SparklesIcon,
+  PresentationChartLineIcon,
+  InformationCircleIcon,
+  ArrowRightIcon,
+  MegaphoneIcon,
+} from '@heroicons/vue/24/outline';
+
 
 interface Investor {
   id: number;
@@ -370,6 +609,9 @@ const props = defineProps<{
   unreadMessagesCount?: number;
 }>();
 
+// Mobile menu state
+const mobileMenuOpen = ref(false);
+
 // Announcement state
 const dismissedAnnouncements = ref<number[]>([]);
 
@@ -381,6 +623,17 @@ const visibleAnnouncements = computed(() => {
 const dismissAnnouncement = (id: number) => {
   dismissedAnnouncements.value.push(id);
 };
+
+// Mini chart data for the hero section
+const miniChartData = computed(() => {
+  // Generate sample growth data or use real data if available
+  if (props.performanceMetrics?.revenue_trend?.data?.length) {
+    const data = props.performanceMetrics.revenue_trend.data;
+    const max = Math.max(...data);
+    return data.slice(-8).map(v => (v / max) * 100);
+  }
+  return [40, 55, 45, 60, 75, 65, 80, 90];
+});
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat('en-US', {
@@ -406,26 +659,31 @@ const getInitials = (name: string): string => {
     .substring(0, 2);
 };
 
-const statusClass = computed(() => {
+const statusBadgeClass = computed(() => {
   const classes = {
-    ciu: 'bg-blue-400 text-blue-900',
-    shareholder: 'bg-green-400 text-green-900',
-    exited: 'bg-gray-400 text-gray-900',
+    ciu: 'bg-blue-400/20 text-blue-100',
+    shareholder: 'bg-emerald-400/20 text-emerald-100',
+    exited: 'bg-gray-400/20 text-gray-100',
   };
   return classes[props.investor.status as keyof typeof classes] || classes.ciu;
 });
 
-const roundStatusClass = computed(() => {
-  if (!props.round) return '';
+const statusPillClass = computed(() => {
   const classes = {
-    active: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800',
-    upcoming: 'bg-blue-100 text-blue-800',
+    ciu: 'bg-blue-400/30 text-blue-100',
+    shareholder: 'bg-emerald-400/30 text-emerald-100',
+    exited: 'bg-gray-400/30 text-gray-100',
   };
-  return classes[props.round.status as keyof typeof classes] || classes.active;
+  return classes[props.investor.status as keyof typeof classes] || classes.ciu;
 });
 
-const roiClass = computed(() => {
-  return props.investmentMetrics.roi_percentage >= 0 ? 'text-green-300' : 'text-red-300';
+const roundStatusBadgeClass = computed(() => {
+  if (!props.round) return '';
+  const classes = {
+    active: 'bg-emerald-100 text-emerald-700',
+    closed: 'bg-gray-100 text-gray-700',
+    upcoming: 'bg-blue-100 text-blue-700',
+  };
+  return classes[props.round.status as keyof typeof classes] || classes.active;
 });
 </script>

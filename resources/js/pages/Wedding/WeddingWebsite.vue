@@ -346,7 +346,7 @@
               <div class="py-4">
                 <div class="w-16 h-px bg-gray-400 mx-auto mb-4"></div>
                 <p class="text-gray-900 text-sm md:text-base font-normal tracking-wide">
-                  Saturday, 6th December 2035
+                  Saturday, 6th December 2025
                 </p>
                 <p class="text-gray-800 text-sm md:text-base mt-2">
                   11:00 in the morning

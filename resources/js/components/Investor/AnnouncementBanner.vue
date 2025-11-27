@@ -2,42 +2,49 @@
   <div
     v-if="announcement"
     :class="[
-      'relative rounded-lg p-4 border-l-4 shadow-sm',
+      'relative rounded-2xl p-4 border shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md',
       bannerClasses
     ]"
   >
+    <!-- Decorative gradient -->
+    <div :class="['absolute inset-0 rounded-2xl opacity-50', gradientClass]"></div>
+    
     <!-- Close Button -->
     <button
       @click="markAsRead"
-      class="absolute top-2 right-2 p-1 rounded-full hover:bg-white/20 transition-colors"
+      class="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-white/30 transition-colors z-10"
       :aria-label="`Dismiss ${announcement.title} announcement`"
     >
       <XMarkIcon class="h-4 w-4" aria-hidden="true" />
     </button>
 
     <!-- Content -->
-    <div class="pr-8">
+    <div class="relative pr-10">
       <!-- Header -->
-      <div class="flex items-center gap-2 mb-2 flex-wrap">
-        <component
-          :is="iconComponent"
-          class="h-5 w-5 flex-shrink-0"
-          aria-hidden="true"
-        />
-        <h3 class="font-semibold text-sm">{{ announcement.title }}</h3>
-        <span
-          v-if="announcement.is_urgent"
-          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
-        >
-          Urgent
-        </span>
+      <div class="flex items-center gap-3 mb-2">
+        <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', iconBgClass]">
+          <component
+            :is="iconComponent"
+            class="h-4 w-4"
+            aria-hidden="true"
+          />
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="font-semibold text-sm">{{ announcement.title }}</h3>
+          <span
+            v-if="announcement.is_urgent"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white animate-pulse"
+          >
+            Urgent
+          </span>
+        </div>
       </div>
 
       <!-- Message -->
-      <p class="text-sm leading-relaxed mb-2 ml-7">{{ announcement.message }}</p>
+      <p class="text-sm leading-relaxed mb-2 ml-11 opacity-90">{{ announcement.message }}</p>
 
       <!-- Timestamp -->
-      <p class="text-xs opacity-75 ml-7">{{ announcement.created_at_human }}</p>
+      <p class="text-xs opacity-60 ml-11">{{ announcement.created_at_human }}</p>
     </div>
   </div>
 </template>
@@ -63,11 +70,9 @@ interface Announcement {
   created_at_human: string
 }
 
-interface Props {
+const props = defineProps<{
   announcement: Announcement | null
-}
-
-const props = defineProps<Props>()
+}>()
 
 const emit = defineEmits<{
   dismissed: [id: number]
@@ -75,51 +80,56 @@ const emit = defineEmits<{
 
 const bannerClasses = computed(() => {
   if (!props.announcement) return ''
-  
-  switch (props.announcement.type) {
-    case 'info':
-      return 'bg-blue-50 border-blue-400 text-blue-800'
-    case 'warning':
-      return 'bg-amber-50 border-amber-400 text-amber-800'
-    case 'success':
-      return 'bg-green-50 border-green-400 text-green-800'
-    case 'urgent':
-      return 'bg-red-50 border-red-400 text-red-800'
-    default:
-      return 'bg-gray-50 border-gray-400 text-gray-800'
+  const classes: Record<string, string> = {
+    info: 'bg-blue-50/80 border-blue-200 text-blue-900',
+    warning: 'bg-amber-50/80 border-amber-200 text-amber-900',
+    success: 'bg-emerald-50/80 border-emerald-200 text-emerald-900',
+    urgent: 'bg-red-50/80 border-red-200 text-red-900',
   }
+  return classes[props.announcement.type] || classes.info
+})
+
+const gradientClass = computed(() => {
+  if (!props.announcement) return ''
+  const classes: Record<string, string> = {
+    info: 'bg-gradient-to-r from-blue-100/50 to-transparent',
+    warning: 'bg-gradient-to-r from-amber-100/50 to-transparent',
+    success: 'bg-gradient-to-r from-emerald-100/50 to-transparent',
+    urgent: 'bg-gradient-to-r from-red-100/50 to-transparent',
+  }
+  return classes[props.announcement.type] || classes.info
+})
+
+const iconBgClass = computed(() => {
+  if (!props.announcement) return ''
+  const classes: Record<string, string> = {
+    info: 'bg-blue-100 text-blue-600',
+    warning: 'bg-amber-100 text-amber-600',
+    success: 'bg-emerald-100 text-emerald-600',
+    urgent: 'bg-red-100 text-red-600',
+  }
+  return classes[props.announcement.type] || classes.info
 })
 
 const iconComponent = computed(() => {
   if (!props.announcement) return InformationCircleIcon
-  
-  switch (props.announcement.type) {
-    case 'info':
-      return InformationCircleIcon
-    case 'warning':
-      return ExclamationTriangleIcon
-    case 'success':
-      return CheckCircleIcon
-    case 'urgent':
-      return ExclamationCircleIcon
-    default:
-      return InformationCircleIcon
+  const icons: Record<string, typeof InformationCircleIcon> = {
+    info: InformationCircleIcon,
+    warning: ExclamationTriangleIcon,
+    success: CheckCircleIcon,
+    urgent: ExclamationCircleIcon,
   }
+  return icons[props.announcement.type] || InformationCircleIcon
 })
 
 const markAsRead = async () => {
   if (!props.announcement) return
-
   try {
     await router.post(`/investor/announcements/${props.announcement.id}/read`, {}, {
       preserveState: true,
       preserveScroll: true,
-      onSuccess: () => {
-        emit('dismissed', props.announcement!.id)
-      },
-      onError: (errors) => {
-        console.error('Failed to mark announcement as read:', errors)
-      }
+      onSuccess: () => emit('dismissed', props.announcement!.id),
+      onError: (errors) => console.error('Failed to mark announcement as read:', errors)
     })
   } catch (error) {
     console.error('Error marking announcement as read:', error)
