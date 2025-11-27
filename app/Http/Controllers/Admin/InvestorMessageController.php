@@ -115,8 +115,7 @@ class InvestorMessageController extends Controller
         ]);
 
         // Get the original message to find the investor
-        $originalMessage = app(\App\Domain\Investor\Repositories\InvestorMessageRepositoryInterface::class)
-            ->findById($messageId);
+        $originalMessage = $this->messagingService->findById($messageId);
 
         if (!$originalMessage) {
             return back()->with('error', 'Original message not found');
@@ -125,8 +124,8 @@ class InvestorMessageController extends Controller
         try {
             $this->messagingService->sendMessageFromAdmin(
                 adminId: auth()->id(),
-                investorAccountId: $originalMessage->getInvestorAccountId(),
-                subject: 'Re: ' . $originalMessage->getSubject(),
+                investorAccountId: $originalMessage->investor_account_id,
+                subject: 'Re: ' . $originalMessage->subject,
                 content: $validated['content'],
                 parentId: $messageId
             );

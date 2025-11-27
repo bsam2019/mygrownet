@@ -142,28 +142,50 @@
 
           <!-- Investment Details Section -->
           <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-8 py-6 border-b border-gray-200">
-            <div class="flex items-center">
-              <div class="flex-shrink-0 w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                <BanknotesIcon class="h-6 w-6 text-white" aria-hidden="true" />
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                  <BanknotesIcon class="h-6 w-6 text-white" aria-hidden="true" />
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold text-gray-900">Investment Details</h3>
+                  <p class="text-sm text-gray-600">Financial information and investment terms (optional for prospective investors)</p>
+                </div>
               </div>
-              <div class="ml-4">
-                <h3 class="text-lg font-semibold text-gray-900">Investment Details</h3>
-                <p class="text-sm text-gray-600">Financial information and investment terms</p>
-              </div>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  v-model="isProspectiveInvestor"
+                  type="checkbox"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span class="text-sm font-medium text-gray-700">Prospective Investor (no investment yet)</span>
+              </label>
             </div>
           </div>
 
           <div class="px-8 py-6 space-y-6">
-            <div>
+            <!-- Prospective Investor Notice -->
+            <div v-if="isProspectiveInvestor" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div class="flex items-start">
+                <InformationCircleIcon class="h-5 w-5 text-amber-600 mr-3 mt-0.5" aria-hidden="true" />
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-900 mb-1">Adding Prospective Investor</h4>
+                  <p class="text-sm text-gray-700">
+                    This investor will be added without an investment. They can access the investor portal and you can record their investment later.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="!isProspectiveInvestor">
               <label class="block text-sm font-semibold text-gray-700 mb-2">
-                Investment Round <span class="text-red-500">*</span>
+                Investment Round
               </label>
               <select
                 v-model="form.investment_round_id"
-                required
                 class="block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white"
               >
-                <option value="">Select an active investment round</option>
+                <option value="">Select an active investment round (optional)</option>
                 <option v-for="round in rounds" :key="round.id" :value="round.id">
                   {{ round.name }} — K{{ formatNumber(round.raised_amount) }} / K{{ formatNumber(round.goal_amount) }} raised
                 </option>
@@ -174,10 +196,10 @@
               </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-if="!isProspectiveInvestor" class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                  Investment Amount (K) <span class="text-red-500">*</span>
+                  Investment Amount (K)
                 </label>
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -188,8 +210,7 @@
                     type="number"
                     step="0.01"
                     min="0"
-                    required
-                    placeholder="50,000.00"
+                    placeholder="50,000.00 (optional)"
                     class="block w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -242,14 +263,13 @@
               </div>
             </div>
 
-            <div>
+            <div v-if="!isProspectiveInvestor">
               <label class="block text-sm font-semibold text-gray-700 mb-2">
-                Investment Date <span class="text-red-500">*</span>
+                Investment Date
               </label>
               <input
                 v-model="form.investment_date"
                 type="date"
-                required
                 class="block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               />
               <p v-if="form.errors.investment_date" class="mt-2 text-sm text-red-600 flex items-center">
@@ -278,7 +298,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              {{ form.processing ? 'Recording Investment...' : 'Record Investment' }}
+              {{ form.processing ? (isProspectiveInvestor ? 'Adding Investor...' : 'Recording Investment...') : (isProspectiveInvestor ? 'Add Prospective Investor' : 'Record Investment') }}
             </button>
           </div>
         </form>
@@ -337,6 +357,7 @@ const showUserDropdown = ref(false);
 const selectedUser = ref<User | null>(null);
 const filteredUsers = ref<User[]>([]);
 const showPassword = ref(false);
+const isProspectiveInvestor = ref(false);
 
 const filterUsers = () => {
   const search = userSearch.value.toLowerCase();
@@ -389,6 +410,14 @@ onUnmounted(() => {
 });
 
 const submit = () => {
+  // Clear investment fields if prospective investor
+  if (isProspectiveInvestor.value) {
+    form.investment_amount = '';
+    form.investment_round_id = '';
+    form.investment_date = '';
+    form.equity_percentage = '';
+  }
+  
   form.post(route('admin.investor-accounts.store'), {
     preserveScroll: true,
     preserveState: true,

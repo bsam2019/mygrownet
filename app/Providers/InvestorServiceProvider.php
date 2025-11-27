@@ -65,6 +65,12 @@ class InvestorServiceProvider extends ServiceProvider
             \App\Domain\Investor\Repositories\InvestorEmailLogRepositoryInterface::class,
             \App\Infrastructure\Persistence\Repositories\Investor\EloquentInvestorEmailLogRepository::class
         );
+        
+        // Register messaging service as singleton
+        $this->app->singleton(
+            \App\Domain\Investor\Services\InvestorMessagingService::class,
+            \App\Domain\Investor\Services\InvestorMessagingService::class
+        );
     }
 
     /**

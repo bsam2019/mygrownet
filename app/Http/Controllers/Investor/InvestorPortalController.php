@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestmentRoundRepositoryInterface;
-use App\Domain\Investor\Repositories\InvestorAnnouncementRepositoryInterface;
 use App\Domain\Investor\Services\DocumentManagementService;
 use App\Domain\Investor\Services\FinancialReportingService;
-use App\Domain\Investor\Services\AnnouncementService as InvestorAnnouncementService;
 use App\Domain\Investor\Services\InvestorMessagingService;
 use App\Domain\Announcement\Services\AnnouncementService;
 use App\Infrastructure\Persistence\Eloquent\Announcement\AnnouncementModel;
@@ -25,8 +23,7 @@ class InvestorPortalController extends Controller
         private readonly DocumentManagementService $documentService,
         private readonly FinancialReportingService $financialReportingService,
         private readonly AnnouncementService $announcementService,
-        private readonly ?InvestorAnnouncementService $investorAnnouncementService = null,
-        private readonly ?InvestorMessagingService $messagingService = null
+        private readonly InvestorMessagingService $messagingService
     ) {}
 
     /**
@@ -232,9 +229,7 @@ class InvestorPortalController extends Controller
 
         // Get unread messages count
         try {
-            $data['unreadMessagesCount'] = $this->messagingService 
-                ? $this->messagingService->getUnreadCountForInvestor($investorId)
-                : 0;
+            $data['unreadMessagesCount'] = $this->messagingService->getUnreadCountForInvestor($investorId);
         } catch (\Exception $e) {
             \Log::error('Unread Messages Count Error: ' . $e->getMessage());
             $data['unreadMessagesCount'] = 0;
@@ -242,6 +237,9 @@ class InvestorPortalController extends Controller
 
         // Debug: Log the complete data
         \Log::info('Investor Dashboard Complete Data', ['keys' => array_keys($data)]);
+
+        // Merge layout data (for notification bell)
+        $data = array_merge($data, $this->getLayoutData($investorId));
 
         return Inertia::render('Investor/Dashboard', $data);
     }
@@ -272,7 +270,7 @@ class InvestorPortalController extends Controller
         // Get available categories for filtering
         $categories = $this->documentService->getAvailableCategories();
 
-        return Inertia::render('Investor/Documents', [
+        return Inertia::render('Investor/Documents', array_merge([
             'investor' => [
                 'id' => $investor->getId(),
                 'name' => $investor->getName(),
@@ -281,7 +279,7 @@ class InvestorPortalController extends Controller
             ],
             'groupedDocuments' => $groupedDocuments,
             'categories' => $categories,
-        ]);
+        ], $this->getLayoutData($investorId)));
     }
 
     /**
@@ -377,7 +375,7 @@ class InvestorPortalController extends Controller
         $financialSummary = $this->financialReportingService->getFinancialSummary();
         $performanceMetrics = $this->financialReportingService->getPerformanceMetrics();
 
-        return Inertia::render('Investor/Reports', [
+        return Inertia::render('Investor/Reports', array_merge([
             'investor' => [
                 'id' => $investor->getId(),
                 'name' => $investor->getName(),
@@ -386,7 +384,7 @@ class InvestorPortalController extends Controller
             'reports' => array_map(fn($report) => $report->toArray(), $reports),
             'financialSummary' => $financialSummary,
             'performanceMetrics' => $performanceMetrics,
-        ]);
+        ], $this->getLayoutData($investorId)));
     }
 
     /**
@@ -407,18 +405,47 @@ class InvestorPortalController extends Controller
             return redirect()->route('investor.login');
         }
 
-        // Get announcements with read status
-        $announcements = [];
-        if ($this->investorAnnouncementService) {
-            $announcements = $this->investorAnnouncementService->getAnnouncementsForInvestor($investorId);
-        }
+        // Get announcements from the general announcements system (filtered for investors)
+        $announcements = AnnouncementModel::active()
+            ->where(function ($query) {
+                $query->where('target_audience', 'all')
+                      ->orWhere('target_audience', 'investors')
+                      ->orWhere('target_audience', 'like', '%investor%');
+            })
+            ->orderByDesc('is_urgent')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($announcement) use ($investorId) {
+                // Check if this investor has read this announcement
+                $isRead = \DB::table('announcement_reads')
+                    ->where('announcement_id', $announcement->id)
+                    ->where('user_id', 'investor_' . $investorId)
+                    ->exists();
 
-        // Get announcement types for filtering
-        $types = $this->investorAnnouncementService 
-            ? $this->investorAnnouncementService->getAnnouncementTypes()
-            : [];
+                return [
+                    'announcement' => [
+                        'id' => $announcement->id,
+                        'title' => $announcement->title,
+                        'content' => $announcement->message,
+                        'summary' => \Str::limit(strip_tags($announcement->message), 150),
+                        'type' => $announcement->type ?? 'general',
+                        'priority' => $announcement->is_urgent ? 'urgent' : 'normal',
+                        'is_pinned' => $announcement->is_urgent ?? false,
+                        'published_at' => $announcement->created_at->format('Y-m-d H:i:s'),
+                    ],
+                    'is_read' => $isRead,
+                ];
+            });
 
-        return Inertia::render('Investor/Announcements', [
+        // Get unique announcement types for filtering
+        $types = [
+            ['value' => 'general', 'label' => 'General'],
+            ['value' => 'financial', 'label' => 'Financial'],
+            ['value' => 'update', 'label' => 'Updates'],
+            ['value' => 'urgent', 'label' => 'Urgent'],
+        ];
+
+        return Inertia::render('Investor/Announcements', array_merge([
             'investor' => [
                 'id' => $investor->getId(),
                 'name' => $investor->getName(),
@@ -426,7 +453,7 @@ class InvestorPortalController extends Controller
             ],
             'announcements' => $announcements,
             'types' => $types,
-        ]);
+        ], $this->getLayoutData($investorId)));
     }
 
     /**
@@ -440,11 +467,22 @@ class InvestorPortalController extends Controller
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
-        if ($this->investorAnnouncementService) {
-            $this->investorAnnouncementService->markAsRead($id, $investorId);
-        }
+        try {
+            \DB::table('announcement_reads')->updateOrInsert(
+                [
+                    'announcement_id' => $id,
+                    'user_id' => 'investor_' . $investorId,
+                ],
+                [
+                    'read_at' => now(),
+                ]
+            );
 
-        return back()->with('success', 'Announcement marked as read');
+            return back()->with('success', 'Announcement marked as read');
+        } catch (\Exception $e) {
+            \Log::error('Mark announcement as read error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to mark as read');
+        }
     }
 
     /**
@@ -466,15 +504,10 @@ class InvestorPortalController extends Controller
         }
 
         // Get messages for this investor
-        $messages = [];
-        $unreadCount = 0;
-        
-        if ($this->messagingService) {
-            $messages = $this->messagingService->getMessagesForInvestor($investorId);
-            $unreadCount = $this->messagingService->getUnreadCountForInvestor($investorId);
-        }
+        $messages = $this->messagingService->getMessagesForInvestor($investorId);
+        $unreadCount = $this->messagingService->getUnreadCountForInvestor($investorId);
 
-        return Inertia::render('Investor/Messages', [
+        return Inertia::render('Investor/Messages', array_merge([
             'investor' => [
                 'id' => $investor->getId(),
                 'name' => $investor->getName(),
@@ -482,7 +515,7 @@ class InvestorPortalController extends Controller
             ],
             'messages' => $messages,
             'unreadCount' => $unreadCount,
-        ]);
+        ], $this->getLayoutData($investorId)));
     }
 
     /**
@@ -501,10 +534,6 @@ class InvestorPortalController extends Controller
             'content' => 'required|string|max:10000',
             'parent_id' => 'nullable|integer|exists:investor_messages,id',
         ]);
-
-        if (!$this->messagingService) {
-            return back()->with('error', 'Messaging service unavailable');
-        }
 
         try {
             $this->messagingService->sendMessageFromInvestor(
@@ -530,10 +559,6 @@ class InvestorPortalController extends Controller
         
         if (!$investorId) {
             return response()->json(['error' => 'Not authenticated'], 401);
-        }
-
-        if (!$this->messagingService) {
-            return response()->json(['error' => 'Messaging service unavailable'], 500);
         }
 
         try {
@@ -653,5 +678,67 @@ class InvestorPortalController extends Controller
         // Mail::to($investor->getEmail())->send(new InvestorAccessCode($accessCode));
 
         return back()->with('success', "Access code sent to {$investor->getEmail()}");
+    }
+
+    /**
+     * Get unread announcements count for investor
+     */
+    private function getUnreadAnnouncementsCount(int $investorId): int
+    {
+        try {
+            $activeAnnouncements = AnnouncementModel::active()
+                ->where(function ($query) {
+                    $query->where('target_audience', 'all')
+                          ->orWhere('target_audience', 'investors')
+                          ->orWhere('target_audience', 'like', '%investor%');
+                })
+                ->pluck('id');
+
+            $readAnnouncements = \DB::table('announcement_reads')
+                ->where('user_id', 'investor_' . $investorId)
+                ->whereIn('announcement_id', $activeAnnouncements)
+                ->pluck('announcement_id');
+
+            return $activeAnnouncements->count() - $readAnnouncements->count();
+        } catch (\Exception $e) {
+            \Log::error('Unread Announcements Count Error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Get common layout data for all investor pages
+     */
+    private function getLayoutData(int $investorId): array
+    {
+        return [
+            'unreadMessages' => $this->messagingService->getUnreadCountForInvestor($investorId),
+            'unreadAnnouncements' => $this->getUnreadAnnouncementsCount($investorId),
+        ];
+    }
+
+    /**
+     * Get notification counts for polling (JSON endpoint)
+     */
+    public function getNotificationCount()
+    {
+        $investorId = session('investor_id');
+        
+        if (!$investorId) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        try {
+            return response()->json([
+                'unreadMessages' => $this->messagingService->getUnreadCountForInvestor($investorId),
+                'unreadAnnouncements' => $this->getUnreadAnnouncementsCount($investorId),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Notification count error: ' . $e->getMessage());
+            return response()->json([
+                'unreadMessages' => 0,
+                'unreadAnnouncements' => 0,
+            ]);
+        }
     }
 }

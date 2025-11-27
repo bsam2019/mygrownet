@@ -9,6 +9,7 @@ namespace App\Domain\Investor\ValueObjects;
  */
 class InvestorStatus
 {
+    private const PROSPECTIVE = 'prospective';
     private const CIU = 'ciu';
     private const SHAREHOLDER = 'shareholder';
     private const EXITED = 'exited';
@@ -16,9 +17,14 @@ class InvestorStatus
     private function __construct(
         private readonly string $value
     ) {
-        if (!in_array($value, [self::CIU, self::SHAREHOLDER, self::EXITED])) {
+        if (!in_array($value, [self::PROSPECTIVE, self::CIU, self::SHAREHOLDER, self::EXITED])) {
             throw new \InvalidArgumentException("Invalid investor status: {$value}");
         }
+    }
+
+    public static function prospective(): self
+    {
+        return new self(self::PROSPECTIVE);
     }
 
     public static function ciu(): self
@@ -51,6 +57,11 @@ class InvestorStatus
         return $this->value === $other->value;
     }
 
+    public function isProspective(): bool
+    {
+        return $this->value === self::PROSPECTIVE;
+    }
+
     public function isCIU(): bool
     {
         return $this->value === self::CIU;
@@ -69,6 +80,7 @@ class InvestorStatus
     public function label(): string
     {
         return match($this->value) {
+            self::PROSPECTIVE => 'Prospective Investor',
             self::CIU => 'Convertible Investment Unit',
             self::SHAREHOLDER => 'Shareholder',
             self::EXITED => 'Exited',

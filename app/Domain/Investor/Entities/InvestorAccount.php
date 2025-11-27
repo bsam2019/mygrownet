@@ -19,7 +19,7 @@ class InvestorAccount
         private string $email,
         private float $investmentAmount,
         private DateTimeImmutable $investmentDate,
-        private int $investmentRoundId,
+        private ?int $investmentRoundId,
         private InvestorStatus $status,
         private float $equityPercentage,
         private readonly DateTimeImmutable $createdAt,
@@ -32,10 +32,13 @@ class InvestorAccount
         string $email,
         float $investmentAmount,
         DateTimeImmutable $investmentDate,
-        int $investmentRoundId,
+        ?int $investmentRoundId,
         float $equityPercentage
     ): self {
         $now = new DateTimeImmutable();
+        
+        // Determine initial status based on investment amount
+        $status = $investmentAmount > 0 ? InvestorStatus::ciu() : InvestorStatus::prospective();
         
         return new self(
             id: 0,
@@ -45,7 +48,7 @@ class InvestorAccount
             investmentAmount: $investmentAmount,
             investmentDate: $investmentDate,
             investmentRoundId: $investmentRoundId,
-            status: InvestorStatus::ciu(),
+            status: $status,
             equityPercentage: $equityPercentage,
             createdAt: $now,
             updatedAt: $now
@@ -59,7 +62,7 @@ class InvestorAccount
         string $email,
         float $investmentAmount,
         DateTimeImmutable $investmentDate,
-        int $investmentRoundId,
+        ?int $investmentRoundId,
         InvestorStatus $status,
         float $equityPercentage,
         DateTimeImmutable $createdAt,
@@ -134,9 +137,35 @@ class InvestorAccount
         return $this->investmentDate;
     }
 
-    public function getInvestmentRoundId(): int
+    public function getInvestmentRoundId(): ?int
     {
         return $this->investmentRoundId;
+    }
+
+    public function isProspective(): bool
+    {
+        return $this->status->equals(InvestorStatus::prospective());
+    }
+
+    public function hasInvested(): bool
+    {
+        return $this->investmentAmount > 0;
+    }
+
+    /**
+     * Record an investment for a prospective investor
+     */
+    public function recordInvestment(
+        float $amount,
+        int $investmentRoundId,
+        float $equityPercentage = 0
+    ): void {
+        $this->investmentAmount = $amount;
+        $this->investmentRoundId = $investmentRoundId;
+        $this->investmentDate = new DateTimeImmutable();
+        $this->equityPercentage = $equityPercentage;
+        $this->status = InvestorStatus::ciu();
+        $this->updatedAt = new DateTimeImmutable();
     }
 
     public function getStatus(): InvestorStatus

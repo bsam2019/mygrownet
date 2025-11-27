@@ -81,51 +81,61 @@ class InvestorAccountController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'investment_amount' => 'required|numeric|min:0',
-            'investment_date' => 'required|date',
-            'investment_round_id' => 'required|exists:investment_rounds,id',
+            'investment_amount' => 'nullable|numeric|min:0',
+            'investment_date' => 'nullable|date',
+            'investment_round_id' => 'nullable|exists:investment_rounds,id',
             'equity_percentage' => 'nullable|numeric|min:0|max:100',
         ], [
             'name.required' => 'Investor name is required',
             'email.required' => 'Email address is required',
             'email.email' => 'Please enter a valid email address',
-            'investment_amount.required' => 'Investment amount is required',
             'investment_amount.numeric' => 'Investment amount must be a number',
-            'investment_date.required' => 'Investment date is required',
-            'investment_round_id.required' => 'Please select an investment round',
         ]);
 
-        // Get investment round for equity calculation
-        $round = $this->roundRepository->findById($validated['investment_round_id']);
+        // Determine if this is a prospective investor (no investment yet)
+        $investmentAmount = (float) ($validated['investment_amount'] ?? 0);
+        $investmentDate = !empty($validated['investment_date']) 
+            ? new DateTimeImmutable($validated['investment_date']) 
+            : new DateTimeImmutable();
+        $investmentRoundId = $validated['investment_round_id'] ?? null;
+
+        // Get investment round for equity calculation (if provided)
+        $round = $investmentRoundId ? $this->roundRepository->findById($investmentRoundId) : null;
         
         // Auto-calculate equity percentage if not provided or is zero
         $equityPercentage = (float) ($validated['equity_percentage'] ?? 0);
-        if ($equityPercentage == 0 && $round && $round->getValuation() > 0) {
-            $equityPercentage = ((float) $validated['investment_amount'] / $round->getValuation()) * 100;
+        if ($equityPercentage == 0 && $round && $round->getValuation() > 0 && $investmentAmount > 0) {
+            $equityPercentage = ($investmentAmount / $round->getValuation()) * 100;
         }
 
         $account = InvestorAccount::create(
             userId: $validated['user_id'] ?? null,
             name: $validated['name'],
             email: $validated['email'],
-            investmentAmount: (float) $validated['investment_amount'],
-            investmentDate: new DateTimeImmutable($validated['investment_date']),
-            investmentRoundId: $validated['investment_round_id'],
+            investmentAmount: $investmentAmount,
+            investmentDate: $investmentDate,
+            investmentRoundId: $investmentRoundId,
             equityPercentage: $equityPercentage
         );
 
         $savedAccount = $this->accountRepository->save($account);
 
-        // Update investment round raised amount
-        if ($round) {
-            $round->addInvestment((float) $validated['investment_amount']);
+        // Update investment round raised amount (only if there's an actual investment)
+        if ($round && $investmentAmount > 0) {
+            $round->addInvestment($investmentAmount);
             $this->roundRepository->save($round);
         }
 
         // Generate access code for investor portal
         $accessCode = $this->generateAccessCode($savedAccount->getEmail(), $savedAccount->getId());
 
-        $message = "Investment recorded successfully. ";
+        // Determine success message based on whether investment was recorded
+        if ($investmentAmount > 0) {
+            $message = "Investment recorded successfully. ";
+        } else {
+            $message = "Prospective investor added successfully. ";
+        }
+        
         if (!$validated['user_id']) {
             $message .= "Investor portal access - Email: {$savedAccount->getEmail()}, Access Code: {$accessCode}";
         } else {

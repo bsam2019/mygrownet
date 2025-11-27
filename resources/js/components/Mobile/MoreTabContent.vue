@@ -98,6 +98,23 @@
       </div>
     </div>
 
+    <!-- Share & Promote Section -->
+    <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-xl shadow-lg overflow-hidden">
+      <button
+        @click="$emit('present-mygrownet')"
+        class="w-full px-4 py-4 flex items-center gap-4 text-left hover:bg-white/10 transition-colors active:scale-[0.98]"
+      >
+        <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+          <PresentationChartBarIcon class="h-6 w-6 text-white" aria-hidden="true" />
+        </div>
+        <div class="flex-1">
+          <p class="text-white font-bold">Present MyGrowNet</p>
+          <p class="text-blue-100 text-sm">Show others what we're all about</p>
+        </div>
+        <ChevronRightIcon class="h-5 w-5 text-white/60" aria-hidden="true" />
+      </button>
+    </div>
+
     <!-- App & View Section -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
@@ -166,7 +183,9 @@ import {
   ArrowDownTrayIcon,
   ComputerDesktopIcon,
   InformationCircleIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  PresentationChartBarIcon,
+  ChevronRightIcon,
 } from '@heroicons/vue/24/outline';
 
 import CompactProfileCard from './CompactProfileCard.vue';
@@ -197,5 +216,6 @@ defineEmits<{
   'about': [];
   'terms': [];
   'logout': [];
+  'present-mygrownet': [];
 }>();
 </script>

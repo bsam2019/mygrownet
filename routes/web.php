@@ -51,6 +51,9 @@ Route::prefix('investor')->name('investor.')->group(function () {
     Route::post('/messages', [App\Http\Controllers\Investor\InvestorPortalController::class, 'storeMessage'])->name('messages.store');
     Route::post('/messages/{id}/read', [App\Http\Controllers\Investor\InvestorPortalController::class, 'markMessageAsRead'])->name('messages.read');
     
+    // Notification count endpoint for polling
+    Route::get('/notifications/count', [App\Http\Controllers\Investor\InvestorPortalController::class, 'getNotificationCount'])->name('notifications.count');
+    
     // Settings
     Route::get('/settings', [App\Http\Controllers\Investor\InvestorPortalController::class, 'settings'])->name('settings');
     Route::post('/settings/notifications', [App\Http\Controllers\Investor\InvestorPortalController::class, 'updateNotificationPreferences'])->name('settings.notifications');
@@ -212,19 +215,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{id}/publish', [App\Http\Controllers\Admin\FinancialReportController::class, 'publish'])->name('publish');
         Route::post('/{id}/unpublish', [App\Http\Controllers\Admin\FinancialReportController::class, 'unpublish'])->name('unpublish');
         Route::delete('/{id}', [App\Http\Controllers\Admin\FinancialReportController::class, 'destroy'])->name('destroy');
-    });
-
-    // Admin Investor Announcements Management
-    Route::middleware(['admin'])->prefix('admin/investor-announcements')->name('admin.investor-announcements.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'store'])->name('store');
-        Route::get('/{id}', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'update'])->name('update');
-        Route::post('/{id}/publish', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'publish'])->name('publish');
-        Route::post('/{id}/unpublish', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'unpublish'])->name('unpublish');
-        Route::delete('/{id}', [App\Http\Controllers\Admin\InvestorAnnouncementController::class, 'destroy'])->name('destroy');
     });
 
     // Admin Investor Messages Management

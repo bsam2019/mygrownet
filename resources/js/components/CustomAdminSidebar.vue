@@ -88,9 +88,11 @@ const financeNavItems: NavItem[] = [
 const investorRelationsNavItems: NavItem[] = [
     { title: 'Investment Rounds', href: safeRoute('admin.investment-rounds.index'), icon: TrendingUp },
     { title: 'Investor Accounts', href: safeRoute('admin.investor-accounts.index'), icon: UserCheck },
+    { title: 'Investor Messages', href: safeRoute('admin.investor-messages.index'), icon: MailIcon },
     { title: 'Investor Documents', href: safeRoute('admin.investor-documents.index'), icon: FileText },
     { title: 'Financial Reports', href: safeRoute('admin.financial-reports.index'), icon: ChartBarIcon },
-    { title: 'Investor Inquiries', href: safeRoute('admin.investor-inquiries.index', '#'), icon: FileText },
+    { title: 'Investor Announcements', href: safeRoute('admin.investor-announcements.index'), icon: Bell },
+    { title: 'Investor Analytics', href: safeRoute('admin.investor-analytics.index'), icon: ChartBarIcon },
 ];
 
 const ventureBuilderNavItems: NavItem[] = [

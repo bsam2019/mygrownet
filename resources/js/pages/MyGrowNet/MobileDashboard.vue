@@ -535,7 +535,7 @@
           </div>
 
           <!-- Referral Link -->
-          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 mb-4">
             <p class="text-xs font-medium text-gray-700 mb-2">Your Referral Link</p>
             <div class="flex items-center gap-2">
               <input
@@ -552,6 +552,18 @@
               </button>
             </div>
           </div>
+
+          <!-- Present MyGrowNet Button -->
+          <button
+            @click="showPresentationModal = true"
+            class="w-full mt-4 flex items-center justify-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all active:scale-[0.98]"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+            </svg>
+            <span class="font-semibold">Present MyGrowNet</span>
+            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Show prospects</span>
+          </button>
         </div>
 
         <!-- Member Filters -->
@@ -1297,6 +1309,7 @@
               @about="showComingSoon('About')"
               @terms="showComingSoon('Terms & Privacy')"
               @logout="handleTabChange(previousTab); handleLogout()"
+              @present-mygrownet="showPresentationModal = true"
             />
           </div>
         </div>
@@ -1611,6 +1624,14 @@
       @open-plan="handleOpenPlan"
     />
 
+    <!-- MyGrowNet Presentation Modal -->
+    <PresentationModal
+      v-model="showPresentationModal"
+      :referral-link="referralLink"
+      :referral-code="user?.referral_code"
+      :user-name="user?.name"
+    />
+
     <!-- ROI Calculator Modal -->
     <ROICalculatorModal
       :show="showROICalculatorModal"
@@ -1664,6 +1685,7 @@ import ROICalculatorModal from '@/components/Mobile/Tools/ROICalculatorModal.vue
 import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
 import MoreTabContent from '@/components/Mobile/MoreTabContent.vue';
 import ChangePasswordModal from '@/components/Mobile/ChangePasswordModal.vue';
+import PresentationModal from '@/components/Mobile/PresentationModal.vue';
 import MiniSparkline from '@/components/Mobile/MiniSparkline.vue';
 import EarningsTrendChart from '@/components/Mobile/EarningsTrendChart.vue';
 import MemberFilters from '@/components/Mobile/MemberFilters.vue';
@@ -1960,6 +1982,7 @@ const showBusinessPlanModal = ref(false);
 const showBusinessPlanListModal = ref(false);
 const showROICalculatorModal = ref(false);
 const showChangePasswordModal = ref(false);
+const showPresentationModal = ref(false);
 
 const handleViewAllPlans = () => {
   showBusinessPlanModal.value = false;
