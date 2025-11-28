@@ -3,6 +3,7 @@
 namespace App\Domain\Investor\Services;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class InvestorMessagingService
@@ -45,11 +46,22 @@ class InvestorMessagingService
      */
     public function getUnreadCountForInvestor(int $investorAccountId): int
     {
-        return DB::table('investor_messages')
-            ->where('investor_account_id', $investorAccountId)
-            ->where('direction', 'to_investor') // Only count unread messages FROM admin
-            ->where('status', 'unread')
-            ->count();
+        try {
+            // Check if status column exists first
+            if (!Schema::hasColumn('investor_messages', 'status')) {
+                \Log::warning('Status column missing from investor_messages table. Returning 0 for unread count.');
+                return 0;
+            }
+            
+            return DB::table('investor_messages')
+                ->where('investor_account_id', $investorAccountId)
+                ->where('direction', 'to_investor') // Only count unread messages FROM admin
+                ->where('status', 'unread')
+                ->count();
+        } catch (\Exception $e) {
+            \Log::error('Error getting unread count for investor ' . $investorAccountId . ': ' . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
@@ -212,10 +224,21 @@ class InvestorMessagingService
      */
     public function getUnreadCountForAdmin(): int
     {
-        return DB::table('investor_messages')
-            ->where('direction', 'from_investor')
-            ->where('status', 'unread')
-            ->count();
+        try {
+            // Check if status column exists first
+            if (!Schema::hasColumn('investor_messages', 'status')) {
+                \Log::warning('Status column missing from investor_messages table. Returning 0 for admin unread count.');
+                return 0;
+            }
+            
+            return DB::table('investor_messages')
+                ->where('direction', 'from_investor')
+                ->where('status', 'unread')
+                ->count();
+        } catch (\Exception $e) {
+            \Log::error('Error getting unread count for admin: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     /**

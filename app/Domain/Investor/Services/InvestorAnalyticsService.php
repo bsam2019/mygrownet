@@ -91,7 +91,12 @@ class InvestorAnalyticsService
             $total = $messages->count();
             $fromInvestors = $messages->where('direction', 'from_investor')->count();
             $toInvestors = $messages->where('direction', 'to_investor')->count();
-            $unread = $messages->where('status', 'unread')->count();
+            
+            // Check if status column exists before using it
+            $unread = 0;
+            if ($messages->isNotEmpty() && isset($messages->first()->status)) {
+                $unread = $messages->where('status', 'unread')->count();
+            }
 
             // Calculate average response time
             $avgResponseTime = $this->calculateAverageResponseTime();

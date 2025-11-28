@@ -574,7 +574,13 @@ class InvestorPortalController extends Controller
 
         // Get messages for this investor
         $messages = $this->messagingService->getMessagesForInvestor($investorId);
-        $unreadCount = $this->messagingService->getUnreadCountForInvestor($investorId);
+        
+        try {
+            $unreadCount = $this->messagingService->getUnreadCountForInvestor($investorId);
+        } catch (\Exception $e) {
+            \Log::error('Unread Messages Count Error in messages page: ' . $e->getMessage());
+            $unreadCount = 0;
+        }
 
         return Inertia::render('Investor/Messages', array_merge([
             'investor' => [
@@ -780,8 +786,15 @@ class InvestorPortalController extends Controller
      */
     private function getLayoutData(int $investorId): array
     {
+        try {
+            $unreadMessages = $this->messagingService->getUnreadCountForInvestor($investorId);
+        } catch (\Exception $e) {
+            \Log::error('Unread Messages Count Error in layout data: ' . $e->getMessage());
+            $unreadMessages = 0;
+        }
+        
         return [
-            'unreadMessages' => $this->messagingService->getUnreadCountForInvestor($investorId),
+            'unreadMessages' => $unreadMessages,
             'unreadAnnouncements' => $this->getUnreadAnnouncementsCount($investorId),
         ];
     }
