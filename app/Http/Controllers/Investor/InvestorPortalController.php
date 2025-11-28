@@ -92,7 +92,8 @@ class InvestorPortalController extends Controller
         }
 
         // Get investment round details
-        $round = $this->roundRepository->findById($investor->getInvestmentRoundId());
+        $roundId = $investor->getInvestmentRoundId();
+        $round = $roundId ? $this->roundRepository->findById($roundId) : null;
 
         // Calculate investment metrics
         $investmentAmount = $investor->getInvestmentAmount();
@@ -123,9 +124,15 @@ class InvestorPortalController extends Controller
 
         // Get all investors for round stats
         try {
-            $allInvestors = $this->accountRepository->findByInvestmentRound($investor->getInvestmentRoundId());
-            $totalInvestors = count($allInvestors);
-            $totalRaised = array_sum(array_map(fn($inv) => $inv->getInvestmentAmount(), $allInvestors));
+            $roundId = $investor->getInvestmentRoundId();
+            if ($roundId) {
+                $allInvestors = $this->accountRepository->findByInvestmentRound($roundId);
+                $totalInvestors = count($allInvestors);
+                $totalRaised = array_sum(array_map(fn($inv) => $inv->getInvestmentAmount(), $allInvestors));
+            } else {
+                $totalInvestors = 1;
+                $totalRaised = $investmentAmount;
+            }
         } catch (\Exception $e) {
             \Log::error('Investor Stats Error: ' . $e->getMessage());
             $totalInvestors = 1;
@@ -324,9 +331,10 @@ class InvestorPortalController extends Controller
         }
 
         // Get documents grouped by category
-        $groupedDocuments = $this->documentService->getDocumentsForInvestor(
-            $investor->getInvestmentRoundId()
-        );
+        $roundId = $investor->getInvestmentRoundId();
+        $groupedDocuments = $roundId 
+            ? $this->documentService->getDocumentsForInvestor($roundId)
+            : [];
 
         // Get available categories for filtering
         $categories = $this->documentService->getAvailableCategories();
