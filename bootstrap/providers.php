@@ -13,6 +13,7 @@ return [
     App\Providers\EmailMarketingServiceProvider::class,
     App\Providers\TelegramServiceProvider::class,
     App\Providers\InvestorServiceProvider::class,
+    App\Providers\InvestorDomainServiceProvider::class,
     // App\Providers\EmployeeServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\EmployeeCacheServiceProvider::class, // Disabled - causing memory issues
     // App\Providers\MLMRepositoryServiceProvider::class, // Disabled - causing memory issues

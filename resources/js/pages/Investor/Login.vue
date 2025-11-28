@@ -76,13 +76,13 @@
         </div>
       </div>
 
-      <!-- Back to Public Page -->
+      <!-- Back to Home -->
       <div class="mt-6 text-center">
         <Link
-          :href="route('investors.index')"
+          :href="route('home')"
           class="text-sm text-gray-600 hover:text-gray-900"
         >
-          ← Back to Investor Information
+          ← Back to MyGrowNet
         </Link>
       </div>
     </div>

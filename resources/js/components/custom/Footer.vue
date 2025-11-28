@@ -129,7 +129,8 @@
           { name: 'Contact Us', route: 'contact' },
           { name: 'All Policies', route: 'policies' },
           { name: 'Privacy Policy', route: 'privacy' },
-          { name: 'Terms of Service', route: 'terms' }
+          { name: 'Terms of Service', route: 'terms' },
+          { name: 'Shareholder Portal', route: 'investor.login' }
         ],
         contactInfo: [
           {

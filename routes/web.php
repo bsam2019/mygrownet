@@ -24,11 +24,9 @@ use App\Http\Controllers\ComplianceController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 
-// Public Investor Routes
-Route::prefix('investors')->name('investors.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Investor\PublicController::class, 'index'])->name('index');
-    Route::post('/inquiry', [App\Http\Controllers\Investor\PublicController::class, 'submitInquiry'])->name('inquiry');
-});
+// Public Investor Routes - REMOVED for regulatory compliance
+// Private companies cannot publicly solicit investments
+// Existing shareholders access the portal via /investor/login
 
 // Investor Portal Routes (Login & Dashboard)
 Route::prefix('investor')->name('investor.')->group(function () {
@@ -57,6 +55,72 @@ Route::prefix('investor')->name('investor.')->group(function () {
     // Settings
     Route::get('/settings', [App\Http\Controllers\Investor\InvestorPortalController::class, 'settings'])->name('settings');
     Route::post('/settings/notifications', [App\Http\Controllers\Investor\InvestorPortalController::class, 'updateNotificationPreferences'])->name('settings.notifications');
+    
+    // Legal Documents (Phase 1)
+    Route::get('/legal-documents', [App\Http\Controllers\Investor\LegalDocumentsController::class, 'index'])->name('legal-documents');
+    Route::post('/legal-documents/certificates/generate/{investmentId}', [App\Http\Controllers\Investor\LegalDocumentsController::class, 'generate'])->name('legal-documents.generate');
+    Route::get('/legal-documents/certificates/{certificateId}/download', [App\Http\Controllers\Investor\LegalDocumentsController::class, 'download'])->name('legal-documents.download');
+    
+    // Dividends (Phase 1)
+    Route::get('/dividends', [App\Http\Controllers\Investor\DividendsController::class, 'index'])->name('dividends');
+    Route::get('/dividends/history', [App\Http\Controllers\Investor\DividendsController::class, 'history'])->name('dividends.history');
+    
+    // Investor Relations (Phase 1)
+    Route::get('/investor-relations', [App\Http\Controllers\Investor\InvestorRelationsController::class, 'index'])->name('investor-relations');
+    Route::get('/investor-relations/reports/{reportId}/download', [App\Http\Controllers\Investor\InvestorRelationsController::class, 'downloadReport'])->name('investor-relations.download');
+    
+    // Advanced Analytics (Phase 2)
+    Route::get('/analytics', [App\Http\Controllers\Investor\AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('/analytics/valuation-history', [App\Http\Controllers\Investor\AnalyticsController::class, 'getValuationHistory'])->name('analytics.valuation');
+    Route::get('/analytics/risk-history', [App\Http\Controllers\Investor\AnalyticsController::class, 'getRiskHistory'])->name('analytics.risk-history');
+    Route::get('/analytics/scenarios', [App\Http\Controllers\Investor\AnalyticsController::class, 'getScenarios'])->name('analytics.scenarios');
+    Route::get('/analytics/summary', [App\Http\Controllers\Investor\AnalyticsController::class, 'getSummary'])->name('analytics.summary');
+    
+    // Shareholder Voting (Phase 2)
+    Route::get('/voting', [App\Http\Controllers\Investor\VotingController::class, 'index'])->name('voting');
+    Route::post('/voting/cast', [App\Http\Controllers\Investor\VotingController::class, 'castVote'])->name('voting.cast');
+    Route::post('/voting/proxy', [App\Http\Controllers\Investor\VotingController::class, 'delegateProxy'])->name('voting.proxy');
+    Route::delete('/voting/proxy/{delegationId}', [App\Http\Controllers\Investor\VotingController::class, 'revokeProxy'])->name('voting.proxy.revoke');
+    Route::get('/voting/results/{resolutionId}', [App\Http\Controllers\Investor\VotingController::class, 'getResults'])->name('voting.results');
+    
+    // Q&A System (Phase 2)
+    Route::get('/questions', [App\Http\Controllers\Investor\CommunicationController::class, 'questions'])->name('questions');
+    Route::post('/questions', [App\Http\Controllers\Investor\CommunicationController::class, 'submitQuestion'])->name('questions.store');
+    Route::post('/questions/{questionId}/upvote', [App\Http\Controllers\Investor\CommunicationController::class, 'upvoteQuestion'])->name('questions.upvote');
+    Route::delete('/questions/{questionId}/upvote', [App\Http\Controllers\Investor\CommunicationController::class, 'removeUpvote'])->name('questions.upvote.remove');
+    
+    // Feedback & Surveys (Phase 2)
+    Route::get('/feedback', [App\Http\Controllers\Investor\CommunicationController::class, 'feedback'])->name('feedback');
+    Route::post('/feedback', [App\Http\Controllers\Investor\CommunicationController::class, 'submitFeedback'])->name('feedback.store');
+    Route::get('/surveys', [App\Http\Controllers\Investor\CommunicationController::class, 'surveys'])->name('surveys');
+    Route::post('/surveys/{surveyId}', [App\Http\Controllers\Investor\CommunicationController::class, 'submitSurvey'])->name('surveys.submit');
+    
+    // Share Transfer Requests (Phase 3)
+    Route::get('/share-transfer', [App\Http\Controllers\Investor\ShareTransferController::class, 'index'])->name('share-transfer');
+    Route::post('/share-transfer', [App\Http\Controllers\Investor\ShareTransferController::class, 'store'])->name('share-transfer.store');
+    Route::post('/share-transfer/{transferRequest}/submit', [App\Http\Controllers\Investor\ShareTransferController::class, 'submit'])->name('share-transfer.submit');
+    Route::post('/share-transfer/{transferRequest}/cancel', [App\Http\Controllers\Investor\ShareTransferController::class, 'cancel'])->name('share-transfer.cancel');
+    
+    // Liquidity Events (Phase 3)
+    Route::get('/liquidity-events', [App\Http\Controllers\Investor\LiquidityEventController::class, 'index'])->name('liquidity-events');
+    Route::get('/liquidity-events/{event}', [App\Http\Controllers\Investor\LiquidityEventController::class, 'show'])->name('liquidity-events.show');
+    Route::post('/liquidity-events/{event}/interest', [App\Http\Controllers\Investor\LiquidityEventController::class, 'registerInterest'])->name('liquidity-events.interest');
+    Route::post('/liquidity-events/{event}/register', [App\Http\Controllers\Investor\LiquidityEventController::class, 'register'])->name('liquidity-events.register');
+    Route::post('/liquidity-events/participation/{participation}/withdraw', [App\Http\Controllers\Investor\LiquidityEventController::class, 'withdraw'])->name('liquidity-events.withdraw');
+    
+    // Shareholder Forum (Phase 3)
+    Route::get('/forum', [App\Http\Controllers\Investor\CommunityController::class, 'forum'])->name('forum');
+    Route::get('/forum/category/{categoryId}', [App\Http\Controllers\Investor\CommunityController::class, 'forumCategory'])->name('forum.category');
+    Route::get('/forum/topic/{slug}', [App\Http\Controllers\Investor\CommunityController::class, 'forumTopic'])->name('forum.topic');
+    Route::post('/forum/topic', [App\Http\Controllers\Investor\CommunityController::class, 'createTopic'])->name('forum.topic.create');
+    Route::post('/forum/topic/{topic}/reply', [App\Http\Controllers\Investor\CommunityController::class, 'createReply'])->name('forum.reply.create');
+    
+    // Shareholder Directory (Phase 3)
+    Route::get('/directory', [App\Http\Controllers\Investor\CommunityController::class, 'directory'])->name('directory');
+    Route::post('/directory/profile', [App\Http\Controllers\Investor\CommunityController::class, 'updateProfile'])->name('directory.update');
+    Route::post('/directory/contact', [App\Http\Controllers\Investor\CommunityController::class, 'sendContactRequest'])->name('directory.contact');
+    Route::get('/directory/requests', [App\Http\Controllers\Investor\CommunityController::class, 'contactRequests'])->name('directory.requests');
+    Route::post('/directory/requests/{contactRequest}/respond', [App\Http\Controllers\Investor\CommunityController::class, 'respondToContactRequest'])->name('directory.requests.respond');
     
     Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
 });

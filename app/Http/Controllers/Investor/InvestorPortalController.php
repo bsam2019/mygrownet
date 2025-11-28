@@ -23,7 +23,10 @@ class InvestorPortalController extends Controller
         private readonly DocumentManagementService $documentService,
         private readonly FinancialReportingService $financialReportingService,
         private readonly AnnouncementService $announcementService,
-        private readonly InvestorMessagingService $messagingService
+        private readonly InvestorMessagingService $messagingService,
+        private readonly \App\Domain\Investor\Services\ShareCertificateService $shareCertificateService,
+        private readonly \App\Domain\Investor\Services\DividendManagementService $dividendService,
+        private readonly \App\Domain\Investor\Services\InvestorRelationsService $relationsService
     ) {}
 
     /**
@@ -233,6 +236,64 @@ class InvestorPortalController extends Controller
         } catch (\Exception $e) {
             \Log::error('Unread Messages Count Error: ' . $e->getMessage());
             $data['unreadMessagesCount'] = 0;
+        }
+
+        // Phase 1: Get share certificates
+        try {
+            $certificates = $this->shareCertificateService->getCertificatesForInvestor($investorId);
+            $data['shareCertificates'] = array_map(fn($cert) => [
+                'id' => $cert->getId(),
+                'certificate_number' => $cert->getCertificateNumber(),
+                'shares' => $cert->getShares()->getValue(),
+                'issue_date' => $cert->getIssueDate()->format('Y-m-d'),
+                'status' => $cert->getStatus(),
+            ], $certificates);
+        } catch (\Exception $e) {
+            \Log::error('Share Certificates Error: ' . $e->getMessage());
+            $data['shareCertificates'] = [];
+        }
+
+        // Phase 1: Get dividend summary
+        try {
+            $dividendSummary = $this->dividendService->getDividendSummary($investorId);
+            $data['dividendSummary'] = $dividendSummary;
+        } catch (\Exception $e) {
+            \Log::error('Dividend Summary Error: ' . $e->getMessage());
+            $data['dividendSummary'] = [
+                'total_received' => 0,
+                'pending_amount' => 0,
+                'next_payment_date' => null,
+                'payment_count' => 0,
+            ];
+        }
+
+        // Phase 1: Get latest quarterly report
+        try {
+            $latestReport = $this->relationsService->getLatestQuarterlyReport();
+            $data['latestQuarterlyReport'] = $latestReport ? [
+                'id' => $latestReport->id,
+                'title' => $latestReport->title,
+                'quarter' => $latestReport->quarter,
+                'year' => $latestReport->year,
+                'published_at' => $latestReport->published_at?->format('Y-m-d'),
+            ] : null;
+        } catch (\Exception $e) {
+            \Log::error('Latest Quarterly Report Error: ' . $e->getMessage());
+            $data['latestQuarterlyReport'] = null;
+        }
+
+        // Phase 1: Get upcoming meetings
+        try {
+            $upcomingMeetings = $this->relationsService->getUpcomingMeetings(3);
+            $data['upcomingMeetings'] = array_map(fn($meeting) => [
+                'id' => $meeting->id,
+                'title' => $meeting->title,
+                'meeting_date' => $meeting->meeting_date->format('Y-m-d H:i'),
+                'type' => $meeting->type,
+            ], $upcomingMeetings);
+        } catch (\Exception $e) {
+            \Log::error('Upcoming Meetings Error: ' . $e->getMessage());
+            $data['upcomingMeetings'] = [];
         }
 
         // Debug: Log the complete data

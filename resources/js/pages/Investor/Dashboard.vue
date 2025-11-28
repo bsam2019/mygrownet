@@ -201,17 +201,57 @@
       <PerformanceChart :performance-metrics="performanceMetrics" />
     </div>
 
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-      <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-        <InformationCircleIcon class="h-6 w-6 text-blue-600" aria-hidden="true" />
-      </div>
-      <div class="flex-1">
-        <h3 class="font-semibold text-blue-900 mb-1">Stay Informed</h3>
-        <p class="text-sm text-blue-700">We'll keep you updated on company performance, financial reports, and important announcements.</p>
-      </div>
-      <Link :href="route('investor.documents')" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
-        View Documents
-        <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+    <!-- Quick Access Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <!-- Legal Documents -->
+      <Link :href="route('investor.legal-documents')" class="group bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+            <DocumentTextIcon class="h-6 w-6 text-white" aria-hidden="true" />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-blue-900 mb-1">Legal Documents</h3>
+            <p class="text-sm text-blue-700 mb-3">Share certificates, agreements, and compliance documents</p>
+            <span class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 group-hover:gap-2 transition-all">
+              View Documents
+              <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+            </span>
+          </div>
+        </div>
+      </Link>
+
+      <!-- Dividends -->
+      <Link :href="route('investor.dividends')" class="group bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+            <BanknotesIcon class="h-6 w-6 text-white" aria-hidden="true" />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-emerald-900 mb-1">Dividends</h3>
+            <p class="text-sm text-emerald-700 mb-3">Payment history, upcoming distributions, and tax information</p>
+            <span class="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 group-hover:gap-2 transition-all">
+              View Dividends
+              <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+            </span>
+          </div>
+        </div>
+      </Link>
+
+      <!-- Investor Relations -->
+      <Link :href="route('investor.investor-relations')" class="group bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-2xl p-6 hover:shadow-lg transition-all duration-300">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-violet-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+            <NewspaperIcon class="h-6 w-6 text-white" aria-hidden="true" />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-violet-900 mb-1">Investor Relations</h3>
+            <p class="text-sm text-violet-700 mb-3">Quarterly reports, board updates, and meeting notices</p>
+            <span class="inline-flex items-center gap-1 text-sm font-medium text-violet-600 group-hover:gap-2 transition-all">
+              View Updates
+              <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+            </span>
+          </div>
+        </div>
       </Link>
     </div>
   </InvestorLayout>
@@ -237,6 +277,9 @@ import {
   PresentationChartLineIcon,
   InformationCircleIcon,
   ArrowRightIcon,
+  DocumentTextIcon,
+  BanknotesIcon,
+  NewspaperIcon,
 } from '@heroicons/vue/24/outline';
 
 
