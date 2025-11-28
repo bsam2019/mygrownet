@@ -42,6 +42,11 @@ Schedule::command('lgr:monitor-pool')
     ->dailyAt('06:00')
     ->description('Monitor LGR pool balance and send alerts if low');
 
+// Account Integrity Monitoring
+Schedule::command('accounts:monitor')
+    ->dailyAt('07:00')
+    ->description('Monitor account integrity and alert on issues');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

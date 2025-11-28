@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
 use App\Models\StarterKitUnlock;
 use App\Models\MemberAchievement;
+use App\Domain\Financial\Services\TransactionIntegrityService;
+use App\Domain\Financial\Exceptions\DuplicateTransactionException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -70,8 +72,11 @@ class StarterKitService
                 'price' => $price,
                 'shop_credit' => $shopCredit,
             ]);
-            // Handle wallet payment
+            // Handle wallet payment with integrity checks
             if ($paymentMethod === 'wallet') {
+                // Use TransactionIntegrityService to prevent double-counting
+                $transactionService = app(TransactionIntegrityService::class);
+                
                 // Calculate current wallet balance using WalletService (includes loan transactions)
                 $walletBalance = $this->walletService->calculateBalance($user);
                 
@@ -79,20 +84,25 @@ class StarterKitService
                     throw new \Exception('Insufficient wallet balance');
                 }
                 
-                // Generate payment reference for wallet transaction
-                $paymentReference = 'WALLET-' . now()->format('YmdHis') . '-' . $user->id;
+                // Generate unique payment reference for wallet transaction
+                $paymentReference = 'SK-' . now()->format('YmdHis') . '-' . $user->id;
                 
-                // Create transaction record to deduct from wallet
-                DB::table('transactions')->insert([
-                    'user_id' => $user->id,
-                    'transaction_type' => 'starter_kit_purchase',
-                    'amount' => -$price, // Negative for debit
-                    'reference_number' => 'SK-' . strtoupper(uniqid()),
-                    'description' => ucfirst($tier) . ' Starter Kit Purchase - Wallet Payment',
-                    'status' => 'completed',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                try {
+                    // Create transaction record with integrity checks (prevents duplicates)
+                    $transactionService->recordWalletDebit(
+                        $user,
+                        $price,
+                        'starter_kit_purchase',
+                        ucfirst($tier) . ' Starter Kit Purchase - Wallet Payment',
+                        $paymentReference
+                    );
+                } catch (DuplicateTransactionException $e) {
+                    Log::warning('Duplicate starter kit transaction prevented', [
+                        'user_id' => $user->id,
+                        'reference' => $paymentReference,
+                    ]);
+                    throw new \Exception('Transaction already processed. Please refresh and try again.');
+                }
                 
                 Log::info('Wallet payment validated and transaction created', [
                     'user_id' => $user->id,
