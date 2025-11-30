@@ -3,6 +3,7 @@ import AppSidebar from '@/components/MyGrowNetSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import InstallPrompt from '@/Components/Mobile/InstallPrompt.vue';
+import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';
 import type { BreadcrumbItemType, NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted } from 'vue';
@@ -33,12 +34,29 @@ const currentUserName = computed(() => {
     return page.props.auth?.user?.name || '';
 });
 
+const currentUserId = computed(() => {
+    return page.props.auth?.user?.id || 0;
+});
+
 const handleSidebarToggle = (collapsed: boolean) => {
     sidebarCollapsed.value = collapsed;
 };
 
 const checkMobile = () => {
     isMobile.value = window.innerWidth < 1024;
+};
+
+// Live Chat Widget handler
+const handleTicketCreated = (ticketId: number) => {
+    console.log('Support ticket created:', ticketId);
+};
+
+const liveChatWidgetRef = ref<any>(null);
+
+const handleOpenLiveChat = () => {
+    if (liveChatWidgetRef.value) {
+        liveChatWidgetRef.value.openChat();
+    }
 };
 
 onMounted(() => {
@@ -52,6 +70,7 @@ onMounted(() => {
         <AppSidebar 
             :footer-nav-items="footerNavItems" 
             @update:collapsed="handleSidebarToggle"
+            @open-live-chat="handleOpenLiveChat"
         />
         <div 
             class="flex-1 flex flex-col transition-all duration-300 overflow-hidden" 
@@ -66,5 +85,14 @@ onMounted(() => {
         
         <!-- PWA Install Prompt -->
         <InstallPrompt />
+
+        <!-- Live Chat Support Widget -->
+        <UnifiedLiveChatWidget
+            ref="liveChatWidgetRef"
+            user-type="member"
+            :user-id="currentUserId"
+            :user-name="currentUserName"
+            @ticket-created="handleTicketCreated"
+        />
     </div>
 </template>

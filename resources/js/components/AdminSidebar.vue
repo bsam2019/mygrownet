@@ -145,11 +145,7 @@ const investorRelationsNavItems: NavItem[] = [
         href: safeRoute('admin.financial-reports.index'),
         icon: ChartBarIcon,
     },
-    {
-        title: 'Investor Announcements',
-        href: safeRoute('admin.investor-announcements.index'),
-        icon: Megaphone,
-    },
+    // Note: Investor Announcements feature not yet implemented - routes/controller/migration needed
     {
         title: 'Investor Messages',
         href: safeRoute('admin.investor-messages.index'),

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Support Chat</title>
+    <meta name="csrf-token" content="test-token">
+</head>
+<body>
+    <h1>Test Support Chat API</h1>
+    
+    <div>
+        <label>Ticket ID: <input type="number" id="ticketId" value="1"></label><br><br>
+        <label>Message: <textarea id="message" rows="3" cols="50">Test message from HTML</textarea></label><br><br>
+        <button onclick="sendMessage()">Send Message</button>
+    </div>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script>
+        async function sendMessage() {
+            const ticketId = document.getElementById('ticketId').value;
+            const message = document.getElementById('message').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = 'Sending...';
+            
+            try {
+                const response = await fetch(`/employee/portal/support/${ticketId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ message }),
+                    credentials: 'same-origin',
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <strong>Status:</strong> ${response.status}<br>
+                    <strong>Response:</strong> <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

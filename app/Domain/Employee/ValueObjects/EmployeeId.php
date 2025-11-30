@@ -4,47 +4,40 @@ declare(strict_types=1);
 
 namespace App\Domain\Employee\ValueObjects;
 
-use App\Domain\Employee\Exceptions\InvalidEmployeeIdException;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
-
 final class EmployeeId
 {
-    private UuidInterface $value;
+    private int $value;
 
-    private function __construct(UuidInterface $value)
+    private function __construct(int $value)
     {
+        if ($value <= 0) {
+            throw new \InvalidArgumentException('Employee ID must be a positive integer');
+        }
         $this->value = $value;
     }
 
-    public static function generate(): self
+    public static function fromInt(int $id): self
     {
-        return new self(Uuid::uuid4());
+        return new self($id);
     }
 
     public static function fromString(string $id): self
     {
-        if (empty(trim($id))) {
-            throw InvalidEmployeeIdException::empty();
+        if (!is_numeric($id) || (int) $id <= 0) {
+            throw new \InvalidArgumentException("Invalid employee ID: {$id}");
         }
 
-        try {
-            $uuid = Uuid::fromString($id);
-        } catch (\InvalidArgumentException $e) {
-            throw InvalidEmployeeIdException::invalidFormat($id);
-        }
-
-        return new self($uuid);
+        return new self((int) $id);
     }
 
-    public static function fromUuid(UuidInterface $uuid): self
+    public function toInt(): int
     {
-        return new self($uuid);
+        return $this->value;
     }
 
     public function toString(): string
     {
-        return $this->value->toString();
+        return (string) $this->value;
     }
 
     public function __toString(): string
@@ -54,10 +47,10 @@ final class EmployeeId
 
     public function equals(EmployeeId $other): bool
     {
-        return $this->value->equals($other->value);
+        return $this->value === $other->value;
     }
 
-    public function getValue(): UuidInterface
+    public function getValue(): int
     {
         return $this->value;
     }

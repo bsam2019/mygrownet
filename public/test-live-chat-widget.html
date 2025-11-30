@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Live Chat Widget Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+        .animate-bounce-dot {
+            animation: bounce 1.4s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Live Chat Widget Test</h1>
+            <p class="text-gray-600 mb-4">This page tests the live chat widget functionality.</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-blue-900 mb-2">Test Configuration</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Employee ID:</span>
+                            <span id="employee-id" class="font-mono">1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Ticket ID:</span>
+                            <span id="ticket-id" class="font-mono">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Connection:</span>
+                            <span id="connection-status" class="font-mono text-gray-500">Not connected</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-green-900 mb-2">Message Stats</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Sent:</span>
+                            <span id="sent-count" class="font-mono">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Received:</span>
+                            <span id="received-count" class="font-mono">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total:</span>
+                            <span id="total-count" class="font-mono">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <button onclick="openChat()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Open Chat
+                </button>
+                <button onclick="sendTestMessage()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Send Test Message
+                </button>
+                <button onclick="simulateIncoming()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    Simulate Incoming
+                </button>
+                <button onclick="clearMessages()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Clear Messages
+                </button>
+            </div>
+
+            <div id="event-log" class="bg-gray-50 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs">
+                <div class="text-gray-500">Event log will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="hidden fixed bottom-6 right-6 z-50">
+        <!-- Chat Button -->
+        <button id="chat-button" onclick="toggleChat()" class="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-105">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="hidden absolute bottom-20 right-0 w-96 h-[500px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="font-semibold">Live Support</h3>
+                        <p class="text-xs text-blue-100">
+                            <span id="chat-status">Connecting...</span>
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeChat()" class="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Messages -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 h-[calc(100%-140px)] bg-gray-50">
+                <!-- Welcome message -->
+                <div class="flex justify-start">
+                    <div class="max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2 bg-gray-100 text-gray-900">
+                        <p class="text-sm">Hello! 👋 Welcome to MyGrowNet Support. How can I help you today?</p>
+                        <p class="text-xs mt-1 text-gray-400" id="welcome-time"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" class="hidden px-4 pb-2">
+                <div class="flex justify-start">
+                    <div class="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                        <div class="flex gap-1">
+                            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce-dot"></span>
+                            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce-dot" style="animation-delay: 150ms"></span>
+                            <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce-dot" style="animation-delay: 300ms"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div class="p-4 border-t border-gray-100">
+                <div class="flex items-end gap-2">
+                    <textarea
+                        id="chat-input"
+                        placeholder="Type your message..."
+                        rows="1"
+                        class="flex-1 resize-none border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm p-2"
+                        onkeydown="handleKeydown(event)"
+                    ></textarea>
+                    <button
+                        onclick="sendMessage()"
+                        id="send-button"
+                        class="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isOpen = false;
+        let isConnected = false;
+        let sentCount = 0;
+        let receivedCount = 0;
+        let messages = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('chat-widget').classList.remove('hidden');
+            document.getElementById('welcome-time').textContent = formatTime(new Date());
+            logEvent('Widget initialized', 'info');
+            
+            // Simulate connection after 1 second
+            setTimeout(() => {
+                isConnected = true;
+                updateConnectionStatus();
+                logEvent('Connected to server', 'success');
+            }, 1000);
+        });
+
+        function toggleChat() {
+            isOpen = !isOpen;
+            const chatWindow = document.getElementById('chat-window');
+            const chatButton = document.getElementById('chat-button');
+            
+            if (isOpen) {
+                chatWindow.classList.remove('hidden');
+                chatButton.classList.add('hidden');
+                logEvent('Chat opened', 'info');
+            } else {
+                chatWindow.classList.add('hidden');
+                chatButton.classList.remove('hidden');
+                logEvent('Chat closed', 'info');
+            }
+        }
+
+        function openChat() {
+            if (!isOpen) {
+                toggleChat();
+            }
+        }
+
+        function closeChat() {
+            if (isOpen) {
+                toggleChat();
+            }
+        }
+
+        function handleKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Clear input
+            input.value = '';
+            
+            // Add message to chat
+            addMessage({
+                sender_type: 'employee',
+                message: message,
+                sent_at: new Date().toISOString()
+            });
+            
+            sentCount++;
+            updateStats();
+            logEvent(`Sent: "${message}"`, 'success');
+            
+            // Simulate response after 2 seconds
+            setTimeout(() => {
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    simulateIncoming();
+                }, 1500);
+            }, 500);
+        }
+
+        function sendTestMessage() {
+            const testMessages = [
+                "Hello, I need help with my account",
+                "Can you check my recent transactions?",
+                "I have a question about my subscription",
+                "How do I update my profile?",
+                "Thank you for your help!"
+            ];
+            
+            const message = testMessages[Math.floor(Math.random() * testMessages.length)];
+            document.getElementById('chat-input').value = message;
+            
+            if (!isOpen) {
+                openChat();
+            }
+            
+            setTimeout(() => sendMessage(), 500);
+        }
+
+        function simulateIncoming() {
+            const responses = [
+                "Hello! I'm here to help. Let me check that for you.",
+                "I can see your account details. Everything looks good!",
+                "I've reviewed your request. Here's what I found...",
+                "That's a great question! Let me explain...",
+                "You're welcome! Is there anything else I can help with?"
+            ];
+            
+            const message = responses[Math.floor(Math.random() * responses.length)];
+            
+            addMessage({
+                sender_type: 'support',
+                sender_name: 'Support Agent',
+                message: message,
+                sent_at: new Date().toISOString()
+            });
+            
+            receivedCount++;
+            updateStats();
+            logEvent(`Received: "${message}"`, 'info');
+        }
+
+        function addMessage(msg) {
+            messages.push(msg);
+            
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${msg.sender_type === 'employee' ? 'justify-end' : 'justify-start'}`;
+            
+            const bubbleClass = msg.sender_type === 'employee' 
+                ? 'bg-blue-600 text-white rounded-br-md' 
+                : 'bg-gray-100 text-gray-900 rounded-bl-md';
+            
+            const timeClass = msg.sender_type === 'employee' 
+                ? 'text-blue-200' 
+                : 'text-gray-400';
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-[80%] rounded-2xl ${bubbleClass} px-4 py-2">
+                    ${msg.sender_type === 'support' ? `<p class="text-xs text-blue-600 font-medium mb-1">${msg.sender_name || 'Support'}</p>` : ''}
+                    <p class="text-sm whitespace-pre-wrap">${msg.message}</p>
+                    <p class="text-xs mt-1 ${timeClass}">${formatTime(new Date(msg.sent_at))}</p>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typing-indicator').classList.remove('hidden');
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').classList.add('hidden');
+        }
+
+        function clearMessages() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = `
+                <div class="flex justify-start">
+                    <div class="max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2 bg-gray-100 text-gray-900">
+                        <p class="text-sm">Hello! 👋 Welcome to MyGrowNet Support. How can I help you today?</p>
+                        <p class="text-xs mt-1 text-gray-400">${formatTime(new Date())}</p>
+                    </div>
+                </div>
+            `;
+            messages = [];
+            sentCount = 0;
+            receivedCount = 0;
+            updateStats();
+            logEvent('Messages cleared', 'warning');
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connection-status');
+            const chatStatusEl = document.getElementById('chat-status');
+            
+            if (isConnected) {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'font-mono text-green-600';
+                chatStatusEl.textContent = 'Connected';
+            } else {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'font-mono text-red-600';
+                chatStatusEl.textContent = 'Connecting...';
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('sent-count').textContent = sentCount;
+            document.getElementById('received-count').textContent = receivedCount;
+            document.getElementById('total-count').textContent = sentCount + receivedCount;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function logEvent(message, type = 'info') {
+            const logEl = document.getElementById('event-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const colors = {
+                info: 'text-blue-600',
+                success: 'text-green-600',
+                warning: 'text-amber-600',
+                error: 'text-red-600'
+            };
+            
+            const entry = document.createElement('div');
+            entry.className = `${colors[type]} mb-1`;
+            entry.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> ${message}`;
+            
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+    </script>
+</body>
+</html>

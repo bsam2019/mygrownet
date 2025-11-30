@@ -46,6 +46,12 @@
       </div>
       <div class="divide-y divide-gray-100">
         <MenuButton
+          label="Live Support"
+          :icon="ChatBubbleLeftEllipsisIcon"
+          subtitle="Chat with us now"
+          @click="$emit('live-support')"
+        />
+        <MenuButton
           label="Messages"
           :icon="EnvelopeIcon"
           :badge="messagingData?.unread_count"
@@ -171,6 +177,7 @@ import {
   KeyIcon,
   ShieldCheckIcon,
   ChatBubbleLeftRightIcon,
+  ChatBubbleLeftEllipsisIcon,
   EnvelopeIcon,
   TicketIcon,
   QuestionMarkCircleIcon,
@@ -204,6 +211,7 @@ defineEmits<{
   'edit-profile': [];
   'change-password': [];
   'verification': [];
+  'live-support': [];
   'messages': [];
   'support-tickets': [];
   'help-center': [];

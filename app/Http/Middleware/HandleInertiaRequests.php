@@ -76,6 +76,30 @@ class HandleInertiaRequests extends Middleware
             );
         }
 
+        // Get support stats for admin users
+        $supportStats = null;
+        if ($authUser && in_array('admin', $authUser['roles'] ?? [])) {
+            $supportStats = cache()->remember('admin_support_stats', 60, function () {
+                if (!class_exists(\App\Models\EmployeeSupportTicket::class)) {
+                    return null;
+                }
+                return [
+                    'open' => \App\Models\EmployeeSupportTicket::where('status', 'open')->count(),
+                    'in_progress' => \App\Models\EmployeeSupportTicket::where('status', 'in_progress')->count(),
+                    'urgent' => \App\Models\EmployeeSupportTicket::where('priority', 'urgent')
+                        ->whereIn('status', ['open', 'in_progress'])->count(),
+                ];
+            });
+        }
+
+        // Get employee data if user has an employee record
+        $employee = null;
+        if ($user) {
+            $employee = \App\Models\Employee::where('user_id', $user->id)
+                ->where('employment_status', 'active')
+                ->first();
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -99,6 +123,8 @@ class HandleInertiaRequests extends Middleware
                 'downloadUrl' => fn () => $request->session()->get('downloadUrl'),
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
+            'supportStats' => $supportStats,
+            'employee' => $employee,
         ];
     }
 }

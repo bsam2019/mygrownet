@@ -104,7 +104,7 @@ class EloquentTicketRepository implements TicketRepository
             'priority' => TicketPriority::fromString($model->priority),
             'status' => TicketStatus::fromString($model->status),
             'subject' => $model->subject,
-            'description' => TicketContent::fromString($model->description),
+            'description' => TicketContent::fromDatabase($model->description ?? ''),
             'assignedTo' => $model->assigned_to ? UserId::fromInt($model->assigned_to) : null,
             'createdAt' => new \DateTimeImmutable($model->created_at->toDateTimeString()),
             'resolvedAt' => $model->resolved_at ? new \DateTimeImmutable($model->resolved_at->toDateTimeString()) : null,

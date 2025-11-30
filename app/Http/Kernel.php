@@ -56,6 +56,7 @@ class Kernel extends HttpKernel
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'admin.or.role' => \App\Http\Middleware\AdminOrRoleMiddleware::class,
         'role.dashboard' => \App\Http\Middleware\RoleBasedDashboard::class,
+        'employee' => \App\Http\Middleware\EnsureIsEmployee::class,
         'otp' => \App\Http\Middleware\RequireOtpVerification::class,
         'fraud.detection' => \App\Http\Middleware\DetectFraudulentActivity::class,
         'id.verification' => \App\Http\Middleware\RequireIdVerification::class,

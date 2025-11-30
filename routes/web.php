@@ -19,10 +19,41 @@ use App\Http\Controllers\Admin\AdminInvestmentController;
 use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\EarningsProjectionController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\BroadcastAuthController;
+
+// Custom broadcasting auth that handles both Laravel auth and session-based investor auth
+Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'])
+    ->middleware('web')
+    ->name('broadcasting.auth');
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
+
+// Test API endpoints (remove in production)
+Route::prefix('api/test')->group(function () {
+    Route::get('/ticket/{ticket}', function (\App\Models\EmployeeSupportTicket $ticket) {
+        return response()->json([
+            'id' => $ticket->id,
+            'ticket_number' => $ticket->ticket_number,
+            'subject' => $ticket->subject,
+            'status' => $ticket->status,
+            'priority' => $ticket->priority,
+            'comments' => $ticket->comments()
+                ->where('is_internal', false)
+                ->with('author')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(fn($c) => [
+                    'id' => $c->id,
+                    'content' => $c->content,
+                    'author_type' => $c->author_type,
+                    'created_at' => $c->created_at->toISOString(),
+                    'author_name' => $c->author?->full_name ?? 'Unknown',
+                ]),
+        ]);
+    });
+});
 
 // Public Investor Routes - REMOVED for regulatory compliance
 // Private companies cannot publicly solicit investments
@@ -121,6 +152,13 @@ Route::prefix('investor')->name('investor.')->group(function () {
     Route::post('/directory/contact', [App\Http\Controllers\Investor\CommunityController::class, 'sendContactRequest'])->name('directory.contact');
     Route::get('/directory/requests', [App\Http\Controllers\Investor\CommunityController::class, 'contactRequests'])->name('directory.requests');
     Route::post('/directory/requests/{contactRequest}/respond', [App\Http\Controllers\Investor\CommunityController::class, 'respondToContactRequest'])->name('directory.requests.respond');
+    
+    // Live Chat Support Widget API Routes
+    Route::get('/api/support/tickets', [App\Http\Controllers\Investor\SupportController::class, 'listJson'])->name('support.list-json');
+    Route::get('/api/support/tickets/{id}', [App\Http\Controllers\Investor\SupportController::class, 'showJson'])->name('support.show-json');
+    Route::post('/support/quick-chat', [App\Http\Controllers\Investor\SupportController::class, 'quickChat'])->name('support.quick-chat');
+    Route::post('/support/{id}/chat', [App\Http\Controllers\Investor\SupportController::class, 'chat'])->name('support.chat');
+    Route::post('/support/{id}/rate', [App\Http\Controllers\Investor\SupportController::class, 'rate'])->name('support.rate');
     
     Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
 });
@@ -343,13 +381,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{id}/read', [App\Http\Controllers\Admin\MessageController::class, 'markAsRead'])->name('read');
     });
 
-    // Admin Support Ticket Routes
+    // Admin Support Ticket Routes (Employee Portal - Legacy)
     Route::middleware(['admin'])->prefix('admin/support')->name('admin.support.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\SupportTicketController::class, 'index'])->name('index');
-        Route::get('/{id}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('show');
-        Route::post('/{id}/assign', [App\Http\Controllers\Admin\SupportTicketController::class, 'assign'])->name('assign');
-        Route::post('/{id}/status', [App\Http\Controllers\Admin\SupportTicketController::class, 'updateStatus'])->name('status');
-        Route::post('/{id}/comment', [App\Http\Controllers\Admin\SupportTicketController::class, 'addComment'])->name('comment');
+        Route::get('/dashboard', [App\Http\Controllers\Admin\SupportTicketController::class, 'dashboard'])->name('dashboard');
+        Route::get('/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'show'])->name('show');
+        Route::patch('/{ticket}', [App\Http\Controllers\Admin\SupportTicketController::class, 'update'])->name('update');
+        Route::post('/{ticket}/comment', [App\Http\Controllers\Admin\SupportTicketController::class, 'addComment'])->name('comment');
+        Route::get('/{ticket}/live-chat', [App\Http\Controllers\Admin\SupportTicketController::class, 'liveChat'])->name('live-chat');
+        Route::post('/{ticket}/chat', [App\Http\Controllers\Admin\SupportTicketController::class, 'sendChatMessage'])->name('chat');
+    });
+
+    // Unified Support Center (All Sources: Employee, Member, Investor)
+    Route::middleware(['admin'])->prefix('admin/unified-support')->name('admin.unified-support.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'index'])->name('index');
+        Route::get('/agents', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'getAgents'])->name('agents');
+        Route::get('/{source}/{id}', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'show'])->name('show');
+        Route::patch('/{source}/{id}', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'update'])->name('update');
+        Route::post('/{source}/{id}/reply', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'addReply'])->name('reply');
+        Route::post('/{source}/{id}/close', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'close'])->name('close');
+        Route::post('/{source}/{id}/reopen', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'reopen'])->name('reopen');
+        Route::post('/{source}/{id}/assign', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'assign'])->name('assign');
+        Route::get('/{source}/{id}/live-chat', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'liveChat'])->name('live-chat');
     });
 
     // Admin Starter Kit Management Routes
@@ -828,6 +881,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/support/{id}', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'show'])->name('support.show');
         Route::post('/support/{id}/comment', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'addComment'])->name('support.comment');
         Route::get('/api/support/tickets/{id}/comments', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'getComments'])->name('support.comments');
+        // Live Chat Widget API Routes
+        Route::post('/support/quick-chat', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'quickChat'])->name('support.quick-chat');
+        Route::post('/support/{id}/chat', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'chat'])->name('support.chat');
+        Route::get('/api/support/tickets', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'listJson'])->name('support.list-json');
+        Route::get('/api/support/tickets/{id}', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'showJson'])->name('support.show-json');
+        Route::post('/support/{id}/rate', [App\Http\Controllers\MyGrowNet\SupportTicketController::class, 'rate'])->name('support.rate');
         
         // Network Routes (for messaging) - uses existing ReferralController
         Route::get('/network/downlines', [App\Http\Controllers\ReferralController::class, 'getDownlinesForMessaging'])->name('network.downlines');

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Live Chat API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #2563eb;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-info { color: #00ff00; }
+        .log-error { color: #ff4444; }
+        .log-success { color: #44ff44; }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Live Chat API Test</h1>
+        
+        <div class="test-section">
+            <h3>Test Configuration</h3>
+            <label>Ticket ID: <input type="number" id="ticketId" value="1" /></label>
+            <label>Message: <input type="text" id="message" value="Test message from console" /></label>
+            <br><br>
+            <label>CSRF Token: <input type="text" id="csrfToken" placeholder="Get from meta tag" style="width: 400px;" /></label>
+        </div>
+
+        <div class="test-section">
+            <h3>Employee Portal Tests</h3>
+            <button onclick="testEmployeeChat()">Test Employee Chat</button>
+            <button onclick="testEmployeeQuickChat()">Test Quick Chat</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Admin Portal Tests</h3>
+            <button onclick="testAdminChat()">Test Admin Chat</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Utilities</h3>
+            <button onclick="getCsrfToken()">Get CSRF Token</button>
+            <button onclick="clearOutput()">Clear Output</button>
+        </div>
+
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function getCsrfToken() {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (token) {
+                document.getElementById('csrfToken').value = token;
+                log(`CSRF Token: ${token}`, 'success');
+            } else {
+                log('CSRF Token not found in meta tag', 'error');
+                log('Trying to get from cookie...', 'info');
+                const cookies = document.cookie.split(';');
+                const xsrfCookie = cookies.find(c => c.trim().startsWith('XSRF-TOKEN='));
+                if (xsrfCookie) {
+                    const token = decodeURIComponent(xsrfCookie.split('=')[1]);
+                    document.getElementById('csrfToken').value = token;
+                    log(`CSRF Token from cookie: ${token}`, 'success');
+                } else {
+                    log('CSRF Token not found in cookies either', 'error');
+                }
+            }
+        }
+
+        async function testEmployeeChat() {
+            const ticketId = document.getElementById('ticketId').value;
+            const message = document.getElementById('message').value;
+            const csrfToken = document.getElementById('csrfToken').value;
+
+            if (!csrfToken) {
+                log('Please get CSRF token first', 'error');
+                return;
+            }
+
+            log(`Testing Employee Chat - Ticket #${ticketId}`, 'info');
+            log(`Message: "${message}"`, 'info');
+
+            try {
+                const url = `/employee/portal/support/${ticketId}/chat`;
+                log(`POST ${url}`, 'info');
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                log(`Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                log(`Response: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testEmployeeQuickChat() {
+            const message = document.getElementById('message').value;
+            const csrfToken = document.getElementById('csrfToken').value;
+
+            if (!csrfToken) {
+                log('Please get CSRF token first', 'error');
+                return;
+            }
+
+            log('Testing Employee Quick Chat', 'info');
+            log(`Message: "${message}"`, 'info');
+
+            try {
+                const url = '/employee/portal/support/quick-chat';
+                log(`POST ${url}`, 'info');
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                log(`Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                log(`Response: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testAdminChat() {
+            const ticketId = document.getElementById('ticketId').value;
+            const message = document.getElementById('message').value;
+            const csrfToken = document.getElementById('csrfToken').value;
+
+            if (!csrfToken) {
+                log('Please get CSRF token first', 'error');
+                return;
+            }
+
+            log(`Testing Admin Chat - Ticket #${ticketId}`, 'info');
+            log(`Message: "${message}"`, 'info');
+
+            try {
+                const url = `/admin/support/${ticketId}/chat`;
+                log(`POST ${url}`, 'info');
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                log(`Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
+                const data = await response.json();
+                log(`Response: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        // Auto-get CSRF token on load
+        window.addEventListener('load', () => {
+            log('Live Chat API Test Tool Loaded', 'success');
+            log('Click "Get CSRF Token" to start testing', 'info');
+        });
+    </script>
+</body>
+</html>

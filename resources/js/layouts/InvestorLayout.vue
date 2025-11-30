@@ -482,6 +482,14 @@
       class="fixed inset-0 z-20" 
       @click="showNotificationDropdown = false; showUserDropdown = false"
     ></div>
+
+    <!-- Live Chat Support Widget -->
+    <LiveChatWidget
+      user-type="investor"
+      :user-id="investor.id"
+      :user-name="investor.name"
+      @ticket-created="handleTicketCreated"
+    />
   </div>
 </template>
 
@@ -489,6 +497,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import LiveChatWidget from '@/components/Support/LiveChatWidget.vue';
 import {
   HomeIcon,
   DocumentTextIcon,
@@ -592,6 +601,11 @@ const getInitials = (name: string) => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+};
+
+// Live Chat Widget handler
+const handleTicketCreated = (ticketId: number) => {
+  console.log('Support ticket created:', ticketId);
 };
 </script>
 

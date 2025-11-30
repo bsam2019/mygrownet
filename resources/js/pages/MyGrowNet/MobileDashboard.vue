@@ -1297,6 +1297,7 @@
               @edit-profile="showEditProfileModal = true"
               @change-password="showChangePasswordModal = true"
               @verification="showComingSoon('Verification')"
+              @live-support="openLiveChat"
               @messages="navigateToMessages"
               @support-tickets="showSupportModal = true"
               @help-center="showHelpSupportModal = true"
@@ -1649,6 +1650,15 @@
       @success="handleToastSuccess"
       @error="handleToastError"
     />
+
+    <!-- Live Chat Support Widget (hidden button on mobile, triggered from More tab) -->
+    <UnifiedLiveChatWidget
+      ref="liveChatWidgetRef"
+      user-type="member"
+      :user-id="user?.id || 0"
+      :user-name="user?.name || 'Member'"
+      @ticket-created="handleTicketCreated"
+    />
   </div>
 </template>
 
@@ -1657,6 +1667,7 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import BalanceCard from '@/components/Mobile/BalanceCard.vue';
+import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';
 import StatCard from '@/components/Mobile/StatCard.vue';
 import QuickActionCard from '@/components/Mobile/QuickActionCard.vue';
 import CollapsibleSection from '@/components/Mobile/CollapsibleSection.vue';
@@ -1983,6 +1994,15 @@ const showBusinessPlanListModal = ref(false);
 const showROICalculatorModal = ref(false);
 const showChangePasswordModal = ref(false);
 const showPresentationModal = ref(false);
+
+// Live Chat Widget ref
+const liveChatWidgetRef = ref<any>(null);
+
+const openLiveChat = () => {
+  if (liveChatWidgetRef.value) {
+    liveChatWidgetRef.value.openChat();
+  }
+};
 
 const handleViewAllPlans = () => {
   showBusinessPlanModal.value = false;
@@ -2687,6 +2707,11 @@ const handleToastSuccess = (message: string) => {
 
 const handleToastError = (message: string) => {
   showToastMessage(message, 'error');
+};
+
+// Live Chat Widget handler
+const handleTicketCreated = (ticketId: number) => {
+  showToastMessage('Support ticket created successfully!', 'success');
 };
 
 const copyReferralLink = async () => {

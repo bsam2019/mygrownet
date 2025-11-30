@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat Real-Time Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Live Chat Real-Time Messaging Test</h1>
+        
+        <!-- Setup Section -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Setup</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Ticket ID</label>
+                    <input type="number" id="ticketId" class="border rounded px-3 py-2 w-full" placeholder="Enter ticket ID">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Test As</label>
+                    <select id="userType" class="border rounded px-3 py-2 w-full">
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button onclick="loadTicket()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Load Ticket
+                </button>
+            </div>
+        </div>
+
+        <!-- Ticket Info -->
+        <div id="ticketInfo" class="bg-white rounded-lg shadow p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Ticket Information</h2>
+            <div id="ticketDetails" class="space-y-2 text-sm"></div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Employee View -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="bg-blue-600 text-white p-4 rounded-t-lg">
+                    <h3 class="font-semibold">Employee View</h3>
+                </div>
+                <div id="employeeMessages" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                    <p class="text-gray-500 text-center">No messages yet</p>
+                </div>
+                <div class="p-4 border-t">
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="employeeInput" 
+                            class="flex-1 border rounded px-3 py-2" 
+                            placeholder="Type message as employee..."
+                            onkeypress="if(event.key==='Enter') sendMessage('employee')"
+                        >
+                        <button 
+                            onclick="sendMessage('employee')" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin View -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="bg-green-600 text-white p-4 rounded-t-lg">
+                    <h3 class="font-semibold">Admin View</h3>
+                </div>
+                <div id="adminMessages" class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                    <p class="text-gray-500 text-center">No messages yet</p>
+                </div>
+                <div class="p-4 border-t">
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="adminInput" 
+                            class="flex-1 border rounded px-3 py-2" 
+                            placeholder="Type message as admin..."
+                            onkeypress="if(event.key==='Enter') sendMessage('admin')"
+                        >
+                        <button 
+                            onclick="sendMessage('admin')" 
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Log -->
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">Test Log</h2>
+            <div id="testLog" class="space-y-1 text-sm font-mono bg-gray-900 text-green-400 p-4 rounded h-64 overflow-y-auto">
+                <p>Ready to test...</p>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+            <h3 class="font-semibold text-blue-900 mb-2">Instructions</h3>
+            <ol class="list-decimal list-inside space-y-2 text-blue-800">
+                <li>Run: <code class="bg-blue-100 px-2 py-1 rounded">php test-live-chat-messaging.php</code></li>
+                <li>Copy the ticket ID from the output</li>
+                <li>Paste it above and click "Load Ticket"</li>
+                <li>Send messages from both Employee and Admin views</li>
+                <li>Verify messages appear in both views in real-time</li>
+                <li>Check the test log for API responses</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let currentTicketId = null;
+        let messages = [];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-green-400',
+                success: 'text-green-300',
+                error: 'text-red-400',
+                warning: 'text-yellow-400'
+            };
+            logDiv.innerHTML += `<p class="${colors[type]}">[${timestamp}] ${message}</p>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function loadTicket() {
+            const ticketId = document.getElementById('ticketId').value;
+            if (!ticketId) {
+                alert('Please enter a ticket ID');
+                return;
+            }
+
+            currentTicketId = ticketId;
+            log(`Loading ticket #${ticketId}...`);
+
+            try {
+                // Fetch ticket details
+                const response = await axios.get(`/api/test/ticket/${ticketId}`);
+                const ticket = response.data;
+
+                document.getElementById('ticketInfo').classList.remove('hidden');
+                document.getElementById('ticketDetails').innerHTML = `
+                    <p><strong>Ticket #:</strong> ${ticket.ticket_number}</p>
+                    <p><strong>Subject:</strong> ${ticket.subject}</p>
+                    <p><strong>Status:</strong> ${ticket.status}</p>
+                    <p><strong>Priority:</strong> ${ticket.priority}</p>
+                `;
+
+                // Load existing messages
+                messages = ticket.comments || [];
+                renderMessages();
+
+                log(`✓ Ticket loaded successfully`, 'success');
+                log(`Found ${messages.length} existing messages`);
+
+                // Start polling for new messages (simulating real-time)
+                startPolling();
+
+            } catch (error) {
+                log(`✗ Failed to load ticket: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        function renderMessages() {
+            const employeeDiv = document.getElementById('employeeMessages');
+            const adminDiv = document.getElementById('adminMessages');
+
+            if (messages.length === 0) {
+                employeeDiv.innerHTML = '<p class="text-gray-500 text-center">No messages yet</p>';
+                adminDiv.innerHTML = '<p class="text-gray-500 text-center">No messages yet</p>';
+                return;
+            }
+
+            const messageHTML = messages.map(msg => {
+                const isEmployee = msg.author_type === 'employee';
+                const time = new Date(msg.created_at).toLocaleTimeString();
+                
+                return `
+                    <div class="flex ${isEmployee ? 'justify-end' : 'justify-start'}">
+                        <div class="${isEmployee ? 'bg-blue-600 text-white' : 'bg-white'} rounded-lg px-4 py-2 max-w-xs shadow">
+                            <p class="text-sm">${msg.content}</p>
+                            <p class="text-xs ${isEmployee ? 'text-blue-200' : 'text-gray-400'} mt-1">${time}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            employeeDiv.innerHTML = messageHTML;
+            adminDiv.innerHTML = messageHTML;
+
+            // Scroll to bottom
+            employeeDiv.scrollTop = employeeDiv.scrollHeight;
+            adminDiv.scrollTop = adminDiv.scrollHeight;
+        }
+
+        async function sendMessage(senderType) {
+            if (!currentTicketId) {
+                alert('Please load a ticket first');
+                return;
+            }
+
+            const inputId = senderType === 'employee' ? 'employeeInput' : 'adminInput';
+            const input = document.getElementById(inputId);
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            log(`Sending message as ${senderType}...`);
+
+            try {
+                const endpoint = senderType === 'employee' 
+                    ? `/employee/portal/support/${currentTicketId}/chat`
+                    : `/admin/support/${currentTicketId}/chat`;
+
+                const response = await axios.post(endpoint, {
+                    message: message
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                // Add message optimistically
+                messages.push({
+                    content: message,
+                    author_type: senderType,
+                    created_at: new Date().toISOString()
+                });
+
+                renderMessages();
+                input.value = '';
+
+                log(`✓ Message sent successfully`, 'success');
+
+            } catch (error) {
+                log(`✗ Failed to send message: ${error.message}`, 'error');
+                console.error(error);
+                
+                if (error.response) {
+                    log(`Response: ${JSON.stringify(error.response.data)}`, 'error');
+                }
+            }
+        }
+
+        let pollingInterval;
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await axios.get(`/api/test/ticket/${currentTicketId}`);
+                    const newMessages = response.data.comments || [];
+                    
+                    if (newMessages.length > messages.length) {
+                        log(`↓ Received ${newMessages.length - messages.length} new message(s)`, 'success');
+                        messages = newMessages;
+                        renderMessages();
+                    }
+                } catch (error) {
+                    // Silently fail polling
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
+        });
+    </script>
+</body>
+</html>

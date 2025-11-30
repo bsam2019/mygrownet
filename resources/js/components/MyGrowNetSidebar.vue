@@ -29,6 +29,7 @@ import {
     Mail as MailIcon,
     Wrench as WrenchIcon
 } from 'lucide-vue-next';
+import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
     footerNavItems?: NavItem[];
@@ -118,7 +119,7 @@ const learningNavItems: NavItem[] = [
 
 const communicationNavItems: NavItem[] = [
     { title: 'Messages', href: route('mygrownet.messages.index'), icon: 'MailIcon' },
-    { title: 'Support', href: route('mygrownet.support.index'), icon: 'LifeBuoyIcon' },
+    { title: 'Support Tickets', href: route('mygrownet.support.index'), icon: 'LifeBuoyIcon' },
 ];
 
 const accountNavItems: NavItem[] = [
@@ -136,7 +137,12 @@ const adminNavItems: NavItem[] = [
 
 const emit = defineEmits<{
     (e: 'update:collapsed', value: boolean): void;
+    (e: 'open-live-chat'): void;
 }>();
+
+const openLiveChat = () => {
+    emit('open-live-chat');
+};
 
 const toggleSidebar = () => {
     isCollapsed.value = !isCollapsed.value;
@@ -541,6 +547,20 @@ onMounted(() => {
                                 {{ page.props.messagingData.unread_count }}
                             </span>
                         </Link>
+                        
+                        <!-- Live Support Button (opens chat widget) -->
+                        <button
+                            @click="openLiveChat"
+                            :class="[
+                                'w-full flex items-center px-4 py-2 transition-colors duration-200',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ]"
+                            @mouseenter="showItemTooltip($event, 'Live Support')"
+                            @mouseleave="hideTooltip"
+                        >
+                            <ChatBubbleLeftRightIcon class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Live Support</span>
+                        </button>
                     </div>
                 </div>
 

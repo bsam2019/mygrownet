@@ -29,7 +29,8 @@ import {
     Bell,
     Mail as MailIcon,
     Send as SendIcon,
-    Ticket as TicketIcon
+    Ticket as TicketIcon,
+    MessageCircle as LiveChatIcon
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -91,7 +92,7 @@ const investorRelationsNavItems: NavItem[] = [
     { title: 'Investor Messages', href: safeRoute('admin.investor-messages.index'), icon: MailIcon },
     { title: 'Investor Documents', href: safeRoute('admin.investor-documents.index'), icon: FileText },
     { title: 'Financial Reports', href: safeRoute('admin.financial-reports.index'), icon: ChartBarIcon },
-    { title: 'Investor Announcements', href: safeRoute('admin.investor-announcements.index'), icon: Bell },
+    // Note: Investor Announcements feature not yet implemented - routes/controller/migration needed
     { title: 'Investor Analytics', href: safeRoute('admin.investor-analytics.index'), icon: ChartBarIcon },
 ];
 
@@ -126,6 +127,7 @@ const reportsNavItems: NavItem[] = [
 
 const employeeNavItems: NavItem[] = [
     { title: 'All Employees', href: safeRoute('admin.employees.index'), icon: UserCheck },
+    { title: 'Task Management', href: safeRoute('admin.tasks.index'), icon: Target },
     { title: 'Departments', href: safeRoute('admin.departments.index'), icon: Building2 },
     { title: 'Positions', href: safeRoute('admin.positions.index'), icon: Briefcase },
     { title: 'Organizational Chart', href: safeRoute('admin.organization.index'), icon: Users },
@@ -138,7 +140,7 @@ const employeeNavItems: NavItem[] = [
 const communicationNavItems: NavItem[] = [
     { title: 'Messages', href: safeRoute('admin.messages.index'), icon: 'MailIcon' },
     { title: 'Compose Message', href: safeRoute('admin.messages.compose'), icon: 'SendIcon' },
-    { title: 'Support Tickets', href: safeRoute('admin.support.index'), icon: 'TicketIcon' },
+    { title: 'Support Center', href: safeRoute('admin.unified-support.index'), icon: 'LiveChatIcon' },
     { title: 'Email Campaigns', href: safeRoute('admin.email-campaigns.index'), icon: 'SendIcon' },
     { title: 'Telegram Bot (FREE)', href: '#telegram', icon: 'BellIcon', badge: 'FREE' },
 ];
@@ -228,7 +230,8 @@ onMounted(() => {
         currentUrl.includes('/admin/departments') || 
         currentUrl.includes('/admin/positions') ||
         currentUrl.includes('/admin/performance') ||
-        currentUrl.includes('/admin/commissions')) {
+        currentUrl.includes('/admin/commissions') ||
+        currentUrl.includes('/admin/tasks')) {
         showSubmenu.value.employees = true;
     }
 });
@@ -596,8 +599,13 @@ onMounted(() => {
                                 isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
                             ]"
                         >
-                            <component :is="item.icon === 'MailIcon' ? MailIcon : item.icon === 'SendIcon' ? SendIcon : TicketIcon" class="h-4 w-4" />
+                            <component :is="item.icon === 'MailIcon' ? MailIcon : item.icon === 'SendIcon' ? SendIcon : item.icon === 'LiveChatIcon' ? LiveChatIcon : TicketIcon" class="h-4 w-4" />
                             <span class="ml-3">{{ item.title }}</span>
+                            <span v-if="item.title === 'Live Support' && page.props.supportStats?.open > 0"
+                                class="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ page.props.supportStats.open }}
+                            </span>
+                            <span v-if="item.badge" class="ml-auto text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">{{ item.badge }}</span>
                         </Link>
                     </div>
                 </div>

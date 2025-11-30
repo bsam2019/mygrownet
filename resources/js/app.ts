@@ -6,6 +6,35 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import { configureEcho } from '@laravel/echo-vue';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+// Make Pusher available globally for Echo
+(window as any).Pusher = Pusher;
+
+// Configure Echo with Reverb settings
+const echoInstance = new Echo({
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST,
+    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
+    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
+    authEndpoint: '/broadcasting/auth',
+    auth: {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+    },
+});
+
+// Expose Echo globally for composables
+(window as any).Echo = echoInstance;
+
+// Configure @laravel/echo-vue to use the same instance
+configureEcho(echoInstance);
 
 // Cache buster - Clear old caches on app load
 (function() {
@@ -46,42 +75,22 @@ declare module 'vite/client' {
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Initialize service worker registration
+// Service worker registration - DISABLED to prevent auto-refresh issues
+// Uncomment if you need PWA/offline functionality
+/*
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker
             .register('/sw.js', { scope: '/' })
             .then((registration) => {
                 console.log('[App] Service Worker registered:', registration);
-                
-                // Check for updates periodically
-                setInterval(() => {
-                    registration.update();
-                }, 60000); // Every minute
-                
-                // Listen for updates
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    if (newWorker) {
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // New service worker available
-                                console.log('[App] New version available!');
-                                // Auto-reload after 3 seconds
-                                setTimeout(() => {
-                                    console.log('[App] Reloading to get new version...');
-                                    window.location.reload();
-                                }, 3000);
-                            }
-                        });
-                    }
-                });
             })
             .catch((error) => {
                 console.warn('[App] Service Worker registration failed:', error);
             });
     });
 }
+*/
 
 // Handle 419 (CSRF token expired) errors with better logic
 let redirecting = false;

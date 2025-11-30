@@ -205,6 +205,22 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::post('/{employee}/invite', [App\Http\Controllers\Employee\EmployeeController::class, 'inviteToPortal'])->name('invite');
     });
 
+    // Task Management Routes (Admin assigns tasks to employees)
+    Route::prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\TaskManagementController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\TaskManagementController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\TaskManagementController::class, 'store'])->name('store');
+        Route::get('/{task}', [App\Http\Controllers\Admin\TaskManagementController::class, 'show'])->name('show');
+        Route::get('/{task}/edit', [App\Http\Controllers\Admin\TaskManagementController::class, 'edit'])->name('edit');
+        Route::put('/{task}', [App\Http\Controllers\Admin\TaskManagementController::class, 'update'])->name('update');
+        Route::delete('/{task}', [App\Http\Controllers\Admin\TaskManagementController::class, 'destroy'])->name('destroy');
+        
+        // AJAX endpoints
+        Route::post('/quick-assign', [App\Http\Controllers\Admin\TaskManagementController::class, 'quickAssign'])->name('quick-assign');
+        Route::post('/bulk-assign', [App\Http\Controllers\Admin\TaskManagementController::class, 'bulkAssign'])->name('bulk-assign');
+        Route::patch('/{task}/status', [App\Http\Controllers\Admin\TaskManagementController::class, 'updateStatus'])->name('update-status');
+    });
+
     // Department Management Routes
     Route::prefix('departments')->name('departments.')->group(function () {
         Route::get('/', [App\Http\Controllers\Employee\DepartmentController::class, 'index'])->name('index');

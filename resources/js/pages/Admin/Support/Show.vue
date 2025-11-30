@@ -1,310 +1,212 @@
-<template>
-  <AdminLayout>
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="mb-6">
-        <Link
-          :href="route('admin.support.index')"
-          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Tickets
-        </Link>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-lg shadow">
-            <div class="p-6 border-b border-gray-200">
-              <div class="flex items-start justify-between mb-4">
-                <div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <span
-                      :class="getStatusColor(ticket.status)"
-                      class="px-3 py-1 text-sm font-medium rounded-full"
-                    >
-                      {{ getStatusLabel(ticket.status) }}
-                    </span>
-                    <span
-                      :class="getPriorityColor(ticket.priority)"
-                      class="px-3 py-1 text-sm font-medium rounded-full"
-                    >
-                      {{ getPriorityLabel(ticket.priority) }}
-                    </span>
-                  </div>
-                  <h1 class="text-2xl font-bold text-gray-900">{{ ticket.subject }}</h1>
-                  <p class="text-sm text-gray-500 mt-2">
-                    Ticket #{{ ticket.id }} • {{ getCategoryLabel(ticket.category) }} • 
-                    Created {{ formatDate(ticket.createdAt) }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="prose max-w-none">
-                <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</p>
-              </div>
-            </div>
-
-            <div class="p-6">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Comments</h2>
-
-              <div v-if="comments.length === 0" class="text-center py-8 text-gray-500">
-                No comments yet
-              </div>
-
-              <div v-else class="space-y-4 mb-6">
-                <div
-                  v-for="comment in comments"
-                  :key="comment.id"
-                  :class="[
-                    'rounded-lg p-4',
-                    comment.isInternal ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'
-                  ]"
-                >
-                  <div class="flex items-start justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-gray-900">
-                        {{ comment.userId === ticket.userId ? 'Member' : 'Support Team' }}
-                      </span>
-                      <span v-if="comment.isInternal" class="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded">
-                        Internal Note
-                      </span>
-                    </div>
-                    <span class="text-sm text-gray-500">
-                      {{ formatDateTime(comment.createdAt) }}
-                    </span>
-                  </div>
-                  <p class="text-gray-700 whitespace-pre-wrap">{{ comment.comment }}</p>
-                </div>
-              </div>
-
-              <form @submit.prevent="submitComment" class="mt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Add Comment
-                </label>
-                <textarea
-                  v-model="commentForm.comment"
-                  rows="4"
-                  class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Type your response..."
-                  required
-                ></textarea>
-                <div class="mt-3 flex items-center justify-between">
-                  <label class="flex items-center">
-                    <input
-                      v-model="commentForm.is_internal"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span class="ml-2 text-sm text-gray-600">Internal note (not visible to member)</span>
-                  </label>
-                  <button
-                    type="submit"
-                    :disabled="commentForm.processing"
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {{ commentForm.processing ? 'Sending...' : 'Send Comment' }}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-6">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Actions</h3>
-            
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select
-                  v-model="statusForm.status"
-                  @change="updateStatus"
-                  class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="waiting">Waiting for Response</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-                <input
-                  v-model="assignForm.admin_id"
-                  type="number"
-                  placeholder="Admin User ID"
-                  class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-                <button
-                  @click="assignTicket"
-                  :disabled="assignForm.processing || !assignForm.admin_id"
-                  class="mt-2 w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50"
-                >
-                  Assign
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket Info</h3>
-            <dl class="space-y-3 text-sm">
-              <div>
-                <dt class="text-gray-500">Member ID</dt>
-                <dd class="text-gray-900 font-medium">#{{ ticket.userId }}</dd>
-              </div>
-              <div>
-                <dt class="text-gray-500">Category</dt>
-                <dd class="text-gray-900">{{ getCategoryLabel(ticket.category) }}</dd>
-              </div>
-              <div>
-                <dt class="text-gray-500">Created</dt>
-                <dd class="text-gray-900">{{ formatDate(ticket.createdAt) }}</dd>
-              </div>
-              <div v-if="ticket.resolvedAt">
-                <dt class="text-gray-500">Resolved</dt>
-                <dd class="text-gray-900">{{ formatDate(ticket.resolvedAt) }}</dd>
-              </div>
-              <div v-if="ticket.assignedTo">
-                <dt class="text-gray-500">Assigned To</dt>
-                <dd class="text-gray-900">Admin #{{ ticket.assignedTo }}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-  </AdminLayout>
-</template>
-
 <script setup lang="ts">
-import { useForm, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import {
+    ArrowLeftIcon,
+    ChatBubbleLeftRightIcon,
+    UserIcon,
+    PaperAirplaneIcon,
+    CheckCircleIcon,
+} from '@heroicons/vue/24/outline';
 
-const props = defineProps<{
-  ticket: {
+interface Comment {
     id: number;
-    userId: number;
+    content: string;
+    author_type: 'employee' | 'support';
+    is_internal: boolean;
+    created_at: string;
+    author?: { id: number; full_name: string };
+}
+
+interface Ticket {
+    id: number;
+    ticket_number: string;
     subject: string;
     description: string;
     category: string;
     priority: string;
     status: string;
-    createdAt: string;
-    resolvedAt?: string;
-    assignedTo?: number;
-  };
-  comments: Array<{
-    id: number;
-    userId: number;
-    comment: string;
-    isInternal: boolean;
-    createdAt: string;
-  }>;
-}>();
+    created_at: string;
+    updated_at: string;
+    resolved_at?: string;
+    employee: {
+        id: number;
+        full_name: string;
+        email: string;
+        phone?: string;
+        department?: { name: string };
+        position?: { title: string };
+    };
+    assigned_to?: { id: number; full_name: string };
+    comments: Comment[];
+}
 
-const commentForm = useForm({
-  comment: '',
-  is_internal: false,
+interface Props {
+    ticket: Ticket;
+    supportAgents: Array<{ id: number; first_name: string; last_name: string }>;
+}
+
+const props = defineProps<Props>();
+
+const updateForm = useForm({
+    status: props.ticket.status,
+    priority: props.ticket.priority,
+    assigned_to: props.ticket.assigned_to?.id || null,
 });
 
-const statusForm = ref({
-  status: props.ticket.status,
-});
+const commentForm = useForm({ content: '', is_internal: false });
 
-const assignForm = useForm({
-  admin_id: props.ticket.assignedTo || null,
-});
-
-const submitComment = () => {
-  commentForm.post(route('admin.support.comment', props.ticket.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      commentForm.reset();
-    },
-  });
+const updateTicket = () => {
+    updateForm.patch(route('admin.support.update', props.ticket.id), { preserveScroll: true });
 };
 
-const updateStatus = () => {
-  router.post(
-    route('admin.support.status', props.ticket.id),
-    { status: statusForm.value.status },
-    { preserveScroll: true }
-  );
+const addComment = () => {
+    commentForm.post(route('admin.support.comment', props.ticket.id), {
+        preserveScroll: true,
+        onSuccess: () => commentForm.reset('content'),
+    });
 };
 
-const assignTicket = () => {
-  assignForm.post(route('admin.support.assign', props.ticket.id), {
-    preserveScroll: true,
-  });
-};
+const getStatusColor = (s: string) => ({
+    open: 'bg-blue-100 text-blue-700',
+    in_progress: 'bg-amber-100 text-amber-700',
+    pending: 'bg-purple-100 text-purple-700',
+    resolved: 'bg-green-100 text-green-700',
+    closed: 'bg-gray-100 text-gray-700',
+}[s] || 'bg-gray-100 text-gray-700');
 
-const getStatusColor = (status: string) => {
-  const colors = {
-    open: 'bg-blue-100 text-blue-800',
-    in_progress: 'bg-amber-100 text-amber-800',
-    waiting: 'bg-purple-100 text-purple-800',
-    resolved: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800',
-  };
-  return colors[status as keyof typeof colors] || colors.open;
-};
-
-const getStatusLabel = (status: string) => {
-  const labels = {
-    open: 'Open',
-    in_progress: 'In Progress',
-    waiting: 'Waiting',
-    resolved: 'Resolved',
-    closed: 'Closed',
-  };
-  return labels[status as keyof typeof labels] || status;
-};
-
-const getPriorityColor = (priority: string) => {
-  const colors = {
+const getPriorityColor = (p: string) => ({
     low: 'bg-gray-100 text-gray-600',
     medium: 'bg-blue-100 text-blue-600',
     high: 'bg-amber-100 text-amber-600',
     urgent: 'bg-red-100 text-red-600',
-  };
-  return colors[priority as keyof typeof colors] || colors.medium;
-};
+}[p] || 'bg-gray-100 text-gray-600');
 
-const getPriorityLabel = (priority: string) => {
-  return priority.charAt(0).toUpperCase() + priority.slice(1);
-};
-
-const getCategoryLabel = (category: string) => {
-  const labels = {
-    technical: 'Technical Support',
-    financial: 'Financial Issue',
-    account: 'Account Management',
-    general: 'General Inquiry',
-  };
-  return labels[category as keyof typeof labels] || category;
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
-const formatDateTime = (date: string) => {
-  return new Date(date).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-};
+const formatDate = (date: string) => new Date(date).toLocaleString();
 </script>
+
+<template>
+    <Head :title="`Ticket #${ticket.ticket_number}`" />
+    <AdminLayout>
+        <div class="space-y-6">
+            <div class="flex items-center gap-4">
+                <Link :href="route('admin.support.index')" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <ArrowLeftIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                </Link>
+                <div class="flex-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-bold text-gray-900">#{{ ticket.ticket_number }}</h1>
+                        <span :class="[getStatusColor(ticket.status), 'px-3 py-1 text-sm font-medium rounded-full']">
+                            {{ ticket.status.replace('_', ' ') }}
+                        </span>
+                    </div>
+                    <p class="text-gray-500 mt-1">{{ ticket.subject }}</p>
+                </div>
+                <Link :href="route('admin.support.live-chat', ticket.id)" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <ChatBubbleLeftRightIcon class="h-5 w-5 mr-2" aria-hidden="true" />
+                    Live Chat
+                </Link>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Description</h2>
+                        <div class="prose prose-sm max-w-none text-gray-600">{{ ticket.description }}</div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="p-4 border-b border-gray-100">
+                            <h2 class="text-lg font-semibold text-gray-900">Conversation</h2>
+                        </div>
+                        <div class="p-4 space-y-4 max-h-96 overflow-y-auto">
+                            <div v-for="comment in ticket.comments" :key="comment.id"
+                                :class="['p-4 rounded-lg', comment.author_type === 'support' ? 'bg-blue-50 ml-8' : 'bg-gray-50 mr-8', comment.is_internal ? 'border-2 border-dashed border-amber-300' : '']">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div :class="['h-8 w-8 rounded-full flex items-center justify-center', comment.author_type === 'support' ? 'bg-blue-200' : 'bg-gray-200']">
+                                        <UserIcon class="h-4 w-4" :class="comment.author_type === 'support' ? 'text-blue-600' : 'text-gray-600'" aria-hidden="true" />
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ comment.author?.full_name || 'Support' }}</p>
+                                        <p class="text-xs text-gray-500">{{ formatDate(comment.created_at) }}</p>
+                                    </div>
+                                    <span v-if="comment.is_internal" class="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Internal</span>
+                                </div>
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
+                            </div>
+                            <div v-if="ticket.comments.length === 0" class="text-center py-8 text-gray-500">No comments yet</div>
+                        </div>
+                        <div class="p-4 border-t border-gray-100">
+                            <form @submit.prevent="addComment">
+                                <textarea v-model="commentForm.content" rows="3" placeholder="Write a reply..." class="w-full border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                <div class="flex items-center justify-between mt-3">
+                                    <label class="flex items-center gap-2 text-sm text-gray-600">
+                                        <input type="checkbox" v-model="commentForm.is_internal" class="rounded border-gray-300 text-blue-600" />
+                                        Internal note
+                                    </label>
+                                    <button type="submit" :disabled="!commentForm.content || commentForm.processing" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                        <PaperAirplaneIcon class="h-4 w-4 mr-2" aria-hidden="true" />Send
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Submitted By</h3>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                <UserIcon class="h-6 w-6 text-gray-500" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ ticket.employee.full_name }}</p>
+                                <p class="text-sm text-gray-500">{{ ticket.employee.position?.title }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <p><span class="text-gray-500">Dept:</span> {{ ticket.employee.department?.name }}</p>
+                            <p><span class="text-gray-500">Email:</span> {{ ticket.employee.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4">Update Ticket</h3>
+                        <form @submit.prevent="updateTicket" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select v-model="updateForm.status" class="w-full border-gray-300 rounded-lg">
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select v-model="updateForm.priority" class="w-full border-gray-300 rounded-lg">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                                <select v-model="updateForm.assigned_to" class="w-full border-gray-300 rounded-lg">
+                                    <option :value="null">Unassigned</option>
+                                    <option v-for="agent in supportAgents" :key="agent.id" :value="agent.id">{{ agent.first_name }} {{ agent.last_name }}</option>
+                                </select>
+                            </div>
+                            <button type="submit" :disabled="updateForm.processing" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                <CheckCircleIcon class="h-4 w-4 inline mr-2" aria-hidden="true" />Update
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AdminLayout>
+</template>

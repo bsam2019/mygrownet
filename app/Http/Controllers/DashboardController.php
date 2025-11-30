@@ -64,6 +64,17 @@ class DashboardController extends Controller
             return redirect()->route('manager.dashboard');
         }
         
+        // Check if user is an employee - redirect to employee portal
+        if ($user->hasRole('employee')) {
+            $employee = \App\Models\Employee::where('user_id', $user->id)
+                ->where('employment_status', 'active')
+                ->first();
+            
+            if ($employee) {
+                return redirect()->route('employee.portal.dashboard');
+            }
+        }
+        
         // Check user preference for dashboard type
         $preference = $user->preferred_dashboard ?? 'mobile';
         

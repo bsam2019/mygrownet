@@ -16,12 +16,15 @@ class TicketDTO
         public readonly string $description,
         public readonly ?int $assignedTo,
         public readonly string $createdAt,
+        public readonly string $updatedAt,
         public readonly ?string $resolvedAt,
         public readonly ?string $closedAt,
-        public readonly ?int $satisfactionRating
+        public readonly ?int $satisfactionRating,
+        public readonly ?string $ticketNumber = null,
+        public readonly int $commentsCount = 0
     ) {}
 
-    public static function fromEntity(Ticket $ticket): self
+    public static function fromEntity(Ticket $ticket, int $commentsCount = 0): self
     {
         return new self(
             id: $ticket->id()->value(),
@@ -33,9 +36,12 @@ class TicketDTO
             description: $ticket->description()->value(),
             assignedTo: $ticket->assignedTo()?->value(),
             createdAt: $ticket->createdAt()->format('Y-m-d H:i:s'),
+            updatedAt: $ticket->createdAt()->format('Y-m-d H:i:s'), // Use createdAt as fallback
             resolvedAt: $ticket->resolvedAt()?->format('Y-m-d H:i:s'),
             closedAt: $ticket->closedAt()?->format('Y-m-d H:i:s'),
-            satisfactionRating: $ticket->satisfactionRating()
+            satisfactionRating: $ticket->satisfactionRating(),
+            ticketNumber: 'MEM-' . str_pad($ticket->id()->value(), 6, '0', STR_PAD_LEFT),
+            commentsCount: $commentsCount
         );
     }
 }
