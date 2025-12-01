@@ -10,7 +10,11 @@ use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    public const HOME = '/dashboard';
+    /**
+     * The path to the "home" route for your application.
+     * After login, users are redirected to the Home Hub.
+     */
+    public const HOME = '/home';
 
     public function boot(): void
     {

@@ -32,6 +32,14 @@
           </div>
           <div class="flex items-center gap-1 flex-shrink-0">
             <NotificationBell />
+            <Link
+              :href="route('home')"
+              aria-label="Go to Home Hub"
+              class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
+              title="Home Hub"
+            >
+              <Squares2X2Icon class="h-5 w-5" aria-hidden="true" />
+            </Link>
             <button
               @click="refreshData"
               aria-label="Refresh dashboard data"
@@ -1738,6 +1746,7 @@ import {
   WrenchScrewdriverIcon as ToolIcon,
   FlagIcon as TargetIcon,
   ComputerDesktopIcon,
+  Squares2X2Icon,
 } from '@heroicons/vue/24/outline';
 
 // Props - same as original dashboard

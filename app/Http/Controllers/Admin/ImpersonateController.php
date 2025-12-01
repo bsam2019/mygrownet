@@ -38,7 +38,7 @@ class ImpersonateController extends Controller
         // Login as the user
         Auth::login($user);
 
-        return redirect()->route('dashboard')->with('success', 'You are now viewing as ' . $user->name);
+        return redirect()->route('home')->with('success', 'You are now viewing as ' . $user->name);
     }
 
     /**
@@ -47,7 +47,7 @@ class ImpersonateController extends Controller
     public function leave()
     {
         if (!Session::has('impersonate_admin_id')) {
-            return redirect()->route('dashboard');
+            return redirect()->route('home');
         }
 
         $currentUser = Auth::user();

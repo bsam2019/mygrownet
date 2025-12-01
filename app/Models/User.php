@@ -13,20 +13,26 @@ use App\Traits\HasActivityLogs;
 use Spatie\Permission\Traits\HasRoles;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureInvestmentModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareholderModel;
+use App\Enums\AccountType;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasActivityLogs, HasRoles;
 
     /**
-     * Boot the model and auto-assign Member role on creation
+     * Boot the model - handles account type and role assignment
+     * 
+     * Account Types:
+     * - member: Joined with referral code, full MLM access
+     * - client: Joined without referral code, shop/apps/venture builder only
+     * - business: SME user, accounting/staff management tools
      */
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($user) {
-            // Auto-generate referral code BEFORE saving
+            // Auto-generate referral code BEFORE saving (all users get one for sharing)
             if (!$user->referral_code) {
                 do {
                     $code = 'MGN' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 6));
@@ -34,10 +40,37 @@ class User extends Authenticatable
                 
                 $user->referral_code = $code;
             }
+            
+            // Set account_types based on referrer (if not already set)
+            // Users with referrer_id = MEMBER (MLM participant)
+            // Users without referrer_id = CLIENT (app user, no MLM)
+            if (!$user->account_types) {
+                $accountType = $user->referrer_id 
+                    ? AccountType::MEMBER 
+                    : AccountType::CLIENT;
+                
+                $user->account_types = [$accountType->value];
+            }
+            
+            // Maintain backward compatibility with old account_type column
+            if (!$user->account_type && !empty($user->account_types)) {
+                $user->account_type = is_array($user->account_types) 
+                    ? $user->account_types[0] 
+                    : json_decode($user->account_types, true)[0];
+            }
         });
 
         static::created(function ($user) {
-            // Auto-assign Member role to new users
+            // Only assign Member role to MLM members
+            if (!$user->hasAccountType(AccountType::MEMBER)) {
+                // Clients get Client role
+                if (\Spatie\Permission\Models\Role::where('name', 'Client')->exists()) {
+                    $user->assignRole('Client');
+                }
+                return;
+            }
+            
+            // Auto-assign Member role to MLM members
             if (!\Spatie\Permission\Models\Role::where('name', 'Member')->exists()) {
                 return;
             }
@@ -107,6 +140,7 @@ class User extends Authenticatable
         'phone_verified_at',
         'referrer_id',
         'status',
+        'account_type',
         'last_login_at',
         'matrix_position',
         'total_investment_amount',
@@ -182,6 +216,8 @@ class User extends Authenticatable
         'loan_issued_at',
         'loan_issued_by',
         'loan_notes',
+        // Multi-account type support
+        'account_types',
     ];
 
     protected $hidden = [
@@ -193,6 +229,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
+        'account_type' => AccountType::class,
         'matrix_position' => 'array',
         'tier_history' => 'array',
         'total_investment_amount' => 'decimal:2',
@@ -232,6 +269,206 @@ class User extends Authenticatable
         'telegram_notifications' => 'boolean',
         'telegram_linked_at' => 'datetime',
     ];
+
+    // ==========================================
+    // Account Type Helper Methods
+    // ==========================================
+
+    /**
+     * Check if user is an MLM member
+     */
+    public function isMember(): bool
+    {
+        return $this->account_type === AccountType::MEMBER;
+    }
+
+    /**
+     * Check if user is a client (non-MLM)
+     */
+    public function isClient(): bool
+    {
+        return $this->account_type === AccountType::CLIENT;
+    }
+
+    /**
+     * Check if user is a business account
+     */
+    public function isBusiness(): bool
+    {
+        return $this->account_type === AccountType::BUSINESS;
+    }
+
+    /**
+     * Check if user has MLM access
+     */
+    public function hasMLMAccess(): bool
+    {
+        return $this->account_type?->hasMLMAccess() ?? false;
+    }
+
+    /**
+     * Check if user has business tools access
+     */
+    public function hasBusinessToolsAccess(): bool
+    {
+        return $this->account_type?->hasBusinessToolsAccess() ?? false;
+    }
+
+    /**
+     * Get available modules for this user's account type
+     */
+    public function getAvailableModules(): array
+    {
+        return $this->account_type?->availableModules() ?? [];
+    }
+
+    /**
+     * Upgrade client to member (when they join via referral)
+     */
+    public function upgradeToMember(int $referrerId): bool
+    {
+        if ($this->account_type !== AccountType::CLIENT) {
+            return false;
+        }
+
+        $this->update([
+            'account_type' => AccountType::MEMBER->value,
+            'referrer_id' => $referrerId,
+        ]);
+
+        // Assign Member role
+        if (\Spatie\Permission\Models\Role::where('name', 'Member')->exists()) {
+            $this->syncRoles(['Member']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Upgrade to business account
+     */
+    public function upgradeToBusiness(): bool
+    {
+        $this->update([
+            'account_type' => AccountType::BUSINESS->value,
+        ]);
+
+        return true;
+    }
+
+    // ==========================================
+    // Multi-Account Type Methods
+    // ==========================================
+
+    /**
+     * Get account types as array
+     */
+    public function getAccountTypesAttribute($value): array
+    {
+        if (is_null($value)) {
+            // Fallback to single account_type if account_types is null
+            return $this->attributes['account_type'] ? [$this->attributes['account_type']] : [];
+        }
+        
+        return json_decode($value, true) ?? [];
+    }
+
+    /**
+     * Set account types
+     */
+    public function setAccountTypesAttribute($value): void
+    {
+        $this->attributes['account_types'] = json_encode(array_unique($value));
+    }
+
+    /**
+     * Check if user has specific account type
+     */
+    public function hasAccountType(AccountType $type): bool
+    {
+        return in_array($type->value, $this->account_types);
+    }
+
+    /**
+     * Add account type to user
+     */
+    public function addAccountType(AccountType $type): void
+    {
+        $types = $this->account_types;
+        if (!in_array($type->value, $types)) {
+            $types[] = $type->value;
+            $this->account_types = $types;
+            $this->save();
+        }
+    }
+
+    /**
+     * Remove account type from user
+     */
+    public function removeAccountType(AccountType $type): void
+    {
+        $types = $this->account_types;
+        $types = array_filter($types, fn($t) => $t !== $type->value);
+        $this->account_types = array_values($types);
+        $this->save();
+    }
+
+    /**
+     * Check if user is MLM participant (has MEMBER account type)
+     */
+    public function isMLMParticipant(): bool
+    {
+        return $this->hasAccountType(AccountType::MEMBER);
+    }
+
+    /**
+     * Check if user is internal employee
+     */
+    public function isEmployee(): bool
+    {
+        return $this->hasAccountType(AccountType::EMPLOYEE);
+    }
+
+    /**
+     * Get all available modules for user based on all their account types
+     */
+    public function getAllAvailableModules(): array
+    {
+        $modules = [];
+        
+        foreach ($this->account_types as $typeValue) {
+            try {
+                $type = AccountType::from($typeValue);
+                $modules = array_merge($modules, $type->availableModules());
+            } catch (\ValueError $e) {
+                // Skip invalid account type
+                continue;
+            }
+        }
+        
+        return array_unique($modules);
+    }
+
+    /**
+     * Get primary account type (first one in array)
+     */
+    public function getPrimaryAccountType(): ?AccountType
+    {
+        $types = $this->account_types;
+        if (empty($types)) {
+            return null;
+        }
+        
+        try {
+            return AccountType::from($types[0]);
+        } catch (\ValueError $e) {
+            return null;
+        }
+    }
+
+    // ==========================================
+    // End Account Type Helper Methods
+    // ==========================================
 
     /**
      * Accessor: Alias for loyalty_points (LGR Balance)
@@ -1793,55 +2030,6 @@ class User extends Authenticatable
         if ($bpValue > 0) {
             $this->awardBonusPoints($bpValue, $activityType, $description);
         }
-    }
-
-    /**
-     * Account Type Helper Methods
-     */
-    public function isInvestor(): bool
-    {
-        return $this->account_type === 'investor';
-    }
-
-    public function isMember(): bool
-    {
-        return $this->account_type === 'member';
-    }
-
-    public function isFullMember(): bool
-    {
-        return $this->isMember() && $this->subscription_active;
-    }
-
-    public function canAccessMLMFeatures(): bool
-    {
-        return $this->isMember();
-    }
-
-    public function canInvestInVentures(): bool
-    {
-        // Both investors and members can invest
-        return true;
-    }
-
-    public function upgradeToMember(): bool
-    {
-        if ($this->isMember()) {
-            return false; // Already a member
-        }
-
-        $this->update(['account_type' => 'member']);
-        return true;
-    }
-
-    public function getAccountTypeLabel(): string
-    {
-        return match($this->account_type) {
-            'investor' => 'Investor',
-            'member' => 'Member',
-            'admin' => 'Administrator',
-            default => 'Member',
-        };
     }
 
     // Loan relationships

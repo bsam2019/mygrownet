@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'id.verification' => \App\Http\Middleware\RequireIdVerification::class,
             'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
             'employee' => \App\Http\Middleware\EnsureIsEmployee::class,
+            'module.access' => \App\Http\Middleware\CheckModuleAccess::class,
+            'account.type' => \App\Http\Middleware\CheckAccountType::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

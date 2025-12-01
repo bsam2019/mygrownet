@@ -27,7 +27,7 @@ Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate
     ->name('broadcasting.auth');
 
 // Public routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('welcome');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 
 // Test API endpoints (remove in production)
@@ -199,17 +199,21 @@ Route::get('/membership', function () {
 
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Home Hub - Main entry point after login
+    Route::get('/home', [App\Http\Controllers\HomeHubController::class, 'index'])->name('home');
+    
     // Temporary debug route - NO AUTH to test
     Route::get('/test-routes', function() {
         return response()->json([
             'message' => 'Routes are working',
             'routes_exist' => [
+                'home' => \Route::has('home'),
                 'dashboard' => \Route::has('dashboard'),
                 'mygrownet.classic-dashboard' => \Route::has('mygrownet.classic-dashboard'),
                 'admin.dashboard' => \Route::has('admin.dashboard'),
             ],
             'all_dashboard_routes' => collect(\Route::getRoutes())->filter(function($route) {
-                return str_contains($route->getName() ?? '', 'dashboard');
+                return str_contains($route->getName() ?? '', 'dashboard') || $route->getName() === 'home';
             })->map(function($route) {
                 return [
                     'name' => $route->getName(),
@@ -220,7 +224,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
     
-    // Dashboard - Role-based routing
+    // Dashboard - Role-based routing (MLM Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Redirect old mobile-dashboard route to new dashboard route
