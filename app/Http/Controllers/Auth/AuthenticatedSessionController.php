@@ -39,6 +39,11 @@ class AuthenticatedSessionController extends Controller
             $user->initializeLoanLimit();
         }
 
+        // Check for pending GrowBiz invitation (token or code)
+        if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
+            return redirect()->route('growbiz.invitation.pending');
+        }
+
         return redirect()->intended(route('home', absolute: false));
     }
 

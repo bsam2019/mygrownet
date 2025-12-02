@@ -44,19 +44,25 @@ class User extends Authenticatable
             // Set account_types based on referrer (if not already set)
             // Users with referrer_id = MEMBER (MLM participant)
             // Users without referrer_id = CLIENT (app user, no MLM)
-            if (!$user->account_types) {
+            // Use getRawOriginal to avoid triggering accessor during creation
+            $rawAccountTypes = $user->getAttributes()['account_types'] ?? null;
+            
+            if (empty($rawAccountTypes)) {
                 $accountType = $user->referrer_id 
                     ? AccountType::MEMBER 
                     : AccountType::CLIENT;
                 
-                $user->account_types = [$accountType->value];
+                // Set directly to attributes to avoid accessor issues
+                $user->attributes['account_types'] = json_encode([$accountType->value]);
             }
             
             // Maintain backward compatibility with old account_type column
-            if (!$user->account_type && !empty($user->account_types)) {
-                $user->account_type = is_array($user->account_types) 
-                    ? $user->account_types[0] 
-                    : json_decode($user->account_types, true)[0];
+            $rawAccountType = $user->getAttributes()['account_type'] ?? null;
+            if (empty($rawAccountType)) {
+                $accountTypes = json_decode($user->attributes['account_types'] ?? '[]', true);
+                if (!empty($accountTypes)) {
+                    $user->attributes['account_type'] = $accountTypes[0];
+                }
             }
         });
 
@@ -367,7 +373,9 @@ class User extends Authenticatable
     {
         if (is_null($value)) {
             // Fallback to single account_type if account_types is null
-            return $this->attributes['account_type'] ? [$this->attributes['account_type']] : [];
+            // Use array_key_exists to avoid undefined key error
+            $accountType = $this->attributes['account_type'] ?? null;
+            return $accountType ? [$accountType] : [];
         }
         
         return json_decode($value, true) ?? [];

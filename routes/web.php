@@ -986,6 +986,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/team-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getTeamData'])->name('team-data');
             Route::get('/wallet-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getWalletData'])->name('wallet-data');
             Route::get('/learn-data', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'getLearnData'])->name('learn-data');
+
+            // Module Usage & Feature Access APIs
+            Route::prefix('modules/{moduleId}')->name('modules.')->group(function () {
+                Route::get('/usage', [\App\Presentation\Http\Controllers\ModuleUsageController::class, 'getUsage'])->name('usage');
+                Route::post('/usage', [\App\Presentation\Http\Controllers\ModuleUsageController::class, 'trackUsage'])->name('track-usage');
+                Route::get('/features', [\App\Presentation\Http\Controllers\ModuleUsageController::class, 'getFeatures'])->name('features');
+                Route::get('/features/{feature}/access', [\App\Presentation\Http\Controllers\ModuleUsageController::class, 'checkFeatureAccess'])->name('feature-access');
+            });
         });
     });
 
@@ -1096,6 +1104,37 @@ Route::prefix('health')->name('health.')->group(function () {
     Route::get('/employee-management/alerts', [\App\Http\Controllers\EmployeeHealthController::class, 'alerts'])->name('employee.alerts');
     Route::post('/employee-management/check', [\App\Http\Controllers\EmployeeHealthController::class, 'checkHealth'])->name('employee.check');
     Route::delete('/employee-management/data', [\App\Http\Controllers\EmployeeHealthController::class, 'clearData'])->name('employee.clear')->middleware('auth');
+});
+
+// Module System Routes (Home Hub & Module Management)
+Route::middleware(['auth', 'verified'])->group(function () {
+    
+    // Home Hub (Module Marketplace) - Using new DDD controller
+    Route::get('/home-hub', [\App\Presentation\Http\Controllers\HomeHubController::class, 'index'])
+        ->name('home-hub.index');
+    
+    // Alias: /home also points to home-hub (for backward compatibility)
+    // This overrides the old /home route defined earlier
+    Route::get('/home', [\App\Presentation\Http\Controllers\HomeHubController::class, 'index'])
+        ->name('home');
+
+    // Module Subscriptions
+    Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
+        Route::post('/', [\App\Presentation\Http\Controllers\ModuleSubscriptionController::class, 'store'])
+            ->name('store');
+        Route::delete('/{subscription}', [\App\Presentation\Http\Controllers\ModuleSubscriptionController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('/{subscription}/upgrade', [\App\Presentation\Http\Controllers\ModuleSubscriptionController::class, 'upgrade'])
+            ->name('upgrade');
+    });
+
+    // Module Routes (with access control)
+    Route::prefix('modules/{moduleId}')->name('modules.')->group(function () {
+        Route::middleware(['module.access:{moduleId}'])->group(function () {
+            Route::get('/', [\App\Presentation\Http\Controllers\ModuleController::class, 'show'])
+                ->name('show');
+        });
+    });
 });
 
 require __DIR__.'/admin.php';

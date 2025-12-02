@@ -310,7 +310,7 @@ class WeddingController extends Controller
             'reception_venue' => '3Sixty Convention Centre - Main Hall',
             'reception_address' => 'Twin Palm Road, Ibex Hill, Lusaka',
             'dress_code' => 'Formal Attire',
-            'rsvp_deadline' => '2025-11-28',
+            'rsvp_deadline' => '2025-12-03',
             'hero_image' => '/images/Wedding/main.jpg?v=' . time(),
             'story_image' => '/images/Wedding/main.jpg?v=' . time(),
             'how_we_met' => 'Our love story began in the most unexpected way when we met at a mutual friend\'s gathering. From that first conversation, we knew there was something special between us.',

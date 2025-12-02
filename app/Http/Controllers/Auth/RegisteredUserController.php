@@ -102,7 +102,13 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            return to_route('dashboard');
+            // Check for pending GrowBiz invitation (token or code)
+            if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
+                return to_route('growbiz.invitation.pending');
+            }
+
+            // Redirect to home hub (consistent with login flow)
+            return to_route('home');
             
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle any database errors gracefully

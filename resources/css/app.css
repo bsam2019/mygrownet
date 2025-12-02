@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* GrowBiz Native App Styles */
+@import './growbiz-app.css';
+
 body,
 html {
     --font-sans:

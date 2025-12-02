@@ -293,6 +293,23 @@ onMounted(() => {
                     <span v-show="!isCollapsed || isMobile" class="ml-3">Dashboard</span>
                 </Link>
 
+                <!-- Home Hub (Module Marketplace) -->
+                <Link
+                    :href="route('home-hub.index')"
+                    :class="[
+                        'flex items-center px-4 py-2 text-sm font-medium transition-colors duration-200 mb-1',
+                        isUrlActive(['/home-hub']) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
+                        isCollapsed && !isMobile ? 'justify-center' : ''
+                    ]"
+                    @mouseenter="isCollapsed && !isMobile ? showItemTooltip($event, 'Home Hub') : null"
+                    @mouseleave="hideTooltip"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span v-show="!isCollapsed || isMobile" class="ml-3">Home Hub</span>
+                </Link>
+
                 <!-- Investor Dashboard (Investor-only users) -->
                 <div v-if="isInvestor" class="space-y-1 pt-2">
                     <Link v-for="item in investorNavItems" :key="item.title"

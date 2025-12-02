@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware('web')
                 ->group(base_path('routes/employee-portal.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growbiz.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -43,5 +45,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle GrowBiz domain exceptions
+        $exceptions->render(function (\App\Domain\GrowBiz\Exceptions\GrowBizException $e, $request) {
+            return \App\Domain\GrowBiz\Exceptions\Handler::render($e, $request);
+        });
     })->create();

@@ -1,220 +1,267 @@
-<template>
-  <Head title="Home" />
-  
-  <div class="min-h-screen bg-white">
-    <!-- Header -->
-    <header class="bg-white px-4 py-4 flex items-center justify-between">
-      <!-- Logo -->
-      <div class="flex items-center">
-        <img 
-          src="/logo.png" 
-          alt="MyGrowNet" 
-          class="h-10 w-auto object-contain"
-        />
-      </div>
-      
-      <!-- Right side - Profile icon and three dots -->
-      <div class="flex items-center gap-2">
-        <!-- Profile button -->
-        <button
-          @click="navigateToProfile"
-          aria-label="Profile"
-          class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center text-white"
-        >
-          <UserIcon class="h-5 w-5" aria-hidden="true" />
-        </button>
-        
-        <!-- Three dots menu -->
-        <div class="relative">
-          <button
-            @click="toggleMenu"
-            aria-label="Menu"
-            class="text-gray-400 hover:text-gray-600 p-1"
-          >
-            <EllipsisVerticalIcon class="h-6 w-6" aria-hidden="true" />
-          </button>
-          
-          <!-- Dropdown Menu -->
-          <div
-            v-if="showMenu"
-            class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
-          >
-            <Link
-              :href="route('profile.edit')"
-              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              <Cog8ToothIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-              Settings
-            </Link>
-            <button
-              @click="logout"
-              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
-            >
-              <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Click outside to close menu -->
-    <div v-if="showMenu" class="fixed inset-0 z-40" @click="showMenu = false"></div>
-
-    <!-- Main Content -->
-    <main class="px-6 py-6 max-w-2xl mx-auto">
-      <!-- Page Title -->
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">Home</h1>
-
-      <!-- Module Grid - 3 columns -->
-      <div class="grid grid-cols-3 gap-4">
-        <!-- MLM Dashboard - Teal/Green gradient -->
-        <Link
-          :href="route('dashboard')"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #4fd1c5 0%, #38b2ac 100%);"
-        >
-          <div class="w-12 h-12 rounded-full border-2 border-white/80 flex items-center justify-center mb-3">
-            <UserCircleIcon class="h-7 w-7" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">MLM<br>Dashboard</span>
-        </Link>
-
-        <!-- Task & Staff Management - Blue gradient -->
-        <Link
-          :href="taskRoute"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);"
-        >
-          <div class="w-12 h-12 flex items-center justify-center mb-3">
-            <ClipboardDocumentCheckIcon class="h-9 w-9" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">Task & Staff<br>Management</span>
-        </Link>
-
-        <!-- Smart Accounting - Green gradient -->
-        <Link
-          :href="accountingRoute"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);"
-        >
-          <div class="w-12 h-12 flex items-center justify-center mb-3">
-            <ChartBarIcon class="h-9 w-9" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">Smart<br>Accounting</span>
-        </Link>
-
-        <!-- Messaging - Purple gradient -->
-        <Link
-          :href="messagingRoute"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);"
-        >
-          <div class="w-12 h-12 flex items-center justify-center mb-3">
-            <ChatBubbleLeftRightIcon class="h-9 w-9" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">Messaging</span>
-        </Link>
-
-        <!-- Marketplace - Orange gradient -->
-        <Link
-          :href="marketplaceRoute"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #fbb040 0%, #f6921e 100%);"
-        >
-          <div class="w-12 h-12 flex items-center justify-center mb-3">
-            <ShoppingCartIcon class="h-9 w-9" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">Marketplace</span>
-        </Link>
-
-        <!-- Profile & Settings - Gray/Slate gradient -->
-        <Link
-          :href="route('profile.edit')"
-          class="aspect-square rounded-2xl p-4 flex flex-col items-center justify-center text-white hover:opacity-90 transition-opacity active:scale-95"
-          style="background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);"
-        >
-          <div class="w-12 h-12 flex items-center justify-center mb-3">
-            <Cog8ToothIcon class="h-9 w-9" aria-hidden="true" />
-          </div>
-          <span class="text-sm font-semibold text-center leading-tight">Profile &<br>Settings</span>
-        </Link>
-      </div>
-    </main>
-  </div>
-</template>
-
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import {
-  UserIcon,
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
+import { 
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon,
   UserCircleIcon,
   ClipboardDocumentCheckIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   ShoppingCartIcon,
-  Cog8ToothIcon,
-  EllipsisVerticalIcon,
-  ArrowRightOnRectangleIcon,
-} from '@heroicons/vue/24/outline';
+  CubeIcon,
+  WalletIcon,
+  BuildingOfficeIcon,
+  HeartIcon,
+  AcademicCapIcon,
+  BanknotesIcon,
+  HomeIcon,
+  UsersIcon,
+  CalendarIcon,
+  DocumentTextIcon,
+  GiftIcon,
+  TruckIcon,
+  ShieldCheckIcon,
+  SparklesIcon
+} from '@heroicons/vue/24/solid';
+import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import SubscriptionModal from '@/components/HomeHub/SubscriptionModal.vue';
+
+interface Module {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  thumbnail: string | null;
+  has_access: boolean;
+  is_subscribed: boolean;
+  subscription_status: string | null;
+  subscription_tier: string | null;
+  requires_subscription: boolean;
+  subscription_tiers: Record<string, any> | null;
+  primary_route: string;
+  is_pwa: boolean;
+  status: string;
+}
 
 interface Props {
-  user: {
-    id: number;
-    name: string;
-    email: string;
+  modules: Module[];
+  accountType: string;
+  auth?: {
+    user: {
+      name: string;
+      email: string;
+    };
   };
 }
 
 const props = defineProps<Props>();
 
-// Menu state
-const showMenu = ref(false);
+// Subscription modal state
+const showSubscriptionModal = ref(false);
+const selectedModule = ref<Module | null>(null);
 
-const toggleMenu = () => {
-  showMenu.value = !showMenu.value;
+const handleModuleClick = (module: Module) => {
+  // GrowBiz is always accessible - it has its own setup flow
+  if (module.slug === 'growbiz') {
+    router.visit(module.primary_route || '/growbiz');
+    return;
+  }
+  
+  if (module.has_access) {
+    router.visit(module.primary_route);
+  } else if (module.requires_subscription && module.subscription_tiers) {
+    // Open subscription modal
+    selectedModule.value = module;
+    showSubscriptionModal.value = true;
+  } else {
+    // Free module without access - might need account type upgrade
+    alert('This module is not available for your account type.');
+  }
 };
 
-// Navigate to profile
-const navigateToProfile = () => {
-  router.visit(route('profile.edit'));
+const handleSubscribed = () => {
+  // Refresh the page to update module access
+  router.reload();
 };
 
-// Logout
 const logout = () => {
-  router.post(route('logout'));
+  router.post('/logout');
 };
 
-// Task management route
-const taskRoute = computed(() => {
-  try {
-    return route('employee.portal.dashboard');
-  } catch {
-    return route('home');
-  }
-});
-
-// Accounting route (placeholder)
-const accountingRoute = computed(() => {
-  return route('home'); // Placeholder - coming soon
-});
-
-// Messaging route
-const messagingRoute = computed(() => {
-  try {
-    return route('mygrownet.messages.index');
-  } catch {
-    return route('home');
-  }
-});
-
-// Marketplace route
-const marketplaceRoute = computed(() => {
-  try {
-    return route('shop.index');
-  } catch {
-    return route('home');
-  }
-});
+// Icon mapping for modules - using solid icons for better visibility
+const getModuleIcon = (slug: string) => {
+  const iconMap: Record<string, any> = {
+    'mlm-dashboard': UsersIcon,
+    'mygrownet-core': HomeIcon,
+    'dashboard': HomeIcon,
+    'growbiz': ClipboardDocumentCheckIcon,
+    'task-management': ClipboardDocumentCheckIcon,
+    'smart-accounting': ChartBarIcon,
+    'sme-accounting': ChartBarIcon,
+    'accounting': ChartBarIcon,
+    'messaging': ChatBubbleLeftRightIcon,
+    'marketplace': ShoppingCartIcon,
+    'shop': ShoppingCartIcon,
+    'settings': Cog6ToothIcon,
+    'mygrow-save': WalletIcon,
+    'wallet': WalletIcon,
+    'personal-finance': BanknotesIcon,
+    'finance': BanknotesIcon,
+    'wedding-planner': HeartIcon,
+    'wedding': HeartIcon,
+    'learning': AcademicCapIcon,
+    'education': AcademicCapIcon,
+    'enterprise': BuildingOfficeIcon,
+    'business': BuildingOfficeIcon,
+    'calendar': CalendarIcon,
+    'documents': DocumentTextIcon,
+    'rewards': GiftIcon,
+    'loyalty': GiftIcon,
+    'delivery': TruckIcon,
+    'logistics': TruckIcon,
+    'security': ShieldCheckIcon,
+    'premium': SparklesIcon,
+  };
+  return iconMap[slug] || CubeIcon;
+};
 </script>
+
+<template>
+  <Head title="Home" />
+
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header - Logo Left, Settings Right -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo - Top Left -->
+          <Link href="/" class="flex items-center gap-2">
+            <AppLogoIcon class="h-9 w-9" />
+          </Link>
+
+          <!-- Settings Dropdown - Top Right -->
+          <Menu as="div" class="relative">
+            <MenuButton class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                <UserCircleIcon class="w-6 h-6 text-white" />
+              </div>
+            </MenuButton>
+
+            <MenuItems class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="text-sm font-medium text-gray-900">{{ auth?.user?.name || 'User' }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ auth?.user?.email || '' }}</p>
+              </div>
+              <div class="py-1">
+                <MenuItem v-slot="{ active }">
+                  <Link
+                    href="/settings/profile"
+                    :class="[active ? 'bg-gray-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700']"
+                  >
+                    <Cog6ToothIcon class="w-5 h-5 text-gray-400" />
+                    Settings
+                  </Link>
+                </MenuItem>
+                <MenuItem v-slot="{ active }">
+                  <button
+                    @click="logout"
+                    :class="[active ? 'bg-red-50' : '', 'flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600']"
+                  >
+                    <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                    Logout
+                  </button>
+                </MenuItem>
+              </div>
+            </MenuItems>
+          </Menu>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content - Centered with larger area -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Page Title -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Home</h1>
+        <p class="text-gray-500 mt-1">Access your apps and services</p>
+      </div>
+
+      <!-- Module Grid - Larger Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <button
+          v-for="module in modules"
+          :key="module.id"
+          @click="handleModuleClick(module)"
+          class="group relative bg-white rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-3 sm:gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-95 shadow-md border border-gray-100"
+        >
+          <!-- Icon Container with gradient background -->
+          <div 
+            class="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
+            :style="{ backgroundColor: module.color || '#3B82F6' }"
+          >
+            <component 
+              :is="getModuleIcon(module.slug)" 
+              class="w-7 h-7 sm:w-8 sm:h-8 text-white"
+            />
+          </div>
+          
+          <!-- Module Name -->
+          <span class="text-gray-800 text-center font-semibold text-sm leading-tight">
+            {{ module.name }}
+          </span>
+
+          <!-- Status Badge -->
+          <span 
+            v-if="module.status === 'beta'" 
+            class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full"
+          >
+            Beta
+          </span>
+          
+          <span 
+            v-if="module.status === 'coming_soon'" 
+            class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-600 rounded-full"
+          >
+            Soon
+          </span>
+
+          <!-- Access indicator -->
+          <span 
+            v-if="!module.has_access && module.requires_subscription" 
+            class="absolute bottom-2 right-2 w-2 h-2 bg-orange-400 rounded-full"
+            title="Subscription required"
+          />
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="modules.length === 0" class="text-center py-20">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+          <CubeIcon class="w-12 h-12 text-gray-400" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No modules available</h3>
+        <p class="text-gray-500 max-w-sm mx-auto">
+          There are no modules available for your account type. Contact support for assistance.
+        </p>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 text-center text-sm text-gray-400">
+      <p>&copy; {{ new Date().getFullYear() }} MyGrowNet. All rights reserved.</p>
+    </footer>
+
+    <!-- Subscription Modal -->
+    <SubscriptionModal
+      :module="selectedModule"
+      :show="showSubscriptionModal"
+      @close="showSubscriptionModal = false"
+      @subscribed="handleSubscribed"
+    />
+  </div>
+</template>

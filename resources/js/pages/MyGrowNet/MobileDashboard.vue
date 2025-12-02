@@ -1277,7 +1277,7 @@
         ></div>
 
         <!-- Drawer Content -->
-        <div class="absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl overflow-y-auto">
+        <div class="absolute inset-y-0 right-0 w-full max-w-md sm:max-w-xl lg:max-w-2xl bg-white shadow-2xl overflow-y-auto">
           <!-- Header -->
           <div class="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-4 shadow-lg">
             <div class="flex items-center justify-between">
