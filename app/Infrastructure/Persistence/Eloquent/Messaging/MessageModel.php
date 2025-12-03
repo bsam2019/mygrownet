@@ -18,6 +18,8 @@ class MessageModel extends Model
         'is_read',
         'read_at',
         'parent_id',
+        'module',
+        'metadata',
     ];
 
     protected $casts = [
@@ -25,7 +27,16 @@ class MessageModel extends Model
         'read_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'metadata' => 'array',
     ];
+
+    /**
+     * Scope to filter messages by module/app context.
+     */
+    public function scopeForModule($query, string $module)
+    {
+        return $query->where('module', $module);
+    }
 
     public function sender(): BelongsTo
     {

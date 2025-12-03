@@ -174,6 +174,7 @@ return [
         App\Providers\SupportServiceProvider::class,
         App\Providers\EmailMarketingServiceProvider::class,
         App\Providers\WeddingServiceProvider::class,
+        App\Providers\GrowFinanceServiceProvider::class,
     ])->toArray(),
 
     /*

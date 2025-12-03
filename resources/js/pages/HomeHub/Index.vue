@@ -104,6 +104,7 @@ const getModuleIcon = (slug: string) => {
     'smart-accounting': ChartBarIcon,
     'sme-accounting': ChartBarIcon,
     'accounting': ChartBarIcon,
+    'growfinance': BanknotesIcon,
     'messaging': ChatBubbleLeftRightIcon,
     'marketplace': ShoppingCartIcon,
     'shop': ShoppingCartIcon,

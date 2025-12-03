@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#059669"/>
+  
+  <!-- Dollar sign with growth element -->
+  <g fill="white">
+    <!-- Dollar sign circle -->
+    <circle cx="256" cy="256" r="140" fill="none" stroke="white" stroke-width="24"/>
+    
+    <!-- Dollar sign -->
+    <path d="M256 136v240M208 200c0-22 22-40 48-40s48 18 48 40c0 30-48 30-48 60 0 22 22 40 48 40s48-18 48-40" 
+          fill="none" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Growth arrow (top right) -->
+    <path d="M340 100 L400 100 L400 160" fill="none" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M400 100 L320 180" fill="none" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  </g>
+</svg>

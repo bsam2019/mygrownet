@@ -52,20 +52,23 @@ class ProcessMLMCommissions
             $packageType = null;
             
             if ($event->paymentType === 'registration' || ($event->paymentType === 'wallet_topup' && $event->amount >= 500)) {
-                // Check if this is the FIRST registration payment (K500)
-                $hasRegistrationCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
-                    ->where('package_type', 'registration')
+                // Check if ANY commission already exists for this user (registration OR starter_kit)
+                // This prevents duplicate commissions from different sources
+                $hasAnyCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
+                    ->whereIn('package_type', ['registration', 'starter_kit'])
                     ->exists();
 
-                if ($hasRegistrationCommission) {
-                    Log::info("Registration commission already processed for this user, skipping", [
+                if ($hasAnyCommission) {
+                    Log::info("Commission already processed for this user (registration or starter_kit), skipping", [
                         'user_id' => $user->id,
                         'payment_id' => $event->paymentId
                     ]);
                     return;
                 }
 
-                $packageType = 'registration';
+                // Use 'starter_kit' as the package type for consistency
+                // (registration and starter_kit are the same thing - K500 initial payment)
+                $packageType = 'starter_kit';
             } elseif ($event->paymentType === 'subscription') {
                 // Check if subscription commission already exists for this period
                 $existingSubscriptionCommission = \App\Models\ReferralCommission::where('referred_id', $user->id)
@@ -85,22 +88,30 @@ class ProcessMLMCommissions
             }
 
             if ($packageType) {
+                // For starter kit purchases, always use K500 as commission base
+                // even if they paid K1000 for premium (extra K500 is for content, not commissionable)
+                $commissionAmount = $packageType === 'starter_kit' ? 500.00 : $event->amount;
+                
                 Log::info("Processing {$packageType} commissions", [
                     'user_id' => $user->id,
-                    'amount' => $event->amount,
-                    'payment_type' => $event->paymentType
+                    'payment_amount' => $event->amount,
+                    'commission_amount' => $commissionAmount,
+                    'payment_type' => $event->paymentType,
+                    'note' => $packageType === 'starter_kit' ? 'Commission based on K500 only' : null,
                 ]);
 
                 $commissions = $this->mlmService->processMLMCommissions(
                     $user,
-                    $event->amount,
+                    $commissionAmount,
                     $packageType
                 );
                 
                 Log::info("{$packageType} commissions processed", [
                     'user_id' => $user->id,
-                    'amount' => $event->amount,
-                    'commissions_created' => count($commissions)
+                    'payment_amount' => $event->amount,
+                    'commission_amount' => $commissionAmount,
+                    'commissions_created' => count($commissions),
+                    'total_commission_paid' => collect($commissions)->sum('amount'),
                 ]);
             }
 

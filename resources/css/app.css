@@ -1,9 +1,9 @@
+/* GrowBiz Native App Styles - must be imported before @tailwind */
+@import './growbiz-app.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* GrowBiz Native App Styles */
-@import './growbiz-app.css';
 
 body,
 html {

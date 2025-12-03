@@ -34,17 +34,17 @@ class SendMessageUseCase
             $senderId,
             $recipientId,
             $content,
-            $parentId
+            $parentId,
+            $dto->module,
+            $dto->metadata
         );
 
         // Load user names for DTO
         $sender = User::find($dto->senderId);
         $recipient = User::find($dto->recipientId);
 
-        // Determine the correct route based on recipient's role
-        $actionUrl = ($recipient->hasRole('admin') || $recipient->hasRole('Administrator'))
-            ? route('admin.messages.show', $message->id()->value())
-            : route('mygrownet.messages.show', $message->id()->value());
+        // Determine the correct route based on module and recipient's role
+        $actionUrl = $this->determineActionUrl($dto->module, $recipient, $message->id()->value());
 
         // Create a preview of the message body (first 100 characters)
         $preview = strlen($dto->body) > 100 ? substr($dto->body, 0, 100) . '...' : $dto->body;
@@ -54,8 +54,8 @@ class SendMessageUseCase
             userId: $dto->recipientId,
             type: 'messages.received',
             data: [
-                'title' => $dto->subject, // Use the actual message subject as title
-                'message' => "From {$sender->name}: {$preview}", // Show sender and preview
+                'title' => $dto->subject,
+                'message' => "From {$sender->name}: {$preview}",
                 'action_url' => $actionUrl,
                 'action_text' => 'Read Message',
                 'message_id' => $message->id()->value(),
@@ -63,6 +63,7 @@ class SendMessageUseCase
                 'subject' => $dto->subject,
                 'preview' => $preview,
                 'is_broadcast' => false,
+                'module' => $dto->module,
             ]
         );
 
@@ -71,5 +72,23 @@ class SendMessageUseCase
             $sender->name ?? 'Unknown',
             $recipient->name ?? 'Unknown'
         );
+    }
+
+    /**
+     * Determine the action URL based on module and recipient role.
+     */
+    private function determineActionUrl(string $module, User $recipient, int $messageId): string
+    {
+        // Admin always goes to admin route
+        if ($recipient->hasRole('admin') || $recipient->hasRole('Administrator')) {
+            return route('admin.messages.show', $messageId);
+        }
+
+        // Route based on module
+        return match ($module) {
+            'growfinance' => route('growfinance.messages.show', $messageId),
+            'growbiz' => route('growbiz.messages.show', $messageId),
+            default => route('mygrownet.messages.show', $messageId),
+        };
     }
 }

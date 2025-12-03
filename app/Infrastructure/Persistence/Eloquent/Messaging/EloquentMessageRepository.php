@@ -15,7 +15,9 @@ class EloquentMessageRepository implements MessageRepository
         UserId $senderId,
         UserId $recipientId,
         MessageContent $content,
-        ?MessageId $parentId = null
+        ?MessageId $parentId = null,
+        string $module = 'mygrownet',
+        ?array $metadata = null
     ): Message {
         $model = new MessageModel();
         $model->sender_id = $senderId->value();
@@ -25,6 +27,8 @@ class EloquentMessageRepository implements MessageRepository
         $model->is_read = false;
         $model->read_at = null;
         $model->parent_id = $parentId?->value();
+        $model->module = $module;
+        $model->metadata = $metadata;
         $model->save();
 
         return $this->toDomainEntity($model);
@@ -56,11 +60,16 @@ class EloquentMessageRepository implements MessageRepository
         return $model ? $this->toDomainEntity($model) : null;
     }
 
-    public function findByRecipient(UserId $recipientId, int $limit = 50, int $offset = 0): array
+    public function findByRecipient(UserId $recipientId, int $limit = 50, int $offset = 0, ?string $module = null): array
     {
-        $models = MessageModel::where('recipient_id', $recipientId->value())
-            ->whereNull('parent_id') // Only root messages
-            ->orderBy('created_at', 'desc')
+        $query = MessageModel::where('recipient_id', $recipientId->value())
+            ->whereNull('parent_id'); // Only root messages
+        
+        if ($module !== null) {
+            $query->where('module', $module);
+        }
+        
+        $models = $query->orderBy('created_at', 'desc')
             ->limit($limit)
             ->offset($offset)
             ->get();
@@ -68,11 +77,16 @@ class EloquentMessageRepository implements MessageRepository
         return $models->map(fn($model) => $this->toDomainEntity($model))->all();
     }
 
-    public function findBySender(UserId $senderId, int $limit = 50, int $offset = 0): array
+    public function findBySender(UserId $senderId, int $limit = 50, int $offset = 0, ?string $module = null): array
     {
-        $models = MessageModel::where('sender_id', $senderId->value())
-            ->whereNull('parent_id') // Only root messages
-            ->orderBy('created_at', 'desc')
+        $query = MessageModel::where('sender_id', $senderId->value())
+            ->whereNull('parent_id'); // Only root messages
+        
+        if ($module !== null) {
+            $query->where('module', $module);
+        }
+        
+        $models = $query->orderBy('created_at', 'desc')
             ->limit($limit)
             ->offset($offset)
             ->get();
@@ -80,9 +94,9 @@ class EloquentMessageRepository implements MessageRepository
         return $models->map(fn($model) => $this->toDomainEntity($model))->all();
     }
 
-    public function findConversation(UserId $user1, UserId $user2, int $limit = 50): array
+    public function findConversation(UserId $user1, UserId $user2, int $limit = 50, ?string $module = null): array
     {
-        $models = MessageModel::where(function ($query) use ($user1, $user2) {
+        $query = MessageModel::where(function ($query) use ($user1, $user2) {
             // Messages from user1 to user2
             $query->where(function ($q) use ($user1, $user2) {
                 $q->where('sender_id', $user1->value())
@@ -93,8 +107,13 @@ class EloquentMessageRepository implements MessageRepository
                 $q->where('sender_id', $user2->value())
                   ->where('recipient_id', $user1->value());
             });
-        })
-            ->orderBy('created_at', 'asc') // Changed to asc for chronological order
+        });
+        
+        if ($module !== null) {
+            $query->where('module', $module);
+        }
+        
+        $models = $query->orderBy('created_at', 'asc') // Chronological order
             ->limit($limit)
             ->get();
 
@@ -110,11 +129,16 @@ class EloquentMessageRepository implements MessageRepository
         return $models->map(fn($model) => $this->toDomainEntity($model))->all();
     }
 
-    public function countUnreadByRecipient(UserId $recipientId): int
+    public function countUnreadByRecipient(UserId $recipientId, ?string $module = null): int
     {
-        return MessageModel::where('recipient_id', $recipientId->value())
-            ->where('is_read', false)
-            ->count();
+        $query = MessageModel::where('recipient_id', $recipientId->value())
+            ->where('is_read', false);
+        
+        if ($module !== null) {
+            $query->where('module', $module);
+        }
+        
+        return $query->count();
     }
 
     public function markAsRead(MessageId $id): void

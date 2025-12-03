@@ -16,6 +16,11 @@ class EarningsService
     /**
      * Calculate total earnings for a user from ALL sources
      * 
+     * NOTE: getCommissionEarnings() already includes ALL commission types
+     * (registration, starter_kit, subscription, product_purchase, etc.)
+     * So we DON'T add getStarterKitEarnings(), getSubscriptionEarnings(), etc.
+     * separately to avoid double-counting!
+     * 
      * @param User $user
      * @return float
      */
@@ -23,9 +28,6 @@ class EarningsService
     {
         return $this->getCommissionEarnings($user) 
              + $this->getProfitShareEarnings($user)
-             + $this->getSubscriptionEarnings($user)
-             + $this->getProductSalesEarnings($user)
-             + $this->getStarterKitEarnings($user)
              + $this->getBonusEarnings($user);
     }
 
@@ -62,9 +64,6 @@ class EarningsService
 
         return $this->getCommissionEarnings($user, $startOfMonth, $endOfMonth)
              + $this->getProfitShareEarnings($user, $startOfMonth, $endOfMonth)
-             + $this->getSubscriptionEarnings($user, $startOfMonth, $endOfMonth)
-             + $this->getProductSalesEarnings($user, $startOfMonth, $endOfMonth)
-             + $this->getStarterKitEarnings($user, $startOfMonth, $endOfMonth)
              + $this->getBonusEarnings($user, $startOfMonth, $endOfMonth);
     }
 
@@ -87,9 +86,6 @@ class EarningsService
             'bonuses' => $this->getBonusEarnings($user, $startDate, $endDate),
             'total' => $this->getCommissionEarnings($user, $startDate, $endDate)
                      + $this->getProfitShareEarnings($user, $startDate, $endDate)
-                     + $this->getSubscriptionEarnings($user, $startDate, $endDate)
-                     + $this->getProductSalesEarnings($user, $startDate, $endDate)
-                     + $this->getStarterKitEarnings($user, $startDate, $endDate)
                      + $this->getBonusEarnings($user, $startDate, $endDate),
         ];
     }

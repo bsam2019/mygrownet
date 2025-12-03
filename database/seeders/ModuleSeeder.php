@@ -442,6 +442,38 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // GrowFinance - Accounting & Financial Management - Emerald
+            [
+                'id' => 'growfinance',
+                'name' => 'GrowFinance',
+                'slug' => 'growfinance',
+                'category' => 'sme',
+                'description' => 'Track income, expenses, invoices, and generate financial reports',
+                'icon' => '💵',
+                'color' => '#059669', // Emerald
+                'thumbnail' => null,
+                'account_types' => json_encode(['business', 'member', 'client']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/growfinance',
+                    'standalone' => '/growfinance',
+                    'setup' => '/growfinance/setup',
+                ]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
+                'features' => json_encode(['offline' => true, 'dataSync' => true, 'notifications' => true, 'requires_setup' => true]),
+                'subscription_tiers' => json_encode([
+                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'transactions' => 100, 'reports' => 'basic'],
+                    'basic' => ['name' => 'Basic', 'price' => 99, 'billing_cycle' => 'monthly', 'transactions' => 'unlimited', 'reports' => 'advanced', 'receipt_storage' => '100MB'],
+                    'professional' => ['name' => 'Professional', 'price' => 299, 'billing_cycle' => 'monthly', 'transactions' => 'unlimited', 'reports' => 'advanced', 'receipt_storage' => '1GB', 'export' => true],
+                    'business' => ['name' => 'Business', 'price' => 599, 'billing_cycle' => 'monthly', 'transactions' => 'unlimited', 'reports' => 'advanced', 'receipt_storage' => '5GB', 'export' => true, 'multi_user' => true],
+                ]),
+                'requires_subscription' => false,
+                'version' => '1.0.0',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
         DB::table('modules')->insert($modules);

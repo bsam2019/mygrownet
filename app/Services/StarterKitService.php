@@ -62,6 +62,16 @@ class StarterKitService
             'payment_method' => $paymentMethod,
         ]);
         
+        // Prevent duplicate purchases
+        if ($user->has_starter_kit) {
+            Log::warning('User already has starter kit', [
+                'user_id' => $user->id,
+                'current_tier' => $user->starter_kit_tier,
+                'attempted_tier' => $tier,
+            ]);
+            throw new \Exception('You already have a starter kit. Please contact support if you wish to upgrade.');
+        }
+        
         return DB::transaction(function () use ($user, $paymentMethod, $paymentReference, $tier) {
             // Get price based on tier
             $price = $tier === self::TIER_PREMIUM ? self::PRICE_PREMIUM : self::PRICE_BASIC;
@@ -187,9 +197,9 @@ class StarterKitService
                 \Log::warning('Failed to create starter kit announcement', ['error' => $e->getMessage()]);
             }
             
-            // Process MLM commissions for uplines (7 levels)
-            // Only uplines who have purchased starter kit will receive commissions
-            $this->processStarterKitCommissions($user, $purchase->amount);
+            // NOTE: MLM commissions are processed by ProcessMLMCommissions listener
+            // when PaymentVerified event is dispatched. Do NOT process here to avoid duplicates.
+            // See: app/Listeners/ProcessMLMCommissions.php
             
             // Generate receipt (wrapped in try-catch to prevent purchase failure)
             try {
@@ -277,34 +287,25 @@ class StarterKitService
     /**
      * Process MLM commissions for starter kit purchase
      * 
+     * DEPRECATED: This method is no longer used. Commissions are now processed
+     * by the ProcessMLMCommissions listener when PaymentVerified event is dispatched.
+     * This prevents duplicate commission processing.
+     * 
+     * See: app/Listeners/ProcessMLMCommissions.php
+     * 
      * IMPORTANT: Commissions are always based on K500, regardless of tier.
      * - Basic tier (K500): Commission on K500
      * - Premium tier (K1000): Commission on K500 only (extra K500 is for content, not commissionable)
      */
     protected function processStarterKitCommissions(User $user, float $amount): void
     {
-        try {
-            // Always use K500 as the commission base, regardless of actual purchase amount
-            $commissionableAmount = 500.00;
-            
-            $mlmService = app(MLMCommissionService::class);
-            $commissions = $mlmService->processMLMCommissions($user, $commissionableAmount, 'starter_kit');
-            
-            Log::info('Starter kit commissions processed', [
-                'user_id' => $user->id,
-                'purchase_amount' => $amount,
-                'commissionable_amount' => $commissionableAmount,
-                'commissions_count' => count($commissions),
-                'total_commission' => collect($commissions)->sum('amount'),
-                'note' => 'Commissions based on K500 base amount only',
-            ]);
-        } catch (\Exception $e) {
-            // Log but don't fail the purchase if commission processing fails
-            Log::error('Failed to process starter kit commissions: ' . $e->getMessage(), [
-                'user_id' => $user->id,
-                'exception' => $e,
-            ]);
-        }
+        // DEPRECATED - DO NOT USE
+        // Commissions are processed by ProcessMLMCommissions listener
+        Log::warning('processStarterKitCommissions called but is deprecated', [
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'note' => 'This method should not be called. Commissions are handled by ProcessMLMCommissions listener.',
+        ]);
     }
     
     /**

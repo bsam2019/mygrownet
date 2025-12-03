@@ -19,6 +19,7 @@ class NotificationModel extends Model
         'user_id',
         'type',
         'category',
+        'module',
         'title',
         'message',
         'action_url',
@@ -61,5 +62,30 @@ class NotificationModel extends Model
     public function scopeByCategory($query, string $category)
     {
         return $query->where('category', $category);
+    }
+
+    public function scopeByModule($query, string $module)
+    {
+        return $query->where('module', $module);
+    }
+
+    public function scopeForGrowFinance($query)
+    {
+        return $query->where('module', 'growfinance');
+    }
+
+    public function scopeForGrowBiz($query)
+    {
+        return $query->where('module', 'growbiz');
+    }
+
+    public function scopeForMyGrowNet($query)
+    {
+        return $query->where('module', 'mygrownet');
+    }
+
+    public function scopeForCore($query)
+    {
+        return $query->where('module', 'core');
     }
 }

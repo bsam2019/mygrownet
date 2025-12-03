@@ -227,3 +227,19 @@ Broadcast::channel('member.support.{ticketId}', function ($user, $ticketId) {
 Broadcast::channel('member.{userId}', function ($user, $userId) {
     return $user && (int) $user->id === (int) $userId;
 });
+
+/*
+|--------------------------------------------------------------------------
+| GrowFinance Module Channels
+|--------------------------------------------------------------------------
+*/
+
+// GrowFinance user notification channel
+Broadcast::channel('growfinance.user.{userId}', function ($user, $userId) {
+    return $user && (int) $user->id === (int) $userId;
+});
+
+// GrowFinance admin channel for feedback/support notifications
+Broadcast::channel('growfinance.admin', function ($user) {
+    return $user && ($user->hasRole('admin') || $user->hasRole('Admin') || $user->is_admin);
+});
