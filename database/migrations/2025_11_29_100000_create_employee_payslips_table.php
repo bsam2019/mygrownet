@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         // Payslips table
-        Schema::create('employee_payslips', function (Blueprint $table) {
+        if (!Schema::hasTable('employee_payslips')) {
+            Schema::create('employee_payslips', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->string('payslip_number')->unique();
@@ -49,7 +50,8 @@ return new class extends Migration
             
             $table->index(['employee_id', 'payment_date']);
             $table->index('pay_period_start');
-        });
+            });
+        }
 
         // Company announcements for employees (if not exists)
         if (!Schema::hasTable('employee_announcements')) {
