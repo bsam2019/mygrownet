@@ -1,0 +1,179 @@
+# Implementation Plan
+
+- [x] 1. PWA Foundation Setup
+  - [x] 1.1 Create web app manifest file with BizBoost branding
+    - Create `public/manifest.json` with app name, icons, theme colors
+    - Configure standalone display mode and start URL
+    - _Requirements: 1.1, 1.2, 1.3_
+  - [x] 1.2 Enhance service worker for BizBoost caching and offline support
+    - Add BizBoost routes to ASSETS_TO_CACHE in `public/sw.js`
+    - Serve `bizboost-offline.html` as fallback for BizBoost routes when offline
+    - Handle GET_CACHED_PAGES and GET_QUEUED_ACTIONS messages for offline page
+    - Implement offline action queue for BizBoost mutations
+    - _Requirements: 1.4, 1.6, 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8_
+  - [x] 1.3 Add PWA meta tags to app layout
+    - Add manifest link, theme-color, apple-touch-icon meta tags
+    - Register service worker in app entry
+    - _Requirements: 1.1, 1.3_
+  - [x] 1.4 Create usePWA composable for install state management
+    - Track installable state, online/offline status
+    - Handle beforeinstallprompt event
+    - Provide install trigger function
+    - _Requirements: 1.1, 12.1_
+
+- [x] 2. Core Mobile Composables
+  - [x] 2.1 Create useMobileDetect composable
+    - Detect mobile viewport and touch capability
+    - Track screen orientation
+    - Provide isMobile, isTablet, isTouch refs
+    - _Requirements: 2.1_
+  - [x] 2.2 Create useHaptics composable
+    - Wrap Vibration API with fallback
+    - Provide light, medium, heavy, success, error patterns
+    - Respect system haptic settings
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
+  - [x] 2.3 Create useSwipeGesture composable
+    - Track touch start, move, end events
+    - Calculate swipe direction and velocity
+    - Prevent scroll conflicts during horizontal swipe
+    - _Requirements: 4.6, 9.1_
+
+- [x] 3. Bottom Navigation Component
+  - [x] 3.1 Create BottomNavigation.vue component
+    - Fixed bottom bar with 5 nav items
+    - Active state highlighting with violet color
+    - Badge support for notifications
+    - Safe area padding for notched devices
+    - _Requirements: 2.1, 2.2, 2.4, 2.7_
+  - [x] 3.2 Implement scroll-aware hide/show behavior
+    - Hide on scroll down, show on scroll up
+    - Smooth transition animations
+    - _Requirements: 2.5, 2.6_
+  - [x] 3.3 Create MoreMenu bottom sheet for additional navigation
+    - Slide-up sheet with all navigation options
+    - Grouped by category (Business, Tools, Advanced)
+    - _Requirements: 2.8_
+
+- [x] 4. Bottom Sheet Modal Component
+  - [x] 4.1 Create BottomSheet.vue component
+    - Slide-up animation from bottom
+    - Drag handle for gesture dismissal
+    - Backdrop overlay with tap-to-dismiss
+    - _Requirements: 5.1, 5.2, 5.5, 5.6_
+  - [x] 4.2 Implement drag-to-dismiss gesture
+    - Track drag position and velocity
+    - Auto-dismiss when dragged past 50%
+    - Spring animation on release
+    - _Requirements: 5.3, 5.4_
+  - [x] 4.3 Add form protection to prevent accidental dismissal
+    - Detect active form inputs
+    - Require confirmation or disable drag during input
+    - _Requirements: 5.7_
+
+- [x] 5. Mobile Header Component
+  - [x] 5.1 Create MobileHeader.vue component
+    - Back button with navigation
+    - Title with truncation
+    - Right-side action icons
+    - _Requirements: 6.1, 6.3, 6.4_
+  - [x] 5.2 Implement back navigation with slide transition
+    - Detect navigation direction
+    - Apply appropriate slide animation
+    - _Requirements: 6.2, 10.1, 10.2_
+  - [x] 5.3 Add optional scroll-collapse behavior
+    - Collapse to compact header on scroll
+    - Expand on scroll up
+    - _Requirements: 6.5_
+
+- [x] 6. Pull-to-Refresh Component
+  - [x] 6.1 Create PullToRefresh.vue component
+    - Wrapper component for list pages
+    - Pull indicator with progress
+    - Loading spinner during refresh
+    - _Requirements: 3.1, 3.2, 3.3_
+  - [x] 6.2 Implement refresh trigger and callback
+    - Call onRefresh prop when threshold exceeded
+    - Handle success and error states
+    - Show toast on error
+    - _Requirements: 3.4, 3.5_
+
+- [x] 7. Swipeable List Item Component
+  - [x] 7.1 Create SwipeableListItem.vue component
+    - Left and right swipe reveal actions
+    - Action buttons with icons and colors
+    - _Requirements: 4.1, 4.2, 4.4_
+  - [x] 7.2 Implement auto-trigger on full swipe
+    - Trigger primary action when swiped past threshold
+    - Haptic feedback on trigger
+    - _Requirements: 4.3_
+  - [x] 7.3 Add tap-elsewhere-to-close behavior
+    - Close open swipe actions when tapping outside
+    - Prevent scroll during swipe
+    - _Requirements: 4.5, 4.6_
+
+- [x] 8. Floating Action Button Component
+  - [x] 8.1 Create FloatingActionButton.vue component
+    - Positioned bottom-right above bottom nav
+    - Single action or expandable menu
+    - _Requirements: 8.1, 8.2, 8.3, 8.4_
+  - [x] 8.2 Implement scroll-aware shrink/expand
+    - Shrink to icon-only on scroll down
+    - Expand with label on scroll up
+    - _Requirements: 8.5, 8.6_
+  - [x] 8.3 Add haptic feedback on tap
+    - Trigger light haptic on tap
+    - _Requirements: 8.7_
+
+- [x] 9. Install Prompt Component
+  - [x] 9.1 Create InstallPrompt.vue component
+    - Banner or modal prompting installation
+    - Show only when installable
+    - Dismiss and remember preference
+    - _Requirements: 1.1_
+  - [x] 9.2 Handle iOS-specific install instructions
+    - Detect iOS Safari
+    - Show manual "Add to Home Screen" instructions
+    - _Requirements: 1.1_
+
+- [x] 10. Page Transitions
+  - [x] 10.1 Implement slide transitions for navigation
+    - Slide-in-from-right for forward navigation
+    - Slide-out-to-right for back navigation
+    - _Requirements: 10.1, 10.2_
+  - [x] 10.2 Implement modal transitions
+    - Fade with scale for modals
+    - Cross-fade for tab switches
+    - _Requirements: 10.3, 10.4, 10.5_
+  - [x] 10.3 Add reduced motion support
+    - Detect prefers-reduced-motion
+    - Use instant transitions when preferred
+    - _Requirements: 10.7_
+
+- [x] 11. Layout Integration
+  - [x] 11.1 Update BizBoostLayout.vue for mobile
+    - Conditionally show bottom nav on mobile
+    - Hide sidebar on mobile
+    - Add padding for bottom nav
+    - _Requirements: 2.1, 2.2_
+  - [x] 11.2 Integrate mobile header on sub-pages
+    - Show mobile header with back button on detail pages
+    - Pass contextual actions to header
+    - _Requirements: 6.1, 6.2_
+  - [x] 11.3 Add install prompt to layout
+    - Show install prompt banner on first visit
+    - Integrate with usePWA composable
+    - _Requirements: 1.1_
+
+- [x] 12. Skeleton Loading States
+  - [x] 12.1 Create mobile-optimized skeleton components
+    - List skeleton for mobile lists
+    - Card skeleton for dashboard
+    - Detail skeleton for detail pages
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [x] 12.2 Add shimmer animation effect
+    - Animated gradient shimmer
+    - Smooth fade-in when content loads
+    - _Requirements: 7.4, 7.5_
+  - [x] 12.3 Add "Still loading" message for slow connections
+    - Show message after 3 seconds
+    - _Requirements: 7.6_

@@ -23,6 +23,11 @@ class Money
         return new self(0, $currency);
     }
 
+    public static function fromCents(int $cents, string $currency = 'ZMW'): self
+    {
+        return new self((int) ($cents / 100), $currency);
+    }
+
     public function amount(): int
     {
         return $this->amount;

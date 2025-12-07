@@ -9,6 +9,11 @@ enum ModuleStatus: string
     case COMING_SOON = 'coming_soon';
     case INACTIVE = 'inactive';
 
+    public static function fromString(string $status): self
+    {
+        return self::tryFrom($status) ?? self::ACTIVE;
+    }
+
     public function isActive(): bool
     {
         return $this === self::ACTIVE;

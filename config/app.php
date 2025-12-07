@@ -175,6 +175,7 @@ return [
         App\Providers\EmailMarketingServiceProvider::class,
         App\Providers\WeddingServiceProvider::class,
         App\Providers\GrowFinanceServiceProvider::class,
+        App\Providers\ModuleSubscriptionServiceProvider::class, // Centralized module subscription services
     ])->toArray(),
 
     /*

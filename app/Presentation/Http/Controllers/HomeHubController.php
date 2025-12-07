@@ -5,6 +5,7 @@ namespace App\Presentation\Http\Controllers;
 use App\Application\UseCases\Module\GetUserModulesUseCase;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GrowBiz\SetupController;
+use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
 use App\Enums\AccountType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,13 +27,20 @@ class HomeHubController extends Controller
         // Get all modules with access status using DDD use case
         $moduleDTOs = $this->getUserModulesUseCase->execute($user);
         
-        // Convert DTOs to arrays and add setup info for GrowBiz
+        // Check setup status for modules that require it
         $growbizNeedsSetup = SetupController::needsSetup($user->id);
-        $modules = array_map(function($dto) use ($growbizNeedsSetup) {
+        $bizboostNeedsSetup = $this->bizboostNeedsSetup($user->id);
+        
+        $modules = array_map(function($dto) use ($growbizNeedsSetup, $bizboostNeedsSetup) {
             $arr = $dto->toArray();
             // Add setup route for GrowBiz if needed
             if ($arr['slug'] === 'growbiz' && $growbizNeedsSetup) {
                 $arr['primary_route'] = '/growbiz/setup';
+                $arr['needs_setup'] = true;
+            }
+            // Add setup route for BizBoost if needed
+            if ($arr['slug'] === 'bizboost' && $bizboostNeedsSetup) {
+                $arr['primary_route'] = '/bizboost/setup';
                 $arr['needs_setup'] = true;
             }
             return $arr;
@@ -75,5 +83,16 @@ class HomeHubController extends Controller
             'modules' => $modules,
             'availableModules' => $user->getAllAvailableModules(), // Legacy support
         ]);
+    }
+
+    /**
+     * Check if user needs to complete BizBoost setup
+     */
+    private function bizboostNeedsSetup(int $userId): bool
+    {
+        $business = BizBoostBusinessModel::where('user_id', $userId)->first();
+        
+        // Needs setup if no business exists or onboarding not completed
+        return !$business || !$business->onboarding_completed;
     }
 }

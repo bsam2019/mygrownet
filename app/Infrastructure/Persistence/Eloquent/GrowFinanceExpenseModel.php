@@ -23,6 +23,9 @@ class GrowFinanceExpenseModel extends Model
         'payment_method',
         'reference',
         'receipt_path',
+        'receipt_size',
+        'receipt_original_name',
+        'receipt_mime_type',
         'is_recurring',
         'notes',
     ];

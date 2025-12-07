@@ -9,6 +9,11 @@ enum ModuleCategory: string
     case SME = 'sme';
     case ENTERPRISE = 'enterprise';
 
+    public static function fromString(string $value): self
+    {
+        return self::tryFrom(strtolower($value)) ?? self::SME;
+    }
+
     public function label(): string
     {
         return match($this) {

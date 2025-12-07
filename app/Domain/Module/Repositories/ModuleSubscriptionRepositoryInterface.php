@@ -61,4 +61,12 @@ interface ModuleSubscriptionRepositoryInterface
      * @return void
      */
     public function delete(string $id): void;
+
+    /**
+     * Clear cached subscription data for a user and module
+     * @param int $userId User ID
+     * @param string $moduleId Module ID
+     * @return void
+     */
+    public function clearCache(int $userId, string $moduleId): void;
 }

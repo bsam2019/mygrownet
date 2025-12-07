@@ -398,6 +398,39 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // BizBoost - Marketing & Growth Assistant - Orange
+            [
+                'id' => 'bizboost',
+                'name' => 'BizBoost',
+                'slug' => 'bizboost',
+                'category' => 'sme',
+                'description' => 'Marketing & growth assistant for SMEs with AI content, social media, and customer management',
+                'icon' => '🚀',
+                'color' => '#F97316', // Orange
+                'thumbnail' => null,
+                'account_types' => json_encode(['business', 'member', 'client']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/bizboost',
+                    'standalone' => '/bizboost',
+                    'setup' => '/bizboost/setup',
+                    'welcome' => '/bizboost/welcome',  // Public landing page (no auth required)
+                ]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
+                'features' => json_encode(['offline' => true, 'dataSync' => true, 'notifications' => true, 'requires_setup' => true]),
+                'subscription_tiers' => json_encode([
+                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'posts' => 10, 'ai_credits' => 5, 'customers' => 50],
+                    'starter' => ['name' => 'Starter', 'price' => 49, 'billing_cycle' => 'monthly', 'posts' => 50, 'ai_credits' => 50, 'customers' => 500],
+                    'growth' => ['name' => 'Growth', 'price' => 99, 'billing_cycle' => 'monthly', 'posts' => 'unlimited', 'ai_credits' => 200, 'customers' => 'unlimited'],
+                    'pro' => ['name' => 'Pro', 'price' => 199, 'billing_cycle' => 'monthly', 'posts' => 'unlimited', 'ai_credits' => 'unlimited', 'customers' => 'unlimited', 'team_members' => 5],
+                ]),
+                'requires_subscription' => false,
+                'version' => '1.0.0',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
         DB::table('modules')->insert($modules);

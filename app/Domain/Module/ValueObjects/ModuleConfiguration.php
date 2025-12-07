@@ -219,4 +219,29 @@ class ModuleConfiguration
             'feature_access' => $this->featureAccess,
         ];
     }
+
+    /**
+     * Create from config array
+     */
+    public static function fromArray(array $config): self
+    {
+        $tiers = $config['tiers'] ?? [];
+        $freeTier = $tiers['free'] ?? [];
+
+        return new self(
+            icon: $config['icon'] ?? 'CurrencyDollarIcon',
+            color: $config['color'] ?? 'emerald',
+            thumbnail: $config['thumbnail'] ?? null,
+            routes: $config['routes'] ?? [],
+            pwaConfig: $config['pwa'] ?? [],
+            features: $config['features'] ?? [],
+            subscriptionTiers: array_keys($tiers),
+            requiresSubscription: $config['requires_subscription'] ?? true,
+            hasFreeTier: isset($tiers['free']),
+            freeTierFeatures: $freeTier['features'] ?? [],
+            freeTierLimits: $freeTier['limits'] ?? [],
+            tierLimits: array_map(fn($t) => $t['limits'] ?? [], $tiers),
+            featureAccess: $config['feature_access'] ?? []
+        );
+    }
 }

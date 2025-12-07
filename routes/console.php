@@ -47,6 +47,30 @@ Schedule::command('accounts:monitor')
     ->dailyAt('07:00')
     ->description('Monitor account integrity and alert on issues');
 
+// ========================================
+// BizBoost Scheduled Tasks
+// ========================================
+
+// Process scheduled posts - runs every minute to publish posts when their scheduled time arrives
+Schedule::command('bizboost:process-scheduled-posts')
+    ->everyMinute()
+    ->description('Publish BizBoost posts that are scheduled and ready');
+
+// Process active campaigns - runs daily to schedule posts for each day of active campaigns
+Schedule::command('bizboost:process-campaigns')
+    ->dailyAt('06:00')
+    ->description('Process active BizBoost campaigns and schedule daily posts');
+
+// Auto-complete expired campaigns - runs daily to mark campaigns as completed
+Schedule::command('bizboost:complete-expired-campaigns')
+    ->dailyAt('00:30')
+    ->description('Mark expired BizBoost campaigns as completed');
+
+// Send follow-up reminders - runs every 15 minutes to send due reminder notifications
+Schedule::command('bizboost:send-reminders')
+    ->everyFifteenMinutes()
+    ->description('Send due BizBoost follow-up reminder notifications');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

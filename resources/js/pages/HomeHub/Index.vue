@@ -23,7 +23,8 @@ import {
   GiftIcon,
   TruckIcon,
   ShieldCheckIcon,
-  SparklesIcon
+  SparklesIcon,
+  RocketLaunchIcon
 } from '@heroicons/vue/24/solid';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import SubscriptionModal from '@/components/HomeHub/SubscriptionModal.vue';
@@ -72,6 +73,12 @@ const handleModuleClick = (module: Module) => {
     return;
   }
   
+  // BizBoost is always accessible - it has its own setup flow
+  if (module.slug === 'bizboost') {
+    router.visit(module.primary_route || '/bizboost');
+    return;
+  }
+  
   if (module.has_access) {
     router.visit(module.primary_route);
   } else if (module.requires_subscription && module.subscription_tiers) {
@@ -105,6 +112,7 @@ const getModuleIcon = (slug: string) => {
     'sme-accounting': ChartBarIcon,
     'accounting': ChartBarIcon,
     'growfinance': BanknotesIcon,
+    'bizboost': SparklesIcon,
     'messaging': ChatBubbleLeftRightIcon,
     'marketplace': ShoppingCartIcon,
     'shop': ShoppingCartIcon,

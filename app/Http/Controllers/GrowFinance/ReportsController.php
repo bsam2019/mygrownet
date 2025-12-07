@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\AccountingService;
+use App\Domain\GrowFinance\Services\PdfReportService;
+use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
@@ -19,7 +21,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ReportsController extends Controller
 {
     public function __construct(
-        private AccountingService $accountingService
+        private AccountingService $accountingService,
+        private SubscriptionService $subscriptionService,
+        private PdfReportService $pdfReportService
     ) {}
     public function profitLoss(Request $request): Response
     {
@@ -53,6 +57,14 @@ class ReportsController extends Controller
 
     public function balanceSheet(Request $request): Response
     {
+        // Check if user can access this report
+        if (!$this->subscriptionService->canAccessReport($request->user(), 'balance-sheet')) {
+            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
+                'reportName' => 'Balance Sheet',
+                'requiredTier' => 'basic',
+            ]);
+        }
+
         $businessId = $request->user()->id;
         $asOfDate = $request->get('as_of_date', Carbon::now()->format('Y-m-d'));
 
@@ -176,6 +188,14 @@ class ReportsController extends Controller
 
     public function trialBalance(Request $request): Response
     {
+        // Check if user can access this report
+        if (!$this->subscriptionService->canAccessReport($request->user(), 'trial-balance')) {
+            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
+                'reportName' => 'Trial Balance',
+                'requiredTier' => 'basic',
+            ]);
+        }
+
         $businessId = $request->user()->id;
         $asOfDate = $request->get('as_of_date', Carbon::now()->format('Y-m-d'));
 
@@ -192,6 +212,14 @@ class ReportsController extends Controller
 
     public function generalLedger(Request $request): Response
     {
+        // Check if user can access this report
+        if (!$this->subscriptionService->canAccessReport($request->user(), 'general-ledger')) {
+            return Inertia::render('GrowFinance/Reports/UpgradeRequired', [
+                'reportName' => 'General Ledger',
+                'requiredTier' => 'basic',
+            ]);
+        }
+
         $businessId = $request->user()->id;
         $accountId = $request->get('account_id');
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
@@ -253,24 +281,158 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function export(Request $request, string $type): StreamedResponse
+    public function export(Request $request, string $type): StreamedResponse|HttpResponse
     {
         $businessId = $request->user()->id;
         $format = $request->get('format', 'csv');
+
+        // For PDF export, check subscription
+        if ($format === 'pdf') {
+            $check = $this->pdfReportService->canExportPdf($request->user());
+            if (!$check['allowed']) {
+                return back()->with('error', $check['reason']);
+            }
+
+            return $this->exportPdf($request, $type);
+        }
 
         $data = match ($type) {
             'profit-loss' => $this->getProfitLossData($businessId, $request),
             'balance-sheet' => $this->getBalanceSheetData($businessId, $request),
             'trial-balance' => $this->getTrialBalanceData($businessId),
+            'cash-flow' => $this->getCashFlowCsvData($businessId, $request),
+            'general-ledger' => $this->getGeneralLedgerCsvData($businessId, $request),
             default => throw new \InvalidArgumentException('Invalid report type'),
         };
 
-        if ($format === 'csv') {
-            return $this->exportCsv($type, $data);
+        return $this->exportCsv($type, $data);
+    }
+
+    /**
+     * Export report as PDF
+     */
+    private function exportPdf(Request $request, string $type): HttpResponse
+    {
+        $user = $request->user();
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $asOfDate = $request->get('as_of_date', Carbon::now()->format('Y-m-d'));
+        $accountId = $request->get('account_id');
+
+        $pdf = match ($type) {
+            'profit-loss' => $this->pdfReportService->generateProfitLoss($user, $startDate, $endDate),
+            'balance-sheet' => $this->pdfReportService->generateBalanceSheet($user, $asOfDate),
+            'cash-flow' => $this->pdfReportService->generateCashFlow($user, $startDate, $endDate),
+            'trial-balance' => $this->pdfReportService->generateTrialBalance($user, $asOfDate),
+            'general-ledger' => $this->pdfReportService->generateGeneralLedger($user, $startDate, $endDate, $accountId),
+            default => throw new \InvalidArgumentException('Invalid report type'),
+        };
+
+        $filename = $type . '-' . Carbon::now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Get Cash Flow data for CSV export
+     */
+    private function getCashFlowCsvData(int $businessId, Request $request): array
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $cashFromSales = GrowFinanceInvoiceModel::forBusiness($businessId)
+            ->whereBetween('invoice_date', [$startDate, $endDate])
+            ->sum('amount_paid');
+
+        $expensesByCategory = GrowFinanceExpenseModel::forBusiness($businessId)
+            ->whereBetween('expense_date', [$startDate, $endDate])
+            ->selectRaw('category, SUM(amount) as total')
+            ->groupBy('category')
+            ->get();
+
+        $totalExpenses = $expensesByCategory->sum('total');
+
+        $rows = [
+            ['Cash Flow Statement'],
+            ['Period: ' . $startDate . ' to ' . $endDate],
+            [''],
+            ['OPERATING ACTIVITIES'],
+            ['Cash received from customers', number_format((float) $cashFromSales, 2)],
+        ];
+
+        foreach ($expensesByCategory as $expense) {
+            $rows[] = ['Payment: ' . ($expense->category ?? 'Other'), '-' . number_format((float) $expense->total, 2)];
         }
 
-        // For PDF, we'd need a PDF library - returning CSV for now
-        return $this->exportCsv($type, $data);
+        $netCashFlow = (float) $cashFromSales - (float) $totalExpenses;
+        $rows[] = [''];
+        $rows[] = ['Net Cash Flow', number_format($netCashFlow, 2)];
+
+        return $rows;
+    }
+
+    /**
+     * Get General Ledger data for CSV export
+     */
+    private function getGeneralLedgerCsvData(int $businessId, Request $request): array
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $accountId = $request->get('account_id');
+
+        $rows = [
+            ['General Ledger'],
+            ['Period: ' . $startDate . ' to ' . $endDate],
+            [''],
+        ];
+
+        $query = GrowFinanceAccountModel::forBusiness($businessId)->active()->orderBy('code');
+        if ($accountId) {
+            $query->where('id', $accountId);
+        }
+        $accounts = $query->get();
+
+        foreach ($accounts as $account) {
+            $rows[] = [''];
+            $rows[] = ['Account: ' . $account->name . ' (' . $account->code . ')'];
+            $rows[] = ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Balance'];
+
+            $entries = GrowFinanceJournalEntryModel::forBusiness($businessId)
+                ->with(['lines' => function ($query) use ($account) {
+                    $query->where('account_id', $account->id);
+                }])
+                ->whereBetween('entry_date', [$startDate, $endDate])
+                ->where('is_posted', true)
+                ->orderBy('entry_date')
+                ->get();
+
+            $runningBalance = (float) $account->opening_balance;
+
+            foreach ($entries as $entry) {
+                foreach ($entry->lines as $line) {
+                    $debit = (float) $line->debit_amount;
+                    $credit = (float) $line->credit_amount;
+
+                    if ($account->type->isDebitNormal()) {
+                        $runningBalance += ($debit - $credit);
+                    } else {
+                        $runningBalance += ($credit - $debit);
+                    }
+
+                    $rows[] = [
+                        $entry->entry_date,
+                        $entry->reference ?? '',
+                        $entry->description,
+                        $debit > 0 ? number_format($debit, 2) : '',
+                        $credit > 0 ? number_format($credit, 2) : '',
+                        number_format($runningBalance, 2),
+                    ];
+                }
+            }
+        }
+
+        return $rows;
     }
 
     private function getProfitLossData(int $businessId, Request $request): array

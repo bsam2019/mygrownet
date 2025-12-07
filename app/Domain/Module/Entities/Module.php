@@ -89,6 +89,31 @@ class Module
         );
     }
 
+    /**
+     * Create Module from config array (for config-based repositories)
+     */
+    public static function fromConfig(string $moduleId, array $config): self
+    {
+        $accountTypes = [];
+        foreach ($config['account_types'] ?? ['sme'] as $type) {
+            $accountTypes[] = AccountType::tryFrom($type) ?? AccountType::SME;
+        }
+
+        return new self(
+            id: ModuleId::fromString($moduleId),
+            name: ModuleName::fromString($config['name']),
+            slug: ModuleSlug::fromString($config['slug'] ?? $moduleId),
+            category: ModuleCategory::fromString($config['category'] ?? 'general'),
+            description: $config['description'] ?? '',
+            accountTypes: $accountTypes,
+            configuration: ModuleConfiguration::fromArray($config),
+            status: ModuleStatus::fromString($config['status'] ?? 'active'),
+            version: $config['version'] ?? '1.0.0',
+            createdAt: new \DateTimeImmutable(),
+            updatedAt: new \DateTimeImmutable()
+        );
+    }
+
     public function isAccessibleBy(AccountType $accountType): bool
     {
         return in_array($accountType, $this->accountTypes, true);

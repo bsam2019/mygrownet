@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growbiz.php'));
             Route::middleware('web')
                 ->group(base_path('routes/growfinance.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/bizboost.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -37,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'employee' => \App\Http\Middleware\EnsureIsEmployee::class,
             'module.access' => \App\Http\Middleware\CheckModuleAccess::class,
             'account.type' => \App\Http\Middleware\CheckAccountType::class,
+            'bizboost.subscription' => \App\Http\Middleware\CheckBizBoostSubscription::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

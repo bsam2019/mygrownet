@@ -179,6 +179,7 @@ class ModuleSubscription
     public function getUserId(): int { return $this->userId; }
     public function getModuleId(): string { return $this->moduleId; }
     public function getSubscriptionTier(): string { return $this->subscriptionTier; }
+    public function getTier(): string { return $this->subscriptionTier; } // Alias for getSubscriptionTier
     public function getStatus(): string { return $this->status; }
     public function getAmount(): Money { return $this->amount; }
     public function getBillingCycle(): string { return $this->billingCycle; }

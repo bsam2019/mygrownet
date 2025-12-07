@@ -18,9 +18,20 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(Request $request): Response
     {
+        // Store redirect URL in session if provided via query parameter
+        // This allows module landing pages (like BizBoost) to redirect back after login
+        if ($request->has('redirect')) {
+            $redirectUrl = $request->query('redirect');
+            // Only allow internal redirects (starting with /)
+            if (is_string($redirectUrl) && str_starts_with($redirectUrl, '/')) {
+                $request->session()->put('url.intended', url($redirectUrl));
+            }
+        }
+
         return Inertia::render('auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
+            'redirect' => $request->query('redirect'),
         ]);
     }
 

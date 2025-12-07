@@ -10,6 +10,7 @@ use App\Http\Controllers\GrowBiz\SetupController;
 use App\Http\Controllers\GrowBiz\SettingsController;
 use App\Http\Controllers\GrowBiz\NotificationController;
 use App\Http\Controllers\GrowBiz\MessageController;
+use App\Http\Controllers\GrowBiz\SubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -132,4 +133,11 @@ Route::middleware(['auth', 'verified'])
         Route::post('/', [MessageController::class, 'store'])->name('store');
         Route::post('/{id}/reply', [MessageController::class, 'reply'])->name('reply');
     });
+
+    // Subscription & Billing
+    Route::get('/upgrade', [SubscriptionController::class, 'upgrade'])->name('upgrade');
+    Route::get('/checkout', [SubscriptionController::class, 'checkout'])->name('checkout');
+    Route::post('/subscribe', [SubscriptionController::class, 'subscribe'])->name('subscribe');
+    Route::get('/usage', [SubscriptionController::class, 'usage'])->name('usage');
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 });

@@ -1,288 +1,462 @@
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, readonly, computed } from 'vue';
 
-const INSTALL_PROMPT_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // 7 days
-const INSTALL_PROMPT_STORAGE_KEY = 'pwa-install-dismissed-at';
-const INSTALL_PROMPT_SHOW_DELAY = 1000; // 1 second after page load
-const INSTALL_STATE_KEY = 'pwa-install-state';
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+// QueuedAction interface for offline sync queue
+export interface QueuedAction {
+    id: number;
+    type: string;
+    endpoint: string;
+    method: string;
+    payload: Record<string, unknown>;
+    timestamp: number;
+    retryCount: number;
+}
+
+interface SWMessage {
+    type: string;
+    count?: number;
+    success?: number;
+    failed?: number;
+    version?: string;
+    timestamp?: number;
+}
+
+const isInstalled = ref(false);
+const isInstallable = ref(false);
+const isOnline = ref(navigator.onLine);
+const isStandalone = ref(false);
+const isUpdateAvailable = ref(false);
+const isSyncing = ref(false);
+const pendingActionsCount = ref(0);
+const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null);
+
+let initialized = false;
 
 export function usePWA() {
-  const deferredPrompt = ref<any>(null);
-  const showInstallPrompt = ref(false);
-  const isInstalled = ref(false);
-  const isStandalone = ref(false);
-  const updateAvailable = ref(false);
-  const swRegistration = ref<ServiceWorkerRegistration | null>(null);
+    const initPWA = () => {
+        if (initialized) return;
+        initialized = true;
 
-  onMounted(() => {
-    // Check if already installed using multiple methods
-    const isDisplayModeStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = (window.navigator as any).standalone === true;
-    const isInStandaloneMode = isDisplayModeStandalone || isIOSStandalone;
-    
-    // Additional check: if URL has ?source=pwa or running in app window
-    const urlParams = new URLSearchParams(window.location.search);
-    const isPWASource = urlParams.get('source') === 'pwa';
-    
-    // Check if running in a PWA window (desktop Chrome/Edge)
-    const isDesktopPWA = window.matchMedia('(display-mode: window-controls-overlay)').matches;
-    
-    isStandalone.value = isInStandaloneMode || isDesktopPWA || isPWASource;
-    
-    // Check localStorage for install state
-    const savedInstallState = localStorage.getItem(INSTALL_STATE_KEY);
-    isInstalled.value = isStandalone.value || savedInstallState === 'true';
-    
-    // Log detection results for debugging
-    console.log('[PWA] Detection:', {
-      isDisplayModeStandalone,
-      isIOSStandalone,
-      isDesktopPWA,
-      isPWASource,
-      savedInstallState,
-      finalIsInstalled: isInstalled.value
-    });
+        // Check if running as standalone PWA
+        isStandalone.value = 
+            window.matchMedia('(display-mode: standalone)').matches ||
+            (window.navigator as any).standalone === true ||
+            document.referrer.includes('android-app://');
 
-    // Additional check using getInstalledRelatedApps API (Chrome/Edge)
-    if ('getInstalledRelatedApps' in navigator) {
-      (navigator as any).getInstalledRelatedApps()
-        .then((relatedApps: any[]) => {
-          if (relatedApps.length > 0) {
-            console.log('[PWA] Detected installed via getInstalledRelatedApps');
-            isInstalled.value = true;
-            localStorage.setItem(INSTALL_STATE_KEY, 'true');
-          }
-        })
-        .catch((error: any) => {
-          console.warn('[PWA] getInstalledRelatedApps failed:', error);
-        });
-    }
+        // Check if already installed (heuristic)
+        isInstalled.value = isStandalone.value;
 
-    // Register service worker with update checking
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
-        .then((registration) => {
-          console.log('[PWA] Service Worker registered:', registration);
-          swRegistration.value = registration;
+        // Service worker is registered in app.ts for BizBoost routes
+        // Here we just set up listeners for the existing registration
+        if ('serviceWorker' in navigator) {
+            // Get existing registration and set up update listener
+            navigator.serviceWorker.ready.then((registration) => {
+                console.log('[PWA] Service worker ready');
 
-          // Check for updates immediately
-          registration.update().catch((error) => {
-            console.warn('[PWA] Initial update check failed:', error);
-          });
-
-          // Check for updates every 30 seconds (more frequent)
-          setInterval(() => {
-            registration.update().catch((error) => {
-              console.warn('[PWA] Update check failed:', error);
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                isUpdateAvailable.value = true;
+                            }
+                        });
+                    }
+                });
+            }).catch((error) => {
+                console.log('[PWA] No service worker registration found:', error);
             });
-          }, 30000);
 
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (!newWorker) return;
-
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New service worker is ready
-                console.log('[PWA] Update available');
-                updateAvailable.value = true;
-                
-                // Notify user about update
-                notifyUpdateAvailable();
-              }
-            });
-          });
-        })
-        .catch((error) => {
-          console.warn('[PWA] Service Worker registration failed:', error);
-        });
-
-      // Listen for messages from service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SW_ACTIVATED') {
-          console.log('[PWA] Service worker activated with version:', event.data.version);
-          // Could trigger a refresh notification here
+            // Listen for messages from service worker
+            navigator.serviceWorker.addEventListener('message', handleSWMessage);
         }
-      });
-    }
 
-    // Listen for beforeinstallprompt event
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt.value = e;
-      
-      console.log('[PWA] Install prompt available');
-      
-      // Check if we should show the prompt
-      if (shouldShowInstallPrompt()) {
-        // Show the prompt after a short delay
-        setTimeout(() => {
-          if (!isInstalled.value && deferredPrompt.value) {
-            console.log('[PWA] Showing install prompt');
-            showInstallPrompt.value = true;
-          }
-        }, INSTALL_PROMPT_SHOW_DELAY);
-      }
-    });
+        // Listen for install prompt
+        window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 
-    // Listen for app installed event
-    window.addEventListener('appinstalled', () => {
-      console.log('[PWA] App installed successfully');
-      isInstalled.value = true;
-      showInstallPrompt.value = false;
-      deferredPrompt.value = null;
-      localStorage.setItem(INSTALL_STATE_KEY, 'true');
-      localStorage.removeItem(INSTALL_PROMPT_STORAGE_KEY);
-      
-      // Show success notification only after actual installation
-      showInstallationSuccess();
-    });
+        // Listen for app installed
+        window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Handle visibility changes to check for updates
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden === false && swRegistration.value) {
-        // Page became visible, check for updates
-        console.log('[PWA] Page visible, checking for updates');
-        swRegistration.value.update().catch((error) => {
-          console.warn('[PWA] Update check failed:', error);
+        // Listen for online/offline
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Listen for display mode changes
+        window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+            isStandalone.value = e.matches;
+            isInstalled.value = e.matches;
         });
-      }
+    };
+
+    const handleInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        deferredPrompt.value = e as BeforeInstallPromptEvent;
+        isInstallable.value = true;
+        console.log('[PWA] Install prompt captured');
+    };
+
+    const handleAppInstalled = () => {
+        isInstalled.value = true;
+        isInstallable.value = false;
+        deferredPrompt.value = null;
+        console.log('[PWA] App installed');
+    };
+
+    const handleOnline = () => {
+        isOnline.value = true;
+    };
+
+    const handleOffline = () => {
+        isOnline.value = false;
+    };
+
+    const handleSWMessage = (event: MessageEvent<SWMessage>) => {
+        const { type } = event.data || {};
+        
+        switch (type) {
+            case 'SYNC_STARTED':
+                isSyncing.value = true;
+                console.log('[PWA] Sync started');
+                break;
+                
+            case 'SYNC_COMPLETED':
+                isSyncing.value = false;
+                updatePendingActionsCount();
+                console.log('[PWA] Sync completed:', event.data);
+                break;
+                
+            case 'ONLINE':
+                isOnline.value = true;
+                break;
+                
+            case 'OFFLINE':
+                isOnline.value = false;
+                break;
+                
+            case 'UPDATE_AVAILABLE':
+                isUpdateAvailable.value = true;
+                break;
+        }
+    };
+
+    const promptInstall = async (): Promise<boolean> => {
+        if (!deferredPrompt.value) {
+            console.log('[PWA] No install prompt available');
+            return false;
+        }
+
+        try {
+            await deferredPrompt.value.prompt();
+            const { outcome } = await deferredPrompt.value.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('[PWA] User accepted install');
+                isInstallable.value = false;
+                deferredPrompt.value = null;
+                return true;
+            } else {
+                console.log('[PWA] User dismissed install');
+                return false;
+            }
+        } catch (error) {
+            console.error('[PWA] Install prompt error:', error);
+            return false;
+        }
+    };
+
+    const dismissInstallPrompt = () => {
+        isInstallable.value = false;
+        // Store dismissal in localStorage to not show again for a while
+        localStorage.setItem('bizboost-pwa-dismissed', Date.now().toString());
+    };
+
+    const shouldShowInstallPrompt = (): boolean => {
+        if (!isInstallable.value || isInstalled.value) return false;
+        
+        const dismissed = localStorage.getItem('bizboost-pwa-dismissed');
+        if (dismissed) {
+            const dismissedTime = parseInt(dismissed, 10);
+            const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+            // Show again after 7 days
+            if (daysSinceDismissed < 7) return false;
+        }
+        
+        return true;
+    };
+
+    const updateApp = () => {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+            window.location.reload();
+        }
+    };
+
+    /**
+     * Queue an action for offline sync
+     */
+    const queueOfflineAction = async (action: {
+        type: string;
+        endpoint: string;
+        method?: string;
+        payload: Record<string, unknown>;
+    }): Promise<boolean> => {
+        if (!navigator.serviceWorker?.controller) {
+            console.warn('[PWA] No service worker controller available');
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data?.success ?? false);
+                updatePendingActionsCount();
+            };
+
+            navigator.serviceWorker.controller.postMessage(
+                { type: 'QUEUE_ACTION', payload: action },
+                [messageChannel.port2]
+            );
+        });
+    };
+
+    /**
+     * Trigger immediate sync of queued actions
+     */
+    const syncNow = async (): Promise<boolean> => {
+        if (!navigator.serviceWorker?.controller) {
+            return false;
+        }
+
+        // Try background sync first if available
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            if ('sync' in registration) {
+                await (registration as any).sync.register('bizboost-sync');
+                return true;
+            }
+        } catch (e) {
+            console.log('[PWA] Background sync not available, using fallback');
+        }
+
+        // Fallback to direct message
+        const controller = navigator.serviceWorker.controller;
+        if (!controller) return false;
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data?.success ?? false);
+            };
+
+            controller.postMessage(
+                { type: 'SYNC_NOW' },
+                [messageChannel.port2]
+            );
+        });
+    };
+
+    /**
+     * Get count of pending offline actions
+     */
+    const updatePendingActionsCount = async () => {
+        if (!navigator.serviceWorker?.controller) {
+            pendingActionsCount.value = 0;
+            return;
+        }
+
+        return new Promise<void>((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                pendingActionsCount.value = event.data?.actions?.length ?? 0;
+                resolve();
+            };
+
+            navigator.serviceWorker.controller!.postMessage(
+                { type: 'GET_QUEUED_ACTIONS' },
+                [messageChannel.port2]
+            );
+        });
+    };
+
+    /**
+     * Clear all caches
+     */
+    const clearCache = async (): Promise<boolean> => {
+        if (!navigator.serviceWorker?.controller) {
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data?.success ?? false);
+            };
+
+            navigator.serviceWorker.controller!.postMessage(
+                { type: 'CLEAR_CACHE' },
+                [messageChannel.port2]
+            );
+        });
+    };
+
+    /**
+     * Get list of cached pages available offline
+     */
+    const getCachedPages = async (): Promise<Array<{ url: string; name: string; cached: boolean; inertia?: boolean }>> => {
+        if (!navigator.serviceWorker?.controller) {
+            return [];
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data?.pages ?? []);
+            };
+
+            navigator.serviceWorker.controller!.postMessage(
+                { type: 'GET_CACHED_PAGES' },
+                [messageChannel.port2]
+            );
+
+            // Timeout after 3 seconds
+            setTimeout(() => resolve([]), 3000);
+        });
+    };
+
+    /**
+     * Pre-cache a specific page for offline access
+     */
+    const precachePage = async (url: string): Promise<boolean> => {
+        if (!navigator.serviceWorker?.controller) {
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data?.success ?? false);
+            };
+
+            navigator.serviceWorker.controller!.postMessage(
+                { type: 'PRECACHE_PAGE', payload: { url } },
+                [messageChannel.port2]
+            );
+
+            // Timeout after 10 seconds
+            setTimeout(() => resolve(false), 10000);
+        });
+    };
+
+    /**
+     * Get cache status for debugging
+     */
+    const getCacheStatus = async (): Promise<{ caches: Record<string, number>; version: string; timestamp: number } | null> => {
+        if (!navigator.serviceWorker?.controller) {
+            return null;
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data ?? null);
+            };
+
+            navigator.serviceWorker.controller!.postMessage(
+                { type: 'GET_CACHE_STATUS' },
+                [messageChannel.port2]
+            );
+
+            setTimeout(() => resolve(null), 3000);
+        });
+    };
+
+    /**
+     * Check if we have pending actions to sync
+     */
+    const hasPendingActions = computed(() => pendingActionsCount.value > 0);
+
+    const getIOSInstallInstructions = () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        
+        if (isIOS && isSafari && !isStandalone.value) {
+            return {
+                show: true,
+                steps: [
+                    'Tap the Share button at the bottom of the screen',
+                    'Scroll down and tap "Add to Home Screen"',
+                    'Tap "Add" to install BizBoost'
+                ]
+            };
+        }
+        
+        return { show: false, steps: [] };
+    };
+
+    onMounted(() => {
+        initPWA();
     });
 
-    // Listen for online/offline events
-    window.addEventListener('online', () => {
-      console.log('[PWA] Back online, checking for updates');
-      if (swRegistration.value) {
-        swRegistration.value.update();
-      }
+    onMounted(() => {
+        // Update pending actions count on mount
+        updatePendingActionsCount();
+        
+        // Sync when coming back online
+        if (isOnline.value && hasPendingActions.value) {
+            syncNow();
+        }
     });
 
-    // Check for updates when page regains focus
-    window.addEventListener('focus', () => {
-      if (swRegistration.value) {
-        swRegistration.value.update();
-      }
+    onUnmounted(() => {
+        window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+        }
     });
-  });
 
-  const shouldShowInstallPrompt = (): boolean => {
-    // Don't show if already installed
-    if (isInstalled.value) return false;
-
-    // Check if user dismissed it recently
-    const dismissedAt = localStorage.getItem(INSTALL_PROMPT_STORAGE_KEY);
-    if (dismissedAt) {
-      const timeSinceDismissal = Date.now() - parseInt(dismissedAt);
-      if (timeSinceDismissal < INSTALL_PROMPT_COOLDOWN) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const installApp = async () => {
-    if (!deferredPrompt.value) {
-      console.warn('[PWA] No install prompt available');
-      return;
-    }
-
-    try {
-      // Show the native install prompt
-      deferredPrompt.value.prompt();
-      
-      // Wait for user choice
-      const { outcome } = await deferredPrompt.value.userChoice;
-      
-      if (outcome === 'accepted') {
-        console.log('[PWA] User accepted the install prompt');
-        // Don't set isInstalled here - wait for appinstalled event
-        // The appinstalled event will fire when installation is actually complete
-      } else {
-        console.log('[PWA] User dismissed the install prompt');
-        dismissInstallPrompt();
-      }
-    } catch (error) {
-      console.error('[PWA] Install error:', error);
-    } finally {
-      deferredPrompt.value = null;
-      showInstallPrompt.value = false;
-    }
-  };
-
-  const dismissInstallPrompt = () => {
-    showInstallPrompt.value = false;
-    // Store dismissal timestamp to implement cooldown
-    localStorage.setItem(INSTALL_PROMPT_STORAGE_KEY, Date.now().toString());
-  };
-
-  const notifyUpdateAvailable = () => {
-    // Show a notification or banner that an update is available
-    console.log('[PWA] Update available - user should refresh');
-    
-    // Optional: Show a toast/notification to user
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('MyGrowNet Update Available', {
-        body: 'A new version is available. Refresh to update.',
-        icon: '/images/icon-192x192.png',
-        badge: '/images/icon-192x192.png',
-      });
-    }
-  };
-
-  const applyUpdate = () => {
-    if (!swRegistration.value?.waiting) {
-      console.warn('[PWA] No waiting service worker');
-      return;
-    }
-
-    // Tell the waiting service worker to skip waiting
-    swRegistration.value.waiting.postMessage({ type: 'SKIP_WAITING' });
-
-    // Reload the page once the new service worker is active
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-  };
-
-  const clearCache = async () => {
-    if (swRegistration.value?.active) {
-      swRegistration.value.active.postMessage({ type: 'CLEAR_CACHE' });
-    }
-    
-    // Also clear caches directly
-    const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames.map((cacheName) => caches.delete(cacheName))
-    );
-    
-    console.log('[PWA] Cache cleared');
-  };
-
-  const showInstallationSuccess = () => {
-    // Show a success message to the user
-    console.log('[PWA] Installation successful!');
-    
-    // You can trigger a toast notification here
-    // For now, just log it
-    if (typeof window !== 'undefined' && (window as any).showToast) {
-      (window as any).showToast('App installed successfully!', 'success');
-    }
-  };
-
-  return {
-    showInstallPrompt,
-    isInstalled,
-    isStandalone,
-    updateAvailable,
-    installApp,
-    dismissInstallPrompt,
-    applyUpdate,
-    clearCache,
-  };
+    return {
+        // State (readonly)
+        isInstalled: readonly(isInstalled),
+        isInstallable: readonly(isInstallable),
+        isOnline: readonly(isOnline),
+        isStandalone: readonly(isStandalone),
+        isUpdateAvailable: readonly(isUpdateAvailable),
+        isSyncing: readonly(isSyncing),
+        pendingActionsCount: readonly(pendingActionsCount),
+        hasPendingActions,
+        
+        // Actions
+        promptInstall,
+        dismissInstallPrompt,
+        shouldShowInstallPrompt,
+        updateApp,
+        getIOSInstallInstructions,
+        
+        // Offline sync actions
+        queueOfflineAction,
+        syncNow,
+        clearCache,
+        updatePendingActionsCount,
+        
+        // Cache management
+        getCachedPages,
+        precachePage,
+        getCacheStatus
+    };
 }

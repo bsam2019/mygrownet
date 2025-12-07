@@ -6,6 +6,7 @@ use App\Domain\Notification\Entities\Notification;
 use App\Domain\Notification\Repositories\NotificationRepositoryInterface;
 use App\Domain\Notification\ValueObjects\NotificationType;
 use App\Domain\Notification\ValueObjects\NotificationPriority;
+use App\Models\User;
 
 class EloquentNotificationRepository implements NotificationRepositoryInterface
 {
@@ -13,7 +14,8 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
     {
         NotificationModel::create([
             'id' => $notification->id(),
-            'user_id' => $notification->userId(),
+            'notifiable_type' => User::class,
+            'notifiable_id' => $notification->userId(),
             'type' => $notification->type()->value(),
             'category' => $notification->type()->category(),
             'title' => $notification->title(),
@@ -35,7 +37,7 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
 
     public function findByUserId(int $userId, int $limit = 50): array
     {
-        $models = NotificationModel::where('user_id', $userId)
+        $models = NotificationModel::forUser($userId)
             ->notArchived()
             ->latest()
             ->limit($limit)
@@ -46,7 +48,7 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
 
     public function findUnreadByUserId(int $userId): array
     {
-        $models = NotificationModel::where('user_id', $userId)
+        $models = NotificationModel::forUser($userId)
             ->unread()
             ->notArchived()
             ->latest()
@@ -57,7 +59,7 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
 
     public function countUnreadByUserId(int $userId): int
     {
-        return NotificationModel::where('user_id', $userId)
+        return NotificationModel::forUser($userId)
             ->unread()
             ->notArchived()
             ->count();
@@ -72,7 +74,7 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
 
     public function markAllAsRead(int $userId): void
     {
-        NotificationModel::where('user_id', $userId)
+        NotificationModel::forUser($userId)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
     }
@@ -95,7 +97,7 @@ class EloquentNotificationRepository implements NotificationRepositoryInterface
         
         // Set private properties
         $this->setProperty($instance, 'id', $model->id);
-        $this->setProperty($instance, 'userId', $model->user_id);
+        $this->setProperty($instance, 'userId', $model->notifiable_id);
         $this->setProperty($instance, 'type', NotificationType::fromString($model->type));
         $this->setProperty($instance, 'title', $model->title);
         $this->setProperty($instance, 'message', $model->message);

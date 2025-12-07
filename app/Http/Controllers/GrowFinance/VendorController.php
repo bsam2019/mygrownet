@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
+use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceVendorModel;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,10 @@ use Inertia\Response;
 
 class VendorController extends Controller
 {
+    public function __construct(
+        private SubscriptionService $subscriptionService
+    ) {}
+
     public function index(Request $request): Response
     {
         $businessId = $request->user()->id;
@@ -20,8 +25,12 @@ class VendorController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
+        // Get vendor usage for limit banner
+        $vendorUsage = $this->subscriptionService->canAddVendor($request->user());
+
         return Inertia::render('GrowFinance/Vendors/Index', [
             'vendors' => $vendors,
+            'vendorUsage' => $vendorUsage,
         ]);
     }
 
@@ -32,6 +41,12 @@ class VendorController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // Check subscription limits
+        $check = $this->subscriptionService->canAddVendor($request->user());
+        if (!$check['allowed']) {
+            return back()->with('error', 'You\'ve reached your vendor limit. Please upgrade your plan to add more vendors.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',

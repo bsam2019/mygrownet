@@ -243,3 +243,31 @@ Broadcast::channel('growfinance.user.{userId}', function ($user, $userId) {
 Broadcast::channel('growfinance.admin', function ($user) {
     return $user && ($user->hasRole('admin') || $user->hasRole('Admin') || $user->is_admin);
 });
+
+/*
+|--------------------------------------------------------------------------
+| BizBoost Module Channels
+|--------------------------------------------------------------------------
+*/
+
+// BizBoost business channel for real-time updates (sales, customers, posts, notifications)
+Broadcast::channel('bizboost.{businessId}', function ($user, $businessId) {
+    $business = \App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel::find($businessId);
+    
+    if (!$business) {
+        return false;
+    }
+    
+    // Owner has access
+    if ($business->user_id === $user->id) {
+        return ['id' => $user->id, 'name' => $user->name, 'role' => 'owner'];
+    }
+    
+    // Team members have access
+    $teamMember = $business->teamMembers()->where('user_id', $user->id)->first();
+    if ($teamMember) {
+        return ['id' => $user->id, 'name' => $user->name, 'role' => $teamMember->role];
+    }
+    
+    return false;
+});

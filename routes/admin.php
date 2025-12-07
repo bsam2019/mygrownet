@@ -412,4 +412,18 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::patch('/responsibilities/{responsibility}', [\App\Http\Controllers\Admin\OrganizationalStructureController::class, 'updateResponsibility'])->name('responsibilities.update');
     });
 
+    // BizBoost Administration
+    Route::prefix('bizboost')->name('bizboost.')->group(function () {
+        // Template Management
+        Route::prefix('templates')->name('templates.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'toggleActive'])->name('toggle-active');
+        });
+    });
+
 });

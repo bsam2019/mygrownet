@@ -3,7 +3,7 @@
 namespace App\Infrastructure\Persistence\Eloquent\Notification;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Models\User;
 
 class NotificationModel extends Model
@@ -16,7 +16,8 @@ class NotificationModel extends Model
 
     protected $fillable = [
         'id',
-        'user_id',
+        'notifiable_type',
+        'notifiable_id',
         'type',
         'category',
         'module',
@@ -39,9 +40,21 @@ class NotificationModel extends Model
         'created_at' => 'datetime',
     ];
 
-    public function user(): BelongsTo
+    /**
+     * Get the notifiable entity (polymorphic)
+     */
+    public function notifiable(): MorphTo
     {
-        return $this->belongsTo(User::class);
+        return $this->morphTo();
+    }
+
+    /**
+     * Scope to filter by user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('notifiable_type', User::class)
+            ->where('notifiable_id', $userId);
     }
 
     public function scopeUnread($query)

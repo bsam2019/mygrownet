@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\GrowFinance;
 
 use App\Domain\GrowFinance\Services\DashboardService;
+use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,12 +12,14 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     public function __construct(
-        private readonly DashboardService $dashboardService
+        private readonly DashboardService $dashboardService,
+        private readonly SubscriptionService $subscriptionService
     ) {}
 
     public function index(Request $request): Response
     {
-        $businessId = $request->user()->id;
+        $user = $request->user();
+        $businessId = $user->id;
 
         // Check if setup is complete
         if (!$this->dashboardService->hasSetupCompleted($businessId)) {
@@ -30,6 +33,13 @@ class DashboardController extends Controller
         $expensesByCategory = $this->dashboardService->getExpensesByCategory($businessId);
         $monthlyTrend = $this->dashboardService->getMonthlyTrend($businessId);
 
+        // Get subscription and usage data
+        $usageSummary = $this->subscriptionService->getUsageSummary($user);
+        $subscription = [
+            'tier' => $usageSummary['tier'],
+            'tier_name' => $usageSummary['tier_name'],
+        ];
+
         return Inertia::render('GrowFinance/Dashboard', [
             'financialSummary' => $financialSummary,
             'invoiceStats' => $invoiceStats,
@@ -37,6 +47,8 @@ class DashboardController extends Controller
             'overdueInvoices' => $overdueInvoices,
             'expensesByCategory' => $expensesByCategory,
             'monthlyTrend' => $monthlyTrend,
+            'usageSummary' => $usageSummary,
+            'subscription' => $subscription,
         ]);
     }
 }

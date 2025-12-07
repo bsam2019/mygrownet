@@ -14,6 +14,7 @@ use App\Models\User;
  * 
  * Domain service for checking module access permissions.
  * Supports freemium model with free tier access.
+ * Admins get full access to all features.
  */
 class ModuleAccessService
 {
@@ -22,8 +23,51 @@ class ModuleAccessService
         private readonly ModuleSubscriptionRepositoryInterface $subscriptionRepository
     ) {}
 
+    /**
+     * Check if user is an admin (has admin or superadmin role)
+     * 
+     * Uses Spatie Permission package roles:
+     * - superadmin: Super Administrator - Highest level access
+     * - admin/Admin/Administrator: Administrator - Full platform access
+     */
+    private function isAdmin(User $user): bool
+    {
+        // Check using Spatie permissions (primary method)
+        // Support multiple naming conventions used in the system
+        if (method_exists($user, 'hasRole')) {
+            $adminRoles = ['admin', 'superadmin', 'Admin', 'Administrator', 'Super Admin', 'super-admin'];
+            if ($user->hasRole($adminRoles)) {
+                return true;
+            }
+            
+            // Also check if any of the user's roles contain 'admin' (case-insensitive)
+            foreach ($user->roles as $role) {
+                if (stripos($role->name, 'admin') !== false) {
+                    return true;
+                }
+            }
+        }
+        
+        // Fallback: check is_admin attribute
+        if (isset($user->is_admin) && $user->is_admin) {
+            return true;
+        }
+        
+        // Fallback: check role attribute (legacy)
+        if (isset($user->role) && stripos($user->role, 'admin') !== false) {
+            return true;
+        }
+        
+        return false;
+    }
+
     public function canAccess(User $user, ModuleId $moduleId): bool
     {
+        // Admins always have access
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
         $module = $this->moduleRepository->findById($moduleId);
         
         if (!$module) {
@@ -56,9 +100,15 @@ class ModuleAccessService
     /**
      * Get the user's access level for a module
      * Returns: 'none', 'free', or the subscription tier name
+     * Admins always get 'business' (highest tier)
      */
     public function getAccessLevel(User $user, ModuleId $moduleId): string
     {
+        // Admins get the highest tier (business)
+        if ($this->isAdmin($user)) {
+            return 'business';
+        }
+
         $module = $this->moduleRepository->findById($moduleId);
         
         if (!$module || !$module->isActive()) {
@@ -210,5 +260,15 @@ class ModuleAccessService
         $subscription = $this->subscriptionRepository->findByUserAndModule($userId, $moduleId);
         
         return $subscription && $subscription->isActive();
+    }
+
+    /**
+     * Clear cached access data for a user
+     */
+    public function clearCache(User $user, string $moduleId): void
+    {
+        // Clear any cached subscription data
+        // The repository implementation may cache subscription lookups
+        $this->subscriptionRepository->clearCache($user->id, ModuleId::fromString($moduleId));
     }
 }

@@ -21,9 +21,22 @@ class RegisteredUserController extends Controller
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('auth/Register');
+        // Store redirect URL in session if provided via query parameter
+        // This allows module landing pages (like BizBoost) to redirect back after registration
+        if ($request->has('redirect')) {
+            $redirectUrl = $request->query('redirect');
+            // Only allow internal redirects (starting with /)
+            if (is_string($redirectUrl) && str_starts_with($redirectUrl, '/')) {
+                $request->session()->put('url.intended', url($redirectUrl));
+            }
+        }
+
+        return Inertia::render('auth/Register', [
+            'redirect' => $request->query('redirect'),
+            'plan' => $request->query('plan'),
+        ]);
     }
 
     /**
@@ -107,8 +120,9 @@ class RegisteredUserController extends Controller
                 return to_route('growbiz.invitation.pending');
             }
 
-            // Redirect to home hub (consistent with login flow)
-            return to_route('home');
+            // Use intended redirect if set (e.g., from BizBoost landing page)
+            // Otherwise redirect to home hub
+            return redirect()->intended(route('home', absolute: false));
             
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle any database errors gracefully

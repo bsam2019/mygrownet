@@ -15,6 +15,7 @@ class GrowFinanceInvoiceModel extends Model
     protected $fillable = [
         'business_id',
         'customer_id',
+        'template_id',
         'invoice_number',
         'invoice_date',
         'due_date',
@@ -47,6 +48,11 @@ class GrowFinanceInvoiceModel extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(GrowFinanceCustomerModel::class, 'customer_id');
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(GrowFinanceInvoiceTemplateModel::class, 'template_id');
     }
 
     public function items(): HasMany

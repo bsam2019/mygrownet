@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GrowFinance;
 
+use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\GrowFinance\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceCustomerModel;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class SalesController extends Controller
 {
+    public function __construct(
+        private SubscriptionService $subscriptionService
+    ) {}
+
     public function index(Request $request): Response
     {
         $businessId = $request->user()->id;
@@ -29,14 +34,24 @@ class SalesController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
+        // Get transaction usage for limit banner
+        $transactionUsage = $this->subscriptionService->canCreateTransaction($request->user());
+
         return Inertia::render('GrowFinance/Sales/Index', [
             'sales' => $sales,
             'customers' => $customers,
+            'transactionUsage' => $transactionUsage,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        // Check subscription limits
+        $check = $this->subscriptionService->canCreateTransaction($request->user());
+        if (!$check['allowed']) {
+            return back()->with('error', 'You\'ve reached your monthly transaction limit. Please upgrade your plan to record more sales.');
+        }
+
         $validated = $request->validate([
             'customer_id' => 'nullable|exists:growfinance_customers,id',
             'description' => 'required|string|max:255',
@@ -68,6 +83,9 @@ class SalesController extends Controller
                 'line_total' => $validated['amount'],
             ]);
         });
+
+        // Clear usage cache
+        $this->subscriptionService->clearUsageCache($request->user());
 
         return back()->with('success', 'Sale recorded successfully!');
     }

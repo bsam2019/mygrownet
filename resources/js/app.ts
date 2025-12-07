@@ -36,29 +36,19 @@ const echoInstance = new Echo({
 // Configure @laravel/echo-vue to use the same instance
 configureEcho(echoInstance);
 
-// Cache buster - Clear old caches on app load
-(function() {
-    if ('serviceWorker' in navigator) {
-        // Unregister old service workers
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-            registrations.forEach(registration => {
-                registration.unregister();
-            });
-        });
+// PWA Cache prefixes for each module - DO NOT clear these caches
+const PWA_CACHE_PREFIXES = ['bizboost-', 'growbiz-', 'growfinance-', 'mygrownet-'];
 
-        // Clear all caches
-        if ('caches' in window) {
-            caches.keys().then(cacheNames => {
-                cacheNames.forEach(cacheName => {
-                    caches.delete(cacheName);
-                });
-            });
-        }
-
-        // Clear localStorage
-        localStorage.clear();
-    }
-})();
+// Check if current path is a PWA-enabled module
+function isPWAModule(): string | null {
+    const path = window.location.pathname;
+    if (path.startsWith('/bizboost')) return 'bizboost';
+    if (path.startsWith('/growbiz')) return 'growbiz';
+    if (path.startsWith('/growfinance')) return 'growfinance';
+    // Main MyGrowNet site (root paths)
+    if (path === '/' || path.startsWith('/dashboard') || path.startsWith('/member')) return 'mygrownet';
+    return null;
+}
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -75,22 +65,32 @@ declare module 'vite/client' {
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Service worker registration - DISABLED to prevent auto-refresh issues
-// Uncomment if you need PWA/offline functionality
-/*
+// Service worker registration for PWA functionality
+// Only register on BizBoost routes to enable mobile app experience
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker
-            .register('/sw.js', { scope: '/' })
-            .then((registration) => {
-                console.log('[App] Service Worker registered:', registration);
-            })
-            .catch((error) => {
-                console.warn('[App] Service Worker registration failed:', error);
-            });
+        // Check if we're on BizBoost routes
+        const isBizBoost = window.location.pathname.startsWith('/bizboost');
+        
+        if (isBizBoost) {
+            // Register service worker - scope defaults to the SW file location
+            // The SW at /sw.js can control /bizboost/* routes
+            navigator.serviceWorker
+                .register('/sw.js')
+                .then((registration) => {
+                    console.log('[BizBoost PWA] Service Worker registered:', registration.scope);
+                    
+                    // Check for updates periodically
+                    setInterval(() => {
+                        registration.update();
+                    }, 60 * 60 * 1000); // Check every hour
+                })
+                .catch((error) => {
+                    console.warn('[BizBoost PWA] Service Worker registration failed:', error);
+                });
+        }
     });
 }
-*/
 
 // Handle 419 (CSRF token expired) errors with better logic
 let redirecting = false;
@@ -107,7 +107,7 @@ window.addEventListener('error', (event) => {
 
 // Intercept fetch errors for 419 responses
 const originalFetch = window.fetch;
-window.fetch = function(...args) {
+window.fetch = function (...args) {
     return originalFetch.apply(this, args).then((response) => {
         if (response.status === 419) {
             console.warn('[App] Session expired (419 from fetch)');

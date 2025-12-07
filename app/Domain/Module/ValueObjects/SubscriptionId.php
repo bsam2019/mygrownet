@@ -16,6 +16,11 @@ class SubscriptionId
         return new self($value);
     }
 
+    public static function fromString(string $value): self
+    {
+        return new self((int) $value);
+    }
+
     public function value(): int
     {
         return $this->value;

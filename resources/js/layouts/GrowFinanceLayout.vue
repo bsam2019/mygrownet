@@ -8,6 +8,9 @@ import RecordSaleModal from '@/Components/GrowFinance/RecordSaleModal.vue';
 import RecordExpenseModal from '@/Components/GrowFinance/RecordExpenseModal.vue';
 import QuickInvoiceModal from '@/Components/GrowFinance/QuickInvoiceModal.vue';
 import NotificationBell from '@/Components/GrowFinance/NotificationBell.vue';
+import OnboardingTour from '@/Components/GrowFinance/OnboardingTour.vue';
+import UsageDashboardWidget from '@/Components/GrowFinance/UsageDashboardWidget.vue';
+import UsageLimitBanner from '@/Components/GrowFinance/UsageLimitBanner.vue';
 import { useToast } from '@/composables/useToast';
 import {
     HomeIcon,
@@ -36,6 +39,14 @@ import {
     QuestionMarkCircleIcon,
     XMarkIcon,
     BellIcon,
+    ArrowPathIcon,
+    CurrencyDollarIcon,
+    SwatchIcon,
+    UserGroupIcon,
+    KeyIcon,
+    PaintBrushIcon,
+    SparklesIcon,
+    ArrowUpCircleIcon,
 } from '@heroicons/vue/24/outline';
 import {
     HomeIcon as HomeIconSolid,
@@ -81,6 +92,32 @@ const expenseAccounts = computed(() => quickEntryData.value.expenseAccounts || [
 // Dashboard data for right sidebar
 const dashboardData = computed(() => (page.props as any).overdueInvoices || []);
 const invoiceStats = computed(() => (page.props as any).invoiceStats || {});
+
+// Usage data for subscription limits
+const usageSummary = computed(() => (page.props as any).usageSummary || null);
+const subscription = computed(() => (page.props as any).subscription || { tier: 'free', tier_name: 'Free' });
+
+// Onboarding tour - always render, let the component handle visibility
+const onboardingTourRef = ref<InstanceType<typeof OnboardingTour> | null>(null);
+
+const startTour = () => {
+    onboardingTourRef.value?.startTour();
+};
+
+const resetTour = () => {
+    onboardingTourRef.value?.resetTour();
+};
+
+const handleRestartTour = () => {
+    closeMoreMenu();
+    // Reset and start the tour
+    if (onboardingTourRef.value) {
+        onboardingTourRef.value.resetTour();
+        setTimeout(() => {
+            onboardingTourRef.value?.startTour();
+        }, 300);
+    }
+};
 
 const openSaleModal = () => {
     quickAddOpen.value = false;
@@ -159,12 +196,12 @@ const desktopNavigation = computed(() => [
     { name: 'Sales', href: 'growfinance.sales.index', icon: BanknotesIcon, badge: null },
     { name: 'Invoices', href: 'growfinance.invoices.index', icon: DocumentTextIcon, badge: invoiceStats.value.overdue || null },
     { name: 'Expenses', href: 'growfinance.expenses.index', icon: ClipboardDocumentListIcon, badge: null },
+    { name: 'Recurring', href: 'growfinance.recurring.index', icon: ArrowPathIcon, badge: null },
+    { name: 'Budgets', href: 'growfinance.budgets.index', icon: CurrencyDollarIcon, badge: null },
     { name: 'Customers', href: 'growfinance.customers.index', icon: UsersIcon, badge: null },
     { name: 'Vendors', href: 'growfinance.vendors.index', icon: BuildingStorefrontIcon, badge: null },
     { name: 'Banking', href: 'growfinance.banking.index', icon: BuildingLibraryIcon, badge: null },
     { name: 'Reports', href: 'growfinance.reports.profit-loss', icon: ChartBarIcon, badge: null },
-    { name: 'Messages', href: 'growfinance.messages.index', icon: ChatBubbleLeftRightIcon, badge: null },
-    { name: 'Support', href: 'growfinance.support.index', icon: QuestionMarkCircleIcon, badge: null },
 ]);
 
 const isActive = (routeName: string) => {
@@ -220,13 +257,16 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                     <!-- Notifications -->
                     <NotificationBell />
                     
-                    <!-- User Info -->
-                    <div class="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <!-- User Info - Links to Profile -->
+                    <Link 
+                        :href="route('growfinance.setup.wizard')"
+                        class="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
                         <div class="h-7 w-7 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
                             <span class="text-[10px] font-semibold text-white">{{ getInitials(user?.name || '') }}</span>
                         </div>
                         <span class="text-sm font-medium">{{ user?.name }}</span>
-                    </div>
+                    </Link>
                     
                     <!-- Help Button -->
                     <button 
@@ -305,6 +345,7 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                     >
                         <Link 
                             :href="route(item.href)"
+                            :data-tour="item.name.toLowerCase()"
                             :class="[
                                 'flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative group',
                                 sidebarCollapsed ? 'px-2 justify-center' : 'px-3',
@@ -482,34 +523,70 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                         </div>
                     </div>
 
-                    <!-- Bills to Pay Section -->
+                    <!-- Usage Summary Widget -->
+                    <UsageDashboardWidget v-if="usageSummary" :usage="usageSummary" />
+
+                    <!-- Premium Features Section -->
                     <div>
                         <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <ClockIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
-                            Bills to Pay
+                            <SparklesIcon class="h-4 w-4 text-indigo-500" aria-hidden="true" />
+                            Premium Features
                         </h3>
-                        <div class="space-y-2">
+                        <div class="space-y-1">
                             <Link 
-                                :href="route('growfinance.expenses.index')"
-                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                                :href="route('growfinance.templates.index')"
+                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                             >
                                 <div class="flex items-center gap-2">
-                                    <UsersIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
-                                    <span>View All Expenses</span>
+                                    <SwatchIcon class="h-4 w-4 text-indigo-500" aria-hidden="true" />
+                                    <span>Invoice Templates</span>
                                 </div>
                                 <ChevronRightIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
                             </Link>
                             <Link 
-                                :href="route('growfinance.vendors.index')"
-                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                                :href="route('growfinance.team.index')"
+                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                             >
                                 <div class="flex items-center gap-2">
-                                    <BuildingStorefrontIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
-                                    <span>Manage Vendors</span>
+                                    <UserGroupIcon class="h-4 w-4 text-indigo-500" aria-hidden="true" />
+                                    <span>Team Management</span>
+                                </div>
+                                <ChevronRightIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
+                            </Link>
+                            <Link 
+                                :href="route('growfinance.api.index')"
+                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <KeyIcon class="h-4 w-4 text-indigo-500" aria-hidden="true" />
+                                    <span>API Access</span>
+                                </div>
+                                <ChevronRightIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
+                            </Link>
+                            <Link 
+                                :href="route('growfinance.white-label.index')"
+                                class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <PaintBrushIcon class="h-4 w-4 text-indigo-500" aria-hidden="true" />
+                                    <span>White Label</span>
                                 </div>
                                 <ChevronRightIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
                             </Link>
                         </div>
+                    </div>
+
+                    <!-- Upgrade CTA -->
+                    <div v-if="subscription.tier !== 'business'" class="mt-4">
+                        <Link 
+                            :href="route('growfinance.upgrade')"
+                            class="block w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-center text-sm font-medium rounded-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-sm"
+                        >
+                            <div class="flex items-center justify-center gap-2">
+                                <ArrowUpCircleIcon class="h-4 w-4" aria-hidden="true" />
+                                <span>Upgrade Plan</span>
+                            </div>
+                        </Link>
                     </div>
                 </div>
 
@@ -547,6 +624,12 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
         <!-- PWA Install Prompt -->
         <PwaInstallPrompt />
 
+        <!-- Onboarding Tour - Component handles its own visibility via localStorage -->
+        <OnboardingTour 
+            ref="onboardingTourRef"
+            :auto-start="true"
+        />
+
         <!-- More Menu - Right Slide-in Drawer -->
         <Transition
             enter-active-class="transition-opacity duration-200"
@@ -570,7 +653,11 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
             <div v-if="moreMenuOpen" class="fixed inset-y-0 right-0 w-full max-w-xs z-50 bg-white shadow-2xl flex flex-col more-menu-container">
                 <!-- Header -->
                 <div class="px-4 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
+                    <Link 
+                        :href="route('growfinance.setup.wizard')" 
+                        class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-2 py-1.5 -mx-2 -my-1.5 transition-colors"
+                        @click="closeMoreMenu"
+                    >
                         <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md">
                             <span class="text-sm font-semibold text-white">{{ getInitials(user?.name || '') }}</span>
                         </div>
@@ -578,7 +665,7 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                             <p class="font-semibold text-gray-900 text-sm">{{ user?.name }}</p>
                             <p class="text-xs text-gray-500">{{ user?.email }}</p>
                         </div>
-                    </div>
+                    </Link>
                     <button 
                         @click="closeMoreMenu" 
                         class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -631,6 +718,18 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                                 </div>
                                 <span class="text-sm font-medium">Chart of Accounts</span>
                             </Link>
+                            <Link :href="route('growfinance.recurring.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-cyan-50 flex items-center justify-center">
+                                    <ArrowPathIcon class="h-5 w-5 text-cyan-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Recurring</span>
+                            </Link>
+                            <Link :href="route('growfinance.budgets.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
+                                    <CurrencyDollarIcon class="h-5 w-5 text-green-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Budgets</span>
+                            </Link>
                             <Link :href="route('growfinance.reports.profit-loss')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
                                 <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
                                     <ChartBarIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
@@ -640,10 +739,53 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                         </div>
                     </div>
 
+                    <!-- Premium Section -->
+                    <div class="mb-5">
+                        <p class="px-2 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Premium</p>
+                        <div class="space-y-1">
+                            <Link :href="route('growfinance.templates.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-violet-50 flex items-center justify-center">
+                                    <SwatchIcon class="h-5 w-5 text-violet-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Invoice Templates</span>
+                            </Link>
+                            <Link :href="route('growfinance.team.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                                    <UserGroupIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Team</span>
+                            </Link>
+                            <Link :href="route('growfinance.api.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center">
+                                    <KeyIcon class="h-5 w-5 text-slate-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">API Access</span>
+                            </Link>
+                            <Link :href="route('growfinance.white-label.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
+                                    <PaintBrushIcon class="h-5 w-5 text-pink-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">White Label</span>
+                            </Link>
+                            <Link :href="route('growfinance.upgrade')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-indigo-50 active:bg-indigo-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <ArrowUpCircleIcon class="h-5 w-5 text-white" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium text-indigo-600">Upgrade Plan</span>
+                            </Link>
+                        </div>
+                    </div>
+
                     <!-- Help & Communication Section -->
                     <div class="mb-5">
                         <p class="px-2 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Help & Communication</p>
                         <div class="space-y-1">
+                            <button @click="handleRestartTour" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-emerald-50 active:bg-emerald-100 transition-colors w-full text-left">
+                                <div class="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center">
+                                    <SparklesIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Restart Tour</span>
+                            </button>
                             <Link :href="route('growfinance.messages.index')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
                                 <div class="w-9 h-9 rounded-full bg-cyan-50 flex items-center justify-center">
                                     <ChatBubbleLeftRightIcon class="h-5 w-5 text-cyan-600" aria-hidden="true" />
@@ -661,6 +803,19 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                                     <BellIcon class="h-5 w-5 text-orange-600" aria-hidden="true" />
                                 </div>
                                 <span class="text-sm font-medium">Notifications</span>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Account Section -->
+                    <div class="mb-5">
+                        <p class="px-2 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Account</p>
+                        <div class="space-y-1">
+                            <Link :href="route('growfinance.setup.wizard')" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors" @click="closeMoreMenu">
+                                <div class="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center">
+                                    <UserIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                                </div>
+                                <span class="text-sm font-medium">Financial Profile</span>
                             </Link>
                         </div>
                     </div>
