@@ -36,18 +36,7 @@ git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME
 
 # Fix stuck migration if needed (bizboost_integrations table exists but migration not marked complete)
 echo "🔧 Checking for stuck migrations..."
-php artisan tinker --execute="
-if (Schema::hasTable('bizboost_integrations')) {
-    \$exists = DB::table('migrations')->where('migration', '2025_12_04_200009_create_bizboost_integrations_table')->exists();
-    if (!\$exists) {
-        DB::table('migrations')->insert([
-            'migration' => '2025_12_04_200009_create_bizboost_integrations_table',
-            'batch' => DB::table('migrations')->max('batch') + 1
-        ]);
-        echo 'Fixed stuck migration: 2025_12_04_200009_create_bizboost_integrations_table';
-    }
-}
-" 2>/dev/null || true
+php artisan db:seed --class=FixStuckMigrationSeeder --force 2>/dev/null || true
 
 # Run migrations
 echo "🔄 Running migrations..."
