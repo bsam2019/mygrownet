@@ -12,10 +12,19 @@ interface Integration {
     last_sync_at: string | null;
 }
 
+interface AvailableProvider {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    color: string;
+    supports: string[];
+}
+
 interface Props {
     integrations: Integration[];
     canAutoPost: boolean;
-    availableProviders: { id: string; name: string; description: string; icon: string }[];
+    availableProviders: AvailableProvider[];
 }
 
 const props = defineProps<Props>();
@@ -32,13 +41,25 @@ const statusIcons: Record<string, typeof CheckCircleIcon> = {
     error: XCircleIcon,
 };
 
+// Provider brand colors
+const providerColors: Record<string, { bg: string; text: string; button: string }> = {
+    facebook: { bg: 'bg-blue-100', text: 'text-blue-600', button: 'bg-[#1877F2] hover:bg-[#166FE5]' },
+    instagram: { bg: 'bg-pink-100', text: 'text-pink-600', button: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600' },
+    whatsapp: { bg: 'bg-green-100', text: 'text-green-600', button: 'bg-[#25D366] hover:bg-[#20BD5A]' },
+    tiktok: { bg: 'bg-gray-900', text: 'text-white', button: 'bg-black hover:bg-gray-800' },
+};
+
+const getProviderColor = (provider: string) => {
+    return providerColors[provider] || { bg: 'bg-blue-100', text: 'text-blue-600', button: 'bg-blue-600 hover:bg-blue-700' };
+};
+
 const connectProvider = (provider: string) => {
     router.get(route('bizboost.integrations.connect', { provider }));
 };
 
-const disconnectIntegration = (id: number) => {
+const disconnectIntegration = (provider: string) => {
     if (confirm('Disconnect this integration?')) {
-        router.delete(route('bizboost.integrations.disconnect', id));
+        router.delete(route('bizboost.integrations.disconnect', { provider }));
     }
 };
 
@@ -70,12 +91,17 @@ const formatDate = (date: string | null) => {
                     <div class="divide-y">
                         <div v-for="integration in integrations" :key="integration.id" class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                    <span class="text-lg font-bold text-gray-600">{{ integration.provider[0].toUpperCase() }}</span>
+                                <div :class="['w-10 h-10 rounded-full flex items-center justify-center', getProviderColor(integration.provider).bg]">
+                                    <span :class="['text-lg font-bold', getProviderColor(integration.provider).text]">
+                                        {{ integration.provider[0].toUpperCase() }}
+                                    </span>
                                 </div>
                                 <div>
                                     <div class="font-medium text-gray-900 capitalize">{{ integration.provider }}</div>
                                     <div class="text-sm text-gray-500">{{ integration.account_name || 'Connected' }}</div>
+                                    <div v-if="integration.connected_at" class="text-xs text-gray-400">
+                                        Connected {{ formatDate(integration.connected_at) }}
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
@@ -84,7 +110,7 @@ const formatDate = (date: string | null) => {
                                     {{ integration.status }}
                                 </span>
                                 <button
-                                    @click="disconnectIntegration(integration.id)"
+                                    @click="disconnectIntegration(integration.provider)"
                                     class="text-sm text-red-600 hover:text-red-800"
                                 >
                                     Disconnect
@@ -102,17 +128,28 @@ const formatDate = (date: string | null) => {
                     <div class="divide-y">
                         <div v-for="provider in availableProviders" :key="provider.id" class="p-4 flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span class="text-lg font-bold text-blue-600">{{ provider.name[0] }}</span>
+                                <div :class="['w-10 h-10 rounded-full flex items-center justify-center', getProviderColor(provider.id).bg]">
+                                    <span :class="['text-lg font-bold', getProviderColor(provider.id).text]">
+                                        {{ provider.name[0] }}
+                                    </span>
                                 </div>
                                 <div>
                                     <div class="font-medium text-gray-900">{{ provider.name }}</div>
                                     <div class="text-sm text-gray-500">{{ provider.description }}</div>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        <span 
+                                            v-for="feature in provider.supports.slice(0, 3)" 
+                                            :key="feature"
+                                            class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                                        >
+                                            {{ feature }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             <button
                                 @click="connectProvider(provider.id)"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                :class="['px-4 py-2 text-white rounded-lg transition-colors', getProviderColor(provider.id).button]"
                             >
                                 Connect
                             </button>

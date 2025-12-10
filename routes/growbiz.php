@@ -50,8 +50,8 @@ Route::middleware(['auth', 'verified'])
     Route::get('/setup', [SetupController::class, 'index'])->name('setup');
     Route::post('/setup/business', [SetupController::class, 'setupAsBusiness'])->name('setup.business');
     
-    // Dashboard (with setup check)
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard (use /dashboard path to avoid conflict with public welcome page at /growbiz)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Employee Management
     Route::prefix('employees')->name('employees.')->group(function () {

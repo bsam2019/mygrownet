@@ -19,11 +19,28 @@ class HomeHubController extends Controller
 
     /**
      * Display the Home Hub (module marketplace)
+     * Accessible to both authenticated and public users
      */
     public function index(Request $request): Response
     {
         $user = $request->user();
         
+        // If user is not authenticated, show public view with all modules
+        if (!$user) {
+            // Get all modules for public view (no access granted)
+            $moduleDTOs = $this->getUserModulesUseCase->execute(null);
+            
+            $modules = array_map(function($dto) {
+                return $dto->toArray();
+            }, $moduleDTOs);
+            
+            return Inertia::render('HomeHub/Index', [
+                'modules' => $modules,
+                'isPublic' => true,
+            ]);
+        }
+        
+        // Authenticated user flow
         // Get all modules with access status using DDD use case
         $moduleDTOs = $this->getUserModulesUseCase->execute($user);
         
@@ -68,6 +85,13 @@ class HomeHubController extends Controller
         // Get primary account type
         $primaryAccountType = $user->getPrimaryAccountType();
 
+        // Check user roles for special access
+        $isAdmin = $user->hasRole('Administrator') || $user->hasRole('admin');
+        $isManager = $user->rank === 'manager' || in_array($user->rank, ['manager', 'regional_manager']);
+        $isEmployee = $user->hasRole('employee') && \App\Models\Employee::where('user_id', $user->id)
+            ->where('employment_status', 'active')
+            ->exists();
+
         return Inertia::render('HomeHub/Index', [
             'user' => [
                 'id' => $user->id,
@@ -82,6 +106,10 @@ class HomeHubController extends Controller
             ],
             'modules' => $modules,
             'availableModules' => $user->getAllAvailableModules(), // Legacy support
+            'isPublic' => false,
+            'isAdmin' => $isAdmin,
+            'isManager' => $isManager,
+            'isEmployee' => $isEmployee,
         ]);
     }
 

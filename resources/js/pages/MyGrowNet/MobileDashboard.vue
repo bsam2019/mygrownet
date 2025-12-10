@@ -33,10 +33,10 @@
           <div class="flex items-center gap-1 flex-shrink-0">
             <NotificationBell />
             <Link
-              :href="route('home')"
-              aria-label="Go to Home Hub"
+              :href="route('dashboard')"
+              aria-label="Go to Dashboard"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
-              title="Home Hub"
+              title="Dashboard"
             >
               <Squares2X2Icon class="h-5 w-5" aria-hidden="true" />
             </Link>
@@ -48,14 +48,6 @@
               title="Refresh"
             >
               <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" aria-hidden="true" />
-            </button>
-            <button
-              @click="switchToClassicView"
-              aria-label="Switch to classic desktop view"
-              class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20 hidden md:block"
-              title="Switch to Classic View"
-            >
-              <ComputerDesktopIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -1314,7 +1306,6 @@
               @language="showComingSoon('Language Settings')"
               @theme="showComingSoon('Theme Settings')"
               @install-app="installPWA"
-              @switch-view="switchToClassicView"
               @about="showComingSoon('About')"
               @terms="showComingSoon('Terms & Privacy')"
               @logout="handleTabChange(previousTab); handleLogout()"
@@ -2601,22 +2592,7 @@ const refreshData = () => {
   setTimeout(() => loading.value = false, 1000);
 };
 
-const switchToClassicView = async () => {
-  try {
-    // Update user preference to desktop (classic) using axios
-    await axios.post(route('mygrownet.api.user.dashboard-preference'), {
-      preference: 'desktop'
-    });
-    
-    // Redirect to classic dashboard
-    window.location.href = route('mygrownet.classic-dashboard');
-  } catch (error) {
-    console.error('Switch view error:', error);
-    // If error, save preference in localStorage as fallback and redirect anyway
-    localStorage.setItem('preferred_dashboard', 'desktop');
-    window.location.href = route('mygrownet.classic-dashboard');
-  }
-};
+
 
 const navigateToMessages = () => {
   // Open messages modal instead of navigating

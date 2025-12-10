@@ -68,10 +68,6 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // This is the CLASSIC dashboard
-        // Users reach here via /classic-dashboard or preference setting
-        // No need to check preference - if they're here, show the classic dashboard
-        
         // Load user with necessary relationships
         $user = $user->load([
             'currentMembershipTier',
@@ -310,12 +306,6 @@ class DashboardController extends Controller
             if (!$user) {
                 \Log::error('Mobile Dashboard: No authenticated user');
                 return redirect()->route('login');
-            }
-            
-            // Only redirect to classic if user explicitly prefers it
-            $preference = $user->preferred_dashboard ?? 'mobile';
-            if ($preference === 'classic' || $preference === 'desktop') {
-                return redirect()->route('mygrownet.classic-dashboard');
             }
             
             // Show main dashboard (mobile-first design)

@@ -24,8 +24,8 @@ use App\Http\Middleware\GrowFinanceStandalone;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', GrowFinanceStandalone::class])->prefix('growfinance')->name('growfinance.')->group(function () {
-    // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard (use /dashboard path to avoid conflict with public welcome page at /growfinance)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Setup (Legacy - simple initialization)
     Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');

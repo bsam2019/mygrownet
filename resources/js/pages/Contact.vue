@@ -10,7 +10,7 @@
               Get in Touch
             </h1>
             <p class="text-xl text-blue-100 max-w-3xl mx-auto">
-              Have questions about our investment opportunities? We're here to help.
+              Have questions about our platform, products, or services? We're here to help.
             </p>
           </div>
         </div>
@@ -68,8 +68,9 @@
         required
       >
         <option value="">Select a subject</option>
-        <option value="investment">Investment Inquiry</option>
+        <option value="products">Products & Services</option>
         <option value="membership">Membership Information</option>
+        <option value="training">Training & Resources</option>
         <option value="support">General Support</option>
         <option value="other">Other</option>
       </select>
@@ -108,12 +109,12 @@
                 <div class="space-y-4">
                   <div class="flex items-start">
                     <div class="flex-shrink-0">
-                      <MapPinIcon class="h-6 w-6 text-blue-500" />
+                      <MapPinIcon class="h-6 w-6 text-blue-500" aria-hidden="true" />
                     </div>
                     <div class="ml-3">
                       <h3 class="text-lg font-medium text-gray-900">Office Location</h3>
                       <p class="mt-1 text-gray-500">
-                        123 Investment Avenue<br />
+                        123 Business Avenue<br />
                         Lusaka, Zambia
                       </p>
                     </div>

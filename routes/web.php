@@ -26,9 +26,63 @@ Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate
     ->middleware('web')
     ->name('broadcasting.auth');
 
-// Public routes
+// Public routes - Repositioned Frontend
 Route::get('/', [HomeController::class, 'index'])->name('welcome');
-Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::get('/about', function () {
+    return Inertia::render('About');
+})->name('about');
+
+// New Public Pages for Platform Repositioning
+Route::get('/starter-kits', function () {
+    return Inertia::render('StarterKits/Index');
+})->name('starter-kits');
+
+// Marketplace route already exists in routes/bizboost.php as marketplace.index
+
+Route::get('/training', function () {
+    return Inertia::render('Training/Index');
+})->name('training');
+
+Route::get('/rewards', function () {
+    return Inertia::render('Rewards/Index');
+})->name('rewards');
+
+Route::get('/roadmap', function () {
+    return Inertia::render('Roadmap/Index');
+})->name('roadmap');
+
+Route::get('/how-we-operate', function () {
+    return Inertia::render('LegalAssurance/Index');
+})->name('legal-assurance');
+
+Route::get('/referral-program', function () {
+    return Inertia::render('ReferralProgram/Index');
+})->name('referral-program');
+
+// Home Hub (Our Apps) - Public access to view available apps/modules
+Route::get('/apps', [\App\Presentation\Http\Controllers\HomeHubController::class, 'index'])
+    ->name('apps.index');
+
+// App Landing Pages (Public - before login/setup wizard)
+Route::get('/growfinance', function () {
+    return Inertia::render('GrowFinance/Welcome');
+})->name('growfinance.welcome');
+
+Route::get('/growbiz', function () {
+    return Inertia::render('GrowBiz/Welcome');
+})->name('growbiz.welcome');
+
+// 301 Redirects for old URLs (maintain SEO and bookmarks)
+Route::permanentRedirect('/investment', '/starter-kits');
+Route::permanentRedirect('/join', '/starter-kits');
+Route::permanentRedirect('/packages', '/starter-kits');
+Route::permanentRedirect('/shop', '/marketplace');
+Route::permanentRedirect('/learn', '/training');
+Route::permanentRedirect('/learning', '/training');
+Route::permanentRedirect('/loyalty', '/rewards');
+Route::permanentRedirect('/vision', '/roadmap');
+Route::permanentRedirect('/home-hub', '/apps');
 
 // Test API endpoints (remove in production)
 Route::prefix('api/test')->group(function () {
@@ -193,14 +247,13 @@ Route::prefix('careers')->name('careers.')->group(function () {
 Route::get('/compliance', [ComplianceController::class, 'information'])->name('compliance.information');
 
 // Public Membership Information
-Route::get('/membership', function () {
-    return Inertia::render('Membership/Index');
-})->name('membership.index');
+// Route::get('/membership', function () {
+//     return Inertia::render('Membership/Index');
+// })->name('membership.index');
 
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Home Hub - Main entry point after login
-    Route::get('/home', [App\Http\Controllers\HomeHubController::class, 'index'])->name('home');
+    // Home Hub - Main entry point after login (defined later with Presentation controller)
     
     // Temporary debug route - NO AUTH to test
     Route::get('/test-routes', function() {
@@ -209,7 +262,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'routes_exist' => [
                 'home' => \Route::has('home'),
                 'dashboard' => \Route::has('dashboard'),
-                'mygrownet.classic-dashboard' => \Route::has('mygrownet.classic-dashboard'),
                 'admin.dashboard' => \Route::has('admin.dashboard'),
             ],
             'all_dashboard_routes' => collect(\Route::getRoutes())->filter(function($route) {
@@ -801,16 +853,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tiers/compare', [App\Http\Controllers\TierController::class, 'compare'])->name('tiers.compare');
     Route::get('/tiers/{tier}', [App\Http\Controllers\TierController::class, 'show'])->name('tiers.show');
     
-    // MyGrowNet Dashboard Routes (Clean URLs)
-    // Note: Main /dashboard route at line 79 handles role-based routing
-    // For regular members, it renders the mobile dashboard directly
-    Route::middleware(['auth'])->group(function () {
-        // Classic Dashboard (Alternative desktop view)
-        Route::get('/classic-dashboard', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'index'])->name('mygrownet.classic-dashboard');
-    });
+    // GrowNet Dashboard Routes (Community & Referral Network)
+    // Note: Main /dashboard route now shows the Universal App Launcher (HomeHub)
+    // Users can access the GrowNet dashboard directly via /grownet
     
-    // MyGrowNet Feature Routes
+    // GrowNet - Primary route (clean URL)
+    Route::get('/grownet', [App\Http\Controllers\MyGrowNet\DashboardController::class, 'mobileIndex'])
+        ->middleware(['auth'])
+        ->name('grownet.dashboard');
+    
+    // Legacy /mygrownet routes (keep for backward compatibility)
     Route::prefix('mygrownet')->name('mygrownet.')->middleware(['auth'])->group(function () {
+        
+        // Redirect /mygrownet to /grownet
+        Route::get('/', function () {
+            return redirect()->route('grownet.dashboard');
+        })->name('dashboard');
         
         // Member Membership Routes
         Route::get('/my-membership', [App\Http\Controllers\MyGrowNet\MembershipController::class, 'show'])->name('membership.show');
@@ -1113,11 +1171,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/home-hub', [\App\Presentation\Http\Controllers\HomeHubController::class, 'index'])
         ->name('home-hub.index');
     
-    // Alias: /home also points to home-hub (for backward compatibility)
-    // This overrides the old /home route defined earlier
-    Route::get('/home', [\App\Presentation\Http\Controllers\HomeHubController::class, 'index'])
-        ->name('home');
-
     // Module Subscriptions
     Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
         Route::post('/', [\App\Presentation\Http\Controllers\ModuleSubscriptionController::class, 'store'])

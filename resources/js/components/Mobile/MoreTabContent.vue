@@ -121,12 +121,12 @@
       </button>
     </div>
 
-    <!-- App & View Section -->
+    <!-- App & Info Section -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
         <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <DevicePhoneMobileIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-          App & View
+          App & Info
         </h3>
       </div>
       <div class="divide-y divide-gray-100">
@@ -135,11 +135,6 @@
           label="Install App"
           :icon="ArrowDownTrayIcon"
           @click="$emit('install-app')"
-        />
-        <MenuButton
-          label="Switch to Classic View"
-          :icon="ComputerDesktopIcon"
-          @click="$emit('switch-view')"
         />
         <MenuButton
           label="About MyGrowNet"
@@ -188,7 +183,6 @@ import {
   SunIcon,
   DevicePhoneMobileIcon,
   ArrowDownTrayIcon,
-  ComputerDesktopIcon,
   InformationCircleIcon,
   ArrowRightOnRectangleIcon,
   PresentationChartBarIcon,
@@ -220,7 +214,6 @@ defineEmits<{
   'language': [];
   'theme': [];
   'install-app': [];
-  'switch-view': [];
   'about': [];
   'terms': [];
   'logout': [];

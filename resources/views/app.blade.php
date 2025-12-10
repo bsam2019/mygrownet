@@ -15,7 +15,7 @@
             if ($isBizBoost) {
                 $themeColor = '#7c3aed'; // Violet
                 $appTitle = 'BizBoost';
-                $manifestPath = '/manifest.json';
+                $manifestPath = '/bizboost-manifest.json';
                 $iconPath = '/images/bizboost/icon-192x192.png';
                 $faviconPath = '/images/bizboost/icon-192x192.png';
             } elseif ($isGrowBiz) {

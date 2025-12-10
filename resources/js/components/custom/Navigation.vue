@@ -3,7 +3,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
-            <Link :href="route('home')" class="flex items-center hover:opacity-90 transition-opacity">
+            <Link :href="route('welcome')" class="flex items-center hover:opacity-90 transition-opacity">
               <div class="flex-shrink-0 flex items-center">
                 <Logo size="lg" variant="white" />
               </div>
@@ -11,86 +11,77 @@
           </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-center space-x-6">
-              <!-- Regular Links -->
-              <Link
-                v-for="item in filteredNavigationItems"
-                :key="item.name"
-                :href="route(item.route)"
-                :class="[
-                  'px-3 py-2 text-sm font-medium transition-colors duration-200',
-                  (route().has(item.route) && route().current(item.route))
-                    ? 'text-blue-400 hover:text-blue-300'
-                    : 'text-white hover:text-blue-200'
-                ]"
-              >
-                {{ item.name }}
-              </Link>
-              
-              <!-- Growth Opportunities Dropdown -->
-              <div class="relative" @mouseenter="handleGrowthEnter" @mouseleave="handleGrowthLeave">
-                <button
+              <!-- Simplified Navigation Links -->
+              <template v-for="item in filteredNavigationItems" :key="item.name">
+                <!-- Regular Link -->
+                <Link
+                  v-if="!item.dropdown"
+                  :href="route(item.route)"
                   :class="[
-                    'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
-                    isGrowthActive ? 'text-blue-400' : 'text-white hover:text-blue-200'
+                    'px-3 py-2 text-sm font-medium transition-colors duration-200',
+                    (route().has(item.route) && route().current(item.route))
+                      ? 'text-blue-400 hover:text-blue-300'
+                      : 'text-white hover:text-blue-200'
                   ]"
                 >
-                  Opportunities
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div
-                  v-show="showGrowth"
-                  @mouseenter="handleGrowthEnter"
-                  @mouseleave="handleGrowthLeave"
-                  class="absolute left-0 mt-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
-                >
-                  <div class="py-1">
-                    <Link
-                      v-for="item in growthItems"
-                      :key="item.name"
-                      :href="route(item.route)"
-                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      {{ item.name }}
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Marketplace Dropdown -->
-              <div class="relative" @mouseenter="handleMarketplaceEnter" @mouseleave="handleMarketplaceLeave">
-                <button
-                  :class="[
-                    'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
-                    isMarketplaceActive ? 'text-blue-400' : 'text-white hover:text-blue-200'
-                  ]"
-                >
-                  Marketplace
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div
-                  v-show="showMarketplace"
-                  @mouseenter="handleMarketplaceEnter"
-                  @mouseleave="handleMarketplaceLeave"
-                  class="absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
-                >
-                  <div class="py-1">
-                    <Link
-                      v-for="item in marketplaceItems"
-                      :key="item.name"
-                      :href="route(item.route)"
-                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                    >
-                      {{ item.name }}
-                    </Link>
-                  </div>
-                </div>
-              </div>
+                  {{ item.name }}
+                </Link>
 
+                <!-- Dropdown Link -->
+                <div v-else class="relative" @mouseenter="openDropdown(item.name)" @mouseleave="closeDropdown">
+                  <button
+                    :class="[
+                      'px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center gap-1',
+                      isDropdownActive(item)
+                        ? 'text-blue-400 hover:text-blue-300'
+                        : 'text-white hover:text-blue-200'
+                    ]"
+                  >
+                    {{ item.name }}
+                    <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': activeDropdown === item.name }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  <!-- Dropdown Menu -->
+                  <transition
+                    enter-active-class="transition ease-out duration-200"
+                    enter-from-class="opacity-0 translate-y-1"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition ease-in duration-150"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 translate-y-1"
+                  >
+                    <div
+                      v-show="activeDropdown === item.name"
+                      class="absolute left-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 overflow-hidden z-50"
+                    >
+                      <div class="py-1">
+                        <Link
+                          v-for="subItem in item.dropdown"
+                          :key="subItem.name"
+                          :href="route(subItem.route)"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        >
+                          <div class="font-medium">{{ subItem.name }}</div>
+                          <div v-if="subItem.description" class="text-xs text-gray-500 mt-0.5">{{ subItem.description }}</div>
+                        </Link>
+                      </div>
+                    </div>
+                  </transition>
+                </div>
+              </template>
+
+              <!-- Show Dashboard if logged in, otherwise Login -->
               <Link
+                v-if="isAuthenticated"
+                :href="route('dashboard')"
+                class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
+              >
+                Dashboard
+              </Link>
+              <Link
+                v-else
                 :href="route('login')"
                 class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
               >
@@ -102,18 +93,28 @@
           <!-- Mobile menu button and auth links -->
           <div class="md:hidden flex items-center gap-2">
             <!-- Mobile Auth Links (visible on mobile) -->
-            <Link
-              :href="route('register')"
-              class="hidden sm:inline-block px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              Register
-            </Link>
-            <Link
-              :href="route('login')"
-              class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
-            >
-              Login
-            </Link>
+            <template v-if="isAuthenticated">
+              <Link
+                :href="route('dashboard')"
+                class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Dashboard
+              </Link>
+            </template>
+            <template v-else>
+              <Link
+                :href="route('register')"
+                class="hidden sm:inline-block px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Register
+              </Link>
+              <Link
+                :href="route('login')"
+                class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Login
+              </Link>
+            </template>
             
             <!-- Menu button -->
             <button
@@ -150,64 +151,85 @@
         :class="{'block': isMobileMenuOpen, 'hidden': !isMobileMenuOpen}"
       >
         <div class="px-2 pt-2 pb-3 space-y-1">
-          <Link
-            v-for="item in filteredNavigationItems"
-            :key="item.name"
-            :href="route(item.route)"
-            :class="[
-              'block px-3 py-2 rounded-md text-base font-medium',
-              (route().has(item.route) && route().current(item.route))
-                ? 'text-blue-400 bg-gray-900'
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            ]"
-          >
-            {{ item.name }}
-          </Link>
-          
-          <!-- Mobile Growth Opportunities Section -->
-          <div class="pt-2">
-            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Growth Opportunities
-            </div>
+          <!-- Simplified Mobile Navigation -->
+          <template v-for="item in filteredNavigationItems" :key="item.name">
+            <!-- Regular Link -->
             <Link
-              v-for="item in growthItems"
-              :key="item.name"
+              v-if="!item.dropdown"
               :href="route(item.route)"
-              class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
+              :class="[
+                'block px-3 py-2 rounded-md text-base font-medium',
+                (route().has(item.route) && route().current(item.route))
+                  ? 'text-blue-400 bg-gray-900'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              ]"
             >
               {{ item.name }}
             </Link>
-          </div>
-          
-          <!-- Mobile Marketplace Section -->
-          <div class="pt-2">
-            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Marketplace
+
+            <!-- Dropdown Section -->
+            <div v-else>
+              <button
+                @click="toggleMobileDropdown(item.name)"
+                :class="[
+                  'w-full flex items-center justify-between px-3 py-2 rounded-md text-base font-medium',
+                  isDropdownActive(item)
+                    ? 'text-blue-400 bg-gray-900'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                ]"
+              >
+                {{ item.name }}
+                <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': mobileDropdowns[item.name] }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <!-- Mobile Dropdown Items -->
+              <div v-show="mobileDropdowns[item.name]" class="pl-4 space-y-1 mt-1">
+                <Link
+                  v-for="subItem in item.dropdown"
+                  :key="subItem.name"
+                  :href="route(subItem.route)"
+                  class="block px-3 py-2 rounded-md text-sm text-gray-400 hover:text-white hover:bg-gray-700"
+                >
+                  {{ subItem.name }}
+                </Link>
+              </div>
             </div>
-            <Link
-              v-for="item in marketplaceItems"
-              :key="item.name"
-              :href="route(item.route)"
-              class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700"
-            >
-              {{ item.name }}
-            </Link>
-          </div>
+          </template>
 
           <!-- Auth buttons in mobile menu -->
           <div class="flex gap-2 mt-4 pt-4 border-t border-gray-700">
-            <Link
-              :href="route('register')"
-              class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-300"
-            >
-              Register
-            </Link>
-            <Link
-              :href="route('login')"
-              class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
-            >
-              Login
-            </Link>
+            <template v-if="isAuthenticated">
+              <Link
+                :href="route('dashboard')"
+                class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Dashboard
+              </Link>
+              <Link
+                :href="route('logout')"
+                method="post"
+                as="button"
+                class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300"
+              >
+                Logout
+              </Link>
+            </template>
+            <template v-else>
+              <Link
+                :href="route('register')"
+                class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-300"
+              >
+                Register
+              </Link>
+              <Link
+                :href="route('login')"
+                class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Login
+              </Link>
+            </template>
           </div>
         </div>
       </div>
@@ -216,7 +238,7 @@
 
   <script>
   import { ref, computed } from 'vue';
-  import { Link } from '@inertiajs/vue3';
+  import { Link, usePage } from '@inertiajs/vue3';
   import Logo from '../Logo.vue';
 
   export default {
@@ -226,92 +248,99 @@
     },
 
     setup() {
+      const page = usePage();
       const isMobileMenuOpen = ref(false);
-      const showGrowth = ref(false);
-      const showMarketplace = ref(false);
-      let growthTimeout = null;
-      let marketplaceTimeout = null;
+      const activeDropdown = ref(null);
+      const mobileDropdowns = ref({});
+      
+      // Check if user is authenticated - access props.value for reactivity
+      const isAuthenticated = computed(() => {
+        const authUser = page.props.auth?.user;
+        return !!authUser;
+      });
+      
+      const user = computed(() => {
+        return page.props.auth?.user;
+      });
 
+      // Simplified navigation - with Services dropdown
       const navigationItems = [
-        { name: 'Home', route: 'home' },
+        { name: 'Home', route: 'welcome' },
         { name: 'About', route: 'about' },
-        { name: 'Membership', route: 'membership.index' },
-      ];
-
-      const growthItems = [
-        { name: 'Venture Builder', route: 'ventures.about' },
-        { name: 'Business Growth Fund', route: 'bgf.about' },
-      ];
-
-      const marketplaceItems = [
-        { name: 'Venture Investments', route: 'ventures.index' },
-        { name: 'MyGrow Shop', route: 'shop.index' },
+        { name: 'Our Apps', route: 'apps.index' },
+        { 
+          name: 'Services', 
+          dropdown: [
+            { name: 'Marketplace', route: 'marketplace.index', description: 'Browse products & services' },
+            { name: 'Training', route: 'training', description: 'Learn new skills' },
+            { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses' },
+            { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business' },
+          ]
+        },
+        { name: 'Rewards & Loyalty', route: 'loyalty-reward.index' },
+        { name: 'Referral Program', route: 'referral-program' },
+        { name: 'Contact', route: 'contact' },
       ];
 
       // Filter out routes that Ziggy doesn't expose
-      const filteredNavigationItems = navigationItems.filter((item) => {
-        try {
-          return route().has(item.route);
-        } catch (e) {
-          return false;
-        }
+      const filteredNavigationItems = computed(() => {
+        return navigationItems.map(item => {
+          if (item.dropdown) {
+            // Filter dropdown items
+            const filteredDropdown = item.dropdown.filter(subItem => {
+              try {
+                return route().has(subItem.route);
+              } catch (e) {
+                return false;
+              }
+            });
+            // Only include dropdown if it has items
+            return filteredDropdown.length > 0 ? { ...item, dropdown: filteredDropdown } : null;
+          } else {
+            // Check if regular route exists
+            try {
+              return route().has(item.route) ? item : null;
+            } catch (e) {
+              return null;
+            }
+          }
+        }).filter(item => item !== null);
       });
 
-      // Dropdown handlers with delay
-      const handleGrowthEnter = () => {
-        clearTimeout(growthTimeout);
-        showGrowth.value = true;
+      const openDropdown = (name) => {
+        activeDropdown.value = name;
       };
 
-      const handleGrowthLeave = () => {
-        growthTimeout = setTimeout(() => {
-          showGrowth.value = false;
-        }, 200);
+      const closeDropdown = () => {
+        activeDropdown.value = null;
       };
 
-      const handleMarketplaceEnter = () => {
-        clearTimeout(marketplaceTimeout);
-        showMarketplace.value = true;
+      const toggleMobileDropdown = (name) => {
+        mobileDropdowns.value[name] = !mobileDropdowns.value[name];
       };
 
-      const handleMarketplaceLeave = () => {
-        marketplaceTimeout = setTimeout(() => {
-          showMarketplace.value = false;
-        }, 200);
+      const isDropdownActive = (item) => {
+        if (!item.dropdown) return false;
+        return item.dropdown.some(subItem => {
+          try {
+            return route().has(subItem.route) && route().current(subItem.route);
+          } catch (e) {
+            return false;
+          }
+        });
       };
-
-      // Check if we're on a growth opportunities page
-      const isGrowthActive = computed(() => {
-        try {
-          return route().current('ventures.about') || route().current('bgf.*');
-        } catch (e) {
-          return false;
-        }
-      });
-
-      // Check if we're on a marketplace page
-      const isMarketplaceActive = computed(() => {
-        try {
-          return route().current('ventures.index') || route().current('shop.*');
-        } catch (e) {
-          return false;
-        }
-      });
 
       return {
         isMobileMenuOpen,
-        showGrowth,
-        showMarketplace,
-        navigationItems,
-        growthItems,
-        marketplaceItems,
+        activeDropdown,
+        mobileDropdowns,
         filteredNavigationItems,
-        isGrowthActive,
-        isMarketplaceActive,
-        handleGrowthEnter,
-        handleGrowthLeave,
-        handleMarketplaceEnter,
-        handleMarketplaceLeave
+        openDropdown,
+        closeDropdown,
+        toggleMobileDropdown,
+        isDropdownActive,
+        isAuthenticated,
+        user,
       };
     }
   }

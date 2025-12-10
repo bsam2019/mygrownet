@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AccountType;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class ImpersonateController extends Controller
     public function impersonate(User $user)
     {
         $admin = Auth::user();
-        
+
         // Prevent impersonating another admin
         if ($user->roles()->where('name', 'admin')->exists()) {
             return back()->withErrors(['error' => 'Cannot impersonate another admin.']);
@@ -25,7 +26,7 @@ class ImpersonateController extends Controller
 
         // Store the original admin ID in session
         Session::put('impersonate_admin_id', $admin->id);
-        
+
         // Log the impersonation for audit trail
         Log::info('Admin impersonation started', [
             'admin_id' => $admin->id,
@@ -38,7 +39,10 @@ class ImpersonateController extends Controller
         // Login as the user
         Auth::login($user);
 
-        return redirect()->route('home')->with('success', 'You are now viewing as ' . $user->name);
+        // Redirect based on user's account type
+        $redirectRoute = $this->getRedirectRouteForUser($user);
+
+        return redirect()->route($redirectRoute)->with('success', 'You are now viewing as ' . $user->name);
     }
 
     /**
@@ -47,7 +51,7 @@ class ImpersonateController extends Controller
     public function leave()
     {
         if (!Session::has('impersonate_admin_id')) {
-            return redirect()->route('home');
+            return redirect()->route('dashboard');
         }
 
         $currentUser = Auth::user();
@@ -69,6 +73,22 @@ class ImpersonateController extends Controller
         // Login back as admin
         Auth::login($admin);
 
-        return redirect()->route('admin.users.index')->with('success', 'You are now back to your admin account.');
+        return redirect()->route('admin.dashboard')->with('success', 'You are now back to your admin account.');
+    }
+
+    /**
+     * Get the appropriate redirect route based on user's account type
+     */
+    private function getRedirectRouteForUser(User $user): string
+    {
+        $accountType = $user->getPrimaryAccountType();
+
+        // Member account type → GrowNet dashboard
+        if ($accountType === AccountType::MEMBER) {
+            return 'grownet.dashboard';
+        }
+
+        // All other types → HomeHub dashboard
+        return 'dashboard';
     }
 }

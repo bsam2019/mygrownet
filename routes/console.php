@@ -71,6 +71,11 @@ Schedule::command('bizboost:send-reminders')
     ->everyFifteenMinutes()
     ->description('Send due BizBoost follow-up reminder notifications');
 
+// Refresh expiring social media tokens - runs daily to keep integrations active
+Schedule::command('bizboost:refresh-tokens')
+    ->dailyAt('03:00')
+    ->description('Refresh expiring social media access tokens');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

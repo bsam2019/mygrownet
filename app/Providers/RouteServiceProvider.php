@@ -12,9 +12,9 @@ class RouteServiceProvider extends ServiceProvider
 {
     /**
      * The path to the "home" route for your application.
-     * After login, users are redirected to the Home Hub.
+     * After login, users are redirected to the dashboard.
      */
-    public const HOME = '/home';
+    public const HOME = '/dashboard';
 
     public function boot(): void
     {

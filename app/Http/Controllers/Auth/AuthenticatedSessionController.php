@@ -55,7 +55,56 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('growbiz.invitation.pending');
         }
 
-        return redirect()->intended(route('home', absolute: false));
+        // Determine the appropriate redirect based on user type
+        $defaultRoute = $this->getDefaultRouteForUser($user);
+
+        return redirect()->intended($defaultRoute);
+    }
+
+    /**
+     * Get the default route for a user based on their account type and role.
+     * 
+     * Redirect logic:
+     * - Admin/Administrator role → Admin panel
+     * - Member account type → GrowNet dashboard
+     * - Client/Business account type → HomeHub dashboard
+     */
+    private function getDefaultRouteForUser($user): string
+    {
+        // Admin users go to admin dashboard (check role first)
+        if ($user && ($user->hasRole('Administrator') || $user->hasRole('admin'))) {
+            return route('admin.dashboard', absolute: false);
+        }
+
+        // Check account type for routing
+        if ($user) {
+            $accountType = $user->getPrimaryAccountType();
+            
+            // Member account type → GrowNet dashboard
+            if ($accountType === \App\Enums\AccountType::MEMBER) {
+                return route('grownet.dashboard', absolute: false);
+            }
+            
+            // Client and Business account types → HomeHub dashboard
+            // (This is the default, but being explicit for clarity)
+            if ($accountType === \App\Enums\AccountType::CLIENT || 
+                $accountType === \App\Enums\AccountType::BUSINESS) {
+                return route('dashboard', absolute: false);
+            }
+            
+            // Investor account type → Investor portal (if exists) or dashboard
+            if ($accountType === \App\Enums\AccountType::INVESTOR) {
+                return route('dashboard', absolute: false);
+            }
+            
+            // Employee account type → Admin panel (internal staff)
+            if ($accountType === \App\Enums\AccountType::EMPLOYEE) {
+                return route('admin.dashboard', absolute: false);
+            }
+        }
+
+        // Default: go to the app launcher (HomeHub/Dashboard)
+        return route('dashboard', absolute: false);
     }
 
     /**

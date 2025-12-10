@@ -47,7 +47,7 @@ onMounted(() => {
 const goto = (href: string) => router.visit(href);
 const logout = () => router.post('/logout');
 
-// Dashboard preference toggle
+// Dashboard preference toggle - now just refreshes the dashboard
 const toggleMobileDashboard = async () => {
   try {
     const isCurrentlyMobile = userDashboardPreference.value === 'mobile';
@@ -58,14 +58,9 @@ const toggleMobileDashboard = async () => {
     await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: newPreference });
     userDashboardPreference.value = newPreference;
     
-    // Redirect to appropriate dashboard
-    if (newPreference === 'mobile') {
-      console.log('Redirecting to mobile dashboard...');
-      window.location.href = '/dashboard';
-    } else {
-      console.log('Redirecting to classic dashboard...');
-      window.location.href = '/classic-dashboard';
-    }
+    // Redirect to dashboard (single unified dashboard)
+    console.log('Redirecting to dashboard...');
+    window.location.href = '/dashboard';
   } catch (error) {
     console.error('Failed to update dashboard preference:', error);
   }

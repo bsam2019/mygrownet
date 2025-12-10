@@ -22,24 +22,24 @@ class ModuleSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $modules = [
-            // MLM Dashboard - Blue
+            // GrowNet - Community & Referral Network - Blue
             [
-                'id' => 'mlm-dashboard',
-                'name' => 'MLM Dashboard',
-                'slug' => 'mlm-dashboard',
+                'id' => 'grownet',
+                'name' => 'GrowNet',
+                'slug' => 'grownet',
                 'category' => 'core',
-                'description' => 'Your network marketing dashboard with earnings and team overview',
-                'icon' => '👤',
+                'description' => 'Community network with referral rewards and team growth tracking',
+                'icon' => '🌐',
                 'color' => '#3B82F6', // Blue
                 'thumbnail' => null,
                 'account_types' => json_encode(['member']),
                 'required_roles' => null,
                 'min_user_level' => null,
                 'routes' => json_encode([
-                    'integrated' => '/dashboard',
-                    'standalone' => null,
+                    'integrated' => '/grownet',
+                    'standalone' => '/grownet',
                 ]),
-                'pwa_config' => json_encode(['enabled' => false]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true]),
                 'features' => json_encode(['offline' => false, 'notifications' => true]),
                 'subscription_tiers' => null,
                 'requires_subscription' => false,
@@ -62,9 +62,10 @@ class ModuleSeeder extends Seeder
                 'required_roles' => null,
                 'min_user_level' => null,
                 'routes' => json_encode([
-                    'integrated' => '/growbiz',
-                    'standalone' => '/growbiz',
+                    'integrated' => '/growbiz/dashboard',
+                    'standalone' => '/growbiz/dashboard',
                     'setup' => '/growbiz/setup',
+                    'welcome' => '/growbiz',  // Public landing page (no auth required)
                 ]),
                 'pwa_config' => json_encode(['enabled' => true, 'installable' => true]),
                 'features' => json_encode(['offline' => true, 'notifications' => true, 'requires_setup' => true]),
@@ -380,9 +381,10 @@ class ModuleSeeder extends Seeder
                 'required_roles' => null,
                 'min_user_level' => null,
                 'routes' => json_encode([
-                    'integrated' => '/growfinance',
-                    'standalone' => '/growfinance',
+                    'integrated' => '/growfinance/dashboard',
+                    'standalone' => '/growfinance/dashboard',
                     'setup' => '/growfinance/setup',
+                    'welcome' => '/growfinance',  // Public landing page (no auth required)
                 ]),
                 'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
                 'features' => json_encode(['offline' => true, 'dataSync' => true, 'notifications' => true, 'requires_setup' => true]),

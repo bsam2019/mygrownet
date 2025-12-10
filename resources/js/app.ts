@@ -66,27 +66,50 @@ declare module 'vite/client' {
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 // Service worker registration for PWA functionality
-// Only register on BizBoost routes to enable mobile app experience
+// Register module-specific service workers for each PWA-enabled module
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        // Check if we're on BizBoost routes
-        const isBizBoost = window.location.pathname.startsWith('/bizboost');
+        const path = window.location.pathname;
+        let swPath: string | null = null;
+        let moduleName = '';
         
-        if (isBizBoost) {
-            // Register service worker - scope defaults to the SW file location
-            // The SW at /sw.js can control /bizboost/* routes
+        // Determine which service worker to register based on current route
+        if (path.startsWith('/bizboost')) {
+            swPath = '/bizboost-sw.js';
+            moduleName = 'BizBoost';
+        } else if (path.startsWith('/growbiz')) {
+            swPath = '/growbiz-sw.js';
+            moduleName = 'GrowBiz';
+        } else if (path.startsWith('/growfinance')) {
+            swPath = '/growfinance-sw.js';
+            moduleName = 'GrowFinance';
+        }
+        
+        if (swPath) {
             navigator.serviceWorker
-                .register('/sw.js')
+                .register(swPath)
                 .then((registration) => {
-                    console.log('[BizBoost PWA] Service Worker registered:', registration.scope);
+                    console.log(`[${moduleName} PWA] Service Worker registered:`, registration.scope);
                     
                     // Check for updates periodically
                     setInterval(() => {
                         registration.update();
                     }, 60 * 60 * 1000); // Check every hour
+                    
+                    // Listen for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log(`[${moduleName} PWA] New version available`);
+                                }
+                            });
+                        }
+                    });
                 })
                 .catch((error) => {
-                    console.warn('[BizBoost PWA] Service Worker registration failed:', error);
+                    console.warn(`[${moduleName} PWA] Service Worker registration failed:`, error);
                 });
         }
     });

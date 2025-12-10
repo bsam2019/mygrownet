@@ -409,23 +409,24 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
 
                 <!-- Sidebar Footer -->
                 <div class="p-2 border-t border-gray-100">
-                    <!-- Back to MyGrowNet -->
+                    <!-- All Apps -->
                     <div 
-                        v-if="!isStandalone"
                         class="relative"
-                        @mouseenter="hoveredNavItem = 'back'"
+                        @mouseenter="hoveredNavItem = 'apps'"
                         @mouseleave="hoveredNavItem = null"
                     >
-                        <button 
-                            @click="router.visit(route('home'))"
+                        <Link 
+                            href="/apps"
                             :class="[
-                                'flex items-center gap-3 w-full py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors',
+                                'flex items-center gap-3 w-full py-2 rounded-lg text-sm text-gray-500 hover:bg-emerald-50 hover:text-emerald-700 transition-colors border border-gray-200 hover:border-emerald-200',
                                 sidebarCollapsed ? 'px-2 justify-center' : 'px-3'
                             ]"
                         >
-                            <ArrowLeftIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                            <span v-if="!sidebarCollapsed" class="truncate">Back to MyGrowNet</span>
-                        </button>
+                            <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                            <span v-if="!sidebarCollapsed" class="truncate">All Apps</span>
+                        </Link>
                         <!-- Tooltip for collapsed state -->
                         <Transition
                             enter-active-class="transition-opacity duration-150"
@@ -436,10 +437,10 @@ const closeQuickAdd = () => { quickAddOpen.value = false; };
                             leave-to-class="opacity-0"
                         >
                             <div 
-                                v-if="sidebarCollapsed && hoveredNavItem === 'back'"
+                                v-if="sidebarCollapsed && hoveredNavItem === 'apps'"
                                 class="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2 py-1 bg-gray-900 text-white text-xs font-medium rounded shadow-lg whitespace-nowrap"
                             >
-                                Back to MyGrowNet
+                                All Apps
                             </div>
                         </Transition>
                     </div>

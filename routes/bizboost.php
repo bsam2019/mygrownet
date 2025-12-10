@@ -159,13 +159,27 @@ Route::middleware(['auth', 'verified'])
 
     // Integrations (Social Media)
     Route::prefix('integrations')->name('integrations.')->group(function () {
-        Route::get('/', [App\Http\Controllers\BizBoost\IntegrationController::class, 'index'])->name('index');
-        Route::get('/facebook/connect', [App\Http\Controllers\BizBoost\IntegrationController::class, 'connectFacebook'])->name('facebook.connect');
-        Route::get('/facebook/callback', [App\Http\Controllers\BizBoost\IntegrationController::class, 'facebookCallback'])->name('facebook.callback');
+        Route::get('/', [App\Http\Controllers\BizBoost\SocialMediaIntegrationController::class, 'index'])->name('index');
+        
+        // New unified OAuth flow for all platforms
+        Route::get('/{provider}/connect', [App\Http\Controllers\BizBoost\SocialMediaIntegrationController::class, 'connect'])
+            ->name('connect')
+            ->where('provider', 'facebook|instagram|whatsapp|tiktok');
+        Route::get('/{provider}/callback', [App\Http\Controllers\BizBoost\SocialMediaIntegrationController::class, 'callback'])
+            ->name('callback')
+            ->where('provider', 'facebook|instagram|whatsapp|tiktok');
+        Route::delete('/{provider}', [App\Http\Controllers\BizBoost\SocialMediaIntegrationController::class, 'disconnect'])
+            ->name('disconnect')
+            ->where('provider', 'facebook|instagram|whatsapp|tiktok');
+        Route::post('/{provider}/refresh', [App\Http\Controllers\BizBoost\SocialMediaIntegrationController::class, 'refresh'])
+            ->name('refresh')
+            ->where('provider', 'facebook|instagram|whatsapp|tiktok');
+        
+        // Legacy routes (for backward compatibility)
+        Route::get('/facebook/connect', [App\Http\Controllers\BizBoost\IntegrationController::class, 'connectFacebook'])->name('facebook.connect.legacy');
+        Route::get('/facebook/callback', [App\Http\Controllers\BizBoost\IntegrationController::class, 'facebookCallback'])->name('facebook.callback.legacy');
         Route::get('/facebook/select', [App\Http\Controllers\BizBoost\IntegrationController::class, 'selectFacebookPage'])->name('facebook.select');
         Route::post('/facebook/store', [App\Http\Controllers\BizBoost\IntegrationController::class, 'storeFacebookPage'])->name('facebook.store');
-        Route::delete('/{id}', [App\Http\Controllers\BizBoost\IntegrationController::class, 'disconnect'])->name('disconnect');
-        Route::post('/{id}/refresh', [App\Http\Controllers\BizBoost\IntegrationController::class, 'refresh'])->name('refresh');
     });
 
     // Industry Kits

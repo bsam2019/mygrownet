@@ -47,46 +47,50 @@ class DashboardController extends Controller
     }
 
     /**
-     * Display role-based dashboard with VBIF-specific data aggregation
+     * Display the Universal App Launcher (HomeHub)
+     * 
+     * All users see the same app launcher dashboard where they can:
+     * - Access their subscribed apps (BizBoost, GrowFinance, GrowBiz, etc.)
+     * - Access GrowNet (MLM features) if they have a starter kit
+     * - Admins can access admin panel from here
+     * 
+     * This provides a consistent experience for all users while
+     * allowing role-specific features within each app.
      */
     public function index()
     {
         $user = auth()->user();
         
-        // Route to appropriate dashboard based on user role
-        // Check for Administrator role (Spatie)
-        if ($user->hasRole('Administrator') || $user->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
+        // Show the Universal App Launcher for ALL users (including admins)
+        // Admins can access admin panel from the HomeHub interface
+        // This allows admins to test/debug all apps as a regular user would
+        $homeHubController = app(\App\Presentation\Http\Controllers\HomeHubController::class);
+        return $homeHubController->index(request());
+    }
+    
+    /**
+     * Redirect to user's preferred app
+     */
+    private function redirectToPreferredApp(string $app)
+    {
+        $appRoutes = [
+            'grownet' => 'grownet.dashboard',
+            'bizboost' => 'bizboost.dashboard',
+            'growfinance' => 'growfinance.dashboard',
+            'growbiz' => 'growbiz.dashboard',
+            'home' => 'home-hub.index', // App Launcher
+        ];
+        
+        $routeName = $appRoutes[$app] ?? 'home-hub.index';
+        
+        // Check if route exists before redirecting
+        if (\Route::has($routeName)) {
+            return redirect()->route($routeName);
         }
         
-        // Check if user has manager role (using a simple field or method)
-        if ($user->rank === 'manager' || $this->isManager($user)) {
-            return redirect()->route('manager.dashboard');
-        }
-        
-        // Check if user is an employee - redirect to employee portal
-        if ($user->hasRole('employee')) {
-            $employee = \App\Models\Employee::where('user_id', $user->id)
-                ->where('employment_status', 'active')
-                ->first();
-            
-            if ($employee) {
-                return redirect()->route('employee.portal.dashboard');
-            }
-        }
-        
-        // Check user preference for dashboard type
-        $preference = $user->preferred_dashboard ?? 'mobile';
-        
-        if ($preference === 'classic' || $preference === 'desktop') {
-            // User prefers classic dashboard
-            return redirect()->route('mygrownet.classic-dashboard');
-        }
-        
-        // Default: Forward to MyGrowNet mobile dashboard controller
-        // This renders the mobile dashboard at /dashboard (no redirect)
-        $mobileController = app(\App\Http\Controllers\MyGrowNet\DashboardController::class);
-        return $mobileController->mobileIndex($request ?? request());
+        // Fallback to HomeHub
+        $homeHubController = app(\App\Presentation\Http\Controllers\HomeHubController::class);
+        return $homeHubController->index(request());
     }
 
     /**

@@ -459,8 +459,30 @@ const openCommandPalette = () => {
                             </div>
                         </li>
 
-                        <!-- Settings & Upgrade -->
+                        <!-- All Apps & Settings & Upgrade -->
                         <li class="mt-auto space-y-2">
+                            <!-- All Apps Link -->
+                            <Link
+                                v-if="!sidebarCollapsed"
+                                href="/apps"
+                                class="group flex gap-x-3 rounded-lg p-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-violet-600 transition-all border border-gray-200 hover:border-violet-200"
+                            >
+                                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                </svg>
+                                All Apps
+                            </Link>
+                            <Link
+                                v-else
+                                href="/apps"
+                                class="group flex justify-center rounded-lg p-2.5 text-gray-700 hover:bg-gray-50 hover:text-violet-600 transition-all border border-gray-200 hover:border-violet-200"
+                                title="All Apps"
+                            >
+                                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                </svg>
+                            </Link>
+                            
                             <Link
                                 v-if="!sidebarCollapsed"
                                 href="/bizboost/business/settings"

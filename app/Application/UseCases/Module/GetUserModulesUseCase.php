@@ -19,22 +19,24 @@ class GetUserModulesUseCase
     /**
      * Get all modules with user's access status
      *
-     * @param User $user
+     * @param User|null $user Null for public/unauthenticated access
      * @param string|null $category Filter by category
      * @return array<ModuleCardDTO>
      */
-    public function execute(User $user, ?string $category = null): array
+    public function execute(?User $user = null, ?string $category = null): array
     {
         // Get all active modules
         $modules = $category
             ? $this->moduleRepository->findByCategory($category)
             : $this->moduleRepository->findAllActive();
 
-        // Get user's subscriptions
-        $subscriptions = $this->subscriptionRepository->findByUser($user->id);
+        // Get user's subscriptions (only if user is authenticated)
         $subscriptionMap = [];
-        foreach ($subscriptions as $subscription) {
-            $subscriptionMap[$subscription->getModuleId()] = $subscription;
+        if ($user) {
+            $subscriptions = $this->subscriptionRepository->findByUser($user->id);
+            foreach ($subscriptions as $subscription) {
+                $subscriptionMap[$subscription->getModuleId()] = $subscription;
+            }
         }
 
         // Build DTOs with access information
@@ -42,7 +44,9 @@ class GetUserModulesUseCase
         foreach ($modules as $module) {
             $moduleIdString = $module->getId()->value(); // Convert ModuleId to string for array key
             $subscription = $subscriptionMap[$moduleIdString] ?? null;
-            $hasAccess = $this->accessService->canAccess($user, $module->getId());
+            
+            // For unauthenticated users, show as no access (they'll need to login)
+            $hasAccess = $user ? $this->accessService->canAccess($user, $module->getId()) : false;
 
             $cards[] = ModuleCardDTO::fromEntity($module, $hasAccess, $subscription);
         }

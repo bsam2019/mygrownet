@@ -114,14 +114,13 @@
           { name: 'Venture Builder', route: 'ventures.about' },
           { name: 'Business Growth Fund', route: 'bgf.about' },
           { name: 'Venture Investments', route: 'ventures.index' },
-          { name: 'MyGrow Shop', route: 'shop.index' },
-          { name: 'Membership Plans', route: 'membership.index' }
-        ],
+          { name: 'MyGrow Shop', route: 'marketplace.index' },
+         ],
         resourceLinks: [
           { name: 'About MyGrowNet', route: 'about' },
-          { name: 'How It Works', route: 'home' },
+          { name: 'How It Works', route: 'welcome' },
           { name: 'FAQ', route: 'faq' },
-          { name: 'Success Stories', route: 'home' }
+          { name: 'Success Stories', route: 'welcome' }
         ],
         companyLinks: [
           { name: 'Compliance', route: 'compliance.information' },
