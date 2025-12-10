@@ -25,8 +25,8 @@ return new class extends Migration
             $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
             
-            $table->unique(['business_id', 'provider', 'provider_page_id']);
-            $table->index(['business_id', 'provider', 'status']);
+            $table->unique(['business_id', 'provider', 'provider_page_id'], 'bb_integrations_unique');
+            $table->index(['business_id', 'provider', 'status'], 'bb_integrations_status_idx');
         });
     }
 
