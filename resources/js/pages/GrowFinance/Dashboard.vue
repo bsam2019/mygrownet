@@ -1,4 +1,7 @@
 <template>
+    <!-- PWA Welcome Screen - Shows only when app is opened as installed PWA -->
+    <PWAWelcomeScreen module="growfinance" :duration="2500" storage-key="growfinance-pwa-welcome-shown" />
+    
     <GrowFinanceLayout>
         <!-- Desktop Layout -->
         <div class="hidden lg:block px-6 py-6">
@@ -351,6 +354,7 @@ import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue';
 import RecordSaleModal from '@/Components/GrowFinance/RecordSaleModal.vue';
 import RecordExpenseModal from '@/Components/GrowFinance/RecordExpenseModal.vue';
 import QuickInvoiceModal from '@/Components/GrowFinance/QuickInvoiceModal.vue';
+import PWAWelcomeScreen from '@/components/pwa/PWAWelcomeScreen.vue';
 import { Link } from '@inertiajs/vue3';
 import {
     BanknotesIcon,

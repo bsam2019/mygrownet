@@ -29,6 +29,7 @@ import {
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import SubscriptionModal from '@/components/HomeHub/SubscriptionModal.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
+import PWAWelcomeScreen from '@/components/pwa/PWAWelcomeScreen.vue';
 
 const page = usePage();
 
@@ -243,6 +244,9 @@ const getModuleIcon = (slug: string) => {
 
 <template>
   <Head :title="isPublic ? 'Our Apps' : 'Home'" />
+
+  <!-- PWA Welcome Screen - Shows only when app is opened as installed PWA -->
+  <PWAWelcomeScreen module="mygrownet" :duration="2500" />
 
   <div class="min-h-screen bg-gray-50">
     <!-- Impersonation Banner -->

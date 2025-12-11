@@ -13,6 +13,7 @@ return [
     App\Providers\PaymentServiceProvider::class,
     App\Providers\ProfitSharingServiceProvider::class,
     App\Providers\GrowBizServiceProvider::class,
+    App\Providers\GrowStartServiceProvider::class,
     App\Providers\StarterKitServiceProvider::class,
     App\Providers\SupportServiceProvider::class,
     App\Providers\TelegramServiceProvider::class,

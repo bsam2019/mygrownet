@@ -251,6 +251,58 @@ return [
         ],
     ],
 
+    'growstart' => [
+        'name' => 'GrowStart',
+        'slug' => 'growstart',
+        'category' => 'sme',
+        'description' => 'Guided startup journey - from idea to launch in 8 stages',
+        'icon' => 'rocket',
+        'color' => '#10B981',
+        'thumbnail' => '/images/modules/growstart.png',
+        'account_types' => ['member', 'business'],
+        'subscription_tiers' => [
+            'free' => [
+                'name' => 'Free',
+                'price' => 0,
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'journey_tracking' => true,
+                    'basic_templates' => true,
+                    'provider_directory' => true,
+                    'badges' => true,
+                ],
+            ],
+            'premium' => [
+                'name' => 'Premium',
+                'price' => 99,
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'journey_tracking' => true,
+                    'all_templates' => true,
+                    'provider_directory' => true,
+                    'badges' => true,
+                    'financial_planning' => true,
+                    'collaboration' => true,
+                    'priority_support' => true,
+                ],
+            ],
+        ],
+        'routes' => [
+            'integrated' => '/growstart',
+            'standalone' => '/apps/growstart',
+        ],
+        'pwa' => [
+            'enabled' => true,
+            'installable' => true,
+            'offline_capable' => true,
+        ],
+        'features' => [
+            'offline' => true,
+            'dataSync' => true,
+            'notifications' => true,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Module Settings
