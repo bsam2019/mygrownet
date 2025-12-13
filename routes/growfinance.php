@@ -9,6 +9,7 @@ use App\Http\Controllers\GrowFinance\DashboardController;
 use App\Http\Controllers\GrowFinance\ExpenseController;
 use App\Http\Controllers\GrowFinance\InvoiceController;
 use App\Http\Controllers\GrowFinance\InvoiceTemplateController;
+use App\Http\Controllers\GrowFinance\QuotationController;
 use App\Http\Controllers\GrowFinance\MessageController;
 use App\Http\Controllers\GrowFinance\NotificationController;
 use App\Http\Controllers\GrowFinance\RecurringController;
@@ -59,6 +60,14 @@ Route::middleware(['auth', 'verified', GrowFinanceStandalone::class])->prefix('g
     Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'printView'])->name('invoices.print');
     Route::post('/invoices/{invoice}/send-email', [InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
     Route::post('/invoices/{invoice}/update-template', [InvoiceController::class, 'updateTemplate'])->name('invoices.update-template');
+
+    // Quotations / Estimates
+    Route::resource('quotations', QuotationController::class);
+    Route::post('/quotations/{quotation}/send', [QuotationController::class, 'send'])->name('quotations.send');
+    Route::post('/quotations/{quotation}/accept', [QuotationController::class, 'accept'])->name('quotations.accept');
+    Route::post('/quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('quotations.reject');
+    Route::post('/quotations/{quotation}/convert', [QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
+    Route::post('/quotations/{quotation}/duplicate', [QuotationController::class, 'duplicate'])->name('quotations.duplicate');
 
     // Expenses
     Route::resource('expenses', ExpenseController::class);

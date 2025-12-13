@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growfinance.php'));
             Route::middleware('web')
                 ->group(base_path('routes/bizboost.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/pos.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/inventory.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController

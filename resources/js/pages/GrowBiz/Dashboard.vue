@@ -66,25 +66,78 @@
                 </div>
 
                 <!-- Quick Actions - App Style -->
-                <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="grid grid-cols-4 gap-2 mb-6">
                     <button 
                         @click="router.visit(route('growbiz.tasks.create'))"
-                        class="quick-action bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center justify-center gap-2 active:scale-95 active:bg-gray-50 transition-all"
+                        class="quick-action bg-white rounded-2xl shadow-sm p-3 flex flex-col items-center justify-center gap-1.5 active:scale-95 active:bg-gray-50 transition-all"
                     >
-                        <div class="p-3 bg-blue-100 rounded-xl">
-                            <PlusIcon class="h-6 w-6 text-blue-600" aria-hidden="true" />
+                        <div class="p-2 bg-blue-100 rounded-xl">
+                            <PlusIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
                         </div>
-                        <span class="text-sm font-medium text-gray-900">New Task</span>
+                        <span class="text-xs font-medium text-gray-900">Task</span>
                     </button>
                     
                     <button 
-                        @click="router.visit(route('growbiz.employees.create'))"
-                        class="quick-action bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center justify-center gap-2 active:scale-95 active:bg-gray-50 transition-all"
+                        @click="router.visit(route('growbiz.projects.index'))"
+                        class="quick-action bg-white rounded-2xl shadow-sm p-3 flex flex-col items-center justify-center gap-1.5 active:scale-95 active:bg-gray-50 transition-all"
                     >
-                        <div class="p-3 bg-purple-100 rounded-xl">
-                            <UserPlusIcon class="h-6 w-6 text-purple-600" aria-hidden="true" />
+                        <div class="p-2 bg-indigo-100 rounded-xl">
+                            <ViewColumnsIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
                         </div>
-                        <span class="text-sm font-medium text-gray-900">Add Employee</span>
+                        <span class="text-xs font-medium text-gray-900">Projects</span>
+                    </button>
+                    
+                    <button 
+                        @click="router.visit(route('growbiz.inventory.index'))"
+                        class="quick-action bg-white rounded-2xl shadow-sm p-3 flex flex-col items-center justify-center gap-1.5 active:scale-95 active:bg-gray-50 transition-all"
+                    >
+                        <div class="p-2 bg-teal-100 rounded-xl">
+                            <CubeIcon class="h-5 w-5 text-teal-600" aria-hidden="true" />
+                        </div>
+                        <span class="text-xs font-medium text-gray-900">Inventory</span>
+                    </button>
+                    
+                    <button 
+                        @click="router.visit(route('growbiz.appointments.index'))"
+                        class="quick-action bg-white rounded-2xl shadow-sm p-3 flex flex-col items-center justify-center gap-1.5 active:scale-95 active:bg-gray-50 transition-all"
+                    >
+                        <div class="p-2 bg-pink-100 rounded-xl">
+                            <CalendarDaysIcon class="h-5 w-5 text-pink-600" aria-hidden="true" />
+                        </div>
+                        <span class="text-xs font-medium text-gray-900">Book</span>
+                    </button>
+                </div>
+                
+                <!-- Secondary Quick Actions -->
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <button 
+                        @click="router.visit(route('growbiz.todos.index'))"
+                        class="quick-action bg-white rounded-xl shadow-sm p-3 flex items-center gap-2 active:scale-95 active:bg-gray-50 transition-all"
+                    >
+                        <div class="p-1.5 bg-emerald-100 rounded-lg">
+                            <ListBulletIcon class="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                        </div>
+                        <span class="text-xs font-medium text-gray-700">My To-Do</span>
+                    </button>
+                    
+                    <button 
+                        @click="router.visit(route('growbiz.employees.index'))"
+                        class="quick-action bg-white rounded-xl shadow-sm p-3 flex items-center gap-2 active:scale-95 active:bg-gray-50 transition-all"
+                    >
+                        <div class="p-1.5 bg-purple-100 rounded-lg">
+                            <UsersIcon class="h-4 w-4 text-purple-600" aria-hidden="true" />
+                        </div>
+                        <span class="text-xs font-medium text-gray-700">Team</span>
+                    </button>
+                    
+                    <button 
+                        @click="router.visit(route('growbiz.reports.analytics'))"
+                        class="quick-action bg-white rounded-xl shadow-sm p-3 flex items-center gap-2 active:scale-95 active:bg-gray-50 transition-all"
+                    >
+                        <div class="p-1.5 bg-amber-100 rounded-lg">
+                            <ChartBarIcon class="h-4 w-4 text-amber-600" aria-hidden="true" />
+                        </div>
+                        <span class="text-xs font-medium text-gray-700">Reports</span>
                     </button>
                 </div>
 
@@ -225,6 +278,7 @@ import GrowBizLayout from '@/Layouts/GrowBizLayout.vue';
 import PullToRefresh from '@/Components/GrowBiz/PullToRefresh.vue';
 import StatusBadge from '@/Components/GrowBiz/StatusBadge.vue';
 import PriorityBadge from '@/Components/GrowBiz/PriorityBadge.vue';
+import PWAWelcomeScreen from '@/components/pwa/PWAWelcomeScreen.vue';
 import { 
     ClipboardDocumentListIcon, 
     ClockIcon, 
@@ -232,7 +286,12 @@ import {
     UsersIcon,
     PlusIcon,
     UserPlusIcon,
-    ExclamationTriangleIcon
+    ExclamationTriangleIcon,
+    ListBulletIcon,
+    ViewColumnsIcon,
+    CubeIcon,
+    CalendarDaysIcon,
+    ChartBarIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Task {

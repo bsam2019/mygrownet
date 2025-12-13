@@ -23,11 +23,17 @@ import {
     PresentationChartLineIcon,
     DocumentChartBarIcon,
     ChatBubbleLeftRightIcon,
+    CheckCircleIcon,
+    CubeIcon,
+    CalendarDaysIcon,
+    ViewColumnsIcon,
 } from '@heroicons/vue/24/outline';
 import {
     HomeIcon as HomeIconSolid,
     ClipboardDocumentListIcon as ClipboardIconSolid,
     UsersIcon as UsersIconSolid,
+    CheckCircleIcon as CheckCircleIconSolid,
+    CubeIcon as CubeIconSolid,
 } from '@heroicons/vue/24/solid';
 
 const page = usePage();
@@ -109,6 +115,7 @@ const navigation = computed(() => {
     const items = [
         { name: 'Home', href: 'growbiz.dashboard', icon: HomeIcon, iconSolid: HomeIconSolid },
         { name: 'Tasks', href: 'growbiz.tasks.index', icon: ClipboardDocumentListIcon, iconSolid: ClipboardIconSolid },
+        { name: 'To-Do', href: 'growbiz.todos.index', icon: CheckCircleIcon, iconSolid: CheckCircleIconSolid },
     ];
     
     // Only show Team tab for owners (not regular employees)
@@ -224,7 +231,7 @@ const closeMoreMenu = () => {
         <!-- Toast Notifications -->
         <ToastContainer />
 
-        <!-- More Menu Bottom Sheet -->
+        <!-- More Menu Slide-in Panel -->
         <Transition
             enter-active-class="transition-opacity duration-200"
             enter-from-class="opacity-0"
@@ -242,23 +249,30 @@ const closeMoreMenu = () => {
 
         <Transition
             enter-active-class="transition-transform duration-300 ease-out"
-            enter-from-class="translate-y-full"
-            enter-to-class="translate-y-0"
+            enter-from-class="translate-x-full"
+            enter-to-class="translate-x-0"
             leave-active-class="transition-transform duration-200 ease-in"
-            leave-from-class="translate-y-0"
-            leave-to-class="translate-y-full"
+            leave-from-class="translate-x-0"
+            leave-to-class="translate-x-full"
         >
             <div 
                 v-if="moreMenuOpen"
-                class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-white rounded-t-3xl shadow-2xl safe-area-bottom"
+                class="fixed inset-y-0 right-0 w-full max-w-sm z-50 bg-white shadow-2xl flex flex-col safe-area-top safe-area-bottom"
             >
-                <!-- Handle bar -->
-                <div class="flex justify-center pt-3 pb-2">
-                    <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+                <!-- Header with close button -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <h2 class="text-lg font-semibold text-gray-900">Menu</h2>
+                    <button 
+                        @click="closeMoreMenu"
+                        class="p-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                        aria-label="Close menu"
+                    >
+                        <XMarkIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                    </button>
                 </div>
                 
                 <!-- User Info -->
-                <div class="px-6 py-4 border-b border-gray-100">
+                <div class="px-4 py-4 border-b border-gray-100">
                     <div class="flex items-center gap-3">
                         <div class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
                             <span class="text-lg font-semibold text-white">{{ getInitials(user?.name || '') }}</span>
@@ -270,8 +284,8 @@ const closeMoreMenu = () => {
                     </div>
                 </div>
 
-                <!-- Menu Items -->
-                <div class="px-4 pt-2 pb-3">
+                <!-- Menu Items - Scrollable -->
+                <div class="flex-1 overflow-y-auto px-4 py-3">
                     <!-- Notifications -->
                     <Link 
                         :href="route('growbiz.notifications.index')"
@@ -306,6 +320,54 @@ const closeMoreMenu = () => {
                             </span>
                         </div>
                         <span class="font-medium text-sm">Messages</span>
+                    </Link>
+                    
+                    <!-- Personal To-Do List -->
+                    <Link 
+                        :href="route('growbiz.todos.index')"
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                        @click="closeMoreMenu"
+                    >
+                        <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+                            <CheckCircleIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                        </div>
+                        <span class="font-medium text-sm">My To-Do List</span>
+                    </Link>
+                    
+                    <!-- Inventory Management -->
+                    <Link 
+                        :href="route('growbiz.inventory.index')"
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                        @click="closeMoreMenu"
+                    >
+                        <div class="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center">
+                            <CubeIcon class="h-5 w-5 text-teal-600" aria-hidden="true" />
+                        </div>
+                        <span class="font-medium text-sm">Inventory</span>
+                    </Link>
+                    
+                    <!-- Projects (Kanban & Gantt) -->
+                    <Link 
+                        :href="route('growbiz.projects.index')"
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                        @click="closeMoreMenu"
+                    >
+                        <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+                            <ViewColumnsIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                        </div>
+                        <span class="font-medium text-sm">Projects</span>
+                    </Link>
+                    
+                    <!-- Appointments & Booking -->
+                    <Link 
+                        :href="route('growbiz.appointments.index')"
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                        @click="closeMoreMenu"
+                    >
+                        <div class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
+                            <CalendarDaysIcon class="h-5 w-5 text-pink-600" aria-hidden="true" />
+                        </div>
+                        <span class="font-medium text-sm">Appointments</span>
                     </Link>
                     
                     <Link 
@@ -376,15 +438,6 @@ const closeMoreMenu = () => {
                     </button>
                 </div>
 
-                <!-- Cancel Button -->
-                <div class="px-4 pb-4">
-                    <button 
-                        @click="closeMoreMenu"
-                        class="w-full py-3.5 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 active:bg-gray-300 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                </div>
             </div>
         </Transition>
 

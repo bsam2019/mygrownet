@@ -16,6 +16,11 @@ class GrowBizTaskModel extends Model
 
     protected $fillable = [
         'manager_id',
+        'project_id',
+        'kanban_column_id',
+        'milestone_id',
+        'parent_task_id',
+        'kanban_order',
         'title',
         'description',
         'due_date',
@@ -32,6 +37,11 @@ class GrowBizTaskModel extends Model
 
     protected $casts = [
         'manager_id' => 'integer',
+        'project_id' => 'integer',
+        'kanban_column_id' => 'integer',
+        'milestone_id' => 'integer',
+        'parent_task_id' => 'integer',
+        'kanban_order' => 'integer',
         'due_date' => 'date',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
@@ -44,6 +54,41 @@ class GrowBizTaskModel extends Model
     public function manager(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'manager_id');
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(GrowBizProjectModel::class, 'project_id');
+    }
+
+    public function kanbanColumn(): BelongsTo
+    {
+        return $this->belongsTo(GrowBizKanbanColumnModel::class, 'kanban_column_id');
+    }
+
+    public function milestone(): BelongsTo
+    {
+        return $this->belongsTo(GrowBizMilestoneModel::class, 'milestone_id');
+    }
+
+    public function parentTask(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_task_id');
+    }
+
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_task_id');
+    }
+
+    public function dependencies(): HasMany
+    {
+        return $this->hasMany(GrowBizTaskDependencyModel::class, 'task_id');
+    }
+
+    public function dependentTasks(): HasMany
+    {
+        return $this->hasMany(GrowBizTaskDependencyModel::class, 'depends_on_task_id');
     }
 
     public function assignments(): HasMany

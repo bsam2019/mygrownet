@@ -194,33 +194,83 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Inventory Management - Teal
+            // Inventory Management - Teal (Standalone + Integratable)
             [
                 'id' => 'inventory',
                 'name' => 'Inventory Management',
                 'slug' => 'inventory',
                 'category' => 'sme',
-                'description' => 'Track stock levels, orders, and suppliers for your business',
+                'description' => 'Track stock levels, orders, and suppliers. Can be used standalone or integrated into GrowBiz, BizBoost, or E-Commerce.',
                 'icon' => '📦',
                 'color' => '#14B8A6', // Teal
                 'thumbnail' => null,
-                'account_types' => json_encode(['business']),
+                'account_types' => json_encode(['business', 'member']),
                 'required_roles' => null,
                 'min_user_level' => null,
                 'routes' => json_encode([
-                    'integrated' => '/modules/inventory',
-                    'standalone' => '/apps/inventory',
+                    'integrated' => '/inventory',
+                    'standalone' => '/inventory',
+                    'setup' => '/inventory/setup',
                 ]),
                 'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
-                'features' => json_encode(['offline' => true, 'dataSync' => true, 'multiUser' => true, 'barcode' => true]),
+                'features' => json_encode([
+                    'offline' => true, 
+                    'dataSync' => true, 
+                    'multiUser' => true, 
+                    'barcode' => true,
+                    'integratable' => true, // Can be embedded in other modules
+                    'integrates_with' => ['growbiz', 'bizboost', 'ecommerce', 'pos'],
+                ]),
                 'subscription_tiers' => json_encode([
-                    'starter' => ['name' => 'Starter', 'price' => 75, 'billing_cycle' => 'monthly', 'user_limit' => 2, 'products' => 100],
-                    'business' => ['name' => 'Business', 'price' => 150, 'billing_cycle' => 'monthly', 'user_limit' => 5, 'products' => 1000],
+                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'products' => 50],
+                    'starter' => ['name' => 'Starter', 'price' => 75, 'billing_cycle' => 'monthly', 'user_limit' => 2, 'products' => 500],
+                    'business' => ['name' => 'Business', 'price' => 150, 'billing_cycle' => 'monthly', 'user_limit' => 5, 'products' => 2000],
                     'enterprise' => ['name' => 'Enterprise', 'price' => 300, 'billing_cycle' => 'monthly', 'user_limit' => 'unlimited', 'products' => 'unlimited'],
                 ]),
-                'requires_subscription' => true,
+                'requires_subscription' => false,
                 'version' => '1.0.0',
-                'status' => 'coming_soon',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // Point of Sale (POS) - Purple (Standalone + Integratable)
+            [
+                'id' => 'pos',
+                'name' => 'Point of Sale',
+                'slug' => 'pos',
+                'category' => 'sme',
+                'description' => 'Simple POS for retail sales with shift management and reporting. Can be used standalone or integrated into GrowBiz, BizBoost, or E-Commerce.',
+                'icon' => '🛒',
+                'color' => '#8B5CF6', // Purple
+                'thumbnail' => null,
+                'account_types' => json_encode(['business', 'member']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/pos',
+                    'standalone' => '/pos',
+                    'setup' => '/pos/setup',
+                    'terminal' => '/pos/terminal',
+                ]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
+                'features' => json_encode([
+                    'offline' => true, 
+                    'dataSync' => true, 
+                    'notifications' => true,
+                    'integratable' => true, // Can be embedded in other modules
+                    'integrates_with' => ['growbiz', 'bizboost', 'ecommerce'],
+                    'requires_inventory' => false, // Can work without inventory
+                    'optional_inventory' => true, // But integrates with inventory if available
+                ]),
+                'subscription_tiers' => json_encode([
+                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'sales_per_month' => 100],
+                    'starter' => ['name' => 'Starter', 'price' => 49, 'billing_cycle' => 'monthly', 'sales_per_month' => 1000],
+                    'business' => ['name' => 'Business', 'price' => 99, 'billing_cycle' => 'monthly', 'sales_per_month' => 5000],
+                    'unlimited' => ['name' => 'Unlimited', 'price' => 199, 'billing_cycle' => 'monthly', 'sales_per_month' => 'unlimited'],
+                ]),
+                'requires_subscription' => false,
+                'version' => '1.0.0',
+                'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
