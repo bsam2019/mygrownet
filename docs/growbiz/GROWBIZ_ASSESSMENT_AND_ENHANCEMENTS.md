@@ -1,6 +1,6 @@
 # GrowBiz Platform Assessment & Enhancement Recommendations
 
-**Last Updated:** December 11, 2025  
+**Last Updated:** December 13, 2025  
 **Status:** Strategic Planning - Ready for Implementation  
 **Priority:** HIGH - Core Platform Enhancement
 
@@ -11,6 +11,33 @@
 This document serves as the **single source of truth** for GrowBiz platform assessment and enhancement planning. It provides a comprehensive analysis of current capabilities, identifies critical gaps, and outlines a prioritized roadmap for making GrowBiz a complete, competitive business management solution for Zambian SMEs.
 
 **Key Focus:** Transform GrowBiz from a task management tool into a comprehensive business platform that solves real pain points for small and medium enterprises.
+
+---
+
+## ⚠️ CRITICAL ARCHITECTURE REQUIREMENTS
+
+### GrowBiz MUST Be:
+
+1. **A Standalone Module** - Part of MyGrowNet ecosystem but fully functional independently
+2. **Installable as PWA** - Users install it on their phones like a native app
+3. **Mobile-First Design** - Primary interface designed for smartphones (360-428px)
+4. **Offline-Capable** - Works without internet, syncs when connected
+
+### Architecture Documentation
+See **`docs/growbiz/GROWBIZ_MODULE_ARCHITECTURE.md`** for complete technical specifications including:
+- PWA manifest configuration
+- Service Worker requirements
+- Mobile-first UI patterns
+- Offline sync architecture
+- IndexedDB schema
+- Implementation checklist
+
+### Key Design Principles
+- **Touch-first**: 44px minimum touch targets, swipe gestures
+- **Bottom navigation**: Primary nav at thumb reach
+- **Bottom sheets**: Forms and modals from bottom
+- **Offline-first**: Cache data locally, queue operations
+- **Progressive enhancement**: Works without JS, enhanced with it
 
 ---
 
@@ -507,6 +534,9 @@ These enhancements will position GraBiz as:
 ---
 
 ## Related Documentation
+
+**Architecture (MUST READ):**
+- `docs/growbiz/GROWBIZ_MODULE_ARCHITECTURE.md` - **PWA, Mobile-First, Offline architecture**
 
 **Core Platform Docs:**
 - `docs/MYGROWNET_PLATFORM_CONCEPT.md` - Overall platform architecture
