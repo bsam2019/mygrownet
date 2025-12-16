@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dff6fb6855dfb44da98fc981fb967d2b",
+    "content-hash": "da2f9679333888448bfd74209cf58ddb",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -82,6 +82,50 @@
                 }
             ],
             "time": "2025-02-13T15:07:54+00:00"
+        },
+        {
+            "name": "blessedjasonmwanza/moneyunify",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/blessedjasonmwanza/MoneyUnify.git",
+                "reference": "1e0a1685e64e4f4e59812d67e04ce385c4d4d6c7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/blessedjasonmwanza/MoneyUnify/zipball/1e0a1685e64e4f4e59812d67e04ce385c4d4d6c7",
+                "reference": "1e0a1685e64e4f4e59812d67e04ce385c4d4d6c7",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Blessedjasonmwanza\\MoneyUnify\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Blessed Jason Mwanza",
+                    "homepage": "https://github.com/blessedjasonmwanza",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Payments API with primary focus on Mobile Money USSD payments.",
+            "support": {
+                "issues": "https://github.com/blessedjasonmwanza/MoneyUnify/issues",
+                "source": "https://github.com/blessedjasonmwanza/MoneyUnify/tree/v1.0.1"
+            },
+            "time": "2024-10-21T19:43:36+00:00"
         },
         {
             "name": "brick/math",

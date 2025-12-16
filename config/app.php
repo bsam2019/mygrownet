@@ -176,6 +176,7 @@ return [
         App\Providers\WeddingServiceProvider::class,
         App\Providers\GrowFinanceServiceProvider::class,
         App\Providers\ModuleSubscriptionServiceProvider::class, // Centralized module subscription services
+        App\Providers\PaymentServiceProvider::class, // Payment gateway integration
     ])->toArray(),
 
     /*

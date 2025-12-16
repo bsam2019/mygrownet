@@ -17,6 +17,10 @@ class Withdrawal extends Model
         'status',
         'withdrawal_method',
         'wallet_address',
+        'phone_number',
+        'reference',
+        'account_name',
+        'notes',
         'reason',
         'processed_at',
     ];

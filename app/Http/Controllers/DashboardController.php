@@ -47,25 +47,58 @@ class DashboardController extends Controller
     }
 
     /**
-     * Display the Universal App Launcher (HomeHub)
+     * Display the Unified Dashboard
      * 
-     * All users see the same app launcher dashboard where they can:
-     * - Access their subscribed apps (BizBoost, GrowFinance, GrowBiz, etc.)
-     * - Access GrowNet (MLM features) if they have a starter kit
-     * - Admins can access admin panel from here
-     * 
-     * This provides a consistent experience for all users while
-     * allowing role-specific features within each app.
+     * Shows everything in one place:
+     * - Wallet balance and quick actions
+     * - App launcher (modules)
+     * - Quick stats
+     * - Recent activity
      */
     public function index()
     {
         $user = auth()->user();
         
-        // Show the Universal App Launcher for ALL users (including admins)
-        // Admins can access admin panel from the HomeHub interface
-        // This allows admins to test/debug all apps as a regular user would
-        $homeHubController = app(\App\Presentation\Http\Controllers\HomeHubController::class);
-        return $homeHubController->index(request());
+        // Get modules using the use case directly
+        $getUserModulesUseCase = app(\App\Application\UseCases\Module\GetUserModulesUseCase::class);
+        $moduleDTOs = $getUserModulesUseCase->execute($user);
+        
+        $modules = array_map(function($dto) {
+            return $dto->toArray();
+        }, $moduleDTOs);
+        
+        // Get wallet data
+        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        $walletBreakdown = $walletService->getWalletBreakdown($user);
+        $recentTransactions = $walletService->getRecentTransactions($user, 5);
+        
+        // Check user roles
+        $isAdmin = $user->hasRole(['Administrator', 'admin', 'superadmin']);
+        $isManager = $user->rank === 'manager' || in_array($user->rank, ['manager', 'regional_manager']);
+        
+        return Inertia::render('Dashboard/Index', [
+            // Wallet data
+            'walletBalance' => $walletBreakdown['balance'],
+            'bonusBalance' => (float) ($user->bonus_balance ?? 0),
+            'totalDeposits' => $walletBreakdown['credits']['deposits'],
+            'totalWithdrawals' => $walletBreakdown['debits']['withdrawals'],
+            'commissions' => $walletBreakdown['credits']['commissions'] ?? 0,
+            'profitShares' => $walletBreakdown['credits']['profit_shares'] ?? 0,
+            'recentTransactions' => $recentTransactions,
+            
+            // Modules
+            'modules' => $modules,
+            
+            // User info
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'isAdmin' => $isAdmin,
+            'isManager' => $isManager,
+            'accountType' => $user->getPrimaryAccountType()?->value ?? 'client',
+        ]);
     }
     
     /**

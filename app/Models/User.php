@@ -224,6 +224,10 @@ class User extends Authenticatable
         'loan_notes',
         // Multi-account type support
         'account_types',
+        // LifePlus fields
+        'lifeplus_onboarded',
+        'fcm_token',
+        'lifeplus_notifications_enabled',
     ];
 
     protected $hidden = [
@@ -274,6 +278,9 @@ class User extends Authenticatable
         // Telegram casts
         'telegram_notifications' => 'boolean',
         'telegram_linked_at' => 'datetime',
+        // LifePlus casts
+        'lifeplus_onboarded' => 'boolean',
+        'lifeplus_notifications_enabled' => 'boolean',
     ];
 
     // ==========================================
@@ -607,6 +614,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'user_id');
     }
+    
+    public function withdrawals(): HasMany
+    {
+        return $this->hasMany(Withdrawal::class, 'user_id');
+    }
 
     public function referralCommissions(): HasMany
     {
@@ -715,19 +727,6 @@ class User extends Authenticatable
         return $this->referrals()
             ->where('is_currently_active', true)
             ->count();
-    }
-
-    public function withdrawals(): HasMany
-    {
-        return $this->hasMany(Withdrawal::class);
-    }
-    
-    /**
-     * Get actual withdrawals (excluding starter kit wallet payments)
-     */
-    public function actualWithdrawals(): HasMany
-    {
-        return $this->hasMany(Withdrawal::class)->actualWithdrawals();
     }
 
     public function profitShares(): HasMany

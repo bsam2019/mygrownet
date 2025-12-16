@@ -483,6 +483,92 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // LifePlus - Health & Wellness App - Red/Pink
+            // FREE for members with active subscriptions, PAID for clients/business users
+            [
+                'id' => 'lifeplus',
+                'name' => 'LifePlus',
+                'slug' => 'lifeplus',
+                'category' => 'personal',
+                'description' => 'Health and wellness companion with fitness tracking, nutrition, budget management (including income), and lifestyle management',
+                'icon' => '❤️',
+                'color' => '#EF4444', // Red
+                'thumbnail' => null,
+                'account_types' => json_encode(['member', 'client', 'business']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/lifeplus',
+                    'standalone' => '/lifeplus',
+                    'welcome' => '/lifeplus/welcome',
+                ]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => true]),
+                'features' => json_encode([
+                    'offline' => true, 
+                    'dataSync' => true, 
+                    'notifications' => true,
+                    'budget_with_income' => true, // Budget includes income tracking
+                    'free_for_members' => true, // Free for members with active subscriptions
+                ]),
+                'subscription_tiers' => json_encode([
+                    'member_free' => [
+                        'name' => 'Member Free', 
+                        'price' => 0, 
+                        'billing_cycle' => 'monthly',
+                        'eligible_account_types' => ['member'],
+                        'requires_active_subscription' => true, // Must have active MyGrowNet subscription
+                        'features' => [
+                            'fitness_tracking' => true,
+                            'nutrition_tracking' => true,
+                            'budget_management' => true,
+                            'income_tracking' => true,
+                            'expense_tracking' => true,
+                            'daily_tips' => true,
+                            'basic_reports' => true,
+                        ]
+                    ],
+                    'basic' => [
+                        'name' => 'Basic', 
+                        'price' => 19, 
+                        'billing_cycle' => 'monthly',
+                        'eligible_account_types' => ['client', 'business'],
+                        'features' => [
+                            'fitness_tracking' => true,
+                            'nutrition_tracking' => true,
+                            'budget_management' => true,
+                            'income_tracking' => true,
+                            'expense_tracking' => true,
+                            'daily_tips' => true,
+                            'basic_reports' => true,
+                        ]
+                    ],
+                    'premium' => [
+                        'name' => 'Premium', 
+                        'price' => 49, 
+                        'billing_cycle' => 'monthly',
+                        'eligible_account_types' => ['member', 'client', 'business'],
+                        'features' => [
+                            'fitness_tracking' => true,
+                            'nutrition_tracking' => true,
+                            'budget_management' => true,
+                            'income_tracking' => true,
+                            'expense_tracking' => true,
+                            'advanced_tracking' => true,
+                            'personalized_plans' => true,
+                            'coach_access' => true,
+                            'advanced_reports' => true,
+                            'goal_setting' => true,
+                            'meal_planning' => true,
+                            'workout_plans' => true,
+                        ]
+                    ],
+                ]),
+                'requires_subscription' => true, // Requires subscription for non-members
+                'version' => '1.0.0',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
         DB::table('modules')->insert($modules);

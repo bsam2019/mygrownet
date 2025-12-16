@@ -105,12 +105,14 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        // Get employee data if user has an employee record
+        // Get employee data if user has an employee record - CACHED
         $employee = null;
         if ($user) {
-            $employee = \App\Models\Employee::where('user_id', $user->id)
-                ->where('employment_status', 'active')
-                ->first();
+            $employee = cache()->remember("employee_record_{$user->id}", 300, function () use ($user) {
+                return \App\Models\Employee::where('user_id', $user->id)
+                    ->where('employment_status', 'active')
+                    ->first();
+            });
         }
 
         return [
@@ -139,13 +141,21 @@ class HandleInertiaRequests extends Middleware
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'supportStats' => $supportStats,
             'employee' => $employee,
-            // GrowBiz PWA data
-            'growbiz' => $request->is('growbiz*') ? [
-                'isPwa' => $this->isPwaMode($request),
-                'userRole' => $this->getGrowBizUserRole($user),
-                'unreadNotificationCount' => $user ? $this->getGrowBizUnreadNotifications($user) : 0,
-                'unreadMessageCount' => $user ? $this->getGrowBizUnreadMessages($user) : 0,
-            ] : null,
+            // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes
+            'growbiz' => fn () => $request->is('growbiz*') ? $this->getGrowBizData($request, $user) : null,
+        ];
+    }
+
+    /**
+     * Get GrowBiz data - only called for GrowBiz routes (lazy loaded)
+     */
+    private function getGrowBizData(Request $request, $user): array
+    {
+        return [
+            'isPwa' => $this->isPwaMode($request),
+            'userRole' => $this->getGrowBizUserRole($user),
+            'unreadNotificationCount' => $user ? $this->getGrowBizUnreadNotifications($user) : 0,
+            'unreadMessageCount' => $user ? $this->getGrowBizUnreadMessages($user) : 0,
         ];
     }
 
@@ -159,7 +169,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Get user's role in GrowBiz (owner, supervisor, or employee)
+     * Get user's role in GrowBiz (owner, supervisor, or employee) - CACHED
      */
     private function getGrowBizUserRole($user): string
     {
@@ -167,102 +177,110 @@ class HandleInertiaRequests extends Middleware
             return 'none';
         }
 
-        // Check if user is a business owner (has employees under them)
-        $isOwner = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)->exists();
-        if ($isOwner) {
-            return 'owner';
-        }
-
-        // Check if user is an employee
-        $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)
-            ->where('status', 'active')
-            ->first();
-
-        if ($employeeRecord) {
-            // Check if they have direct reports (supervisor)
-            if ($employeeRecord->hasSupervisorRole()) {
-                return 'supervisor';
+        return cache()->remember("growbiz_role_{$user->id}", 300, function () use ($user) {
+            // Check if user is a business owner (has employees under them)
+            $isOwner = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)->exists();
+            if ($isOwner) {
+                return 'owner';
             }
-            return 'employee';
-        }
 
-        return 'none';
+            // Check if user is an employee
+            $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($employeeRecord) {
+                // Check if they have direct reports (supervisor)
+                if ($employeeRecord->hasSupervisorRole()) {
+                    return 'supervisor';
+                }
+                return 'employee';
+            }
+
+            return 'none';
+        });
     }
 
     /**
-     * Get unread GrowBiz notifications count
+     * Get unread GrowBiz notifications count - CACHED for 60 seconds
      */
     private function getGrowBizUnreadNotifications($user): int
     {
-        return $user->unreadNotifications()
-            ->where(function ($query) {
-                $query->where('type', 'like', '%GrowBiz%')
-                    ->orWhere('data->type', 'like', 'growbiz_%');
-            })
-            ->count();
+        return cache()->remember("growbiz_notifications_{$user->id}", 60, function () use ($user) {
+            return $user->unreadNotifications()
+                ->where(function ($query) {
+                    $query->where('type', 'like', '%GrowBiz%')
+                        ->orWhere('data->type', 'like', 'growbiz_%');
+                })
+                ->count();
+        });
     }
 
     /**
-     * Get unread GrowBiz messages count
+     * Get unread GrowBiz messages count - CACHED for 60 seconds
      */
     private function getGrowBizUnreadMessages($user): int
     {
-        // Check if messaging table exists
-        if (!\Schema::hasTable('messages')) {
-            return 0;
-        }
+        return cache()->remember("growbiz_messages_{$user->id}", 60, function () use ($user) {
+            // Check if messaging table exists
+            if (!\Schema::hasTable('messages')) {
+                return 0;
+            }
 
-        // Get team member IDs for this user
-        $teamMemberIds = $this->getGrowBizTeamMemberIds($user);
-        
-        if (empty($teamMemberIds)) {
-            // No team members, just count [GrowBiz] prefixed messages
+            // Get team member IDs for this user
+            $teamMemberIds = $this->getGrowBizTeamMemberIds($user);
+            
+            if (empty($teamMemberIds)) {
+                // No team members, just count [GrowBiz] prefixed messages
+                return \DB::table('messages')
+                    ->where('recipient_id', $user->id)
+                    ->where('is_read', false)
+                    ->where('subject', 'like', '[GrowBiz]%')
+                    ->count();
+            }
+
             return \DB::table('messages')
                 ->where('recipient_id', $user->id)
                 ->where('is_read', false)
-                ->where('subject', 'like', '[GrowBiz]%')
+                ->where(function ($query) use ($teamMemberIds) {
+                    // Messages from team members OR with [GrowBiz] prefix
+                    $query->whereIn('sender_id', $teamMemberIds)
+                        ->orWhere('subject', 'like', '[GrowBiz]%');
+                })
                 ->count();
-        }
-
-        return \DB::table('messages')
-            ->where('recipient_id', $user->id)
-            ->where('is_read', false)
-            ->where(function ($query) use ($teamMemberIds) {
-                // Messages from team members OR with [GrowBiz] prefix
-                $query->whereIn('sender_id', $teamMemberIds)
-                    ->orWhere('subject', 'like', '[GrowBiz]%');
-            })
-            ->count();
+        });
     }
 
     /**
-     * Get team member IDs for GrowBiz messaging
+     * Get team member IDs for GrowBiz messaging - CACHED
      */
     private function getGrowBizTeamMemberIds($user): array
     {
-        $ids = [];
-        
-        // Get employees managed by this user
-        $employeeIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)
-            ->whereNotNull('user_id')
-            ->pluck('user_id')
-            ->toArray();
-        $ids = array_merge($ids, $employeeIds);
-        
-        // Get manager if user is an employee
-        $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)->first();
-        if ($employeeRecord && $employeeRecord->manager_id) {
-            $ids[] = $employeeRecord->manager_id;
+        return cache()->remember("growbiz_team_{$user->id}", 300, function () use ($user) {
+            $ids = [];
             
-            // Get colleagues (other employees under same manager)
-            $colleagueIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $employeeRecord->manager_id)
+            // Get employees managed by this user
+            $employeeIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)
                 ->whereNotNull('user_id')
-                ->where('user_id', '!=', $user->id)
                 ->pluck('user_id')
                 ->toArray();
-            $ids = array_merge($ids, $colleagueIds);
-        }
-        
-        return array_unique($ids);
+            $ids = array_merge($ids, $employeeIds);
+            
+            // Get manager if user is an employee
+            $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)->first();
+            if ($employeeRecord && $employeeRecord->manager_id) {
+                $ids[] = $employeeRecord->manager_id;
+                
+                // Get colleagues (other employees under same manager)
+                $colleagueIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $employeeRecord->manager_id)
+                    ->whereNotNull('user_id')
+                    ->where('user_id', '!=', $user->id)
+                    ->pluck('user_id')
+                    ->toArray();
+                $ids = array_merge($ids, $colleagueIds);
+            }
+            
+            return array_unique($ids);
+        });
     }
 }

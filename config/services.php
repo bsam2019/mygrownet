@@ -52,4 +52,40 @@ return [
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging
+    |--------------------------------------------------------------------------
+    */
+
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials' => env('FIREBASE_CREDENTIALS', storage_path('app/firebase-credentials.json')),
+        'server_key' => env('FIREBASE_SERVER_KEY'), // Legacy fallback
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Gateway Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'payment' => [
+        'default_gateway' => env('PAYMENT_DEFAULT_GATEWAY', 'moneyunify'),
+    ],
+
+    'moneyunify' => [
+        'base_url' => env('MONEYUNIFY_BASE_URL', 'https://api.moneyunify.com/v2'),
+        'muid' => env('MONEYUNIFY_MUID'), // MoneyUnify ID - get from dashboard
+        'webhook_secret' => env('MONEYUNIFY_WEBHOOK_SECRET'),
+        'mock_mode' => env('MONEYUNIFY_MOCK_MODE', false), // Enable for testing without real API
+    ],
+
+    'pawapay' => [
+        'base_url' => env('PAWAPAY_BASE_URL', 'https://api.pawapay.io'),
+        'api_token' => env('PAWAPAY_API_TOKEN'),
+        'webhook_secret' => env('PAWAPAY_WEBHOOK_SECRET'),
+        'mock_mode' => env('PAWAPAY_MOCK_MODE', false), // Enable for testing without real API
+    ],
+
 ];

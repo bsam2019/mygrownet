@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItemType, NavItem } from '@/types';
-
-interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
-    footerNavItems?: NavItem[];
-}
-
-withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
-    footerNavItems: () => []
-});
+/**
+ * MemberLayout - Alias for ClientLayout
+ * 
+ * This file exists for backward compatibility.
+ * All functionality has been moved to ClientLayout.
+ */
+import ClientLayout from '@/layouts/ClientLayout.vue';
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs" :footer-nav-items="footerNavItems">
+    <ClientLayout>
         <slot />
-    </AppLayout>
+    </ClientLayout>
 </template>

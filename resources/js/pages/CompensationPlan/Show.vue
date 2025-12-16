@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue';
 import MemberLayout from '@/layouts/MemberLayout.vue';
 import { formatCurrency } from '@/utils/formatting';
+import { useCompensationPlanPPT } from '@/composables/useCompensationPlanPPT';
+import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
 
 interface ReferralLevel {
     level: number;
@@ -23,6 +25,9 @@ interface Props {
 const props = defineProps<Props>();
 
 const activeSection = ref('overview');
+const isDownloading = ref(false);
+
+const { generatePresentation } = useCompensationPlanPPT();
 
 const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US').format(num);
@@ -49,6 +54,24 @@ const positionBonuses = [
     { position: 'Executive', teamSize: 729, cumulative: 1092, lpEstimate: 160000, milestoneBonus: 'K50,000 + Luxury', physicalReward: 'Luxury Vehicle' },
     { position: 'Ambassador', teamSize: 2187, cumulative: 3279, lpEstimate: 350000, milestoneBonus: 'K150,000 + Property', physicalReward: 'Investment Property' },
 ];
+
+const downloadPresentation = async () => {
+    isDownloading.value = true;
+    try {
+        await generatePresentation({
+            registrationAmount: props.registrationAmount,
+            referralBonusStructure: props.referralBonusStructure,
+            totalPotential: props.totalPotential,
+            totalTeamSize: props.totalTeamSize,
+            levelNames: props.levelNames,
+            positionBonuses: positionBonuses,
+        });
+    } catch (error) {
+        console.error('Failed to generate presentation:', error);
+    } finally {
+        isDownloading.value = false;
+    }
+};
 </script>
 
 <template>
@@ -60,9 +83,19 @@ const positionBonuses = [
                     <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                         MyGrowNet Compensation Plan
                     </h1>
-                    <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                    <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-6">
                         Build your network and earn through our 7-level referral bonus system
                     </p>
+                    <button
+                        @click="downloadPresentation"
+                        :disabled="isDownloading"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
+                        aria-label="Download compensation plan as PowerPoint presentation"
+                    >
+                        <ArrowDownTrayIcon class="h-5 w-5" aria-hidden="true" />
+                        <span v-if="isDownloading">Generating...</span>
+                        <span v-else>Download Presentation</span>
+                    </button>
                 </div>
 
                 <!-- Registration Amount Card -->

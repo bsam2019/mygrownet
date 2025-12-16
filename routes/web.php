@@ -1190,6 +1190,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+// General Wallet Routes (for all user types: client, business)
+// MLM members are redirected to the full MyGrowNet wallet
+Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'index'])->name('index');
+    Route::post('/accept-policy', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'acceptPolicy'])->name('accept-policy');
+    Route::post('/check-withdrawal-limit', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'checkWithdrawalLimit'])->name('check-limit');
+    
+    // Top-up routes
+    Route::get('/topup', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'showTopUp'])->name('topup');
+    Route::post('/topup', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'processTopUp'])->name('topup.process');
+    
+    // Withdraw routes
+    Route::get('/withdraw', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'showWithdraw'])->name('withdraw');
+    Route::post('/withdraw', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'processWithdraw'])->name('withdraw.process');
+    
+    // Transaction history
+    Route::get('/history', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'history'])->name('history');
+});
+
 require __DIR__.'/admin.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

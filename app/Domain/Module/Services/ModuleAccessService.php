@@ -83,6 +83,20 @@ class ModuleAccessService
             return false;
         }
 
+        // Special case: LifePlus is free for members with active subscriptions
+        if ($moduleId->value() === 'lifeplus' && $user->hasAccountType(\App\Enums\AccountType::MEMBER)) {
+            // Check if member has any active subscription (to any module)
+            $hasActiveSubscription = \DB::table('module_subscriptions')
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->where('end_date', '>', now())
+                ->exists();
+            
+            if ($hasActiveSubscription) {
+                return true; // Free access for members with active subscriptions
+            }
+        }
+
         // If module doesn't require subscription, grant access
         if (!$module->requiresSubscription()) {
             return true;
@@ -99,7 +113,7 @@ class ModuleAccessService
 
     /**
      * Get the user's access level for a module
-     * Returns: 'none', 'free', or the subscription tier name
+     * Returns: 'none', 'free', 'member_free', or the subscription tier name
      * Admins always get 'business' (highest tier)
      */
     public function getAccessLevel(User $user, ModuleId $moduleId): string
@@ -124,6 +138,19 @@ class ModuleAccessService
         
         if ($subscription && $subscription->isActive()) {
             return $subscription->getTier();
+        }
+
+        // Special case: LifePlus member_free tier for members with active subscriptions
+        if ($moduleId->value() === 'lifeplus' && $user->hasAccountType(\App\Enums\AccountType::MEMBER)) {
+            $hasActiveSubscription = \DB::table('module_subscriptions')
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->where('end_date', '>', now())
+                ->exists();
+            
+            if ($hasActiveSubscription) {
+                return 'member_free'; // Free tier for members
+            }
         }
 
         // If module has free tier, return 'free'

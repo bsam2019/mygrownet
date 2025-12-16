@@ -61,6 +61,8 @@ const accountType = computed(() => {
 
 const isInvestor = computed(() => accountType.value === 'investor');
 const isMember = computed(() => accountType.value === 'member');
+const isClient = computed(() => accountType.value === 'client');
+const isBusiness = computed(() => accountType.value === 'business');
 
 // Menu structure - Investor-only items (minimal)
 const investorNavItems: NavItem[] = [

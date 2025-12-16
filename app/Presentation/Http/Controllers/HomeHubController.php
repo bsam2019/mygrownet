@@ -6,6 +6,7 @@ use App\Application\UseCases\Module\GetUserModulesUseCase;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GrowBiz\SetupController;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
+use App\Domain\Wallet\Services\UnifiedWalletService;
 use App\Enums\AccountType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +15,8 @@ use Inertia\Response;
 class HomeHubController extends Controller
 {
     public function __construct(
-        private GetUserModulesUseCase $getUserModulesUseCase
+        private GetUserModulesUseCase $getUserModulesUseCase,
+        private UnifiedWalletService $walletService
     ) {}
 
     /**
@@ -92,6 +94,9 @@ class HomeHubController extends Controller
             ->where('employment_status', 'active')
             ->exists();
 
+        // Get wallet balance for quick display
+        $walletBalance = $this->walletService->calculateBalance($user);
+
         return Inertia::render('HomeHub/Index', [
             'user' => [
                 'id' => $user->id,
@@ -110,6 +115,7 @@ class HomeHubController extends Controller
             'isAdmin' => $isAdmin,
             'isManager' => $isManager,
             'isEmployee' => $isEmployee,
+            'walletBalance' => $walletBalance,
         ]);
     }
 

@@ -18,6 +18,9 @@ use App\Http\Controllers\Admin\InvestmentCategoriesController;
 Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
+    // Payment Gateway Test Page
+    Route::get('/payment-test', fn() => \Inertia\Inertia::render('Admin/PaymentTest'))->name('payment-test');
+    
     // Receipt Management
     Route::prefix('receipts')->name('receipts.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ReceiptController::class, 'index'])->name('index');

@@ -76,6 +76,25 @@ Schedule::command('bizboost:refresh-tokens')
     ->dailyAt('03:00')
     ->description('Refresh expiring social media access tokens');
 
+// ========================================
+// Life+ Scheduled Tasks
+// ========================================
+
+// Send daily tip notification - runs every morning
+Schedule::command('lifeplus:daily-tip')
+    ->dailyAt('07:00')
+    ->description('Send daily tip notification to Life+ users');
+
+// Send task reminders - runs every hour
+Schedule::command('lifeplus:task-reminders')
+    ->hourly()
+    ->description('Send task due reminders to Life+ users');
+
+// Send habit reminders - runs every 5 minutes to catch reminder times
+Schedule::command('lifeplus:habit-reminders')
+    ->everyFiveMinutes()
+    ->description('Send habit reminder notifications');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

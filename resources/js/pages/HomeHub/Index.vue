@@ -64,6 +64,7 @@ interface Props {
   isAdmin?: boolean;
   isManager?: boolean;
   isEmployee?: boolean;
+  walletBalance?: number;
   auth?: {
     user: {
       name: string;
@@ -73,7 +74,9 @@ interface Props {
   };
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  walletBalance: 0,
+});
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => !!props.auth?.user);
@@ -95,8 +98,8 @@ const isEmployee = computed(() => {
 const showSubscriptionModal = ref(false);
 const selectedModule = ref<Module | null>(null);
 
-// Define primary modules order (business tools first, then community network)
-const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'marketplace', 'grownet', 'mlm-dashboard'];
+// Define primary modules order (business tools first, then community network, then lifestyle)
+const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'marketplace', 'grownet', 'lifeplus', 'mlm-dashboard'];
 
 // Computed properties for module organization
 const primaryModules = computed(() => {
@@ -124,6 +127,7 @@ const getModuleDescription = (slug: string): string => {
     'mygrow-save': 'Digital wallet & store credit',
     'learning': 'Business skills & education',
     'rewards': 'Loyalty points & member benefits',
+    'lifeplus': 'Health, wellness & lifestyle companion',
   };
   return descriptions[slug] || '';
 };
@@ -137,6 +141,7 @@ const getPublicLandingRoute = (slug: string): string | null => {
     'marketplace': '/marketplace',
     'grownet': '/login', // GrowNet requires login
     'mlm-dashboard': '/login', // MLM Dashboard requires login
+    'lifeplus': '/lifeplus/welcome', // LifePlus public landing
   };
   return publicRoutes[slug] || null;
 };
@@ -177,6 +182,12 @@ const handleModuleClick = (module: Module) => {
   // BizBoost is always accessible - it has its own setup flow
   if (module.slug === 'bizboost') {
     router.visit(module.primary_route || '/bizboost');
+    return;
+  }
+  
+  // LifePlus - Health & Wellness app
+  if (module.slug === 'lifeplus') {
+    router.visit(module.primary_route || '/lifeplus');
     return;
   }
   
@@ -236,6 +247,9 @@ const getModuleIcon = (slug: string) => {
     'logistics': TruckIcon,
     'security': ShieldCheckIcon,
     'premium': SparklesIcon,
+    'lifeplus': HeartIcon, // LifePlus - Health & Wellness
+    'health': HeartIcon,
+    'wellness': HeartIcon,
   };
   return iconMap[slug] || CubeIcon;
 };
@@ -392,34 +406,42 @@ const getModuleIcon = (slug: string) => {
       <!-- Quick Actions (only for authenticated users) -->
       <div v-if="isAuthenticated" class="mb-8">
         <h3 class="text-sm font-semibold text-gray-700 mb-3">Quick Actions</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Link
+            href="/wallet"
+            class="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border border-green-100 hover:shadow-md hover:border-green-300 transition-all"
+          >
+            <WalletIcon class="w-6 h-6 text-green-600" aria-hidden="true" />
+            <span class="text-xs font-medium text-gray-700">My Wallet</span>
+            <span class="text-sm font-bold text-green-700">K{{ walletBalance.toLocaleString('en-ZM', { minimumFractionDigits: 2 }) }}</span>
+          </Link>
           <Link
             href="/marketplace"
             class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all"
           >
             <ShoppingCartIcon class="w-6 h-6 text-blue-600" aria-hidden="true" />
-            <span class="text-xs font-medium text-gray-700">Browse Marketplace</span>
+            <span class="text-xs font-medium text-gray-700">Marketplace</span>
           </Link>
           <Link
             href="/training"
             class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all"
           >
             <AcademicCapIcon class="w-6 h-6 text-emerald-600" aria-hidden="true" />
-            <span class="text-xs font-medium text-gray-700">Start Learning</span>
+            <span class="text-xs font-medium text-gray-700">Learning</span>
           </Link>
           <Link
             href="/grownet/orders"
             class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all"
           >
             <ClipboardDocumentCheckIcon class="w-6 h-6 text-purple-600" aria-hidden="true" />
-            <span class="text-xs font-medium text-gray-700">View Orders</span>
+            <span class="text-xs font-medium text-gray-700">Orders</span>
           </Link>
           <Link
             href="/rewards"
             class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-200 transition-all"
           >
             <GiftIcon class="w-6 h-6 text-indigo-600" aria-hidden="true" />
-            <span class="text-xs font-medium text-gray-700">Check Rewards</span>
+            <span class="text-xs font-medium text-gray-700">Rewards</span>
           </Link>
         </div>
       </div>
