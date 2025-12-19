@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
+import ClientLayout from '@/layouts/ClientLayout.vue';
 import { 
     WalletIcon, 
     CubeIcon,
@@ -12,15 +13,9 @@ import {
     BanknotesIcon,
     ClipboardDocumentCheckIcon,
     HeartIcon,
-    UserCircleIcon,
-    Cog6ToothIcon,
-    ArrowRightOnRectangleIcon,
-    XMarkIcon,
-    ShieldCheckIcon,
     RocketLaunchIcon,
     ChevronRightIcon
 } from '@heroicons/vue/24/solid';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 interface Module {
     id: string;
@@ -58,9 +53,6 @@ const props = withDefaults(defineProps<Props>(), {
     isAdmin: false,
     isManager: false,
 });
-
-// Profile slider state
-const showProfileSlider = ref(false);
 
 // Filter primary modules
 const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'marketplace', 'grownet', 'lifeplus'];
@@ -110,39 +102,13 @@ const getModuleDescription = (slug: string): string => {
 const handleModuleClick = (module: Module) => {
     router.visit(module.primary_route);
 };
-
-const logout = () => {
-    router.post('/logout');
-};
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <ClientLayout :is-admin="isAdmin" :is-manager="isManager">
         <Head title="Dashboard" />
 
-        <!-- Header -->
-        <header class="bg-white shadow-sm sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <Link href="/dashboard" class="flex items-center gap-2">
-                        <AppLogoIcon class="h-9 w-9" />
-                    </Link>
-
-                    <button
-                        @click="showProfileSlider = true"
-                        class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        aria-label="Open profile menu"
-                    >
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <UserCircleIcon class="w-6 h-6 text-white" aria-hidden="true" />
-                        </div>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content with Sidebar -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Column - Main Content -->
                 <div class="flex-1 min-w-0">
@@ -331,110 +297,6 @@ const logout = () => {
                     </div>
                 </div>
             </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="py-6 text-center text-sm text-gray-400">
-            <p>&copy; {{ new Date().getFullYear() }} MyGrowNet. All rights reserved.</p>
-        </footer>
-
-        <!-- Profile Slider -->
-        <Transition
-            enter-active-class="transition ease-out duration-300"
-            enter-from-class="transform translate-x-full"
-            enter-to-class="transform translate-x-0"
-            leave-active-class="transition ease-in duration-200"
-            leave-from-class="transform translate-x-0"
-            leave-to-class="transform translate-x-full"
-        >
-            <div v-if="showProfileSlider" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-2xl flex flex-col overflow-hidden">
-                <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-                    <h2 class="text-lg font-semibold text-gray-900">Profile</h2>
-                    <button
-                        @click="showProfileSlider = false"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        aria-label="Close profile menu"
-                    >
-                        <XMarkIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                    </button>
-                </div>
-
-                <div class="flex-1 overflow-y-auto">
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                <UserCircleIcon class="w-8 h-8 text-white" aria-hidden="true" />
-                            </div>
-                            <div>
-                                <p class="font-semibold text-gray-900">{{ user?.name }}</p>
-                                <p class="text-sm text-gray-500">{{ user?.email }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="isAdmin || isManager" class="p-4 border-b border-gray-200">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Admin Access</h3>
-                        <div class="space-y-2">
-                            <Link
-                                v-if="isAdmin"
-                                href="/admin/dashboard"
-                                class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-indigo-50 text-indigo-700 transition-colors"
-                            >
-                                <ShieldCheckIcon class="w-5 h-5" aria-hidden="true" />
-                                <span class="text-sm font-medium">Admin Panel</span>
-                            </Link>
-                            <Link
-                                v-if="isManager"
-                                href="/manager/dashboard"
-                                class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-purple-50 text-purple-700 transition-colors"
-                            >
-                                <UsersIcon class="w-5 h-5" aria-hidden="true" />
-                                <span class="text-sm font-medium">Manager Dashboard</span>
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div class="p-4">
-                        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Account</h3>
-                        <div class="space-y-1">
-                            <Link href="/settings/profile" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors">
-                                <UserCircleIcon class="w-5 h-5 text-gray-400" aria-hidden="true" />
-                                <span class="text-sm">Profile</span>
-                            </Link>
-                            <Link href="/settings" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors">
-                                <Cog6ToothIcon class="w-5 h-5 text-gray-400" aria-hidden="true" />
-                                <span class="text-sm">Settings</span>
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div class="p-4 border-t border-gray-200 mt-auto">
-                        <button
-                            @click="logout"
-                            class="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-                        >
-                            <ArrowRightOnRectangleIcon class="w-5 h-5" aria-hidden="true" />
-                            <span class="text-sm font-medium">Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Transition>
-
-        <!-- Overlay -->
-        <Transition
-            enter-active-class="transition ease-out duration-300"
-            enter-from-class="opacity-0"
-            enter-to-class="opacity-100"
-            leave-active-class="transition ease-in duration-200"
-            leave-from-class="opacity-100"
-            leave-to-class="opacity-0"
-        >
-            <div
-                v-if="showProfileSlider"
-                @click="showProfileSlider = false"
-                class="fixed inset-0 bg-black/50 z-40"
-            />
-        </Transition>
-    </div>
+        </div>
+    </ClientLayout>
 </template>

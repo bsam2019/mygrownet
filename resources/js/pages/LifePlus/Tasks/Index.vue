@@ -2,16 +2,24 @@
 import { ref, computed } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import LifePlusLayout from '@/layouts/LifePlusLayout.vue';
+import { useLifePlusAccess } from '@/composables/useLifePlusAccess';
+import UpgradePrompt from '@/Components/LifePlus/UpgradePrompt.vue';
 import {
     PlusIcon,
     CheckCircleIcon,
     TrashIcon,
     FunnelIcon,
     CalendarIcon,
+    LockClosedIcon,
 } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/vue/24/solid';
 
 defineOptions({ layout: LifePlusLayout });
+
+const { hasReachedLimit, getLimit, getRemaining, isFreeTier } = useLifePlusAccess();
+const taskLimitReached = computed(() => hasReachedLimit('tasks'));
+const taskLimit = computed(() => getLimit('tasks'));
+const tasksRemaining = computed(() => getRemaining('tasks'));
 
 interface Task {
     id: number;
@@ -91,46 +99,71 @@ const getPriorityLabel = (priority: string) => {
 </script>
 
 <template>
-    <div class="p-4 space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between">
-            <h1 class="text-xl font-bold text-gray-900">Tasks</h1>
-            <button 
-                @click="showAddModal = true"
-                class="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
-            >
-                <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                Add Task
-            </button>
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <!-- Header with Gradient -->
+        <div class="bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Tasks</h1>
+                    <p class="text-sm text-blue-100 mt-1">Stay organized and productive ✓</p>
+                </div>
+                <button 
+                    v-if="!taskLimitReached"
+                    @click="showAddModal = true"
+                    class="flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl font-semibold hover:bg-white/30 transition-all shadow-md"
+                >
+                    <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                    Add Task
+                </button>
+                <div v-else class="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white/70 rounded-xl text-sm">
+                    <LockClosedIcon class="h-4 w-4" aria-hidden="true" />
+                    Limit ({{ taskLimit }})
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 space-y-6">
+        
+        <!-- Task Limit Warning for Free Users -->
+        <div v-if="isFreeTier && tasksRemaining !== null && tasksRemaining <= 3" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <LockClosedIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold text-amber-900">{{ tasksRemaining }} tasks remaining</p>
+                    <p class="text-sm text-amber-700">Upgrade to Premium for unlimited tasks</p>
+                </div>
+            </div>
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-4 gap-2">
-            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
+            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl p-3 text-center shadow-lg border border-gray-200">
                 <p class="text-2xl font-bold text-gray-900">{{ stats.pending }}</p>
                 <p class="text-xs text-gray-500">Pending</p>
             </div>
-            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-                <p class="text-2xl font-bold text-blue-600">{{ stats.today }}</p>
-                <p class="text-xs text-gray-500">Today</p>
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center shadow-lg border border-blue-200">
+                <p class="text-2xl font-bold text-blue-700">{{ stats.today }}</p>
+                <p class="text-xs text-blue-600">Today</p>
             </div>
-            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-                <p class="text-2xl font-bold text-red-600">{{ stats.overdue }}</p>
-                <p class="text-xs text-gray-500">Overdue</p>
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 text-center shadow-lg border border-red-200">
+                <p class="text-2xl font-bold text-red-700">{{ stats.overdue }}</p>
+                <p class="text-xs text-red-600">Overdue</p>
             </div>
-            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-                <p class="text-2xl font-bold text-emerald-600">{{ stats.completed }}</p>
-                <p class="text-xs text-gray-500">Done</p>
+            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-3 text-center shadow-lg border border-emerald-200">
+                <p class="text-2xl font-bold text-emerald-700">{{ stats.completed }}</p>
+                <p class="text-xs text-emerald-600">Done</p>
             </div>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 bg-gray-100 p-1 rounded-xl">
+        <div class="flex gap-2 bg-gradient-to-r from-gray-100 to-gray-200 p-1 rounded-xl shadow-inner">
             <button 
                 @click="activeTab = 'all'"
                 :class="[
-                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors',
-                    activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'
+                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all',
+                    activeTab === 'all' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-gray-600 hover:bg-white/50'
                 ]"
             >
                 All
@@ -138,8 +171,8 @@ const getPriorityLabel = (priority: string) => {
             <button 
                 @click="activeTab = 'today'"
                 :class="[
-                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors',
-                    activeTab === 'today' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'
+                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all',
+                    activeTab === 'today' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-gray-600 hover:bg-white/50'
                 ]"
             >
                 Today
@@ -147,8 +180,8 @@ const getPriorityLabel = (priority: string) => {
             <button 
                 @click="activeTab = 'completed'"
                 :class="[
-                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors',
-                    activeTab === 'completed' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'
+                    'flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all',
+                    activeTab === 'completed' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg' : 'text-gray-600 hover:bg-white/50'
                 ]"
             >
                 Completed
@@ -157,15 +190,15 @@ const getPriorityLabel = (priority: string) => {
 
         <!-- Task List -->
         <div class="space-y-2">
-            <div v-if="filteredTasks.length === 0" class="text-center py-12">
-                <CheckCircleIcon class="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
+            <div v-if="filteredTasks.length === 0" class="text-center py-12 bg-gradient-to-br from-white to-blue-50 rounded-3xl border border-blue-200">
+                <CheckCircleIcon class="h-12 w-12 text-blue-300 mx-auto mb-3" aria-hidden="true" />
                 <p class="text-gray-500">
                     {{ activeTab === 'completed' ? 'No completed tasks' : 'No tasks yet' }}
                 </p>
                 <button 
                     v-if="activeTab !== 'completed'"
                     @click="showAddModal = true"
-                    class="mt-3 text-blue-600 font-medium"
+                    class="mt-3 text-blue-600 font-semibold hover:text-blue-700"
                 >
                     Add your first task
                 </button>
@@ -174,7 +207,7 @@ const getPriorityLabel = (priority: string) => {
             <div 
                 v-for="task in filteredTasks" 
                 :key="task.id"
-                class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-start gap-3 group"
+                class="bg-gradient-to-br from-white to-gray-50 rounded-xl p-4 shadow-lg border border-gray-200 flex items-start gap-3 group hover:shadow-xl hover:scale-[1.02] transition-all"
             >
                 <button 
                     @click="toggleTask(task.id)"
@@ -315,5 +348,6 @@ const getPriorityLabel = (priority: string) => {
                 </div>
             </Transition>
         </Teleport>
+        </div>
     </div>
 </template>

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Module\Services\UsageLimitService;
+use App\Domain\Wallet\Services\UnifiedWalletService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class SubscriptionController extends Controller
@@ -16,8 +18,116 @@ class SubscriptionController extends Controller
     public function __construct(
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
-        private UsageLimitService $usageLimitService
+        private UsageLimitService $usageLimitService,
+        private UnifiedWalletService $walletService
     ) {}
+
+    /**
+     * Show subscription settings page (in-app)
+     */
+    public function settings(Request $request)
+    {
+        $user = $request->user();
+        $currentTier = $this->subscriptionService->getUserTier($user, self::MODULE_ID);
+        
+        $subscription = DB::table('module_subscriptions')
+            ->where('user_id', $user->id)
+            ->where('module_id', self::MODULE_ID)
+            ->where('status', 'active')
+            ->first();
+
+        // Get dynamic tiers from admin-configured database or config fallback
+        $tiers = $this->tierConfigService->getAllTiersForDisplay(self::MODULE_ID);
+
+        return Inertia::render('BizBoost/Settings/Subscription', [
+            'walletBalance' => $this->walletService->calculateBalance($user),
+            'currentTier' => $currentTier ?: 'free',
+            'tiers' => $tiers,
+            'subscription' => $subscription ? [
+                'tier' => $subscription->subscription_tier,
+                'expires_at' => $subscription->expires_at,
+                'auto_renew' => $subscription->auto_renew,
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Purchase subscription using wallet balance
+     */
+    public function purchase(Request $request)
+    {
+        $request->validate([
+            'module_id' => 'required|string',
+            'tier' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'billing_cycle' => 'required|in:monthly,yearly',
+        ]);
+
+        $user = $request->user();
+        $amount = (float) $request->input('amount');
+
+        // Check wallet balance
+        $balance = $this->walletService->calculateBalance($user);
+        if ($balance < $amount) {
+            return back()->with('error', 'Insufficient wallet balance. Please top up your wallet.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Calculate expiry date
+            $expiresAt = $request->input('billing_cycle') === 'yearly'
+                ? now()->addYear()
+                : now()->addMonth();
+
+            // Create or update subscription
+            DB::table('module_subscriptions')->updateOrInsert(
+                [
+                    'user_id' => $user->id,
+                    'module_id' => self::MODULE_ID,
+                ],
+                [
+                    'subscription_tier' => $request->input('tier'),
+                    'status' => 'active',
+                    'started_at' => now(),
+                    'expires_at' => $expiresAt,
+                    'billing_cycle' => $request->input('billing_cycle'),
+                    'amount' => $amount,
+                    'currency' => 'ZMW',
+                    'auto_renew' => true,
+                    'updated_at' => now(),
+                ]
+            );
+
+            // Record transaction
+            DB::table('transactions')->insert([
+                'user_id' => $user->id,
+                'transaction_type' => 'subscription_payment',
+                'amount' => -$amount,
+                'status' => 'completed',
+                'description' => "BizBoost {$request->input('tier')} subscription",
+                'metadata' => json_encode([
+                    'module_id' => self::MODULE_ID,
+                    'tier' => $request->input('tier'),
+                    'billing_cycle' => $request->input('billing_cycle'),
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            // Clear caches
+            $this->walletService->clearCache($user);
+
+            DB::commit();
+
+            return redirect()->route('bizboost.settings.subscription')
+                ->with('success', 'Subscription activated successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'An error occurred. Please try again.');
+        }
+    }
 
     public function upgrade(Request $request)
     {

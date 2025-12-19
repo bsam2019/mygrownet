@@ -66,41 +66,47 @@ class AuthenticatedSessionController extends Controller
      * 
      * Redirect logic:
      * - Admin/Administrator role → Admin panel
+     * - Active Employee record → Workspace (Employee Portal)
      * - Member account type → GrowNet dashboard
      * - Client/Business account type → HomeHub dashboard
      */
     private function getDefaultRouteForUser($user): string
     {
+        if (!$user) {
+            return route('dashboard', absolute: false);
+        }
+
         // Admin users go to admin dashboard (check role first)
-        if ($user && ($user->hasRole('Administrator') || $user->hasRole('admin'))) {
+        if ($user->hasRole('Administrator') || $user->hasRole('admin') || $user->hasRole('superadmin')) {
             return route('admin.dashboard', absolute: false);
         }
 
+        // Check if user has an active employee record → Workspace
+        $hasActiveEmployee = \App\Models\Employee::where('user_id', $user->id)
+            ->where('employment_status', 'active')
+            ->exists();
+        
+        if ($hasActiveEmployee) {
+            return route('employee.portal.dashboard', absolute: false);
+        }
+
         // Check account type for routing
-        if ($user) {
-            $accountType = $user->getPrimaryAccountType();
-            
-            // Member account type → GrowNet dashboard
-            if ($accountType === \App\Enums\AccountType::MEMBER) {
-                return route('grownet.dashboard', absolute: false);
-            }
-            
-            // Client and Business account types → HomeHub dashboard
-            // (This is the default, but being explicit for clarity)
-            if ($accountType === \App\Enums\AccountType::CLIENT || 
-                $accountType === \App\Enums\AccountType::BUSINESS) {
-                return route('dashboard', absolute: false);
-            }
-            
-            // Investor account type → Investor portal (if exists) or dashboard
-            if ($accountType === \App\Enums\AccountType::INVESTOR) {
-                return route('dashboard', absolute: false);
-            }
-            
-            // Employee account type → Admin panel (internal staff)
-            if ($accountType === \App\Enums\AccountType::EMPLOYEE) {
-                return route('admin.dashboard', absolute: false);
-            }
+        $accountType = $user->getPrimaryAccountType();
+        
+        // Member account type → GrowNet dashboard
+        if ($accountType === \App\Enums\AccountType::MEMBER) {
+            return route('grownet.dashboard', absolute: false);
+        }
+        
+        // Client and Business account types → HomeHub dashboard
+        if ($accountType === \App\Enums\AccountType::CLIENT || 
+            $accountType === \App\Enums\AccountType::BUSINESS) {
+            return route('dashboard', absolute: false);
+        }
+        
+        // Investor account type → Investor portal (if exists) or dashboard
+        if ($accountType === \App\Enums\AccountType::INVESTOR) {
+            return route('dashboard', absolute: false);
         }
 
         // Default: go to the app launcher (HomeHub/Dashboard)

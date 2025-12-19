@@ -121,8 +121,8 @@ class RegisteredUserController extends Controller
             }
 
             // Use intended redirect if set (e.g., from BizBoost landing page)
-            // Otherwise redirect to home hub
-            return redirect()->intended(route('home', absolute: false));
+            // Otherwise redirect to dashboard
+            return redirect()->intended(route('dashboard', absolute: false));
             
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle any database errors gracefully

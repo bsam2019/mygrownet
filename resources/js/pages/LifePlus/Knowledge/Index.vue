@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import LifePlusLayout from '@/layouts/LifePlusLayout.vue';
 import {
@@ -7,7 +7,68 @@ import {
     BookOpenIcon,
     ArrowDownTrayIcon,
     PlayIcon,
+    CurrencyDollarIcon,
+    BriefcaseIcon,
+    HeartIcon,
+    UserGroupIcon,
+    LightBulbIcon,
+    AcademicCapIcon,
+    SparklesIcon,
+    MusicalNoteIcon,
+    DocumentTextIcon,
+    HomeIcon,
 } from '@heroicons/vue/24/outline';
+
+// Map category names to icons
+const categoryIconMap: Record<string, any> = {
+    finance: CurrencyDollarIcon,
+    business: BriefcaseIcon,
+    health: HeartIcon,
+    parenting: UserGroupIcon,
+    motivation: SparklesIcon,
+    skills: AcademicCapIcon,
+    tips: LightBulbIcon,
+    home: HomeIcon,
+    default: DocumentTextIcon,
+};
+
+const getCategoryIcon = (category: string | null) => {
+    if (!category) return categoryIconMap.default;
+    const key = category.toLowerCase();
+    return categoryIconMap[key] || categoryIconMap.default;
+};
+
+const getCategoryIconColor = (category: string | null) => {
+    if (!category) return 'text-gray-500';
+    const key = category.toLowerCase();
+    const colors: Record<string, string> = {
+        finance: 'text-emerald-500',
+        business: 'text-blue-500',
+        health: 'text-red-500',
+        parenting: 'text-purple-500',
+        motivation: 'text-amber-500',
+        skills: 'text-indigo-500',
+        tips: 'text-yellow-500',
+        home: 'text-teal-500',
+    };
+    return colors[key] || 'text-gray-500';
+};
+
+const getCategoryBgColor = (category: string | null) => {
+    if (!category) return 'bg-gray-100';
+    const key = category.toLowerCase();
+    const colors: Record<string, string> = {
+        finance: 'bg-emerald-100',
+        business: 'bg-blue-100',
+        health: 'bg-red-100',
+        parenting: 'bg-purple-100',
+        motivation: 'bg-amber-100',
+        skills: 'bg-indigo-100',
+        tips: 'bg-yellow-100',
+        home: 'bg-teal-100',
+    };
+    return colors[key] || 'bg-gray-100';
+};
 
 defineOptions({ layout: LifePlusLayout });
 
@@ -110,14 +171,21 @@ const downloadItem = (id: number) => {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 ]"
             >
-                <span>{{ cat.icon }}</span>
+                <component 
+                    :is="getCategoryIcon(cat.id)" 
+                    class="h-4 w-4" 
+                    aria-hidden="true" 
+                />
                 {{ cat.name }}
             </button>
         </div>
 
         <!-- Featured Section -->
         <div v-if="!selectedCategory && !searchQuery" class="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white">
-            <h2 class="font-semibold mb-2">💡 Daily Tips</h2>
+            <h2 class="font-semibold mb-2 flex items-center gap-2">
+                <LightBulbIcon class="h-5 w-5" aria-hidden="true" />
+                Daily Tips
+            </h2>
             <p class="text-teal-100 text-sm">
                 Get practical tips on finance, business, health, and more to improve your daily life.
             </p>
@@ -138,10 +206,16 @@ const downloadItem = (id: number) => {
                 <div class="flex items-start gap-3">
                     <div 
                         class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                        :class="item.type === 'audio' ? 'bg-purple-100' : 'bg-teal-100'"
+                        :class="item.type === 'audio' ? 'bg-purple-100' : getCategoryBgColor(item.category)"
                     >
-                        <span v-if="item.type === 'audio'" class="text-2xl">🎧</span>
-                        <span v-else class="text-2xl">{{ item.category_icon }}</span>
+                        <MusicalNoteIcon v-if="item.type === 'audio'" class="h-6 w-6 text-purple-500" aria-hidden="true" />
+                        <component 
+                            v-else 
+                            :is="getCategoryIcon(item.category)" 
+                            class="h-6 w-6" 
+                            :class="getCategoryIconColor(item.category)"
+                            aria-hidden="true" 
+                        />
                     </div>
                     
                     <div class="flex-1 min-w-0">

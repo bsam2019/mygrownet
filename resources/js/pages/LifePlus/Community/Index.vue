@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import LifePlusLayout from '@/layouts/LifePlusLayout.vue';
+import { useLifePlusAccess } from '@/composables/useLifePlusAccess';
+import UpgradePrompt from '@/Components/LifePlus/UpgradePrompt.vue';
 import {
     PlusIcon,
     MegaphoneIcon,
@@ -10,9 +12,13 @@ import {
     MapPinIcon,
     BriefcaseIcon,
     ClipboardDocumentListIcon,
+    LockClosedIcon,
 } from '@heroicons/vue/24/outline';
 
 defineOptions({ layout: LifePlusLayout });
+
+const { canAccess } = useLifePlusAccess();
+const canPost = canAccess('community_post');
 
 interface Post {
     id: number;
@@ -71,43 +77,55 @@ const filteredPosts = props.posts;
 </script>
 
 <template>
-    <div class="p-4 space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between">
-            <h1 class="text-xl font-bold text-gray-900">Community</h1>
-            <button 
-                @click="showAddModal = true"
-                class="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl font-medium hover:bg-teal-600 transition-colors"
-            >
-                <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                Post
-            </button>
+    <div class="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+        <!-- Header with Gradient -->
+        <div class="bg-gradient-to-r from-teal-500 via-cyan-600 to-blue-600 p-6 shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Community</h1>
+                    <p class="text-sm text-teal-100 mt-1">Connect with your neighbors 🤝</p>
+                </div>
+                <button 
+                    v-if="canPost"
+                    @click="showAddModal = true"
+                    class="flex items-center gap-2 px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl font-semibold hover:bg-white/30 transition-all shadow-md"
+                >
+                    <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                    Post
+                </button>
+                <div v-else class="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white/70 rounded-xl text-sm">
+                    <LockClosedIcon class="h-4 w-4" aria-hidden="true" />
+                    Premium
+                </div>
+            </div>
         </div>
+        
+        <div class="p-4 space-y-6">
 
         <!-- Quick Links -->
         <div class="grid grid-cols-2 gap-3">
             <Link 
                 :href="route('lifeplus.gigs.index')"
-                class="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl hover:bg-blue-100 transition-colors"
+                class="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl hover:from-blue-100 hover:to-blue-200 transition-all shadow-lg hover:shadow-xl hover:scale-105 border border-blue-200"
             >
-                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
                     <BriefcaseIcon class="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                 <div>
-                    <p class="font-medium text-blue-900">Gig Finder</p>
+                    <p class="font-semibold text-blue-900">Gig Finder</p>
                     <p class="text-xs text-blue-600">Find local jobs</p>
                 </div>
             </Link>
             
             <Link 
                 :href="route('lifeplus.community.events')"
-                class="flex items-center gap-3 p-4 bg-purple-50 rounded-2xl hover:bg-purple-100 transition-colors"
+                class="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl hover:from-purple-100 hover:to-purple-200 transition-all shadow-lg hover:shadow-xl hover:scale-105 border border-purple-200"
             >
-                <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md">
                     <CalendarDaysIcon class="h-5 w-5 text-white" aria-hidden="true" />
                 </div>
                 <div>
-                    <p class="font-medium text-purple-900">Events</p>
+                    <p class="font-semibold text-purple-900">Events</p>
                     <p class="text-xs text-purple-600">Local happenings</p>
                 </div>
             </Link>
@@ -120,10 +138,10 @@ const filteredPosts = props.posts;
                 :key="tab.id"
                 @click="filterByType(tab.id)"
                 :class="[
-                    'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                    'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all shadow-md',
                     activeTab === tab.id 
-                        ? 'bg-teal-500 text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg scale-105' 
+                        : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300'
                 ]"
             >
                 <component :is="tab.component" class="h-4 w-4" aria-hidden="true" />
@@ -148,13 +166,13 @@ const filteredPosts = props.posts;
                 v-for="post in filteredPosts" 
                 :key="post.id"
                 :href="route('lifeplus.community.posts.show', post.id)"
-                class="block bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                class="block bg-gradient-to-br from-white to-gray-50 rounded-2xl p-4 shadow-lg border border-gray-200 hover:shadow-xl hover:scale-[1.02] transition-all"
             >
                 <div class="flex items-start gap-3">
                     <span class="text-2xl">{{ post.type_icon }}</span>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-teal-100 to-cyan-100 text-teal-700 font-medium">
                                 {{ post.type_label }}
                             </span>
                             <span class="text-xs text-gray-400">{{ post.posted_at }}</span>
@@ -268,5 +286,6 @@ const filteredPosts = props.posts;
                 </div>
             </Transition>
         </Teleport>
+        </div>
     </div>
 </template>

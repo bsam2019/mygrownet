@@ -44,6 +44,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'module.access' => \App\Http\Middleware\CheckModuleAccess::class,
             'account.type' => \App\Http\Middleware\CheckAccountType::class,
             'bizboost.subscription' => \App\Http\Middleware\CheckBizBoostSubscription::class,
+            'delegated' => \App\Http\Middleware\CheckDelegatedPermission::class,
+            'inject.delegated.nav' => \App\Http\Middleware\InjectDelegatedNavigation::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

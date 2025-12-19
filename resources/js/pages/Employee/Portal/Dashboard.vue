@@ -148,13 +148,13 @@ const getPriorityColor = (priority: string) => {
 </script>
 
 <template>
-    <Head title="Employee Portal" />
+    <Head title="Workspace" />
 
     <EmployeePortalLayout>
         <div class="space-y-6">
             <!-- Welcome Header -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-                <h1 class="text-2xl font-bold">Welcome back, {{ employee.full_name }}!</h1>
+                <h1 class="text-2xl font-bold">Welcome back, {{ employee.full_name.split(' ')[0] }}! 👋</h1>
                 <p class="text-blue-100 mt-1">
                     {{ employee.position?.title }} • {{ employee.department?.name }}
                 </p>

@@ -10,6 +10,9 @@ import {
     SparklesIcon,
     BriefcaseIcon,
     QuestionMarkCircleIcon,
+    MapPinIcon,
+    AcademicCapIcon,
+    RocketLaunchIcon,
 } from '@heroicons/vue/24/outline';
 
 defineOptions({ layout: LifePlusLayout });
@@ -57,22 +60,25 @@ const getInitials = (name: string) => {
 </script>
 
 <template>
-    <div class="p-4 space-y-6">
-        <!-- Profile Header -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span class="text-2xl font-bold text-white">{{ getInitials(profile.name) }}</span>
+    <div class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-4 space-y-6">
+        <!-- Profile Header with Softer Gradient -->
+        <div class="bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 rounded-3xl p-6 shadow-lg text-white text-center">
+            <div class="w-24 h-24 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 shadow-xl border-4 border-white/40">
+                <span class="text-3xl font-bold text-white drop-shadow-md">{{ getInitials(profile.name) }}</span>
             </div>
-            <h1 class="text-xl font-bold text-gray-900">{{ profile.name }}</h1>
-            <p class="text-gray-500 text-sm">{{ profile.email }}</p>
-            <p v-if="profile.location" class="text-gray-500 text-sm mt-1">📍 {{ profile.location }}</p>
-            <p v-if="profile.bio" class="text-gray-600 text-sm mt-3">{{ profile.bio }}</p>
+            <h1 class="text-2xl font-bold drop-shadow-md">{{ profile.name }}</h1>
+            <p class="text-white/90 text-sm mt-1">{{ profile.email }}</p>
+            <p v-if="profile.location" class="flex items-center justify-center gap-1 text-white/90 text-sm mt-2">
+                <MapPinIcon class="h-4 w-4" aria-hidden="true" />
+                {{ profile.location }}
+            </p>
+            <p v-if="profile.bio" class="text-white/95 text-sm mt-3">{{ profile.bio }}</p>
             
             <div v-if="profile.skills?.length" class="flex flex-wrap justify-center gap-2 mt-4">
                 <span 
                     v-for="skill in profile.skills.slice(0, 5)" 
                     :key="skill"
-                    class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium"
+                    class="px-3 py-1 bg-white/25 backdrop-blur-sm text-white rounded-full text-xs font-semibold shadow-md"
                 >
                     {{ skill }}
                 </span>
@@ -80,59 +86,59 @@ const getInitials = (name: string) => {
             
             <Link 
                 :href="route('lifeplus.profile.settings')"
-                class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                class="inline-flex items-center gap-2 mt-5 px-5 py-2.5 bg-white/25 backdrop-blur-sm text-white rounded-xl font-semibold hover:bg-white/35 transition-all shadow-md"
             >
                 <PencilIcon class="h-4 w-4" aria-hidden="true" />
                 Edit Profile
             </Link>
         </div>
 
-        <!-- Stats Grid -->
+        <!-- Stats Grid with Softer Gradients -->
         <div class="grid grid-cols-2 gap-3">
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-4 shadow-lg text-white">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                        <ClipboardDocumentCheckIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                    <div class="w-12 h-12 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        <ClipboardDocumentCheckIcon class="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ stats.tasks_completed }}</p>
-                        <p class="text-xs text-gray-500">Tasks Done</p>
+                        <p class="text-3xl font-bold drop-shadow-md">{{ stats.tasks_completed }}</p>
+                        <p class="text-xs text-white/90">Tasks Done</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl p-4 shadow-lg text-white">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                        <BanknotesIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                    <div class="w-12 h-12 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        <BanknotesIcon class="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.month_spent) }}</p>
-                        <p class="text-xs text-gray-500">This Month</p>
+                        <p class="text-2xl font-bold drop-shadow-md">{{ formatCurrency(stats.month_spent) }}</p>
+                        <p class="text-xs text-white/90">This Month</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl p-4 shadow-lg text-white">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
-                        <SparklesIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
+                    <div class="w-12 h-12 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        <SparklesIcon class="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_streaks }}</p>
-                        <p class="text-xs text-gray-500">Habit Streaks</p>
+                        <p class="text-3xl font-bold drop-shadow-md">{{ stats.total_streaks }}</p>
+                        <p class="text-xs text-white/90">Habit Streaks</p>
                     </div>
                 </div>
             </div>
             
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-4 shadow-lg text-white">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
-                        <BriefcaseIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                    <div class="w-12 h-12 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        <BriefcaseIcon class="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                        <p class="text-2xl font-bold text-gray-900">{{ stats.gigs_completed }}</p>
-                        <p class="text-xs text-gray-500">Gigs Done</p>
+                        <p class="text-3xl font-bold drop-shadow-md">{{ stats.gigs_completed }}</p>
+                        <p class="text-xs text-white/90">Gigs Done</p>
                     </div>
                 </div>
             </div>
@@ -146,7 +152,7 @@ const getInitials = (name: string) => {
             >
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-                        <span class="text-lg">🎯</span>
+                        <AcademicCapIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
                     </div>
                     <span class="font-medium text-gray-900">My Skills</span>
                 </div>
@@ -162,6 +168,22 @@ const getInitials = (name: string) => {
                         <BriefcaseIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
                     </div>
                     <span class="font-medium text-gray-900">My Gigs</span>
+                </div>
+                <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            </Link>
+            
+            <Link 
+                :href="route('lifeplus.profile.subscription')"
+                class="flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all border-l-4 border-transparent hover:border-indigo-500"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                        <SparklesIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-900 block">My Subscription</span>
+                        <span class="text-xs text-gray-500">View plan & features</span>
+                    </div>
                 </div>
                 <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
             </Link>
@@ -185,7 +207,7 @@ const getInitials = (name: string) => {
             >
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center">
-                        <span class="text-lg">🚀</span>
+                        <RocketLaunchIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
                     </div>
                     <span class="font-medium text-gray-900">MyGrowNet Hub</span>
                 </div>

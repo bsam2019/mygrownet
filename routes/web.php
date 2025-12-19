@@ -659,7 +659,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Settings Routes
-    Route::redirect('settings', '/settings/profile');
+    Route::get('settings', function () {
+        return Inertia::render('Settings/Index');
+    })->name('settings');
     Route::get('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [\App\Http\Controllers\Settings\ProfileController::class, 'update'])->name('profile.update');
     Route::post('settings/profile/notification-settings', [\App\Http\Controllers\Settings\ProfileController::class, 'updateNotificationSettings'])->name('profile.notification-settings');
@@ -667,7 +669,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [\App\Http\Controllers\Settings\PasswordController::class, 'update'])->name('password.update');
     Route::get('settings/appearance', function () {
-        return Inertia::render('settings/Appearance');
+        return Inertia::render('Settings/Appearance');
     })->name('appearance');
 
     // Compensation Plan Route

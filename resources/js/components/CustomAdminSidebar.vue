@@ -127,6 +127,7 @@ const reportsNavItems: NavItem[] = [
 
 const employeeNavItems: NavItem[] = [
     { title: 'All Employees', href: safeRoute('admin.employees.index'), icon: UserCheck },
+    { title: 'Delegations', href: safeRoute('admin.delegations.index'), icon: Shield },
     { title: 'Task Management', href: safeRoute('admin.tasks.index'), icon: Target },
     { title: 'Departments', href: safeRoute('admin.departments.index'), icon: Building2 },
     { title: 'Positions', href: safeRoute('admin.positions.index'), icon: Briefcase },
@@ -147,6 +148,7 @@ const communicationNavItems: NavItem[] = [
 
 const systemNavItems: NavItem[] = [
     { title: 'Announcements', href: safeRoute('admin.announcements.index'), icon: Bell },
+    { title: 'Module Subscriptions', href: safeRoute('admin.module-subscriptions.index'), icon: CreditCard },
     { title: 'Bonus Points Settings', href: safeRoute('admin.settings.bp.index'), icon: Target },
     { title: 'Roles', href: safeRoute('admin.role-management.roles.index'), icon: Shield },
     { title: 'Permissions', href: safeRoute('admin.role-management.permissions.index'), icon: Key },

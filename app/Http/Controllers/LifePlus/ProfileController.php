@@ -4,12 +4,18 @@ namespace App\Http\Controllers\LifePlus;
 
 use App\Http\Controllers\Controller;
 use App\Domain\LifePlus\Services\ProfileService;
+use App\Domain\Module\Services\TierConfigurationService;
+use App\Domain\Wallet\Services\UnifiedWalletService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProfileController extends Controller
 {
-    public function __construct(protected ProfileService $profileService) {}
+    public function __construct(
+        protected ProfileService $profileService,
+        protected TierConfigurationService $tierConfigService,
+        protected UnifiedWalletService $walletService
+    ) {}
 
     public function index()
     {
@@ -72,6 +78,20 @@ class ProfileController extends Controller
     {
         return Inertia::render('LifePlus/Profile/Settings', [
             'profile' => $this->profileService->getProfile(auth()->id()),
+        ]);
+    }
+
+    public function subscription()
+    {
+        $user = auth()->user();
+        
+        // Get dynamic tiers from admin-configured database or config fallback
+        $tiers = $this->tierConfigService->getAllTiersForDisplay('lifeplus');
+        
+        // Access info is already injected by InjectLifePlusAccess middleware
+        return Inertia::render('LifePlus/Profile/Subscription', [
+            'walletBalance' => $this->walletService->calculateBalance($user),
+            'tiers' => $tiers,
         ]);
     }
 }

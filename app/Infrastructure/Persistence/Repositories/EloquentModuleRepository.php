@@ -108,16 +108,24 @@ class EloquentModuleRepository implements ModuleRepositoryInterface
             thumbnail: $model->thumbnail
         );
         
+        // Filter out invalid account types (like 'guest') that aren't in the enum
+        $validAccountTypes = [];
+        foreach ($model->account_types ?? [] as $type) {
+            try {
+                $validAccountTypes[] = \App\Enums\AccountType::from($type);
+            } catch (\ValueError $e) {
+                // Skip invalid account types (e.g., 'guest')
+                continue;
+            }
+        }
+        
         return Module::reconstitute(
             id: \App\Domain\Module\ValueObjects\ModuleId::fromString($model->id),
             name: \App\Domain\Module\ValueObjects\ModuleName::fromString($model->name),
             slug: \App\Domain\Module\ValueObjects\ModuleSlug::fromString($model->slug),
             category: \App\Domain\Module\ValueObjects\ModuleCategory::from($model->category),
             description: $model->description ?? '',
-            accountTypes: array_map(
-                fn($type) => \App\Enums\AccountType::from($type),
-                $model->account_types ?? []
-            ),
+            accountTypes: $validAccountTypes,
             configuration: $configuration,
             status: \App\Domain\Module\ValueObjects\ModuleStatus::from($model->status),
             version: $model->version ?? '1.0.0',

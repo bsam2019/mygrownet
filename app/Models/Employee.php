@@ -101,6 +101,11 @@ class Employee extends Model
         return $this->hasMany(EmployeeNotification::class);
     }
 
+    public function delegations(): HasMany
+    {
+        return $this->hasMany(EmployeeDelegation::class);
+    }
+
     // Accessors
     public function getFullNameAttribute(): string
     {

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import LifePlusLayout from '@/layouts/LifePlusLayout.vue';
+import { useLifePlusAccess } from '@/composables/useLifePlusAccess';
 import {
     PlusIcon,
     FireIcon,
@@ -18,9 +19,14 @@ import {
     PencilIcon,
     FlagIcon,
     BanknotesIcon,
+    LockClosedIcon,
 } from '@heroicons/vue/24/outline';
 
 defineOptions({ layout: LifePlusLayout });
+
+const { hasReachedLimit, getLimit, isFreeTier } = useLifePlusAccess();
+const habitLimitReached = computed(() => hasReachedLimit('habits'));
+const habitLimit = computed(() => getLimit('habits'));
 
 interface HabitDay {
     date: string;
@@ -117,12 +123,30 @@ const submitHabit = () => {
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-bold text-gray-900">Habit Tracker</h1>
             <button 
+                v-if="!habitLimitReached"
                 @click="showAddModal = true"
                 class="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
                 Add Habit
             </button>
+            <div v-else class="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm">
+                <LockClosedIcon class="h-4 w-4" aria-hidden="true" />
+                Limit ({{ habitLimit }})
+            </div>
+        </div>
+        
+        <!-- Habit Limit Warning for Free Users -->
+        <div v-if="isFreeTier && habitLimitReached" class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <LockClosedIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold text-purple-900">Habit limit reached</p>
+                    <p class="text-sm text-purple-700">Upgrade to Premium for unlimited habits</p>
+                </div>
+            </div>
         </div>
 
         <!-- Week Overview -->

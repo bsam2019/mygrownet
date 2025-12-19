@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified', 'employee'])->prefix('employee/portal')->name('employee.portal.')->group(function () {
+Route::middleware(['auth', 'verified', 'employee', 'inject.delegated.nav'])->prefix('workspace')->name('employee.portal.')->group(function () {
     
     // Dashboard
     Route::get('/', [PortalController::class, 'dashboard'])->name('dashboard');
@@ -147,5 +147,87 @@ Route::middleware(['auth', 'verified', 'employee'])->prefix('employee/portal')->
         Route::patch('/tickets/{ticket}/status', [PortalController::class, 'supportAgentUpdateStatus'])->name('update-status');
         Route::patch('/tickets/{ticket}/assign', [PortalController::class, 'supportAgentAssign'])->name('assign');
         Route::get('/stats', [PortalController::class, 'supportAgentStats'])->name('stats');
+    });
+
+    // Delegated Admin Functions
+    // These routes provide access to admin functions delegated to specific employees
+    Route::prefix('delegated')->name('delegated.')->group(function () {
+        $delegatedController = \App\Http\Controllers\Employee\DelegatedFunctionsController::class;
+        
+        // Delegated Dashboard
+        Route::get('/', [$delegatedController, 'dashboard'])->name('dashboard');
+        
+        // Approval Queue
+        Route::prefix('approvals')->name('approvals.')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'approvalQueue'])->name('index');
+            Route::post('/{approval}/review', [$delegatedController, 'approvalReview'])->name('review');
+        });
+        
+        // Support Center (delegated.support.handle_tickets)
+        Route::prefix('support')->name('support.')->middleware('delegated:delegated.support.handle_tickets')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'support'])->name('index');
+            Route::get('/{source}/{ticketId}', [$delegatedController, 'supportShow'])->name('show');
+            Route::post('/{source}/{ticketId}/reply', [$delegatedController, 'supportReply'])
+                ->middleware('delegated:delegated.support.respond_tickets')
+                ->name('reply');
+        });
+        
+        // Receipts (delegated.finance.view_receipts)
+        Route::prefix('receipts')->name('receipts.')->middleware('delegated:delegated.finance.view_receipts')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'receipts'])->name('index');
+        });
+        
+        // Payments (delegated.finance.view_payments)
+        Route::prefix('payments')->name('payments.')->middleware('delegated:delegated.finance.view_payments')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'payments'])->name('index');
+            Route::get('/{payment}', [$delegatedController, 'paymentShow'])->name('show');
+            Route::post('/{payment}/process', [$delegatedController, 'paymentProcess'])
+                ->middleware('delegated:delegated.finance.process_payments')
+                ->name('process');
+        });
+        
+        // Withdrawals (delegated.finance.view_withdrawals)
+        Route::prefix('withdrawals')->name('withdrawals.')->middleware('delegated:delegated.finance.view_withdrawals')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'withdrawals'])->name('index');
+            Route::get('/{withdrawal}', [$delegatedController, 'withdrawalShow'])->name('show');
+            Route::post('/{withdrawal}/process', [$delegatedController, 'withdrawalProcess'])
+                ->middleware('delegated:delegated.finance.process_withdrawals')
+                ->name('process');
+        });
+        
+        // Users (delegated.users.view)
+        Route::prefix('users')->name('users.')->middleware('delegated:delegated.users.view')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'users'])->name('index');
+            Route::get('/{user}', [$delegatedController, 'userShow'])->name('show');
+        });
+        
+        // BGF Applications (delegated.bgf.view_applications)
+        Route::prefix('bgf')->name('bgf.')->middleware('delegated:delegated.bgf.view_applications')->group(function () use ($delegatedController) {
+            Route::get('/', [$delegatedController, 'bgfApplications'])->name('index');
+            Route::get('/{application}', [$delegatedController, 'bgfApplicationShow'])->name('show');
+            Route::post('/{application}/review', [$delegatedController, 'bgfApplicationReview'])
+                ->middleware('delegated:delegated.bgf.review_applications')
+                ->name('review');
+        });
+        
+        // Investor Relations
+        Route::prefix('investors')->name('investors.')->group(function () use ($delegatedController) {
+            Route::get('/messages', [$delegatedController, 'investorMessages'])
+                ->middleware('delegated:delegated.investors.view_messages')
+                ->name('messages');
+            Route::get('/documents', [$delegatedController, 'investorDocuments'])
+                ->middleware('delegated:delegated.investors.view_documents')
+                ->name('documents');
+        });
+        
+        // Analytics
+        Route::prefix('analytics')->name('analytics.')->group(function () use ($delegatedController) {
+            Route::get('/members', [$delegatedController, 'memberAnalytics'])
+                ->middleware('delegated:delegated.analytics.members')
+                ->name('members');
+            Route::get('/financial', [$delegatedController, 'financialReports'])
+                ->middleware('delegated:delegated.analytics.financial')
+                ->name('financial');
+        });
     });
 });

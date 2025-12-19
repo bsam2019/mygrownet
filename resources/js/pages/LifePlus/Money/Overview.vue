@@ -9,7 +9,10 @@ import {
     Cog6ToothIcon,
     TrashIcon,
     PencilIcon,
+    BanknotesIcon,
+    UserGroupIcon,
 } from '@heroicons/vue/24/outline';
+import FeatureGate from '@/Components/LifePlus/FeatureGate.vue';
 
 defineOptions({ layout: LifePlusLayout });
 
@@ -126,51 +129,53 @@ const deleteExpense = (id: number) => {
     <div class="p-4 space-y-6">
         <!-- Header with Month Navigation -->
         <div class="flex items-center justify-between">
-            <h1 class="text-xl font-bold text-gray-900">Money</h1>
-            <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">Money</h1>
+            <div class="flex items-center gap-2 bg-white rounded-xl shadow-md p-1">
                 <button 
                     @click="changeMonth(-1)"
-                    class="p-2 rounded-lg hover:bg-gray-100"
+                    class="p-2 rounded-lg hover:bg-emerald-50 transition-colors"
                     aria-label="Previous month"
                 >
-                    <ChevronLeftIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
+                    <ChevronLeftIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
                 </button>
                 <span class="text-sm font-medium text-gray-700 min-w-[100px] text-center">
                     {{ summary.month_name }}
                 </span>
                 <button 
                     @click="changeMonth(1)"
-                    class="p-2 rounded-lg hover:bg-gray-100"
+                    class="p-2 rounded-lg hover:bg-emerald-50 transition-colors"
                     aria-label="Next month"
                 >
-                    <ChevronRightIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
+                    <ChevronRightIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
                 </button>
             </div>
         </div>
 
         <!-- Summary Card -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div class="bg-gradient-to-br from-white via-emerald-50 to-teal-50 rounded-3xl p-6 shadow-lg border border-emerald-200">
             <div class="text-center mb-4">
-                <p class="text-gray-500 text-sm">Total Spent</p>
-                <p class="text-3xl font-bold text-gray-900 mt-1">{{ formatCurrency(summary.total_spent) }}</p>
-                <p class="text-sm text-gray-500 mt-1">
-                    Budget: {{ formatCurrency(summary.budget) }}
+                <p class="text-emerald-600 text-sm font-medium">Total Spent</p>
+                <p class="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mt-1">
+                    {{ formatCurrency(summary.total_spent) }}
+                </p>
+                <p class="text-sm text-gray-600 mt-1">
+                    Budget: <span class="font-semibold">{{ formatCurrency(summary.budget) }}</span>
                 </p>
             </div>
             
-            <div class="relative h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div class="relative h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                 <div 
-                    class="absolute inset-y-0 left-0 rounded-full transition-all"
-                    :class="summary.is_over_budget ? 'bg-red-500' : 'bg-emerald-500'"
+                    class="absolute inset-y-0 left-0 rounded-full transition-all shadow-md"
+                    :class="summary.is_over_budget ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'"
                     :style="{ width: `${Math.min(100, summary.percentage)}%` }"
                 ></div>
             </div>
             
-            <div class="flex justify-between mt-2 text-sm">
-                <span :class="summary.is_over_budget ? 'text-red-600' : 'text-emerald-600'">
+            <div class="flex justify-between mt-3 text-sm">
+                <span :class="summary.is_over_budget ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'">
                     {{ summary.percentage.toFixed(0) }}% used
                 </span>
-                <span class="text-gray-500">
+                <span class="text-gray-700 font-medium">
                     {{ summary.is_over_budget ? 'Over by' : 'Left:' }} {{ formatCurrency(Math.abs(summary.remaining)) }}
                 </span>
             </div>
@@ -180,22 +185,22 @@ const deleteExpense = (id: number) => {
         <div class="flex gap-3">
             <button 
                 @click="openAddModal()"
-                class="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 transition-colors"
+                class="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl hover:scale-105"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
                 Add Expense
             </button>
             <Link 
                 :href="route('lifeplus.money.budget')"
-                class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                class="px-4 py-3 bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 rounded-xl font-medium hover:from-gray-200 hover:to-gray-300 transition-all shadow-md hover:shadow-lg"
             >
                 <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
             </Link>
         </div>
 
         <!-- Categories Breakdown -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <h2 class="font-semibold text-gray-900 mb-4">By Category</h2>
+        <div class="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-5 shadow-lg border border-blue-200">
+            <h2 class="font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">By Category</h2>
             
             <div v-if="summary.by_category.length === 0" class="text-center py-6 text-gray-500">
                 No expenses this month
@@ -228,10 +233,10 @@ const deleteExpense = (id: number) => {
         </div>
 
         <!-- Recent Expenses -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div class="bg-gradient-to-br from-white to-purple-50 rounded-3xl p-5 shadow-lg border border-purple-200">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="font-semibold text-gray-900">Recent Expenses</h2>
-                <span class="text-sm text-gray-500">{{ summary.transaction_count }} transactions</span>
+                <h2 class="font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Recent Expenses</h2>
+                <span class="text-sm text-purple-600 font-medium">{{ summary.transaction_count }} transactions</span>
             </div>
             
             <div v-if="expenses.length === 0" class="text-center py-6 text-gray-500">
@@ -272,22 +277,30 @@ const deleteExpense = (id: number) => {
             </div>
         </div>
 
-        <!-- Savings Goals Link -->
-        <Link 
-            :href="route('lifeplus.money.savings')"
-            class="block bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white"
-        >
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <BanknotesIcon class="h-5 w-5" aria-hidden="true" />
-                    <div>
-                        <h3 class="font-semibold">Savings Goals</h3>
-                        <p class="text-blue-100 text-sm mt-0.5">Track your savings progress</p>
-                    </div>
-                </div>
-                <ChevronRightIcon class="h-5 w-5" aria-hidden="true" />
-            </div>
-        </Link>
+        <!-- Quick Links -->
+        <div class="grid grid-cols-2 gap-3">
+            <!-- Savings Goals Link -->
+            <Link 
+                :href="route('lifeplus.money.savings')"
+                class="block bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white hover:scale-105 transition-transform"
+            >
+                <BanknotesIcon class="h-6 w-6 mb-2" aria-hidden="true" />
+                <h3 class="font-semibold">Savings Goals</h3>
+                <p class="text-blue-100 text-xs mt-0.5">Track progress</p>
+            </Link>
+
+            <!-- Chilimba Tracker Link - Premium Feature -->
+            <FeatureGate feature="chilimba" compact>
+                <Link 
+                    :href="route('lifeplus.chilimba.index')"
+                    class="block bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-4 text-white hover:scale-105 transition-transform"
+                >
+                    <UserGroupIcon class="h-6 w-6 mb-2" aria-hidden="true" />
+                    <h3 class="font-semibold">Chilimba</h3>
+                    <p class="text-emerald-100 text-xs mt-0.5">Village banking</p>
+                </Link>
+            </FeatureGate>
+        </div>
 
         <!-- Add/Edit Expense Modal -->
         <Teleport to="body">

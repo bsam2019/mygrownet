@@ -120,7 +120,7 @@ export function useEmployeeNotifications(employeeIdRef: Ref<number | null>) {
                     type: 'time_off_' + data.action,
                     title: `Time Off ${data.action.charAt(0).toUpperCase() + data.action.slice(1)}`,
                     message: `Your ${data.type} leave request has been ${data.action}`,
-                    action_url: '/employee/portal/time-off',
+                    action_url: '/workspace/time-off',
                     created_at: new Date().toISOString(),
                 };
                 

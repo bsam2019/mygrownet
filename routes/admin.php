@@ -429,4 +429,45 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         });
     });
 
+    // Module Subscription Management (Admin manages app subscriptions)
+    Route::prefix('module-subscriptions')->name('module-subscriptions.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'index'])->name('index');
+        Route::get('/discounts', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'discounts'])->name('discounts');
+        Route::get('/offers', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'offers'])->name('offers');
+        Route::get('/{moduleId}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'show'])->name('show');
+        Route::post('/{moduleId}/seed-from-config', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'seedFromConfig'])->name('seed-from-config');
+        
+        // Tier Management
+        Route::post('/{moduleId}/tiers', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'storeTier'])->name('tiers.store');
+        Route::put('/{moduleId}/tiers/{tier}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'updateTier'])->name('tiers.update');
+        Route::delete('/{moduleId}/tiers/{tier}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'destroyTier'])->name('tiers.destroy');
+        Route::put('/{moduleId}/tiers/{tier}/features', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'updateFeatures'])->name('tiers.features');
+        
+        // Discount Management
+        Route::post('/discounts', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'storeDiscount'])->name('discounts.store');
+        Route::put('/discounts/{discount}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'updateDiscount'])->name('discounts.update');
+        Route::delete('/discounts/{discount}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'destroyDiscount'])->name('discounts.destroy');
+        
+        // Special Offers Management
+        Route::post('/offers', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'storeOffer'])->name('offers.store');
+        Route::put('/offers/{offer}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'updateOffer'])->name('offers.update');
+        Route::delete('/offers/{offer}', [\App\Http\Controllers\Admin\ModuleSubscriptionAdminController::class, 'destroyOffer'])->name('offers.destroy');
+    });
+
+    // Employee Delegation Management
+    Route::prefix('delegations')->name('delegations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\DelegationController::class, 'index'])->name('index');
+        Route::get('/logs', [\App\Http\Controllers\Admin\DelegationController::class, 'logs'])->name('logs');
+        Route::get('/logs/export', [\App\Http\Controllers\Admin\DelegationController::class, 'exportLogs'])->name('logs.export');
+        Route::get('/activity-report', [\App\Http\Controllers\Admin\DelegationController::class, 'activityReport'])->name('activity-report');
+        Route::get('/approvals', [\App\Http\Controllers\Admin\DelegationController::class, 'approvals'])->name('approvals');
+        Route::post('/approvals/{approvalRequest}/approve', [\App\Http\Controllers\Admin\DelegationController::class, 'approve'])->name('approvals.approve');
+        Route::post('/approvals/{approvalRequest}/reject', [\App\Http\Controllers\Admin\DelegationController::class, 'reject'])->name('approvals.reject');
+        Route::get('/{employee}', [\App\Http\Controllers\Admin\DelegationController::class, 'show'])->name('show');
+        Route::post('/{employee}/grant', [\App\Http\Controllers\Admin\DelegationController::class, 'grant'])->name('grant');
+        Route::post('/{employee}/grant-preset', [\App\Http\Controllers\Admin\DelegationController::class, 'grantPreset'])->name('grant-preset');
+        Route::delete('/{employee}/revoke/{permissionKey}', [\App\Http\Controllers\Admin\DelegationController::class, 'revoke'])->name('revoke');
+        Route::delete('/{employee}/revoke-all', [\App\Http\Controllers\Admin\DelegationController::class, 'revokeAll'])->name('revoke-all');
+    });
+
 });

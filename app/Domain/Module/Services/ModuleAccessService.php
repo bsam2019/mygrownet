@@ -89,7 +89,10 @@ class ModuleAccessService
             $hasActiveSubscription = \DB::table('module_subscriptions')
                 ->where('user_id', $user->id)
                 ->where('status', 'active')
-                ->where('end_date', '>', now())
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                })
                 ->exists();
             
             if ($hasActiveSubscription) {
@@ -145,7 +148,10 @@ class ModuleAccessService
             $hasActiveSubscription = \DB::table('module_subscriptions')
                 ->where('user_id', $user->id)
                 ->where('status', 'active')
-                ->where('end_date', '>', now())
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                })
                 ->exists();
             
             if ($hasActiveSubscription) {

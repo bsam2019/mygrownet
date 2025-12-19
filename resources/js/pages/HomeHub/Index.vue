@@ -306,11 +306,11 @@ const getModuleIcon = (slug: string) => {
                 </MenuItem>
                 <MenuItem v-if="isEmployee" v-slot="{ active }">
                   <Link
-                    href="/employee/portal"
+                    href="/workspace"
                     :class="[active ? 'bg-emerald-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-700']"
                   >
                     <ClipboardDocumentCheckIcon class="w-5 h-5 text-emerald-500" />
-                    Employee Portal
+                    Workspace
                   </Link>
                 </MenuItem>
               </div>

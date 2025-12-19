@@ -237,6 +237,12 @@ Route::middleware(['auth', 'verified'])
         Route::put('/security/password', [SettingsController::class, 'updatePassword'])->name('security.password');
         Route::get('/business', [SettingsController::class, 'business'])->name('business');
         Route::post('/business', [SettingsController::class, 'updateBusiness'])->name('business.update');
+        Route::get('/subscription', [SubscriptionController::class, 'settings'])->name('subscription');
+    });
+
+    // Subscription Checkout (wallet-based)
+    Route::prefix('subscription')->name('subscription.')->group(function () {
+        Route::post('/purchase', [SubscriptionController::class, 'purchase'])->name('purchase');
     });
 
     // Notifications

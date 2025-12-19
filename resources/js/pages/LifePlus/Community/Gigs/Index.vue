@@ -2,15 +2,29 @@
 import { ref } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import LifePlusLayout from '@/layouts/LifePlusLayout.vue';
+import { useLifePlusAccess } from '@/composables/useLifePlusAccess';
 import {
     PlusIcon,
     MapPinIcon,
     BriefcaseIcon,
     MagnifyingGlassIcon,
     FunnelIcon,
+    SparklesIcon,
+    WrenchScrewdriverIcon,
+    HomeIcon,
+    FireIcon,
+    CakeIcon,
+    AcademicCapIcon,
+    TruckIcon,
+    PaintBrushIcon,
+    EllipsisHorizontalIcon,
+    LockClosedIcon,
 } from '@heroicons/vue/24/outline';
 
 defineOptions({ layout: LifePlusLayout });
+
+const { canAccess } = useLifePlusAccess();
+const canPostGig = canAccess('gigs_post');
 
 interface Gig {
     id: number;
@@ -71,6 +85,23 @@ const submitGig = () => {
         },
     });
 };
+
+// Map category names to Heroicons
+const categoryIcons: Record<string, any> = {
+    'cleaning': SparklesIcon,
+    'yard_work': HomeIcon,
+    'cooking': CakeIcon,
+    'babysitting': FireIcon,
+    'tutoring': AcademicCapIcon,
+    'delivery': TruckIcon,
+    'repairs': WrenchScrewdriverIcon,
+    'firenze': PaintBrushIcon,
+    'other': EllipsisHorizontalIcon,
+};
+
+const getCategoryIcon = (categoryId: string) => {
+    return categoryIcons[categoryId] || BriefcaseIcon;
+};
 </script>
 
 <template>
@@ -86,12 +117,17 @@ const submitGig = () => {
                     My Gigs
                 </Link>
                 <button 
+                    v-if="canPostGig"
                     @click="showAddModal = true"
                     class="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
                     Post
                 </button>
+                <div v-else class="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-500 rounded-xl text-sm">
+                    <LockClosedIcon class="h-4 w-4" aria-hidden="true" />
+                    Premium
+                </div>
             </div>
         </div>
 
@@ -131,7 +167,7 @@ const submitGig = () => {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 ]"
             >
-                <span>{{ cat.icon }}</span>
+                <component :is="getCategoryIcon(cat.id)" class="h-4 w-4" aria-hidden="true" />
                 {{ cat.name }}
             </button>
         </div>
@@ -156,7 +192,9 @@ const submitGig = () => {
                 class="block bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
                 <div class="flex items-start gap-3">
-                    <span class="text-2xl">{{ gig.category_icon }}</span>
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <component :is="getCategoryIcon(gig.category || 'other')" class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                    </div>
                     <div class="flex-1 min-w-0">
                         <h3 class="font-semibold text-gray-900">{{ gig.title }}</h3>
                         <p v-if="gig.description" class="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -233,7 +271,7 @@ const submitGig = () => {
                                     >
                                         <option value="">Select</option>
                                         <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-                                            {{ cat.icon }} {{ cat.name }}
+                                            {{ cat.name }}
                                         </option>
                                     </select>
                                 </div>

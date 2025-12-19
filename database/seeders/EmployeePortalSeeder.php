@@ -240,7 +240,7 @@ class EmployeePortalSeeder extends Seeder
             [
                 'type' => 'task_assigned',
                 'message' => 'You have been assigned a new task: Fix Login Bug',
-                'action_url' => '/employee/portal/tasks',
+                'action_url' => '/workspace/tasks',
             ]
         );
 
@@ -249,7 +249,7 @@ class EmployeePortalSeeder extends Seeder
             [
                 'type' => 'goal_reminder',
                 'message' => 'Your goal "Complete Vue.js Certification" is due in 30 days',
-                'action_url' => '/employee/portal/goals',
+                'action_url' => '/workspace/goals',
             ]
         );
 

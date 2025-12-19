@@ -251,6 +251,55 @@ return [
         ],
     ],
 
+    'lifeplus' => [
+        'name' => 'Life+',
+        'slug' => 'lifeplus',
+        'category' => 'personal',
+        'description' => 'Personal development, wellness, and lifestyle improvement tools',
+        'icon' => 'heart',
+        'color' => 'rose',
+        'thumbnail' => '/images/modules/lifeplus.png',
+        'account_types' => ['member'],
+        'subscription_tiers' => [
+            'free' => [
+                'name' => 'Free',
+                'price' => 0,
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'basic_content' => true,
+                    'daily_tips' => true,
+                    'community_access' => false,
+                ],
+            ],
+            'premium' => [
+                'name' => 'Premium',
+                'price' => 49,
+                'billing_cycle' => 'monthly',
+                'features' => [
+                    'all_content' => true,
+                    'daily_tips' => true,
+                    'community_access' => true,
+                    'coaching_sessions' => true,
+                    'exclusive_workshops' => true,
+                ],
+            ],
+        ],
+        'routes' => [
+            'integrated' => '/lifeplus',
+            'standalone' => '/apps/lifeplus',
+        ],
+        'pwa' => [
+            'enabled' => true,
+            'installable' => true,
+            'offline_capable' => true,
+        ],
+        'features' => [
+            'offline' => true,
+            'dataSync' => true,
+            'notifications' => true,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Module Settings

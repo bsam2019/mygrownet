@@ -12,6 +12,9 @@ use App\Http\Controllers\LifePlus\CommunityController;
 use App\Http\Controllers\LifePlus\KnowledgeController;
 use App\Http\Controllers\LifePlus\ProfileController;
 use App\Http\Controllers\LifePlus\AnalyticsController;
+use App\Http\Controllers\LifePlus\ChilimbaController;
+use App\Http\Controllers\LifePlus\NotificationController;
+use App\Http\Controllers\ModuleSubscriptionCheckoutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +26,7 @@ use App\Http\Controllers\LifePlus\AnalyticsController;
 |
 */
 
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', \App\Http\Middleware\InjectLifePlusAccess::class])
     ->prefix('lifeplus')
     ->name('lifeplus.')
     ->group(function () {
@@ -34,6 +37,12 @@ Route::middleware(['auth', 'verified'])
         // Onboarding
         Route::get('/onboarding', [HomeController::class, 'onboarding'])->name('onboarding');
         Route::post('/onboarding/complete', [HomeController::class, 'completeOnboarding'])->name('onboarding.complete');
+
+        // Notifications
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
         // Money Management
         Route::prefix('money')->name('money.')->group(function () {
@@ -60,6 +69,43 @@ Route::middleware(['auth', 'verified'])
             Route::put('/savings/{id}', [BudgetController::class, 'updateSavingsGoal'])->name('savings.update');
             Route::post('/savings/{id}/contribute', [BudgetController::class, 'contributeSavings'])->name('savings.contribute');
             Route::delete('/savings/{id}', [BudgetController::class, 'destroySavingsGoal'])->name('savings.destroy');
+        });
+
+        // Chilimba (Village Banking)
+        Route::prefix('chilimba')->name('chilimba.')->group(function () {
+            Route::get('/', [ChilimbaController::class, 'index'])->name('index');
+            Route::post('/', [ChilimbaController::class, 'store'])->name('store');
+            Route::get('/{id}', [ChilimbaController::class, 'show'])->name('show');
+            Route::put('/{id}', [ChilimbaController::class, 'update'])->name('update');
+            Route::delete('/{id}', [ChilimbaController::class, 'destroy'])->name('destroy');
+            
+            // Members
+            Route::post('/{groupId}/members', [ChilimbaController::class, 'storeMembers'])->name('members.store');
+            Route::put('/members/{memberId}', [ChilimbaController::class, 'updateMember'])->name('members.update');
+            Route::delete('/members/{memberId}', [ChilimbaController::class, 'destroyMember'])->name('members.destroy');
+            
+            // Contributions
+            Route::post('/{groupId}/contributions', [ChilimbaController::class, 'storeContribution'])->name('contributions.store');
+            Route::post('/{groupId}/contributions/bulk', [ChilimbaController::class, 'storeBulkContributions'])->name('contributions.bulk');
+            Route::put('/contributions/{id}', [ChilimbaController::class, 'updateContribution'])->name('contributions.update');
+            Route::delete('/contributions/{id}', [ChilimbaController::class, 'destroyContribution'])->name('contributions.destroy');
+            Route::get('/{groupId}/contributions/summary', [ChilimbaController::class, 'contributionSummary'])->name('contributions.summary');
+            
+            // Payouts
+            Route::post('/{groupId}/payouts', [ChilimbaController::class, 'storePayout'])->name('payouts.store');
+            
+            // Loans
+            Route::post('/{groupId}/loans', [ChilimbaController::class, 'storeLoan'])->name('loans.store');
+            Route::post('/loans/{loanId}/approve', [ChilimbaController::class, 'approveLoan'])->name('loans.approve');
+            Route::post('/loans/{loanId}/payments', [ChilimbaController::class, 'storeLoanPayment'])->name('loans.payment');
+            
+            // Special Contributions
+            Route::get('/{groupId}/contribution-types', [ChilimbaController::class, 'getContributionTypes'])->name('types.index');
+            Route::post('/{groupId}/contribution-types', [ChilimbaController::class, 'storeContributionType'])->name('types.store');
+            Route::post('/{groupId}/special-contributions', [ChilimbaController::class, 'storeSpecialContribution'])->name('special.store');
+            
+            // Meetings
+            Route::post('/{groupId}/meetings', [ChilimbaController::class, 'storeMeeting'])->name('meetings.store');
         });
 
         // Tasks & Productivity
@@ -137,6 +183,15 @@ Route::middleware(['auth', 'verified'])
             Route::put('/skills', [ProfileController::class, 'updateSkills'])->name('skills.update');
             Route::get('/stats', [ProfileController::class, 'stats'])->name('stats');
             Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+            Route::get('/subscription', [ProfileController::class, 'subscription'])->name('subscription');
+        });
+
+        // Subscription Checkout
+        Route::prefix('subscription')->name('subscription.')->group(function () {
+            Route::post('/purchase', [ModuleSubscriptionCheckoutController::class, 'purchase'])->name('purchase');
+            Route::post('/trial', [ModuleSubscriptionCheckoutController::class, 'startTrial'])->name('trial');
+            Route::post('/upgrade', [ModuleSubscriptionCheckoutController::class, 'upgrade'])->name('upgrade');
+            Route::post('/cancel', [ModuleSubscriptionCheckoutController::class, 'cancel'])->name('cancel');
         });
 
         // Analytics & Reports

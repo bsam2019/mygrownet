@@ -234,6 +234,11 @@ const resourcesNavItems: NavItem[] = [
 
 const systemNavItems: NavItem[] = [
     {
+        title: 'Module Subscriptions',
+        href: safeRoute('admin.module-subscriptions.index'),
+        icon: CreditCard,
+    },
+    {
         title: 'Bonus Points Settings',
         href: safeRoute('admin.settings.bp.index'),
         icon: Target,

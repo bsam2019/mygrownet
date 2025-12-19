@@ -167,6 +167,10 @@ Route::middleware(['auth', 'verified', GrowFinanceStandalone::class])->prefix('g
     Route::post('/subscribe', [SubscriptionController::class, 'subscribe'])->name('subscribe');
     Route::get('/usage', [SubscriptionController::class, 'usage'])->name('usage');
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
+    
+    // Settings - Subscription (in-app with wallet)
+    Route::get('/settings/subscription', [SubscriptionController::class, 'settings'])->name('settings.subscription');
+    Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
 
     // Team Management (Business+)
     Route::prefix('team')->name('team.')->group(function () {

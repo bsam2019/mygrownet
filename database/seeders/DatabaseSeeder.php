@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             TransactionSeeder::class,          // Create related transactions
             InvestmentMetricSeeder::class,     // Create investment metrics
             InvestmentOpportunitySeeder::class,
+            ModuleTierSeeder::class,           // Create module subscription tiers
         ]);
     }
 }

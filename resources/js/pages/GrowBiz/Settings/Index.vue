@@ -13,6 +13,7 @@ import {
     ChevronRightIcon,
     HomeIcon,
     ArrowRightOnRectangleIcon,
+    CreditCardIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -61,6 +62,14 @@ const settingsSections = [
                 iconBg: 'bg-amber-50',
                 iconColor: 'text-amber-600',
                 route: 'growbiz.settings.security',
+            },
+            {
+                name: 'Subscription',
+                description: 'Manage your plan and billing',
+                icon: CreditCardIcon,
+                iconBg: 'bg-emerald-50',
+                iconColor: 'text-emerald-600',
+                route: 'growbiz.settings.subscription',
             },
             {
                 name: 'Notifications',

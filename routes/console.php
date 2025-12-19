@@ -95,6 +95,15 @@ Schedule::command('lifeplus:habit-reminders')
     ->everyFiveMinutes()
     ->description('Send habit reminder notifications');
 
+// ========================================
+// Employee Delegation Scheduled Tasks
+// ========================================
+
+// Expire delegations that have passed their expiration date
+Schedule::command('delegations:expire')
+    ->dailyAt('00:15')
+    ->description('Expire delegations that have passed their expiration date');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');
