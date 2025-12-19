@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/pos.php'));
             Route::middleware('web')
                 ->group(base_path('routes/inventory.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/marketplace.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/lifeplus.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -34,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'marketplace.data' => \App\Http\Middleware\InjectMarketplaceData::class,
             'admin.or.role' => \App\Http\Middleware\AdminOrRoleMiddleware::class,
             'role.dashboard' => \App\Http\Middleware\RoleBasedDashboard::class,
             'otp' => \App\Http\Middleware\RequireOtpVerification::class,

@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class MarketplaceSeller extends Model
+{
+    protected $table = 'marketplace_sellers';
+
+    protected $fillable = [
+        'user_id',
+        'business_name',
+        'business_type',
+        'province',
+        'district',
+        'phone',
+        'email',
+        'description',
+        'logo_path',
+        'trust_level',
+        'kyc_status',
+        'kyc_documents',
+        'kyc_rejection_reason',
+        'total_orders',
+        'rating',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'kyc_documents' => 'array',
+        'is_active' => 'boolean',
+        'rating' => 'float',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(MarketplaceProduct::class, 'seller_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(MarketplaceOrder::class, 'seller_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(MarketplaceReview::class, 'seller_id');
+    }
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo_path ? asset('storage/' . $this->logo_path) : null;
+    }
+
+    public function getTrustBadgeAttribute(): string
+    {
+        return match ($this->trust_level) {
+            'new' => '🆕',
+            'verified' => '✓',
+            'trusted' => '⭐',
+            'top' => '👑',
+            default => '',
+        };
+    }
+
+    public function getTrustLabelAttribute(): string
+    {
+        return match ($this->trust_level) {
+            'new' => 'New Seller',
+            'verified' => 'Verified Seller',
+            'trusted' => 'Trusted Seller',
+            'top' => 'Top Seller',
+            default => 'Seller',
+        };
+    }
+
+    public function canAcceptOrders(): bool
+    {
+        return $this->is_active && $this->kyc_status === 'approved';
+    }
+}
