@@ -46,6 +46,9 @@ class BizBoostBusinessModel extends Model
         'onboarding_completed',
         'marketplace_listed',
         'marketplace_listed_at',
+        'marketplace_seller_id',
+        'marketplace_sync_enabled',
+        'marketplace_synced_at',
     ];
 
     protected $casts = [
@@ -57,11 +60,18 @@ class BizBoostBusinessModel extends Model
         'onboarding_completed' => 'boolean',
         'marketplace_listed' => 'boolean',
         'marketplace_listed_at' => 'datetime',
+        'marketplace_sync_enabled' => 'boolean',
+        'marketplace_synced_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class);
+    }
+
+    public function marketplaceSeller(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\MarketplaceSeller::class, 'marketplace_seller_id');
     }
 
     public function profile(): HasOne

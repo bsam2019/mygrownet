@@ -27,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/marketplace.php'));
             Route::middleware('web')
+                ->group(base_path('routes/admin-marketplace.php'));
+            Route::middleware('web')
                 ->group(base_path('routes/lifeplus.php'));
         },
     )

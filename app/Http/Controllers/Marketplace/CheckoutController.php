@@ -98,7 +98,12 @@ class CheckoutController extends Controller
         }
 
         return Inertia::render('Marketplace/Payment', [
-            'order' => $order,
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'total' => $order->total,
+                'formatted_total' => 'K' . number_format($order->total / 100, 2),
+            ],
         ]);
     }
 

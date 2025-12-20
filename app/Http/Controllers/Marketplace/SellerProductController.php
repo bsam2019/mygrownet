@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Marketplace;
 use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\SellerService;
 use App\Domain\Marketplace\Services\ProductService;
+use App\Services\ImageProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -14,6 +15,7 @@ class SellerProductController extends Controller
     public function __construct(
         private SellerService $sellerService,
         private ProductService $productService,
+        private ImageProcessingService $imageService,
     ) {}
 
     public function index(Request $request)
@@ -56,9 +58,11 @@ class SellerProductController extends Controller
         }
 
         $categories = $this->productService->getCategories();
+        $imageGuidelines = ImageProcessingService::getGuidelines();
 
         return Inertia::render('Marketplace/Seller/Products/Create', [
             'categories' => $categories,
+            'imageGuidelines' => $imageGuidelines,
         ]);
     }
 
@@ -77,15 +81,12 @@ class SellerProductController extends Controller
             'price' => 'required|numeric|min:1|max:1000000',
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
-            'images' => 'required|array|min:1|max:5',
+            'images' => 'required|array|min:1|max:8',
             'images.*' => 'image|max:5120',
         ]);
 
-        // Upload images
-        $images = [];
-        foreach ($request->file('images', []) as $image) {
-            $images[] = $image->store('marketplace/products', 'public');
-        }
+        // Process images based on current phase
+        $images = $this->processProductImages($request->file('images', []), $seller);
 
         $product = $this->productService->create($seller->id, [
             'name' => $validated['name'],
@@ -134,7 +135,7 @@ class SellerProductController extends Controller
             'price' => 'required|numeric|min:1|max:1000000',
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
-            'new_images' => 'nullable|array|max:5',
+            'new_images' => 'nullable|array|max:8',
             'new_images.*' => 'image|max:5120',
             'remove_images' => 'nullable|array',
         ]);
@@ -150,9 +151,8 @@ class SellerProductController extends Controller
         }
 
         // Add new images
-        foreach ($request->file('new_images', []) as $image) {
-            $images[] = $image->store('marketplace/products', 'public');
-        }
+        $newImages = $this->processProductImages($request->file('new_images', []), $seller);
+        $images = array_merge($images, $newImages);
 
         $this->productService->update($id, [
             'name' => $validated['name'],
@@ -182,5 +182,43 @@ class SellerProductController extends Controller
 
         return redirect()->route('marketplace.seller.products.index')
             ->with('success', 'Product deleted.');
+    }
+
+    /**
+     * Process product images based on current phase configuration
+     */
+    private function processProductImages(array $files, $seller): array
+    {
+        $phase = config('marketplace.images.processing_phase', 'phase2');
+        $images = [];
+
+        foreach ($files as $file) {
+            $result = match ($phase) {
+                'mvp' => [
+                    'original' => $this->imageService->uploadRaw($file),
+                ],
+                'phase2' => $this->imageService->uploadOptimized($file),
+                'phase3' => $this->imageService->uploadWithBackgroundRemoval(
+                    $file,
+                    'marketplace/products',
+                    $seller->trust_level === 'top' || $seller->trust_level === 'trusted'
+                ),
+                'phase4' => $this->imageService->uploadAdvanced($file, 'marketplace/products', [
+                    'optimize' => true,
+                    'remove_background' => $seller->trust_level === 'top',
+                    'add_watermark' => config('marketplace.images.watermark.enabled', false),
+                    'enhance' => config('marketplace.images.enhancement.enabled', false),
+                    'is_featured' => false, // Can be determined by product status
+                ]),
+                default => [
+                    'original' => $this->imageService->uploadRaw($file),
+                ],
+            };
+
+            // Store the primary image path (use 'medium' for display, 'original' as fallback)
+            $images[] = $result['medium'] ?? $result['original'];
+        }
+
+        return $images;
     }
 }

@@ -21,6 +21,22 @@ class SellerDashboardController extends Controller
         private EscrowService $escrowService,
     ) {}
 
+    /**
+     * Public landing page for becoming a seller (no auth required)
+     */
+    public function join()
+    {
+        // If user is logged in and already a seller, redirect to dashboard
+        if (auth()->check()) {
+            $existingSeller = $this->sellerService->getByUserId(auth()->id());
+            if ($existingSeller) {
+                return redirect()->route('marketplace.seller.dashboard');
+            }
+        }
+
+        return Inertia::render('Marketplace/Seller/Join');
+    }
+
     public function index(Request $request)
     {
         $seller = $this->sellerService->getByUserId($request->user()->id);
@@ -29,13 +45,108 @@ class SellerDashboardController extends Controller
             return redirect()->route('marketplace.seller.register');
         }
 
+        // Basic Stats
+        $totalProducts = $seller->products()->count();
+        $activeProducts = $seller->products()->where('status', 'active')->count();
+        $pendingProducts = $seller->products()->where('status', 'pending')->count();
+        $rejectedProducts = $seller->products()->where('status', 'rejected')->count();
+        
+        // Order Stats
+        $pendingOrders = $seller->orders()->whereIn('status', ['paid', 'processing'])->count();
+        $completedOrders = $seller->orders()->where('status', 'completed')->count();
+        $totalOrders = $seller->total_orders;
+        
+        // Financial Stats
+        $pendingBalance = $this->escrowService->getSellerPendingBalance($seller->id);
+        $availableBalance = $seller->available_balance ?? 0;
+        $totalRevenue = $seller->orders()->where('status', 'completed')->sum('total');
+        $todayRevenue = $seller->orders()->where('status', 'completed')
+            ->whereDate('confirmed_at', today())->sum('total');
+        $thisWeekRevenue = $seller->orders()->where('status', 'completed')
+            ->whereBetween('confirmed_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('total');
+        $thisMonthRevenue = $seller->orders()->where('status', 'completed')
+            ->whereMonth('confirmed_at', now()->month)->sum('total');
+        
+        // Calculate average order value
+        $avgOrderValue = $completedOrders > 0 ? $totalRevenue / $completedOrders : 0;
+        
+        // Product Performance
+        $lowStockProducts = $seller->products()
+            ->where('status', 'active')
+            ->where('stock_quantity', '>', 0)
+            ->where('stock_quantity', '<=', 5)
+            ->count();
+        
+        $outOfStockProducts = $seller->products()
+            ->where('status', 'active')
+            ->where('stock_quantity', 0)
+            ->count();
+        
+        $topProducts = $seller->products()
+            ->withCount(['orderItems as total_sold' => function ($query) {
+                $query->whereHas('order', function ($q) {
+                    $q->where('status', 'completed');
+                });
+            }])
+            ->orderByDesc('total_sold')
+            ->limit(5)
+            ->get();
+        
+        // Sales Chart Data (last 7 days)
+        $salesChartData = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $revenue = $seller->orders()
+                ->where('status', 'completed')
+                ->whereDate('confirmed_at', $date)
+                ->sum('total');
+            $salesChartData[] = [
+                'date' => $date->format('M d'),
+                'revenue' => $revenue / 100,
+            ];
+        }
+        
+        // Customer Stats
+        $totalCustomers = $seller->orders()
+            ->distinct('buyer_id')
+            ->count('buyer_id');
+        
+        $repeatCustomers = $seller->orders()
+            ->select('buyer_id')
+            ->groupBy('buyer_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->count();
+        
+        $repeatRate = $totalCustomers > 0 ? ($repeatCustomers / $totalCustomers) * 100 : 0;
+        
+        // Recent Reviews
+        $recentReviews = $seller->reviews()
+            ->with('buyer')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
         $stats = [
-            'total_products' => $seller->products()->count(),
-            'active_products' => $seller->products()->where('status', 'active')->count(),
-            'pending_orders' => $seller->orders()->whereIn('status', ['paid', 'processing'])->count(),
-            'total_orders' => $seller->total_orders,
+            'total_products' => $totalProducts,
+            'active_products' => $activeProducts,
+            'pending_products' => $pendingProducts,
+            'rejected_products' => $rejectedProducts,
+            'pending_orders' => $pendingOrders,
+            'completed_orders' => $completedOrders,
+            'total_orders' => $totalOrders,
             'rating' => $seller->rating,
-            'pending_balance' => $this->escrowService->getSellerPendingBalance($seller->id),
+            'pending_balance' => $pendingBalance,
+            'available_balance' => $availableBalance,
+            'total_revenue' => $totalRevenue,
+            'today_revenue' => $todayRevenue,
+            'this_week_revenue' => $thisWeekRevenue,
+            'this_month_revenue' => $thisMonthRevenue,
+            'avg_order_value' => $avgOrderValue,
+            'low_stock_count' => $lowStockProducts,
+            'out_of_stock_count' => $outOfStockProducts,
+            'total_customers' => $totalCustomers,
+            'repeat_customers' => $repeatCustomers,
+            'repeat_rate' => $repeatRate,
         ];
 
         $recentOrders = $seller->orders()
@@ -48,6 +159,9 @@ class SellerDashboardController extends Controller
             'seller' => $seller,
             'stats' => $stats,
             'recentOrders' => $recentOrders,
+            'topProducts' => $topProducts,
+            'salesChartData' => $salesChartData,
+            'recentReviews' => $recentReviews,
         ]);
     }
 

@@ -114,7 +114,7 @@
           { name: 'Venture Builder', route: 'ventures.about' },
           { name: 'Business Growth Fund', route: 'bgf.about' },
           { name: 'Venture Investments', route: 'ventures.index' },
-          { name: 'MyGrow Shop', route: 'marketplace.index' },
+          { name: 'MyGrow Shop', route: 'marketplace.home' },
          ],
         resourceLinks: [
           { name: 'About MyGrowNet', route: 'about' },

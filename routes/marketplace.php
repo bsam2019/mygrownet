@@ -27,7 +27,15 @@ Route::prefix('marketplace')->name('marketplace.')->middleware('marketplace.data
     Route::get('/search', [HomeController::class, 'search'])->name('search');
     Route::get('/category/{slug}', [HomeController::class, 'category'])->name('category');
     Route::get('/product/{slug}', [HomeController::class, 'product'])->name('product');
-    Route::get('/seller/{id}', [HomeController::class, 'seller'])->name('seller.show');
+    Route::get('/shop/{id}', [HomeController::class, 'seller'])->name('seller.show')->whereNumber('id');
+    
+    // Static Pages
+    Route::get('/help', [HomeController::class, 'helpCenter'])->name('help');
+    Route::get('/buyer-protection', [HomeController::class, 'buyerProtection'])->name('buyer-protection');
+    Route::get('/seller-guide', [HomeController::class, 'sellerGuide'])->name('seller-guide');
+    Route::get('/about', [HomeController::class, 'about'])->name('about');
+    Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
+    Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
     
     // Cart (session-based, works without auth)
     Route::get('/cart', [CartController::class, 'index'])->name('cart');
@@ -56,15 +64,24 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
         Route::post('/orders/{id}/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');
         Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
         Route::post('/orders/{id}/dispute', [OrderController::class, 'dispute'])->name('orders.dispute');
+        
+        // Reviews
+        Route::post('/reviews', [\App\Http\Controllers\Marketplace\ReviewController::class, 'store'])->name('reviews.store');
+        Route::post('/reviews/{id}/vote', [\App\Http\Controllers\Marketplace\ReviewController::class, 'vote'])->name('reviews.vote');
     });
 
-// Seller routes
+// Public seller landing page (no auth required)
+Route::prefix('marketplace/seller')->name('marketplace.seller.')->middleware('marketplace.data')->group(function () {
+    Route::get('/join', [SellerDashboardController::class, 'join'])->name('join');
+});
+
+// Seller routes (auth required)
 Route::middleware(['auth', 'verified', 'marketplace.data'])
     ->prefix('marketplace/seller')
     ->name('marketplace.seller.')
     ->group(function () {
         
-        // Registration
+        // Registration (for authenticated users)
         Route::get('/register', [SellerDashboardController::class, 'register'])->name('register');
         Route::post('/register', [SellerDashboardController::class, 'store'])->name('store');
         

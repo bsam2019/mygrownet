@@ -37,7 +37,7 @@
             </Link>
             
             <Link 
-              :href="route('marketplace.index')"
+              :href="route('marketplace.home')"
               class="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 border-2 border-white/30 transition-all duration-200"
             >
               View Products

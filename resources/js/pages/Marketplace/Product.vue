@@ -60,8 +60,10 @@ const currentImageIndex = ref(0);
 const isAddingToCart = ref(false);
 
 const images = computed(() => {
-    return props.product.image_urls.length > 0 
+    return props.product.image_urls?.length > 0 
         ? props.product.image_urls 
+        : props.product.images?.length > 0
+        ? props.product.images
         : [null];
 });
 
@@ -243,20 +245,20 @@ const getTrustLevelColor = (level: string) => {
                     <div v-if="product.stock_quantity > 0" class="space-y-4 mb-8">
                         <div class="flex items-center gap-4">
                             <span class="text-sm font-medium text-gray-700">Quantity:</span>
-                            <div class="flex items-center border border-gray-300 rounded-lg">
+                            <div class="flex items-center border border-gray-300 rounded-lg bg-white">
                                 <button 
                                     @click="decrementQuantity"
                                     :disabled="quantity <= 1"
-                                    class="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="p-2 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                     aria-label="Decrease quantity"
                                 >
                                     <MinusIcon class="h-5 w-5" aria-hidden="true" />
                                 </button>
-                                <span class="w-12 text-center font-medium">{{ quantity }}</span>
+                                <span class="w-12 text-center font-medium text-gray-900">{{ quantity }}</span>
                                 <button 
                                     @click="incrementQuantity"
                                     :disabled="quantity >= product.stock_quantity"
-                                    class="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="p-2 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                     aria-label="Increase quantity"
                                 >
                                     <PlusIcon class="h-5 w-5" aria-hidden="true" />

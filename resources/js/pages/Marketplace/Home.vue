@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
+import { ref } from 'vue';
 import {
     ShoppingBagIcon,
     TruckIcon,
     ShieldCheckIcon,
     CurrencyDollarIcon,
     ArrowRightIcon,
+    MagnifyingGlassIcon,
+    CheckBadgeIcon,
+    ClockIcon,
+    UserGroupIcon,
+    BuildingStorefrontIcon,
+    SparklesIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Product {
@@ -39,11 +46,32 @@ defineProps<{
     provinces: string[];
 }>();
 
+const searchQuery = ref('');
+
+const handleSearch = () => {
+    if (searchQuery.value.trim()) {
+        router.get(route('marketplace.search'), { q: searchQuery.value });
+    }
+};
+
 const trustFeatures = [
-    { icon: ShieldCheckIcon, title: 'Verified Sellers', desc: 'All sellers are KYC verified' },
-    { icon: CurrencyDollarIcon, title: 'Escrow Protection', desc: 'Funds held until delivery confirmed' },
-    { icon: TruckIcon, title: 'Delivery Tracking', desc: 'Track your order every step' },
-    { icon: ShoppingBagIcon, title: 'Buyer Protection', desc: '7-day confirmation window' },
+    { icon: ShieldCheckIcon, title: 'Verified Sellers', desc: 'KYC verified businesses' },
+    { icon: CurrencyDollarIcon, title: 'Escrow Protection', desc: 'Funds held until delivery' },
+    { icon: TruckIcon, title: 'Delivery Tracking', desc: 'Track every step' },
+    { icon: ClockIcon, title: '7-Day Protection', desc: 'Buyer confirmation window' },
+];
+
+const howItWorks = [
+    { step: '1', title: 'Search Products', desc: 'Browse thousands of products from verified sellers', icon: MagnifyingGlassIcon },
+    { step: '2', title: 'Place Order', desc: 'Add to cart and checkout securely with escrow', icon: ShoppingBagIcon },
+    { step: '3', title: 'Receive & Confirm', desc: 'Get your order and release payment to seller', icon: CheckBadgeIcon },
+];
+
+const sellerBenefits = [
+    { icon: UserGroupIcon, title: 'Reach More Customers', desc: 'Access thousands of buyers across Zambia' },
+    { icon: ShieldCheckIcon, title: 'Secure Payments', desc: 'Get paid safely through our escrow system' },
+    { icon: BuildingStorefrontIcon, title: 'Easy Store Setup', desc: 'List products in minutes, no tech skills needed' },
+    { icon: SparklesIcon, title: 'Grow Your Business', desc: 'Tools and insights to scale your sales' },
 ];
 
 const categoryIcons: Record<string, string> = {
@@ -55,6 +83,17 @@ const categoryIcons: Record<string, string> = {
     'Sports': '⚽',
     'Books': '📚',
     'Automotive': '🚗',
+    'Agriculture': '🌾',
+    'Services': '🛠️',
+};
+
+const categoryImages: Record<string, string> = {
+    'Electronics': 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop',
+    'Fashion': 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop',
+    'Home & Garden': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=200&fit=crop',
+    'Health & Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&h=200&fit=crop',
+    'Food & Groceries': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop',
+    'Agriculture': 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=300&h=200&fit=crop',
 };
 </script>
 
@@ -62,45 +101,105 @@ const categoryIcons: Record<string, string> = {
     <Head title="Marketplace - MyGrowNet" />
     
     <MarketplaceLayout>
-        <!-- Hero Section -->
-        <section class="bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-                <div class="max-w-2xl">
-                    <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                        Shop with Trust
-                    </h1>
-                    <p class="text-xl text-orange-100 mb-8">
-                        Zambia's first escrow-protected marketplace. Buy from verified sellers with complete peace of mind.
-                    </p>
-                    <div class="flex flex-wrap gap-4">
-                        <Link 
-                            :href="route('marketplace.search')"
-                            class="inline-flex items-center gap-2 px-6 py-3 bg-white text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition-colors"
-                        >
-                            Start Shopping
-                            <ArrowRightIcon class="h-5 w-5" aria-hidden="true" />
-                        </Link>
-                        <Link 
-                            :href="route('marketplace.seller.register')"
-                            class="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
-                        >
-                            Become a Seller
-                        </Link>
+        <!-- Hero Section with Search -->
+        <section class="relative overflow-hidden">
+            <!-- Background Image -->
+            <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" 
+                style="background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1920&q=80');">
+            </div>
+            
+            <!-- Gradient Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-br from-orange-600/95 via-amber-600/90 to-orange-500/95"></div>
+            
+            <!-- Pattern Overlay (Optional) -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+            </div>
+            
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <!-- Left Content -->
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-white text-sm mb-6">
+                            <ShieldCheckIcon class="h-4 w-4" aria-hidden="true" />
+                            Zambia's Trusted Marketplace
+                        </div>
+                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+                            Shop with <span class="text-yellow-300">Trust</span>,<br/>
+                            Sell with <span class="text-yellow-300">Confidence</span>
+                        </h1>
+                        <p class="text-lg text-orange-100 mb-8 max-w-lg">
+                            Discover thousands of products from verified sellers. Every transaction protected by our escrow system.
+                        </p>
+                        
+                        <!-- Search Bar -->
+                        <form @submit.prevent="handleSearch" class="relative max-w-xl">
+                            <div class="flex bg-white rounded-xl shadow-lg overflow-hidden">
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Search for products, categories, or sellers..."
+                                    class="flex-1 px-5 py-4 text-gray-900 placeholder-gray-400 border-0 focus:ring-0 focus:outline-none"
+                                />
+                                <button
+                                    type="submit"
+                                    class="px-6 bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-colors flex items-center gap-2"
+                                >
+                                    <MagnifyingGlassIcon class="h-5 w-5" aria-hidden="true" />
+                                    <span class="hidden sm:inline">Search</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Quick Links -->
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <span class="text-orange-200 text-sm">Popular:</span>
+                            <Link 
+                                v-for="term in ['Electronics', 'Fashion', 'Food', 'Home']"
+                                :key="term"
+                                :href="route('marketplace.search', { q: term })"
+                                class="text-sm text-white hover:text-yellow-300 transition-colors"
+                            >
+                                {{ term }}
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Right - Stats/Trust Indicators -->
+                    <div class="hidden lg:block">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+                                <div class="text-4xl font-bold text-yellow-300">500+</div>
+                                <div class="text-orange-100">Verified Sellers</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+                                <div class="text-4xl font-bold text-yellow-300">10K+</div>
+                                <div class="text-orange-100">Products Listed</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+                                <div class="text-4xl font-bold text-yellow-300">100%</div>
+                                <div class="text-orange-100">Escrow Protected</div>
+                            </div>
+                            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+                                <div class="text-4xl font-bold text-yellow-300">10</div>
+                                <div class="text-orange-100">Provinces Covered</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Trust Features -->
-        <section class="bg-white border-b">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Trust Bar -->
+        <section class="bg-white border-b shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <div 
                         v-for="feature in trustFeatures" 
                         :key="feature.title"
                         class="flex items-center gap-3"
                     >
-                        <div class="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl flex items-center justify-center">
                             <component :is="feature.icon" class="h-6 w-6 text-orange-600" aria-hidden="true" />
                         </div>
                         <div>
@@ -112,29 +211,70 @@ const categoryIcons: Record<string, string> = {
             </div>
         </section>
 
-        <!-- Categories -->
-        <section class="py-12">
+        <!-- Categories with Images -->
+        <section class="py-12 bg-gray-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Shop by Category</h2>
-                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Explore Categories</h2>
+                        <p class="text-gray-500 mt-1">Find exactly what you're looking for</p>
+                    </div>
+                    <Link 
+                        :href="route('marketplace.search')"
+                        class="text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1"
+                    >
+                        View All
+                        <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                </div>
+                
+                <!-- Featured Categories with Images -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                     <Link
-                        v-for="category in categories"
+                        v-for="category in categories.slice(0, 6)"
                         :key="category.id"
                         :href="route('marketplace.category', category.slug)"
-                        class="flex flex-col items-center p-4 bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-md transition-all"
+                        class="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
                     >
-                        <span class="text-3xl mb-2">{{ categoryIcons[category.name] || '📦' }}</span>
-                        <span class="text-sm font-medium text-gray-700 text-center">{{ category.name }}</span>
+                        <div class="aspect-[4/3] bg-gradient-to-br from-orange-100 to-amber-50 relative overflow-hidden">
+                            <img 
+                                v-if="categoryImages[category.name]"
+                                :src="categoryImages[category.name]"
+                                :alt="category.name"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                            <div class="absolute bottom-0 left-0 right-0 p-4">
+                                <span class="text-2xl mb-1 block">{{ categoryIcons[category.name] || '📦' }}</span>
+                                <h3 class="font-semibold text-white text-sm">{{ category.name }}</h3>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+
+                <!-- Remaining Categories as Pills -->
+                <div v-if="categories.length > 6" class="flex flex-wrap gap-2">
+                    <Link
+                        v-for="category in categories.slice(6)"
+                        :key="category.id"
+                        :href="route('marketplace.category', category.slug)"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all text-sm"
+                    >
+                        <span>{{ categoryIcons[category.name] || '📦' }}</span>
+                        <span class="font-medium text-gray-700">{{ category.name }}</span>
                     </Link>
                 </div>
             </div>
         </section>
 
         <!-- Featured Products -->
-        <section v-if="featuredProducts.length > 0" class="py-12 bg-gray-50">
+        <section v-if="featuredProducts.length > 0" class="py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">Featured Products</h2>
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Featured Products</h2>
+                        <p class="text-gray-500 mt-1">Handpicked deals from top sellers</p>
+                    </div>
                     <Link 
                         :href="route('marketplace.search')"
                         class="text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1"
@@ -148,40 +288,40 @@ const categoryIcons: Record<string, string> = {
                         v-for="product in featuredProducts"
                         :key="product.id"
                         :href="route('marketplace.product', product.slug)"
-                        class="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                        class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:border-orange-200 transition-all duration-300"
                     >
                         <div class="aspect-square bg-gray-100 relative overflow-hidden">
                             <img 
                                 v-if="product.primary_image_url"
                                 :src="product.primary_image_url"
                                 :alt="product.name"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-                                <ShoppingBagIcon class="h-12 w-12" aria-hidden="true" />
+                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
+                                <ShoppingBagIcon class="h-16 w-16" aria-hidden="true" />
                             </div>
                             <span 
                                 v-if="product.discount_percentage > 0"
-                                class="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded"
+                                class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg"
                             >
                                 -{{ product.discount_percentage }}%
                             </span>
                         </div>
                         <div class="p-4">
-                            <h3 class="font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-orange-600">
+                            <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-orange-600 transition-colors">
                                 {{ product.name }}
                             </h3>
-                            <div class="flex items-center gap-1 text-xs text-gray-500 mb-2">
-                                <span>{{ product.seller.trust_badge }}</span>
-                                <span>{{ product.seller.business_name }}</span>
+                            <div class="flex items-center gap-1 text-xs text-gray-500 mb-3">
+                                <span class="text-green-600">{{ product.seller.trust_badge }}</span>
+                                <span class="truncate">{{ product.seller.business_name }}</span>
                             </div>
                             <div class="flex items-baseline gap-2">
-                                <span class="text-lg font-bold text-orange-600">{{ product.formatted_price }}</span>
+                                <span class="text-xl font-bold text-orange-600">{{ product.formatted_price }}</span>
                                 <span 
                                     v-if="product.compare_price"
                                     class="text-sm text-gray-400 line-through"
                                 >
-                                    K{{ (product.compare_price / 100).toFixed(2) }}
+                                    K{{ (product.compare_price / 100).toFixed(0) }}
                                 </span>
                             </div>
                         </div>
@@ -190,11 +330,59 @@ const categoryIcons: Record<string, string> = {
             </div>
         </section>
 
+        <!-- How It Works -->
+        <section class="py-16 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold mb-4">Trade with Confidence</h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto">
+                        Our escrow system protects both buyers and sellers. Funds are only released when you confirm delivery.
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div 
+                        v-for="(item, index) in howItWorks" 
+                        :key="item.step"
+                        class="relative"
+                    >
+                        <!-- Connector Line -->
+                        <div 
+                            v-if="index < howItWorks.length - 1"
+                            class="hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-orange-500 to-orange-500/20"
+                        ></div>
+                        
+                        <div class="relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 text-center hover:bg-white/10 transition-colors">
+                            <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/30">
+                                <component :is="item.icon" class="h-8 w-8 text-white" aria-hidden="true" />
+                            </div>
+                            <div class="text-orange-400 font-bold text-sm mb-2">Step {{ item.step }}</div>
+                            <h3 class="text-xl font-semibold mb-2">{{ item.title }}</h3>
+                            <p class="text-gray-400 text-sm">{{ item.desc }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-12">
+                    <Link 
+                        :href="route('marketplace.search')"
+                        class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30"
+                    >
+                        Start Shopping Now
+                        <ArrowRightIcon class="h-5 w-5" aria-hidden="true" />
+                    </Link>
+                </div>
+            </div>
+        </section>
+
         <!-- Latest Products -->
         <section class="py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">Latest Products</h2>
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Just Arrived</h2>
+                        <p class="text-gray-500 mt-1">Fresh listings from our sellers</p>
+                    </div>
                     <Link 
                         :href="route('marketplace.search', { sort: 'newest' })"
                         class="text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1"
@@ -208,7 +396,7 @@ const categoryIcons: Record<string, string> = {
                         v-for="product in latestProducts.data"
                         :key="product.id"
                         :href="route('marketplace.product', product.slug)"
-                        class="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                        class="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-orange-200 transition-all"
                     >
                         <div class="aspect-square bg-gray-100 relative overflow-hidden">
                             <img 
@@ -217,12 +405,12 @@ const categoryIcons: Record<string, string> = {
                                 :alt="product.name"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
-                            <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
                                 <ShoppingBagIcon class="h-10 w-10" aria-hidden="true" />
                             </div>
                         </div>
                         <div class="p-3">
-                            <h3 class="font-medium text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-orange-600">
+                            <h3 class="font-medium text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-orange-600 transition-colors">
                                 {{ product.name }}
                             </h3>
                             <span class="text-base font-bold text-orange-600">{{ product.formatted_price }}</span>
@@ -232,20 +420,94 @@ const categoryIcons: Record<string, string> = {
             </div>
         </section>
 
-        <!-- CTA Section -->
-        <section class="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-16">
+        <!-- Seller CTA Section -->
+        <section class="py-16 bg-gradient-to-br from-amber-50 to-orange-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 rounded-full text-orange-700 text-sm mb-4">
+                            <BuildingStorefrontIcon class="h-4 w-4" aria-hidden="true" />
+                            For Sellers
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                            Ready to Grow Your Business?
+                        </h2>
+                        <p class="text-gray-600 mb-8">
+                            Join hundreds of sellers already thriving on MyGrowNet Marketplace. Get verified, list your products, and reach customers across all 10 provinces of Zambia.
+                        </p>
+                        
+                        <div class="grid sm:grid-cols-2 gap-4 mb-8">
+                            <div 
+                                v-for="benefit in sellerBenefits"
+                                :key="benefit.title"
+                                class="flex items-start gap-3"
+                            >
+                                <div class="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <component :is="benefit.icon" class="h-5 w-5 text-orange-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 text-sm">{{ benefit.title }}</h4>
+                                    <p class="text-xs text-gray-500">{{ benefit.desc }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Link 
+                            :href="route('marketplace.seller.join')"
+                            class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20"
+                        >
+                            Start Selling Today
+                            <ArrowRightIcon class="h-5 w-5" aria-hidden="true" />
+                        </Link>
+                    </div>
+
+                    <!-- Seller Stats -->
+                    <div class="bg-white rounded-3xl shadow-xl p-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Why Sellers Love Us</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <span class="text-gray-600">Average seller rating</span>
+                                <span class="font-bold text-gray-900">⭐ 4.8/5</span>
+                            </div>
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <span class="text-gray-600">Seller payout success rate</span>
+                                <span class="font-bold text-green-600">99.9%</span>
+                            </div>
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                                <span class="text-gray-600">Average time to first sale</span>
+                                <span class="font-bold text-gray-900">3 days</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Commission rate</span>
+                                <span class="font-bold text-orange-600">Only 5%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="bg-gradient-to-r from-orange-500 to-amber-500 text-white py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-3xl font-bold mb-4">Ready to Start Selling?</h2>
-                <p class="text-gray-300 mb-8 max-w-2xl mx-auto">
-                    Join thousands of sellers on MyGrowNet Marketplace. Get verified, list your products, and reach customers across Zambia.
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">Join Zambia's Most Trusted Marketplace</h2>
+                <p class="text-orange-100 mb-8 max-w-2xl mx-auto">
+                    Whether you're buying or selling, MyGrowNet Marketplace has you covered with escrow protection on every transaction.
                 </p>
-                <Link 
-                    :href="route('marketplace.seller.register')"
-                    class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                    Register as Seller
-                    <ArrowRightIcon class="h-5 w-5" aria-hidden="true" />
-                </Link>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <Link 
+                        :href="route('marketplace.search')"
+                        class="inline-flex items-center gap-2 px-8 py-4 bg-white text-orange-600 font-semibold rounded-xl hover:bg-orange-50 transition-colors"
+                    >
+                        Browse Products
+                    </Link>
+                    <Link 
+                        :href="route('marketplace.seller.join')"
+                        class="inline-flex items-center gap-2 px-8 py-4 bg-orange-700 text-white font-semibold rounded-xl hover:bg-orange-800 transition-colors"
+                    >
+                        Become a Seller
+                    </Link>
+                </div>
             </div>
         </section>
     </MarketplaceLayout>

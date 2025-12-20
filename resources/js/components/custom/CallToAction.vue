@@ -8,7 +8,7 @@
             Everything you need to grow your skills and business in one platform.
           </p>
           <div class="flex flex-col sm:flex-row justify-center gap-4">
-            <Link :href="route('marketplace.index')" class="inline-flex items-center justify-center px-8 py-3 bg-white text-blue-600 font-bold rounded-full shadow-md hover:bg-gray-100 hover:scale-105 transition-all duration-300">
+            <Link :href="route('marketplace.home')" class="inline-flex items-center justify-center px-8 py-3 bg-white text-blue-600 font-bold rounded-full shadow-md hover:bg-gray-100 hover:scale-105 transition-all duration-300">
               Browse Products
             </Link>
             <Link :href="route('mygrownet.library.index')" class="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-white font-bold rounded-full hover:bg-white/10 hover:scale-105 transition-all duration-300">

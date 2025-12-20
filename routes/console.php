@@ -104,6 +104,15 @@ Schedule::command('delegations:expire')
     ->dailyAt('00:15')
     ->description('Expire delegations that have passed their expiration date');
 
+// ========================================
+// GrowNet Market Scheduled Tasks
+// ========================================
+
+// Sync BizBoost businesses to marketplace - runs every 6 hours
+Schedule::command('marketplace:sync-bizboost --all')
+    ->everySixHours()
+    ->description('Sync BizBoost businesses and products to GrowNet Market');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

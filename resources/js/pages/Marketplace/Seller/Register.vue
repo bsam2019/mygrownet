@@ -36,6 +36,19 @@ const handleFileChange = (field: 'nrc_front' | 'nrc_back' | 'business_cert', eve
 };
 
 const nextStep = () => {
+    // Basic validation before moving to next step
+    if (step.value === 1) {
+        if (!form.business_name || !form.province || !form.district) {
+            alert('Please fill in all required fields');
+            return;
+        }
+    }
+    if (step.value === 2) {
+        if (!form.phone) {
+            alert('Please enter your phone number');
+            return;
+        }
+    }
     if (step.value < 3) step.value++;
 };
 
@@ -44,8 +57,19 @@ const prevStep = () => {
 };
 
 const submit = () => {
+    // Final validation
+    if (!form.nrc_front || !form.nrc_back) {
+        alert('Please upload both sides of your NRC');
+        return;
+    }
+    
     form.post(route('marketplace.seller.store'), {
         forceFormData: true,
+        onError: (errors) => {
+            console.error('Validation errors:', errors);
+            // Scroll to top to show errors
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
     });
 };
 </script>
@@ -90,6 +114,14 @@ const submit = () => {
             </div>
 
             <form @submit.prevent="submit" class="bg-white rounded-xl border border-gray-200 p-6">
+                <!-- Global Errors -->
+                <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 class="text-sm font-semibold text-red-800 mb-2">Please fix the following errors:</h3>
+                    <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                        <li v-for="(error, field) in form.errors" :key="field">{{ error }}</li>
+                    </ul>
+                </div>
+
                 <!-- Step 1: Business Info -->
                 <div v-show="step === 1" class="space-y-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">Business Information</h2>
@@ -99,7 +131,7 @@ const submit = () => {
                         <input 
                             v-model="form.business_name"
                             type="text"
-                            class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                            class="w-full border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                             placeholder="Your business or shop name"
                         />
                         <p v-if="form.errors.business_name" class="mt-1 text-sm text-red-600">{{ form.errors.business_name }}</p>
@@ -136,22 +168,24 @@ const submit = () => {
                             <label class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
                             <select 
                                 v-model="form.province"
-                                class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                class="w-full border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-orange-500 focus:border-orange-500"
                             >
                                 <option value="">Select province</option>
                                 <option v-for="province in provinces" :key="province" :value="province">
                                     {{ province }}
                                 </option>
                             </select>
+                            <p v-if="form.errors.province" class="mt-1 text-sm text-red-600">{{ form.errors.province }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">District *</label>
                             <input 
                                 v-model="form.district"
                                 type="text"
-                                class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                class="w-full border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                                 placeholder="Your district"
                             />
+                            <p v-if="form.errors.district" class="mt-1 text-sm text-red-600">{{ form.errors.district }}</p>
                         </div>
                     </div>
 
@@ -160,9 +194,10 @@ const submit = () => {
                         <textarea 
                             v-model="form.description"
                             rows="3"
-                            class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                            class="w-full border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                             placeholder="Tell buyers about your business..."
                         ></textarea>
+                        <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</p>
                     </div>
                 </div>
 
@@ -175,7 +210,7 @@ const submit = () => {
                         <input 
                             v-model="form.phone"
                             type="tel"
-                            class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                            class="w-full border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                             placeholder="0977123456"
                         />
                         <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</p>
@@ -186,9 +221,10 @@ const submit = () => {
                         <input 
                             v-model="form.email"
                             type="email"
-                            class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                            class="w-full border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                             placeholder="your@email.com"
                         />
+                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">{{ form.errors.email }}</p>
                     </div>
                 </div>
 
@@ -212,8 +248,9 @@ const submit = () => {
                             type="file"
                             accept="image/*"
                             @change="(e) => handleFileChange('nrc_front', e)"
-                            class="w-full border border-gray-300 rounded-lg p-2"
+                            class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
+                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the front of your NRC</p>
                         <p v-if="form.errors.nrc_front" class="mt-1 text-sm text-red-600">{{ form.errors.nrc_front }}</p>
                     </div>
 
@@ -223,8 +260,9 @@ const submit = () => {
                             type="file"
                             accept="image/*"
                             @change="(e) => handleFileChange('nrc_back', e)"
-                            class="w-full border border-gray-300 rounded-lg p-2"
+                            class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
+                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the back of your NRC</p>
                         <p v-if="form.errors.nrc_back" class="mt-1 text-sm text-red-600">{{ form.errors.nrc_back }}</p>
                     </div>
 
@@ -234,8 +272,10 @@ const submit = () => {
                             type="file"
                             accept="image/*,.pdf"
                             @change="(e) => handleFileChange('business_cert', e)"
-                            class="w-full border border-gray-300 rounded-lg p-2"
+                            class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
+                        <p class="mt-1 text-xs text-gray-500">Upload your business registration certificate (image or PDF)</p>
+                        <p v-if="form.errors.business_cert" class="mt-1 text-sm text-red-600">{{ form.errors.business_cert }}</p>
                     </div>
                 </div>
 

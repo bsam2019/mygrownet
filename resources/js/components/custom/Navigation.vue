@@ -271,7 +271,7 @@
         { 
           name: 'Services', 
           dropdown: [
-            { name: 'Marketplace', route: 'marketplace.index', description: 'Browse products & services' },
+            { name: 'Marketplace', route: 'marketplace.home', description: 'Browse products & services' },
             { name: 'Training', route: 'training', description: 'Learn new skills' },
             { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses' },
             { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business' },

@@ -78,7 +78,7 @@ const submit = () => {
                                 <input 
                                     v-model="form.name"
                                     type="text"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     placeholder="Your name"
                                 />
                                 <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
@@ -88,7 +88,7 @@ const submit = () => {
                                 <input 
                                     v-model="form.phone"
                                     type="tel"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     placeholder="0977123456"
                                 />
                                 <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">{{ form.errors.phone }}</p>
@@ -135,7 +135,7 @@ const submit = () => {
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
                                     <select 
                                         v-model="form.province"
-                                        class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     >
                                         <option value="">Select province</option>
                                         <option v-for="province in provinces" :key="province" :value="province">
@@ -149,7 +149,7 @@ const submit = () => {
                                     <input 
                                         v-model="form.district"
                                         type="text"
-                                        class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                         placeholder="Your district"
                                     />
                                     <p v-if="form.errors.district" class="mt-1 text-sm text-red-600">{{ form.errors.district }}</p>
@@ -160,7 +160,7 @@ const submit = () => {
                                 <textarea 
                                     v-model="form.address"
                                     rows="2"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     placeholder="House number, street name, area..."
                                 ></textarea>
                                 <p v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</p>
@@ -170,7 +170,7 @@ const submit = () => {
                                 <textarea 
                                     v-model="form.notes"
                                     rows="2"
-                                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                                     placeholder="Any special instructions..."
                                 ></textarea>
                             </div>

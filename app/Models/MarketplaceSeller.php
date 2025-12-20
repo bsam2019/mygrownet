@@ -12,6 +12,8 @@ class MarketplaceSeller extends Model
 
     protected $fillable = [
         'user_id',
+        'bizboost_business_id',
+        'is_bizboost_synced',
         'business_name',
         'business_type',
         'province',
@@ -32,12 +34,18 @@ class MarketplaceSeller extends Model
     protected $casts = [
         'kyc_documents' => 'array',
         'is_active' => 'boolean',
+        'is_bizboost_synced' => 'boolean',
         'rating' => 'float',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function bizboostBusiness(): BelongsTo
+    {
+        return $this->belongsTo(\App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel::class, 'bizboost_business_id');
     }
 
     public function products(): HasMany

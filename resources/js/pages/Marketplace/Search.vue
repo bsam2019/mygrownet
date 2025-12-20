@@ -148,7 +148,7 @@ const hasActiveFilters = () => {
                             <h3 class="font-semibold text-gray-900 mb-3">Location</h3>
                             <select 
                                 v-model="localFilters.province"
-                                class="w-full border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500"
+                                class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-orange-500 focus:border-orange-500"
                             >
                                 <option value="">All Provinces</option>
                                 <option v-for="province in provinces" :key="province" :value="province">
@@ -165,14 +165,14 @@ const hasActiveFilters = () => {
                                     type="number"
                                     v-model="localFilters.min_price"
                                     placeholder="Min"
-                                    class="w-full border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                                 />
                                 <span class="text-gray-400">-</span>
                                 <input 
                                     type="number"
                                     v-model="localFilters.max_price"
                                     placeholder="Max"
-                                    class="w-full border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500"
+                                    class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500"
                                 />
                             </div>
                         </div>
@@ -202,7 +202,7 @@ const hasActiveFilters = () => {
                         <select 
                             v-model="localFilters.sort"
                             @change="applyFilters"
-                            class="border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500"
+                            class="border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-orange-500 focus:border-orange-500"
                         >
                             <option v-for="option in sortOptions" :key="option.value" :value="option.value">
                                 {{ option.label }}
@@ -349,7 +349,7 @@ const hasActiveFilters = () => {
                             <h3 class="font-semibold text-gray-900 mb-3">Location</h3>
                             <select 
                                 v-model="localFilters.province"
-                                class="w-full border-gray-300 rounded-lg text-sm"
+                                class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
                             >
                                 <option value="">All Provinces</option>
                                 <option v-for="province in provinces" :key="province" :value="province">
@@ -365,14 +365,14 @@ const hasActiveFilters = () => {
                                     type="number"
                                     v-model="localFilters.min_price"
                                     placeholder="Min"
-                                    class="w-full border-gray-300 rounded-lg text-sm"
+                                    class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400"
                                 />
                                 <span class="text-gray-400">-</span>
                                 <input 
                                     type="number"
                                     v-model="localFilters.max_price"
                                     placeholder="Max"
-                                    class="w-full border-gray-300 rounded-lg text-sm"
+                                    class="w-full border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400"
                                 />
                             </div>
                         </div>

@@ -12,6 +12,8 @@ class MarketplaceProduct extends Model
 
     protected $fillable = [
         'seller_id',
+        'bizboost_product_id',
+        'is_bizboost_synced',
         'category_id',
         'name',
         'slug',
@@ -29,13 +31,27 @@ class MarketplaceProduct extends Model
     protected $casts = [
         'images' => 'array',
         'is_featured' => 'boolean',
+        'is_bizboost_synced' => 'boolean',
         'price' => 'integer',
         'compare_price' => 'integer',
+    ];
+
+    protected $appends = [
+        'image_urls',
+        'primary_image_url',
+        'formatted_price',
+        'formatted_compare_price',
+        'discount_percentage',
     ];
 
     public function seller(): BelongsTo
     {
         return $this->belongsTo(MarketplaceSeller::class, 'seller_id');
+    }
+
+    public function bizboostProduct(): BelongsTo
+    {
+        return $this->belongsTo(\App\Infrastructure\Persistence\Eloquent\BizBoostProductModel::class, 'bizboost_product_id');
     }
 
     public function category(): BelongsTo
@@ -50,12 +66,38 @@ class MarketplaceProduct extends Model
 
     public function getImageUrlsAttribute(): array
     {
-        return collect($this->images ?? [])->map(fn($img) => asset('storage/' . $img))->toArray();
+        return collect($this->images ?? [])->map(function ($img) {
+            // Handle if img is an array (shouldn't happen but defensive)
+            if (is_array($img)) {
+                return null;
+            }
+            
+            // Check if it's already a full URL
+            if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+                return $img;
+            }
+            return asset('storage/' . $img);
+        })->filter()->values()->toArray();
     }
 
     public function getPrimaryImageUrlAttribute(): ?string
     {
-        return isset($this->images[0]) ? asset('storage/' . $this->images[0]) : null;
+        if (!isset($this->images[0])) {
+            return null;
+        }
+        
+        $img = $this->images[0];
+        
+        // Handle if img is an array (shouldn't happen but defensive)
+        if (is_array($img)) {
+            return null;
+        }
+        
+        // Check if it's already a full URL
+        if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
+            return $img;
+        }
+        return asset('storage/' . $img);
     }
 
     public function getFormattedPriceAttribute(): string

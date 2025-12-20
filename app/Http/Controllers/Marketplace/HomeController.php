@@ -111,9 +111,9 @@ class HomeController extends Controller
         ]);
     }
 
-    public function seller(int $id)
+    public function seller(string $id)
     {
-        $seller = $this->sellerService->getById($id);
+        $seller = $this->sellerService->getById((int) $id);
         
         if (!$seller || !$seller->is_active) {
             abort(404);
@@ -128,5 +128,35 @@ class HomeController extends Controller
             'seller' => $seller,
             'products' => $products,
         ]);
+    }
+
+    public function helpCenter()
+    {
+        return Inertia::render('Marketplace/HelpCenter');
+    }
+
+    public function buyerProtection()
+    {
+        return Inertia::render('Marketplace/BuyerProtection');
+    }
+
+    public function sellerGuide()
+    {
+        return Inertia::render('Marketplace/SellerGuide');
+    }
+
+    public function about()
+    {
+        return Inertia::render('Marketplace/About');
+    }
+
+    public function terms()
+    {
+        return Inertia::render('Marketplace/Terms');
+    }
+
+    public function privacy()
+    {
+        return Inertia::render('Marketplace/Privacy');
     }
 }
