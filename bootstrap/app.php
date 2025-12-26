@@ -30,6 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/admin-marketplace.php'));
             Route::middleware('web')
                 ->group(base_path('routes/lifeplus.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growbuilder.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController

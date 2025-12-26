@@ -20,7 +20,7 @@ defineProps<{
                     <Logo size="xl" />
                 </Link>
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ title }}</h2>
-                <p class="text-gray-600">{{ description }}</p>
+                <p class="text-gray-700">{{ description }}</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-xl p-8 border border-gray-100">

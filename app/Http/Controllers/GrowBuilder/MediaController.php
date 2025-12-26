@@ -1,0 +1,246 @@
+<?php
+
+namespace App\Http\Controllers\GrowBuilder;
+
+use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
+use App\Domain\GrowBuilder\ValueObjects\SiteId;
+use App\Http\Controllers\Controller;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderMedia;
+use App\Services\GrowBuilder\ImageOptimizationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
+
+class MediaController extends Controller
+{
+    public function __construct(
+        private SiteRepositoryInterface $siteRepository,
+    ) {}
+    
+    /**
+     * Get the image optimizer service (lazy loaded only when needed)
+     */
+    private function getImageOptimizer(): ?ImageOptimizationService
+    {
+        try {
+            return app(ImageOptimizationService::class);
+        } catch (\Exception $e) {
+            \Log::warning('ImageOptimizationService not available: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function index(Request $request, int $siteId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $media = GrowBuilderMedia::where('site_id', $siteId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(24);
+
+        $transformedData = $media->getCollection()->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'url' => $item->url,
+                'webpUrl' => $item->webp_url,
+                'thumbnailUrl' => $item->thumbnail_url,
+                'filename' => $item->filename,
+                'originalName' => $item->original_name,
+                'size' => $item->human_size,
+                'width' => $item->width,
+                'height' => $item->height,
+            ];
+        });
+
+        return response()->json([
+            'data' => $transformedData,
+            'meta' => [
+                'current_page' => $media->currentPage(),
+                'last_page' => $media->lastPage(),
+                'total' => $media->total(),
+            ],
+        ]);
+    }
+
+    public function store(Request $request, int $siteId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp,svg|max:10240',
+            'optimize' => 'boolean',
+        ]);
+
+        $file = $request->file('file');
+        $shouldOptimize = $request->boolean('optimize', true);
+        $directory = "growbuilder/{$siteId}";
+        
+        $isOptimizable = str_starts_with($file->getMimeType(), 'image/') 
+            && !in_array($file->getClientOriginalExtension(), ['svg', 'gif']);
+
+        // Try optimized upload if requested and possible
+        if ($shouldOptimize && $isOptimizable) {
+            $imageOptimizer = $this->getImageOptimizer();
+            if ($imageOptimizer) {
+                try {
+                    $result = $imageOptimizer->optimize($file, $directory);
+                    
+                    $media = GrowBuilderMedia::create([
+                        'site_id' => $siteId,
+                        'filename' => basename($result['original']['path']),
+                        'original_name' => $file->getClientOriginalName(),
+                        'path' => $result['original']['path'],
+                        'disk' => 'public',
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $result['original']['size'],
+                        'width' => $result['original']['width'],
+                        'height' => $result['original']['height'],
+                        'variants' => [
+                            'webp' => $result['webp']['path'],
+                            'thumbnail' => $result['thumbnail']['path'],
+                        ],
+                        'metadata' => [
+                            'optimized' => true,
+                            'original_size' => $result['savings']['original_size'],
+                            'saved_percent' => $result['savings']['saved_percent'],
+                            'webp_saved_percent' => $result['savings']['webp_saved_percent'],
+                        ],
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'media' => [
+                            'id' => $media->id,
+                            'url' => $media->url,
+                            'webpUrl' => $media->webp_url,
+                            'thumbnailUrl' => $media->thumbnail_url,
+                            'filename' => $media->filename,
+                            'originalName' => $media->original_name,
+                            'size' => $media->human_size,
+                            'width' => $media->width,
+                            'height' => $media->height,
+                        ],
+                        'optimization' => [
+                            'original_size' => $this->formatBytes($result['savings']['original_size']),
+                            'optimized_size' => $this->formatBytes($result['savings']['optimized_size']),
+                            'webp_size' => $this->formatBytes($result['savings']['webp_size']),
+                            'saved_percent' => $result['savings']['saved_percent'],
+                            'webp_saved_percent' => $result['savings']['webp_saved_percent'],
+                        ],
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::warning('Image optimization failed, falling back to standard upload', [
+                        'error' => $e->getMessage(),
+                        'file' => $file->getClientOriginalName(),
+                    ]);
+                }
+            }
+        }
+
+        // Standard upload (for SVG, GIF, or when optimization is disabled/fails)
+        return $this->standardUpload($file, $siteId, $directory);
+    }
+
+    /**
+     * Standard upload without optimization
+     */
+    private function standardUpload($file, int $siteId, string $directory)
+    {
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = "{$directory}/{$filename}";
+
+        Storage::disk('public')->put($path, file_get_contents($file));
+
+        $width = null;
+        $height = null;
+        $variants = [];
+
+        if (str_starts_with($file->getMimeType(), 'image/') && $file->getClientOriginalExtension() !== 'svg') {
+            try {
+                $image = Image::read($file);
+                $width = $image->width();
+                $height = $image->height();
+
+                $thumbPath = "{$directory}/thumbs/{$filename}";
+                $thumb = $image->scale(width: 300);
+                Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
+                $variants['thumbnail'] = $thumbPath;
+            } catch (\Exception $e) {
+                // Ignore image processing errors
+            }
+        }
+
+        $media = GrowBuilderMedia::create([
+            'site_id' => $siteId,
+            'filename' => $filename,
+            'original_name' => $file->getClientOriginalName(),
+            'path' => $path,
+            'disk' => 'public',
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'width' => $width,
+            'height' => $height,
+            'variants' => $variants,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'media' => [
+                'id' => $media->id,
+                'url' => $media->url,
+                'thumbnailUrl' => $media->thumbnail_url,
+                'filename' => $media->filename,
+                'originalName' => $media->original_name,
+                'size' => $media->human_size,
+                'width' => $media->width,
+                'height' => $media->height,
+            ],
+        ]);
+    }
+
+    public function destroy(Request $request, int $siteId, int $mediaId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $media = GrowBuilderMedia::where('site_id', $siteId)
+            ->where('id', $mediaId)
+            ->firstOrFail();
+
+        Storage::disk($media->disk)->delete($media->path);
+        
+        if (isset($media->variants['webp'])) {
+            Storage::disk($media->disk)->delete($media->variants['webp']);
+        }
+        if (isset($media->variants['thumbnail'])) {
+            Storage::disk($media->disk)->delete($media->variants['thumbnail']);
+        }
+
+        $media->delete();
+
+        return response()->json(['success' => true]);
+    }
+    
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+}

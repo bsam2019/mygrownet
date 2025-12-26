@@ -218,7 +218,7 @@
             </div>
             <ul class="space-y-3">
               <li>
-                <Link :href="route('membership.index')" class="flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
+                <Link :href="route('mygrownet.membership.show')" class="flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
                   <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>

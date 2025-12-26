@@ -65,5 +65,7 @@ class Kernel extends HttpKernel
         'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
         'module.access' => \App\Presentation\Http\Middleware\CheckModuleAccess::class,
         'account.type' => \App\Presentation\Http\Middleware\CheckAccountType::class,
+        'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
+        'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
     ];
 }

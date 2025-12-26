@@ -93,7 +93,7 @@ const submit = () => {
                         v-model="form.email"
                         placeholder="email@example.com or 0977123456"
                     />
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="text-xs text-gray-700 mt-1">
                         Enter your email address or phone number (e.g., 0977123456 or +260977123456)
                     </p>
                     <InputError :message="form.errors.email" />
@@ -118,7 +118,7 @@ const submit = () => {
 
                 <div class="flex items-center space-x-2">
                     <Checkbox id="remember" v-model:checked="form.remember" class="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600" />
-                    <Label for="remember" class="text-gray-600">Remember me</Label>
+                    <Label for="remember">Remember me</Label>
                 </div>
 
                 <Button
@@ -131,7 +131,7 @@ const submit = () => {
                 </Button>
             </div>
 
-            <div class="text-center text-gray-600">
+            <div class="text-center text-gray-700">
                 Don't have an account?
                 <TextLink :href="route('register')" class="text-blue-600 hover:text-blue-700 font-medium">Create an account</TextLink>
             </div>

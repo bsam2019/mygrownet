@@ -18,7 +18,11 @@ class LifePlusChilimbaGroupModel extends Model
         'meeting_day',
         'meeting_time',
         'meeting_location',
-        'contribution_amount',
+        'min_contribution',
+        'max_contribution',
+        'initial_contribution',
+        'teacher_contribution',
+        'absence_penalty',
         'total_members',
         'start_date',
         'user_role',
@@ -26,7 +30,11 @@ class LifePlusChilimbaGroupModel extends Model
     ];
 
     protected $casts = [
-        'contribution_amount' => 'decimal:2',
+        'min_contribution' => 'decimal:2',
+        'max_contribution' => 'decimal:2',
+        'initial_contribution' => 'decimal:2',
+        'teacher_contribution' => 'decimal:2',
+        'absence_penalty' => 'decimal:2',
         'start_date' => 'date',
         'meeting_time' => 'datetime:H:i',
         'is_active' => 'boolean',

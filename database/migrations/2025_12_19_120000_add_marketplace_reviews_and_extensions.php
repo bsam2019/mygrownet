@@ -11,11 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add missing columns to marketplace_orders
+        // Add missing columns to marketplace_orders (only if they don't exist)
         Schema::table('marketplace_orders', function (Blueprint $table) {
-            $table->string('tracking_number')->nullable()->after('tracking_info');
-            $table->string('courier_name')->nullable()->after('tracking_number');
-            $table->timestamp('estimated_delivery')->nullable()->after('delivered_at');
+            if (!Schema::hasColumn('marketplace_orders', 'tracking_number')) {
+                $table->string('tracking_number')->nullable()->after('tracking_info');
+            }
+            if (!Schema::hasColumn('marketplace_orders', 'courier_name')) {
+                $table->string('courier_name')->nullable()->after('tracking_number');
+            }
+            if (!Schema::hasColumn('marketplace_orders', 'estimated_delivery')) {
+                $table->timestamp('estimated_delivery')->nullable()->after('delivered_at');
+            }
         });
 
         // Marketplace Reviews
@@ -244,7 +250,15 @@ return new class extends Migration
         Schema::dropIfExists('marketplace_reviews');
         
         Schema::table('marketplace_orders', function (Blueprint $table) {
-            $table->dropColumn(['tracking_number', 'courier_name', 'estimated_delivery']);
+            if (Schema::hasColumn('marketplace_orders', 'tracking_number')) {
+                $table->dropColumn('tracking_number');
+            }
+            if (Schema::hasColumn('marketplace_orders', 'courier_name')) {
+                $table->dropColumn('courier_name');
+            }
+            if (Schema::hasColumn('marketplace_orders', 'estimated_delivery')) {
+                $table->dropColumn('estimated_delivery');
+            }
         });
     }
 };

@@ -206,7 +206,7 @@
       <!-- CTA -->
       <div class="mt-12 text-center">
         <Link 
-          :href="route('membership.index')"
+          :href="route('mygrownet.levels.index')"
           class="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           Explore All Levels

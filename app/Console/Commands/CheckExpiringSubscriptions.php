@@ -64,7 +64,7 @@ class CheckExpiringSubscriptions extends Command
                         'message' => "Your subscription expires in {$days} day" . ($days > 1 ? 's' : '') . ". Renew now to keep your benefits!",
                         'days_remaining' => $days,
                         'expires_at' => $user->subscription_expires_at->format('M d, Y'),
-                        'action_url' => route('mygrownet.membership.index'),
+                        'action_url' => route('mygrownet.membership.show'),
                         'action_text' => 'Renew Now'
                     ]
                 );
@@ -99,7 +99,7 @@ class CheckExpiringSubscriptions extends Command
                         'title' => 'Subscription Expired',
                         'message' => 'Your subscription has expired. Renew now to restore your access and benefits!',
                         'expired_at' => $user->subscription_expires_at->format('M d, Y'),
-                        'action_url' => route('mygrownet.membership.index'),
+                        'action_url' => route('mygrownet.membership.show'),
                         'action_text' => 'Renew Subscription'
                     ]
                 );
