@@ -2,22 +2,45 @@
 
 namespace App\Services\GrowBuilder;
 
+use App\Domain\Module\Services\TierConfigurationService;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderMedia;
 use Illuminate\Support\Facades\Storage;
 
 class StorageService
 {
+    private const MODULE_ID = 'growbuilder';
+
     /**
-     * Default storage limits by plan (in bytes)
+     * Default storage limits by tier (in bytes) - fallback if not in tier config
      */
-    public const PLAN_LIMITS = [
-        'free' => 104857600,      // 100 MB
-        'starter' => 524288000,   // 500 MB
-        'pro' => 2147483648,      // 2 GB
-        'business' => 5368709120, // 5 GB
-        'enterprise' => 10737418240, // 10 GB
+    public const TIER_LIMITS = [
+        'free' => 52428800,       // 50 MB
+        'member' => 209715200,    // 200 MB
+        'standard' => 1073741824, // 1 GB (1000 MB)
+        'ecommerce' => 5368709120, // 5 GB (5000 MB)
     ];
+
+    public function __construct(
+        private ?TierConfigurationService $tierConfigService = null
+    ) {}
+
+    /**
+     * Get storage limit for a tier from configuration (in bytes)
+     */
+    public function getStorageLimitForTier(string $tier): int
+    {
+        // Try to get from tier configuration
+        if ($this->tierConfigService) {
+            $limits = $this->tierConfigService->getTierLimits(self::MODULE_ID, $tier);
+            if (isset($limits['storage_mb'])) {
+                return $limits['storage_mb'] * 1024 * 1024; // Convert MB to bytes
+            }
+        }
+
+        // Fallback to hardcoded limits
+        return self::TIER_LIMITS[$tier] ?? self::TIER_LIMITS['free'];
+    }
 
     /**
      * Calculate storage used by a site
@@ -108,7 +131,24 @@ class StorageService
      */
     public function getDefaultLimitForPlan(string $plan): int
     {
-        return self::PLAN_LIMITS[$plan] ?? self::PLAN_LIMITS['free'];
+        return $this->getStorageLimitForTier($plan);
+    }
+
+    /**
+     * Get all tier limits for display
+     */
+    public function getAllTierLimits(): array
+    {
+        $limits = [];
+        foreach (array_keys(self::TIER_LIMITS) as $tier) {
+            $limitBytes = $this->getStorageLimitForTier($tier);
+            $limits[$tier] = [
+                'bytes' => $limitBytes,
+                'formatted' => $this->formatBytes($limitBytes),
+                'mb' => round($limitBytes / 1024 / 1024),
+            ];
+        }
+        return $limits;
     }
 
     /**

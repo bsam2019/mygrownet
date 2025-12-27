@@ -1933,7 +1933,7 @@ onUnmounted(() => {
             <!-- Left Sidebar -->
             <aside :class="[
                 'flex flex-col transition-all duration-300 flex-shrink-0 border-r',
-                leftSidebarOpen ? 'w-72' : 'w-0',
+                leftSidebarOpen ? 'w-56' : 'w-0',
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             ]">
                 <div v-if="leftSidebarOpen" class="flex flex-col h-full overflow-hidden">
@@ -1942,19 +1942,19 @@ onUnmounted(() => {
                         <button
                             @click="activeLeftTab = 'widgets'"
                             :class="[
-                                'flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors border-b-2',
+                                'flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors border-b-2',
                                 activeLeftTab === 'widgets' 
                                     ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
                                     : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
                             ]"
                         >
-                            <Squares2X2Icon class="w-4 h-4" aria-hidden="true" />
+                            <Squares2X2Icon class="w-3.5 h-3.5" aria-hidden="true" />
                             Widgets
                         </button>
                         <button
                             @click="activeLeftTab = 'pages'"
                             :class="[
-                                'flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors border-b-2',
+                                'flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors border-b-2',
                                 activeLeftTab === 'pages' 
                                     ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
                                     : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
@@ -2000,11 +2000,11 @@ onUnmounted(() => {
             <!-- Toggle Left Sidebar -->
             <button
                 @click="leftSidebarOpen = !leftSidebarOpen"
-                class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-gray-50 transition-colors"
-                :class="leftSidebarOpen ? 'ml-72' : 'ml-0'"
+                class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-gray-50 transition-colors"
+                :class="leftSidebarOpen ? 'ml-56' : 'ml-0'"
                 aria-label="Toggle left sidebar"
             >
-                <ChevronLeftIcon :class="['w-4 h-4 text-gray-500 transition-transform', leftSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
+                <ChevronLeftIcon :class="['w-3.5 h-3.5 text-gray-500 transition-transform', leftSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
             </button>
 
 
@@ -2189,41 +2189,41 @@ onUnmounted(() => {
             <!-- Right Sidebar - Inspector -->
             <aside :class="[
                 'flex flex-col transition-all duration-300 flex-shrink-0 border-l',
-                rightSidebarOpen ? 'w-80' : 'w-0',
+                rightSidebarOpen ? 'w-64' : 'w-0',
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             ]">
                 <div v-if="rightSidebarOpen" class="flex flex-col h-full overflow-hidden">
                     <!-- Inspector Header -->
-                    <div :class="['p-4 border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
-                        <div v-if="showNavSettings" class="flex items-center gap-3">
-                            <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100']">
-                                <Bars3BottomLeftIcon :class="['w-5 h-5', darkMode ? 'text-indigo-400' : 'text-indigo-600']" aria-hidden="true" />
+                    <div :class="['p-2 border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
+                        <div v-if="showNavSettings" class="flex items-center gap-2">
+                            <div :class="['w-8 h-8 rounded-md flex items-center justify-center', darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100']">
+                                <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-indigo-400' : 'text-indigo-600']" aria-hidden="true" />
                             </div>
                             <div>
-                                <h3 :class="['font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Site Navigation</h3>
-                                <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Appears on all pages</p>
+                                <h3 :class="['text-xs font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Navigation</h3>
+                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">All pages</p>
                             </div>
                         </div>
-                        <div v-else-if="showFooterSettings" class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
-                                <Bars3BottomLeftIcon class="w-5 h-5 text-white" aria-hidden="true" />
+                        <div v-else-if="showFooterSettings" class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-gray-700 rounded-md flex items-center justify-center">
+                                <Bars3BottomLeftIcon class="w-4 h-4 text-white" aria-hidden="true" />
                             </div>
                             <div>
-                                <h3 :class="['font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Site Footer</h3>
-                                <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Appears on all pages</p>
+                                <h3 :class="['text-xs font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Footer</h3>
+                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">All pages</p>
                             </div>
                         </div>
-                        <div v-else-if="selectedSection" class="flex items-center gap-3">
-                            <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', darkMode ? 'bg-blue-900/50' : 'bg-blue-100']">
-                                <component :is="selectedSectionType?.icon || Squares2X2Icon" :class="['w-5 h-5', darkMode ? 'text-blue-400' : 'text-blue-600']" aria-hidden="true" />
+                        <div v-else-if="selectedSection" class="flex items-center gap-2">
+                            <div :class="['w-8 h-8 rounded-md flex items-center justify-center', darkMode ? 'bg-blue-900/50' : 'bg-blue-100']">
+                                <component :is="selectedSectionType?.icon || Squares2X2Icon" :class="['w-4 h-4', darkMode ? 'text-blue-400' : 'text-blue-600']" aria-hidden="true" />
                             </div>
                             <div>
-                                <h3 :class="['font-semibold capitalize', darkMode ? 'text-white' : 'text-gray-900']">{{ selectedSection.type }}</h3>
-                                <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Edit section properties</p>
+                                <h3 :class="['text-xs font-semibold capitalize', darkMode ? 'text-white' : 'text-gray-900']">{{ selectedSection.type }}</h3>
+                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">Edit properties</p>
                             </div>
                         </div>
-                        <div v-else class="text-center py-4">
-                            <p :class="['text-sm', darkMode ? 'text-gray-400' : 'text-gray-500']">Select a section to edit</p>
+                        <div v-else class="text-center py-3">
+                            <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Select a section</p>
                         </div>
                     </div>
 
@@ -2281,11 +2281,11 @@ onUnmounted(() => {
             <!-- Toggle Right Sidebar -->
             <button
                 @click="rightSidebarOpen = !rightSidebarOpen"
-                class="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1.5 bg-white border border-gray-200 rounded-l-lg shadow-sm hover:bg-gray-50 transition-colors"
-                :class="rightSidebarOpen ? 'mr-80' : 'mr-0'"
+                class="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-l-lg shadow-sm hover:bg-gray-50 transition-colors"
+                :class="rightSidebarOpen ? 'mr-64' : 'mr-0'"
                 aria-label="Toggle right sidebar"
             >
-                <ChevronRightIcon :class="['w-4 h-4 text-gray-500 transition-transform', rightSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
+                <ChevronRightIcon :class="['w-3.5 h-3.5 text-gray-500 transition-transform', rightSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
             </button>
         </div>
     </div>

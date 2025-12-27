@@ -6,6 +6,7 @@ use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Wallet\Services\UnifiedWalletService;
 use App\Http\Controllers\Controller;
+use App\Services\GrowBuilder\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -17,7 +18,8 @@ class SubscriptionController extends Controller
     public function __construct(
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
-        private UnifiedWalletService $walletService
+        private UnifiedWalletService $walletService,
+        private StorageService $storageService
     ) {}
 
     /**
@@ -46,6 +48,17 @@ class SubscriptionController extends Controller
         // Check if user is an active MyGrowNet member (for member benefit)
         $isMember = $user->account_type === 'member' && $user->subscription_status === 'active';
 
+        // Get storage usage for current user
+        $totalStorageUsed = DB::table('growbuilder_sites')
+            ->where('user_id', $user->id)
+            ->where('status', '!=', 'deleted')
+            ->sum('storage_used');
+
+        $currentTierStorageLimit = $this->storageService->getStorageLimitForTier($currentTier ?: 'free');
+
+        // Get storage limits for all tiers
+        $tierStorageLimits = $this->storageService->getAllTierLimits();
+
         return Inertia::render('GrowBuilder/Settings/Subscription', [
             'walletBalance' => $this->walletService->calculateBalance($user),
             'currentTier' => $currentTier ?: 'free',
@@ -58,7 +71,15 @@ class SubscriptionController extends Controller
             ] : null,
             'usage' => [
                 'sites' => $siteCount,
+                'storage_used' => $totalStorageUsed,
+                'storage_used_formatted' => $this->storageService->formatBytes($totalStorageUsed),
+                'storage_limit' => $currentTierStorageLimit,
+                'storage_limit_formatted' => $this->storageService->formatBytes($currentTierStorageLimit),
+                'storage_percentage' => $currentTierStorageLimit > 0 
+                    ? min(100, round(($totalStorageUsed / $currentTierStorageLimit) * 100, 1)) 
+                    : 0,
             ],
+            'tierStorageLimits' => $tierStorageLimits,
             'isMember' => $isMember,
         ]);
     }

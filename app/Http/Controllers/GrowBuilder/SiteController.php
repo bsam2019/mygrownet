@@ -15,6 +15,8 @@ use App\Domain\Module\Services\TierConfigurationService;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
+use App\Services\GrowBuilder\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -31,6 +33,7 @@ class SiteController extends Controller
         private PublishSiteUseCase $publishSiteUseCase,
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
+        private StorageService $storageService,
     ) {}
 
     public function index(Request $request)
@@ -176,6 +179,11 @@ class SiteController extends Controller
             );
 
             $site = $this->createSiteUseCase->execute($dto);
+
+            // Set storage limit based on user's tier
+            $storageLimit = $this->storageService->getStorageLimitForTier($currentTier);
+            GrowBuilderSite::where('id', $site->getId()->value())
+                ->update(['storage_limit' => $storageLimit]);
 
             return redirect()->route('growbuilder.editor', $site->getId()->value())
                 ->with('success', 'Site created successfully!');

@@ -50,7 +50,15 @@ interface Props {
         auto_renew: boolean;
         billing_cycle: string;
     } | null;
-    usage: { sites: number };
+    usage: {
+        sites: number;
+        storage_used?: number;
+        storage_used_formatted?: string;
+        storage_limit?: number;
+        storage_limit_formatted?: string;
+        storage_percentage?: number;
+    };
+    tierStorageLimits?: Record<string, { bytes: number; formatted: string; mb: number }>;
     isMember: boolean;
 }
 
@@ -157,7 +165,7 @@ const onTopUpSuccess = () => router.reload({ only: ['walletBalance'] });
             </div>
 
             <!-- Current Plan & Usage -->
-            <div class="grid md:grid-cols-2 gap-4 mb-6">
+            <div class="grid md:grid-cols-3 gap-4 mb-6">
                 <div :class="['rounded-2xl p-5 text-white bg-gradient-to-br', getGradient(currentTier)]">
                     <div class="flex items-center justify-between mb-3">
                         <div>
@@ -167,6 +175,37 @@ const onTopUpSuccess = () => router.reload({ only: ['walletBalance'] });
                         <component :is="getIcon(currentTier)" class="h-10 w-10 opacity-50" aria-hidden="true" />
                     </div>
                     <p class="text-sm opacity-80">{{ usage.sites }} site(s) created</p>
+                </div>
+
+                <!-- Storage Usage Card -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-sm text-gray-500">Storage Used</p>
+                            <p class="text-xl font-bold text-gray-900">{{ usage.storage_used_formatted || '0 B' }}</p>
+                        </div>
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>{{ usage.storage_percentage || 0 }}% used</span>
+                            <span>{{ usage.storage_limit_formatted || '0 B' }} limit</span>
+                        </div>
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                                :class="[
+                                    'h-full rounded-full transition-all',
+                                    (usage.storage_percentage || 0) >= 90 ? 'bg-red-500' : 
+                                    (usage.storage_percentage || 0) >= 80 ? 'bg-yellow-500' : 'bg-blue-500'
+                                ]"
+                                :style="{ width: Math.min(usage.storage_percentage || 0, 100) + '%' }"
+                            ></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white">
