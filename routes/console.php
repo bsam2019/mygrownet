@@ -113,6 +113,15 @@ Schedule::command('marketplace:sync-bizboost --all')
     ->everySixHours()
     ->description('Sync BizBoost businesses and products to GrowNet Market');
 
+// ========================================
+// GrowBuilder Scheduled Tasks
+// ========================================
+
+// Purge deleted sites after 30-day grace period - runs daily at 2 AM
+Schedule::command('growbuilder:purge-deleted-sites')
+    ->dailyAt('02:00')
+    ->description('Permanently delete GrowBuilder sites past their scheduled deletion date');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');
