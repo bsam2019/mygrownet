@@ -37,6 +37,7 @@ class EloquentSiteRepository implements SiteRepositoryInterface
     public function findByUserId(int $userId): array
     {
         return GrowBuilderSite::where('user_id', $userId)
+            ->where('status', '!=', 'deleted')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn($model) => $this->toDomainEntity($model))

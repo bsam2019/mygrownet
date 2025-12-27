@@ -40,6 +40,11 @@ const minHeight = computed(() => {
     return props.isMobile ? '350px' : '500px';
 });
 
+// Text color from style (defaults to white for hero sections)
+const textColor = computed(() => style.value?.textColor || '#ffffff');
+const textColorStyle = computed(() => ({ color: textColor.value }));
+const subtitleColorStyle = computed(() => ({ color: textColor.value, opacity: 0.9 }));
+
 // Compute background style (solid or gradient)
 const backgroundStyle = computed(() => {
     const s = style.value;
@@ -182,15 +187,17 @@ const overlayStyle = computed(() => {
                             @input="emit('update:editingValue', ($event.target as HTMLInputElement).value)"
                             @blur="saveInlineEdit"
                             @keydown="handleInlineKeydown"
-                            class="inline-edit-input font-bold bg-white/20 border border-white/40 rounded px-3 py-2 text-white w-full"
+                            class="inline-edit-input font-bold bg-white/20 border border-white/40 rounded px-3 py-2 w-full"
                             :class="textSize.h1"
+                            :style="textColorStyle"
                         />
                     </h1>
                     <h1
                         v-else
                         @click.stop="startInlineEdit(section.id, 'title', content.title)"
-                        class="font-bold text-white mb-4 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors"
+                        class="font-bold mb-4 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors"
                         :class="[textSize.h1, hasElementOffset(section, 'title') ? 'ring-1 ring-blue-400/50' : '']"
+                        :style="textColorStyle"
                     >
                         {{ content.title || 'Hero Title' }}
                         <PencilIcon class="w-4 h-4 inline opacity-0 hover:opacity-70 ml-2" aria-hidden="true" />
@@ -217,15 +224,17 @@ const overlayStyle = computed(() => {
                             @input="emit('update:editingValue', ($event.target as HTMLInputElement).value)"
                             @blur="saveInlineEdit"
                             @keydown="handleInlineKeydown"
-                            class="inline-edit-input bg-white/20 border border-white/40 rounded px-3 py-2 text-white/90 w-full"
+                            class="inline-edit-input bg-white/20 border border-white/40 rounded px-3 py-2 w-full"
                             :class="textSize.p"
+                            :style="subtitleColorStyle"
                         />
                     </p>
                     <p
                         v-else
                         @click.stop="startInlineEdit(section.id, 'subtitle', content.subtitle)"
-                        class="text-white/90 mb-6 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors"
+                        class="mb-6 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors"
                         :class="[textSize.p, hasElementOffset(section, 'subtitle') ? 'ring-1 ring-blue-400/50' : '']"
+                        :style="subtitleColorStyle"
                     >
                         {{ content.subtitle || 'Subtitle text' }}
                         <PencilIcon class="w-3 h-3 inline opacity-0 hover:opacity-70 ml-2" aria-hidden="true" />
@@ -264,8 +273,9 @@ const overlayStyle = computed(() => {
                         </button>
                         <button
                             v-if="content.secondaryButtonText"
-                            class="px-6 py-2 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-colors"
+                            class="px-6 py-2 border-2 font-semibold rounded-lg hover:bg-white/10 transition-colors"
                             :class="textSize.p"
+                            :style="{ borderColor: textColor, color: textColor }"
                         >
                             {{ content.secondaryButtonText }}
                         </button>

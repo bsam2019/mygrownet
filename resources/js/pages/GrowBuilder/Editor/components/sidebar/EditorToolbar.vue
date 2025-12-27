@@ -15,6 +15,9 @@ import {
     MagnifyingGlassPlusIcon,
     SunIcon,
     MoonIcon,
+    SparklesIcon,
+    GlobeAltIcon,
+    ArrowTopRightOnSquareIcon,
 } from '@heroicons/vue/24/outline';
 import type { PreviewMode } from '../../types';
 
@@ -24,6 +27,9 @@ const props = defineProps<{
     pageTitle: string;
     previewMode: PreviewMode;
     saving: boolean;
+    publishing?: boolean;
+    isPublished?: boolean;
+    siteUrl?: string;
     lastSaved?: Date | null;
     canUndo?: boolean;
     canRedo?: boolean;
@@ -36,11 +42,14 @@ const emit = defineEmits<{
     (e: 'update:previewMode', mode: PreviewMode): void;
     (e: 'preview'): void;
     (e: 'save'): void;
+    (e: 'publish'): void;
+    (e: 'unpublish'): void;
     (e: 'undo'): void;
     (e: 'redo'): void;
     (e: 'showShortcuts'): void;
     (e: 'update:zoom', zoom: number): void;
     (e: 'update:darkMode', value: boolean): void;
+    (e: 'openAI'): void;
 }>();
 
 // Format last saved time
@@ -233,6 +242,21 @@ const currentZoom = computed(() => props.zoom || 100);
                 <span>Saved {{ lastSavedText }}</span>
             </div>
 
+            <!-- AI Assistant Button -->
+            <button
+                @click="emit('openAI')"
+                :class="[
+                    'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all',
+                    'bg-gradient-to-r from-purple-500 to-indigo-600 text-white',
+                    'hover:from-purple-600 hover:to-indigo-700 shadow-sm hover:shadow'
+                ]"
+                title="AI Assistant"
+                aria-label="Open AI Assistant"
+            >
+                <SparklesIcon class="w-4 h-4" aria-hidden="true" />
+                <span>AI</span>
+            </button>
+
             <!-- Dark Mode Toggle -->
             <button
                 @click="emit('update:darkMode', !darkMode)"
@@ -293,6 +317,46 @@ const currentZoom = computed(() => props.zoom || 100);
                 </svg>
                 <span>{{ saving ? 'Saving...' : 'Save' }}</span>
             </button>
+
+            <!-- Publish/Unpublish Button -->
+            <div class="relative group">
+                <button
+                    v-if="!isPublished"
+                    @click="emit('publish')"
+                    :disabled="publishing"
+                    class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-sm hover:shadow"
+                    title="Publish your site"
+                >
+                    <GlobeAltIcon v-if="!publishing" class="w-4 h-4" aria-hidden="true" />
+                    <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>{{ publishing ? 'Publishing...' : 'Publish' }}</span>
+                </button>
+
+                <!-- Published State with Dropdown -->
+                <div v-else class="flex items-center">
+                    <a
+                        :href="siteUrl"
+                        target="_blank"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-l-lg hover:bg-emerald-200 transition-colors"
+                        title="View live site"
+                    >
+                        <CheckCircleIcon class="w-4 h-4" aria-hidden="true" />
+                        <span>Live</span>
+                        <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                    </a>
+                    <button
+                        @click="emit('unpublish')"
+                        :disabled="publishing"
+                        class="px-2 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-r-lg border-l border-emerald-200 hover:bg-red-100 hover:text-red-700 transition-colors"
+                        title="Unpublish site"
+                    >
+                        <span class="text-xs">Unpublish</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 </template>

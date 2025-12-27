@@ -243,4 +243,109 @@ class MediaController extends Controller
         
         return round($bytes, $precision) . ' ' . $units[$i];
     }
+
+    /**
+     * Generate a favicon from the site logo
+     */
+    public function generateFavicon(Request $request, int $siteId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'logoUrl' => 'required|string|max:500',
+        ]);
+
+        $logoUrl = $request->input('logoUrl');
+        $directory = "growbuilder/{$siteId}";
+
+        try {
+            // Get the logo image content
+            $logoContent = null;
+            
+            // Check if it's a local storage URL
+            if (str_contains($logoUrl, '/storage/')) {
+                $path = str_replace('/storage/', '', parse_url($logoUrl, PHP_URL_PATH));
+                if (Storage::disk('public')->exists($path)) {
+                    $logoContent = Storage::disk('public')->get($path);
+                }
+            }
+            
+            // If not local, try to fetch from URL
+            if (!$logoContent) {
+                $logoContent = @file_get_contents($logoUrl);
+            }
+
+            if (!$logoContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not fetch logo image',
+                ], 400);
+            }
+
+            // Create favicon using Intervention Image
+            $image = Image::read($logoContent);
+            
+            // Generate multiple favicon sizes
+            $faviconSizes = [
+                ['size' => 16, 'name' => 'favicon-16x16.png'],
+                ['size' => 32, 'name' => 'favicon-32x32.png'],
+                ['size' => 180, 'name' => 'apple-touch-icon.png'],
+            ];
+
+            $faviconPaths = [];
+            $mainFaviconUrl = null;
+
+            foreach ($faviconSizes as $config) {
+                $resized = clone $image;
+                $resized->cover($config['size'], $config['size']);
+                
+                $faviconPath = "{$directory}/favicons/{$config['name']}";
+                Storage::disk('public')->put($faviconPath, $resized->toPng());
+                
+                $faviconPaths[$config['name']] = Storage::disk('public')->url($faviconPath);
+                
+                // Use 32x32 as the main favicon
+                if ($config['size'] === 32) {
+                    $mainFaviconUrl = $faviconPaths[$config['name']];
+                }
+            }
+
+            // Also create a standard favicon.ico (32x32)
+            $favicon32 = clone $image;
+            $favicon32->cover(32, 32);
+            $icoPath = "{$directory}/favicons/favicon.ico";
+            Storage::disk('public')->put($icoPath, $favicon32->toPng());
+
+            // Save favicon variants to site settings
+            $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+            if ($siteModel) {
+                $settings = $siteModel->settings ?? [];
+                $settings['favicons'] = $faviconPaths;
+                $siteModel->settings = $settings;
+                $siteModel->favicon = $mainFaviconUrl;
+                $siteModel->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'faviconUrl' => $mainFaviconUrl,
+                'favicons' => $faviconPaths,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Favicon generation failed', [
+                'error' => $e->getMessage(),
+                'logoUrl' => $logoUrl,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate favicon: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

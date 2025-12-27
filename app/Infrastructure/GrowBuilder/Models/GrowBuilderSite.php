@@ -33,6 +33,8 @@ class GrowBuilderSite extends Model
         'plan',
         'published_at',
         'plan_expires_at',
+        'scheduled_deletion_at',
+        'deletion_reason',
     ];
 
     protected $casts = [
@@ -44,6 +46,7 @@ class GrowBuilderSite extends Model
         'seo_settings' => 'array',
         'published_at' => 'datetime',
         'plan_expires_at' => 'datetime',
+        'scheduled_deletion_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

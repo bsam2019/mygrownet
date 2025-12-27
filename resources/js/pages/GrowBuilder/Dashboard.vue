@@ -13,6 +13,8 @@ import {
     UsersIcon,
     ArrowTrendingUpIcon,
     ClockIcon,
+    SparklesIcon,
+    ArrowUpCircleIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Site {
@@ -39,9 +41,19 @@ interface Stats {
     totalRevenue: number;
 }
 
+interface Subscription {
+    tier: string;
+    tierName: string;
+    sitesLimit: number;
+    sitesUsed: number;
+    canCreateSite: boolean;
+    expiresAt: string | null;
+}
+
 const props = defineProps<{
     sites: Site[];
     stats?: Stats;
+    subscription?: Subscription;
 }>();
 
 const getStatusBadge = (status: string) => {
@@ -80,19 +92,51 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
-                <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center justify-between mb-6">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">GrowBuilder</h1>
                         <p class="mt-1 text-sm text-gray-500">
                             Build beautiful websites for your business
                         </p>
                     </div>
-                    <Link
-                        :href="route('growbuilder.sites.create')"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
-                    >
-                        <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                        Create Website
+                    <div class="flex items-center gap-3">
+                        <Link
+                            :href="route('growbuilder.subscription.index')"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition"
+                        >
+                            <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                            <span class="hidden sm:inline">{{ subscription?.tierName || 'Free' }} Plan</span>
+                        </Link>
+                        <Link
+                            v-if="subscription?.canCreateSite !== false"
+                            :href="route('growbuilder.sites.create')"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
+                        >
+                            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                            Create Website
+                        </Link>
+                        <Link
+                            v-else
+                            :href="route('growbuilder.subscription.index')"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 shadow-sm transition"
+                        >
+                            <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            Upgrade to Create More
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Subscription Banner (when at limit) -->
+                <div v-if="subscription && !subscription.canCreateSite" class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 mb-6 text-white flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <SparklesIcon class="h-6 w-6" aria-hidden="true" />
+                        <div>
+                            <p class="font-medium">You've reached your site limit ({{ subscription.sitesUsed }}/{{ subscription.sitesLimit }})</p>
+                            <p class="text-sm text-indigo-100">Upgrade your plan to create more websites</p>
+                        </div>
+                    </div>
+                    <Link :href="route('growbuilder.subscription.index')" class="px-4 py-2 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition">
+                        View Plans
                     </Link>
                 </div>
 

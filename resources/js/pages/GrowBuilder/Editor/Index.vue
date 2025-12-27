@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import draggable from 'vuedraggable';
 import axios from 'axios';
 
@@ -11,7 +12,7 @@ import FooterRenderer from './components/FooterRenderer.vue';
 import ToastContainer from './components/ToastContainer.vue';
 import ContextMenu from './components/common/ContextMenu.vue';
 import { NavigationInspector, FooterInspector, SectionInspector } from './components/inspectors';
-import { CreatePageModal, EditPageModal, ApplyTemplateModal, MediaLibraryModal } from './components/modals';
+import { CreatePageModal, EditPageModal, ApplyTemplateModal, MediaLibraryModal, AIAssistantModal } from './components/modals';
 import { WidgetPalette, PagesList, EditorToolbar } from './components/sidebar';
 
 // Config
@@ -50,6 +51,10 @@ import { useHistory } from './composables/useHistory';
 import { useAutoSave } from './composables/useAutoSave';
 import { useDragUpload } from './composables/useDragUpload';
 import { useClipboard } from './composables/useClipboard';
+import { useAIContext } from './composables/useAIContext';
+
+// AI Components
+import AIFloatingButton from './components/ai/AIFloatingButton.vue';
 
 const props = defineProps<{
     site: Site;
@@ -66,6 +71,8 @@ const rightSidebarOpen = ref(true);
 const previewMode = ref<'desktop' | 'tablet' | 'mobile'>('desktop');
 const selectedSectionId = ref<string | null>(null);
 const saving = ref(false);
+const publishing = ref(false);
+const isPublished = ref(props.site.status === 'published');
 const isDragging = ref(false);
 const activeInspectorTab = ref<'content' | 'style' | 'advanced'>('content');
 const hoveredSectionId = ref<string | null>(null);
@@ -143,6 +150,7 @@ const creatingPage = ref(false);
 const pageError = ref<string | null>(null);
 const showApplyTemplateModal = ref(false);
 const applyingTemplate = ref(false);
+const showAIModal = ref(false);
 
 // Media Library State
 const uploadingImage = ref(false);
@@ -169,6 +177,21 @@ const { draggingElement, draggingSectionContent, startElementDrag, startSectionC
 const toast = useToast();
 const history = useHistory({ maxHistory: 50 });
 const { copySection, cutSection, pasteSection, hasClipboard, clipboardType } = useClipboard();
+
+// AI Context - provides site/page awareness to AI assistant
+const siteRef = computed(() => props.site);
+const pagesRef = computed(() => props.pages);
+const currentPageRef = computed(() => activePage.value);
+const sectionsRef = computed(() => sections.value);
+const selectedSectionIdRef = computed(() => selectedSectionId.value);
+
+const { context: aiContext, contextSummary, smartSuggestions } = useAIContext(
+    siteRef,
+    pagesRef,
+    currentPageRef,
+    sectionsRef,
+    selectedSectionIdRef
+);
 
 // Context Menu State
 const contextMenu = ref({
@@ -363,7 +386,7 @@ const isMobilePreview = computed(() => previewMode.value === 'mobile' || preview
 
 // Mobile preview responsive helpers
 const textSize = computed(() => isMobilePreview.value ? { h1: 'text-2xl', h2: 'text-xl', h3: 'text-lg', p: 'text-sm' } : { h1: 'text-4xl', h2: 'text-3xl', h3: 'text-xl', p: 'text-base' });
-const spacing = computed(() => isMobilePreview.value ? { section: 'py-10 px-4', gap: 'gap-4' } : { section: 'py-16 px-8', gap: 'gap-6' });
+const spacing = computed(() => isMobilePreview.value ? { section: 'py-10 px-4', gap: 'gap-4' } : { section: 'py-16 px-6', gap: 'gap-6' });
 const gridCols2 = computed(() => isMobilePreview.value ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2');
 const gridCols3 = computed(() => isMobilePreview.value ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3');
 const gridCols4 = computed(() => isMobilePreview.value ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4');
@@ -395,7 +418,7 @@ const getDefaultContent = (type: string): Record<string, any> => {
         text: { content: '<p>Enter your text content here...</p>' },
         faq: { title: 'Frequently Asked Questions', items: [{ question: 'Question?', answer: 'Answer.' }] },
         team: { title: 'Meet Our Team', items: [{ name: 'John Smith', role: 'CEO', image: '', bio: '' }] },
-        blog: { title: 'Latest News', showLatest: true, limit: 3, posts: [] },
+        blog: { title: 'Latest News', description: 'Stay updated with our latest articles and insights', postsCount: 6, showViewAll: true },
         stats: { title: 'Our Impact', items: [{ value: '500+', label: 'Happy Clients' }] },
         map: { title: 'Find Us', address: '123 Business Street', embedUrl: '', showAddress: true },
         video: { title: 'Watch Our Story', videoUrl: '', videoType: 'youtube', autoplay: false, description: '' },
@@ -859,6 +882,40 @@ const savePage = async (silent = false) => {
     }
 };
 
+// ============================================
+// Publish/Unpublish
+// ============================================
+const publishSite = async () => {
+    publishing.value = true;
+    try {
+        // Save first to ensure latest changes are published
+        await savePage(true);
+        
+        await axios.post(`/growbuilder/sites/${props.site.id}/publish`);
+        isPublished.value = true;
+        toast.success('Site published! Your site is now live.');
+    } catch (error: any) {
+        const message = error.response?.data?.error || error.response?.data?.message || 'Failed to publish site';
+        toast.error(message);
+    } finally {
+        publishing.value = false;
+    }
+};
+
+const unpublishSite = async () => {
+    publishing.value = true;
+    try {
+        await axios.post(`/growbuilder/sites/${props.site.id}/unpublish`);
+        isPublished.value = false;
+        toast.success('Site unpublished');
+    } catch (error: any) {
+        const message = error.response?.data?.error || 'Failed to unpublish site';
+        toast.error(message);
+    } finally {
+        publishing.value = false;
+    }
+};
+
 const openPreview = async () => {
     await savePage();
     window.open(`${props.site.url}?t=${Date.now()}`, '_blank');
@@ -1038,6 +1095,377 @@ const handleStockPhotoSelect = (url: string, attribution: string) => {
     toast.success('Stock photo added');
     showMediaLibrary.value = false;
     mediaLibraryTarget.value = null;
+};
+
+// ============================================
+// AI Content Handlers
+// ============================================
+const handleAIContent = (content: any) => {
+    console.log('handleAIContent received:', {
+        sectionType: content.sectionType,
+        position: content.position,
+        hasStyle: !!content.style,
+        style: content.style
+    });
+    
+    // Find the target section - either selected or by type from AI
+    let targetSection = selectedSection.value;
+    
+    // If no section selected but AI specified a section type, find it
+    // BUT: Don't auto-find for headers - always create new if position is 'first'
+    if (!targetSection && content.sectionType) {
+        // For headers with position 'first', always create new (don't update existing)
+        const isHeaderWithFirstPosition = 
+            (content.sectionType === 'page-header' || content.sectionType === 'hero') 
+            && content.position === 'first';
+        
+        if (!isHeaderWithFirstPosition) {
+            targetSection = sections.value.find(s => s.type === content.sectionType) || null;
+            if (targetSection) {
+                selectedSectionId.value = targetSection.id;
+            }
+        }
+    }
+    
+    if (!targetSection) {
+        // No section selected or found, create a new one based on the content type
+        const sectionType = content.sectionType || 'hero';
+        pushToHistory();
+        
+        // Get style from AI or use defaults that match existing page
+        const existingStyle = sections.value[0]?.style || {};
+        const newStyle = {
+            backgroundColor: content.style?.backgroundColor || existingStyle.backgroundColor || '#ffffff',
+            textColor: content.style?.textColor || existingStyle.textColor || '#111827',
+            ...content.style
+        };
+        
+        const newSection: Section = {
+            id: `section-${Date.now()}`,
+            type: sectionType as any,
+            content: { ...getDefaultContent(sectionType), ...content },
+            style: newStyle,
+        };
+        
+        // Handle position-aware placement
+        const position = content.position || 'auto';
+        console.log('Creating new section with position:', position, 'type:', sectionType);
+        
+        if (position === 'first') {
+            // Insert at the beginning of the page
+            sections.value.unshift(newSection);
+            toast.success('AI content added at the top of the page');
+        } else if (position === 'last') {
+            // Insert at the end
+            sections.value.push(newSection);
+            toast.success('AI content added at the bottom of the page');
+        } else {
+            // Auto placement based on section type
+            if (sectionType === 'page-header' || sectionType === 'hero') {
+                // Headers go at the top
+                sections.value.unshift(newSection);
+                toast.success('Header section added at the top');
+            } else if (sectionType === 'cta' || sectionType === 'contact') {
+                // CTA and contact typically go near the end
+                sections.value.push(newSection);
+                toast.success('AI content added as new section');
+            } else {
+                // Default: add at the end
+                sections.value.push(newSection);
+                toast.success('AI content added as new section');
+            }
+        }
+        
+        selectedSectionId.value = newSection.id;
+    } else {
+        // Apply to target section
+        pushToHistory();
+        Object.keys(content).forEach(key => {
+            if (key !== 'sectionType' && key !== 'position' && key !== 'style') {
+                targetSection!.content[key] = content[key];
+            }
+        });
+        // Also apply style if provided
+        if (content.style) {
+            Object.keys(content.style).forEach(key => {
+                targetSection!.style[key] = content.style[key];
+            });
+        }
+        toast.success('AI content applied to section');
+    }
+};
+
+const handleAIColors = (palette: any) => {
+    if (selectedSection.value) {
+        pushToHistory();
+        if (palette.background) {
+            selectedSection.value.style.backgroundColor = palette.background;
+        }
+        if (palette.text) {
+            selectedSection.value.style.textColor = palette.text;
+        }
+        if (palette.primary) {
+            selectedSection.value.style.primaryColor = palette.primary;
+        }
+        if (palette.accent) {
+            selectedSection.value.style.accentColor = palette.accent;
+        }
+        toast.success('Color palette applied to section');
+    } else {
+        toast.info('Select a section to apply colors');
+    }
+};
+
+const handleAIStyle = (styleChange: any) => {
+    // Find the target section - either selected or by type from AI
+    let targetSection = selectedSection.value;
+    
+    // If no section selected but AI specified a section type, find it
+    if (!targetSection && styleChange.sectionType) {
+        targetSection = sections.value.find(s => s.type === styleChange.sectionType) || null;
+        if (targetSection) {
+            selectedSectionId.value = targetSection.id;
+        }
+    }
+    
+    if (!targetSection) {
+        toast.info('Select a section to apply style changes');
+        return;
+    }
+    
+    pushToHistory();
+    
+    // Apply style changes to the section
+    if (!targetSection.style) {
+        targetSection.style = {};
+    }
+    if (!targetSection.content) {
+        targetSection.content = {};
+    }
+    
+    // Apply each style property
+    if (styleChange.backgroundColor) {
+        targetSection.style.backgroundColor = styleChange.backgroundColor;
+    }
+    if (styleChange.textColor) {
+        targetSection.style.textColor = styleChange.textColor;
+    }
+    if (styleChange.paddingY) {
+        targetSection.style.paddingY = styleChange.paddingY;
+    }
+    // Handle text alignment/position (multiple possible property names from AI)
+    const textAlign = styleChange.textPosition || styleChange.textAlign || styleChange.alignment;
+    if (textAlign) {
+        targetSection.content.textPosition = textAlign;
+        targetSection.style.textAlign = textAlign;
+    }
+    if (styleChange.titleSize) {
+        targetSection.style.titleSize = styleChange.titleSize;
+    }
+    if (styleChange.fontWeight) {
+        targetSection.style.fontWeight = styleChange.fontWeight;
+    }
+    if (styleChange.minHeight) {
+        targetSection.style.minHeight = styleChange.minHeight;
+    }
+    // Handle additional common style properties
+    if (styleChange.padding) {
+        targetSection.style.padding = styleChange.padding;
+    }
+    if (styleChange.margin) {
+        targetSection.style.margin = styleChange.margin;
+    }
+    if (styleChange.borderRadius) {
+        targetSection.style.borderRadius = styleChange.borderRadius;
+    }
+    if (styleChange.gap) {
+        targetSection.style.gap = styleChange.gap;
+    }
+    if (styleChange.layout) {
+        targetSection.content.layout = styleChange.layout;
+    }
+    
+    toast.success(`Style applied: ${styleChange.action || 'changes made'}`);
+};
+
+// Handle AI add section request
+const handleAIAddSection = (type: string, content?: any) => {
+    pushToHistory();
+    const newSection: Section = {
+        id: `section-${Date.now()}`,
+        type: type as any,
+        content: { ...getDefaultContent(type), ...content },
+        style: { backgroundColor: '#ffffff', textColor: '#111827' },
+    };
+    sections.value.push(newSection);
+    selectedSectionId.value = newSection.id;
+    toast.success(`Added ${type} section`);
+};
+
+// Handle AI navigation changes
+const handleAINavigation = (changes: any) => {
+    pushToHistory();
+    
+    if (changes.style) {
+        siteNavigation.value.style = changes.style;
+    }
+    if (changes.sticky !== undefined) {
+        siteNavigation.value.sticky = changes.sticky;
+    }
+    if (changes.showCta !== undefined) {
+        siteNavigation.value.showCta = changes.showCta;
+    }
+    if (changes.showAuthButtons !== undefined) {
+        siteNavigation.value.showAuthButtons = changes.showAuthButtons;
+    }
+    if (changes.ctaText) {
+        siteNavigation.value.ctaText = changes.ctaText;
+    }
+    if (changes.ctaLink) {
+        siteNavigation.value.ctaLink = changes.ctaLink;
+    }
+    
+    toast.success(changes.action || 'Navigation updated');
+};
+
+// Handle AI footer changes
+const handleAIFooter = (changes: any) => {
+    pushToHistory();
+    
+    if (changes.layout) {
+        siteFooter.value.layout = changes.layout;
+    }
+    if (changes.backgroundColor) {
+        siteFooter.value.backgroundColor = changes.backgroundColor;
+    }
+    if (changes.textColor) {
+        siteFooter.value.textColor = changes.textColor;
+    }
+    if (changes.showSocialLinks !== undefined) {
+        siteFooter.value.showSocialLinks = changes.showSocialLinks;
+    }
+    if (changes.showNewsletter !== undefined) {
+        siteFooter.value.showNewsletter = changes.showNewsletter;
+    }
+    
+    toast.success(changes.action || 'Footer updated');
+};
+
+// Handle AI create page request
+const handleAICreatePage = async (template: string, title?: string) => {
+    const pageTitle = title || template.charAt(0).toUpperCase() + template.slice(1);
+    const slug = pageTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    // Check if page already exists
+    const existingPage = props.pages.find(p => p.slug === slug);
+    if (existingPage) {
+        toast.error(`A page with URL "/${slug}" already exists`);
+        return;
+    }
+    
+    // Find template sections
+    const templateData = findTemplate(template);
+    const templateSections = templateData?.sections.map((s, i) => ({
+        id: `section-${Date.now()}-${i}`,
+        type: s.type,
+        content: { ...s.content },
+        style: { ...s.style },
+    })) || [];
+    
+    try {
+        const response = await axios.post(`/growbuilder/editor/${props.site.id}/pages`, {
+            title: pageTitle,
+            slug: slug,
+            sections: templateSections,
+            show_in_nav: true,
+            is_homepage: false,
+        });
+        
+        // Add to navigation
+        if (response.data.page?.id) {
+            siteNavigation.value.navItems.push({
+                id: `nav-${response.data.page.id}`,
+                label: pageTitle,
+                url: `/${slug}`,
+                pageId: response.data.page.id,
+                isExternal: false,
+                children: [],
+            });
+            
+            // Save navigation
+            await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
+                navigation: siteNavigation.value,
+                footer: siteFooter.value,
+            });
+        }
+        
+        toast.success(`Created ${pageTitle} page`);
+        
+        // Navigate to new page
+        if (response.data.page?.id) {
+            router.visit(`/growbuilder/editor/${props.site.id}?page=${response.data.page.id}`);
+        }
+    } catch (error: any) {
+        toast.error(error.response?.data?.error || 'Failed to create page');
+    }
+};
+
+// Handle AI-generated page with custom content
+const handleAIGeneratedPage = async (pageType: string, pageData: any) => {
+    const pageTitle = pageData.title || pageType.charAt(0).toUpperCase() + pageType.slice(1);
+    const slug = pageTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    // Check if page already exists
+    const existingPage = props.pages.find(p => p.slug === slug);
+    if (existingPage) {
+        toast.error(`A page with URL "/${slug}" already exists`);
+        return;
+    }
+    
+    // Transform AI-generated sections to our format
+    const aiSections = (pageData.sections || []).map((s: any, i: number) => ({
+        id: `section-${Date.now()}-${i}`,
+        type: s.type,
+        content: { ...s.content },
+        style: { ...s.style },
+    }));
+    
+    try {
+        const response = await axios.post(`/growbuilder/editor/${props.site.id}/pages`, {
+            title: pageTitle,
+            slug: slug,
+            sections: aiSections,
+            show_in_nav: true,
+            is_homepage: false,
+        });
+        
+        // Add to navigation
+        if (response.data.page?.id) {
+            siteNavigation.value.navItems.push({
+                id: `nav-${response.data.page.id}`,
+                label: pageTitle,
+                url: `/${slug}`,
+                pageId: response.data.page.id,
+                isExternal: false,
+                children: [],
+            });
+            
+            // Save navigation
+            await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
+                navigation: siteNavigation.value,
+                footer: siteFooter.value,
+            });
+        }
+        
+        toast.success(`Created ${pageTitle} page with AI-generated content`);
+        
+        // Navigate to new page
+        if (response.data.page?.id) {
+            router.visit(`/growbuilder/editor/${props.site.id}?page=${response.data.page.id}`);
+        }
+    } catch (error: any) {
+        toast.error(error.response?.data?.error || 'Failed to create AI page');
+    }
 };
 
 // ============================================
@@ -1368,7 +1796,7 @@ onUnmounted(() => {
                         :section="section"
                         :isMobile="previewWidth < 640"
                         :textSize="previewWidth < 640 ? { h1: 'text-2xl', h2: 'text-xl', h3: 'text-lg', p: 'text-sm' } : { h1: 'text-4xl', h2: 'text-3xl', h3: 'text-xl', p: 'text-base' }"
-                        :spacing="previewWidth < 640 ? { section: 'py-10 px-4', gap: 'gap-4' } : { section: 'py-16 px-8', gap: 'gap-6' }"
+                        :spacing="previewWidth < 640 ? { section: 'py-10 px-4', gap: 'gap-4' } : { section: 'py-16 px-6', gap: 'gap-6' }"
                         :gridCols2="previewWidth < 640 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
                         :gridCols3="previewWidth < 640 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'"
                         :gridCols4="previewWidth < 640 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'"
@@ -1480,20 +1908,24 @@ onUnmounted(() => {
             :pageTitle="activePage?.title || ''"
             :previewMode="previewMode"
             :saving="saving"
+            :publishing="publishing"
+            :isPublished="isPublished"
+            :siteUrl="site.url"
             :lastSaved="lastSaved"
             :canUndo="history.canUndo.value"
             :canRedo="history.canRedo.value"
             :zoom="canvasZoom"
             :darkMode="darkMode"
-            @back="handleBack"
-            @update:previewMode="previewMode = $event"
-            @update:zoom="canvasZoom = $event"
             @update:darkMode="darkMode = $event"
             @preview="toggleFullPreview"
             @save="savePage"
+            @publish="publishSite"
+            @unpublish="unpublishSite"
             @undo="handleUndo"
             @redo="handleRedo"
             @showShortcuts="showKeyboardShortcuts = true"
+            @openAI="showAIModal = true"
+            @back="router.visit(route('growbuilder.index'))"
         />
 
         <!-- Main Content Area -->
@@ -1801,6 +2233,7 @@ onUnmounted(() => {
                         :navigation="siteNavigation"
                         :pages="pages"
                         :darkMode="darkMode"
+                        class="flex-1 min-h-0 overflow-hidden"
                         @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
                     />
 
@@ -1810,6 +2243,7 @@ onUnmounted(() => {
                         :footer="siteFooter"
                         :pages="pages"
                         :darkMode="darkMode"
+                        class="flex-1 min-h-0 overflow-hidden"
                         @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
                     />
 
@@ -1820,6 +2254,8 @@ onUnmounted(() => {
                         :sectionType="selectedSectionType"
                         :activeTab="activeInspectorTab"
                         :darkMode="darkMode"
+                        :subdomain="site.subdomain"
+                        class="flex-1 min-h-0 overflow-hidden"
                         @update:activeTab="activeInspectorTab = $event"
                         @updateContent="updateSectionContent"
                         @updateStyle="updateSectionStyle"
@@ -1866,6 +2302,7 @@ onUnmounted(() => {
     <EditPageModal
         :show="showEditPageModal"
         :page="editingPage"
+        :siteId="site.id"
         @close="showEditPageModal = false; editingPage = null"
         @update="updatePage"
     />
@@ -1890,6 +2327,35 @@ onUnmounted(() => {
         @selectCropped="handleCroppedImage"
         @selectStockPhoto="handleStockPhotoSelect"
         @delete="deleteMediaImage"
+    />
+
+    <AIAssistantModal
+        :isOpen="showAIModal"
+        :siteId="site.id"
+        :siteName="site.name"
+        :darkMode="darkMode"
+        :aiContext="aiContext"
+        :contextSummary="contextSummary"
+        :smartSuggestions="smartSuggestions"
+        :initialText="selectedSection?.content?.title || selectedSection?.content?.text"
+        @close="showAIModal = false"
+        @applyContent="handleAIContent"
+        @applyColors="handleAIColors"
+        @applyStyle="handleAIStyle"
+        @addSection="handleAIAddSection"
+        @updateNavigation="handleAINavigation"
+        @updateFooter="handleAIFooter"
+        @createPage="handleAICreatePage"
+        @createAIPage="handleAIGeneratedPage"
+    />
+
+    <!-- AI Floating Button -->
+    <AIFloatingButton
+        :isOpen="showAIModal"
+        :darkMode="darkMode"
+        :currentSection="selectedSection ? { type: selectedSection.type } : null"
+        :currentPage="activePage ? { title: activePage.title } : null"
+        @toggle="showAIModal = !showAIModal"
     />
 
     <!-- Context Menu -->

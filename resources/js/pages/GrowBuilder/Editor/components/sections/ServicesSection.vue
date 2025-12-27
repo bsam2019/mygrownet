@@ -31,6 +31,25 @@ const content = computed(() => props.section.content);
 const style = computed(() => props.section.style);
 
 const bgStyle = computed(() => getBackgroundStyle(style.value, '#ffffff', '#111827'));
+
+// Compute text alignment class
+const textAlignClass = computed(() => {
+    const align = content.value?.textPosition || style.value?.textAlign || 'center';
+    return {
+        'text-left': align === 'left',
+        'text-center': align === 'center',
+        'text-right': align === 'right',
+    };
+});
+
+// Compute items alignment class for grid
+const itemsJustifyClass = computed(() => {
+    const align = style.value?.itemsAlign || 'center';
+    if (align === 'start') return 'justify-items-start';
+    if (align === 'end') return 'justify-items-end';
+    if (align === 'stretch') return 'justify-items-stretch';
+    return 'justify-items-center';
+});
 </script>
 
 <template>
@@ -40,23 +59,23 @@ const bgStyle = computed(() => getBackgroundStyle(style.value, '#ffffff', '#1118
         :style="bgStyle"
     >
         <div :style="{ transform: getSectionContentTransform(section) }">
-            <h2 :class="[textSize.h2, 'font-bold text-center mb-4']">
+            <h2 :class="[textSize.h2, 'font-bold mb-4', textAlignClass]">
                 {{ content.title || 'Our Services' }}
             </h2>
             <p
                 v-if="content.subtitle"
-                class="text-center text-gray-600 mb-8 max-w-2xl mx-auto"
-                :class="textSize.p"
+                class="text-gray-600 mb-8 max-w-2xl"
+                :class="[textSize.p, textAlignClass, { 'mx-auto': style?.textAlign !== 'left' && style?.textAlign !== 'right' }]"
             >
                 {{ content.subtitle }}
             </p>
             <div v-else class="mb-6"></div>
             
-            <div class="grid" :class="[gridCols3, spacing.gap]">
+            <div class="grid" :class="[gridCols3, spacing.gap, itemsJustifyClass]">
                 <div
                     v-for="(item, idx) in content.items || []"
                     :key="idx"
-                    class="p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                    class="p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow w-full"
                 >
                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
                         <Cog6ToothIcon class="w-5 h-5 text-blue-600" aria-hidden="true" />

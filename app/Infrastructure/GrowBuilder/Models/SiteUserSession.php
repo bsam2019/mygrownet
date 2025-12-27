@@ -51,7 +51,20 @@ class SiteUserSession extends Model
         return $this->expires_at->isPast();
     }
 
-    public function touch(): bool
+    public function touch($attribute = null): bool
+    {
+        if ($attribute) {
+            return parent::touch($attribute);
+        }
+        
+        $this->last_activity_at = now();
+        return $this->save();
+    }
+
+    /**
+     * Update the last activity timestamp
+     */
+    public function updateActivity(): bool
     {
         $this->last_activity_at = now();
         return $this->save();

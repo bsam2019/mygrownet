@@ -18,8 +18,14 @@
     <meta property="og:image" content="{{ $page['ogImage'] }}">
     @endif
     
-    @if($site['favicon'])
-    <link rel="icon" href="{{ $site['favicon'] }}">
+    <!-- Favicons -->
+    @if(!empty($site['favicons']))
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ $site['favicons']['favicon-32x32.png'] ?? $site['favicon'] }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ $site['favicons']['favicon-16x16.png'] ?? $site['favicon'] }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ $site['favicons']['apple-touch-icon.png'] ?? $site['favicon'] }}">
+    @elseif($site['favicon'])
+        <link rel="icon" href="{{ $site['favicon'] }}">
+        <link rel="apple-touch-icon" href="{{ $site['favicon'] }}">
     @endif
     
     <!-- Tailwind CSS CDN for rendered sites -->
@@ -113,7 +119,12 @@
     <!-- Page Content -->
     <main>
         @foreach($page['sections'] as $section)
-            @include('growbuilder.sections.' . $section['type'], ['content' => $section['content'], 'style' => $section['style'] ?? []])
+            @include('growbuilder.sections.' . $section['type'], [
+                'content' => $section['content'], 
+                'style' => $section['style'] ?? [],
+                'site' => $site,
+                'subdomain' => $subdomain ?? $site['subdomain'] ?? ''
+            ])
         @endforeach
     </main>
 

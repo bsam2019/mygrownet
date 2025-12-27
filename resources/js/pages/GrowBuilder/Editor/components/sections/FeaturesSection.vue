@@ -20,6 +20,16 @@ const content = computed(() => props.section.content);
 const style = computed(() => props.section.style);
 
 const bgStyle = computed(() => getBackgroundStyle(style.value, '#ffffff', '#111827'));
+
+// Compute text alignment class
+const textAlignClass = computed(() => {
+    const align = content.value?.textPosition || style.value?.textAlign || 'center';
+    return {
+        'text-left': align === 'left',
+        'text-center': align === 'center',
+        'text-right': align === 'right',
+    };
+});
 </script>
 
 <template>
@@ -29,13 +39,13 @@ const bgStyle = computed(() => getBackgroundStyle(style.value, '#ffffff', '#1118
         :style="bgStyle"
     >
         <div :style="{ transform: getSectionContentTransform(section) }">
-            <h2 :class="[textSize.h2, 'font-bold text-center mb-4']">
+            <h2 :class="[textSize.h2, 'font-bold mb-4', textAlignClass]">
                 {{ content.title || 'Features' }}
             </h2>
             <p
                 v-if="content.subtitle"
-                class="text-center text-gray-600 mb-8 max-w-2xl mx-auto"
-                :class="textSize.p"
+                class="text-gray-600 mb-8 max-w-2xl"
+                :class="[textSize.p, textAlignClass, { 'mx-auto': style?.textAlign !== 'left' && style?.textAlign !== 'right' }]"
             >
                 {{ content.subtitle }}
             </p>

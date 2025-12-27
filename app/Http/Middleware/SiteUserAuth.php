@@ -71,6 +71,6 @@ class SiteUserAuth
 
     protected function redirectToLogin(string $subdomain): Response
     {
-        return redirect()->route('site.login', ['subdomain' => $subdomain]);
+        return redirect("/sites/{$subdomain}/login");
     }
 }

@@ -117,8 +117,71 @@ const isNavItemActive = (navItem: any) => {
 const loginUrl = computed(() => `/sites/${props.site.subdomain}/login`);
 const registerUrl = computed(() => `/sites/${props.site.subdomain}/register`);
 
+// Hero section helper functions (matching editor)
+const getHeroBackgroundStyle = (section: Section) => {
+    const s = section.style;
+    const minHeight = s?.minHeight ? `${s.minHeight}px` : '500px';
+    
+    // Check for gradient background
+    if (s?.backgroundType === 'gradient' && s?.gradientFrom && s?.gradientTo) {
+        const degMap: Record<string, string> = {
+            'to-r': '90deg',
+            'to-b': '180deg',
+            'to-br': '135deg',
+            'to-tr': '45deg',
+        };
+        const direction = degMap[s.gradientDirection || 'to-r'] || '90deg';
+        return {
+            background: `linear-gradient(${direction}, ${s.gradientFrom}, ${s.gradientTo})`,
+            minHeight,
+        };
+    }
+    
+    return {
+        backgroundColor: s?.backgroundColor || '#1e40af',
+        minHeight,
+    };
+};
+
+const hasImageBackground = (section: Section) => {
+    const c = section.content;
+    return (!c.backgroundType || c.backgroundType === 'image') && c.backgroundImage;
+};
+
+const hasVideoBackground = (section: Section) => {
+    const c = section.content;
+    return c.backgroundType === 'video' && c.videoBackground;
+};
+
+const getOverlayStyle = (section: Section) => {
+    const c = section.content;
+    const color = c.overlayColor || 'black';
+    const opacity = (c.overlayOpacity ?? 50) / 100;
+    
+    if (color === 'gradient') {
+        const from = c.overlayGradientFrom || '#2563eb';
+        const to = c.overlayGradientTo || '#7c3aed';
+        const midpoint = c.overlayGradientMidpoint || 50;
+        const opacityHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+        return {
+            background: `linear-gradient(135deg, ${from}${opacityHex} 0%, ${from}${opacityHex} ${Math.max(0, midpoint - 20)}%, ${to}${opacityHex} ${Math.min(100, midpoint + 20)}%, ${to}${opacityHex} 100%)`,
+        };
+    } else if (color === 'white') {
+        return { backgroundColor: `rgba(255, 255, 255, ${opacity})` };
+    } else {
+        return { backgroundColor: `rgba(0, 0, 0, ${opacity})` };
+    }
+};
+
 const closeMobileMenu = () => {
     mobileMenuOpen.value = false;
+};
+
+// Helper to get element transform from saved offsets (matching builder behavior)
+const getElementTransform = (section: Section, elementKey: string): string => {
+    const offset = section.content?.elementOffsets?.[elementKey];
+    if (!offset || offset.y === 0) return '';
+    return `translateY(${offset.y}px)`;
 };
 </script>
 
@@ -260,73 +323,87 @@ const closeMobileMenu = () => {
         <!-- Page Content -->
         <main>
             <template v-for="section in sections" :key="section.id">
-                <!-- Hero Section - Mobile Optimized with Offset Support -->
+                <!-- Hero Section -->
                 <section
                     v-if="section.type === 'hero'"
                     class="relative overflow-hidden"
-                    :style="{ 
-                        minHeight: section.style?.minHeight ? `${section.style.minHeight}px` : '500px',
-                        backgroundColor: section.style?.backgroundColor || '#1e40af'
-                    }"
+                    :style="getHeroBackgroundStyle(section)"
                 >
-                    <!-- Background - only show gradient if no custom background color or image -->
-                    <div 
-                        class="absolute inset-0"
-                        :style="{ backgroundColor: section.style?.backgroundColor || '#1e40af' }"
-                    >
-                        <img v-if="section.content.backgroundImage" :src="section.content.backgroundImage" class="w-full h-full object-cover" />
-                        <div v-if="section.content.backgroundImage" class="absolute inset-0 bg-black/50"></div>
+                    <!-- Background Image -->
+                    <div v-if="hasImageBackground(section)" class="absolute inset-0">
+                        <img :src="section.content.backgroundImage" class="w-full h-full object-cover" />
+                        <div class="absolute inset-0" :style="getOverlayStyle(section)"></div>
+                    </div>
+
+                    <!-- Video Background -->
+                    <div v-else-if="hasVideoBackground(section)" class="absolute inset-0">
+                        <iframe
+                            :src="section.content.videoBackground"
+                            class="absolute w-full h-full object-cover"
+                            style="transform: scale(1.5); pointer-events: none;"
+                            frameborder="0"
+                            allow="autoplay; fullscreen"
+                            allowfullscreen
+                        ></iframe>
+                        <div class="absolute inset-0" :style="getOverlayStyle(section)"></div>
                     </div>
                     
-                    <!-- Standard Layout with Offset Support -->
+                    <!-- Content -->
                     <div
-                        class="relative z-10 h-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8"
+                        class="flex flex-col justify-center relative z-10 py-16 px-4 sm:px-6 lg:px-8"
+                        style="min-height: inherit;"
                         :class="{
-                            'items-start text-left': section.content.textPosition === 'left',
-                            'items-center text-center': !section.content.textPosition || section.content.textPosition === 'center',
-                            'items-end text-right': section.content.textPosition === 'right'
+                            'text-left items-start': section.content.textPosition === 'left',
+                            'text-center items-center': !section.content.textPosition || section.content.textPosition === 'center',
+                            'text-right items-end': section.content.textPosition === 'right'
                         }"
-                        :style="section.content.contentOffset ? `transform: translateY(${section.content.contentOffset}px)` : ''"
                     >
                         <div 
-                            class="w-full max-w-4xl"
+                            class="w-full max-w-3xl"
                             :class="{
-                                '': section.content.textPosition === 'left',
                                 'mx-auto': !section.content.textPosition || section.content.textPosition === 'center',
                                 'ml-auto': section.content.textPosition === 'right'
                             }"
                         >
-                            <h1 
-                                class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4"
-                                :style="section.content.elementOffsets?.title ? `transform: translateY(${section.content.elementOffsets.title.y}px)` : ''"
-                            >
-                                {{ section.content.title }}
-                            </h1>
-                            <p 
-                                class="text-base sm:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8"
-                                :style="section.content.elementOffsets?.subtitle ? `transform: translateY(${section.content.elementOffsets.subtitle.y}px)` : ''"
-                            >
-                                {{ section.content.subtitle }}
-                            </p>
+                            <!-- Title with saved offset -->
+                            <div :style="{ transform: getElementTransform(section, 'title') }">
+                                <h1 
+                                    class="font-bold mb-4 text-3xl sm:text-4xl lg:text-5xl"
+                                    :style="{ color: section.style?.textColor || '#ffffff' }"
+                                >
+                                    {{ section.content.title || 'Hero Title' }}
+                                </h1>
+                            </div>
+                            <!-- Subtitle with saved offset -->
+                            <div :style="{ transform: getElementTransform(section, 'subtitle') }">
+                                <p 
+                                    class="mb-6 text-base sm:text-lg"
+                                    :style="{ color: section.style?.textColor || '#ffffff', opacity: 0.9 }"
+                                >
+                                    {{ section.content.subtitle || 'Subtitle text' }}
+                                </p>
+                            </div>
+                            <!-- Buttons with saved offset -->
                             <div 
-                                class="flex flex-col sm:flex-row gap-3 sm:gap-4" 
+                                :style="{ transform: getElementTransform(section, 'buttons') }"
+                                class="flex flex-wrap gap-3" 
                                 :class="{ 
                                     'justify-start': section.content.textPosition === 'left',
-                                    'sm:justify-center': !section.content.textPosition || section.content.textPosition === 'center',
+                                    'justify-center': !section.content.textPosition || section.content.textPosition === 'center',
                                     'justify-end': section.content.textPosition === 'right'
                                 }"
-                                :style="section.content.elementOffsets?.buttons ? `transform: translateY(${section.content.elementOffsets.buttons.y}px)` : ''"
                             >
                                 <a 
                                     :href="section.content.buttonLink || '#'" 
-                                    class="inline-block px-6 sm:px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-center"
+                                    class="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
                                 >
                                     {{ section.content.buttonText || 'Get Started' }}
                                 </a>
                                 <a 
                                     v-if="section.content.secondaryButtonText"
                                     :href="section.content.secondaryButtonLink || '#'" 
-                                    class="inline-block px-6 sm:px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-colors text-center"
+                                    class="px-6 py-3 border-2 font-semibold rounded-lg hover:bg-white/10 transition-colors"
+                                    :style="{ borderColor: section.style?.textColor || '#ffffff', color: section.style?.textColor || '#ffffff' }"
                                 >
                                     {{ section.content.secondaryButtonText }}
                                 </a>
@@ -774,7 +851,6 @@ const closeMobileMenu = () => {
                             'text-center': !section.content.textPosition || section.content.textPosition === 'center',
                             'text-right': section.content.textPosition === 'right'
                         }"
-                        :style="section.content.contentOffset ? `transform: translateY(${section.content.contentOffset}px)` : ''"
                     >
                         <div 
                             class="max-w-3xl"
@@ -784,22 +860,15 @@ const closeMobileMenu = () => {
                                 'ml-auto': section.content.textPosition === 'right'
                             }"
                         >
-                            <h2 
-                                class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4"
-                                :style="section.content.elementOffsets?.title ? `transform: translateY(${section.content.elementOffsets.title.y}px)` : ''"
-                            >
+                            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
                                 {{ section.content.title }}
                             </h2>
-                            <p 
-                                class="text-white/90 mb-6 sm:mb-8 text-sm sm:text-base"
-                                :style="section.content.elementOffsets?.description ? `transform: translateY(${section.content.elementOffsets.description.y}px)` : ''"
-                            >
+                            <p class="text-white/90 mb-6 sm:mb-8 text-sm sm:text-base">
                                 {{ section.content.description }}
                             </p>
                             <a 
                                 :href="section.content.buttonLink || '#'" 
                                 class="inline-block px-6 sm:px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
-                                :style="section.content.elementOffsets?.button ? `transform: translateY(${section.content.elementOffsets.button.y}px)` : ''"
                             >
                                 {{ section.content.buttonText || 'Contact Us' }}
                             </a>

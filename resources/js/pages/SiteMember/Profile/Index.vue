@@ -1,275 +1,144 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import {
-    HomeIcon,
-    UserIcon,
-    ShoppingBagIcon,
-    DocumentTextIcon,
-    UsersIcon,
-    ArrowRightOnRectangleIcon,
-} from '@heroicons/vue/24/outline';
+import { Head, useForm } from '@inertiajs/vue3';
+import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import { ref, computed } from 'vue';
+import { UserIcon, KeyIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
-    site: {
-        id: number;
-        name: string;
-        subdomain: string;
-        logo: string | null;
-        theme: {
-            primaryColor?: string;
-        } | null;
-    };
+    site: { id: number; name: string; subdomain: string; theme: { primaryColor?: string } | null };
+    settings: { navigation?: { logo?: string } } | null;
     user: {
         id: number;
         name: string;
         email: string;
         phone: string | null;
-        role: { name: string; slug: string } | null;
+        avatar: string | null;
+        role: { name: string; slug: string; level: number; type: string; color?: string } | null;
         permissions: string[];
+        created_at: string;
     };
 }
 
 const props = defineProps<Props>();
-const page = usePage();
-
 const primaryColor = computed(() => props.site.theme?.primaryColor || '#2563eb');
-const subdomain = computed(() => props.site.subdomain);
-const success = computed(() => page.props.flash?.success as string | undefined);
+const activeTab = ref<'profile' | 'password'>('profile');
 
-const form = useForm({
+const profileForm = useForm({
     name: props.user.name,
     phone: props.user.phone || '',
+});
+
+const passwordForm = useForm({
     current_password: '',
     new_password: '',
     new_password_confirmation: '',
 });
 
-const hasPermission = (permission: string) => props.user.permissions.includes(permission);
-
-const navigation = computed(() => {
-    const items = [
-        { name: 'Dashboard', href: route('site.member.dashboard', { subdomain: subdomain.value }), icon: HomeIcon },
-        { name: 'Profile', href: route('site.member.profile', { subdomain: subdomain.value }), icon: UserIcon, current: true },
-        { name: 'Orders', href: route('site.member.orders', { subdomain: subdomain.value }), icon: ShoppingBagIcon },
-    ];
-
-    if (hasPermission('posts.view')) {
-        items.push({ name: 'Posts', href: route('site.member.posts.index', { subdomain: subdomain.value }), icon: DocumentTextIcon });
-    }
-
-    if (hasPermission('users.view')) {
-        items.push({ name: 'Users', href: route('site.member.users.index', { subdomain: subdomain.value }), icon: UsersIcon });
-    }
-
-    return items;
-});
-
-const logout = () => {
-    router.post(route('site.logout', { subdomain: subdomain.value }));
+const submitProfile = () => {
+    profileForm.put(`/sites/${props.site.subdomain}/dashboard/profile`);
 };
 
-const submit = () => {
-    form.put(route('site.member.profile.update', { subdomain: subdomain.value }), {
-        onSuccess: () => {
-            form.reset('current_password', 'new_password', 'new_password_confirmation');
-        },
+const submitPassword = () => {
+    passwordForm.put(`/sites/${props.site.subdomain}/dashboard/profile`, {
+        onSuccess: () => passwordForm.reset(),
     });
 };
+
+const userInitials = computed(() => props.user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2));
+const memberSince = computed(() => new Date(props.user.created_at).toLocaleDateString('en-ZM', { year: 'numeric', month: 'long' }));
 </script>
 
 <template>
-    <Head :title="`Profile - ${site.name}`" />
+    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Profile">
+        <Head :title="`Profile - ${site.name}`" />
 
-    <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
-        <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center gap-3">
-                        <img
-                            v-if="site.logo"
-                            :src="site.logo"
-                            :alt="site.name"
-                            class="h-10 w-auto"
-                        />
-                        <div
-                            v-else
-                            class="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold"
-                            :style="{ backgroundColor: primaryColor }"
-                        >
-                            {{ site.name.charAt(0) }}
-                        </div>
-                        <span class="text-xl font-semibold text-gray-900">{{ site.name }}</span>
+        <div class="max-w-3xl mx-auto">
+            <!-- Profile Header -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold" :style="{ backgroundColor: primaryColor }">
+                        {{ userInitials }}
                     </div>
-
-                    <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600">{{ user.name }}</span>
-                        <button
-                            @click="logout"
-                            class="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-                        >
-                            <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
-                            Logout
-                        </button>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">{{ user.name }}</h1>
+                        <p class="text-gray-500">{{ user.email }}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span v-if="user.role" class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                                {{ user.role.name }}
+                            </span>
+                            <span class="text-xs text-gray-400">Member since {{ memberSince }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex gap-8">
-                <!-- Sidebar -->
-                <aside class="w-64 flex-shrink-0">
-                    <nav class="space-y-1">
-                        <Link
-                            v-for="item in navigation"
-                            :key="item.name"
-                            :href="item.href"
-                            class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors"
-                            :class="item.current ? 'text-white' : 'text-gray-700 hover:bg-gray-100'"
-                            :style="item.current ? { backgroundColor: primaryColor } : {}"
+            <!-- Tabs -->
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <nav class="flex">
+                        <button
+                            @click="activeTab = 'profile'"
+                            :class="['flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition', activeTab === 'profile' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
                         >
-                            <component :is="item.icon" class="h-5 w-5" aria-hidden="true" />
-                            {{ item.name }}
-                        </Link>
+                            <UserIcon class="w-5 h-5" aria-hidden="true" />
+                            Profile Info
+                        </button>
+                        <button
+                            @click="activeTab = 'password'"
+                            :class="['flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition', activeTab === 'password' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700']"
+                        >
+                            <KeyIcon class="w-5 h-5" aria-hidden="true" />
+                            Change Password
+                        </button>
                     </nav>
-                </aside>
+                </div>
 
-                <!-- Main Content -->
-                <main class="flex-1">
-                    <div class="mb-8">
-                        <h1 class="text-2xl font-bold text-gray-900">Profile Settings</h1>
-                        <p class="text-gray-600">Manage your account information</p>
+                <!-- Profile Tab -->
+                <form v-show="activeTab === 'profile'" @submit.prevent="submitProfile" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input v-model="profileForm.name" type="text" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                        <p v-if="profileForm.errors.name" class="mt-1 text-sm text-red-600">{{ profileForm.errors.name }}</p>
                     </div>
-
-                    <!-- Success Message -->
-                    <div v-if="success" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p class="text-sm text-green-700">{{ success }}</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input :value="user.email" type="email" disabled class="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500" />
+                        <p class="mt-1 text-xs text-gray-400">Email cannot be changed</p>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input v-model="profileForm.phone" type="tel" placeholder="+260 97X XXX XXX" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" :disabled="profileForm.processing" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            {{ profileForm.processing ? 'Saving...' : 'Save Changes' }}
+                        </button>
+                    </div>
+                </form>
 
-                    <form @submit.prevent="submit" class="space-y-6">
-                        <!-- Basic Info -->
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="name" class="block text-sm font-medium text-gray-700">
-                                        Full name
-                                    </label>
-                                    <input
-                                        id="name"
-                                        v-model="form.name"
-                                        type="text"
-                                        required
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.name }"
-                                    />
-                                    <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.name }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700">
-                                        Email address
-                                    </label>
-                                    <input
-                                        id="email"
-                                        :value="user.email"
-                                        type="email"
-                                        disabled
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">Email cannot be changed</p>
-                                </div>
-
-                                <div>
-                                    <label for="phone" class="block text-sm font-medium text-gray-700">
-                                        Phone number
-                                    </label>
-                                    <input
-                                        id="phone"
-                                        v-model="form.phone"
-                                        type="tel"
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.phone }"
-                                    />
-                                    <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.phone }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Change Password -->
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h2 class="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
-                            <p class="text-sm text-gray-600 mb-4">Leave blank to keep current password</p>
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="current_password" class="block text-sm font-medium text-gray-700">
-                                        Current password
-                                    </label>
-                                    <input
-                                        id="current_password"
-                                        v-model="form.current_password"
-                                        type="password"
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.current_password }"
-                                    />
-                                    <p v-if="form.errors.current_password" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.current_password }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label for="new_password" class="block text-sm font-medium text-gray-700">
-                                        New password
-                                    </label>
-                                    <input
-                                        id="new_password"
-                                        v-model="form.new_password"
-                                        type="password"
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.new_password }"
-                                    />
-                                    <p v-if="form.errors.new_password" class="mt-1 text-sm text-red-600">
-                                        {{ form.errors.new_password }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700">
-                                        Confirm new password
-                                    </label>
-                                    <input
-                                        id="new_password_confirmation"
-                                        v-model="form.new_password_confirmation"
-                                        type="password"
-                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Submit -->
-                        <div class="flex justify-end">
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="px-6 py-2 rounded-lg text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                :style="{ backgroundColor: primaryColor }"
-                            >
-                                <span v-if="form.processing">Saving...</span>
-                                <span v-else>Save Changes</span>
-                            </button>
-                        </div>
-                    </form>
-                </main>
+                <!-- Password Tab -->
+                <form v-show="activeTab === 'password'" @submit.prevent="submitPassword" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                        <input v-model="passwordForm.current_password" type="password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                        <p v-if="passwordForm.errors.current_password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.current_password }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                        <input v-model="passwordForm.new_password" type="password" required minlength="8" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                        <p v-if="passwordForm.errors.new_password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.new_password }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                        <input v-model="passwordForm.new_password_confirmation" type="password" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" :disabled="passwordForm.processing" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                            {{ passwordForm.processing ? 'Updating...' : 'Update Password' }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
+    </SiteMemberLayout>
 </template>

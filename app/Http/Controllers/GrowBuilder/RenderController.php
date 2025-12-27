@@ -63,12 +63,15 @@ class RenderController extends Controller
         $hasEcommerce = GrowBuilderPaymentSettings::where('site_id', $site->getId()->value())->exists();
 
         return view('growbuilder.render', [
+            'subdomain' => $site->getSubdomain()->value(),
             'site' => [
+                'id' => $site->getId()->value(),
                 'name' => $site->getName(),
                 'subdomain' => $site->getSubdomain()->value(),
                 'description' => $site->getDescription(),
                 'logo' => $site->getLogo(),
                 'favicon' => $site->getFavicon(),
+                'favicons' => $site->getSettings()['favicons'] ?? null,
                 'theme' => $site->getTheme()?->toArray() ?? [],
                 'socialLinks' => $site->getSocialLinks(),
                 'contactInfo' => $site->getContactInfo(),

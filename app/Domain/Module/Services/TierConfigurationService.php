@@ -235,7 +235,7 @@ class TierConfigurationService
         $discounts = $this->getApplicableDiscounts($moduleId);
         $displayTiers = [];
 
-        $tierOrder = ['free', 'basic', 'starter', 'professional', 'business', 'premium', 'enterprise'];
+        $tierOrder = ['free', 'member', 'basic', 'starter', 'standard', 'professional', 'business', 'premium', 'ecommerce', 'enterprise'];
         $sortOrder = 0;
 
         foreach ($tierOrder as $tierKey) {

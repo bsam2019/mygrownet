@@ -6,3 +6,4 @@ export { default as ImageEditorModal } from './ImageEditorModal.vue';
 export { default as StockPhotosModal } from './StockPhotosModal.vue';
 export { default as IconPickerModal } from './IconPickerModal.vue';
 export { default as VideoEmbedModal } from './VideoEmbedModal.vue';
+export { default as AIAssistantModal } from './AIAssistantModal.vue';

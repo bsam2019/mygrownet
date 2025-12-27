@@ -14,7 +14,8 @@ import {
     ClipboardDocumentCheckIcon,
     HeartIcon,
     RocketLaunchIcon,
-    ChevronRightIcon
+    ChevronRightIcon,
+    GlobeAltIcon
 } from '@heroicons/vue/24/solid';
 
 interface Module {
@@ -55,7 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 // Filter primary modules
-const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'marketplace', 'grownet', 'lifeplus'];
+const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'growmarket', 'growbuilder', 'grownet', 'lifeplus'];
 const primaryModules = computed(() => {
     return props.modules
         .filter(m => primaryModuleSlugs.includes(m.slug) && m.has_access)
@@ -81,7 +82,8 @@ const getModuleIcon = (slug: string) => {
         'growbiz': ClipboardDocumentCheckIcon,
         'growfinance': BanknotesIcon,
         'bizboost': SparklesIcon,
-        'marketplace': ShoppingCartIcon,
+        'growmarket': ShoppingCartIcon,
+        'growbuilder': GlobeAltIcon,
         'lifeplus': HeartIcon,
     };
     return iconMap[slug] || CubeIcon;
@@ -92,7 +94,8 @@ const getModuleDescription = (slug: string): string => {
         'bizboost': 'Business management & marketing',
         'growfinance': 'Accounting & financial management',
         'growbiz': 'Team & employee management',
-        'marketplace': 'Shop products & services',
+        'growmarket': 'Shop products & services',
+        'growbuilder': 'Build professional websites',
         'grownet': 'Community & referral rewards',
         'lifeplus': 'Health & wellness companion',
     };

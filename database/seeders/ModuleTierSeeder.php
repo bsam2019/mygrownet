@@ -16,6 +16,7 @@ class ModuleTierSeeder extends Seeder
             $this->seedBizBoostTiers();
             $this->seedGrowFinanceTiers();
             $this->seedLifePlusTiers();
+            $this->seedGrowBuilderTiers();
         });
     }
 
@@ -322,6 +323,114 @@ class ModuleTierSeeder extends Seeder
                     ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => true],
                     ['key' => 'advanced_analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => true],
                     ['key' => 'early_access', 'name' => 'Early Access to Features', 'type' => 'boolean', 'value' => true],
+                ],
+            ],
+        ];
+
+        $this->createTiersWithFeatures($moduleId, $tiers);
+    }
+
+    private function seedGrowBuilderTiers(): void
+    {
+        $moduleId = 'growbuilder';
+        
+        $tiers = [
+            [
+                'tier_key' => 'free',
+                'name' => 'Free',
+                'description' => 'Get started with a basic website',
+                'price_monthly' => 0,
+                'price_annual' => 0,
+                'is_default' => true,
+                'sort_order' => 0,
+                'features' => [
+                    ['key' => 'sites', 'name' => 'Websites', 'type' => 'limit', 'limit' => 1],
+                    ['key' => 'pages_per_site', 'name' => 'Pages per Site', 'type' => 'limit', 'limit' => 3],
+                    ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'type' => 'limit', 'limit' => 50],
+                    ['key' => 'custom_domain', 'name' => 'Custom Domain', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'ssl_certificate', 'name' => 'SSL Certificate', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'basic_templates', 'name' => 'Basic Templates', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ai_content', 'name' => 'AI Content Generation', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'contact_forms', 'name' => 'Contact Forms', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'blog', 'name' => 'Blog', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'member_area', 'name' => 'Member Area', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'ecommerce', 'name' => 'E-commerce', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'analytics', 'name' => 'Analytics', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'remove_branding', 'name' => 'Remove Branding', 'type' => 'boolean', 'value' => false],
+                ],
+            ],
+            [
+                'tier_key' => 'member',
+                'name' => 'Member',
+                'description' => 'Free for MyGrowNet members',
+                'price_monthly' => 0,
+                'price_annual' => 0,
+                'sort_order' => 1,
+                'features' => [
+                    ['key' => 'sites', 'name' => 'Websites', 'type' => 'limit', 'limit' => 2],
+                    ['key' => 'pages_per_site', 'name' => 'Pages per Site', 'type' => 'limit', 'limit' => 10],
+                    ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'type' => 'limit', 'limit' => 200],
+                    ['key' => 'custom_domain', 'name' => 'Custom Domain', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ssl_certificate', 'name' => 'SSL Certificate', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'all_templates', 'name' => 'All Templates', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ai_content', 'name' => 'AI Content Generation', 'type' => 'limit', 'limit' => 10],
+                    ['key' => 'contact_forms', 'name' => 'Contact Forms', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'blog', 'name' => 'Blog', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'member_area', 'name' => 'Member Area', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ecommerce', 'name' => 'E-commerce', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'analytics', 'name' => 'Analytics', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'remove_branding', 'name' => 'Remove Branding', 'type' => 'boolean', 'value' => false],
+                ],
+            ],
+            [
+                'tier_key' => 'standard',
+                'name' => 'Standard',
+                'description' => 'Perfect for professionals & small businesses',
+                'price_monthly' => 49,
+                'price_annual' => 490,
+                'sort_order' => 2,
+                'features' => [
+                    ['key' => 'sites', 'name' => 'Websites', 'type' => 'limit', 'limit' => 5],
+                    ['key' => 'pages_per_site', 'name' => 'Pages per Site', 'type' => 'limit', 'limit' => null],
+                    ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'type' => 'limit', 'limit' => 1000],
+                    ['key' => 'custom_domain', 'name' => 'Custom Domain', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ssl_certificate', 'name' => 'SSL Certificate', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'all_templates', 'name' => 'All Templates', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ai_content', 'name' => 'AI Content Generation', 'type' => 'limit', 'limit' => 50],
+                    ['key' => 'contact_forms', 'name' => 'Contact Forms', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'blog', 'name' => 'Blog', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'member_area', 'name' => 'Member Area', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ecommerce', 'name' => 'E-commerce', 'type' => 'boolean', 'value' => false],
+                    ['key' => 'analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'remove_branding', 'name' => 'Remove Branding', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => true],
+                ],
+            ],
+            [
+                'tier_key' => 'ecommerce',
+                'name' => 'E-commerce',
+                'description' => 'Full online store capabilities',
+                'price_monthly' => 99,
+                'price_annual' => 990,
+                'sort_order' => 3,
+                'features' => [
+                    ['key' => 'sites', 'name' => 'Websites', 'type' => 'limit', 'limit' => 10],
+                    ['key' => 'pages_per_site', 'name' => 'Pages per Site', 'type' => 'limit', 'limit' => null],
+                    ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'type' => 'limit', 'limit' => 5000],
+                    ['key' => 'custom_domain', 'name' => 'Custom Domain', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ssl_certificate', 'name' => 'SSL Certificate', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'all_templates', 'name' => 'All Templates', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ai_content', 'name' => 'AI Content Generation', 'type' => 'limit', 'limit' => null],
+                    ['key' => 'contact_forms', 'name' => 'Contact Forms', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'blog', 'name' => 'Blog', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'member_area', 'name' => 'Member Area', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'ecommerce', 'name' => 'E-commerce', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'products', 'name' => 'Products', 'type' => 'limit', 'limit' => null],
+                    ['key' => 'payment_gateways', 'name' => 'Payment Gateways', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'inventory_management', 'name' => 'Inventory Management', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'analytics', 'name' => 'Advanced Analytics', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'remove_branding', 'name' => 'Remove Branding', 'type' => 'boolean', 'value' => true],
+                    ['key' => 'priority_support', 'name' => 'Priority Support', 'type' => 'boolean', 'value' => true],
                 ],
             ],
         ];

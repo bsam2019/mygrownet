@@ -85,7 +85,7 @@ onMounted(() => {
                             <BuildingStorefrontIcon class="size-6 text-white" aria-hidden="true" />
                         </div>
                         <div class="hidden sm:flex flex-col">
-                            <span class="text-lg font-bold text-gray-900 leading-tight">Marketplace</span>
+                            <span class="text-lg font-bold text-gray-900 leading-tight">GrowMarket</span>
                             <span class="text-[10px] text-gray-500 leading-tight">Trust-First Shopping</span>
                         </div>
                     </Link>
@@ -377,7 +377,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-                    <p>&copy; {{ new Date().getFullYear() }} MyGrowNet Marketplace. All rights reserved.</p>
+                    <p>&copy; {{ new Date().getFullYear() }} GrowMarket. All rights reserved.</p>
                 </div>
             </div>
         </footer>

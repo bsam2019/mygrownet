@@ -30,7 +30,9 @@ import {
     Mail as MailIcon,
     Send as SendIcon,
     Ticket as TicketIcon,
-    MessageCircle as LiveChatIcon
+    MessageCircle as LiveChatIcon,
+    Globe,
+    Trash2
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -114,6 +116,12 @@ const bgfNavItems: NavItem[] = [
     { title: 'Evaluations', href: safeRoute('admin.bgf.evaluations.index'), icon: Target },
     { title: 'Contracts', href: safeRoute('admin.bgf.contracts.index'), icon: FileText },
     { title: 'Analytics', href: safeRoute('admin.bgf.analytics'), icon: ChartBarIcon },
+];
+
+const growBuilderNavItems: NavItem[] = [
+    { title: 'All Sites', href: safeRoute('admin.growbuilder.index'), icon: Globe },
+    { title: 'Deleted Sites', href: safeRoute('admin.growbuilder.deleted'), icon: Trash2 },
+    { title: 'Analytics', href: safeRoute('admin.growbuilder.analytics'), icon: ChartBarIcon },
 ];
 
 const reportsNavItems: NavItem[] = [
@@ -487,6 +495,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.bgf" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in bgfNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- GrowBuilder Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('growBuilder')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'GrowBuilder')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <Globe class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowBuilder</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.growBuilder }" />
+                    </button>
+
+                    <div v-if="showSubmenu.growBuilder" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in growBuilderNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

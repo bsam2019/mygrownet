@@ -306,6 +306,11 @@ class EditorController extends Controller
             
             if (isset($validated['navigation'])) {
                 $currentSettings['navigation'] = $validated['navigation'];
+                
+                // Sync navigation logo to site.logo for Settings page compatibility
+                if (isset($validated['navigation']['logo'])) {
+                    $site->updateLogo($validated['navigation']['logo']);
+                }
             }
             
             if (isset($validated['footer'])) {

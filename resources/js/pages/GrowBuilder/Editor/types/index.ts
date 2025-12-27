@@ -39,6 +39,10 @@ export interface Page {
     isPublished: boolean;
     showInNav: boolean;
     navOrder: number;
+    // SEO fields
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImage?: string;
 }
 
 export interface Site {

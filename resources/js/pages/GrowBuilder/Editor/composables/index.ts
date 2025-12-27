@@ -8,3 +8,4 @@ export { useTemplates } from './useTemplates';
 export { useHistory } from './useHistory';
 export { useAutoSave } from './useAutoSave';
 export { useToast } from './useToast';
+export { useAI, languageOptions, toneOptions, styleOptions, businessTypeOptions } from './useAI';

@@ -18,12 +18,19 @@ class SiteRole extends Model
         'description',
         'is_system',
         'level',
+        'type',
+        'icon',
+        'color',
     ];
 
     protected $casts = [
         'is_system' => 'boolean',
         'level' => 'integer',
     ];
+
+    // Constants
+    public const TYPE_STAFF = 'staff';
+    public const TYPE_CLIENT = 'client';
 
     // Relationships
     public function site(): BelongsTo
@@ -57,7 +64,26 @@ class SiteRole extends Model
         return $query->where('is_system', true);
     }
 
+    public function scopeStaff($query)
+    {
+        return $query->where('type', self::TYPE_STAFF);
+    }
+
+    public function scopeClient($query)
+    {
+        return $query->where('type', self::TYPE_CLIENT);
+    }
+
     // Helper methods
+    public function isStaff(): bool
+    {
+        return $this->type === self::TYPE_STAFF;
+    }
+
+    public function isClient(): bool
+    {
+        return $this->type === self::TYPE_CLIENT;
+    }
     public function hasPermission(string $permission): bool
     {
         // Admin role (level 100) has all permissions

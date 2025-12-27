@@ -461,6 +461,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{source}/{id}/live-chat', [App\Http\Controllers\Admin\UnifiedSupportController::class, 'liveChat'])->name('live-chat');
     });
 
+    // Admin GrowBuilder Management Routes
+    Route::middleware(['admin'])->prefix('admin/growbuilder')->name('admin.growbuilder.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\GrowBuilderController::class, 'index'])->name('index');
+        Route::get('/deleted', [App\Http\Controllers\Admin\GrowBuilderController::class, 'deleted'])->name('deleted');
+        Route::get('/analytics', [App\Http\Controllers\Admin\GrowBuilderController::class, 'analytics'])->name('analytics');
+        Route::post('/{id}/restore', [App\Http\Controllers\Admin\GrowBuilderController::class, 'restore'])->name('restore');
+        Route::post('/{id}/toggle-publish', [App\Http\Controllers\Admin\GrowBuilderController::class, 'togglePublish'])->name('toggle-publish');
+        Route::delete('/{id}/force-delete', [App\Http\Controllers\Admin\GrowBuilderController::class, 'forceDelete'])->name('force-delete');
+    });
+
     // Admin Starter Kit Management Routes
     Route::middleware(['admin'])->prefix('admin/starter-kit')->name('admin.starter-kit.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\StarterKitAdminController::class, 'dashboard'])->name('dashboard');

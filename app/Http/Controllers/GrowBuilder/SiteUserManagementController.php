@@ -45,6 +45,7 @@ class SiteUserManagementController extends Controller
 
         return Inertia::render('SiteMember/Users/Index', [
             'site' => $this->getSiteData($site),
+            'settings' => $site->settings,
             'user' => $this->getUserData($user),
             'users' => $users,
             'roles' => $roles,
@@ -68,6 +69,7 @@ class SiteUserManagementController extends Controller
 
         return Inertia::render('SiteMember/Users/Show', [
             'site' => $this->getSiteData($site),
+            'settings' => $site->settings,
             'user' => $this->getUserData($user),
             'targetUser' => [
                 'id' => $targetUser->id,
@@ -197,11 +199,14 @@ class SiteUserManagementController extends Controller
 
     protected function getSiteData($site): array
     {
+        $settings = $site->settings ?? [];
+        $logo = $settings['navigation']['logo'] ?? $site->logo ?? null;
+        
         return [
             'id' => $site->id,
             'name' => $site->name,
             'subdomain' => $site->subdomain,
-            'logo' => $site->logo,
+            'logo' => $logo,
             'theme' => $site->theme,
         ];
     }
@@ -216,6 +221,8 @@ class SiteUserManagementController extends Controller
                 'name' => $user->role->name,
                 'slug' => $user->role->slug,
                 'level' => $user->role->level,
+                'type' => $user->role->type ?? 'client',
+                'color' => $user->role->color,
             ] : null,
             'permissions' => $user->role 
                 ? $user->role->permissions->pluck('slug')->toArray() 

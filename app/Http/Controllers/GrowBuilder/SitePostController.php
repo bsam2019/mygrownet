@@ -35,6 +35,7 @@ class SitePostController extends Controller
 
         return Inertia::render('SiteMember/Posts/Index', [
             'site' => $this->getSiteData($site),
+            'settings' => $site->settings,
             'user' => $this->getUserData($user),
             'posts' => $posts,
             'filters' => $request->only(['status']),
@@ -55,6 +56,7 @@ class SitePostController extends Controller
 
         return Inertia::render('SiteMember/Posts/Create', [
             'site' => $this->getSiteData($site),
+            'settings' => $site->settings,
             'user' => $this->getUserData($user),
             'categories' => $categories,
         ]);
@@ -70,34 +72,32 @@ class SitePostController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:500',
             'featured_image' => 'nullable|string',
-            'status' => 'required|in:draft,published,scheduled',
-            'visibility' => 'required|in:public,members,private',
-            'scheduled_at' => 'nullable|date|after:now',
-            'categories' => 'nullable|array',
-            'comments_enabled' => 'boolean',
+            'status' => 'required|in:draft,published',
+            'meta_title' => 'nullable|string|max:60',
+            'meta_description' => 'nullable|string|max:160',
         ]);
+
+        $slug = $request->slug ?: SitePost::generateSlug($request->title, $site->id);
 
         $post = SitePost::create([
             'site_id' => $site->id,
             'author_id' => $user->id,
             'title' => $request->title,
-            'slug' => SitePost::generateSlug($request->title, $site->id),
+            'slug' => $slug,
             'content' => $request->content,
             'excerpt' => $request->excerpt,
             'featured_image' => $request->featured_image,
             'status' => $request->status,
-            'visibility' => $request->visibility,
+            'visibility' => 'public',
             'published_at' => $request->status === 'published' ? now() : null,
-            'scheduled_at' => $request->scheduled_at,
-            'comments_enabled' => $request->comments_enabled ?? true,
+            'meta_title' => $request->meta_title,
+            'meta_description' => $request->meta_description,
+            'comments_enabled' => true,
         ]);
-
-        if ($request->filled('categories')) {
-            $post->categories()->sync($request->categories);
-        }
 
         return redirect()
             ->route('site.member.posts.index', ['subdomain' => $subdomain])
@@ -120,6 +120,7 @@ class SitePostController extends Controller
 
         return Inertia::render('SiteMember/Posts/Edit', [
             'site' => $this->getSiteData($site),
+            'settings' => $site->settings,
             'user' => $this->getUserData($user),
             'post' => $post->load('categories'),
             'categories' => $categories,
@@ -138,36 +139,32 @@ class SitePostController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255',
             'content' => 'required|string',
             'excerpt' => 'nullable|string|max:500',
             'featured_image' => 'nullable|string',
-            'status' => 'required|in:draft,published,scheduled,archived',
-            'visibility' => 'required|in:public,members,private',
-            'scheduled_at' => 'nullable|date',
-            'categories' => 'nullable|array',
-            'comments_enabled' => 'boolean',
+            'status' => 'required|in:draft,published',
+            'meta_title' => 'nullable|string|max:60',
+            'meta_description' => 'nullable|string|max:160',
         ]);
+
+        $slug = $request->slug ?: $post->slug;
 
         $post->update([
             'title' => $request->title,
-            'slug' => SitePost::generateSlug($request->title, $site->id, $post->id),
+            'slug' => $slug,
             'content' => $request->content,
             'excerpt' => $request->excerpt,
             'featured_image' => $request->featured_image,
             'status' => $request->status,
-            'visibility' => $request->visibility,
             'published_at' => $request->status === 'published' && !$post->published_at 
                 ? now() 
                 : $post->published_at,
-            'scheduled_at' => $request->scheduled_at,
-            'comments_enabled' => $request->comments_enabled ?? true,
+            'meta_title' => $request->meta_title,
+            'meta_description' => $request->meta_description,
         ]);
 
-        $post->categories()->sync($request->categories ?? []);
-
-        return redirect()
-            ->route('site.member.posts.index', ['subdomain' => $subdomain])
-            ->with('success', 'Post updated successfully.');
+        return back()->with('success', 'Post updated successfully.');
     }
 
     /**
@@ -203,11 +200,14 @@ class SitePostController extends Controller
 
     protected function getSiteData($site): array
     {
+        $settings = $site->settings ?? [];
+        $logo = $settings['navigation']['logo'] ?? $site->logo ?? null;
+        
         return [
             'id' => $site->id,
             'name' => $site->name,
             'subdomain' => $site->subdomain,
-            'logo' => $site->logo,
+            'logo' => $logo,
             'theme' => $site->theme,
         ];
     }
@@ -221,6 +221,9 @@ class SitePostController extends Controller
             'role' => $user->role ? [
                 'name' => $user->role->name,
                 'slug' => $user->role->slug,
+                'level' => $user->role->level,
+                'type' => $user->role->type ?? 'client',
+                'color' => $user->role->color,
             ] : null,
             'permissions' => $user->role 
                 ? $user->role->permissions->pluck('slug')->toArray() 

@@ -29,6 +29,7 @@ const props = defineProps<{
     sectionType: SectionType | null;
     activeTab: 'content' | 'style' | 'advanced';
     darkMode?: boolean;
+    subdomain?: string;
 }>();
 
 const emit = defineEmits<{
@@ -164,9 +165,9 @@ const getIconComponent = (iconName: string) => {
 </script>
 
 <template>
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full min-h-0">
         <!-- Inspector Tabs -->
-        <div class="flex border-b border-gray-200">
+        <div class="flex border-b border-gray-200 flex-shrink-0">
             <button
                 @click="emit('update:activeTab', 'content')"
                 :class="['flex-1 py-2.5 text-sm font-medium transition-colors border-b-2', activeTab === 'content' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']"
@@ -1011,6 +1012,13 @@ const getIconComponent = (iconName: string) => {
 
                 <!-- Blog Section Content -->
                 <template v-else-if="section.type === 'blog'">
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <p class="text-sm text-blue-700">
+                            <strong>Dynamic Blog:</strong> Posts from your dashboard appear here automatically.
+                        </p>
+                    </div>
+                    
+                    <!-- Basic Settings -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                         <input
@@ -1020,23 +1028,163 @@ const getIconComponent = (iconName: string) => {
                         />
                     </div>
                     <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Blog Posts</label>
-                            <button @click="emit('addBlogPost')" class="text-xs text-blue-600 hover:text-blue-700">+ Add Post</button>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                            :value="section.content.description"
+                            @input="updateContent('description', ($event.target as HTMLTextAreaElement).value)"
+                            rows="2"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                            placeholder="Latest news and updates"
+                        ></textarea>
+                    </div>
+                    
+                    <!-- Layout Options -->
+                    <div class="pt-3 border-t border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Layout Style</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button
+                                @click="updateContent('layout', 'grid')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.layout === 'grid' || !section.content.layout ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Grid</button>
+                            <button
+                                @click="updateContent('layout', 'list')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.layout === 'list' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >List</button>
+                            <button
+                                @click="updateContent('layout', 'featured')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.layout === 'featured' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Featured</button>
                         </div>
-                        <div class="space-y-3">
-                            <div v-for="(post, idx) in section.content.posts || []" :key="idx" class="p-3 bg-gray-50 rounded-lg">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-medium text-gray-500">Post {{ idx + 1 }}</span>
-                                    <button @click="emit('removeBlogPost', idx)" class="p-1 hover:bg-red-100 rounded">
-                                        <TrashIcon class="w-3.5 h-3.5 text-red-500" aria-hidden="true" />
-                                    </button>
-                                </div>
-                                <input v-model="post.title" placeholder="Post Title" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 text-gray-900" />
-                                <input v-model="post.date" type="date" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2 text-gray-900" />
-                                <textarea v-model="post.excerpt" placeholder="Excerpt" rows="2" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-gray-900"></textarea>
-                            </div>
+                    </div>
+                    
+                    <div v-if="section.content.layout === 'grid' || !section.content.layout">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Columns</label>
+                        <select
+                            :value="section.content.columns || 3"
+                            @change="updateContent('columns', parseInt(($event.target as HTMLSelectElement).value))"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        >
+                            <option :value="2">2 columns</option>
+                            <option :value="3">3 columns</option>
+                            <option :value="4">4 columns</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Posts to Show</label>
+                        <select
+                            :value="section.content.postsCount || 6"
+                            @change="updateContent('postsCount', parseInt(($event.target as HTMLSelectElement).value))"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        >
+                            <option :value="3">3 posts</option>
+                            <option :value="6">6 posts</option>
+                            <option :value="9">9 posts</option>
+                            <option :value="12">12 posts</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Card Style -->
+                    <div class="pt-3 border-t border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Card Style</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                @click="updateContent('cardStyle', 'bordered')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.cardStyle === 'bordered' || !section.content.cardStyle ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Bordered</button>
+                            <button
+                                @click="updateContent('cardStyle', 'shadow')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.cardStyle === 'shadow' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Shadow</button>
+                            <button
+                                @click="updateContent('cardStyle', 'minimal')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.cardStyle === 'minimal' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Minimal</button>
+                            <button
+                                @click="updateContent('cardStyle', 'filled')"
+                                :class="['p-2 border rounded-lg text-xs', section.content.cardStyle === 'filled' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600']"
+                            >Filled</button>
                         </div>
+                    </div>
+                    
+                    <!-- Card Colors -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Card Background</label>
+                            <input
+                                type="color"
+                                :value="section.content.cardBackgroundColor || '#ffffff'"
+                                @input="updateContent('cardBackgroundColor', ($event.target as HTMLInputElement).value)"
+                                class="w-full h-8 rounded border border-gray-300 cursor-pointer"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Card Text</label>
+                            <input
+                                type="color"
+                                :value="section.content.cardTextColor || '#111827'"
+                                @input="updateContent('cardTextColor', ($event.target as HTMLInputElement).value)"
+                                class="w-full h-8 rounded border border-gray-300 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                    
+                    <!-- Display Options -->
+                    <div class="pt-3 border-t border-gray-200 space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Display Options</label>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" :checked="section.content.showImage !== false" @change="updateContent('showImage', ($event.target as HTMLInputElement).checked)" id="blogShowImage" class="rounded border-gray-300" />
+                            <label for="blogShowImage" class="text-sm text-gray-700">Show featured image</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" :checked="section.content.showDate !== false" @change="updateContent('showDate', ($event.target as HTMLInputElement).checked)" id="blogShowDate" class="rounded border-gray-300" />
+                            <label for="blogShowDate" class="text-sm text-gray-700">Show date</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" :checked="section.content.showExcerpt !== false" @change="updateContent('showExcerpt', ($event.target as HTMLInputElement).checked)" id="blogShowExcerpt" class="rounded border-gray-300" />
+                            <label for="blogShowExcerpt" class="text-sm text-gray-700">Show excerpt</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" :checked="section.content.showViewAll !== false" @change="updateContent('showViewAll', ($event.target as HTMLInputElement).checked)" id="blogShowViewAll" class="rounded border-gray-300" />
+                            <label for="blogShowViewAll" class="text-sm text-gray-700">Show "View All" button</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Button Style -->
+                    <div v-if="section.content.showViewAll !== false">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Button Style</label>
+                        <select
+                            :value="section.content.buttonStyle || 'filled'"
+                            @change="updateContent('buttonStyle', ($event.target as HTMLSelectElement).value)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        >
+                            <option value="filled">Filled</option>
+                            <option value="outline">Outline</option>
+                            <option value="text">Text only</option>
+                        </select>
+                    </div>
+                    
+                    <div v-if="section.content.showViewAll !== false">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                        <input
+                            :value="section.content.viewAllText || 'View All Posts'"
+                            @input="updateContent('viewAllText', ($event.target as HTMLInputElement).value)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                        />
+                    </div>
+                    
+                    <!-- Dashboard Link -->
+                    <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p class="text-xs text-gray-600 mb-2">
+                            <strong>Manage Posts:</strong> Create and edit blog posts from your dashboard.
+                        </p>
+                        <a
+                            :href="`/sites/${subdomain}/dashboard/posts`"
+                            target="_blank"
+                            class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                        >
+                            Open Posts Dashboard →
+                        </a>
                     </div>
                 </template>
 
@@ -1206,6 +1354,114 @@ const getIconComponent = (iconName: string) => {
                         </div>
                     </div>
                     <p class="text-xs text-gray-400 mt-1">Drag the bottom edge of a section to resize, or use the slider</p>
+                </div>
+
+                <!-- Content Alignment -->
+                <div class="border-t border-gray-200 pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Content Alignment</label>
+                    <div class="space-y-3">
+                        <!-- Horizontal Alignment -->
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Horizontal</label>
+                            <div class="flex gap-2">
+                                <button
+                                    @click="updateContent('textPosition', 'left'); updateStyle('textAlign', 'left')"
+                                    :class="[
+                                        'flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors',
+                                        (section.content?.textPosition === 'left' || section.style?.textAlign === 'left')
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                    title="Align Left"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" />
+                                    </svg>
+                                    Left
+                                </button>
+                                <button
+                                    @click="updateContent('textPosition', 'center'); updateStyle('textAlign', 'center')"
+                                    :class="[
+                                        'flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors',
+                                        (!section.content?.textPosition && !section.style?.textAlign) || section.content?.textPosition === 'center' || section.style?.textAlign === 'center'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                    title="Align Center"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" />
+                                    </svg>
+                                    Center
+                                </button>
+                                <button
+                                    @click="updateContent('textPosition', 'right'); updateStyle('textAlign', 'right')"
+                                    :class="[
+                                        'flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors',
+                                        (section.content?.textPosition === 'right' || section.style?.textAlign === 'right')
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                    title="Align Right"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14" />
+                                    </svg>
+                                    Right
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Items Layout (for sections with multiple items) -->
+                        <div v-if="['services', 'features', 'testimonials', 'team', 'stats', 'pricing', 'gallery'].includes(section.type)">
+                            <label class="block text-xs text-gray-500 mb-1">Items Layout</label>
+                            <div class="flex gap-2">
+                                <button
+                                    @click="updateStyle('itemsAlign', 'start')"
+                                    :class="[
+                                        'flex-1 px-3 py-2 rounded-lg border-2 text-xs font-medium transition-colors',
+                                        section.style?.itemsAlign === 'start'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                >
+                                    Start
+                                </button>
+                                <button
+                                    @click="updateStyle('itemsAlign', 'center')"
+                                    :class="[
+                                        'flex-1 px-3 py-2 rounded-lg border-2 text-xs font-medium transition-colors',
+                                        (!section.style?.itemsAlign || section.style?.itemsAlign === 'center')
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                >
+                                    Center
+                                </button>
+                                <button
+                                    @click="updateStyle('itemsAlign', 'end')"
+                                    :class="[
+                                        'flex-1 px-3 py-2 rounded-lg border-2 text-xs font-medium transition-colors',
+                                        section.style?.itemsAlign === 'end'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                >
+                                    End
+                                </button>
+                                <button
+                                    @click="updateStyle('itemsAlign', 'stretch')"
+                                    :class="[
+                                        'flex-1 px-3 py-2 rounded-lg border-2 text-xs font-medium transition-colors',
+                                        section.style?.itemsAlign === 'stretch'
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                    ]"
+                                >
+                                    Stretch
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Background Type Toggle -->

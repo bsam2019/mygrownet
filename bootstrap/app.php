@@ -55,6 +55,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'bizboost.subscription' => \App\Http\Middleware\CheckBizBoostSubscription::class,
             'delegated' => \App\Http\Middleware\CheckDelegatedPermission::class,
             'inject.delegated.nav' => \App\Http\Middleware\InjectDelegatedNavigation::class,
+            // GrowBuilder site user middleware
+            'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
+            'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group
