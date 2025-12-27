@@ -32,7 +32,8 @@ import {
     Ticket as TicketIcon,
     MessageCircle as LiveChatIcon,
     Globe,
-    Trash2
+    Trash2,
+    HardDrive as HardDriveIcon
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -121,6 +122,7 @@ const bgfNavItems: NavItem[] = [
 const growBuilderNavItems: NavItem[] = [
     { title: 'All Sites', href: safeRoute('admin.growbuilder.index'), icon: Globe },
     { title: 'Deleted Sites', href: safeRoute('admin.growbuilder.deleted'), icon: Trash2 },
+    { title: 'Storage', href: safeRoute('admin.growbuilder.storage'), icon: HardDriveIcon },
     { title: 'Analytics', href: safeRoute('admin.growbuilder.analytics'), icon: ChartBarIcon },
 ];
 

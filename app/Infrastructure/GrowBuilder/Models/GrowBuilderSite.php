@@ -31,6 +31,9 @@ class GrowBuilderSite extends Model
         'seo_settings',
         'status',
         'plan',
+        'storage_used',
+        'storage_limit',
+        'storage_calculated_at',
         'published_at',
         'plan_expires_at',
         'scheduled_deletion_at',
@@ -47,6 +50,9 @@ class GrowBuilderSite extends Model
         'published_at' => 'datetime',
         'plan_expires_at' => 'datetime',
         'scheduled_deletion_at' => 'datetime',
+        'storage_calculated_at' => 'datetime',
+        'storage_used' => 'integer',
+        'storage_limit' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -131,5 +137,57 @@ class GrowBuilderSite extends Model
             return false;
         }
         return $this->plan_expires_at->isPast();
+    }
+
+    public function getStoragePercentageAttribute(): float
+    {
+        if ($this->storage_limit <= 0) {
+            return 100;
+        }
+        return min(100, round(($this->storage_used / $this->storage_limit) * 100, 2));
+    }
+
+    public function getStorageUsedFormattedAttribute(): string
+    {
+        return $this->formatBytes($this->storage_used ?? 0);
+    }
+
+    public function getStorageLimitFormattedAttribute(): string
+    {
+        return $this->formatBytes($this->storage_limit ?? 0);
+    }
+
+    public function getRemainingStorageAttribute(): int
+    {
+        return max(0, ($this->storage_limit ?? 0) - ($this->storage_used ?? 0));
+    }
+
+    public function getRemainingStorageFormattedAttribute(): string
+    {
+        return $this->formatBytes($this->remaining_storage);
+    }
+
+    public function isStorageNearLimit(): bool
+    {
+        return $this->storage_percentage >= 80;
+    }
+
+    public function isStorageOverLimit(): bool
+    {
+        return ($this->storage_used ?? 0) > ($this->storage_limit ?? 0);
+    }
+
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+
+        $pow = floor(log($bytes) / log(1024));
+        $pow = min($pow, count($units) - 1);
+
+        return round($bytes / pow(1024, $pow), $precision) . ' ' . $units[$pow];
     }
 }

@@ -6,7 +6,9 @@ use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderMedia;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use App\Services\GrowBuilder\ImageOptimizationService;
+use App\Services\GrowBuilder\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -16,6 +18,7 @@ class MediaController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private StorageService $storageService,
     ) {}
     
     /**
@@ -81,6 +84,21 @@ class MediaController extends Controller
         ]);
 
         $file = $request->file('file');
+        
+        // Check storage limit before upload
+        $siteModel = GrowBuilderSite::find($siteId);
+        if ($siteModel && !$this->storageService->hasAvailableStorage($siteModel, $file->getSize())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Storage limit exceeded. Please delete some files or upgrade your plan.',
+                'storage' => [
+                    'used' => $siteModel->storage_used_formatted,
+                    'limit' => $siteModel->storage_limit_formatted,
+                    'percentage' => $siteModel->storage_percentage,
+                ],
+            ], 422);
+        }
+        
         $shouldOptimize = $request->boolean('optimize', true);
         $directory = "growbuilder/{$siteId}";
         
@@ -115,6 +133,11 @@ class MediaController extends Controller
                             'webp_saved_percent' => $result['savings']['webp_saved_percent'],
                         ],
                     ]);
+
+                    // Update storage usage
+                    if ($siteModel) {
+                        $this->storageService->updateStorageUsage($siteModel);
+                    }
 
                     return response()->json([
                         'success' => true,
@@ -192,6 +215,12 @@ class MediaController extends Controller
             'variants' => $variants,
         ]);
 
+        // Update storage usage
+        $siteModel = GrowBuilderSite::find($siteId);
+        if ($siteModel) {
+            $this->storageService->updateStorageUsage($siteModel);
+        }
+
         return response()->json([
             'success' => true,
             'media' => [
@@ -229,6 +258,12 @@ class MediaController extends Controller
         }
 
         $media->delete();
+
+        // Update storage usage after deletion
+        $siteModel = GrowBuilderSite::find($siteId);
+        if ($siteModel) {
+            $this->storageService->updateStorageUsage($siteModel);
+        }
 
         return response()->json(['success' => true]);
     }

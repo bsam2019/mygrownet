@@ -31,6 +31,11 @@ interface Site {
     ordersCount?: number;
     revenue?: number;
     thumbnail?: string;
+    storageUsed?: number;
+    storageLimit?: number;
+    storageUsedFormatted?: string;
+    storageLimitFormatted?: string;
+    storagePercentage?: number;
 }
 
 interface Stats {
@@ -332,6 +337,29 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                                 <div class="flex items-center gap-1">
                                     <ClockIcon class="h-3.5 w-3.5" aria-hidden="true" />
                                     Created {{ formatDate(site.createdAt) }}
+                                </div>
+                            </div>
+                            
+                            <!-- Storage Usage -->
+                            <div v-if="site.storageUsed !== undefined" class="mt-3 pt-3 border-t border-gray-100">
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="text-gray-500">Storage</span>
+                                    <span :class="[
+                                        (site.storagePercentage || 0) >= 90 ? 'text-red-600' : 
+                                        (site.storagePercentage || 0) >= 80 ? 'text-yellow-600' : 'text-gray-600'
+                                    ]">
+                                        {{ site.storageUsedFormatted }} / {{ site.storageLimitFormatted }}
+                                    </span>
+                                </div>
+                                <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                        :class="[
+                                            'h-full rounded-full transition-all',
+                                            (site.storagePercentage || 0) >= 90 ? 'bg-red-500' : 
+                                            (site.storagePercentage || 0) >= 80 ? 'bg-yellow-500' : 'bg-blue-500'
+                                        ]"
+                                        :style="{ width: Math.min(site.storagePercentage || 0, 100) + '%' }"
+                                    ></div>
                                 </div>
                             </div>
                         </div>

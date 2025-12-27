@@ -101,6 +101,17 @@ class SiteController extends Controller
                 $siteArray['pageViews'] = $pageViews[$siteId] ?? 0;
                 $siteArray['ordersCount'] = $orders[$siteId]->count ?? 0;
                 $siteArray['revenue'] = $orders[$siteId]->revenue ?? 0;
+                
+                // Add storage info from the model
+                $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+                if ($siteModel) {
+                    $siteArray['storageUsed'] = $siteModel->storage_used ?? 0;
+                    $siteArray['storageLimit'] = $siteModel->storage_limit ?? 104857600;
+                    $siteArray['storageUsedFormatted'] = $siteModel->storage_used_formatted;
+                    $siteArray['storageLimitFormatted'] = $siteModel->storage_limit_formatted;
+                    $siteArray['storagePercentage'] = $siteModel->storage_percentage;
+                }
+                
                 return $siteArray;
             }),
             'stats' => $stats,

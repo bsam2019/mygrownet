@@ -9,10 +9,16 @@ interface Site {
     name: string;
     subdomain: string;
     status: string;
+    plan: string;
     published_at: string | null;
     created_at: string;
     updated_at: string;
     user: { id: number; name: string; email: string } | null;
+    storage_used?: number;
+    storage_limit?: number;
+    storage_used_formatted?: string;
+    storage_limit_formatted?: string;
+    storage_percentage?: number;
 }
 
 interface Props {
@@ -23,6 +29,12 @@ interface Props {
         last_page: number;
     };
     stats: { total: number; published: number; draft: number; deleted: number };
+    storageStats?: {
+        total_used_formatted: string;
+        total_allocated_formatted: string;
+        sites_over_limit: number;
+        sites_near_limit: number;
+    };
     filters: { search?: string; status?: string };
 }
 
@@ -64,7 +76,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', 
                 <p class="text-gray-600 dark:text-gray-400 mt-1">Manage all GrowBuilder sites across the platform</p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</div>
                     <div class="text-sm text-gray-500">Total Sites</div>
@@ -80,6 +92,14 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', 
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div class="text-2xl font-bold text-red-600">{{ stats.deleted }}</div>
                     <div class="text-sm text-gray-500">Deleted</div>
+                </div>
+                <div v-if="storageStats" class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-blue-600">{{ storageStats.total_used_formatted }}</div>
+                    <div class="text-sm text-gray-500">Storage Used</div>
+                </div>
+                <div v-if="storageStats" class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div class="text-2xl font-bold text-orange-600">{{ storageStats.sites_over_limit + storageStats.sites_near_limit }}</div>
+                    <div class="text-sm text-gray-500">Storage Alerts</div>
                 </div>
             </div>
 

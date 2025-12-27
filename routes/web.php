@@ -466,9 +466,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\GrowBuilderController::class, 'index'])->name('index');
         Route::get('/deleted', [App\Http\Controllers\Admin\GrowBuilderController::class, 'deleted'])->name('deleted');
         Route::get('/analytics', [App\Http\Controllers\Admin\GrowBuilderController::class, 'analytics'])->name('analytics');
+        Route::get('/storage', [App\Http\Controllers\Admin\GrowBuilderController::class, 'storage'])->name('storage');
         Route::post('/{id}/restore', [App\Http\Controllers\Admin\GrowBuilderController::class, 'restore'])->name('restore');
         Route::post('/{id}/toggle-publish', [App\Http\Controllers\Admin\GrowBuilderController::class, 'togglePublish'])->name('toggle-publish');
         Route::delete('/{id}/force-delete', [App\Http\Controllers\Admin\GrowBuilderController::class, 'forceDelete'])->name('force-delete');
+        Route::put('/{id}/storage-limit', [App\Http\Controllers\Admin\GrowBuilderController::class, 'updateStorageLimit'])->name('update-storage-limit');
+        Route::post('/{id}/recalculate-storage', [App\Http\Controllers\Admin\GrowBuilderController::class, 'recalculateStorage'])->name('recalculate-storage');
+        Route::post('/recalculate-all-storage', [App\Http\Controllers\Admin\GrowBuilderController::class, 'recalculateAllStorage'])->name('recalculate-all-storage');
     });
 
     // Admin Starter Kit Management Routes
