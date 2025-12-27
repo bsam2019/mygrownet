@@ -124,8 +124,8 @@ class ModuleSeeder extends Seeder
                 'required_roles' => null,
                 'min_user_level' => null,
                 'routes' => json_encode([
-                    'integrated' => '/marketplace',
-                    'standalone' => '/marketplace',
+                    'integrated' => '/growmarket',
+                    'standalone' => '/growmarket',
                 ]),
                 'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => false]),
                 'features' => json_encode(['notifications' => true, 'offline' => false]),

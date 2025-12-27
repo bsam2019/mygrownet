@@ -256,7 +256,7 @@
             Join Now
           </a>
           <a
-            href="/marketplace"
+            href="/growmarket"
             class="inline-flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
           >
             Browse Marketplace

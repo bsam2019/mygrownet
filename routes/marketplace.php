@@ -20,7 +20,7 @@ use App\Http\Controllers\Marketplace\SellerOrderController;
 */
 
 // Public routes (no auth required)
-Route::prefix('marketplace')->name('marketplace.')->middleware('marketplace.data')->group(function () {
+Route::prefix('growmarket')->name('marketplace.')->middleware('marketplace.data')->group(function () {
     
     // Home & Browse
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -48,7 +48,7 @@ Route::prefix('marketplace')->name('marketplace.')->middleware('marketplace.data
 
 // Authenticated buyer routes
 Route::middleware(['auth', 'verified', 'marketplace.data'])
-    ->prefix('marketplace')
+    ->prefix('growmarket')
     ->name('marketplace.')
     ->group(function () {
         
@@ -71,13 +71,13 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
     });
 
 // Public seller landing page (no auth required)
-Route::prefix('marketplace/seller')->name('marketplace.seller.')->middleware('marketplace.data')->group(function () {
+Route::prefix('growmarket/seller')->name('marketplace.seller.')->middleware('marketplace.data')->group(function () {
     Route::get('/join', [SellerDashboardController::class, 'join'])->name('join');
 });
 
 // Seller routes (auth required)
 Route::middleware(['auth', 'verified', 'marketplace.data'])
-    ->prefix('marketplace/seller')
+    ->prefix('growmarket/seller')
     ->name('marketplace.seller.')
     ->group(function () {
         
