@@ -71,10 +71,10 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::post('/media/{siteId}', [MediaController::class, 'store'])->name('media.store');
     Route::delete('/media/{siteId}/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
 
-    // Media
-    Route::get('/sites/{siteId}/media', [MediaController::class, 'index'])->name('media.index');
-    Route::post('/sites/{siteId}/media', [MediaController::class, 'store'])->name('media.store');
-    Route::delete('/sites/{siteId}/media/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
+    // Media (alternative URL pattern - sites prefix)
+    Route::get('/sites/{siteId}/media', [MediaController::class, 'index'])->name('sites.media.index');
+    Route::post('/sites/{siteId}/media', [MediaController::class, 'store'])->name('sites.media.store');
+    Route::delete('/sites/{siteId}/media/{mediaId}', [MediaController::class, 'destroy'])->name('sites.media.destroy');
     Route::post('/sites/{siteId}/generate-favicon', [MediaController::class, 'generateFavicon'])->name('media.generate-favicon');
 
     // Products
