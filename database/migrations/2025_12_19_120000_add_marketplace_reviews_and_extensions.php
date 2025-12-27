@@ -24,28 +24,52 @@ return new class extends Migration
             }
         });
 
-        // Marketplace Reviews
-        Schema::create('marketplace_reviews', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained('marketplace_products')->onDelete('cascade');
-            $table->foreignId('order_id')->constrained('marketplace_orders')->onDelete('cascade');
-            $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('seller_id')->constrained('marketplace_sellers')->onDelete('cascade');
-            $table->unsignedTinyInteger('rating'); // 1-5
-            $table->text('comment')->nullable();
-            $table->json('images')->nullable(); // Review images
-            $table->boolean('is_verified_purchase')->default(true);
-            $table->boolean('is_approved')->default(true);
-            $table->unsignedInteger('helpful_count')->default(0);
-            $table->unsignedInteger('not_helpful_count')->default(0);
-            $table->text('seller_response')->nullable();
-            $table->timestamp('seller_responded_at')->nullable();
-            $table->timestamps();
-            
-            $table->index(['product_id', 'is_approved']);
-            $table->index(['seller_id', 'rating']);
-            $table->unique(['order_id', 'product_id', 'buyer_id']);
-        });
+        // Marketplace Reviews - Add extra columns if table exists, otherwise create
+        if (Schema::hasTable('marketplace_reviews')) {
+            // Table exists from earlier migration, add new columns
+            Schema::table('marketplace_reviews', function (Blueprint $table) {
+                if (!Schema::hasColumn('marketplace_reviews', 'images')) {
+                    $table->json('images')->nullable()->after('comment');
+                }
+                if (!Schema::hasColumn('marketplace_reviews', 'is_verified_purchase')) {
+                    $table->boolean('is_verified_purchase')->default(true)->after('images');
+                }
+                if (!Schema::hasColumn('marketplace_reviews', 'is_approved')) {
+                    $table->boolean('is_approved')->default(true)->after('is_verified_purchase');
+                }
+                if (!Schema::hasColumn('marketplace_reviews', 'helpful_count')) {
+                    $table->unsignedInteger('helpful_count')->default(0)->after('is_approved');
+                }
+                if (!Schema::hasColumn('marketplace_reviews', 'not_helpful_count')) {
+                    $table->unsignedInteger('not_helpful_count')->default(0)->after('helpful_count');
+                }
+                if (!Schema::hasColumn('marketplace_reviews', 'seller_responded_at')) {
+                    $table->timestamp('seller_responded_at')->nullable()->after('seller_response');
+                }
+            });
+        } else {
+            Schema::create('marketplace_reviews', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('product_id')->constrained('marketplace_products')->onDelete('cascade');
+                $table->foreignId('order_id')->constrained('marketplace_orders')->onDelete('cascade');
+                $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
+                $table->foreignId('seller_id')->constrained('marketplace_sellers')->onDelete('cascade');
+                $table->unsignedTinyInteger('rating'); // 1-5
+                $table->text('comment')->nullable();
+                $table->json('images')->nullable(); // Review images
+                $table->boolean('is_verified_purchase')->default(true);
+                $table->boolean('is_approved')->default(true);
+                $table->unsignedInteger('helpful_count')->default(0);
+                $table->unsignedInteger('not_helpful_count')->default(0);
+                $table->text('seller_response')->nullable();
+                $table->timestamp('seller_responded_at')->nullable();
+                $table->timestamps();
+                
+                $table->index(['product_id', 'is_approved']);
+                $table->index(['seller_id', 'rating']);
+                $table->unique(['order_id', 'product_id', 'buyer_id']);
+            });
+        }
 
         // Review Helpfulness Votes
         Schema::create('marketplace_review_votes', function (Blueprint $table) {
@@ -247,7 +271,18 @@ return new class extends Migration
         Schema::dropIfExists('marketplace_wishlists');
         Schema::dropIfExists('marketplace_disputes');
         Schema::dropIfExists('marketplace_review_votes');
-        Schema::dropIfExists('marketplace_reviews');
+        
+        // Only drop columns we added, not the whole table (it may have been created by earlier migration)
+        if (Schema::hasTable('marketplace_reviews')) {
+            Schema::table('marketplace_reviews', function (Blueprint $table) {
+                $columns = ['images', 'is_verified_purchase', 'is_approved', 'helpful_count', 'not_helpful_count', 'seller_responded_at'];
+                foreach ($columns as $column) {
+                    if (Schema::hasColumn('marketplace_reviews', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }
         
         Schema::table('marketplace_orders', function (Blueprint $table) {
             if (Schema::hasColumn('marketplace_orders', 'tracking_number')) {

@@ -32,8 +32,8 @@ Route::prefix('biz')->name('bizboost.public.')->group(function () {
     Route::post('/{slug}/contact', [BusinessController::class, 'publicContact'])->name('contact');
 });
 
-// Public Marketplace (no auth required)
-Route::prefix('marketplace')->name('marketplace.')->group(function () {
+// Public Marketplace (no auth required) - Using bizboost-specific prefix to avoid conflict with main marketplace routes
+Route::prefix('bizboost-marketplace')->name('bizboost.marketplace.public.')->group(function () {
     Route::get('/', [App\Http\Controllers\BizBoost\MarketplaceController::class, 'publicIndex'])->name('index');
     Route::get('/category/{category}', [App\Http\Controllers\BizBoost\MarketplaceController::class, 'publicCategory'])->name('category');
     Route::get('/search', [App\Http\Controllers\BizBoost\MarketplaceController::class, 'publicSearch'])->name('search');
