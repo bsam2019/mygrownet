@@ -60,7 +60,7 @@
                         <Link
                           v-for="subItem in item.dropdown"
                           :key="subItem.name"
-                          :href="route(subItem.route)"
+                          :href="subItem.url || route(subItem.route)"
                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                         >
                           <div class="font-medium">{{ subItem.name }}</div>
@@ -189,7 +189,7 @@
                 <Link
                   v-for="subItem in item.dropdown"
                   :key="subItem.name"
-                  :href="route(subItem.route)"
+                  :href="subItem.url || route(subItem.route)"
                   class="block px-3 py-2 rounded-md text-sm text-gray-400 hover:text-white hover:bg-gray-700"
                 >
                   {{ subItem.name }}
@@ -271,8 +271,8 @@
         { 
           name: 'Services', 
           dropdown: [
-            { name: 'GrowMarket', route: 'marketplace.home', description: 'Browse products & services' },
-            { name: 'GrowBuilder', route: 'growbuilder.index', description: 'Build professional websites' },
+            { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services' },
+            { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites' },
             { name: 'Training', route: 'training', description: 'Learn new skills' },
             { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses' },
             { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business' },
@@ -283,12 +283,13 @@
         { name: 'Contact', route: 'contact' },
       ];
 
-      // Filter out routes that Ziggy doesn't expose
+      // Filter out routes that Ziggy doesn't expose (but keep items with direct URLs)
       const filteredNavigationItems = computed(() => {
         return navigationItems.map(item => {
           if (item.dropdown) {
-            // Filter dropdown items
+            // Filter dropdown items - keep items with url OR valid route
             const filteredDropdown = item.dropdown.filter(subItem => {
+              if (subItem.url) return true; // Always keep items with direct URLs
               try {
                 return route().has(subItem.route);
               } catch (e) {
