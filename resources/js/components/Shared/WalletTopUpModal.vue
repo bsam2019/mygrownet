@@ -8,7 +8,7 @@ import {
     WalletIcon,
     ExclamationTriangleIcon,
     PhoneIcon,
-    BanknoteIcon,
+    CurrencyDollarIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -283,7 +283,7 @@ const close = () => {
                             <!-- Payment Instructions -->
                             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4">
                                 <h4 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                                    <BanknoteIcon class="h-5 w-5" aria-hidden="true" />
+                                    <CurrencyDollarIcon class="h-5 w-5" aria-hidden="true" />
                                     How to Top Up
                                 </h4>
                                 <div class="space-y-3">

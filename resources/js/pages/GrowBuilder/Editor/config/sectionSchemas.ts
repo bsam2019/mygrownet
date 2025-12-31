@@ -668,7 +668,7 @@ export const sectionSchemas: Record<string, SectionSchema> = {
 
     // NEW PHASE 1 SECTIONS
 
-    stats: {
+    statsMetrics: {
         type: 'stats',
         name: 'Stats/Metrics',
         fields: [
