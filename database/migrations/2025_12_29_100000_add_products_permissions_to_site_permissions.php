@@ -25,6 +25,7 @@ return new class extends Migration
                     'slug' => $permission['slug'],
                     'name' => $permission['name'],
                     'description' => $permission['description'],
+                    'group_name' => 'Products',
                 ]);
             }
         }
