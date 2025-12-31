@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('site_id')->constrained('growbuilder_sites')->cascadeOnDelete();
             $table->foreignId('payment_config_id')->constrained('growbuilder_site_payment_configs')->cascadeOnDelete();
-            $table->string('transaction_reference')->unique();
+            $table->string('transaction_reference');
             $table->string('external_reference')->nullable()->index();
             $table->decimal('amount', 15, 2);
             $table->string('currency', 3)->default('ZMW');
@@ -32,6 +32,7 @@ return new class extends Migration
 
             $table->index(['site_id', 'status']);
             $table->index(['site_id', 'created_at']);
+            $table->unique('transaction_reference', 'gb_txn_ref_unique');
         });
     }
 
