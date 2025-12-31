@@ -6,6 +6,7 @@ use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
+use App\Services\GrowBuilder\TierRestrictionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -14,6 +15,7 @@ class ProductController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private TierRestrictionService $tierRestrictionService,
     ) {}
 
     public function index(Request $request, int $siteId)
@@ -29,9 +31,15 @@ class ProductController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $tierRestrictions = $this->tierRestrictionService->getRestrictions($request->user());
+        $productCount = GrowBuilderProduct::where('site_id', $siteId)->count();
+
         return Inertia::render('GrowBuilder/Products/Index', [
             'site' => $this->siteToArray($site),
             'products' => $products,
+            'tierRestrictions' => $tierRestrictions,
+            'productCount' => $productCount,
+            'canAddProduct' => $this->tierRestrictionService->canAddProduct($request->user(), $productCount),
         ]);
     }
 
@@ -60,6 +68,17 @@ class ProductController extends Controller
 
         if (!$site || $site->getUserId() !== $request->user()->id) {
             abort(404);
+        }
+
+        // Check product limit
+        $productCount = GrowBuilderProduct::where('site_id', $siteId)->count();
+        if (!$this->tierRestrictionService->canAddProduct($request->user(), $productCount)) {
+            $limit = $this->tierRestrictionService->getProductsLimit($request->user());
+            return back()->withErrors([
+                'limit' => $limit === 0 
+                    ? 'E-commerce is not available on your plan. Upgrade to Starter or higher to sell products.'
+                    : "You've reached your product limit ({$limit}). Upgrade to Business plan for unlimited products."
+            ]);
         }
 
         $validated = $request->validate([

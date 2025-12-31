@@ -63,4 +63,12 @@ class GrowBuilderPage extends Model
     {
         return $this->content_json;
     }
+
+    /**
+     * Mutator to allow setting content which maps to content_json
+     */
+    public function setContentAttribute($value): void
+    {
+        $this->attributes['content_json'] = is_array($value) ? json_encode($value) : $value;
+    }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
  * Services Section Preview Component
+ * Supports layouts: grid, list, cards-images, alternating
  */
 import { computed } from 'vue';
 import { Cog6ToothIcon, PencilIcon } from '@heroicons/vue/24/outline';
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 
 const content = computed(() => props.section.content);
 const style = computed(() => props.section.style);
+const layout = computed(() => content.value.layout || 'grid');
 
 const bgStyle = computed(() => getBackgroundStyle(style.value, '#ffffff', '#111827'));
 
@@ -42,13 +44,20 @@ const textAlignClass = computed(() => {
     };
 });
 
-// Compute items alignment class for grid
-const itemsJustifyClass = computed(() => {
-    const align = style.value?.itemsAlign || 'center';
-    if (align === 'start') return 'justify-items-start';
-    if (align === 'end') return 'justify-items-end';
-    if (align === 'stretch') return 'justify-items-stretch';
-    return 'justify-items-center';
+// Get icon emoji based on icon name
+const getIconEmoji = (icon: string) => {
+    const iconMap: Record<string, string> = {
+        'chart': '📊', 'code': '💻', 'sparkles': '✨', 'briefcase': '💼',
+        'globe': '🌍', 'cog': '⚙️', 'users': '👥', 'shield': '🛡️',
+    };
+    return iconMap[icon] || '📦';
+};
+
+// Grid columns based on layout and settings
+const gridColsClass = computed(() => {
+    const cols = content.value.columns || 3;
+    if (props.isMobile) return 'grid-cols-1';
+    return `grid-cols-1 sm:grid-cols-2 lg:grid-cols-${cols}`;
 });
 </script>
 
@@ -59,19 +68,66 @@ const itemsJustifyClass = computed(() => {
         :style="bgStyle"
     >
         <div :style="{ transform: getSectionContentTransform(section) }">
-            <h2 :class="[textSize.h2, 'font-bold mb-4', textAlignClass]">
-                {{ content.title || 'Our Services' }}
-            </h2>
-            <p
-                v-if="content.subtitle"
-                class="text-gray-600 mb-8 max-w-2xl"
-                :class="[textSize.p, textAlignClass, { 'mx-auto': style?.textAlign !== 'left' && style?.textAlign !== 'right' }]"
-            >
-                {{ content.subtitle }}
-            </p>
-            <div v-else class="mb-6"></div>
+            <!-- Header -->
+            <div :class="textAlignClass" class="mb-8">
+                <h2 :class="[textSize.h2, 'font-bold mb-4']">
+                    {{ content.title || 'Our Services' }}
+                </h2>
+                <p v-if="content.subtitle" class="text-gray-600 max-w-2xl" :class="[textSize.p, { 'mx-auto': content.textPosition !== 'left' && content.textPosition !== 'right' }]">
+                    {{ content.subtitle }}
+                </p>
+            </div>
             
-            <div class="grid" :class="[gridCols3, spacing.gap, itemsJustifyClass]">
+            <!-- List Layout -->
+            <div v-if="layout === 'list'" class="space-y-4">
+                <div v-for="(item, idx) in content.items || []" :key="idx" class="flex gap-4 items-start p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div v-if="item.icon" class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">{{ getIconEmoji(item.icon) }}</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 :class="[textSize.h3, 'font-semibold mb-2 text-gray-900']">{{ item.title }}</h3>
+                        <p :class="[textSize.p, 'text-gray-600']">{{ item.description }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cards with Images Layout -->
+            <div v-else-if="layout === 'cards-images'" class="grid gap-6" :class="gridColsClass">
+                <div v-for="(item, idx) in content.items || []" :key="idx" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group">
+                    <div v-if="item.image" class="aspect-video bg-gray-100 overflow-hidden">
+                        <img :src="item.image" :alt="item.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    </div>
+                    <div v-else class="aspect-video bg-gray-100 flex items-center justify-center">
+                        <span class="text-gray-400 text-sm">Add image</span>
+                    </div>
+                    <div class="p-5">
+                        <h3 :class="[textSize.h3, 'font-semibold mb-2 text-gray-900']">{{ item.title }}</h3>
+                        <p :class="[textSize.p, 'text-gray-600']">{{ item.description }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alternating Rows Layout -->
+            <div v-else-if="layout === 'alternating'" class="space-y-12">
+                <div v-for="(item, idx) in content.items || []" :key="idx" class="flex flex-col lg:flex-row gap-8 items-center" :class="idx % 2 === 1 ? 'lg:flex-row-reverse' : ''">
+                    <div class="lg:w-1/2">
+                        <div v-if="item.icon" class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                            <span class="text-2xl">{{ getIconEmoji(item.icon) }}</span>
+                        </div>
+                        <h3 :class="[textSize.h2, 'font-semibold mb-3 text-gray-900']">{{ item.title }}</h3>
+                        <p :class="[textSize.p, 'text-gray-600']">{{ item.description }}</p>
+                    </div>
+                    <div class="lg:w-1/2">
+                        <img v-if="item.image" :src="item.image" :alt="item.title" class="rounded-xl shadow-lg w-full" />
+                        <div v-else class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center">
+                            <span class="text-gray-400 text-sm">Service image</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Default Grid Layout -->
+            <div v-else class="grid gap-6" :class="gridColsClass">
                 <div
                     v-for="(item, idx) in content.items || []"
                     :key="idx"

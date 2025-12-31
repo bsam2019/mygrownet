@@ -109,6 +109,19 @@
                         </div>
                         <!-- Other actions -->
                         <div class="flex items-center gap-1" :class="darkMode ? 'text-gray-500' : 'text-gray-400'">
+                            <!-- Dismiss button for actionable messages (tracks rejection) -->
+                            <button
+                                v-if="isActionableMessage(message) && !appliedMessages.has(message.id)"
+                                @click="handleDismiss(message)"
+                                class="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg transition-colors"
+                                :class="darkMode 
+                                    ? 'hover:bg-gray-800 hover:text-gray-300' 
+                                    : 'hover:bg-gray-100 hover:text-gray-600'"
+                                title="Not what I wanted"
+                            >
+                                <XMarkIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                                <span class="hidden sm:inline">Dismiss</span>
+                            </button>
                             <button
                                 @click="$emit('copy', message.content)"
                                 class="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg transition-colors"
@@ -121,7 +134,7 @@
                                 <span class="hidden sm:inline">Copy</span>
                             </button>
                             <button
-                                @click="$emit('regenerate', message.id)"
+                                @click="handleRegenerate(message)"
                                 class="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg transition-colors"
                                 :class="darkMode 
                                     ? 'hover:bg-gray-800 hover:text-gray-300' 
@@ -166,7 +179,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
-import { SparklesIcon, UserIcon, CheckIcon, ClipboardIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
+import { SparklesIcon, UserIcon, CheckIcon, ClipboardIcon, ArrowPathIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import ContentPreview from './ContentPreview.vue';
 
 interface Message {
@@ -186,8 +199,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'apply-content': [data: any];
+    'dismiss-content': [data: { type: string; sectionType?: string }];
     copy: [text: string];
-    regenerate: [messageId: string];
+    regenerate: [messageId: string, data?: { type: string; sectionType?: string }];
 }>();
 
 const containerRef = ref<HTMLElement | null>(null);
@@ -238,9 +252,39 @@ const handleApply = (message: Message) => {
     }, 3000);
 };
 
+// Handle dismiss (user rejected the suggestion) - tracks for learning
+const handleDismiss = (message: Message) => {
+    emit('dismiss-content', {
+        type: message.type || 'unknown',
+        sectionType: message.data?.sectionType,
+    });
+    // Mark as dismissed visually (optional - could add dismissedMessages set)
+};
+
+// Handle regenerate with feedback data
+const handleRegenerate = (message: Message) => {
+    emit('regenerate', message.id, {
+        type: message.type || 'unknown',
+        sectionType: message.data?.sectionType,
+    });
+};
+
 // Format message with basic markdown
 const formatMessage = (content: string) => {
-    return content
+    // First, remove any raw JSON that might have slipped through
+    // This handles cases where AI returns `json {...}` or ```json {...}```
+    let cleaned = content
+        .replace(/`json\s*\{[\s\S]*?\}\s*`/g, '') // Remove `json {...}`
+        .replace(/```json\s*\{[\s\S]*?\}\s*```/g, '') // Remove ```json {...}```
+        .replace(/```\s*\{[\s\S]*?\}\s*```/g, '') // Remove ``` {...} ```
+        .trim();
+    
+    // If the entire content was JSON, return empty (the actual content should be in message field)
+    if (!cleaned || cleaned.length < 10) {
+        cleaned = content; // Fall back to original if cleanup removed everything
+    }
+    
+    return cleaned
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .replace(/`(.*?)`/g, '<code class="px-1 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-sm">$1</code>')

@@ -10,26 +10,38 @@
             $isBizBoost = request()->is('bizboost*');
             $isGrowBiz = request()->is('growbiz*');
             $isGrowFinance = request()->is('growfinance*');
+            $isGrowBuilderSite = request()->is('sites/*');
             
             // Module-specific PWA configuration
-            if ($isBizBoost) {
+            if ($isGrowBuilderSite) {
+                // GrowBuilder sites - no splash screen, use site's own branding
+                $themeColor = '#2563eb';
+                $appTitle = 'Site Preview';
+                $manifestPath = '/manifest.json';
+                $iconPath = '/images/icon-192x192.png';
+                $faviconPath = asset('logo.png');
+                $showSplash = false;
+            } elseif ($isBizBoost) {
                 $themeColor = '#7c3aed'; // Violet
                 $appTitle = 'BizBoost';
                 $manifestPath = '/bizboost-manifest.json';
                 $iconPath = '/images/bizboost/icon-192x192.png';
                 $faviconPath = '/images/bizboost/icon-192x192.png';
+                $showSplash = true;
             } elseif ($isGrowBiz) {
                 $themeColor = '#059669'; // Emerald
                 $appTitle = 'GrowBiz';
                 $manifestPath = '/growbiz-manifest.json';
                 $iconPath = '/growbiz-assets/icon-192x192.png';
                 $faviconPath = '/growbiz-assets/icon-192x192.png';
+                $showSplash = true;
             } elseif ($isGrowFinance) {
                 $themeColor = '#059669'; // Emerald
                 $appTitle = 'GrowFinance';
                 $manifestPath = '/growfinance-manifest.json';
                 $iconPath = '/growfinance-assets/icon-192x192.png';
                 $faviconPath = '/growfinance-assets/icon-192x192.png';
+                $showSplash = true;
             } else {
                 // Default: MyGrowNet
                 $themeColor = '#2563eb'; // Blue
@@ -37,6 +49,7 @@
                 $manifestPath = '/manifest.json';
                 $iconPath = '/images/icon-192x192.png';
                 $faviconPath = asset('logo.png');
+                $showSplash = true;
             }
         @endphp
         
@@ -201,6 +214,7 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        @if($showSplash ?? true)
         <!-- Elegant Splash Screen -->
         <div id="app-splash">
             <div class="splash-logo">
@@ -218,51 +232,56 @@
                 <div class="splash-progress-bar"></div>
             </div>
         </div>
+        @endif
         
         @inertia
         
         <script>
             // Hide splash screen when Inertia page is loaded
-            let appLoaded = false;
-            let minTimeElapsed = false;
-            
-            // Ensure splash shows for at least 800ms for smooth experience
-            setTimeout(function() {
-                minTimeElapsed = true;
-                if (appLoaded) {
-                    hideSplash();
-                }
-            }, 800);
-            
-            // Listen for Inertia page load
-            document.addEventListener('DOMContentLoaded', function() {
-                // Wait for Inertia to finish loading
-                const checkInertia = setInterval(function() {
-                    if (document.querySelector('[data-page]')) {
-                        clearInterval(checkInertia);
-                        appLoaded = true;
-                        if (minTimeElapsed) {
-                            hideSplash();
-                        }
-                    }
-                }, 50);
+            (function() {
+                var splash = document.getElementById('app-splash');
+                if (!splash) return; // No splash screen for this page
                 
-                // Fallback: hide after 3 seconds max
+                var appLoaded = false;
+                var minTimeElapsed = false;
+                
+                // Ensure splash shows for at least 800ms for smooth experience
                 setTimeout(function() {
-                    clearInterval(checkInertia);
-                    hideSplash();
-                }, 3000);
-            });
-            
-            function hideSplash() {
-                const splash = document.getElementById('app-splash');
-                if (splash && !splash.classList.contains('hidden')) {
-                    splash.classList.add('hidden');
+                    minTimeElapsed = true;
+                    if (appLoaded) {
+                        hideSplash();
+                    }
+                }, 800);
+                
+                // Listen for Inertia page load
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Wait for Inertia to finish loading
+                    var checkInertia = setInterval(function() {
+                        if (document.querySelector('[data-page]')) {
+                            clearInterval(checkInertia);
+                            appLoaded = true;
+                            if (minTimeElapsed) {
+                                hideSplash();
+                            }
+                        }
+                    }, 50);
+                    
+                    // Fallback: hide after 3 seconds max
                     setTimeout(function() {
-                        splash.remove();
-                    }, 500);
+                        clearInterval(checkInertia);
+                        hideSplash();
+                    }, 3000);
+                });
+                
+                function hideSplash() {
+                    if (splash && !splash.classList.contains('hidden')) {
+                        splash.classList.add('hidden');
+                        setTimeout(function() {
+                            splash.remove();
+                        }, 500);
+                    }
                 }
-            }
+            })();
         </script>
     </body>
 </html>

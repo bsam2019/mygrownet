@@ -1,4 +1,5 @@
 import '../css/app.css';
+import 'aos/dist/aos.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -9,6 +10,7 @@ import { initializeTheme } from './composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import AOS from 'aos';
 
 // Make Pusher available globally for Echo
 (window as any).Pusher = Pusher;
@@ -166,3 +168,11 @@ createInertiaApp({
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Initialize AOS (Animate On Scroll)
+AOS.init({
+    duration: 800,
+    easing: 'ease-in-out',
+    once: true,
+    offset: 100,
+});

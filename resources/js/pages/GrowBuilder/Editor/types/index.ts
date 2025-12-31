@@ -86,7 +86,11 @@ export type SectionType =
     | 'stats'
     | 'map'
     | 'video'
-    | 'divider';
+    | 'divider'
+    | 'timeline'
+    | 'cta-banner'
+    | 'logo-cloud'
+    | 'video-hero';
 
 export interface SectionBlock {
     type: SectionType;

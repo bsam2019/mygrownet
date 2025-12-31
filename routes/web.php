@@ -20,6 +20,7 @@ use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\EarningsProjectionController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\BroadcastAuthController;
+use App\Http\Controllers\Auth\BladeAuthController;
 
 // Custom broadcasting auth that handles both Laravel auth and session-based investor auth
 Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'])
@@ -78,6 +79,16 @@ Route::permanentRedirect('/investment', '/starter-kits');
 Route::permanentRedirect('/join', '/starter-kits');
 Route::permanentRedirect('/packages', '/starter-kits');
 Route::permanentRedirect('/shop', '/marketplace');
+
+// Blade-based auth pages (fallback for when Vue/Inertia fails)
+// These work without JavaScript and serve as reliable fallback
+Route::middleware('guest')->prefix('auth')->name('blade.')->group(function () {
+    Route::get('/login', [BladeAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [BladeAuthController::class, 'login']);
+    Route::get('/register', [BladeAuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [BladeAuthController::class, 'register']);
+    Route::get('/forgot-password', [BladeAuthController::class, 'showForgotPassword'])->name('password.request');
+});
 Route::permanentRedirect('/learn', '/training');
 Route::permanentRedirect('/learning', '/training');
 Route::permanentRedirect('/loyalty', '/rewards');

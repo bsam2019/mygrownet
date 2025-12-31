@@ -21,8 +21,12 @@
                     :provider="providerName"
                     :active-view="activeView"
                     :context-summary="contextSummaryText"
+                    :ai-usage="aiUsage"
+                    :creativity-level="creativityLevel"
                     @close="$emit('close')"
                     @change-view="activeView = $event"
+                    @new-chat="clearConversation"
+                    @update:creativity-level="updateCreativityLevel"
                 />
 
                 <!-- Main Content Area -->
@@ -36,6 +40,7 @@
                             :dark-mode="darkMode"
                             class="flex-1 min-h-0"
                             @apply-content="handleApplyContent"
+                            @dismiss-content="handleDismissContent"
                             @copy="copyToClipboard"
                             @regenerate="regenerateMessage"
                         />
@@ -111,6 +116,30 @@ interface Message {
     data?: any;
 }
 
+interface AIUsage {
+    limit: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage: number;
+    month: string;
+    features: string[];
+    has_priority: boolean;
+}
+
+interface TierRestrictions {
+    tier: string;
+    tier_name: string;
+    sites_limit: number;
+    storage_limit: number;
+    storage_limit_formatted: string;
+    products_limit: number;
+    products_unlimited: boolean;
+    ai_prompts_limit: number;
+    ai_unlimited: boolean;
+    features: Record<string, boolean>;
+}
+
 const props = defineProps<{
     isOpen: boolean;
     siteId: number;
@@ -121,7 +150,22 @@ const props = defineProps<{
     aiContext?: AIContext | null;
     contextSummary?: string;
     smartSuggestions?: string[];
+    aiUsage?: AIUsage;
+    tierRestrictions?: TierRestrictions;
+    hasAISectionGenerator?: boolean;
+    hasAISEO?: boolean;
 }>();
+
+// Compute canUseAI from aiUsage prop (more reactive than receiving it as a prop)
+const canUseAI = computed(() => {
+    if (!props.aiUsage) return true;
+    const result = props.aiUsage.is_unlimited || props.aiUsage.remaining > 0;
+    console.log('AIAssistantModal canUseAI:', { 
+        aiUsage: props.aiUsage, 
+        result 
+    });
+    return result;
+});
 
 const emit = defineEmits<{
     close: [];
@@ -133,6 +177,7 @@ const emit = defineEmits<{
     updateFooter: [changes: any];
     createPage: [template: string, title?: string];
     createAIPage: [pageType: string, pageData: any];
+    updateUsage: [usage: any];
 }>();
 
 const {
@@ -162,6 +207,70 @@ const providerName = ref('');
 const generatedContent = ref<any>(null);
 const feedbackStats = ref<any>(null);
 const messageListRef = ref<any>(null);
+
+// Creativity level state with localStorage persistence
+type CreativityLevel = 'guided' | 'balanced' | 'creative';
+const creativityLevel = ref<CreativityLevel>(
+    (localStorage.getItem('ai_creativity_level') as CreativityLevel) || 'balanced'
+);
+
+const updateCreativityLevel = (level: CreativityLevel) => {
+    creativityLevel.value = level;
+    localStorage.setItem('ai_creativity_level', level);
+};
+
+// Conversation persistence key (per site)
+const getStorageKey = () => `ai_chat_history_${props.siteId}`;
+
+// Load conversation from localStorage
+const loadConversation = () => {
+    try {
+        const stored = localStorage.getItem(getStorageKey());
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Only load if not too old (24 hours)
+            const maxAge = 24 * 60 * 60 * 1000;
+            if (parsed.timestamp && Date.now() - parsed.timestamp < maxAge) {
+                messages.value = parsed.messages.map((m: any) => ({
+                    ...m,
+                    timestamp: new Date(m.timestamp)
+                }));
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to load conversation history:', e);
+    }
+};
+
+// Save conversation to localStorage
+const saveConversation = () => {
+    try {
+        // Only save last 20 messages to avoid storage limits
+        const toSave = messages.value.slice(-20).map(m => ({
+            ...m,
+            timestamp: m.timestamp.toISOString()
+        }));
+        localStorage.setItem(getStorageKey(), JSON.stringify({
+            messages: toSave,
+            timestamp: Date.now()
+        }));
+    } catch (e) {
+        console.warn('Failed to save conversation history:', e);
+    }
+};
+
+// Clear conversation history
+const clearConversation = () => {
+    messages.value = [];
+    localStorage.removeItem(getStorageKey());
+};
+
+// Watch messages and save on change
+watch(messages, () => {
+    if (messages.value.length > 0) {
+        saveConversation();
+    }
+}, { deep: true });
 
 // Context-aware computed properties
 const contextSummaryText = computed(() => props.contextSummary || '');
@@ -211,6 +320,12 @@ const scrollToBottom = async () => {
 const sendMessage = async () => {
     if (!userInput.value.trim() || isLoading.value) return;
 
+    // Check if user can use AI (frontend check for better UX)
+    if (canUseAI.value === false) {
+        addMessage('assistant', '⚠️ You\'ve reached your AI limit for this month. Please upgrade your plan to continue using AI features.', 'text');
+        return;
+    }
+
     const input = userInput.value.trim();
     userInput.value = '';
     lastUserMessage.value = input; // Track for feedback
@@ -224,13 +339,26 @@ const sendMessage = async () => {
         addMessage('assistant', response.content, response.type, response.data);
         lastAiResponse.value = response.content; // Track for feedback
         
+        // Update usage if provided
+        if (response.usage) {
+            console.log('Emitting updateUsage with:', response.usage);
+            emit('updateUsage', response.usage);
+        } else {
+            console.warn('No usage data in response');
+        }
+        
         // Track last action for context
         if (response.type && response.type !== 'text') {
             lastAction.value = response.type;
         }
     } catch (e: any) {
         isTyping.value = false;
-        addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+        // Check if it's an upgrade required error
+        if (e.response?.data?.upgrade_required) {
+            addMessage('assistant', `⚠️ ${e.response.data.message || 'AI limit reached. Please upgrade your plan.'}`, 'text');
+        } else {
+            addMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+        }
     }
 };
 
@@ -346,6 +474,9 @@ const buildRichContext = () => {
         
         // User preferences (could be stored in localStorage)
         userPreferences: getUserPreferences(),
+        
+        // Creativity level for AI flexibility
+        creativityLevel: creativityLevel.value,
     };
 };
 
@@ -371,7 +502,7 @@ const saveUserPreference = (key: string, value: any) => {
 };
 
 // Process user message with AI-powered smart chat
-const processUserMessage = async (input: string): Promise<{ content: string; type: Message['type']; data?: any }> => {
+const processUserMessage = async (input: string): Promise<{ content: string; type: Message['type']; data?: any; usage?: any }> => {
     const lowerInput = input.toLowerCase();
     const ctx = props.aiContext;
 
@@ -381,14 +512,19 @@ const processUserMessage = async (input: string): Promise<{ content: string; typ
     // ============================================
     try {
         const richContext = buildRichContext();
+        console.log('Calling smartChat with:', { input, contextKeys: Object.keys(richContext) });
         const result = await smartChat(input, richContext);
+        console.log('SmartChat result:', result);
         
         if (result && result.action) {
             // Map AI action to message type and format response
-            return mapSmartChatResponse(result, ctx);
+            const response = mapSmartChatResponse(result, ctx);
+            // Include usage in response
+            return { ...response, usage: result.usage };
         }
-    } catch (e) {
-        console.warn('Smart chat failed, falling back to keyword matching:', e);
+    } catch (e: any) {
+        console.error('Smart chat failed:', e);
+        console.error('Error details:', e.response?.data || e.message);
     }
 
     // ============================================
@@ -402,7 +538,42 @@ const mapSmartChatResponse = (
     result: { action: string; message: string; data: Record<string, any> | null },
     ctx: AIContext | null | undefined
 ): { content: string; type: Message['type']; data?: any } => {
-    const { action, message, data } = result;
+    let { action, message, data } = result;
+    
+    // Debug: log what we received
+    console.log('mapSmartChatResponse input:', { action, messageType: typeof message, messageLength: message?.length, data });
+    
+    // Handle case where message might be undefined or empty
+    if (!message || message.trim() === '') {
+        message = "I've processed your request. Let me know if you need anything else.";
+    }
+    
+    // If message looks like JSON (starts with { or contains "action":), try to extract the actual message
+    if (typeof message === 'string' && (message.trim().startsWith('{') || message.includes('"action":'))) {
+        try {
+            const parsed = JSON.parse(message);
+            if (parsed.message) {
+                message = parsed.message;
+                data = parsed.data || data;
+                action = parsed.action || action;
+                console.log('Extracted message from JSON:', message.substring(0, 100));
+            }
+        } catch {
+            // Not valid JSON - might be truncated or malformed
+            // Try to extract just the message field if it exists
+            const messageMatch = message.match(/"message"\s*:\s*"([^"]+)/);
+            if (messageMatch && messageMatch[1]) {
+                message = messageMatch[1];
+                // Clean up any trailing incomplete content
+                if (message.endsWith('...') || message.match(/\d+\.\s*\*\*[^*]+$/)) {
+                    message += '\n\n_(Response was truncated. Ask me to continue if needed.)_';
+                }
+            } else {
+                // Can't extract, provide a helpful fallback
+                message = "I've analyzed your request but the response was incomplete. Could you try asking again?";
+            }
+        }
+    }
     
     switch (action) {
         case 'generate_content':
@@ -470,6 +641,14 @@ const mapSmartChatResponse = (
                 content: data?.question || message,
                 type: 'text',
                 data: { awaitingClarification: true }
+            };
+        
+        case 'analyze_page':
+            // For page analysis/suggestions - just show the message, no apply button needed
+            return {
+                content: message,
+                type: 'text',
+                data: { suggestions: data?.suggestions }
             };
         
         case 'proactive_suggestion':
@@ -1768,6 +1947,13 @@ const handleSuggestion = (suggestion: string) => {
     userInput.value = suggestion;
 };
 
+// Handle when user dismisses/rejects a suggestion - records for learning
+const handleDismissContent = (data: { type: string; sectionType?: string }) => {
+    recordFeedback(data.type, false, data.sectionType);
+    // Add a subtle message acknowledging the dismissal
+    addMessage('assistant', "Got it! I'll try a different approach. What would you prefer?", 'text');
+};
+
 const handleApplyContent = async (data: any) => {
     if (!data) return;
     
@@ -1780,6 +1966,9 @@ const handleApplyContent = async (data: any) => {
     
     let appliedSomething = false;
     const appliedTypes: string[] = [];
+    
+    // Debug log to see what data we're receiving
+    console.log('handleApplyContent data:', JSON.stringify(data, null, 2));
     
     // Handle style changes (don't return early - may have content too)
     if (data.styleChange) {
@@ -1796,6 +1985,7 @@ const handleApplyContent = async (data: any) => {
             position: data.position, // Pass position for smart placement
             style: data.style, // Pass style for theme matching
         };
+        console.log('Emitting applyContent:', contentToApply);
         emit('applyContent', contentToApply);
         appliedSomething = true;
         appliedTypes.push(data.sectionType || 'content');
@@ -1830,6 +2020,23 @@ const handleApplyContent = async (data: any) => {
     
     // Handle page requests
     if (data.pageRequest) {
+        // Smart AI page creation (sections already generated by smartChat)
+        if (data.pageRequest.action === 'create-ai-smart') {
+            // Sections are already generated, just emit to create the page
+            const pageData = {
+                title: data.pageRequest.title,
+                sections: data.pageRequest.sections || [],
+            };
+            
+            emit('createAIPage', data.pageRequest.pageType, pageData);
+            toast.success(`Created ${data.pageRequest.title || data.pageRequest.pageType} page`);
+            recordFeedback('page', true, data.pageRequest.pageType);
+            
+            const sectionCount = pageData.sections?.length || 0;
+            addMessage('assistant', `✅ Created your ${data.pageRequest.title || data.pageRequest.pageType} page with ${sectionCount} sections!`);
+            return;
+        }
+        
         // Detailed AI-powered page creation (comprehensive requirements)
         if (data.pageRequest.action === 'create-detailed' && data.pageRequest.useAI) {
             isTyping.value = true;
@@ -2001,7 +2208,12 @@ const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text);
 };
 
-const regenerateMessage = async (messageId: string) => {
+const regenerateMessage = async (messageId: string, data?: { type: string; sectionType?: string }) => {
+    // Record that user wanted to retry (implicit rejection of previous response)
+    if (data?.type) {
+        recordFeedback(data.type, false, data.sectionType);
+    }
+    
     const index = messages.value.findIndex(m => m.id === messageId);
     if (index > 0) {
         const userMessage = messages.value[index - 1];
@@ -2046,10 +2258,19 @@ const handleColors = async (businessType: string, mood: string) => {
 
 // Initialize
 onMounted(async () => {
+    // Load conversation history from localStorage
+    loadConversation();
+    
     await checkStatus();
     providerName.value = provider.value;
+    console.log('After checkStatus:', { isAvailable: isAvailable.value, provider: provider.value, providerName: providerName.value });
     // Load feedback stats from database
     await loadFeedbackStats();
+});
+
+// Debug watcher
+watch([isAvailable, provider], ([available, prov]) => {
+    console.log('AI Status Changed:', { isAvailable: available, provider: prov });
 });
 
 watch(() => props.isOpen, (isOpen) => {

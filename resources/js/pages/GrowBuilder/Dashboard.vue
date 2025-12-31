@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
     PlusIcon,
@@ -15,7 +15,10 @@ import {
     ClockIcon,
     SparklesIcon,
     ArrowUpCircleIcon,
+    CpuChipIcon,
+    WrenchScrewdriverIcon,
 } from '@heroicons/vue/24/outline';
+import { ref, computed } from 'vue';
 
 interface Site {
     id: number;
@@ -55,11 +58,65 @@ interface Subscription {
     expiresAt: string | null;
 }
 
+interface AIUsage {
+    limit: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage: number;
+    month: string;
+    features: string[];
+    has_priority: boolean;
+}
+
+interface TierRestrictions {
+    tier: string;
+    tier_name: string;
+    sites_limit: number;
+    storage_limit: number;
+    storage_limit_formatted: string;
+    products_limit: number;
+    products_unlimited: boolean;
+    ai_prompts_limit: number;
+    ai_unlimited: boolean;
+    features: Record<string, boolean>;
+}
+
+interface AvailableTier {
+    key: string;
+    name: string;
+}
+
 const props = defineProps<{
     sites: Site[];
     stats?: Stats;
     subscription?: Subscription;
+    aiUsage?: AIUsage;
+    tierRestrictions?: TierRestrictions;
+    availableTiers?: AvailableTier[] | null;
+    isAdmin?: boolean;
 }>();
+
+// Admin tier switcher
+const showTierDropdown = ref(false);
+const tierForm = useForm({
+    tier: props.subscription?.tier || 'free',
+});
+
+const switchTier = (tierKey: string) => {
+    tierForm.tier = tierKey;
+    tierForm.post(route('growbuilder.switch-tier'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showTierDropdown.value = false;
+        },
+    });
+};
+
+// Helper to check if feature is available
+const hasFeature = (feature: string): boolean => {
+    return props.tierRestrictions?.features?.[feature] ?? false;
+};
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -105,6 +162,51 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <!-- Admin Tier Switcher -->
+                        <div v-if="isAdmin && availableTiers" class="relative">
+                            <button
+                                @click="showTierDropdown = !showTierDropdown"
+                                class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-amber-100 text-amber-800 font-medium rounded-lg hover:bg-amber-200 transition border border-amber-300"
+                                :disabled="tierForm.processing"
+                            >
+                                <WrenchScrewdriverIcon class="h-4 w-4" aria-hidden="true" />
+                                <span>Test: {{ subscription?.tierName || 'Free' }}</span>
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Dropdown -->
+                            <div 
+                                v-if="showTierDropdown"
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                            >
+                                <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                                    Switch Tier (Admin)
+                                </div>
+                                <button
+                                    v-for="tier in availableTiers"
+                                    :key="tier.key"
+                                    @click="switchTier(tier.key)"
+                                    :disabled="tierForm.processing"
+                                    :class="[
+                                        'w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition flex items-center justify-between',
+                                        subscription?.tier === tier.key ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                                    ]"
+                                >
+                                    <span>{{ tier.name }}</span>
+                                    <span v-if="subscription?.tier === tier.key" class="text-blue-500">✓</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Click outside to close -->
+                            <div 
+                                v-if="showTierDropdown" 
+                                class="fixed inset-0 z-40" 
+                                @click="showTierDropdown = false"
+                            ></div>
+                        </div>
+                        
                         <Link
                             :href="route('growbuilder.subscription.index')"
                             class="inline-flex items-center gap-2 px-4 py-2.5 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition"
@@ -120,14 +222,24 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             Create Website
                         </Link>
-                        <Link
-                            v-else
-                            :href="route('growbuilder.subscription.index')"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 shadow-sm transition"
-                        >
-                            <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
-                            Upgrade to Create More
-                        </Link>
+                        <template v-else>
+                            <Link
+                                v-if="subscription?.tier !== 'agency'"
+                                :href="route('growbuilder.subscription.index')"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 shadow-sm transition"
+                            >
+                                <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
+                                Buy Another Site
+                            </Link>
+                            <span
+                                v-else
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-400 text-white font-medium rounded-xl cursor-not-allowed"
+                                title="You've reached the maximum site limit for Agency plan"
+                            >
+                                <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                                Site Limit Reached
+                            </span>
+                        </template>
                     </div>
                 </div>
 
@@ -137,16 +249,93 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         <SparklesIcon class="h-6 w-6" aria-hidden="true" />
                         <div>
                             <p class="font-medium">You've reached your site limit ({{ subscription.sitesUsed }}/{{ subscription.sitesLimit }})</p>
-                            <p class="text-sm text-indigo-100">Upgrade your plan to create more websites</p>
+                            <p class="text-sm text-indigo-100">
+                                {{ subscription.tier === 'agency' ? 'Contact support if you need more sites' : 'Purchase another subscription to create more websites' }}
+                            </p>
                         </div>
                     </div>
-                    <Link :href="route('growbuilder.subscription.index')" class="px-4 py-2 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition">
-                        View Plans
+                    <Link 
+                        v-if="subscription.tier !== 'agency'"
+                        :href="route('growbuilder.subscription.index')" 
+                        class="px-4 py-2 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition"
+                    >
+                        Buy Another Site
                     </Link>
+                    <a 
+                        v-else
+                        href="mailto:support@mygrownet.com"
+                        class="px-4 py-2 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition"
+                    >
+                        Contact Support
+                    </a>
+                </div>
+
+                <!-- Available Plans Card (for non-agency users) -->
+                <div v-if="subscription && subscription.tier !== 'agency' && sites.length > 0" class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Need More Sites?</h3>
+                            <p class="text-sm text-gray-500">Each subscription includes 1 website with its own storage</p>
+                        </div>
+                        <Link 
+                            :href="route('growbuilder.subscription.index')"
+                            class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                            View All Plans →
+                        </Link>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Starter Plan -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-gray-900">Starter</span>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">1 GB Storage</span>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 mb-1">K120<span class="text-sm font-normal text-gray-500">/mo</span></p>
+                            <p class="text-xs text-gray-500 mb-3">Perfect for small businesses</p>
+                            <Link 
+                                :href="route('growbuilder.subscription.index') + '?plan=starter'"
+                                class="block w-full text-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                            >
+                                Get Starter
+                            </Link>
+                        </div>
+                        <!-- Business Plan -->
+                        <div class="border-2 border-blue-500 rounded-lg p-4 relative">
+                            <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">Popular</span>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-gray-900">Business</span>
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">2 GB Storage</span>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 mb-1">K350<span class="text-sm font-normal text-gray-500">/mo</span></p>
+                            <p class="text-xs text-gray-500 mb-3">E-commerce & more features</p>
+                            <Link 
+                                :href="route('growbuilder.subscription.index') + '?plan=business'"
+                                class="block w-full text-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                            >
+                                Get Business
+                            </Link>
+                        </div>
+                        <!-- Agency Plan -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-gray-900">Agency</span>
+                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">10 GB Total</span>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900 mb-1">K900<span class="text-sm font-normal text-gray-500">/mo</span></p>
+                            <p class="text-xs text-gray-500 mb-3">Up to 20 sites (500MB each)</p>
+                            <Link 
+                                :href="route('growbuilder.subscription.index') + '?plan=agency'"
+                                class="block w-full text-center px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition"
+                            >
+                                Get Agency
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Stats Cards -->
-                <div v-if="stats && sites.length > 0" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div v-if="stats && sites.length > 0" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                     <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                         <div class="flex items-center gap-3">
                             <div class="p-2.5 bg-blue-100 rounded-lg">
@@ -188,6 +377,34 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             <div>
                                 <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.totalRevenue) }}</p>
                                 <p class="text-sm text-gray-500">Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- AI Usage Card -->
+                    <div v-if="aiUsage" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-indigo-100 rounded-lg">
+                                <CpuChipIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ aiUsage.is_unlimited ? '∞' : aiUsage.remaining }}
+                                    </p>
+                                    <span v-if="aiUsage.has_priority" class="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">Priority</span>
+                                </div>
+                                <p class="text-sm text-gray-500">
+                                    {{ aiUsage.is_unlimited ? 'Unlimited AI' : 'AI Prompts Left' }}
+                                </p>
+                                <div v-if="!aiUsage.is_unlimited" class="mt-2">
+                                    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                            class="h-full bg-indigo-500 rounded-full transition-all"
+                                            :style="{ width: Math.min(aiUsage.percentage, 100) + '%' }"
+                                        ></div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1">{{ aiUsage.used }}/{{ aiUsage.limit }} used</p>
+                                </div>
                             </div>
                         </div>
                     </div>

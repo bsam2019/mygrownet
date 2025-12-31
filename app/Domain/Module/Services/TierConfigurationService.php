@@ -69,13 +69,23 @@ class TierConfigurationService
         $limits = [];
 
         foreach ($tier->activeFeatures as $feature) {
-            if ($feature->feature_type === 'boolean' && $feature->value_boolean) {
-                $features[$feature->feature_key] = true;
+            if ($feature->feature_type === 'boolean') {
+                // Include both true and false boolean features
+                $features[$feature->feature_key] = [
+                    'value' => $feature->value_boolean,
+                    'name' => $feature->feature_name,
+                ];
             } elseif ($feature->feature_type === 'limit') {
                 $limits[$feature->feature_key] = $feature->value_limit;
-                $features[$feature->feature_key] = $feature->value_limit;
+                $features[$feature->feature_key] = [
+                    'value' => $feature->value_limit,
+                    'name' => $feature->feature_name,
+                ];
             } elseif ($feature->feature_type === 'text') {
-                $features[$feature->feature_key] = $feature->value_text;
+                $features[$feature->feature_key] = [
+                    'value' => $feature->value_text,
+                    'name' => $feature->feature_name,
+                ];
             }
         }
 
@@ -91,6 +101,7 @@ class TierConfigurationService
             'features' => $features,
             'limits' => $limits,
             'is_default' => $tier->is_default,
+            'is_popular' => $tier->is_popular ?? false,
         ];
     }
 
@@ -235,7 +246,7 @@ class TierConfigurationService
         $discounts = $this->getApplicableDiscounts($moduleId);
         $displayTiers = [];
 
-        $tierOrder = ['free', 'member', 'basic', 'starter', 'standard', 'professional', 'business', 'premium', 'ecommerce', 'enterprise'];
+        $tierOrder = ['free', 'member', 'basic', 'starter', 'standard', 'professional', 'business', 'premium', 'ecommerce', 'enterprise', 'agency'];
         $sortOrder = 0;
 
         foreach ($tierOrder as $tierKey) {
@@ -281,7 +292,7 @@ class TierConfigurationService
                 'reports' => $tierConfig['reports'] ?? [],
                 'user_limit' => $tierConfig['user_limit'] ?? null,
                 'storage_limit_mb' => $tierConfig['storage_limit_mb'] ?? null,
-                'is_popular' => $tierConfig['popular'] ?? ($tierKey === 'professional'),
+                'is_popular' => $tierConfig['is_popular'] ?? $tierConfig['popular'] ?? ($tierKey === 'business'),
                 'is_default' => $tierConfig['is_default'] ?? ($tierKey === 'free'),
                 'sort_order' => $sortOrder++,
             ];
@@ -298,13 +309,25 @@ class TierConfigurationService
         $formatted = [];
 
         foreach ($features as $key => $value) {
-            $formatted[] = [
-                'key' => $key,
-                'name' => $this->formatFeatureKey($key),
-                'value' => $value,
-                'display' => $this->formatFeatureValue($value),
-                'available' => $this->isFeatureAvailable($value),
-            ];
+            // Handle new structure with name included
+            if (is_array($value) && isset($value['name'])) {
+                $formatted[] = [
+                    'key' => $key,
+                    'name' => $value['name'],
+                    'value' => $value['value'],
+                    'display' => $this->formatFeatureValue($value['value']),
+                    'available' => $this->isFeatureAvailable($value['value']),
+                ];
+            } else {
+                // Handle legacy structure
+                $formatted[] = [
+                    'key' => $key,
+                    'name' => $this->formatFeatureKey($key),
+                    'value' => $value,
+                    'display' => $this->formatFeatureValue($value),
+                    'available' => $this->isFeatureAvailable($value),
+                ];
+            }
         }
 
         return $formatted;

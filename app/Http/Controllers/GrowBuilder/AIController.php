@@ -7,6 +7,7 @@ use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\AIFeedback;
 use App\Services\GrowBuilder\AIContentService;
+use App\Services\GrowBuilder\AIUsageService;
 use Illuminate\Http\Request;
 
 class AIController extends Controller
@@ -14,17 +15,74 @@ class AIController extends Controller
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
         private AIContentService $aiService,
+        private AIUsageService $aiUsageService,
     ) {}
     
     /**
-     * Check if AI is available
+     * Check if AI is available and get usage stats
      */
-    public function status()
+    public function status(Request $request)
     {
+        $user = $request->user();
+        $usageStats = $this->aiUsageService->getUsageStats($user);
+        
         return response()->json([
             'available' => $this->aiService->isConfigured(),
             'provider' => $this->aiService->getProvider(),
+            'usage' => $usageStats,
+            'can_use' => $this->aiUsageService->canUseAI($user),
         ]);
+    }
+
+    /**
+     * Check AI access before processing - returns error response if not allowed
+     */
+    private function checkAIAccess(Request $request, string $feature = 'content'): ?array
+    {
+        $user = $request->user();
+        
+        // Check if user can use AI at all
+        if (!$this->aiUsageService->canUseAI($user)) {
+            return [
+                'error' => 'AI limit reached',
+                'message' => $this->aiUsageService->getUpgradeMessage($user),
+                'usage' => $this->aiUsageService->getUsageStats($user),
+                'upgrade_required' => true,
+            ];
+        }
+        
+        // Check if user has access to this specific feature
+        if (!$this->aiUsageService->hasFeatureAccess($user, $feature)) {
+            $featureNames = [
+                'seo' => 'SEO Assistant',
+                'section' => 'Section Generator',
+                'priority' => 'Priority Processing',
+            ];
+            
+            return [
+                'error' => 'Feature not available',
+                'message' => ($featureNames[$feature] ?? ucfirst($feature)) . ' is available on Business plan and above.',
+                'feature' => $feature,
+                'upgrade_required' => true,
+            ];
+        }
+        
+        return null; // Access granted
+    }
+
+    /**
+     * Record AI usage after successful generation
+     */
+    private function recordUsage(Request $request, string $promptType, ?string $prompt = null, int $tokens = 0, ?int $siteId = null): void
+    {
+        $this->aiUsageService->recordUsage(
+            $request->user(),
+            $promptType,
+            $prompt,
+            $tokens,
+            $siteId,
+            $this->aiService->getProvider()
+        );
     }
     
     /**
@@ -124,12 +182,18 @@ class AIController extends Controller
      * The AI understands intent AND generates content in one call
      */
     public function smartChat(Request $request, int $siteId)
+        
     {
         $site = $this->validateSiteAccess($request, $siteId);
         if (!$site) {
             return response()->json(['error' => 'Site not found'], 404);
         }
-        
+
+        // Check AI access
+        $accessError = $this->checkAIAccess($request, 'content');
+        if ($accessError) {
+            return response()->json($accessError, 403);
+        }
         $validated = $request->validate([
             'message' => 'required|string|max:2000',
             'context' => 'nullable|array',
@@ -144,9 +208,16 @@ class AIController extends Controller
             $context
         );
         
+        // Record usage to database
+        $this->recordUsage($request, 'smart_chat', $validated['message'], 0, $siteId);
+        
+        // Get updated usage stats
+        $usageStats = $this->aiUsageService->getUsageStats($request->user());
+        
         return response()->json([
             'success' => true,
             'result' => $result,
+            'usage' => $usageStats,
         ]);
     }
     

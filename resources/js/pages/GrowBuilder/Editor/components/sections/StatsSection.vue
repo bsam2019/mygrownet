@@ -1,100 +1,163 @@
 <script setup lang="ts">
-/**
- * Stats Section Preview Component
- */
 import { computed } from 'vue';
-import { getBackgroundStyle } from '../../composables/useBackgroundStyle';
-import type { Section } from '../../types';
+import { 
+    UsersIcon, 
+    ChartBarIcon, 
+    TrophyIcon, 
+    StarIcon,
+    BuildingOfficeIcon,
+    HeartIcon,
+} from '@heroicons/vue/24/outline';
 
-const props = defineProps<{
-    section: Section;
-    isMobile: boolean;
-    textSize: { h1: string; h2: string; h3: string; p: string };
-    spacing: { section: string; gap: string };
-    gridCols4: string;
-    getSectionContentTransform: (section: Section) => string;
-}>();
+interface StatItem {
+    number: string;
+    suffix?: string;
+    label: string;
+    icon?: string;
+}
 
-const content = computed(() => props.section.content);
-const style = computed(() => props.section.style);
-
-const bgStyle = computed(() => getBackgroundStyle(style.value, '#2563eb', '#ffffff'));
-
-// Compute text alignment class
-const textAlignClass = computed(() => {
-    const align = content.value?.textPosition || style.value?.textAlign || 'center';
-    return {
-        'text-left': align === 'left',
-        'text-center': align === 'center',
-        'text-right': align === 'right',
+interface Props {
+    content: {
+        layout?: string;
+        title?: string;
+        subtitle?: string;
+        textAlign?: string;
+        animated?: boolean;
+        items?: StatItem[];
     };
+    style?: {
+        backgroundColor?: string;
+        accentColor?: string;
+    };
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    content: () => ({
+        layout: 'horizontal',
+        title: 'Our Impact',
+        subtitle: 'Numbers that speak for themselves',
+        textAlign: 'center',
+        animated: true,
+        items: [
+            { number: '500', suffix: '+', label: 'Happy Clients', icon: 'users' },
+            { number: '1000', suffix: '+', label: 'Projects Completed', icon: 'chart' },
+            { number: '50', suffix: '+', label: 'Awards Won', icon: 'trophy' },
+            { number: '99', suffix: '%', label: 'Satisfaction Rate', icon: 'star' },
+        ],
+    }),
+    style: () => ({
+        backgroundColor: '#ffffff',
+        accentColor: '#2563eb',
+    }),
 });
 
-// Compute items alignment/justify class
-const itemsAlignClass = computed(() => {
-    const align = style.value?.itemsAlign || 'center';
-    return {
-        'justify-start': align === 'start',
-        'justify-center': align === 'center',
-        'justify-end': align === 'end',
-        'justify-stretch': align === 'stretch',
-    };
-});
+const iconMap: Record<string, any> = {
+    users: UsersIcon,
+    chart: ChartBarIcon,
+    trophy: TrophyIcon,
+    star: StarIcon,
+    building: BuildingOfficeIcon,
+    heart: HeartIcon,
+};
 
-// Dynamic grid columns based on number of items
-const dynamicGridCols = computed(() => {
-    const itemCount = content.value?.items?.length || 0;
-    
-    if (props.isMobile) {
-        // Mobile: max 2 columns
-        return itemCount === 1 ? 'grid-cols-1' : 'grid-cols-2';
+const getIcon = (iconName?: string) => {
+    return iconName ? iconMap[iconName] || ChartBarIcon : ChartBarIcon;
+};
+
+const layoutClass = computed(() => {
+    switch (props.content.layout) {
+        case 'grid':
+            return 'grid grid-cols-2 md:grid-cols-4 gap-8';
+        case 'centered':
+            return 'flex flex-wrap justify-center gap-12';
+        default: // horizontal
+            return 'flex flex-wrap justify-between gap-8';
     }
-    
-    // Desktop: match columns to item count (max 6)
-    switch (itemCount) {
-        case 1: return 'grid-cols-1';
-        case 2: return 'grid-cols-2';
-        case 3: return 'grid-cols-3';
-        case 4: return 'grid-cols-4';
-        case 5: return 'grid-cols-5';
-        case 6: return 'grid-cols-6';
-        default: return itemCount > 6 ? 'grid-cols-4' : 'grid-cols-4'; // Fallback to 4 for many items
+});
+
+const textAlignClass = computed(() => {
+    switch (props.content.textAlign) {
+        case 'left':
+            return 'text-left';
+        case 'right':
+            return 'text-right';
+        default:
+            return 'text-center';
     }
 });
 </script>
 
 <template>
-    <div
-        class="h-full flex flex-col justify-center overflow-hidden"
-        :class="spacing.section"
-        :style="bgStyle"
+    <section 
+        class="py-16 px-4"
+        :style="{ backgroundColor: style?.backgroundColor }"
+        data-aos="fade-up"
     >
-        <div :style="{ transform: getSectionContentTransform(section) }">
-            <h2
-                v-if="content.title"
-                :class="[textSize.h2, 'font-bold mb-8', textAlignClass]"
-            >
-                {{ content.title }}
-            </h2>
-            <div 
-                class="grid" 
-                :class="[
-                    dynamicGridCols, 
-                    spacing.gap, 
-                    textAlignClass,
-                    itemsAlignClass
-                ]"
-            >
-                <div v-for="(stat, idx) in content.items || []" :key="idx">
-                    <p
-                        class="font-bold mb-1"
-                        :class="isMobile ? 'text-2xl' : 'text-4xl'"
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div v-if="content.title || content.subtitle" class="mb-12" :class="textAlignClass">
+                <h2 
+                    v-if="content.title" 
+                    class="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+                    data-aos="fade-up"
+                >
+                    {{ content.title }}
+                </h2>
+                <p 
+                    v-if="content.subtitle" 
+                    class="text-lg text-gray-600 max-w-2xl"
+                    :class="{ 'mx-auto': content.textAlign === 'center' }"
+                    data-aos="fade-up"
+                    data-aos-delay="100"
+                >
+                    {{ content.subtitle }}
+                </p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div :class="layoutClass">
+                <div
+                    v-for="(item, index) in content.items"
+                    :key="index"
+                    class="text-center"
+                    data-aos="fade-up"
+                    :data-aos-delay="index * 100"
+                >
+                    <!-- Icon -->
+                    <div 
+                        v-if="item.icon"
+                        class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                        :style="{ 
+                            backgroundColor: style?.accentColor + '20',
+                            color: style?.accentColor 
+                        }"
                     >
-                        {{ stat.value }}
+                        <component :is="getIcon(item.icon)" class="h-8 w-8" aria-hidden="true" />
+                    </div>
+
+                    <!-- Number -->
+                    <div class="flex items-baseline justify-center gap-1 mb-2">
+                        <span 
+                            class="text-4xl md:text-5xl font-bold"
+                            :style="{ color: style?.accentColor }"
+                        >
+                            {{ item.number }}
+                        </span>
+                        <span 
+                            v-if="item.suffix"
+                            class="text-3xl md:text-4xl font-bold"
+                            :style="{ color: style?.accentColor }"
+                        >
+                            {{ item.suffix }}
+                        </span>
+                    </div>
+
+                    <!-- Label -->
+                    <p class="text-gray-600 font-medium">
+                        {{ item.label }}
                     </p>
-                    <p class="opacity-80" :class="textSize.p">{{ stat.label }}</p>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>

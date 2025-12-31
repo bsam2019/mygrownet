@@ -174,7 +174,7 @@ class EloquentModuleSubscriptionRepository implements ModuleSubscriptionReposito
             id: $record->id ? SubscriptionId::fromString((string) $record->id) : null,
             userId: $record->user_id,
             moduleId: $record->module_id,
-            subscriptionTier: $record->tier ?? 'free',
+            subscriptionTier: $record->subscription_tier ?? $record->tier ?? 'free',
             status: $record->status ?? 'active',
             startedAt: new \DateTimeImmutable($record->started_at ?? 'now'),
             trialEndsAt: isset($record->trial_ends_at) ? new \DateTimeImmutable($record->trial_ends_at) : null,

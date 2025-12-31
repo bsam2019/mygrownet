@@ -117,15 +117,9 @@ class ModuleAccessService
     /**
      * Get the user's access level for a module
      * Returns: 'none', 'free', 'member_free', or the subscription tier name
-     * Admins always get 'business' (highest tier)
      */
     public function getAccessLevel(User $user, ModuleId $moduleId): string
     {
-        // Admins get the highest tier (business)
-        if ($this->isAdmin($user)) {
-            return 'business';
-        }
-
         $module = $this->moduleRepository->findById($moduleId);
         
         if (!$module || !$module->isActive()) {

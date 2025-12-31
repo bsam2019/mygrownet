@@ -16,7 +16,9 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
+use App\Services\GrowBuilder\AIUsageService;
 use App\Services\GrowBuilder\StorageService;
+use App\Services\GrowBuilder\TierRestrictionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -34,6 +36,8 @@ class SiteController extends Controller
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
         private StorageService $storageService,
+        private AIUsageService $aiUsageService,
+        private TierRestrictionService $tierRestrictionService,
     ) {}
 
     public function index(Request $request)
@@ -65,21 +69,19 @@ class SiteController extends Controller
             'totalRevenue' => $orders->sum('revenue') ?? 0,
         ];
 
-        // Get subscription info
-        $currentTier = $this->subscriptionService->getUserTier($user, self::MODULE_ID);
-        $tierLimits = $this->tierConfigService->getTierLimits(self::MODULE_ID, $currentTier);
-        $tierConfig = $this->tierConfigService->getTierConfig(self::MODULE_ID, $currentTier);
+        // Get subscription info - use tierRestrictionService which has proper fallback defaults
+        $currentTier = $this->tierRestrictionService->getUserTier($user);
+        $restrictions = $this->tierRestrictionService->getRestrictions($user);
         
-        $sitesLimit = $tierLimits['sites'] ?? 1;
+        $sitesLimit = $restrictions['sites_limit'];
         $sitesUsed = count($sites);
         
-        // For per-site pricing (standard/ecommerce), users can create unlimited sites
-        // Each site is a separate subscription
-        $canCreateSite = in_array($currentTier, ['standard', 'ecommerce']) || $sitesUsed < $sitesLimit;
+        // Check if user can create more sites
+        $canCreateSite = $sitesUsed < $sitesLimit;
 
         $subscription = [
             'tier' => $currentTier,
-            'tierName' => $tierConfig['name'] ?? ucfirst($currentTier),
+            'tierName' => $restrictions['tier_name'],
             'sitesLimit' => $sitesLimit,
             'sitesUsed' => $sitesUsed,
             'canCreateSite' => $canCreateSite,
@@ -95,6 +97,37 @@ class SiteController extends Controller
         
         if ($dbSubscription) {
             $subscription['expiresAt'] = $dbSubscription->expires_at;
+        }
+
+        // Get AI usage stats
+        $aiUsage = $this->aiUsageService->getUsageStats($user);
+
+        // Get comprehensive tier restrictions
+        $tierRestrictions = $this->tierRestrictionService->getRestrictions($user);
+
+        // Get user's total storage stats across all sites
+        $userStorageStats = $this->storageService->getUserStorageStats($user->id, $currentTier);
+
+        // For admins: get available tiers for testing
+        $availableTiers = null;
+        $isAdmin = $user->is_admin;
+        if ($isAdmin) {
+            $allTiers = $this->tierConfigService->getTiers(self::MODULE_ID);
+            
+            // If no tiers in DB, use fallback
+            if (empty($allTiers)) {
+                $allTiers = [
+                    'free' => ['name' => 'Free'],
+                    'starter' => ['name' => 'Starter'],
+                    'business' => ['name' => 'Business'],
+                    'agency' => ['name' => 'Agency'],
+                ];
+            }
+            
+            $availableTiers = collect($allTiers)->map(fn($t, $key) => [
+                'key' => $key,
+                'name' => $t['name'] ?? ucfirst($key),
+            ])->values()->toArray();
         }
 
         return Inertia::render('GrowBuilder/Dashboard', [
@@ -119,12 +152,49 @@ class SiteController extends Controller
             }),
             'stats' => $stats,
             'subscription' => $subscription,
+            'aiUsage' => $aiUsage,
+            'tierRestrictions' => $tierRestrictions,
+            'storageStats' => $userStorageStats, // User's total storage across all sites
+            'availableTiers' => $availableTiers,
+            'isAdmin' => $isAdmin,
         ]);
     }
 
     public function create(Request $request)
     {
         $templates = $this->templateRepository->findActive();
+
+        // Get site templates (full website templates)
+        $siteTemplates = \App\Models\GrowBuilder\SiteTemplate::with('pages')
+            ->active()
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'slug' => $t->slug,
+                'description' => $t->description,
+                'industry' => $t->industry,
+                'thumbnail' => $t->thumbnail_url,
+                'theme' => $t->theme,
+                'isPremium' => $t->is_premium,
+                'pagesCount' => $t->pages->count(),
+                'pages' => $t->pages->map(fn($p) => [
+                    'title' => $p->title,
+                    'slug' => $p->slug,
+                    'isHomepage' => $p->is_homepage,
+                ]),
+            ]);
+
+        // Get industries for filtering
+        $industries = \App\Models\GrowBuilder\SiteTemplateIndustry::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($i) => [
+                'slug' => $i->slug,
+                'name' => $i->name,
+                'icon' => $i->icon,
+            ]);
 
         return Inertia::render('GrowBuilder/Sites/Create', [
             'templates' => collect($templates)->map(fn($t) => [
@@ -139,6 +209,8 @@ class SiteController extends Controller
                 'isPremium' => $t->isPremium(),
                 'price' => $t->getPrice(),
             ]),
+            'siteTemplates' => $siteTemplates,
+            'industries' => $industries,
         ]);
     }
 
@@ -146,19 +218,24 @@ class SiteController extends Controller
     {
         $user = $request->user();
         
-        // Check subscription limits before creating
-        $currentTier = $this->subscriptionService->getUserTier($user, self::MODULE_ID);
-        $tierLimits = $this->tierConfigService->getTierLimits(self::MODULE_ID, $currentTier);
+        // Check subscription limits before creating - use tierRestrictionService for proper fallbacks
+        $restrictions = $this->tierRestrictionService->getRestrictions($user);
+        $currentTier = $restrictions['tier'];
+        $sitesLimit = $restrictions['sites_limit'];
         
-        $sitesLimit = $tierLimits['sites'] ?? 1;
         $currentSites = $this->siteRepository->findByUserId($user->id);
         $sitesUsed = count($currentSites);
         
-        // For per-site pricing tiers (standard/ecommerce), allow unlimited sites
-        // For free tier, enforce the limit
-        if (!in_array($currentTier, ['standard', 'ecommerce']) && $sitesUsed >= $sitesLimit) {
+        // Enforce site limit for all tiers
+        if ($sitesUsed >= $sitesLimit) {
+            // Check if user is at highest tier (agency)
+            $isHighestTier = $currentTier === 'agency';
+            $message = $isHighestTier 
+                ? "You've reached your maximum site limit ({$sitesLimit}). Contact support if you need more."
+                : "You've reached your site limit ({$sitesLimit}). Please upgrade your subscription to create more sites.";
+            
             return back()->withErrors([
-                'limit' => "You've reached your site limit ({$sitesLimit}). Please upgrade your subscription to create more sites."
+                'limit' => $message
             ]);
         }
         
@@ -166,6 +243,7 @@ class SiteController extends Controller
             'name' => 'required|string|max:255',
             'subdomain' => 'required|string|min:3|max:63|regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$/',
             'template_id' => 'nullable|integer|exists:growbuilder_templates,id',
+            'site_template_id' => 'nullable|integer|exists:site_templates,id',
             'description' => 'nullable|string|max:500',
         ]);
 
@@ -180,10 +258,23 @@ class SiteController extends Controller
 
             $site = $this->createSiteUseCase->execute($dto);
 
-            // Set storage limit based on user's tier
-            $storageLimit = $this->storageService->getStorageLimitForTier($currentTier);
-            GrowBuilderSite::where('id', $site->getId()->value())
-                ->update(['storage_limit' => $storageLimit]);
+            // Apply site template if selected (full website template)
+            if (!empty($validated['site_template_id'])) {
+                $applySiteTemplate = new \App\Application\GrowBuilder\UseCases\ApplySiteTemplateUseCase(
+                    $this->siteRepository
+                );
+                $applySiteTemplate->execute($site->getId()->value(), $validated['site_template_id']);
+            }
+
+            // Set storage limit based on the site's plan (each site gets its full tier allocation)
+            // The site's plan is set during creation based on user's current subscription
+            $siteModel = GrowBuilderSite::find($site->getId()->value());
+            $sitePlan = $siteModel->plan ?? $currentTier;
+            $storageLimit = $this->storageService->getStorageLimitForTier($sitePlan);
+            $siteModel->update([
+                'plan' => $sitePlan,
+                'storage_limit' => $storageLimit,
+            ]);
 
             return redirect()->route('growbuilder.editor', $site->getId()->value())
                 ->with('success', 'Site created successfully!');
@@ -340,6 +431,10 @@ class SiteController extends Controller
             'heading_font' => 'nullable|string|max:50',
             'body_font' => 'nullable|string|max:50',
             'border_radius' => 'nullable|integer|min:0|max:24',
+            // Splash Screen
+            'splash_enabled' => 'nullable|boolean',
+            'splash_style' => 'nullable|string|in:none,minimal,pulse,wave,gradient,particles,elegant',
+            'splash_tagline' => 'nullable|string|max:100',
             // SEO
             'meta_title' => 'nullable|string|max:60',
             'meta_description' => 'nullable|string|max:160',
@@ -410,16 +505,28 @@ class SiteController extends Controller
 
             $this->updateSiteUseCase->execute($dto);
             
-            // Sync logo to settings.navigation.logo for editor compatibility
-            if (isset($validated['logo'])) {
-                $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($id);
-                if ($siteModel) {
-                    $settings = $siteModel->settings ?? [];
+            // Update settings JSON (logo, splash, etc.)
+            $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($id);
+            if ($siteModel) {
+                $settings = $siteModel->settings ?? [];
+                
+                // Sync logo to settings.navigation.logo for editor compatibility
+                if (isset($validated['logo'])) {
                     $settings['navigation'] = $settings['navigation'] ?? [];
                     $settings['navigation']['logo'] = $validated['logo'];
-                    $siteModel->settings = $settings;
-                    $siteModel->save();
                 }
+                
+                // Save splash screen settings
+                if ($request->has('splash_enabled') || $request->has('splash_style') || $request->has('splash_tagline')) {
+                    $settings['splash'] = [
+                        'enabled' => $validated['splash_enabled'] ?? true,
+                        'style' => $validated['splash_style'] ?? 'minimal',
+                        'tagline' => $validated['splash_tagline'] ?? '',
+                    ];
+                }
+                
+                $siteModel->settings = $settings;
+                $siteModel->save();
             }
 
             return back()->with('success', 'Site updated successfully!');
@@ -899,6 +1006,36 @@ class SiteController extends Controller
         // Refresh the model to get latest data from database
         $pageModel->refresh();
 
+        // Get products for the site (for products section)
+        $products = \App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct::where('site_id', $siteModel->id)
+            ->where('is_active', true)
+            ->orderBy('is_featured', 'desc')
+            ->orderBy('sort_order')
+            ->limit(12)
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'slug' => $p->slug,
+                'price' => $p->price,
+                'priceFormatted' => $p->formatted_price,
+                'comparePrice' => $p->compare_price,
+                'comparePriceFormatted' => $p->compare_price ? 'K' . number_format($p->compare_price / 100, 2) : null,
+                'image' => $p->main_image,
+                'images' => $p->images,
+                'shortDescription' => $p->short_description,
+                'category' => $p->category,
+                'inStock' => $p->isInStock(),
+                'isFeatured' => $p->is_featured,
+                'hasDiscount' => $p->hasDiscount(),
+                'discountPercentage' => $p->discount_percentage,
+            ]);
+
+        // Get site owner's tier for watermark display
+        $siteOwner = \App\Models\User::find($site->getUserId());
+        $ownerTier = $siteOwner ? $this->tierRestrictionService->getUserTier($siteOwner) : 'free';
+        $showWatermark = $ownerTier === 'free';
+
         return Inertia::render('GrowBuilder/Preview/Site', [
             'site' => $this->siteToArray($site),
             'page' => [
@@ -915,8 +1052,232 @@ class SiteController extends Controller
                 'isHomepage' => $p->is_homepage,
             ]),
             'settings' => $siteModel->fresh()->settings,
+            'products' => $products,
             'isPreview' => !$site->isPublished() && $isOwner, // Flag for owner preview mode
+            'showWatermark' => $showWatermark, // Show "Powered by MyGrowNet" for free tier
         ])->withViewData(['cacheControl' => 'no-cache, no-store, must-revalidate']);
+    }
+
+    /**
+     * Switch user's tier (admin only - for testing)
+     */
+    public function switchTier(Request $request)
+    {
+        $user = $request->user();
+        
+        // Only admins can switch tiers
+        if (!$user->is_admin) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'tier' => 'required|string',
+        ]);
+
+        $tierKey = $validated['tier'];
+        
+        // Verify tier exists (check DB first, then fallback)
+        $allTiers = $this->tierConfigService->getTiers(self::MODULE_ID);
+        if (empty($allTiers)) {
+            $allTiers = [
+                'free' => ['name' => 'Free'],
+                'starter' => ['name' => 'Starter'],
+                'business' => ['name' => 'Business'],
+                'agency' => ['name' => 'Agency'],
+            ];
+        }
+        
+        if (!isset($allTiers[$tierKey])) {
+            return back()->withErrors(['tier' => 'Invalid tier selected.']);
+        }
+
+        // Update or create subscription
+        $subscription = DB::table('module_subscriptions')
+            ->where('user_id', $user->id)
+            ->where('module_id', self::MODULE_ID)
+            ->first();
+
+        if ($subscription) {
+            DB::table('module_subscriptions')
+                ->where('id', $subscription->id)
+                ->update([
+                    'subscription_tier' => $tierKey,
+                    'updated_at' => now(),
+                ]);
+        } else {
+            DB::table('module_subscriptions')->insert([
+                'user_id' => $user->id,
+                'module_id' => self::MODULE_ID,
+                'subscription_tier' => $tierKey,
+                'status' => 'active',
+                'started_at' => now(),
+                'expires_at' => now()->addYear(),
+                'billing_cycle' => 'monthly',
+                'amount' => 0,
+                'currency' => 'ZMW',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Clear cached tier data - clear all possible tier caches
+        $allTierKeys = ['free', 'starter', 'business', 'agency'];
+        foreach ($allTierKeys as $t) {
+            \Illuminate\Support\Facades\Cache::forget("growbuilder_restrictions:{$user->id}:{$t}");
+        }
+        \Illuminate\Support\Facades\Cache::forget("user_tier_{$user->id}_" . self::MODULE_ID);
+        \Illuminate\Support\Facades\Cache::forget("module_sub_{$user->id}_" . self::MODULE_ID);
+        $this->tierRestrictionService->clearCache($user);
+        $this->aiUsageService->clearCache($user);
+
+        return back()->with('success', "Switched to {$allTiers[$tierKey]['name']} tier.");
+    }
+
+    /**
+     * Show product detail page
+     */
+    public function showProduct(Request $request, string $subdomain, string $slug)
+    {
+        $site = $this->siteRepository->findBySubdomain(\App\Domain\GrowBuilder\ValueObjects\Subdomain::fromString($subdomain));
+
+        if (!$site) {
+            abort(404, 'Site not found');
+        }
+
+        // Check if site is accessible
+        $isOwner = $request->user() && $request->user()->id === $site->getUserId();
+        if (!$site->isPublished() && !$isOwner) {
+            abort(404, 'Site not found');
+        }
+
+        $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($site->getId()->value());
+
+        // Get the product
+        $product = \App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct::where('site_id', $siteModel->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$product) {
+            abort(404, 'Product not found');
+        }
+
+        // Get related products (same category or featured)
+        $relatedProducts = \App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct::where('site_id', $siteModel->id)
+            ->where('is_active', true)
+            ->where('id', '!=', $product->id)
+            ->when($product->category, function ($query) use ($product) {
+                $query->where('category', $product->category);
+            })
+            ->orderBy('is_featured', 'desc')
+            ->limit(4)
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'slug' => $p->slug,
+                'price' => $p->price,
+                'priceFormatted' => $p->formatted_price,
+                'comparePrice' => $p->compare_price,
+                'comparePriceFormatted' => $p->compare_price ? 'K' . number_format($p->compare_price / 100, 2) : null,
+                'image' => $p->main_image,
+                'inStock' => $p->isInStock(),
+                'isFeatured' => $p->is_featured,
+                'hasDiscount' => $p->hasDiscount(),
+                'discountPercentage' => $p->discount_percentage,
+            ]);
+
+        return Inertia::render('GrowBuilder/Preview/Product', [
+            'site' => $this->siteToArray($site),
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'price' => $product->price,
+                'priceFormatted' => $product->formatted_price,
+                'comparePrice' => $product->compare_price,
+                'comparePriceFormatted' => $product->compare_price ? 'K' . number_format($product->compare_price / 100, 2) : null,
+                'image' => $product->main_image,
+                'images' => $product->images ?? [],
+                'description' => $product->description,
+                'shortDescription' => $product->short_description,
+                'category' => $product->category,
+                'sku' => $product->sku,
+                'inStock' => $product->isInStock(),
+                'stockQuantity' => $product->stock_quantity,
+                'trackStock' => $product->track_stock,
+                'isFeatured' => $product->is_featured,
+                'hasDiscount' => $product->hasDiscount(),
+                'discountPercentage' => $product->discount_percentage,
+            ],
+            'relatedProducts' => $relatedProducts,
+            'settings' => $siteModel->settings,
+        ]);
+    }
+
+    /**
+     * Show checkout page
+     */
+    public function checkout(Request $request, string $subdomain)
+    {
+        $site = $this->siteRepository->findBySubdomain(\App\Domain\GrowBuilder\ValueObjects\Subdomain::fromString($subdomain));
+
+        if (!$site) {
+            abort(404, 'Site not found');
+        }
+
+        // Check if site is accessible
+        $isOwner = $request->user() && $request->user()->id === $site->getUserId();
+        if (!$site->isPublished() && !$isOwner) {
+            abort(404, 'Site not found');
+        }
+
+        $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($site->getId()->value());
+
+        // Get payment settings
+        $paymentSettings = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPaymentSettings::where('site_id', $siteModel->id)->first();
+        
+        // Check for new payment gateway config
+        $paymentConfig = \App\Models\GrowBuilder\SitePaymentConfig::where('site_id', $siteModel->id)
+            ->where('is_active', true)
+            ->first();
+
+        $paymentMethods = [];
+        
+        // Add legacy payment methods
+        if ($paymentSettings) {
+            if ($paymentSettings->momo_enabled) {
+                $paymentMethods[] = ['id' => 'momo', 'name' => 'MTN Mobile Money', 'icon' => '📱'];
+            }
+            if ($paymentSettings->airtel_enabled) {
+                $paymentMethods[] = ['id' => 'airtel', 'name' => 'Airtel Money', 'icon' => '📱'];
+            }
+            if ($paymentSettings->whatsapp_enabled) {
+                $paymentMethods[] = ['id' => 'whatsapp', 'name' => 'WhatsApp Order', 'icon' => '💬'];
+            }
+            if ($paymentSettings->cod_enabled) {
+                $paymentMethods[] = ['id' => 'cod', 'name' => 'Cash on Delivery', 'icon' => '💵'];
+            }
+            if ($paymentSettings->bank_enabled) {
+                $paymentMethods[] = ['id' => 'bank', 'name' => 'Bank Transfer', 'icon' => '🏦'];
+            }
+        }
+
+        // Add new payment gateway if configured
+        if ($paymentConfig) {
+            $paymentMethods[] = ['id' => 'online', 'name' => 'Pay Online', 'icon' => '💳'];
+        }
+
+        // Default to COD if no payment methods configured
+        if (empty($paymentMethods)) {
+            $paymentMethods[] = ['id' => 'cod', 'name' => 'Cash on Delivery', 'icon' => '💵'];
+        }
+
+        return Inertia::render('GrowBuilder/Preview/Checkout', [
+            'site' => $this->siteToArray($site),
+            'settings' => $siteModel->settings,
+            'paymentMethods' => $paymentMethods,
+        ]);
     }
 
     private function siteToArray($site): array

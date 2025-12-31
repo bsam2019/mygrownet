@@ -35,6 +35,12 @@ class AIContentService
                 $this->model = config('services.ai.groq_model', 'llama-3.3-70b-versatile');
                 $this->baseUrl = 'https://api.groq.com/openai/v1';
                 break;
+            case 'grok':
+            case 'xai':
+                $this->apiKey = config('services.ai.grok_key', config('services.ai.xai_key', ''));
+                $this->model = config('services.ai.grok_model', 'grok-beta');
+                $this->baseUrl = 'https://api.x.ai/v1';
+                break;
             case 'gemini':
                 $this->apiKey = config('services.ai.gemini_key', '');
                 $this->model = config('services.ai.gemini_model', 'gemini-pro');
@@ -277,8 +283,16 @@ PROMPT;
             // Log the raw response for debugging
             Log::debug('AI raw response', ['response' => substr($response, 0, 500)]);
             
+            // Remove markdown code blocks if present (```json ... ```, ``` ... ```, or `json ... `)
+            $cleanResponse = $response;
+            // Triple backticks with optional language
+            $cleanResponse = preg_replace('/```(?:json)?\s*([\s\S]*?)\s*```/', '$1', $cleanResponse);
+            // Single backticks (sometimes AI uses these)
+            $cleanResponse = preg_replace('/`json\s*([\s\S]*?)\s*`/', '$1', $cleanResponse);
+            $cleanResponse = preg_replace('/`([\s\S]*?)`/', '$1', $cleanResponse);
+            
             // Extract JSON from response
-            if (preg_match('/\{[\s\S]*\}/', $response, $matches)) {
+            if (preg_match('/\{[\s\S]*\}/', $cleanResponse, $matches)) {
                 $result = json_decode($matches[0], true);
                 if (is_array($result) && isset($result['action'])) {
                     // Post-process to enforce intelligent rules
@@ -312,7 +326,8 @@ PROMPT;
     
     /**
      * Post-process AI response to enforce intelligent rules
-     * This catches cases where the AI doesn't follow instructions properly
+     * PHASE 1 UPDATE: Removed forcing logic - AI now has creative freedom
+     * Only enforces: JSON validation, required fields, security
      */
     private function enforceIntelligentRules(array $result, string $userMessage, array $context): array
     {
@@ -321,82 +336,84 @@ PROMPT;
         $isHomePage = in_array($currentPage, ['home', 'homepage', 'index', '']);
         $pageSections = $context['pageSections'] ?? [];
         
+        // Check for creativity mode
+        $creativityLevel = $context['creativityLevel'] ?? 'balanced';
+        $isCreativeMode = $creativityLevel === 'creative' 
+            || str_contains($lowerMessage, 'surprise me')
+            || str_contains($lowerMessage, 'be creative')
+            || str_contains($lowerMessage, 'something different')
+            || str_contains($lowerMessage, 'unconventional')
+            || str_contains($lowerMessage, 'experiment');
+        
         Log::debug('enforceIntelligentRules input', [
             'action' => $result['action'] ?? 'none',
             'sectionType' => $result['data']['sectionType'] ?? 'none',
             'currentPage' => $currentPage,
             'isHomePage' => $isHomePage,
+            'creativityLevel' => $creativityLevel,
+            'isCreativeMode' => $isCreativeMode,
             'userMessage' => $lowerMessage
         ]);
         
-        // Rule 1: "header" requests on inner pages should use page-header
+        // In creative mode, skip most rules - trust the AI
+        if ($isCreativeMode) {
+            Log::debug('Creative mode enabled - minimal enforcement');
+            
+            // Only ensure required fields exist
+            if ($result['action'] === 'generate_content') {
+                if (empty($result['data']['style'])) {
+                    $result['data']['style'] = $this->getDefaultStyleForSection(
+                        $result['data']['sectionType'] ?? 'about', 
+                        $context
+                    );
+                }
+                if (empty($result['data']['position'])) {
+                    $result['data']['position'] = 'auto';
+                }
+            }
+            
+            return $result;
+        }
+        
+        // BALANCED MODE: Provide smart defaults but don't override AI decisions
         if ($result['action'] === 'generate_content') {
             $sectionType = $result['data']['sectionType'] ?? '';
             
-            // Detect header-related requests more broadly
+            // Smart header detection - SUGGEST but don't force
             $isHeaderRequest = str_contains($lowerMessage, 'header') 
                 || str_contains($lowerMessage, 'title section') 
                 || str_contains($lowerMessage, 'page title')
                 || str_contains($lowerMessage, 'banner')
-                || str_contains($lowerMessage, 'top section')
-                || (str_contains($lowerMessage, 'add') && str_contains($lowerMessage, 'title'));
+                || str_contains($lowerMessage, 'top section');
             
-            // If user asked for "header" and we're not on homepage
-            if ($isHeaderRequest && !$isHomePage) {
-                Log::debug('Header request detected on inner page', ['forcing' => 'page-header']);
+            // Only suggest page-header if AI didn't already choose appropriately
+            if ($isHeaderRequest && !$isHomePage && !in_array($sectionType, ['page-header', 'hero'])) {
+                Log::debug('Header request detected - suggesting page-header (not forcing)');
                 
-                // Force page-header type
-                $result['data']['sectionType'] = 'page-header';
-                
-                // Convert content to page-header format
-                $content = $result['data']['content'] ?? [];
-                $pageTitle = ucwords(str_replace(['-', '_'], ' ', $currentPage));
-                $result['data']['content'] = [
-                    'title' => $content['title'] ?? $pageTitle,
-                    'subtitle' => $content['subtitle'] ?? $content['description'] ?? "Welcome to our {$pageTitle} page",
-                    'backgroundImage' => $content['backgroundImage'] ?? '',
-                ];
-                
-                // Force position to first for headers
-                $result['data']['position'] = 'first';
-                
-                // Set appropriate style for page header
-                $siteColors = $context['siteColors'] ?? [];
-                $result['data']['style'] = [
-                    'backgroundColor' => $siteColors['primary'] ?? '#2563eb',
-                    'textColor' => '#ffffff',
-                    'textPosition' => 'center',
-                ];
-                
-                // Update message to reflect the change
-                $result['message'] = "Adding a professional page header to the top of your {$pageTitle} page with matching colors.";
+                // Suggest but don't force - AI may have good reason for different choice
+                if (empty($sectionType)) {
+                    $result['data']['sectionType'] = 'page-header';
+                    $pageTitle = ucwords(str_replace(['-', '_'], ' ', $currentPage));
+                    $result['data']['content'] = [
+                        'title' => $result['data']['content']['title'] ?? $pageTitle,
+                        'subtitle' => $result['data']['content']['subtitle'] ?? "Welcome to our {$pageTitle} page",
+                        'backgroundImage' => '',
+                    ];
+                }
             }
             
-            // Rule 2: page-header and hero always go first (re-check after potential type change)
-            $sectionType = $result['data']['sectionType'] ?? '';
-            if (in_array($sectionType, ['page-header', 'hero'])) {
-                $result['data']['position'] = 'first';
-                Log::debug('Forcing position to first for header/hero');
-            }
+            // REMOVED: Forced position overrides
+            // AI can now place sections where it thinks best
+            // Users can always manually reorder
             
-            // Rule 3: contact sections go last
-            if ($sectionType === 'contact') {
-                $result['data']['position'] = 'last';
-            }
-            
-            // Rule 4: CTA sections go near the end (before contact if exists)
-            if ($sectionType === 'cta') {
-                $result['data']['position'] = in_array('contact', $pageSections) ? 'auto' : 'last';
-            }
-            
-            // Rule 5: Ensure style is set with good defaults
+            // Provide defaults only if missing (don't override AI choices)
             if (empty($result['data']['style'])) {
                 $result['data']['style'] = $this->getDefaultStyleForSection($sectionType, $context);
             }
             
-            // Rule 6: Ensure position is always set
             if (empty($result['data']['position'])) {
-                $result['data']['position'] = 'auto';
+                // Smart default based on section type, but AI can override
+                $result['data']['position'] = $this->suggestPositionForSection($sectionType, $pageSections);
             }
         }
         
@@ -407,6 +424,24 @@ PROMPT;
         ]);
         
         return $result;
+    }
+    
+    /**
+     * Suggest a position for a section type (not forced, just a default)
+     */
+    private function suggestPositionForSection(string $sectionType, array $existingSections): string
+    {
+        // These are suggestions, not rules - AI can override
+        switch ($sectionType) {
+            case 'page-header':
+            case 'hero':
+                return 'first';
+            case 'contact':
+            case 'map':
+                return 'last';
+            default:
+                return 'auto';
+        }
     }
     
     /**
@@ -470,6 +505,14 @@ PROMPT;
             $existingSections = "Current page sections (in order): " . implode(' → ', $context['pageSections']);
         }
         
+        // Get existing site pages - CRITICAL for avoiding duplicate suggestions
+        $existingPages = '';
+        $pagesList = [];
+        if (!empty($context['sitePages'])) {
+            $pagesList = $context['sitePages'];
+            $existingPages = "EXISTING SITE PAGES: " . implode(', ', $context['sitePages']);
+        }
+        
         // Get site colors for style matching
         $siteColors = '';
         $colorData = [];
@@ -482,6 +525,12 @@ PROMPT;
         // Analyze page structure
         $pageAnalysis = $this->analyzePageStructure($sectionsList, $currentPage);
         
+        // Build page awareness section
+        $pageAwareness = $this->buildPageAwareness($pagesList, $currentPage);
+        
+        // Get section schemas from template service
+        $sectionSchemas = SectionTemplateService::generateAISchemaDoc();
+        
         return <<<PROMPT
 You are an EXPERT website builder AI assistant for "{$siteName}", a {$businessType} business. You create PROFESSIONAL, POLISHED websites through intelligent conversation.
 
@@ -490,115 +539,90 @@ CURRENT CONTEXT
 ═══════════════════════════════════════════════════════════════
 - Site: {$siteName} ({$businessType})
 - Current page: {$currentPage}
+- {$existingPages}
 - {$existingSections}
 - {$siteColors}
 - {$pageAnalysis}
 
-═══════════════════════════════════════════════════════════════
-SECTION TYPES & WHEN TO USE THEM
-═══════════════════════════════════════════════════════════════
-
-PAGE STRUCTURE SECTIONS:
-• page-header: Title banner for ALL inner pages (About, Contact, Services, etc). ALWAYS first. Use gradient or image background.
-• hero: ONLY for homepage. Full-screen impact section with CTA button.
-• cta: Call-to-action. Place near bottom to drive conversions.
-• divider: Visual separator between sections.
-
-CONTENT SECTIONS:
-• about: Company story, mission, values. Use on About page or homepage.
-• services: Grid of 3-6 service cards with icons. Use on Services page or homepage.
-• features: Checklist-style benefits. Good for highlighting advantages.
-• team: Staff profiles with photos. Use on About or dedicated Team page.
-• stats: 3-4 impressive numbers (years, clients, projects). Great for credibility.
-• text: Rich text block for detailed content.
-
-SOCIAL PROOF:
-• testimonials: Customer reviews with names, roles, ratings. Essential for trust.
-• blog: Latest articles/news. Links to blog posts.
-• gallery: Image grid. Perfect for portfolios, restaurants, events.
-
-COMMERCE:
-• pricing: Pricing plans/packages. Highlight recommended plan.
-• products: Product catalog grid.
-
-FORMS:
-• contact: Contact form with business info. Usually last content section.
-• faq: Accordion Q&A. Reduces support queries.
-
-MEDIA:
-• video: Embedded video (YouTube/Vimeo).
-• map: Google Maps embed for location.
+{$pageAwareness}
 
 ═══════════════════════════════════════════════════════════════
-INTELLIGENT PLACEMENT RULES
+{$sectionSchemas}
+═══════════════════════════════════════════════════════════════
+GUIDELINES (flexible, not strict rules)
 ═══════════════════════════════════════════════════════════════
 
-SECTION ORDER (top to bottom):
-1. page-header OR hero (ALWAYS first)
+TYPICAL SECTION ORDER (can be changed if user wants):
+1. page-header or hero (usually first)
 2. about/services/features (main content)
 3. stats/testimonials (social proof)
 4. pricing/products (if applicable)
 5. faq (if applicable)
 6. cta (call to action)
-7. contact/map (last before footer)
+7. contact/map (often last)
 
-AUTOMATIC DECISIONS:
-• "Add header" on inner page → page-header with position "first"
-• "Add header" on homepage → hero (if none exists)
-• "Add contact section" → contact with position "last"
-• "Add CTA" → cta positioned before contact section
-• Empty section mentioned → generate relevant content for that section type
+HOWEVER: If user explicitly requests a different order, RESPECT their choice.
+Examples of when to break typical order:
+- "Put contact form at the top" → Do it
+- "I want testimonials first" → Do it
+- "Surprise me with something different" → Be creative!
+- "Create an unconventional layout" → Experiment!
 
-═══════════════════════════════════════════════════════════════
-STYLE MATCHING RULES
-═══════════════════════════════════════════════════════════════
-
-ALWAYS match the existing page theme:
-• Use colors from the site's color scheme
-• Alternate between light and dark backgrounds for visual rhythm
-• page-header: Use primary color or gradient background with white text
-• stats: Often use primary/accent color background
-• testimonials: Light gray or white background
-• cta: Bold color (primary or gradient) to stand out
-• contact: Usually light background
-
-PROFESSIONAL COLOR COMBINATIONS:
-• Dark header (primary color) + white text
-• Light sections alternate with subtle gray (#f9fafb)
-• CTA sections use gradient or bold primary color
-• Maintain contrast ratio for readability
+STYLE SUGGESTIONS (not requirements):
+• Consider using site's color scheme for consistency
+• Alternate light/dark backgrounds for visual rhythm
+• Headers often use primary color with white text
+• But feel free to suggest alternatives if appropriate
 
 ═══════════════════════════════════════════════════════════════
-CONTENT QUALITY STANDARDS
+CONTENT QUALITY
 ═══════════════════════════════════════════════════════════════
 
-ALWAYS:
-✓ Write REAL, specific content (never Lorem ipsum)
-✓ Use Zambian context (K for Kwacha, +260 phones, local names)
-✓ Match the business type and industry
-✓ Be concise but compelling
-✓ Include clear calls-to-action
-✓ Use professional, friendly tone
+PREFER:
+✓ Real, specific content over placeholder text
+✓ Zambian context when appropriate (K for Kwacha, +260 phones, local names)
+✓ Content that matches the business type
+✓ Concise but compelling copy
+✓ Clear calls-to-action
+✓ Professional, friendly tone
 
-FOR STATS:
-✓ Use realistic, impressive numbers
-✓ 3-4 stats maximum
-✓ Examples: "500+ Happy Clients", "10+ Years Experience", "24/7 Support"
-
-FOR TESTIMONIALS:
-✓ Use realistic Zambian names
-✓ Include role/company
-✓ Specific, believable quotes
-✓ 4-5 star ratings
-
-FOR SERVICES/FEATURES:
-✓ 3-6 items (not too many)
-✓ Clear, benefit-focused titles
-✓ Brief descriptions (1-2 sentences)
+FOR STATS: Use realistic, impressive numbers (3-4 max)
+FOR TESTIMONIALS: Realistic names, roles, specific quotes
+FOR SERVICES: 3-6 items with benefit-focused titles
 
 {$industryKnowledge}
 
 {$proactiveSuggestions}
+
+═══════════════════════════════════════════════════════════════
+CREATIVITY MODE
+═══════════════════════════════════════════════════════════════
+
+When user says "surprise me", "be creative", "something different", or "unconventional":
+• Ignore typical section ordering
+• Try unexpected combinations
+• Experiment with layouts
+• Suggest unique approaches
+• Be bold and innovative
+
+═══════════════════════════════════════════════════════════════
+LEARNING FROM USER FEEDBACK
+═══════════════════════════════════════════════════════════════
+
+You have access to feedback data showing what this user (and similar users) have accepted or rejected.
+
+HOW TO USE FEEDBACK DATA:
+• If acceptance rate is HIGH (>70%): Continue with similar approaches
+• If acceptance rate is LOW (<50%): Try different approaches, ask more questions
+• If certain content types are "preferred": Prioritize those in suggestions
+• If certain content types are "avoided": Be more careful, offer alternatives
+• Industry-specific insights: Apply learnings from similar businesses
+
+ADAPTIVE BEHAVIOR:
+• After a rejection: Acknowledge and try a different approach
+• After multiple rejections: Ask clarifying questions
+• When user retries: Generate something noticeably different
+• For new users (no data): Use global best practices
 
 ═══════════════════════════════════════════════════════════════
 RESPONSE FORMAT
@@ -607,13 +631,13 @@ RESPONSE FORMAT
 Return ONLY valid JSON (no markdown, no extra text):
 
 {
-    "action": "generate_content|create_page|change_style|update_navigation|update_footer|generate_seo|chat|clarify",
+    "action": "generate_content|create_page|change_style|update_navigation|update_footer|generate_seo|chat|clarify|analyze_page",
     "message": "Friendly explanation of what you're doing and why",
     "data": {
         // For generate_content:
         "sectionType": "page-header|hero|about|services|etc",
         "content": { /* complete section content */ },
-        "position": "first|last|auto",
+        "position": "first|last|auto|specific index",
         "style": {
             "backgroundColor": "#hex",
             "textColor": "#hex",
@@ -629,28 +653,56 @@ Return ONLY valid JSON (no markdown, no extra text):
         "pageType": "about|services|contact|etc",
         "title": "Page Title",
         "sections": [{ "type": "...", "content": {...}, "style": {...} }]
+        
+        // For analyze_page (when user asks for feedback/improvements):
+        "suggestions": [
+            { "type": "add_section|improve_content|change_style|seo", "description": "what to improve", "priority": "high|medium|low" }
+        ]
     }
 }
 
 ═══════════════════════════════════════════════════════════════
-CRITICAL RULES
+HANDLING ANALYTICAL QUESTIONS
 ═══════════════════════════════════════════════════════════════
 
-1. ALWAYS return valid JSON only
-2. NEVER use placeholder text or Lorem ipsum
-3. MATCH existing page styles and colors
-4. Place sections LOGICALLY (headers first, contact last)
-5. Generate COMPLETE content (all required fields)
-6. Be HELPFUL - if request is vague, make smart assumptions
-7. Explain your choices in the message field
+When user asks questions like:
+- "Are there any improvements?"
+- "What do you think of this page?"
+- "What's missing?"
+- "How can I make this better?"
+- "Any suggestions?"
 
-HEADER PLACEMENT IS CRITICAL:
-• When user asks for "header", "title section", "banner", or "top section" on ANY inner page:
-  - ALWAYS use sectionType: "page-header"
-  - ALWAYS set position: "first"
-  - ALWAYS use primary color background with white text
-• NEVER place a header at the bottom of a page
-• NEVER use "hero" type on inner pages - that's ONLY for homepage
+Use action: "analyze_page" and provide thoughtful analysis in the message field.
+DO NOT automatically generate content - instead, LIST suggestions and let user choose.
+
+Example response for "Any improvements for this page?":
+{
+    "action": "analyze_page",
+    "message": "Looking at your Blog page, here are some suggestions:\n\n1. **Add a newsletter signup** - Capture readers' emails\n2. **Include author bios** - Build trust and credibility\n3. **Add social sharing buttons** - Increase reach\n4. **Consider a 'Related Posts' section** - Keep readers engaged\n\nWould you like me to implement any of these?",
+    "data": {
+        "suggestions": [
+            { "type": "add_section", "description": "Newsletter signup form", "priority": "high" },
+            { "type": "add_section", "description": "Author bio section", "priority": "medium" },
+            { "type": "improve_content", "description": "Add social sharing", "priority": "medium" }
+        ]
+    }
+}
+
+═══════════════════════════════════════════════════════════════
+IMPORTANT PRINCIPLES
+═══════════════════════════════════════════════════════════════
+
+1. Return valid JSON only
+2. Avoid placeholder text when possible
+3. Consider existing styles for consistency (unless user wants change)
+4. RESPECT USER REQUESTS - if they want something specific, do it
+5. Generate complete content (all required fields)
+6. Be helpful - make smart assumptions for vague requests
+7. Explain your choices in the message field
+8. BE FLEXIBLE - guidelines are not laws
+9. When in doubt, ask for clarification rather than assuming
+
+REMEMBER: The user has full control. They can always manually adjust anything you suggest. Your job is to help, not restrict.
 PROMPT;
     }
     
@@ -690,6 +742,47 @@ PROMPT;
         }
         
         return "Page analysis:\n" . implode("\n", $analysis);
+    }
+    
+    /**
+     * Build page awareness section to prevent duplicate page suggestions
+     */
+    private function buildPageAwareness(array $existingPages, string $currentPage): string
+    {
+        if (empty($existingPages)) {
+            return '';
+        }
+        
+        $normalizedPages = array_map('strtolower', $existingPages);
+        
+        return <<<AWARENESS
+═══════════════════════════════════════════════════════════════
+⚠️ CRITICAL: PAGE AWARENESS - READ CAREFULLY
+═══════════════════════════════════════════════════════════════
+
+The site ALREADY HAS these pages: {$this->formatPageList($existingPages)}
+
+RULES FOR PAGE SUGGESTIONS:
+1. NEVER suggest creating a page that already exists
+2. If user asks about a page that exists, offer to IMPROVE it instead
+3. When suggesting new pages, only suggest ones NOT in the list above
+4. If user asks "what pages should I add?", exclude existing pages from suggestions
+
+EXAMPLES:
+- If "About" exists and user says "add about page" → Respond: "You already have an About page. Would you like me to improve it or add sections to it?"
+- If user asks "what's missing?" → Only suggest pages NOT in the existing list
+- If user wants to "create Contact page" but it exists → Offer to enhance the existing Contact page
+
+Current page being edited: {$currentPage}
+AWARENESS;
+    }
+    
+    /**
+     * Format page list for display
+     */
+    private function formatPageList(array $pages): string
+    {
+        return implode(', ', array_map(fn($p) => "'{$p}'", $pages));
     }
     
     /**
@@ -1758,7 +1851,7 @@ PROMPT;
                 ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.7,
-            'max_tokens' => 1000,
+            'max_tokens' => 4096, // Increased for longer, more detailed responses
         ]);
         
         if (!$response->successful()) {

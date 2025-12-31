@@ -76,8 +76,8 @@ return [
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
-            'username' => env('LOG_SLACK_USERNAME', 'Laravel Log'),
-            'emoji' => env('LOG_SLACK_EMOJI', ':boom:'),
+            'username' => 'Laravel Log',
+            'emoji' => ':boom:',
             'level' => env('LOG_LEVEL', 'critical'),
             'replace_placeholders' => true,
         ],
@@ -127,11 +127,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-        'growbiz' => [
+        // Payment logging channel
+        'payment' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/growbiz.log'),
+            'path' => storage_path('logs/payment.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'days' => 90, // Keep payment logs for 90 days
             'replace_placeholders' => true,
         ],
 

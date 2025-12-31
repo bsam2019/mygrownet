@@ -13,12 +13,29 @@ class StorageService
 
     /**
      * Default storage limits by tier (in bytes) - fallback if not in tier config
+     * 
+     * For Free/Starter/Business: Each subscription = 1 site with full tier storage
+     * For Agency: 20 sites sharing 10GB total = 500MB per site
      */
     public const TIER_LIMITS = [
-        'free' => 52428800,       // 50 MB
-        'member' => 209715200,    // 200 MB
-        'standard' => 1073741824, // 1 GB (1000 MB)
-        'ecommerce' => 5368709120, // 5 GB (5000 MB)
+        'free' => 524288000,       // 500 MB per site (1 site per subscription)
+        'starter' => 1073741824,   // 1 GB per site (1 site per subscription)
+        'business' => 2147483648,  // 2 GB per site (1 site per subscription)
+        'agency' => 524288000,     // 500 MB per site (up to 20 sites, 10GB total)
+        // Legacy tiers (for backward compatibility)
+        'member' => 524288000,     // 500 MB (maps to free)
+        'standard' => 1073741824,  // 1 GB (maps to starter)
+        'ecommerce' => 2147483648, // 2 GB (maps to business)
+    ];
+
+    /**
+     * Total storage allocation per tier (for display purposes)
+     */
+    public const TIER_TOTAL_STORAGE = [
+        'free' => 524288000,       // 500 MB total
+        'starter' => 1073741824,   // 1 GB total
+        'business' => 2147483648,  // 2 GB total
+        'agency' => 10737418240,   // 10 GB total (shared across up to 20 sites)
     ];
 
     public function __construct(
@@ -27,12 +44,22 @@ class StorageService
 
     /**
      * Get storage limit for a tier from configuration (in bytes)
+     * This returns the PER-SITE storage allocation
+     * 
+     * - Free/Starter/Business: Full tier storage per site (1 site per subscription)
+     * - Agency: 500MB per site (10GB shared across up to 20 sites)
      */
     public function getStorageLimitForTier(string $tier): int
     {
         // Try to get from tier configuration
         if ($this->tierConfigService) {
             $limits = $this->tierConfigService->getTierLimits(self::MODULE_ID, $tier);
+            
+            // For agency, always use 500MB per site regardless of DB config
+            if ($tier === 'agency') {
+                return 524288000; // 500 MB per site
+            }
+            
             if (isset($limits['storage_mb'])) {
                 return $limits['storage_mb'] * 1024 * 1024; // Convert MB to bytes
             }
@@ -40,6 +67,66 @@ class StorageService
 
         // Fallback to hardcoded limits
         return self::TIER_LIMITS[$tier] ?? self::TIER_LIMITS['free'];
+    }
+
+    /**
+     * Get total storage allocation for a tier (for display purposes)
+     * This is the total storage the tier provides, not per-site
+     */
+    public function getTotalStorageForTier(string $tier): int
+    {
+        return self::TIER_TOTAL_STORAGE[$tier] ?? self::TIER_TOTAL_STORAGE['free'];
+    }
+
+    /**
+     * Get storage limit for a site based on its plan
+     */
+    public function getStorageLimitForSite(GrowBuilderSite $site): int
+    {
+        $plan = $site->plan ?? 'free';
+        return $this->getStorageLimitForTier($plan);
+    }
+
+    /**
+     * Get total storage used by a user across all their sites (for display purposes)
+     */
+    public function getTotalStorageUsedByUser(int $userId): int
+    {
+        return GrowBuilderSite::where('user_id', $userId)
+            ->whereNull('deleted_at')
+            ->sum('storage_used');
+    }
+
+    /**
+     * Get user's storage summary across all sites
+     */
+    public function getUserStorageStats(int $userId, string $defaultTier = 'free'): array
+    {
+        $sites = GrowBuilderSite::where('user_id', $userId)
+            ->whereNull('deleted_at')
+            ->get();
+        
+        $totalUsed = $sites->sum('storage_used');
+        $totalAllocated = $sites->sum('storage_limit');
+        
+        // Group by plan
+        $byPlan = $sites->groupBy('plan')->map(function ($planSites, $plan) {
+            return [
+                'plan' => $plan ?: 'free',
+                'sites_count' => $planSites->count(),
+                'storage_used' => $planSites->sum('storage_used'),
+                'storage_limit' => $planSites->sum('storage_limit'),
+            ];
+        })->values()->toArray();
+        
+        return [
+            'total_sites' => $sites->count(),
+            'total_used' => $totalUsed,
+            'total_used_formatted' => $this->formatBytes($totalUsed),
+            'total_allocated' => $totalAllocated,
+            'total_allocated_formatted' => $this->formatBytes($totalAllocated),
+            'by_plan' => $byPlan,
+        ];
     }
 
     /**

@@ -16,6 +16,7 @@ import {
     NewspaperIcon,
     PhotoIcon,
     StarIcon,
+    ShoppingBagIcon,
 } from '@heroicons/vue/24/outline';
 import type { Component } from 'vue';
 
@@ -48,6 +49,7 @@ export const templateIcons: Record<string, Component> = {
     'newspaper': NewspaperIcon,
     'photo': PhotoIcon,
     'star': StarIcon,
+    'shopping': ShoppingBagIcon,
 };
 
 /**
@@ -389,6 +391,242 @@ export const pageTemplates: PageTemplate[] = [
             { type: 'testimonials', content: { title: 'What Our Clients Say', items: [{ name: 'Catherine Mumba', text: 'Partnering with this team was a game-changer. Their strategic insights helped us expand into two new markets.', role: 'CEO, Mumba Holdings' }, { name: 'Richard Sakala', text: 'The level of professionalism is unmatched. They took time to understand our business.', role: 'Managing Director, Sakala Technologies' }, { name: 'Florence Tembo', text: 'What impressed me most was their commitment to our success.', role: 'Founder, Tembo Consulting' }, { name: 'Michael Zulu', text: 'From consultation to delivery, every interaction was marked by excellence.', role: 'Operations Director, Zulu Enterprises' }] }, style: { backgroundColor: '#f8fafc' } },
             { type: 'stats', content: { title: 'The Numbers Speak', items: [{ value: '98%', label: 'Client Satisfaction' }, { value: '500+', label: 'Projects Completed' }, { value: '150%', label: 'Average ROI' }, { value: '95%', label: 'Client Retention' }] }, style: { backgroundColor: '#ffffff' } },
             { type: 'cta', content: { title: 'Join Our Success Stories', description: 'Become our next satisfied client', buttonText: 'Get Started Today', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+    // ============================================
+    // PAGE TEMPLATE VARIATIONS
+    // ============================================
+
+    // About Page Variations
+    {
+        id: 'about-minimal',
+        name: 'About - Minimal',
+        description: 'Clean, simple about page with focused content',
+        iconType: 'users',
+        sections: [
+            { type: 'page-header', content: { title: 'About Us', subtitle: 'Simple. Focused. Effective.', backgroundColor: '#111827', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'about', content: { layout: 'image-left', title: 'Who We Are', description: 'We believe in doing one thing exceptionally well. Our focused approach has helped hundreds of businesses achieve their goals without the complexity.', image: '', imagePosition: 'left' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { layout: 'minimal', title: 'Let\'s Work Together', buttonText: 'Get in Touch', buttonLink: '/contact' }, style: { backgroundColor: '#111827' } },
+        ],
+    },
+    {
+        id: 'about-team-focused',
+        name: 'About - Team Focused',
+        description: 'Highlights your team members and company culture',
+        iconType: 'users',
+        sections: [
+            { type: 'page-header', content: { title: 'Meet Our Team', subtitle: 'The people behind our success', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 220 } },
+            { type: 'about', content: { layout: 'image-right', title: 'Our Story', description: 'Founded in Lusaka, we\'ve grown from a small team of passionate individuals to a full-service agency. Our diverse backgrounds bring unique perspectives to every project.', image: '' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'team', content: { layout: 'social', title: 'Leadership Team', items: [{ name: 'Mwila Chanda', role: 'Founder & CEO', bio: 'Visionary leader with 15+ years experience', image: '' }, { name: 'Bwalya Mutale', role: 'Creative Director', bio: 'Award-winning designer and brand strategist', image: '' }, { name: 'Chilufya Banda', role: 'Head of Operations', bio: 'Efficiency expert who keeps everything running', image: '' }, { name: 'Kondwani Phiri', role: 'Lead Developer', bio: 'Full-stack developer and tech enthusiast', image: '' }] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'stats', content: { layout: 'icons', title: 'Our Impact', items: [{ icon: 'users', value: '50+', label: 'Team Members' }, { icon: 'globe', value: '12', label: 'Countries Served' }, { icon: 'star', value: '500+', label: 'Happy Clients' }, { icon: 'chart', value: '10+', label: 'Years Experience' }] }, style: { backgroundColor: '#1e40af' } },
+            { type: 'cta', content: { title: 'Join Our Team', description: 'We\'re always looking for talented individuals', buttonText: 'View Careers', buttonLink: '/careers' }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+    {
+        id: 'about-story',
+        name: 'About - Story Timeline',
+        description: 'Tell your company story with a timeline approach',
+        iconType: 'users',
+        sections: [
+            { type: 'page-header', content: { title: 'Our Journey', subtitle: 'From humble beginnings to where we are today', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 220 } },
+            { type: 'about', content: { layout: 'image-top', title: 'It All Started With a Vision', description: 'In 2010, we started with a simple idea: make quality services accessible to every Zambian business. What began in a small office in Lusaka has grown into a nationwide operation serving clients across Africa.', image: '' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'features', content: { layout: 'steps', title: 'Our Milestones', items: [{ title: '2010 - The Beginning', description: 'Founded in Lusaka with just 3 team members and a dream.' }, { title: '2015 - First Major Client', description: 'Landed our first enterprise client, proving our capabilities.' }, { title: '2018 - Regional Expansion', description: 'Opened offices in Kitwe and Ndola to serve the Copperbelt.' }, { title: '2022 - Going Digital', description: 'Launched our digital platform, reaching clients nationwide.' }, { title: '2024 - Pan-African Vision', description: 'Now serving clients across 12 African countries.' }] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'testimonials', content: { layout: 'single', title: 'What Our Founder Says', items: [{ name: 'David Mulenga', text: 'Every step of our journey has been guided by one principle: put the client first. This philosophy has taken us from a small startup to a trusted partner for businesses across Africa.', role: 'Founder & CEO', image: '' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Be Part of Our Story', description: 'Let\'s write the next chapter together', buttonText: 'Start Your Project', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+
+    // Contact Page Variations
+    {
+        id: 'contact-simple',
+        name: 'Contact - Simple',
+        description: 'Clean contact form without extra sections',
+        iconType: 'envelope',
+        sections: [
+            { type: 'page-header', content: { title: 'Contact Us', subtitle: 'We\'d love to hear from you', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 180 } },
+            { type: 'contact', content: { layout: 'stacked', title: 'Send Us a Message', description: 'Fill out the form and we\'ll get back to you within 24 hours.', showForm: true, email: 'hello@yourbusiness.com', phone: '+260 97X XXX XXX' }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+    {
+        id: 'contact-with-map',
+        name: 'Contact - With Map',
+        description: 'Contact form with embedded Google Map',
+        iconType: 'envelope',
+        sections: [
+            { type: 'page-header', content: { title: 'Visit Us', subtitle: 'Find us at our office or reach out online', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'contact', content: { layout: 'with-map', title: 'Get in Touch', description: 'We\'re here to help with any questions.', showForm: true, email: 'info@yourbusiness.com', phone: '+260 97X XXX XXX', address: 'Plot 123, Cairo Road, Lusaka, Zambia', mapEmbedUrl: '' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'features', content: { layout: 'grid', title: 'Why Contact Us?', items: [{ title: 'Quick Response', description: 'We respond within 24 hours' }, { title: 'Expert Advice', description: 'Speak directly with specialists' }, { title: 'No Obligation', description: 'Free consultation available' }] }, style: { backgroundColor: '#f8fafc' } },
+        ],
+    },
+    {
+        id: 'contact-full',
+        name: 'Contact - Full Page',
+        description: 'Comprehensive contact page with all details',
+        iconType: 'envelope',
+        sections: [
+            { type: 'page-header', content: { title: 'Let\'s Connect', subtitle: 'Multiple ways to reach us', backgroundColor: '#111827', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 220 } },
+            { type: 'contact', content: { layout: 'side-by-side', title: 'Send a Message', description: 'Our team is ready to assist you.', showForm: true, email: 'support@yourbusiness.com', phone: '+260 97X XXX XXX', address: 'Plot 123, Cairo Road, Lusaka, Zambia' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'map', content: { title: 'Our Location', address: 'Plot 123, Cairo Road, Lusaka, Zambia', embedUrl: '', showAddress: true }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'faq', content: { layout: 'accordion', title: 'Common Questions', items: [{ question: 'What are your business hours?', answer: 'We\'re open Monday to Friday, 8:00 AM to 5:00 PM.' }, { question: 'How quickly do you respond?', answer: 'We aim to respond to all inquiries within 24 business hours.' }, { question: 'Do you offer phone support?', answer: 'Yes, you can call us during business hours for immediate assistance.' }] }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+
+    // Services Page Variations
+    {
+        id: 'services-grid',
+        name: 'Services - Grid Layout',
+        description: 'Services displayed in a clean grid format',
+        iconType: 'cog',
+        sections: [
+            { type: 'page-header', content: { title: 'Our Services', subtitle: 'Solutions tailored to your needs', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'services', content: { layout: 'grid', title: 'What We Offer', columns: 3, items: [{ title: 'Web Development', description: 'Custom websites and web applications built with modern technologies.', icon: 'code' }, { title: 'Mobile Apps', description: 'Native and cross-platform mobile applications for iOS and Android.', icon: 'sparkles' }, { title: 'Digital Marketing', description: 'SEO, social media, and paid advertising to grow your reach.', icon: 'chart' }, { title: 'Brand Design', description: 'Logo design, brand identity, and visual guidelines.', icon: 'sparkles' }, { title: 'Consulting', description: 'Strategic advice to help your business grow.', icon: 'briefcase' }, { title: 'Support', description: '24/7 technical support and maintenance services.', icon: 'shield' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Need a Custom Solution?', description: 'Let\'s discuss your specific requirements', buttonText: 'Get a Quote', buttonLink: '/contact' }, style: { backgroundColor: '#0f172a' } },
+        ],
+    },
+    {
+        id: 'services-detailed',
+        name: 'Services - Detailed',
+        description: 'In-depth service descriptions with features',
+        iconType: 'cog',
+        sections: [
+            { type: 'page-header', content: { title: 'Services & Solutions', subtitle: 'Comprehensive offerings for every business need', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 220 } },
+            { type: 'services', content: { layout: 'alternating', title: 'Our Core Services', items: [{ title: 'Digital Transformation', description: 'We help businesses modernize their operations with cutting-edge technology. From cloud migration to process automation, we guide you through every step of your digital journey.', icon: 'code', image: '' }, { title: 'Strategic Consulting', description: 'Our experienced consultants work alongside your team to identify opportunities, overcome challenges, and develop actionable strategies for sustainable growth.', icon: 'briefcase', image: '' }, { title: 'Creative Services', description: 'From brand identity to marketing campaigns, our creative team delivers compelling visuals and messaging that resonate with your target audience.', icon: 'sparkles', image: '' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'features', content: { layout: 'checklist', title: 'Why Choose Our Services?', items: [{ title: 'Proven Track Record', description: '500+ successful projects delivered' }, { title: 'Expert Team', description: 'Certified professionals in every discipline' }, { title: 'Transparent Pricing', description: 'No hidden fees, clear deliverables' }, { title: 'Ongoing Support', description: 'We\'re with you long after launch' }] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'pricing', content: { layout: 'cards', title: 'Service Packages', plans: [{ name: 'Starter', price: 'K2,500', features: ['Basic website', 'Social media setup', 'Email support'], buttonText: 'Get Started' }, { name: 'Professional', price: 'K7,500', popular: true, features: ['Custom website', 'SEO optimization', 'Priority support', 'Monthly reports'], buttonText: 'Most Popular' }, { name: 'Enterprise', price: 'Custom', features: ['Full digital suite', 'Dedicated team', '24/7 support', 'Custom integrations'], buttonText: 'Contact Us' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Ready to Get Started?', description: 'Book a free consultation today', buttonText: 'Schedule a Call', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+    {
+        id: 'services-list',
+        name: 'Services - List Style',
+        description: 'Services in an easy-to-scan list format',
+        iconType: 'cog',
+        sections: [
+            { type: 'page-header', content: { title: 'How We Help', subtitle: 'Clear solutions for complex challenges', backgroundColor: '#111827', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'services', content: { layout: 'list', title: 'Our Services', items: [{ title: 'Business Strategy', description: 'Develop winning strategies that drive growth and competitive advantage.', icon: 'chart', link: '/services/strategy' }, { title: 'Technology Solutions', description: 'Build and implement technology that powers your business forward.', icon: 'code', link: '/services/technology' }, { title: 'Marketing & Growth', description: 'Reach more customers and grow your market share effectively.', icon: 'globe', link: '/services/marketing' }, { title: 'Operations Excellence', description: 'Streamline processes and improve efficiency across your organization.', icon: 'cog', link: '/services/operations' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'stats', content: { layout: 'row', title: '', items: [{ value: '500+', label: 'Projects' }, { value: '98%', label: 'Satisfaction' }, { value: '24/7', label: 'Support' }, { value: '10+', label: 'Years' }] }, style: { backgroundColor: '#1e40af' } },
+            { type: 'cta', content: { layout: 'banner', title: 'Let\'s Discuss Your Needs', description: 'Free consultation available', buttonText: 'Contact Us', buttonLink: '/contact' }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+
+    // Pricing Page Variations
+    {
+        id: 'pricing-simple',
+        name: 'Pricing - Simple',
+        description: 'Clean pricing cards without extras',
+        iconType: 'currency',
+        sections: [
+            { type: 'page-header', content: { title: 'Pricing', subtitle: 'Simple, transparent pricing', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 180 } },
+            { type: 'pricing', content: { layout: 'cards', title: 'Choose Your Plan', plans: [{ name: 'Basic', price: 'K1,500/mo', features: ['5 users', 'Basic features', 'Email support'], buttonText: 'Start Free Trial' }, { name: 'Pro', price: 'K4,500/mo', popular: true, features: ['25 users', 'All features', 'Priority support', 'Analytics'], buttonText: 'Get Started' }, { name: 'Enterprise', price: 'Custom', features: ['Unlimited users', 'Custom features', '24/7 support', 'Dedicated manager'], buttonText: 'Contact Sales' }] }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+    {
+        id: 'pricing-comparison',
+        name: 'Pricing - Comparison Table',
+        description: 'Detailed feature comparison table',
+        iconType: 'currency',
+        sections: [
+            { type: 'page-header', content: { title: 'Plans & Pricing', subtitle: 'Compare features and find your perfect fit', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'pricing', content: { layout: 'table', title: 'Compare Plans', plans: [{ name: 'Starter', price: 'K2,000/mo', features: ['Up to 10 users', 'Basic analytics', 'Email support', '5GB storage', 'Standard security'] }, { name: 'Business', price: 'K6,000/mo', popular: true, features: ['Up to 50 users', 'Advanced analytics', 'Priority support', '50GB storage', 'Enhanced security', 'API access'] }, { name: 'Enterprise', price: 'K15,000/mo', features: ['Unlimited users', 'Custom analytics', '24/7 phone support', 'Unlimited storage', 'Enterprise security', 'Full API access', 'Custom integrations'] }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'faq', content: { layout: 'two-column', title: 'Pricing FAQ', items: [{ question: 'Can I change plans later?', answer: 'Yes, upgrade or downgrade anytime.' }, { question: 'Is there a free trial?', answer: '14-day free trial on all plans.' }, { question: 'What payment methods?', answer: 'Mobile money, bank transfer, and cards.' }, { question: 'Any setup fees?', answer: 'No hidden fees. Pay only for your plan.' }] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'cta', content: { title: 'Need Help Choosing?', description: 'Our team can help you find the right plan', buttonText: 'Talk to Sales', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+    {
+        id: 'pricing-toggle',
+        name: 'Pricing - Monthly/Yearly Toggle',
+        description: 'Pricing with billing period toggle',
+        iconType: 'currency',
+        sections: [
+            { type: 'page-header', content: { title: 'Flexible Pricing', subtitle: 'Save 20% with annual billing', backgroundColor: '#111827', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'pricing', content: { layout: 'toggle', title: 'Choose Your Plan', plans: [{ name: 'Personal', price: 'K1,000/mo', yearlyPrice: 'K9,600/yr', features: ['1 user', 'Core features', 'Community support'], buttonText: 'Start Free' }, { name: 'Team', price: 'K3,500/mo', yearlyPrice: 'K33,600/yr', popular: true, features: ['10 users', 'All features', 'Priority support', 'Team collaboration'], buttonText: 'Try Free' }, { name: 'Business', price: 'K8,000/mo', yearlyPrice: 'K76,800/yr', features: ['Unlimited users', 'Advanced features', 'Dedicated support', 'Custom training'], buttonText: 'Contact Us' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'features', content: { layout: 'grid', title: 'All Plans Include', items: [{ title: 'Free Updates', description: 'Always get the latest features' }, { title: 'SSL Security', description: 'Your data is always protected' }, { title: 'Mobile Access', description: 'Work from anywhere' }, { title: 'Data Export', description: 'Your data belongs to you' }] }, style: { backgroundColor: '#f8fafc' } },
+        ],
+    },
+
+    // Gallery/Portfolio Variations
+    {
+        id: 'gallery-grid',
+        name: 'Gallery - Grid',
+        description: 'Simple image grid gallery',
+        iconType: 'photo',
+        sections: [
+            { type: 'page-header', content: { title: 'Our Work', subtitle: 'A showcase of our best projects', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'gallery', content: { layout: 'grid', title: 'Featured Projects', columns: 3, images: [] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Like What You See?', description: 'Let\'s create something amazing together', buttonText: 'Start a Project', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+    {
+        id: 'gallery-masonry',
+        name: 'Gallery - Masonry',
+        description: 'Pinterest-style masonry layout',
+        iconType: 'photo',
+        sections: [
+            { type: 'page-header', content: { title: 'Portfolio', subtitle: 'Explore our creative work', backgroundColor: '#111827', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'about', content: { layout: 'image-left', title: 'Our Creative Process', description: 'Every project starts with understanding your vision. We combine creativity with strategy to deliver results that exceed expectations.', image: '' }, style: { backgroundColor: '#ffffff' } },
+            { type: 'gallery', content: { layout: 'masonry', title: 'Recent Work', images: [] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'testimonials', content: { layout: 'carousel', title: 'Client Feedback', items: [{ name: 'Sarah Mwanza', text: 'The quality of work exceeded our expectations.', role: 'Marketing Director' }, { name: 'James Phiri', text: 'Professional, creative, and delivered on time.', role: 'Business Owner' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Ready to Start Your Project?', buttonText: 'Get in Touch', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+
+    // FAQ Variations
+    {
+        id: 'faq-simple',
+        name: 'FAQ - Simple',
+        description: 'Clean accordion-style FAQ',
+        iconType: 'question',
+        sections: [
+            { type: 'page-header', content: { title: 'FAQ', subtitle: 'Quick answers to common questions', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 180 } },
+            { type: 'faq', content: { layout: 'accordion', title: 'Frequently Asked Questions', items: [{ question: 'How do I get started?', answer: 'Simply contact us through our form or give us a call. We\'ll schedule a free consultation to discuss your needs.' }, { question: 'What are your payment terms?', answer: 'We accept mobile money, bank transfers, and card payments. Projects typically require a 50% deposit to begin.' }, { question: 'How long does a typical project take?', answer: 'Project timelines vary based on scope. A simple website takes 2-4 weeks, while complex projects may take 2-3 months.' }, { question: 'Do you offer ongoing support?', answer: 'Yes! We offer various support packages to keep your project running smoothly after launch.' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { layout: 'minimal', title: 'Still have questions?', buttonText: 'Contact Us', buttonLink: '/contact' }, style: { backgroundColor: '#f8fafc' } },
+        ],
+    },
+    {
+        id: 'faq-categorized',
+        name: 'FAQ - Categorized',
+        description: 'FAQ organized by categories',
+        iconType: 'question',
+        sections: [
+            { type: 'page-header', content: { title: 'Help Center', subtitle: 'Find answers to all your questions', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 200 } },
+            { type: 'faq', content: { layout: 'two-column', title: 'Getting Started', items: [{ question: 'How do I create an account?', answer: 'Click the Sign Up button and follow the simple registration process.' }, { question: 'Is there a free trial?', answer: 'Yes, all plans include a 14-day free trial.' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'faq', content: { layout: 'two-column', title: 'Billing & Payments', items: [{ question: 'What payment methods do you accept?', answer: 'We accept MTN Mobile Money, Airtel Money, bank transfers, Visa, and Mastercard.' }, { question: 'Can I cancel anytime?', answer: 'Yes, you can cancel your subscription at any time with no penalties.' }] }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'faq', content: { layout: 'two-column', title: 'Technical Support', items: [{ question: 'How do I contact support?', answer: 'Email us at support@example.com or call +260 97X XXX XXX during business hours.' }, { question: 'What are your support hours?', answer: 'Monday to Friday, 8:00 AM to 6:00 PM. Enterprise clients have 24/7 access.' }] }, style: { backgroundColor: '#ffffff' } },
+            { type: 'cta', content: { title: 'Can\'t Find Your Answer?', description: 'Our support team is here to help', buttonText: 'Contact Support', buttonLink: '/contact' }, style: { backgroundColor: '#1e40af' } },
+        ],
+    },
+
+    // Shop Variations
+    {
+        id: 'shop',
+        name: 'Shop',
+        description: 'Product catalog with search and categories',
+        iconType: 'shopping',
+        sections: [
+            { type: 'page-header', content: { title: 'Our Shop', subtitle: 'Browse our collection of quality products', backgroundColor: '#0f172a', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 180 } },
+            { type: 'product-search', content: { placeholder: 'Search products...', showCategories: true, showSort: true }, style: { backgroundColor: '#ffffff' } },
+            { type: 'products', content: { title: '', columns: 4, limit: 12, showCategory: true, showViewAll: false, featuredOnly: false }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+    {
+        id: 'shop-featured',
+        name: 'Shop - Featured Products',
+        description: 'Highlights featured products first',
+        iconType: 'shopping',
+        sections: [
+            { type: 'page-header', content: { title: 'Shop', subtitle: 'Discover our best-selling products', backgroundColor: '#1e40af', textColor: '#ffffff', textPosition: 'center' }, style: { minHeight: 180 } },
+            { type: 'products', content: { title: 'Featured Products', columns: 4, limit: 4, showCategory: true, featuredOnly: true }, style: { backgroundColor: '#f8fafc' } },
+            { type: 'product-search', content: { placeholder: 'Search all products...', showCategories: true, showSort: true }, style: { backgroundColor: '#ffffff' } },
+            { type: 'products', content: { title: 'All Products', columns: 4, limit: 12, showCategory: true, showViewAll: false, featuredOnly: false }, style: { backgroundColor: '#ffffff' } },
+        ],
+    },
+    {
+        id: 'shop-minimal',
+        name: 'Shop - Minimal',
+        description: 'Clean, distraction-free shopping experience',
+        iconType: 'shopping',
+        sections: [
+            { type: 'products', content: { title: 'Products', subtitle: 'Quality items for every need', columns: 3, limit: 9, showCategory: false, showViewAll: false, featuredOnly: false, textPosition: 'center' }, style: { backgroundColor: '#ffffff' } },
         ],
     },
 ];

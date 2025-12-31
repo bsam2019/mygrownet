@@ -12,6 +12,8 @@ use App\Http\Controllers\GrowBuilder\SiteBlogController;
 use App\Http\Controllers\GrowBuilder\SiteContactController;
 use App\Http\Controllers\GrowBuilder\SiteMemberController;
 use App\Http\Controllers\GrowBuilder\SitePostController;
+use App\Http\Controllers\GrowBuilder\SiteProductController;
+use App\Http\Controllers\GrowBuilder\SiteTemplateController;
 use App\Http\Controllers\GrowBuilder\SiteUserManagementController;
 use App\Http\Controllers\GrowBuilder\SiteController;
 use App\Http\Controllers\GrowBuilder\SubscriptionController;
@@ -26,11 +28,22 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilder.')->group(function () {
     // Dashboard
     Route::get('/', [SiteController::class, 'index'])->name('index');
+    
+    // Admin tier switching (for testing)
+    Route::post('/switch-tier', [SiteController::class, 'switchTier'])->name('switch-tier');
 
     // Subscription/Pricing
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
     Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
+
+    // Site Templates API
+    Route::get('/templates', [SiteTemplateController::class, 'index'])->name('templates.index');
+    Route::get('/templates/industries', [SiteTemplateController::class, 'industries'])->name('templates.industries');
+    Route::get('/templates/{id}', [SiteTemplateController::class, 'show'])->name('templates.show');
+    Route::get('/templates/{id}/preview', [SiteTemplateController::class, 'preview'])->name('templates.preview');
+    Route::get('/templates/{id}/live', [SiteTemplateController::class, 'livePreview'])->name('templates.live');
+    Route::get('/templates/{id}/render/{page?}', [SiteTemplateController::class, 'renderPreview'])->name('templates.render');
 
     // Sites
     Route::get('/sites/create', [SiteController::class, 'create'])->name('sites.create');
@@ -91,9 +104,22 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::put('/sites/{siteId}/orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::post('/sites/{siteId}/orders/{orderId}/mark-paid', [OrderController::class, 'markAsPaid'])->name('orders.mark-paid');
 
-    // Payment Settings
+    // Payment Settings (legacy)
     Route::get('/sites/{siteId}/payments', [PaymentSettingsController::class, 'index'])->name('payments.index');
     Route::put('/sites/{siteId}/payments', [PaymentSettingsController::class, 'update'])->name('payments.update');
+
+    // Payment Gateway Configuration (new)
+    Route::get('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'index'])->name('payment.config');
+    Route::post('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'store'])->name('payment.config.store');
+    Route::delete('/sites/{site}/payment/config/{config}', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'destroy'])->name('payment.config.destroy');
+    
+    // Payment API Routes
+    Route::get('/api/payment/gateway-fields', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'getGatewayFields'])->name('api.payment.gateway-fields');
+    Route::post('/sites/{site}/payment/test', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'test'])->name('payment.test');
+    Route::get('/sites/{site}/payment/transactions', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'transactions'])->name('payment.transactions');
+    
+    // Payment Webhook (public)
+    Route::post('/sites/{siteId}/payment/webhook', [\App\Http\Controllers\GrowBuilder\PaymentWebhookController::class, 'handle'])->name('payment.webhook')->withoutMiddleware(['auth', 'verified']);
 
     // AI Content Generation
     Route::get('/ai/status', [AIController::class, 'status'])->name('ai.status');
@@ -192,6 +218,16 @@ Route::prefix('sites/{subdomain}')->group(function () {
             Route::put('/messages/{id}/status', [SiteContactController::class, 'updateStatus'])->name('messages.status');
             Route::delete('/messages/{id}', [SiteContactController::class, 'destroy'])->name('messages.destroy');
         });
+
+        // Products (Admin or products.view permission)
+        Route::middleware('site.permission:products.view')->group(function () {
+            Route::get('/products', [SiteProductController::class, 'index'])->name('products.index');
+            Route::get('/products/create', [SiteProductController::class, 'create'])->name('products.create');
+            Route::post('/products', [SiteProductController::class, 'store'])->name('products.store');
+            Route::get('/products/{id}/edit', [SiteProductController::class, 'edit'])->name('products.edit');
+            Route::put('/products/{id}', [SiteProductController::class, 'update'])->name('products.update');
+            Route::delete('/products/{id}', [SiteProductController::class, 'destroy'])->name('products.destroy');
+        });
     });
 });
 
@@ -199,7 +235,13 @@ Route::prefix('sites/{subdomain}')->group(function () {
 Route::get('/sites/{subdomain}/blog', [SiteBlogController::class, 'index'])->name('site.blog.index');
 Route::get('/sites/{subdomain}/blog/{slug}', [SiteBlogController::class, 'show'])->name('site.blog.show');
 
+// Product detail page
+Route::get('/sites/{subdomain}/product/{slug}', [SiteController::class, 'showProduct'])->name('site.product.show');
+
+// Checkout page
+Route::get('/sites/{subdomain}/checkout', [SiteController::class, 'checkout'])->name('site.checkout');
+
 // Local development site preview (must be last to avoid conflicts)
 Route::get('/sites/{subdomain}/{page?}', [SiteController::class, 'preview'])
-    ->where('page', '^(?!login|register|forgot-password|reset-password|dashboard|member|blog).*')
+    ->where('page', '^(?!login|register|forgot-password|reset-password|dashboard|member|blog|product|checkout).*')
     ->name('growbuilder.preview');

@@ -1,4 +1,7 @@
-import { computed, Ref } from 'vue';
+import { computed, Ref, ref } from 'vue';
+
+// Creativity levels for AI assistant
+export type CreativityLevel = 'guided' | 'balanced' | 'creative';
 
 export interface AIContext {
     // Site info
@@ -8,6 +11,19 @@ export interface AIContext {
         description?: string;
         businessType?: string;
         subdomain: string;
+        pages: Array<{
+            id: number;
+            title: string;
+            slug: string;
+            isHome: boolean;
+        }>;
+        colors?: {
+            primary?: string;
+            secondary?: string;
+            accent?: string;
+            background?: string;
+            text?: string;
+        };
     };
     // Current page
     currentPage: {
@@ -16,6 +32,12 @@ export interface AIContext {
         slug: string;
         sectionsCount: number;
         sectionTypes: string[];
+        sections: Array<{
+            id: string;
+            type: string;
+            content?: any;
+            style?: any;
+        }>;
     } | null;
     // All pages summary
     pages: Array<{
@@ -39,6 +61,8 @@ export interface AIContext {
     };
     // What the user is currently doing
     userIntent?: 'editing_section' | 'adding_section' | 'browsing' | 'styling';
+    // Creativity level for AI
+    creativityLevel?: CreativityLevel;
 }
 
 export interface Section {
@@ -75,7 +99,8 @@ export function useAIContext(
     pages: Ref<Page[]>,
     currentPage: Ref<Page | null>,
     sections: Ref<Section[]>,
-    selectedSectionId: Ref<string | null>
+    selectedSectionId: Ref<string | null>,
+    creativityLevel: Ref<CreativityLevel> = ref('balanced')
 ) {
     // Build the full context object
     const context = computed<AIContext>(() => {
@@ -90,6 +115,16 @@ export function useAIContext(
                 description: site.value.description,
                 businessType: site.value.settings?.businessType,
                 subdomain: site.value.subdomain,
+                pages: pages.value.map(p => ({
+                    id: p.id,
+                    title: p.title,
+                    slug: p.slug,
+                    isHome: p.is_home || false,
+                })),
+                colors: site.value.settings?.theme ? {
+                    primary: site.value.settings.theme.primaryColor,
+                    secondary: site.value.settings.theme.secondaryColor,
+                } : undefined,
             },
             currentPage: currentPage.value ? {
                 id: currentPage.value.id,
@@ -97,6 +132,12 @@ export function useAIContext(
                 slug: currentPage.value.slug,
                 sectionsCount: sections.value.length,
                 sectionTypes: sections.value.map(s => s.type),
+                sections: sections.value.map(s => ({
+                    id: s.id,
+                    type: s.type,
+                    content: s.content,
+                    style: s.style,
+                })),
             } : null,
             pages: pages.value.map(p => ({
                 id: p.id,
@@ -116,6 +157,7 @@ export function useAIContext(
                 fontFamily: site.value.settings?.theme?.fontFamily,
             },
             userIntent: determineUserIntent(selectedSectionId.value, sections.value),
+            creativityLevel: creativityLevel.value,
         };
     });
 

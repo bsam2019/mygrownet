@@ -20,6 +20,7 @@ import {
     EyeIcon,
     ShieldCheckIcon,
     EnvelopeIcon,
+    CubeIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -93,6 +94,9 @@ const navigation = computed(() => {
     if (isStaff.value) {
         if (hasPermission('orders.view')) {
             items.push({ name: 'Orders', href: `/sites/${subdomain.value}/dashboard/orders`, icon: InboxIcon });
+        }
+        if (hasPermission('products.view')) {
+            items.push({ name: 'Products', href: `/sites/${subdomain.value}/dashboard/products`, icon: CubeIcon });
         }
         if (hasPermission('messages.view')) {
             items.push({ name: 'Messages', href: `/sites/${subdomain.value}/dashboard/messages`, icon: EnvelopeIcon });

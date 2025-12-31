@@ -61,6 +61,11 @@ interface Site {
         navigation?: {
             logo?: string;
         };
+        splash?: {
+            enabled?: boolean;
+            style?: 'none' | 'minimal' | 'pulse' | 'wave' | 'gradient' | 'particles' | 'elegant';
+            tagline?: string;
+        };
     } | null;
 }
 
@@ -92,6 +97,10 @@ const form = useForm({
     heading_font: props.site.theme?.headingFont || 'Inter',
     body_font: props.site.theme?.bodyFont || 'Inter',
     border_radius: props.site.theme?.borderRadius || 8,
+    // Splash Screen
+    splash_enabled: props.site.settings?.splash?.enabled !== false,
+    splash_style: props.site.settings?.splash?.style || 'minimal',
+    splash_tagline: props.site.settings?.splash?.tagline || '',
     // SEO
     meta_title: props.site.seoSettings?.metaTitle || '',
     meta_description: props.site.seoSettings?.metaDescription || '',
@@ -109,6 +118,17 @@ const form = useForm({
     address: props.site.contactInfo?.address || '',
 });
 
+// Splash screen style options
+const splashStyles = [
+    { id: 'none', name: 'None', description: 'No splash screen' },
+    { id: 'minimal', name: 'Minimal', description: 'Clean fade with bouncing logo' },
+    { id: 'pulse', name: 'Pulse', description: 'Pulsing rings around logo' },
+    { id: 'wave', name: 'Wave', description: 'Animated wave background' },
+    { id: 'gradient', name: 'Gradient', description: 'Animated gradient with floating logo' },
+    { id: 'particles', name: 'Particles', description: 'Floating particles effect' },
+    { id: 'elegant', name: 'Elegant', description: 'Sophisticated with subtle animations' },
+];
+
 const fonts = [
     'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins',
     'Playfair Display', 'Merriweather', 'Source Sans Pro', 'Nunito',
@@ -117,6 +137,7 @@ const fonts = [
 const tabs = [
     { id: 'general', name: 'General', icon: GlobeAltIcon },
     { id: 'theme', name: 'Theme', icon: PaintBrushIcon },
+    { id: 'splash', name: 'Splash Screen', icon: SparklesIcon },
     { id: 'seo', name: 'SEO', icon: MagnifyingGlassIcon },
     { id: 'social', name: 'Social & Contact', icon: ShareIcon },
 ];
@@ -300,6 +321,26 @@ const clearLogo = () => {
 const clearFavicon = () => {
     form.favicon = '';
 };
+
+// Splash Preview
+const previewKey = ref(0);
+
+const restartPreview = () => {
+    previewKey.value++;
+};
+
+// Helper to darken/lighten a hex color
+const adjustColor = (hex: string, amount: number): string => {
+    const color = hex.replace('#', '');
+    const num = parseInt(color, 16);
+    let r = (num >> 16) + amount;
+    let g = ((num >> 8) & 0x00FF) + amount;
+    let b = (num & 0x0000FF) + amount;
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+};
 </script>
 
 <template>
@@ -345,10 +386,20 @@ const clearFavicon = () => {
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 mb-6 text-white">
                     <div class="flex items-center justify-between flex-wrap gap-4">
                         <div>
-                            <h2 class="text-lg font-semibold">Site Users & Roles</h2>
-                            <p class="text-blue-100 text-sm mt-1">Create admin users, editors, manage roles and permissions</p>
+                            <h2 class="text-lg font-semibold">Site Management</h2>
+                            <p class="text-blue-100 text-sm mt-1">Manage users, roles, permissions, and payment settings</p>
                         </div>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <Link
+                                :href="route('growbuilder.payment.config', site.id)"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Payment Settings
+                                <ChevronRightIcon class="h-4 w-4" aria-hidden="true" />
+                            </Link>
                             <Link
                                 :href="route('growbuilder.sites.roles', site.id)"
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
@@ -674,6 +725,203 @@ const clearFavicon = () => {
                             </div>
                         </div>
 
+                        <!-- Splash Screen Tab -->
+                        <div v-show="activeTab === 'splash'" class="space-y-6">
+                            <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                <div class="flex gap-3">
+                                    <SparklesIcon class="h-5 w-5 text-indigo-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                                    <div>
+                                        <h4 class="font-medium text-indigo-900">Loading Splash Screen</h4>
+                                        <p class="text-sm text-indigo-700 mt-1">Choose a stylish loading animation that shows while your site loads. Uses your site's logo and primary color.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enable/Disable -->
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Enable Splash Screen</h4>
+                                    <p class="text-sm text-gray-500">Show a loading animation when visitors first open your site</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="form.splash_enabled = !form.splash_enabled"
+                                    :class="[
+                                        'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2',
+                                        form.splash_enabled ? 'bg-indigo-600' : 'bg-gray-200'
+                                    ]"
+                                >
+                                    <span
+                                        :class="[
+                                            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                            form.splash_enabled ? 'translate-x-5' : 'translate-x-0'
+                                        ]"
+                                    />
+                                </button>
+                            </div>
+
+                            <!-- Style Selection -->
+                            <div v-if="form.splash_enabled">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Choose Style</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <button
+                                        v-for="style in splashStyles"
+                                        :key="style.id"
+                                        type="button"
+                                        @click="form.splash_style = style.id"
+                                        :class="[
+                                            'relative p-4 rounded-xl border-2 text-left transition-all',
+                                            form.splash_style === style.id
+                                                ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600'
+                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        ]"
+                                    >
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <div 
+                                                class="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                                                :class="form.splash_style === style.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'"
+                                            >
+                                                {{ style.id === 'none' ? '✕' : style.id === 'minimal' ? '○' : style.id === 'pulse' ? '◎' : style.id === 'wave' ? '〰' : style.id === 'gradient' ? '◐' : style.id === 'particles' ? '✦' : '◇' }}
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-gray-900">{{ style.name }}</h4>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-500">{{ style.description }}</p>
+                                        <CheckCircleIcon 
+                                            v-if="form.splash_style === style.id"
+                                            class="absolute top-2 right-2 h-5 w-5 text-indigo-600"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tagline -->
+                            <div v-if="form.splash_enabled && form.splash_style !== 'none'">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tagline (optional)</label>
+                                <input
+                                    v-model="form.splash_tagline"
+                                    type="text"
+                                    placeholder="e.g., Quality products, delivered fast"
+                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                                    maxlength="60"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">Short text shown below your site name (max 60 characters)</p>
+                            </div>
+
+                            <!-- Live Preview -->
+                            <div v-if="form.splash_enabled && form.splash_style !== 'none'" class="mt-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-sm font-medium text-gray-700">Live Preview</h4>
+                                    <button
+                                        type="button"
+                                        @click="restartPreview"
+                                        class="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                                    >
+                                        ↻ Replay Animation
+                                    </button>
+                                </div>
+                                <div class="relative h-80 rounded-xl overflow-hidden border border-gray-200 shadow-inner">
+                                    <!-- Minimal Style Preview -->
+                                    <div v-if="form.splash_style === 'minimal'" class="splash-preview minimal-preview" :key="previewKey">
+                                        <div class="preview-logo-wrapper minimal-bounce" :style="{ backgroundColor: form.primary_color }">
+                                            {{ form.name?.charAt(0) || 'S' }}
+                                        </div>
+                                        <h3 class="preview-title">{{ form.name || 'Site Name' }}</h3>
+                                        <p v-if="form.splash_tagline" class="preview-tagline">{{ form.splash_tagline }}</p>
+                                        <div class="minimal-loader-track">
+                                            <div class="minimal-loader-bar" :style="{ backgroundColor: form.primary_color }"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Pulse Style Preview -->
+                                    <div v-else-if="form.splash_style === 'pulse'" class="splash-preview pulse-preview" :key="previewKey">
+                                        <div class="pulse-container">
+                                            <div class="pulse-ring" :style="{ borderColor: form.primary_color + '40' }"></div>
+                                            <div class="pulse-ring delay-1" :style="{ borderColor: form.primary_color + '40' }"></div>
+                                            <div class="pulse-ring delay-2" :style="{ borderColor: form.primary_color + '40' }"></div>
+                                            <div class="preview-logo-wrapper" :style="{ backgroundColor: form.primary_color }">
+                                                {{ form.name?.charAt(0) || 'S' }}
+                                            </div>
+                                        </div>
+                                        <h3 class="preview-title">{{ form.name || 'Site Name' }}</h3>
+                                        <p v-if="form.splash_tagline" class="preview-tagline">{{ form.splash_tagline }}</p>
+                                    </div>
+
+                                    <!-- Wave Style Preview -->
+                                    <div v-else-if="form.splash_style === 'wave'" class="splash-preview wave-preview" :key="previewKey">
+                                        <svg class="wave-svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                                            <path class="wave-path wave-1" :fill="form.primary_color + '30'" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                                            <path class="wave-path wave-2" :fill="form.primary_color + '60'" d="M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,197.3C672,213,768,235,864,224C960,213,1056,171,1152,165.3C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                                        </svg>
+                                        <div class="wave-content">
+                                            <div class="preview-logo-wrapper" :style="{ backgroundColor: form.primary_color }">
+                                                {{ form.name?.charAt(0) || 'S' }}
+                                            </div>
+                                            <h3 class="preview-title">{{ form.name || 'Site Name' }}</h3>
+                                            <p v-if="form.splash_tagline" class="preview-tagline">{{ form.splash_tagline }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gradient Style Preview -->
+                                    <div v-else-if="form.splash_style === 'gradient'" class="splash-preview gradient-preview" :style="{ background: `linear-gradient(135deg, ${form.primary_color} 0%, ${adjustColor(form.primary_color, -40)} 100%)` }" :key="previewKey">
+                                        <div class="gradient-shine"></div>
+                                        <div class="gradient-content">
+                                            <div class="preview-logo-wrapper gradient-float white-logo" :style="{ color: form.primary_color }">
+                                                {{ form.name?.charAt(0) || 'S' }}
+                                            </div>
+                                            <h3 class="preview-title text-white">{{ form.name || 'Site Name' }}</h3>
+                                            <p v-if="form.splash_tagline" class="preview-tagline text-white-80">{{ form.splash_tagline }}</p>
+                                            <div class="gradient-dots">
+                                                <span class="dot"></span>
+                                                <span class="dot"></span>
+                                                <span class="dot"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Particles Style Preview -->
+                                    <div v-else-if="form.splash_style === 'particles'" class="splash-preview particles-preview" :key="previewKey">
+                                        <div class="particles-container">
+                                            <div v-for="i in 15" :key="i" class="particle" :style="{ 
+                                                backgroundColor: i % 2 === 0 ? form.primary_color : form.primary_color + '60',
+                                                animationDelay: `${i * 0.15}s`,
+                                                left: `${(i * 7) % 100}%`
+                                            }"></div>
+                                        </div>
+                                        <div class="particles-content">
+                                            <div class="preview-logo-wrapper" :style="{ backgroundColor: form.primary_color }">
+                                                {{ form.name?.charAt(0) || 'S' }}
+                                            </div>
+                                            <h3 class="preview-title text-white">{{ form.name || 'Site Name' }}</h3>
+                                            <p v-if="form.splash_tagline" class="preview-tagline text-white-70">{{ form.splash_tagline }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Elegant Style Preview -->
+                                    <div v-else-if="form.splash_style === 'elegant'" class="splash-preview elegant-preview" :key="previewKey">
+                                        <div class="elegant-pattern"></div>
+                                        <div class="elegant-content">
+                                            <div class="elegant-line" :style="{ backgroundColor: form.primary_color }"></div>
+                                            <div class="preview-logo-wrapper elegant-scale elegant-border" :style="{ color: form.primary_color, borderColor: form.primary_color }">
+                                                {{ form.name?.charAt(0) || 'S' }}
+                                            </div>
+                                            <h3 class="preview-title elegant-title">{{ form.name || 'Site Name' }}</h3>
+                                            <p v-if="form.splash_tagline" class="preview-tagline elegant-tagline">{{ form.splash_tagline }}</p>
+                                            <div class="elegant-line" :style="{ backgroundColor: form.primary_color }"></div>
+                                            <div class="elegant-spinner" :style="{ borderTopColor: form.primary_color }"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Style Label -->
+                                    <div class="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded-lg capitalize">
+                                        {{ form.splash_style }} style
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- SEO Tab -->
                         <div v-show="activeTab === 'seo'" class="space-y-6">
                             <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
@@ -926,3 +1174,316 @@ const clearFavicon = () => {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+/* Splash Preview Styles */
+.splash-preview {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-logo-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.preview-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.preview-tagline {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Minimal Style */
+.minimal-preview {
+    background: white;
+}
+
+.minimal-bounce {
+    animation: minimalBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes minimalBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.minimal-loader-track {
+    width: 120px;
+    height: 3px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin-top: 16px;
+    overflow: hidden;
+}
+
+.minimal-loader-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    animation: minimalLoad 1.5s ease-in-out infinite;
+}
+
+@keyframes minimalLoad {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 0; }
+    100% { width: 0%; margin-left: 100%; }
+}
+
+/* Pulse Style */
+.pulse-preview {
+    background: white;
+}
+
+.pulse-container {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.pulse-container .preview-logo-wrapper {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0;
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid;
+    border-radius: 50%;
+    animation: pulseRing 2s ease-out infinite;
+}
+
+.pulse-ring.delay-1 { animation-delay: 0.4s; }
+.pulse-ring.delay-2 { animation-delay: 0.8s; }
+
+@keyframes pulseRing {
+    0% { transform: scale(0.7); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Wave Style */
+.wave-preview {
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.wave-svg {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 45%;
+}
+
+.wave-path {
+    animation: waveMove 3s ease-in-out infinite;
+}
+
+.wave-1 { animation-delay: 0s; }
+.wave-2 { animation-delay: 0.5s; }
+
+@keyframes waveMove {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-3%); }
+}
+
+.wave-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Gradient Style */
+.gradient-preview {
+    position: relative;
+    overflow: hidden;
+}
+
+.gradient-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+    animation: gradientShine 2.5s ease-in-out infinite;
+}
+
+@keyframes gradientShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.gradient-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gradient-float {
+    animation: gradientFloat 2s ease-in-out infinite;
+}
+
+@keyframes gradientFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.white-logo {
+    background: white !important;
+}
+
+.text-white { color: white; }
+.text-white-80 { color: rgba(255,255,255,0.8); }
+.text-white-70 { color: rgba(255,255,255,0.7); }
+
+.gradient-dots {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.gradient-dots .dot {
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.gradient-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.gradient-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Particles Style */
+.particles-preview {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.particles-container {
+    position: absolute;
+    inset: 0;
+}
+
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    bottom: -10px;
+    animation: particleRise 3.5s linear infinite;
+}
+
+@keyframes particleRise {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-350px) rotate(720deg); opacity: 0; }
+}
+
+.particles-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Elegant Style */
+.elegant-preview {
+    background: #fafafa;
+    position: relative;
+}
+
+.elegant-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, #e5e7eb 1px, transparent 0);
+    background-size: 24px 24px;
+    opacity: 0.6;
+}
+
+.elegant-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.elegant-line {
+    width: 40px;
+    height: 2px;
+    border-radius: 1px;
+    margin: 12px 0;
+}
+
+.elegant-scale {
+    animation: elegantScale 2s ease-in-out infinite;
+}
+
+@keyframes elegantScale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.elegant-border {
+    background: transparent !important;
+    border: 2px solid;
+}
+
+.elegant-title {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.elegant-tagline {
+    font-style: italic;
+}
+
+.elegant-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e5e7eb;
+    border-top-width: 2px;
+    border-radius: 50%;
+    animation: elegantSpin 1s linear infinite;
+    margin-top: 8px;
+}
+
+@keyframes elegantSpin {
+    to { transform: rotate(360deg); }
+}
+</style>

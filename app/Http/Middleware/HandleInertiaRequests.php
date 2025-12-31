@@ -19,6 +19,20 @@ class HandleInertiaRequests extends Middleware
     protected $rootView = 'app';
 
     /**
+     * Handle the incoming request.
+     * Skip Inertia processing for Blade-only auth routes.
+     */
+    public function handle($request, \Closure $next)
+    {
+        // Skip Inertia for auth routes (they use pure Blade templates)
+        if ($request->is('login', 'register', 'forgot-password', 'reset-password/*', 'auth/*')) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
+    }
+
+    /**
      * Determine the root view based on the request.
      */
     public function rootView(Request $request): string
@@ -141,6 +155,8 @@ class HandleInertiaRequests extends Middleware
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'supportStats' => $supportStats,
             'employee' => $employee,
+            // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
+            'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
             // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes
             'growbiz' => fn () => $request->is('growbiz*') ? $this->getGrowBizData($request, $user) : null,
         ];

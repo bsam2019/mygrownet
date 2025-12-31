@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 import {
     XMarkIcon,
     CheckIcon,
     WalletIcon,
     ExclamationTriangleIcon,
+    PhoneIcon,
+    BanknoteIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -16,7 +19,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    quickAmounts: () => [25, 50, 100, 200],
+    quickAmounts: () => [50, 100, 200, 500],
     returnUrl: '',
 });
 
@@ -24,6 +27,10 @@ const emit = defineEmits<{
     close: [];
     success: [amount: number];
 }>();
+
+// Check if automated payments are enabled (from backend config)
+const page = usePage();
+const automatedPaymentsEnabled = computed(() => (page.props as any).automatedPaymentsEnabled ?? false);
 
 const selectedAmount = ref<number | null>(null);
 const customAmount = ref('');
@@ -38,9 +45,10 @@ const topUpAmount = computed(() => {
     return isNaN(custom) ? 0 : custom;
 });
 
-const isValidAmount = computed(() => topUpAmount.value >= 5);
+const isValidAmount = computed(() => topUpAmount.value >= 50);
 const isValidPhone = computed(() => /^(09[567]\d{7}|07[567]\d{7})$/.test(phoneNumber.value));
-const canSubmit = computed(() => isValidAmount.value && isValidPhone.value && !processing.value);
+const canSubmitAutomated = computed(() => isValidAmount.value && isValidPhone.value && !processing.value);
+const canSubmitManual = computed(() => isValidAmount.value && !processing.value);
 
 const selectQuickAmount = (amount: number) => {
     selectedAmount.value = amount;
@@ -53,8 +61,9 @@ const onCustomAmountChange = () => {
 
 const formatCurrency = (amount: number) => `K${amount.toLocaleString()}`;
 
-const submitTopUp = async () => {
-    if (!canSubmit.value) return;
+// Automated payment submission (when PawaPay is enabled)
+const submitAutomatedPayment = async () => {
+    if (!canSubmitAutomated.value) return;
 
     processing.value = true;
     error.value = '';
@@ -85,6 +94,12 @@ const submitTopUp = async () => {
         error.value = 'An error occurred. Please try again.';
         processing.value = false;
     }
+};
+
+// Redirect to manual payment submission page
+const goToManualPayment = () => {
+    emit('close');
+    router.visit(route('mygrownet.payments.create', { type: 'wallet_topup' }));
 };
 
 const close = () => {
@@ -144,121 +159,182 @@ const close = () => {
                             <p class="text-sm text-red-700">{{ error }}</p>
                         </div>
 
-                        <!-- Quick Amount Selection -->
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 mb-2">Select Amount</p>
-                            <div class="grid grid-cols-4 gap-2">
-                                <button
-                                    v-for="amount in quickAmounts"
-                                    :key="amount"
-                                    @click="selectQuickAmount(amount)"
-                                    :class="[
-                                        'py-3 px-2 rounded-xl font-semibold transition-all text-sm',
-                                        selectedAmount === amount
-                                            ? 'bg-emerald-500 text-white shadow-lg scale-105'
-                                            : 'bg-gray-100 hover:bg-emerald-100 text-gray-900'
-                                    ]"
-                                >
-                                    K{{ amount }}
-                                </button>
+                        <!-- ========== AUTOMATED PAYMENT MODE ========== -->
+                        <template v-if="automatedPaymentsEnabled">
+                            <!-- Quick Amount Selection -->
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700 mb-2">Select Amount</p>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button
+                                        v-for="amount in quickAmounts"
+                                        :key="amount"
+                                        @click="selectQuickAmount(amount)"
+                                        :class="[
+                                            'py-3 px-2 rounded-xl font-semibold transition-all text-sm',
+                                            selectedAmount === amount
+                                                ? 'bg-emerald-500 text-white shadow-lg scale-105'
+                                                : 'bg-gray-100 hover:bg-emerald-100 text-gray-900'
+                                        ]"
+                                    >
+                                        K{{ amount }}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Custom Amount -->
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700 mb-2 block">Or Enter Custom Amount</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">K</span>
+                            <!-- Custom Amount -->
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700 mb-2 block">Or Enter Custom Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">K</span>
+                                    <input
+                                        v-model="customAmount"
+                                        @input="onCustomAmountChange"
+                                        type="number"
+                                        min="50"
+                                        placeholder="0.00"
+                                        class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 text-lg font-semibold"
+                                    />
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Minimum top-up: K50</p>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700 mb-2">Payment Method</p>
+                                <div class="space-y-2">
+                                    <button
+                                        @click="selectedMethod = 'mtn'"
+                                        :class="[
+                                            'w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all',
+                                            selectedMethod === 'mtn'
+                                                ? 'border-emerald-500 bg-emerald-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        ]"
+                                    >
+                                        <div class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+                                            <span class="text-xs font-bold text-yellow-900">MTN</span>
+                                        </div>
+                                        <span class="font-semibold text-gray-900">MTN Mobile Money</span>
+                                        <CheckIcon
+                                            v-if="selectedMethod === 'mtn'"
+                                            class="h-5 w-5 text-emerald-600 ml-auto"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                    <button
+                                        @click="selectedMethod = 'airtel'"
+                                        :class="[
+                                            'w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all',
+                                            selectedMethod === 'airtel'
+                                                ? 'border-emerald-500 bg-emerald-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        ]"
+                                    >
+                                        <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                                            <span class="text-xs font-bold text-white">AIR</span>
+                                        </div>
+                                        <span class="font-semibold text-gray-900">Airtel Money</span>
+                                        <CheckIcon
+                                            v-if="selectedMethod === 'airtel'"
+                                            class="h-5 w-5 text-emerald-600 ml-auto"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div>
+                                <label class="text-sm font-semibold text-gray-700 mb-2 block">Phone Number</label>
                                 <input
-                                    v-model="customAmount"
-                                    @input="onCustomAmountChange"
-                                    type="number"
-                                    min="5"
-                                    placeholder="0.00"
-                                    class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 text-lg font-semibold"
+                                    v-model="phoneNumber"
+                                    type="tel"
+                                    placeholder="097XXXXXXX"
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 text-lg"
                                 />
+                                <p v-if="phoneNumber && !isValidPhone" class="text-xs text-red-500 mt-1">
+                                    Enter a valid Zambian mobile number
+                                </p>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">Minimum top-up: K5</p>
-                        </div>
 
-                        <!-- Payment Method -->
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 mb-2">Payment Method</p>
-                            <div class="space-y-2">
-                                <button
-                                    @click="selectedMethod = 'mtn'"
-                                    :class="[
-                                        'w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all',
-                                        selectedMethod === 'mtn'
-                                            ? 'border-emerald-500 bg-emerald-50'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    ]"
-                                >
-                                    <div class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-xs font-bold text-yellow-900">MTN</span>
+                            <!-- Summary -->
+                            <div v-if="topUpAmount > 0" class="bg-gray-50 rounded-xl p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">Top Up Amount</span>
+                                    <span class="font-bold text-gray-900">{{ formatCurrency(topUpAmount) }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                                    <span class="text-sm text-gray-600">New Balance</span>
+                                    <span class="font-bold text-emerald-600">{{ formatCurrency(balance + topUpAmount) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="bg-blue-50 rounded-xl p-3">
+                                <p class="text-xs text-blue-700">
+                                    You will receive a payment prompt on your phone. Enter your PIN to confirm the transaction.
+                                    Funds are added instantly after confirmation.
+                                </p>
+                            </div>
+                        </template>
+
+                        <!-- ========== MANUAL PAYMENT MODE ========== -->
+                        <template v-else>
+                            <!-- Payment Instructions -->
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-4">
+                                <h4 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                    <BanknoteIcon class="h-5 w-5" aria-hidden="true" />
+                                    How to Top Up
+                                </h4>
+                                <div class="space-y-3">
+                                    <!-- MTN -->
+                                    <div class="bg-white rounded-xl p-3 border border-yellow-300">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+                                                <span class="text-xs font-bold text-yellow-900">MTN</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-900">MTN MoMo</span>
+                                        </div>
+                                        <p class="text-lg font-bold text-gray-900 mb-1">0760491206</p>
+                                        <p class="text-xs text-gray-600">Rockshield Investments Ltd</p>
+                                        <p class="text-xs text-yellow-700 mt-1">⚠️ Use WITHDRAW method (Agent Number)</p>
                                     </div>
-                                    <span class="font-semibold text-gray-900">MTN Mobile Money</span>
-                                    <CheckIcon
-                                        v-if="selectedMethod === 'mtn'"
-                                        class="h-5 w-5 text-emerald-600 ml-auto"
-                                        aria-hidden="true"
-                                    />
-                                </button>
-                                <button
-                                    @click="selectedMethod = 'airtel'"
-                                    :class="[
-                                        'w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all',
-                                        selectedMethod === 'airtel'
-                                            ? 'border-emerald-500 bg-emerald-50'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    ]"
-                                >
-                                    <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
-                                        <span class="text-xs font-bold text-white">AIR</span>
+                                    
+                                    <!-- Airtel -->
+                                    <div class="bg-white rounded-xl p-3 border border-red-300">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <div class="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                                                <span class="text-xs font-bold text-white">AIR</span>
+                                            </div>
+                                            <span class="font-semibold text-gray-900">Airtel Money</span>
+                                        </div>
+                                        <p class="text-lg font-bold text-gray-900 mb-1">0979230669</p>
+                                        <p class="text-xs text-gray-600">Kafula Mbulo</p>
+                                        <p class="text-xs text-red-700 mt-1">📱 Send Money normally</p>
                                     </div>
-                                    <span class="font-semibold text-gray-900">Airtel Money</span>
-                                    <CheckIcon
-                                        v-if="selectedMethod === 'airtel'"
-                                        class="h-5 w-5 text-emerald-600 ml-auto"
-                                        aria-hidden="true"
-                                    />
-                                </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Phone Number -->
-                        <div>
-                            <label class="text-sm font-semibold text-gray-700 mb-2 block">Phone Number</label>
-                            <input
-                                v-model="phoneNumber"
-                                type="tel"
-                                :placeholder="selectedMethod === 'mtn' ? '097XXXXXXX' : '097XXXXXXX'"
-                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 text-lg"
-                            />
-                            <p v-if="phoneNumber && !isValidPhone" class="text-xs text-red-500 mt-1">
-                                Enter a valid Zambian mobile number
-                            </p>
-                        </div>
-
-                        <!-- Summary -->
-                        <div v-if="topUpAmount > 0" class="bg-gray-50 rounded-xl p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm text-gray-600">Top Up Amount</span>
-                                <span class="font-bold text-gray-900">{{ formatCurrency(topUpAmount) }}</span>
+                            <!-- Steps -->
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <h4 class="font-semibold text-gray-900 mb-2">Steps:</h4>
+                                <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
+                                    <li>Send money to one of the numbers above</li>
+                                    <li>Note your transaction reference</li>
+                                    <li>Click "Submit Payment Proof" below</li>
+                                    <li>Fill in the payment details</li>
+                                    <li>Wait for verification (usually within hours)</li>
+                                </ol>
                             </div>
-                            <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-                                <span class="text-sm text-gray-600">New Balance</span>
-                                <span class="font-bold text-emerald-600">{{ formatCurrency(balance + topUpAmount) }}</span>
-                            </div>
-                        </div>
 
-                        <!-- Info -->
-                        <div class="bg-blue-50 rounded-xl p-3">
-                            <p class="text-xs text-blue-700">
-                                You will receive a payment prompt on your phone. Enter your PIN to confirm the transaction.
-                                Funds are added instantly after confirmation.
-                            </p>
-                        </div>
+                            <!-- Info -->
+                            <div class="bg-green-50 border border-green-200 rounded-xl p-3">
+                                <p class="text-sm text-green-800 flex items-start gap-2">
+                                    <CheckIcon class="h-5 w-5 text-green-600 flex-shrink-0" aria-hidden="true" />
+                                    <span>Your wallet will be credited once payment is verified by our team.</span>
+                                </p>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Footer -->
@@ -271,12 +347,22 @@ const close = () => {
                             >
                                 Cancel
                             </button>
+                            <!-- Automated Payment Button -->
                             <button
-                                @click="submitTopUp"
-                                :disabled="!canSubmit"
+                                v-if="automatedPaymentsEnabled"
+                                @click="submitAutomatedPayment"
+                                :disabled="!canSubmitAutomated"
                                 class="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold hover:from-emerald-600 hover:to-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {{ processing ? 'Processing...' : `Pay ${formatCurrency(topUpAmount)}` }}
+                            </button>
+                            <!-- Manual Payment Button -->
+                            <button
+                                v-else
+                                @click="goToManualPayment"
+                                class="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold hover:from-emerald-600 hover:to-teal-700 transition-colors"
+                            >
+                                Submit Payment Proof
                             </button>
                         </div>
                     </div>

@@ -6,6 +6,8 @@ import {
     PencilSquareIcon,
     TrashIcon,
     ArrowLeftIcon,
+    ArrowUpCircleIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Product {
@@ -30,7 +32,15 @@ interface Site {
     subdomain: string;
 }
 
-defineProps<{
+interface TierRestrictions {
+    tier: string;
+    tier_name: string;
+    products_limit: number;
+    products_unlimited: boolean;
+    features: Record<string, boolean>;
+}
+
+const props = defineProps<{
     site: Site;
     products: {
         data: Product[];
@@ -38,6 +48,9 @@ defineProps<{
         current_page: number;
         last_page: number;
     };
+    tierRestrictions?: TierRestrictions;
+    productCount?: number;
+    canAddProduct?: boolean;
 }>();
 
 const deleteProduct = (productId: number) => {
@@ -72,14 +85,81 @@ const formatPrice = (priceInNgwee: number): string => {
                             <h1 class="text-2xl font-bold text-gray-900">Products</h1>
                             <p class="text-sm text-gray-500">{{ site.name }}</p>
                         </div>
-                        <Link
-                            :href="route('growbuilder.products.create', site.id)"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                        >
-                            <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                            Add Product
-                        </Link>
+                        <div class="flex items-center gap-3">
+                            <!-- Product Count Badge -->
+                            <div 
+                                v-if="tierRestrictions && !tierRestrictions.products_unlimited"
+                                class="text-sm px-3 py-1.5 rounded-lg"
+                                :class="[
+                                    (productCount || 0) >= tierRestrictions.products_limit 
+                                        ? 'bg-red-100 text-red-700' 
+                                        : 'bg-gray-100 text-gray-600'
+                                ]"
+                            >
+                                {{ productCount || 0 }}/{{ tierRestrictions.products_limit }} products
+                            </div>
+                            
+                            <!-- Add Product Button -->
+                            <Link
+                                v-if="canAddProduct !== false"
+                                :href="route('growbuilder.products.create', site.id)"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            >
+                                <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                                Add Product
+                            </Link>
+                            
+                            <!-- Upgrade Button (when at limit) -->
+                            <Link
+                                v-else
+                                :href="route('growbuilder.subscription.index')"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                            >
+                                <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
+                                Upgrade to Add More
+                            </Link>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Product Limit Warning Banner -->
+                <div 
+                    v-if="tierRestrictions && !tierRestrictions.products_unlimited && (productCount || 0) >= tierRestrictions.products_limit"
+                    class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between"
+                >
+                    <div class="flex items-center gap-3">
+                        <ExclamationTriangleIcon class="h-5 w-5 text-amber-500" aria-hidden="true" />
+                        <div>
+                            <p class="font-medium text-amber-800">Product limit reached</p>
+                            <p class="text-sm text-amber-600">
+                                You've used all {{ tierRestrictions.products_limit }} products on your {{ tierRestrictions.tier_name }} plan.
+                            </p>
+                        </div>
+                    </div>
+                    <Link 
+                        :href="route('growbuilder.subscription.index')"
+                        class="px-4 py-2 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition"
+                    >
+                        Upgrade Plan
+                    </Link>
+                </div>
+                
+                <!-- E-commerce Not Available Banner (Free tier) -->
+                <div 
+                    v-if="tierRestrictions && tierRestrictions.products_limit === 0"
+                    class="mb-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white"
+                >
+                    <h3 class="text-lg font-semibold mb-2">Unlock E-commerce Features</h3>
+                    <p class="text-indigo-100 mb-4">
+                        Upgrade to Starter plan or higher to sell products on your website with mobile money payments.
+                    </p>
+                    <Link 
+                        :href="route('growbuilder.subscription.index')"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition"
+                    >
+                        <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
+                        View Plans
+                    </Link>
                 </div>
 
                 <!-- Products Table -->
@@ -87,6 +167,7 @@ const formatPrice = (priceInNgwee: number): string => {
                     <div v-if="products.data.length === 0" class="text-center py-12">
                         <p class="text-gray-500 mb-4">No products yet</p>
                         <Link
+                            v-if="canAddProduct !== false"
                             :href="route('growbuilder.products.create', site.id)"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >

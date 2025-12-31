@@ -9,6 +9,8 @@ use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\PageId;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
+use App\Services\GrowBuilder\AIUsageService;
+use App\Services\GrowBuilder\TierRestrictionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,6 +20,8 @@ class EditorController extends Controller
         private SiteRepositoryInterface $siteRepository,
         private PageRepositoryInterface $pageRepository,
         private SavePageContentUseCase $savePageContentUseCase,
+        private AIUsageService $aiUsageService,
+        private TierRestrictionService $tierRestrictionService,
     ) {}
 
     public function index(Request $request, int $siteId)
@@ -55,6 +59,8 @@ class EditorController extends Controller
             'pages' => collect($pages)->map(fn($p) => $this->pageToArray($p)),
             'currentPage' => $currentPage ? $this->pageToArray($currentPage) : null,
             'sectionTypes' => $this->getSectionTypes(),
+            'aiUsage' => $this->aiUsageService->getUsageStats($request->user()),
+            'tierRestrictions' => $this->tierRestrictionService->getRestrictions($request->user()),
         ]);
     }
 
@@ -79,6 +85,8 @@ class EditorController extends Controller
             'pages' => collect($pages)->map(fn($p) => $this->pageToArray($p)),
             'currentPage' => $this->pageToArray($page),
             'sectionTypes' => $this->getSectionTypes(),
+            'aiUsage' => $this->aiUsageService->getUsageStats($request->user()),
+            'tierRestrictions' => $this->tierRestrictionService->getRestrictions($request->user()),
         ]);
     }
 

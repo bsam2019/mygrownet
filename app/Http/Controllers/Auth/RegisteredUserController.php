@@ -14,14 +14,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
     /**
      * Show the registration page.
+     * Using Blade template for reliability (no JS dependency).
      */
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
         // Store redirect URL in session if provided via query parameter
         // This allows module landing pages (like BizBoost) to redirect back after registration
@@ -33,9 +33,15 @@ class RegisteredUserController extends Controller
             }
         }
 
-        return Inertia::render('auth/Register', [
-            'redirect' => $request->query('redirect'),
-            'plan' => $request->query('plan'),
+        // If this is an Inertia request, force a full page reload
+        if ($request->header('X-Inertia')) {
+            return Inertia::location(url()->current());
+        }
+
+        // Use unified Blade template - bypass Inertia completely
+        return response()->view('auth.unified', [
+            'activeTab' => 'register',
+            'referralCode' => $request->query('ref'),
         ]);
     }
 

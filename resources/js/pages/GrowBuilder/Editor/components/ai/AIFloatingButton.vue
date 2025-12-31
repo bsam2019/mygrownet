@@ -28,15 +28,42 @@
             </div>
         </Transition>
 
+        <!-- AI Usage indicator (when not unlimited) -->
+        <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+        >
+            <div 
+                v-if="aiUsage && !aiUsage.is_unlimited"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium shadow-sm"
+                :class="[
+                    darkMode ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-gray-200',
+                    aiUsage.remaining <= 0 ? 'text-red-500' : 
+                    aiUsage.remaining <= 5 ? 'text-amber-500' : 
+                    darkMode ? 'text-gray-300' : 'text-gray-600'
+                ]"
+            >
+                <SparklesIcon class="w-3 h-3" aria-hidden="true" />
+                <span>{{ aiUsage.remaining }}/{{ aiUsage.limit }}</span>
+            </div>
+        </Transition>
+
         <!-- Main Button -->
         <button
-            @click="$emit('toggle')"
-            class="group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 hover:from-violet-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/25"
-            :class="pulseAnimation ? 'animate-pulse-subtle' : ''"
-            aria-label="Open AI Assistant"
+            @click="handleClick"
+            class="group relative w-14 h-14 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
+            :class="[
+                canUseAI 
+                    ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 hover:from-violet-600 hover:via-purple-600 hover:to-indigo-700 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/25' 
+                    : 'bg-gray-400 cursor-not-allowed',
+                pulseAnimation && canUseAI ? 'animate-pulse-subtle' : ''
+            ]"
+            :aria-label="canUseAI ? 'Open AI Assistant' : 'AI limit reached - Upgrade to continue'"
+            :disabled="!canUseAI"
         >
             <!-- Sparkle effect on hover -->
-            <div class="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div v-if="canUseAI" class="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div class="absolute top-1 right-2 w-1.5 h-1.5 bg-white/60 rounded-full animate-ping" />
                 <div class="absolute bottom-2 left-3 w-1 h-1 bg-white/40 rounded-full animate-ping" style="animation-delay: 150ms" />
             </div>
@@ -44,12 +71,20 @@
             <!-- Icon -->
             <SparklesIcon class="w-6 h-6 text-white" aria-hidden="true" />
 
-            <!-- Notification dot -->
+            <!-- Notification dot (limit warning) -->
             <div 
-                v-if="hasNotification"
+                v-if="aiUsage && !aiUsage.is_unlimited && aiUsage.remaining <= 5 && aiUsage.remaining > 0"
+                class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center"
+            >
+                <span class="text-[9px] font-bold text-white">{{ aiUsage.remaining }}</span>
+            </div>
+            
+            <!-- Limit reached indicator -->
+            <div 
+                v-if="aiUsage && !aiUsage.is_unlimited && aiUsage.remaining <= 0"
                 class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center"
             >
-                <span class="text-[9px] font-bold text-white">!</span>
+                <XMarkIcon class="w-2.5 h-2.5 text-white" aria-hidden="true" />
             </div>
         </button>
 
@@ -60,7 +95,7 @@
             enter-to-class="opacity-100 scale-100"
         >
             <div 
-                v-if="contextSummary"
+                v-if="contextSummary && canUseAI"
                 class="text-[10px] px-2 py-1 rounded-full max-w-[150px] truncate"
                 :class="darkMode ? 'bg-gray-800/80 text-gray-400' : 'bg-white/80 text-gray-500'"
             >
@@ -74,20 +109,40 @@
 import { ref, computed, onMounted } from 'vue';
 import { SparklesIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
+interface AIUsage {
+    limit: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage: number;
+    month: string;
+    features: string[];
+    has_priority: boolean;
+}
+
 const props = defineProps<{
     isOpen: boolean;
     darkMode?: boolean;
     hasNotification?: boolean;
     currentSection?: { type: string } | null;
     currentPage?: { title: string } | null;
+    aiUsage?: AIUsage;
+    canUseAI?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     toggle: [];
 }>();
 
 const showHint = ref(false);
 const pulseAnimation = ref(false);
+
+// Handle click - show upgrade message if limit reached
+const handleClick = () => {
+    if (props.canUseAI !== false) {
+        emit('toggle');
+    }
+};
 
 // Context summary for the indicator
 const contextSummary = computed(() => {

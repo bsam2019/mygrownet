@@ -4,19 +4,21 @@ namespace App\Http\Controllers\GrowBuilder;
 
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
+use App\Domain\GrowBuilder\Payment\Services\GrowBuilderPaymentService;
+use App\Domain\GrowBuilder\Payment\DTOs\PaymentRequest;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderOrder;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPayment;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPaymentSettings;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
-use App\Infrastructure\GrowBuilder\Services\AirtelMoneyPaymentGateway;
-use App\Infrastructure\GrowBuilder\Services\MoMoPaymentGateway;
+use App\Models\GrowBuilder\SitePaymentConfig;
 use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
+        private GrowBuilderPaymentService $paymentService,
     ) {}
 
     public function createOrder(Request $request, string $subdomain)
@@ -39,7 +41,7 @@ class CheckoutController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
-            'payment_method' => 'required|string|in:momo,airtel,whatsapp,cod,bank',
+            'payment_method' => 'required|string|in:momo,airtel,whatsapp,cod,bank,online',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -117,7 +119,17 @@ class CheckoutController extends Controller
             ],
         ];
 
-        if (in_array($validated['payment_method'], ['momo', 'airtel'])) {
+        // Check if site has new payment gateway configured
+        $paymentConfig = SitePaymentConfig::where('site_id', $siteId)
+            ->where('is_active', true)
+            ->first();
+
+        if ($paymentConfig && in_array($validated['payment_method'], ['momo', 'airtel', 'online'])) {
+            // Use new payment gateway system
+            $paymentResult = $this->initiateNewPayment($order, $siteId);
+            $response['payment'] = $paymentResult;
+        } elseif (in_array($validated['payment_method'], ['momo', 'airtel'])) {
+            // Fallback to legacy payment system
             $paymentResult = $this->initiatePayment($order, $validated['payment_method']);
             $response['payment'] = $paymentResult;
         } elseif ($validated['payment_method'] === 'whatsapp') {
@@ -136,9 +148,46 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Site not found'], 404);
         }
 
-        $order = GrowBuilderOrder::where('site_id', $site->getId()->value())
+        $siteId = $site->getId()->value();
+        $order = GrowBuilderOrder::where('site_id', $siteId)
             ->findOrFail($orderId);
 
+        // Check if site uses new payment gateway
+        $paymentConfig = SitePaymentConfig::where('site_id', $siteId)
+            ->where('is_active', true)
+            ->first();
+
+        if ($paymentConfig && $order->payment_reference) {
+            // Use new payment gateway system
+            try {
+                $result = $this->paymentService->verifyPayment($siteId, $order->payment_reference);
+
+                if ($result->success && $result->status->value === 'completed') {
+                    $order->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
+                } elseif ($result->status->value === 'failed') {
+                    $order->update([
+                        'status' => 'payment_failed',
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => $order->fresh()->status,
+                    'is_paid' => $order->fresh()->isPaid(),
+                    'payment_status' => $result->status->value,
+                    'message' => $result->message,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Payment verification failed', [
+                    'order_id' => $orderId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Fallback to legacy payment system
         $payment = $order->latestPayment;
 
         if (!$payment || !$payment->isPending()) {
@@ -148,37 +197,39 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // Check with payment provider
-        $settings = GrowBuilderPaymentSettings::where('site_id', $site->getId()->value())->first();
+        // Check with legacy payment provider
+        $settings = GrowBuilderPaymentSettings::where('site_id', $siteId)->first();
         
-        $gateway = match ($payment->provider) {
-            'momo' => new MoMoPaymentGateway($settings->getMomoConfig()),
-            'airtel' => new AirtelMoneyPaymentGateway($settings->getAirtelConfig()),
-            default => null,
-        };
+        if ($settings) {
+            $gateway = match ($payment->provider) {
+                'momo' => new \App\Infrastructure\GrowBuilder\Services\MoMoPaymentGateway($settings->getMomoConfig()),
+                'airtel' => new \App\Infrastructure\GrowBuilder\Services\AirtelMoneyPaymentGateway($settings->getAirtelConfig()),
+                default => null,
+            };
 
-        if ($gateway) {
-            $result = $gateway->checkStatus($payment->transaction_id);
+            if ($gateway) {
+                $result = $gateway->checkStatus($payment->transaction_id);
 
-            if ($result->isCompleted()) {
-                $payment->update([
-                    'status' => 'completed',
-                    'external_reference' => $result->externalReference,
-                    'provider_response' => $result->rawResponse,
-                    'completed_at' => now(),
-                ]);
+                if ($result->isCompleted()) {
+                    $payment->update([
+                        'status' => 'completed',
+                        'external_reference' => $result->externalReference,
+                        'provider_response' => $result->rawResponse,
+                        'completed_at' => now(),
+                    ]);
 
-                $order->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'payment_reference' => $result->transactionId,
-                ]);
-            } elseif ($result->isFailed()) {
-                $payment->update([
-                    'status' => 'failed',
-                    'status_message' => $result->message,
-                    'provider_response' => $result->rawResponse,
-                ]);
+                    $order->update([
+                        'status' => 'paid',
+                        'paid_at' => now(),
+                        'payment_reference' => $result->transactionId,
+                    ]);
+                } elseif ($result->isFailed()) {
+                    $payment->update([
+                        'status' => 'failed',
+                        'status_message' => $result->message,
+                        'provider_response' => $result->rawResponse,
+                    ]);
+                }
             }
         }
 
@@ -187,6 +238,60 @@ class CheckoutController extends Controller
             'is_paid' => $order->fresh()->isPaid(),
             'payment_status' => $payment->fresh()->status,
         ]);
+    }
+
+    private function initiateNewPayment(GrowBuilderOrder $order, int $siteId): array
+    {
+        try {
+            $paymentRequest = new PaymentRequest(
+                amount: number_format($order->total / 100, 2, '.', ''), // Convert from ngwee to kwacha
+                currency: 'ZMW',
+                phoneNumber: $order->customer_phone,
+                reference: $order->order_number,
+                description: "Order {$order->order_number}",
+                customerName: $order->customer_name,
+                customerEmail: $order->customer_email,
+                metadata: [
+                    'order_id' => $order->id,
+                    'site_id' => $siteId,
+                ],
+                callbackUrl: route('growbuilder.api.payment-webhook', ['siteId' => $siteId]),
+                returnUrl: route('growbuilder.api.payment-return', [
+                    'subdomain' => $order->site->subdomain,
+                    'orderId' => $order->id,
+                ]),
+            );
+
+            $result = $this->paymentService->initiatePayment($siteId, $paymentRequest);
+
+            if ($result->success) {
+                $order->update([
+                    'status' => 'payment_pending',
+                    'payment_reference' => $result->transactionReference,
+                ]);
+
+                return [
+                    'status' => $result->status->value,
+                    'message' => $result->message ?? 'Payment initiated successfully',
+                    'transaction_reference' => $result->transactionReference,
+                    'checkout_url' => $result->checkoutUrl,
+                ];
+            }
+
+            return [
+                'error' => $result->message ?? 'Payment initiation failed',
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Payment initiation failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'error' => 'Payment initiation failed. Please try again.',
+            ];
+        }
     }
 
     private function initiatePayment(GrowBuilderOrder $order, string $method): array

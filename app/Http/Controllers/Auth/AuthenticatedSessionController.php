@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Show the login page.
+     * Using Blade template for reliability (no JS dependency).
      */
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
         // Store redirect URL in session if provided via query parameter
         // This allows module landing pages (like BizBoost) to redirect back after login
@@ -28,10 +28,16 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
-        return Inertia::render('auth/Login', [
+        // If this is an Inertia request, force a full page reload
+        if ($request->header('X-Inertia')) {
+            return Inertia::location(url()->current());
+        }
+
+        // Use unified Blade template - bypass Inertia completely
+        return response()->view('auth.unified', [
+            'activeTab' => 'login',
             'canResetPassword' => Route::has('password.request'),
-            'status' => $request->session()->get('status'),
-            'redirect' => $request->query('redirect'),
+            'referralCode' => $request->query('ref'),
         ]);
     }
 

@@ -4,6 +4,7 @@
  */
 
 import type { SectionType } from '../types';
+import { getIndustryCopy, genericCopy } from './copyLibrary';
 
 interface PageInfo {
     id: number;
@@ -15,20 +16,28 @@ interface PageInfo {
 
 /**
  * Get default content for a section type
+ * Now uses professional copy from copyLibrary
  */
 export function getDefaultContent(
     type: SectionType,
     siteName: string,
-    pages: PageInfo[] = []
+    pages: PageInfo[] = [],
+    industry?: string
 ): Record<string, any> {
+    // Get industry-specific copy or fallback to generic
+    const copy = industry ? getIndustryCopy(industry) : genericCopy;
+    
     const defaults: Record<SectionType, Record<string, any>> = {
         'hero': {
-            title: 'Welcome to Our Business',
-            subtitle: 'We help you grow and succeed',
-            buttonText: 'Get Started',
+            title: copy.hero.title,
+            subtitle: copy.hero.subtitle,
+            buttonText: copy.hero.cta,
             buttonLink: '#contact',
+            secondaryButtonText: 'Learn More',
+            secondaryButtonLink: '#about',
             textPosition: 'center',
             backgroundImage: '',
+            layout: 'centered',
         },
         'page-header': {
             title: 'Page Title',
@@ -39,17 +48,33 @@ export function getDefaultContent(
             textPosition: 'center',
         },
         'about': {
-            title: 'About Us',
-            description: 'Tell your story here. Share your mission, values, and what makes you unique.',
+            title: copy.about.title,
+            description: copy.about.description,
             image: '',
             imagePosition: 'right',
+            layout: 'image-right',
         },
         'services': {
-            title: 'Our Services',
+            title: copy.services.title,
+            subtitle: copy.services.subtitle,
+            layout: 'grid',
+            columns: 3,
             items: [
-                { title: 'Service 1', description: 'Description of service 1' },
-                { title: 'Service 2', description: 'Description of service 2' },
-                { title: 'Service 3', description: 'Description of service 3' },
+                { 
+                    title: 'Strategic Planning', 
+                    description: 'Comprehensive strategies tailored to your business goals and market position.',
+                    icon: 'chart',
+                },
+                { 
+                    title: 'Process Optimization', 
+                    description: 'Streamline operations and maximize efficiency across your organization.',
+                    icon: 'cog',
+                },
+                { 
+                    title: 'Growth Solutions', 
+                    description: 'Scalable solutions designed to accelerate your business growth.',
+                    icon: 'rocket',
+                },
             ],
         },
         'features': {
@@ -65,8 +90,15 @@ export function getDefaultContent(
         },
         'testimonials': {
             title: 'What Our Clients Say',
+            subtitle: 'Real results from real customers',
+            layout: 'grid',
             items: [
-                { name: 'John Doe', text: 'Great service!', role: 'Customer' },
+                { 
+                    name: copy.testimonial.author, 
+                    text: copy.testimonial.quote, 
+                    role: copy.testimonial.role,
+                    rating: 5,
+                },
             ],
         },
         'pricing': {
@@ -89,9 +121,9 @@ export function getDefaultContent(
             address: '',
         },
         'cta': {
-            title: 'Ready to Get Started?',
-            description: 'Contact us today for a free consultation',
-            buttonText: 'Contact Us',
+            title: copy.cta.title,
+            description: copy.cta.subtitle,
+            buttonText: copy.cta.button,
             buttonLink: '#contact',
         },
         'member-cta': {
@@ -138,12 +170,20 @@ export function getDefaultContent(
             ],
         },
         'stats': {
-            title: 'Our Impact',
-            items: [
-                { value: '500+', label: 'Happy Clients' },
-                { value: '10+', label: 'Years Experience' },
-                { value: '50+', label: 'Projects Completed' },
-                { value: '24/7', label: 'Support' },
+            title: copy.stats[0] ? 'Our Impact in Numbers' : 'Our Impact',
+            subtitle: 'Proven results that speak for themselves',
+            layout: 'horizontal',
+            animated: true,
+            items: copy.stats.length > 0 ? copy.stats.map(stat => ({
+                number: stat.number,
+                suffix: stat.suffix,
+                label: stat.label,
+                icon: 'chart',
+            })) : [
+                { number: '500', suffix: '+', label: 'Happy Clients', icon: 'users' },
+                { number: '10', suffix: '+', label: 'Years Experience', icon: 'star' },
+                { number: '1000', suffix: '+', label: 'Projects Completed', icon: 'chart' },
+                { number: '99', suffix: '%', label: 'Satisfaction Rate', icon: 'heart' },
             ],
         },
         'map': {
@@ -163,6 +203,55 @@ export function getDefaultContent(
             style: 'line',
             height: 40,
             color: '#e5e7eb',
+        },
+        'timeline': {
+            title: 'Our Journey',
+            subtitle: 'Milestones that shaped our success',
+            textAlign: 'center',
+            layout: 'vertical',
+            items: [
+                { year: '2020', title: 'Company Founded', description: 'Started with a vision to transform the industry', icon: 'star' },
+                { year: '2021', title: 'First Major Client', description: 'Secured partnership with leading organization', icon: 'rocket' },
+                { year: '2022', title: 'Award Winning', description: 'Recognized as industry leader', icon: 'trophy' },
+                { year: '2023', title: 'Expansion', description: 'Opened new offices and doubled team size', icon: 'sparkles' },
+            ],
+        },
+        'cta-banner': {
+            title: copy.cta.title,
+            subtitle: copy.cta.subtitle,
+            layout: 'centered',
+            buttonText: copy.cta.button,
+            buttonLink: '#contact',
+            secondaryButtonText: 'Learn More',
+            secondaryButtonLink: '#about',
+            image: '',
+        },
+        'logo-cloud': {
+            title: 'Trusted by Leading Companies',
+            subtitle: 'Join hundreds of businesses that trust us',
+            textAlign: 'center',
+            layout: 'grid',
+            grayscale: true,
+            items: [
+                { image: '', name: 'Company 1', link: '' },
+                { image: '', name: 'Company 2', link: '' },
+                { image: '', name: 'Company 3', link: '' },
+                { image: '', name: 'Company 4', link: '' },
+                { image: '', name: 'Company 5', link: '' },
+                { image: '', name: 'Company 6', link: '' },
+            ],
+        },
+        'video-hero': {
+            title: 'Watch Our Story',
+            subtitle: 'Discover how we transform businesses',
+            layout: 'fullscreen',
+            videoUrl: '',
+            posterImage: '',
+            autoPlay: false,
+            muted: true,
+            loop: true,
+            buttonText: 'Learn More',
+            buttonLink: '#about',
         },
     };
 

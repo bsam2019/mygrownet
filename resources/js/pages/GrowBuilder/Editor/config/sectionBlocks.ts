@@ -23,6 +23,10 @@ import {
     ShoppingBagIcon,
     EnvelopeIcon,
     UserPlusIcon,
+    ClockIcon,
+    RocketLaunchIcon,
+    BuildingOffice2Icon,
+    FilmIcon,
 } from '@heroicons/vue/24/outline';
 import type { SectionBlock, SectionCategory } from '../types';
 
@@ -32,8 +36,10 @@ import type { SectionBlock, SectionCategory } from '../types';
 export const sectionBlocks: SectionBlock[] = [
     // Layout
     { type: 'hero', name: 'Hero', icon: SparklesIcon, category: 'Layout', description: 'Eye-catching header section' },
+    { type: 'video-hero', name: 'Video Hero', icon: FilmIcon, category: 'Layout', description: 'Hero with video background' },
     { type: 'page-header', name: 'Page Header', icon: Bars3Icon, category: 'Layout', description: 'Title banner for inner pages' },
     { type: 'cta', name: 'Call to Action', icon: MegaphoneIcon, category: 'Layout', description: 'Drive conversions' },
+    { type: 'cta-banner', name: 'CTA Banner', icon: RocketLaunchIcon, category: 'Layout', description: 'Full-width conversion banner' },
     { type: 'member-cta', name: 'Member Signup', icon: UserPlusIcon, category: 'Layout', description: 'Promote membership registration' },
     { type: 'divider', name: 'Divider', icon: MinusIcon, category: 'Layout', description: 'Visual separator' },
     
@@ -44,6 +50,7 @@ export const sectionBlocks: SectionBlock[] = [
     { type: 'team', name: 'Team', icon: UserGroupIcon, category: 'Content', description: 'Meet the team' },
     { type: 'faq', name: 'FAQ', icon: QuestionMarkCircleIcon, category: 'Content', description: 'Frequently asked questions' },
     { type: 'stats', name: 'Stats/Counter', icon: ChartBarIcon, category: 'Content', description: 'Show impressive numbers' },
+    { type: 'timeline', name: 'Timeline', icon: ClockIcon, category: 'Content', description: 'Company history & milestones' },
     { type: 'text', name: 'Text Block', icon: DocumentTextIcon, category: 'Content', description: 'Rich text content' },
     
     // Media
@@ -53,6 +60,7 @@ export const sectionBlocks: SectionBlock[] = [
     
     // Social Proof
     { type: 'testimonials', name: 'Testimonials', icon: ChatBubbleBottomCenterTextIcon, category: 'Social Proof', description: 'Customer reviews' },
+    { type: 'logo-cloud', name: 'Logo Cloud', icon: BuildingOffice2Icon, category: 'Social Proof', description: 'Client & partner logos' },
     { type: 'blog', name: 'Blog Posts', icon: NewspaperIcon, category: 'Social Proof', description: 'Latest articles' },
     
     // Commerce

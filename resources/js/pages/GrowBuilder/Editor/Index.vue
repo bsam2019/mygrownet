@@ -56,12 +56,68 @@ import { useAIContext } from './composables/useAIContext';
 // AI Components
 import AIFloatingButton from './components/ai/AIFloatingButton.vue';
 
+interface AIUsage {
+    limit: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage: number;
+    month: string;
+    features: string[];
+    has_priority: boolean;
+}
+
+interface TierRestrictions {
+    tier: string;
+    tier_name: string;
+    sites_limit: number;
+    storage_limit: number;
+    storage_limit_formatted: string;
+    products_limit: number;
+    products_unlimited: boolean;
+    ai_prompts_limit: number;
+    ai_unlimited: boolean;
+    features: Record<string, boolean>;
+}
+
 const props = defineProps<{
     site: Site;
     pages: Page[];
     currentPage?: Page;
     sectionTypes: SectionBlock[];
+    aiUsage?: AIUsage;
+    tierRestrictions?: TierRestrictions;
 }>();
+
+// Helper to check if feature is available based on tier
+const hasFeature = (feature: string): boolean => {
+    return props.tierRestrictions?.features?.[feature] ?? false;
+};
+
+// Check if user can use AI
+const canUseAI = computed(() => {
+    const usage = aiUsage.value;
+    console.log('canUseAI computed:', { 
+        aiUsage: usage,
+        limit: usage?.limit,
+        remaining: usage?.remaining,
+        is_unlimited: usage?.is_unlimited
+    });
+    if (!usage) return true;
+    const result = usage.is_unlimited || usage.remaining > 0;
+    console.log('canUseAI result:', result);
+    return result;
+});
+
+// Check if user has AI section generator access
+const hasAISectionGenerator = computed(() => {
+    return aiUsage.value?.features?.includes('section') ?? false;
+});
+
+// Check if user has AI SEO access
+const hasAISEO = computed(() => {
+    return aiUsage.value?.features?.includes('seo') ?? false;
+});
 
 // ============================================
 // UI State
@@ -92,6 +148,16 @@ const iframeKey = ref(0); // Force iframe refresh
 const canvasZoom = ref(100);
 const lastSaved = ref<Date | null>(null);
 const darkMode = ref(false);
+
+// AI Usage tracking (local reactive copy of prop)
+const aiUsage = ref<AIUsage | undefined>(props.aiUsage);
+
+// Watch for prop changes and update local copy
+watch(() => props.aiUsage, (newUsage) => {
+    if (newUsage) {
+        aiUsage.value = newUsage;
+    }
+}, { deep: true });
 
 // Responsive breakpoints
 const breakpoints = [
@@ -1216,6 +1282,14 @@ const handleAIColors = (palette: any) => {
     }
 };
 
+// Handle AI usage updates
+const handleAIUsageUpdate = (newUsage: AIUsage) => {
+    console.log('handleAIUsageUpdate called with:', newUsage);
+    console.log('Current aiUsage:', aiUsage.value);
+    aiUsage.value = newUsage;
+    console.log('Updated aiUsage:', aiUsage.value);
+};
+
 const handleAIStyle = (styleChange: any) => {
     // Find the target section - either selected or by type from AI
     let targetSection = selectedSection.value;
@@ -2260,20 +2334,6 @@ onUnmounted(() => {
                         @updateContent="updateSectionContent"
                         @updateStyle="updateSectionStyle"
                         @openMediaLibrary="(sectionId, field) => openMediaLibrary('section', sectionId, field)"
-                        @addItem="addItem"
-                        @removeItem="removeItem"
-                        @addPlan="addPlan"
-                        @removePlan="removePlan"
-                        @addPlanFeature="addPlanFeature"
-                        @addFaqItem="addFaqItem"
-                        @removeFaqItem="removeFaqItem"
-                        @addTeamMember="addTeamMember"
-                        @removeTeamMember="removeTeamMember"
-                        @addBlogPost="addBlogPost"
-                        @removeBlogPost="removeBlogPost"
-                        @addStatItem="addStatItem"
-                        @removeStatItem="removeStatItem"
-                        @removeGalleryImage="(idx) => removeGalleryImage(selectedSection?.id || '', idx)"
                     />
                 </div>
             </aside>
@@ -2338,6 +2398,10 @@ onUnmounted(() => {
         :contextSummary="contextSummary"
         :smartSuggestions="smartSuggestions"
         :initialText="selectedSection?.content?.title || selectedSection?.content?.text"
+        :aiUsage="aiUsage"
+        :tierRestrictions="tierRestrictions"
+        :hasAISectionGenerator="hasAISectionGenerator"
+        :hasAISEO="hasAISEO"
         @close="showAIModal = false"
         @applyContent="handleAIContent"
         @applyColors="handleAIColors"
@@ -2347,6 +2411,7 @@ onUnmounted(() => {
         @updateFooter="handleAIFooter"
         @createPage="handleAICreatePage"
         @createAIPage="handleAIGeneratedPage"
+        @updateUsage="handleAIUsageUpdate"
     />
 
     <!-- AI Floating Button -->
@@ -2355,6 +2420,8 @@ onUnmounted(() => {
         :darkMode="darkMode"
         :currentSection="selectedSection ? { type: selectedSection.type } : null"
         :currentPage="activePage ? { title: activePage.title } : null"
+        :aiUsage="aiUsage"
+        :canUseAI="canUseAI"
         @toggle="showAIModal = !showAIModal"
     />
 

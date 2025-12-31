@@ -60,9 +60,12 @@ export function useAI(siteId: number) {
             const response = await axios.get<AIStatus>('/growbuilder/ai/status');
             isAvailable.value = response.data.available;
             provider.value = response.data.provider || '';
+            console.log('AI Status:', { available: response.data.available, provider: response.data.provider });
             return response.data.available;
         } catch (e) {
+            console.error('AI status check failed:', e);
             isAvailable.value = false;
+            provider.value = '';
             return false;
         }
     };
@@ -78,6 +81,7 @@ export function useAI(siteId: number) {
 
         try {
             const response = await axios.post(`${baseUrl}/${endpoint}`, data);
+            console.log(`makeRequest ${endpoint} response:`, response.data);
             return extractKey ? response.data[extractKey] : response.data;
         } catch (e: any) {
             const errorMessage = e.response?.data?.error || e.response?.data?.message || 'Request failed';
@@ -359,11 +363,21 @@ export function useAI(siteId: number) {
         action: string;
         message: string;
         data: Record<string, any> | null;
+        usage?: any;
     }> => {
-        return makeRequest('smart-chat', {
+        const response = await makeRequest('smart-chat', {
             message,
             context: context || {},
-        }, 'result');
+        });
+        
+        console.log('smartChat full response:', response);
+        
+        // Backend returns {success: true, result: {...}, usage: {...}}
+        // Return both result and usage
+        return {
+            ...(response as any).result,
+            usage: (response as any).usage
+        };
     };
 
     return {
