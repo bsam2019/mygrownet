@@ -25,8 +25,6 @@ return new class extends Migration
                     'slug' => $permission['slug'],
                     'name' => $permission['name'],
                     'description' => $permission['description'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
             }
         }
