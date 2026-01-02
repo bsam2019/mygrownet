@@ -18,4 +18,5 @@ return [
     App\Providers\SupportServiceProvider::class,
     App\Providers\TelegramServiceProvider::class,
     App\Providers\WorkshopServiceProvider::class,
+    App\Providers\QuickInvoiceServiceProvider::class,
 ];

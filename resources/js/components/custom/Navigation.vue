@@ -273,6 +273,7 @@
           dropdown: [
             { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services' },
             { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites' },
+            { name: 'Quick Invoice', url: '/quick-invoice', description: 'Create invoices & receipts' },
             { name: 'Training', route: 'training', description: 'Learn new skills' },
             { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses' },
             { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business' },

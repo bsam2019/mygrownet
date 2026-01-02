@@ -1007,6 +1007,13 @@
                     <BuildingOffice2Icon class="h-5 w-5 text-orange-500 mr-3" />
                     <span class="text-sm font-medium">Manage Assets</span>
                   </Link>
+                  <Link
+                    :href="route('mygrownet.tools.index')"
+                    class="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <DocumentTextIcon class="h-5 w-5 text-amber-500 mr-3" />
+                    <span class="text-sm font-medium">Business Tools</span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -1036,7 +1043,8 @@ import {
   BuildingOffice2Icon,
   AcademicCapIcon,
   GiftIcon,
-  Squares2X2Icon
+  Squares2X2Icon,
+  DocumentTextIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
