@@ -153,28 +153,28 @@ class CleanGrowBuilderTiersSeeder extends Seeder
     {
         $limits = [
             'free' => [
-                ['key' => 'sites', 'name' => 'Sites limit', 'value' => 1],
-                ['key' => 'products', 'name' => 'Products limit', 'value' => 0],
-                ['key' => 'ai_prompts', 'name' => 'AI prompts per month', 'value' => 5],
-                ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'value' => 500],
+                ['key' => 'sites_limit', 'name' => 'Sites limit', 'value' => 1],
+                ['key' => 'products_limit', 'name' => 'Products limit', 'value' => 0],
+                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => 5],
+                ['key' => 'storage_mb_limit', 'name' => 'Storage (MB)', 'value' => 500],
             ],
             'starter' => [
-                ['key' => 'sites', 'name' => 'Sites limit', 'value' => 1],
-                ['key' => 'products', 'name' => 'Products limit', 'value' => 20],
-                ['key' => 'ai_prompts', 'name' => 'AI prompts per month', 'value' => 100],
-                ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'value' => 1024],
+                ['key' => 'sites_limit', 'name' => 'Sites limit', 'value' => 1],
+                ['key' => 'products_limit', 'name' => 'Products limit', 'value' => 20],
+                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => 100],
+                ['key' => 'storage_mb_limit', 'name' => 'Storage (MB)', 'value' => 1024],
             ],
             'business' => [
-                ['key' => 'sites', 'name' => 'Sites limit', 'value' => 1],
-                ['key' => 'products', 'name' => 'Products limit', 'value' => -1], // unlimited
-                ['key' => 'ai_prompts', 'name' => 'AI prompts per month', 'value' => -1], // unlimited
-                ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'value' => 2048],
+                ['key' => 'sites_limit', 'name' => 'Sites limit', 'value' => 1],
+                ['key' => 'products_limit', 'name' => 'Products limit', 'value' => -1], // unlimited
+                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => -1], // unlimited
+                ['key' => 'storage_mb_limit', 'name' => 'Storage (MB)', 'value' => 2048],
             ],
             'agency' => [
-                ['key' => 'sites', 'name' => 'Sites limit', 'value' => 20],
-                ['key' => 'products', 'name' => 'Products limit', 'value' => -1], // unlimited
-                ['key' => 'ai_prompts', 'name' => 'AI prompts per month', 'value' => -1], // unlimited
-                ['key' => 'storage_mb', 'name' => 'Storage (MB)', 'value' => 10240],
+                ['key' => 'sites_limit', 'name' => 'Sites limit', 'value' => 20],
+                ['key' => 'products_limit', 'name' => 'Products limit', 'value' => -1], // unlimited
+                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => -1], // unlimited
+                ['key' => 'storage_mb_limit', 'name' => 'Storage (MB)', 'value' => 10240],
             ],
         ];
         
