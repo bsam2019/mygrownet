@@ -9,8 +9,40 @@ import {
 import axios from 'axios';
 
 interface Currency { code: string; symbol: string; name: string; }
-interface LineItem { id: string; description: string; quantity: number; unit: string; unit_price: number; }
-interface SavedProfile { id: number; name: string; address: string | null; phone: string | null; email: string | null; logo: string | null; signature: string | null; tax_number: string | null; }
+interface LineItem { 
+    id: string; 
+    description: string; 
+    quantity: number; 
+    unit: string; 
+    unit_price: number;
+    // Area calculation fields for constructors
+    useAreaCalc: boolean;
+    length: number;
+    width: number;
+}
+interface SavedProfile { 
+    id: number; 
+    name: string; 
+    address: string | null; 
+    phone: string | null; 
+    email: string | null; 
+    logo: string | null; 
+    signature: string | null; 
+    tax_number: string | null;
+    default_tax_rate: number | null;
+    default_discount_rate: number | null;
+    default_notes: string | null;
+    default_terms: string | null;
+}
+
+// Template preview data
+const templatePreviews: Record<string, { name: string; description: string; style: string }> = {
+    classic: { name: 'Classic', description: 'Traditional business style with clean lines', style: 'border-blue-600' },
+    modern: { name: 'Modern', description: 'Contemporary design with gradient header', style: 'border-indigo-600' },
+    minimal: { name: 'Minimal', description: 'Clean and simple, content-focused', style: 'border-gray-600' },
+    professional: { name: 'Professional', description: 'Corporate look with sidebar accent', style: 'border-slate-600' },
+    bold: { name: 'Bold', description: 'Eye-catching with strong colors', style: 'border-orange-600' },
+};
 
 const props = defineProps<{
     documentType: string;
@@ -43,6 +75,7 @@ const businessEmail = ref('');
 const businessLogo = ref<string | null>(null);
 const businessTaxNumber = ref('');
 const signature = ref<string | null>(null);
+const preparedByName = ref('');
 const clientName = ref('');
 const clientAddress = ref('');
 const clientPhone = ref('');
@@ -55,7 +88,7 @@ const taxRate = ref(0);
 const discountRate = ref(0);
 const notes = ref('');
 const terms = ref('');
-const items = ref<LineItem[]>([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0 }]);
+const items = ref<LineItem[]>([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0, useAreaCalc: false, length: 0, width: 0 }]);
 
 onMounted(() => { 
     if (props.savedProfile) {
@@ -75,6 +108,11 @@ const loadSavedProfile = (profile: SavedProfile) => {
     businessTaxNumber.value = profile.tax_number || '';
     if (profile.logo) { businessLogo.value = profile.logo; logoPreview.value = profile.logo; }
     if (profile.signature) { signature.value = profile.signature; signaturePreview.value = profile.signature; }
+    // Load default settings
+    if (profile.default_tax_rate) { taxRate.value = profile.default_tax_rate; }
+    if (profile.default_discount_rate) { discountRate.value = profile.default_discount_rate; }
+    if (profile.default_notes) { notes.value = profile.default_notes; }
+    if (profile.default_terms) { terms.value = profile.default_terms; }
 };
 
 const openEditProfile = () => {
@@ -82,15 +120,38 @@ const openEditProfile = () => {
 };
 
 const currencySymbol = computed(() => props.currencies.find(c => c.code === currency.value)?.symbol || 'K');
-const subtotal = computed(() => items.value.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0));
+const subtotal = computed(() => items.value.reduce((sum, item) => sum + getItemAmount(item), 0));
 const discountAmount = computed(() => subtotal.value * (discountRate.value / 100));
 const taxableAmount = computed(() => subtotal.value - discountAmount.value);
 const taxAmount = computed(() => taxableAmount.value * (taxRate.value / 100));
 const total = computed(() => taxableAmount.value + taxAmount.value);
 const formatCurrency = (amount: number) => `${currencySymbol.value} ${amount.toFixed(2)}`;
 
-const addItem = () => { items.value.push({ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0 }); };
+const addItem = () => { items.value.push({ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0, useAreaCalc: false, length: 0, width: 0 }); };
 const removeItem = (id: string) => { if (items.value.length > 1) items.value = items.value.filter(item => item.id !== id); };
+
+// Calculate effective quantity (handles area calculation for constructors)
+const getEffectiveQuantity = (item: LineItem): number => {
+    if (item.useAreaCalc && item.length > 0 && item.width > 0) {
+        return item.length * item.width;
+    }
+    return item.quantity;
+};
+
+// Calculate item amount
+const getItemAmount = (item: LineItem): number => {
+    return getEffectiveQuantity(item) * item.unit_price;
+};
+
+// Toggle area calculation mode for an item
+const toggleAreaCalc = (item: LineItem) => {
+    item.useAreaCalc = !item.useAreaCalc;
+    if (item.useAreaCalc) {
+        item.unit = 'm²'; // Default to square meters
+        item.length = item.length || 1;
+        item.width = item.width || 1;
+    }
+};
 
 const handleLogoUpload = async (event: Event) => {
     const input = event.target as HTMLInputElement;
@@ -146,9 +207,14 @@ const generateDocument = async () => {
             issue_date: issueDate.value, due_date: dueDate.value || undefined, currency: currency.value,
             tax_rate: taxRate.value, discount_rate: discountRate.value, notes: notes.value || undefined,
             terms: terms.value || undefined, template: selectedTemplate.value, colors: { primary: primaryColor.value },
-            signature: signature.value || undefined, save_document: true,
+            signature: signature.value || undefined, prepared_by: preparedByName.value || undefined, save_document: true,
             items: items.value.filter(item => item.description.trim()).map(item => ({
-                description: item.description, quantity: item.quantity, unit: item.unit || undefined, unit_price: item.unit_price
+                description: item.description, 
+                quantity: getEffectiveQuantity(item), 
+                unit: item.unit || undefined, 
+                unit_price: item.unit_price,
+                // Include area calc details for display purposes
+                area_calc: item.useAreaCalc ? { length: item.length, width: item.width } : undefined
             })),
         });
         shareData.value = response.data.share; showShareModal.value = true; successMessage.value = 'Document generated!';
@@ -161,8 +227,31 @@ const generateDocument = async () => {
     } finally { isLoading.value = false; }
 };
 
-const downloadPdf = () => { if (shareData.value?.pdf_url) window.open(shareData.value.pdf_url, '_blank'); };
-const shareWhatsApp = () => { if (shareData.value?.whatsapp_link) window.open(shareData.value.whatsapp_link, '_blank'); };
+const downloadPdf = () => { 
+    if (shareData.value?.pdf_url) {
+        // Open in new window - this works better for server-generated PDFs
+        window.open(shareData.value.pdf_url, '_blank');
+    }
+};
+
+const shareWhatsApp = async () => { 
+    if (!shareData.value?.document_id) return;
+    
+    // For WhatsApp, we need to get a temporary URL since WhatsApp needs a public link
+    if (shareData.value?.can_whatsapp) {
+        try {
+            const response = await axios.get(route('quick-invoice.whatsapp', shareData.value.document_id));
+            if (response.data.whatsapp_link) {
+                window.open(response.data.whatsapp_link, '_blank');
+            }
+        } catch (error) {
+            // Fallback: open WhatsApp with just the message (no PDF link)
+            const phone = clientPhone.value?.replace(/[^0-9]/g, '') || '';
+            const message = encodeURIComponent(`Hi ${clientName.value}, please find your ${props.documentType} #${shareData.value.document_number}. Total: ${shareData.value.total}`);
+            window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        }
+    }
+};
 
 const sendEmail = async () => {
     if (!clientEmail.value) { errors.value.client_email = 'Client email is required'; return; }
@@ -188,6 +277,8 @@ const saveBusinessProfile = async () => {
         await axios.post(route('quick-invoice.save-profile'), {
             name: businessName.value, address: businessAddress.value, phone: businessPhone.value,
             email: businessEmail.value, logo: businessLogo.value, signature: signature.value, tax_number: businessTaxNumber.value,
+            default_tax_rate: taxRate.value, default_discount_rate: discountRate.value,
+            default_notes: notes.value, default_terms: terms.value,
         });
         successMessage.value = 'Business profile saved!'; setTimeout(() => successMessage.value = '', 3000);
         showSetupWizard.value = false;
@@ -236,22 +327,96 @@ const skipSetupWizard = () => {
                     <!-- Template & Color -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">Style & Template</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Template</label>
-                                <select v-model="selectedTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="classic">Classic - Traditional</option>
-                                    <option value="modern">Modern - Contemporary</option>
-                                    <option value="minimal">Minimal - Clean</option>
-                                    <option value="professional">Professional - Corporate</option>
-                                    <option value="bold">Bold - Eye-catching</option>
-                                </select>
+                        
+                        <!-- Template Selection with Previews -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Choose Template</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                <button
+                                    v-for="(preview, key) in templatePreviews"
+                                    :key="key"
+                                    @click="selectedTemplate = key"
+                                    type="button"
+                                    class="relative p-3 rounded-lg border-2 transition-all text-left"
+                                    :class="selectedTemplate === key ? `${preview.style} bg-gray-50` : 'border-gray-200 hover:border-gray-300'"
+                                >
+                                    <!-- Mini Preview -->
+                                    <div class="aspect-[3/4] mb-2 rounded border bg-white overflow-hidden">
+                                        <div v-if="key === 'classic'" class="h-full flex flex-col">
+                                            <div class="h-1.5 bg-blue-600"></div>
+                                            <div class="flex-1 p-1.5">
+                                                <div class="h-1 w-8 bg-gray-300 mb-1"></div>
+                                                <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
+                                                <div class="space-y-0.5">
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else-if="key === 'modern'" class="h-full flex flex-col">
+                                            <div class="h-4 bg-gradient-to-r from-indigo-600 to-blue-600"></div>
+                                            <div class="flex-1 p-1.5">
+                                                <div class="h-1 w-6 bg-indigo-200 rounded-full mb-2"></div>
+                                                <div class="space-y-0.5">
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else-if="key === 'minimal'" class="h-full flex flex-col p-1.5">
+                                            <div class="h-1 w-8 bg-gray-400 mb-1"></div>
+                                            <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
+                                            <div class="flex-1 border-t pt-1">
+                                                <div class="space-y-0.5">
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else-if="key === 'professional'" class="h-full flex">
+                                            <div class="w-1.5 bg-slate-700"></div>
+                                            <div class="flex-1 p-1.5">
+                                                <div class="h-1 w-8 bg-gray-300 mb-1"></div>
+                                                <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
+                                                <div class="space-y-0.5">
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div v-else-if="key === 'bold'" class="h-full flex flex-col">
+                                            <div class="h-5 bg-orange-500 flex items-center justify-center">
+                                                <div class="h-1 w-4 bg-white/50 rounded"></div>
+                                            </div>
+                                            <div class="flex-1 p-1.5">
+                                                <div class="space-y-0.5">
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                    <div class="h-0.5 bg-gray-100"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs font-medium text-gray-900">{{ preview.name }}</div>
+                                    <div class="text-[10px] text-gray-500 leading-tight hidden sm:block">{{ preview.description }}</div>
+                                    <!-- Selected indicator -->
+                                    <div v-if="selectedTemplate === key" class="absolute top-1 right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                                        <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                    </div>
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
-                                <div class="flex items-center gap-3">
-                                    <input v-model="primaryColor" type="color" class="w-12 h-10 rounded border border-gray-300 cursor-pointer" />
-                                    <input v-model="primaryColor" type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
+                            <div class="flex items-center gap-3">
+                                <input v-model="primaryColor" type="color" class="w-12 h-10 rounded border border-gray-300 cursor-pointer" />
+                                <input v-model="primaryColor" type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                <!-- Quick color presets -->
+                                <div class="flex gap-1">
+                                    <button type="button" @click="primaryColor = '#2563eb'" class="w-6 h-6 rounded bg-blue-600 border-2" :class="primaryColor === '#2563eb' ? 'border-gray-900' : 'border-transparent'" aria-label="Blue"></button>
+                                    <button type="button" @click="primaryColor = '#059669'" class="w-6 h-6 rounded bg-emerald-600 border-2" :class="primaryColor === '#059669' ? 'border-gray-900' : 'border-transparent'" aria-label="Green"></button>
+                                    <button type="button" @click="primaryColor = '#7c3aed'" class="w-6 h-6 rounded bg-violet-600 border-2" :class="primaryColor === '#7c3aed' ? 'border-gray-900' : 'border-transparent'" aria-label="Purple"></button>
+                                    <button type="button" @click="primaryColor = '#dc2626'" class="w-6 h-6 rounded bg-red-600 border-2" :class="primaryColor === '#dc2626' ? 'border-gray-900' : 'border-transparent'" aria-label="Red"></button>
                                 </div>
                             </div>
                         </div>
@@ -298,6 +463,10 @@ const skipSetupWizard = () => {
                                     </label>
                                 </div>
                                 <p v-if="errors.signature" class="mt-1 text-sm text-red-600">{{ errors.signature }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Prepared By</label>
+                                <input v-model="preparedByName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Your name" />
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -362,7 +531,7 @@ const skipSetupWizard = () => {
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
                                 <input v-model="issueDate" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
                             </div>
-                            <div>
+                            <div v-if="documentType === 'invoice'">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                                 <input v-model="dueDate" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
                             </div>
@@ -378,50 +547,130 @@ const skipSetupWizard = () => {
                     <!-- Line Items -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">Items</h2>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Items</h2>
+                                <p class="text-xs text-gray-500 mt-0.5">Use area calc (L×W) for construction/flooring work</p>
+                            </div>
                             <button @click="addItem" type="button" class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
                                 <PlusIcon class="w-4 h-4" aria-hidden="true" />Add Item
                             </button>
                         </div>
                         <p v-if="errors.items" class="mb-3 text-sm text-red-600">{{ errors.items }}</p>
+                        
+                        <!-- Desktop Table View -->
                         <div class="hidden md:block overflow-x-auto">
                             <table class="w-full">
                                 <thead>
                                     <tr class="text-left text-sm text-gray-500 border-b">
                                         <th class="pb-2 font-medium">Description</th>
-                                        <th class="pb-2 font-medium w-20">Qty</th>
+                                        <th class="pb-2 font-medium w-36">Quantity / Area</th>
                                         <th class="pb-2 font-medium w-24">Unit</th>
-                                        <th class="pb-2 font-medium w-28">Price</th>
+                                        <th class="pb-2 font-medium w-28">Unit Price</th>
                                         <th class="pb-2 font-medium w-28 text-right">Amount</th>
                                         <th class="pb-2 w-10"></th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
                                     <tr v-for="item in items" :key="item.id">
-                                        <td class="py-2 pr-2"><input v-model="item.description" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="Item description" /></td>
-                                        <td class="py-2 pr-2"><input v-model.number="item.quantity" type="number" min="1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" /></td>
-                                        <td class="py-2 pr-2"><input v-model="item.unit" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="pcs" /></td>
-                                        <td class="py-2 pr-2"><input v-model.number="item.unit_price" type="number" min="0" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" /></td>
-                                        <td class="py-2 pr-2 text-right text-sm font-medium text-gray-900">{{ formatCurrency(item.quantity * item.unit_price) }}</td>
-                                        <td class="py-2"><button @click="removeItem(item.id)" :disabled="items.length === 1" class="p-1 text-gray-400 hover:text-red-500 disabled:opacity-30" aria-label="Remove item"><TrashIcon class="w-4 h-4" aria-hidden="true" /></button></td>
+                                        <td class="py-2 pr-2">
+                                            <input v-model="item.description" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" placeholder="Item description" />
+                                        </td>
+                                        <td class="py-2 pr-2">
+                                            <!-- Toggle between simple qty and area calc -->
+                                            <div v-if="!item.useAreaCalc">
+                                                <div class="flex items-center gap-1">
+                                                    <input v-model.number="item.quantity" type="number" min="0.01" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" />
+                                                    <button @click="toggleAreaCalc(item)" type="button" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Switch to area calculation (L×W)">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" /></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div v-else class="space-y-1">
+                                                <div class="flex items-center gap-1">
+                                                    <input v-model.number="item.length" type="number" min="0.01" step="0.01" class="w-14 px-1.5 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500" placeholder="L" />
+                                                    <span class="text-gray-400 text-xs">×</span>
+                                                    <input v-model.number="item.width" type="number" min="0.01" step="0.01" class="w-14 px-1.5 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500" placeholder="W" />
+                                                    <button @click="toggleAreaCalc(item)" type="button" class="p-1 text-blue-600 hover:text-gray-600 hover:bg-gray-50 rounded" title="Switch to simple quantity">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                </div>
+                                                <div class="text-xs text-blue-600 font-medium">= {{ (item.length * item.width).toFixed(2) }} {{ item.unit || 'm²' }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-2 pr-2">
+                                            <input v-model="item.unit" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" :placeholder="item.useAreaCalc ? 'm²' : 'pcs, kg, m'" />
+                                        </td>
+                                        <td class="py-2 pr-2">
+                                            <input v-model.number="item.unit_price" type="number" min="0" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500" />
+                                        </td>
+                                        <td class="py-2 pr-2 text-right text-sm font-medium text-gray-900">{{ formatCurrency(getItemAmount(item)) }}</td>
+                                        <td class="py-2">
+                                            <button @click="removeItem(item.id)" :disabled="items.length === 1" class="p-1 text-gray-400 hover:text-red-500 disabled:opacity-30" aria-label="Remove item">
+                                                <TrashIcon class="w-4 h-4" aria-hidden="true" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Mobile Card View -->
                         <div class="md:hidden space-y-4">
                             <div v-for="(item, index) in items" :key="item.id" class="border border-gray-200 rounded-lg p-4">
                                 <div class="flex justify-between items-start mb-3">
                                     <span class="text-sm font-medium text-gray-500">Item {{ index + 1 }}</span>
-                                    <button @click="removeItem(item.id)" :disabled="items.length === 1" class="p-1 text-gray-400 hover:text-red-500 disabled:opacity-30" aria-label="Remove item"><TrashIcon class="w-4 h-4" aria-hidden="true" /></button>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="toggleAreaCalc(item)" type="button" class="text-xs px-2 py-1 rounded" :class="item.useAreaCalc ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'">
+                                            {{ item.useAreaCalc ? 'Area (L×W)' : 'Simple Qty' }}
+                                        </button>
+                                        <button @click="removeItem(item.id)" :disabled="items.length === 1" class="p-1 text-gray-400 hover:text-red-500 disabled:opacity-30" aria-label="Remove item">
+                                            <TrashIcon class="w-4 h-4" aria-hidden="true" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="space-y-3">
                                     <input v-model="item.description" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Description" />
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <div><label class="text-xs text-gray-500">Qty</label><input v-model.number="item.quantity" type="number" min="1" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" /></div>
-                                        <div><label class="text-xs text-gray-500">Unit</label><input v-model="item.unit" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="pcs" /></div>
-                                        <div><label class="text-xs text-gray-500">Price</label><input v-model.number="item.unit_price" type="number" min="0" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" /></div>
+                                    
+                                    <!-- Quantity or Area inputs -->
+                                    <div v-if="!item.useAreaCalc" class="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <label class="text-xs text-gray-500">Qty</label>
+                                            <input v-model.number="item.quantity" type="number" min="0.01" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" />
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500">Unit</label>
+                                            <input v-model="item.unit" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="pcs" />
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-gray-500">Price</label>
+                                            <input v-model.number="item.unit_price" type="number" min="0" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" />
+                                        </div>
                                     </div>
-                                    <div class="text-right text-sm font-medium text-gray-900">Amount: {{ formatCurrency(item.quantity * item.unit_price) }}</div>
+                                    <div v-else class="space-y-2">
+                                        <div class="grid grid-cols-4 gap-2">
+                                            <div>
+                                                <label class="text-xs text-gray-500">Length</label>
+                                                <input v-model.number="item.length" type="number" min="0.01" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">Width</label>
+                                                <input v-model.number="item.width" type="number" min="0.01" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">Unit</label>
+                                                <input v-model="item.unit" type="text" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" placeholder="m²" />
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-gray-500">Price/{{ item.unit || 'm²' }}</label>
+                                                <input v-model.number="item.unit_price" type="number" min="0" step="0.01" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm" />
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                            Area: {{ item.length }} × {{ item.width }} = <span class="font-semibold">{{ (item.length * item.width).toFixed(2) }} {{ item.unit || 'm²' }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-right text-sm font-medium text-gray-900">Amount: {{ formatCurrency(getItemAmount(item)) }}</div>
                                 </div>
                             </div>
                         </div>
@@ -473,8 +722,9 @@ const skipSetupWizard = () => {
                             <ul class="text-xs text-gray-500 space-y-1">
                                 <li>• Business name and client name are required</li>
                                 <li>• Add at least one item with description</li>
+                                <li>• Use area calc (L×W) for flooring/construction</li>
+                                <li>• Unit field shows measurement type (pcs, m², kg)</li>
                                 <li>• Upload your logo for professional look</li>
-                                <li>• Save your profile to reuse details</li>
                             </ul>
                         </div>
                     </div>
@@ -559,6 +809,29 @@ const skipSetupWizard = () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tax Number (TPIN)</label>
                             <input v-model="businessTaxNumber" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
+                        </div>
+
+                        <!-- Default Settings Section -->
+                        <div class="border-t pt-4 mt-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Default Invoice Settings</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Tax Rate (%)</label>
+                                    <input v-model.number="taxRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="16" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Discount (%)</label>
+                                    <input v-model.number="discountRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Notes</label>
+                                <textarea v-model="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Thank you for your business!"></textarea>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Terms & Conditions</label>
+                                <textarea v-model="terms" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Payment due within 30 days"></textarea>
+                            </div>
                         </div>
 
                         <!-- Signature Upload in Wizard -->
@@ -658,6 +931,29 @@ const skipSetupWizard = () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tax Number (TPIN)</label>
                             <input v-model="businessTaxNumber" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
+                        </div>
+
+                        <!-- Default Settings Section -->
+                        <div class="border-t pt-4 mt-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Default Invoice Settings</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Tax Rate (%)</label>
+                                    <input v-model.number="taxRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="16" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Discount (%)</label>
+                                    <input v-model.number="discountRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Notes</label>
+                                <textarea v-model="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Thank you for your business!"></textarea>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Terms & Conditions</label>
+                                <textarea v-model="terms" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Payment due within 30 days"></textarea>
+                            </div>
                         </div>
 
                         <!-- Signature Upload -->

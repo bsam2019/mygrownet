@@ -14,6 +14,9 @@ class ShareService
         private readonly PdfGeneratorService $pdfGenerator
     ) {}
 
+    /**
+     * Generate WhatsApp link with a PDF URL
+     */
     public function generateWhatsAppLink(Document $document, string $pdfUrl): string
     {
         $clientPhone = $document->clientInfo()->phone();
@@ -58,7 +61,10 @@ class ShareService
         return $message;
     }
 
-    public function sendEmail(Document $document, string $pdfUrl, ?string $customMessage = null): bool
+    /**
+     * Send email with PDF attachment (generated on-demand)
+     */
+    public function sendEmail(Document $document, ?string $customMessage = null): bool
     {
         $clientEmail = $document->clientInfo()->email();
         
@@ -67,7 +73,10 @@ class ShareService
         }
 
         try {
-            Mail::to($clientEmail)->send(new QuickInvoiceMail($document, $pdfUrl, $customMessage));
+            // Generate PDF on-demand for email attachment
+            $pdfContent = $this->pdfGenerator->output($document);
+            
+            Mail::to($clientEmail)->send(new QuickInvoiceMail($document, $pdfContent, $customMessage));
             return true;
         } catch (\Exception $e) {
             report($e);
@@ -75,13 +84,20 @@ class ShareService
         }
     }
 
-    public function generateShareData(Document $document, string $pdfUrl): array
+    /**
+     * Generate share data for frontend (URLs for on-demand PDF generation)
+     */
+    public function generateShareData(Document $document): array
     {
+        $documentId = $document->id()->value();
+        
         return [
-            'pdf_url' => $pdfUrl,
-            'whatsapp_link' => $this->generateWhatsAppLink($document, $pdfUrl),
+            'document_id' => $documentId,
+            'pdf_url' => route('quick-invoice.download', $documentId),
+            'view_url' => route('quick-invoice.view', $documentId),
             'can_email' => !empty($document->clientInfo()->email()),
-            'document_number' => $document->documentNumber(),
+            'can_whatsapp' => !empty($document->clientInfo()->phone()),
+            'document_number' => $document->documentNumber()->value(),
             'document_type' => $document->type()->label(),
             'total' => $document->total()->format(),
         ];

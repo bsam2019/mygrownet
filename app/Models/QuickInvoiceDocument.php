@@ -42,6 +42,7 @@ class QuickInvoiceDocument extends Model
         'template',
         'colors',
         'signature',
+        'prepared_by',
     ];
 
     protected $casts = [

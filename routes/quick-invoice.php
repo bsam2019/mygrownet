@@ -24,7 +24,15 @@ Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
     Route::post('/upload-logo', [QuickInvoiceController::class, 'uploadLogo'])->name('upload-logo');
     Route::post('/upload-signature', [QuickInvoiceController::class, 'uploadSignature'])->name('upload-signature');
     Route::post('/send-email', [QuickInvoiceController::class, 'sendEmail'])->name('send-email');
+    
+    // PDF routes - generated on-demand
+    Route::get('/download/{id}', [QuickInvoiceController::class, 'downloadPdf'])->name('download');
+    Route::get('/view/{id}', [QuickInvoiceController::class, 'viewPdf'])->name('view');
+    Route::get('/whatsapp/{id}', [QuickInvoiceController::class, 'getWhatsAppLink'])->name('whatsapp');
+    
+    // Legacy route alias for backward compatibility
     Route::get('/pdf/{id}', [QuickInvoiceController::class, 'downloadPdf'])->name('pdf');
+    
     Route::delete('/{id}', [QuickInvoiceController::class, 'destroy'])->name('destroy');
     
     // Authenticated routes for profile management

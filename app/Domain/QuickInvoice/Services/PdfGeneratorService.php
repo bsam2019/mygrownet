@@ -8,48 +8,67 @@ use App\Domain\QuickInvoice\Entities\Document;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * PDF Generator Service - Generates PDFs on-demand (no storage)
+ * 
+ * This service generates PDFs dynamically when requested rather than
+ * storing them, saving storage resources and ensuring documents
+ * always reflect the latest template designs.
+ */
 class PdfGeneratorService
 {
     private const TEMPLATES = ['classic', 'modern', 'minimal', 'professional', 'bold'];
 
-    public function generate(Document $document): string
-    {
-        $template = $this->getTemplateName($document);
-        $documentData = $this->prepareDocumentData($document);
-        
-        $pdf = Pdf::loadView("pdf.quick-invoice.{$template}", [
-            'document' => $documentData,
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-        
-        // Enable remote images for DomPDF
-        $pdf->setOption('isRemoteEnabled', true);
-
-        $filename = $this->generateFilename($document);
-        $path = "quick-invoice/pdfs/{$filename}";
-        
-        Storage::disk('public')->put($path, $pdf->output());
-
-        return Storage::disk('public')->url($path);
-    }
-
+    /**
+     * Generate PDF and return as downloadable response
+     */
     public function download(Document $document)
     {
-        $template = $this->getTemplateName($document);
-        $documentData = $this->prepareDocumentData($document);
-        
-        $pdf = Pdf::loadView("pdf.quick-invoice.{$template}", [
-            'document' => $documentData,
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->setOption('isRemoteEnabled', true);
-
+        $pdf = $this->createPdf($document);
         return $pdf->download($this->generateFilename($document));
     }
 
+    /**
+     * Generate PDF and return as inline stream (for viewing in browser)
+     */
     public function stream(Document $document)
+    {
+        $pdf = $this->createPdf($document);
+        return $pdf->stream($this->generateFilename($document));
+    }
+
+    /**
+     * Generate PDF and return raw output (for email attachments)
+     */
+    public function output(Document $document): string
+    {
+        $pdf = $this->createPdf($document);
+        return $pdf->output();
+    }
+
+    /**
+     * Generate a temporary URL for sharing (creates temp file, auto-deleted)
+     * Used for WhatsApp sharing where we need a public URL
+     */
+    public function generateTemporaryUrl(Document $document): string
+    {
+        $pdf = $this->createPdf($document);
+        $filename = $this->generateFilename($document);
+        $path = "quick-invoice/temp/{$filename}";
+        
+        // Store temporarily
+        Storage::disk('public')->put($path, $pdf->output());
+        
+        // Schedule cleanup (delete after 1 hour)
+        $this->scheduleCleanup($path, 60);
+        
+        return Storage::disk('public')->url($path);
+    }
+
+    /**
+     * Create the PDF instance
+     */
+    private function createPdf(Document $document)
     {
         $template = $this->getTemplateName($document);
         $documentData = $this->prepareDocumentData($document);
@@ -60,8 +79,9 @@ class PdfGeneratorService
 
         $pdf->setPaper('A4', 'portrait');
         $pdf->setOption('isRemoteEnabled', true);
+        $pdf->setOption('isHtml5ParserEnabled', true);
 
-        return $pdf->stream($this->generateFilename($document));
+        return $pdf;
     }
 
     /**
@@ -185,5 +205,39 @@ class PdfGeneratorService
         $type = str_replace('_', '-', $document->type()->value);
         $number = $document->documentNumber()->value();
         return "{$type}-{$number}.pdf";
+    }
+
+    /**
+     * Schedule file cleanup after specified minutes
+     */
+    private function scheduleCleanup(string $path, int $minutes): void
+    {
+        // Use Laravel's scheduler or queue to delete the file
+        // For now, we'll use a simple delayed job approach
+        dispatch(function () use ($path) {
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        })->delay(now()->addMinutes($minutes));
+    }
+
+    /**
+     * Clean up old temporary PDFs (can be called from scheduler)
+     */
+    public static function cleanupTempFiles(): int
+    {
+        $deleted = 0;
+        $files = Storage::disk('public')->files('quick-invoice/temp');
+        
+        foreach ($files as $file) {
+            $lastModified = Storage::disk('public')->lastModified($file);
+            // Delete files older than 1 hour
+            if ($lastModified < now()->subHour()->timestamp) {
+                Storage::disk('public')->delete($file);
+                $deleted++;
+            }
+        }
+        
+        return $deleted;
     }
 }

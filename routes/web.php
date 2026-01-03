@@ -290,6 +290,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard - Role-based routing (MLM Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+    // Tools page
+    Route::get('/tools', function () {
+        return Inertia::render('Tools/Index', [
+            'isAdmin' => auth()->user()?->hasRole('admin') ?? false,
+            'isManager' => auth()->user()?->hasRole('manager') ?? false,
+        ]);
+    })->name('tools.index');
+    
     // Redirect old mobile-dashboard route to new dashboard route
     Route::get('/mobile-dashboard', function () {
         return redirect('/dashboard');

@@ -43,6 +43,7 @@ class Document
     private TemplateStyle $template;
     private ThemeColors $colors;
     private ?string $signature;
+    private ?string $preparedBy;
 
     // Calculated values
     private Money $subtotal;
@@ -89,6 +90,8 @@ class Document
         $document->dueDate = $type->showDueDate() ? Carbon::today()->addDays(30) : null;
         $document->template = $template ?? TemplateStyle::CLASSIC;
         $document->colors = $colors ?? ThemeColors::default();
+        $document->signature = null;
+        $document->preparedBy = null;
         $document->createdAt = Carbon::now();
         $document->updatedAt = Carbon::now();
         $document->recalculate();
@@ -120,7 +123,8 @@ class Document
         Carbon $updatedAt,
         ?TemplateStyle $template = null,
         ?ThemeColors $colors = null,
-        ?string $signature = null
+        ?string $signature = null,
+        ?string $preparedBy = null
     ): self {
         $document = new self();
         $document->id = $id;
@@ -142,6 +146,7 @@ class Document
         $document->template = $template ?? TemplateStyle::CLASSIC;
         $document->colors = $colors ?? ThemeColors::default();
         $document->signature = $signature;
+        $document->preparedBy = $preparedBy;
         $document->createdAt = $createdAt;
         $document->updatedAt = $updatedAt;
         $document->recalculate();
@@ -264,6 +269,9 @@ class Document
     public function template(): TemplateStyle { return $this->template; }
     public function colors(): ThemeColors { return $this->colors; }
     public function signature(): ?string { return $this->signature; }
+    public function preparedBy(): ?string { return $this->preparedBy; }
+    
+    public function setPreparedBy(?string $preparedBy): void { $this->preparedBy = $preparedBy; $this->touch(); }
 
     public function toArray(): array
     {
@@ -292,6 +300,7 @@ class Document
             'template' => $this->template->value,
             'colors' => $this->colors->toArray(),
             'signature' => $this->signature,
+            'prepared_by' => $this->preparedBy,
             'created_at' => $this->createdAt->toIso8601String(),
             'updated_at' => $this->updatedAt->toIso8601String(),
         ];

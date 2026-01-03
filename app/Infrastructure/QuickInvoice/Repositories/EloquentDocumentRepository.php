@@ -53,42 +53,53 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
     public function save(Document $document): Document
     {
         $data = $document->toArray();
+        $documentId = $document->id()->value();
         
-        $model = QuickInvoiceDocument::updateOrCreate(
-            ['id' => $document->id()->value()],
-            [
-                'user_id' => $data['user_id'],
-                'session_id' => $data['session_id'],
-                'document_type' => $data['type'],
-                'document_number' => $data['document_number'],
-                'business_name' => $data['business_info']['name'],
-                'business_address' => $data['business_info']['address'],
-                'business_phone' => $data['business_info']['phone'],
-                'business_email' => $data['business_info']['email'],
-                'business_logo' => $data['business_info']['logo'],
-                'business_tax_number' => $data['business_info']['tax_number'],
-                'business_website' => $data['business_info']['website'],
-                'client_name' => $data['client_info']['name'],
-                'client_address' => $data['client_info']['address'],
-                'client_phone' => $data['client_info']['phone'],
-                'client_email' => $data['client_info']['email'],
-                'issue_date' => $data['issue_date'],
-                'due_date' => $data['due_date'],
-                'currency' => $data['currency'],
-                'subtotal' => $data['subtotal'],
-                'tax_rate' => $data['tax_rate'],
-                'tax_amount' => $data['tax_amount'],
-                'discount_rate' => $data['discount_rate'],
-                'discount_amount' => $data['discount_amount'],
-                'total' => $data['total'],
-                'notes' => $data['notes'],
-                'terms' => $data['terms'],
-                'status' => $data['status'],
-                'template' => $data['template'],
-                'colors' => $data['colors'],
-                'signature' => $data['signature'],
-            ]
-        );
+        // Check if document exists
+        $model = QuickInvoiceDocument::find($documentId);
+        
+        if (!$model) {
+            // Create new - explicitly set ID to match domain entity
+            $model = new QuickInvoiceDocument();
+            $model->id = $documentId;
+        }
+        
+        // Update all fields
+        $model->fill([
+            'user_id' => $data['user_id'],
+            'session_id' => $data['session_id'],
+            'document_type' => $data['type'],
+            'document_number' => $data['document_number'],
+            'business_name' => $data['business_info']['name'],
+            'business_address' => $data['business_info']['address'],
+            'business_phone' => $data['business_info']['phone'],
+            'business_email' => $data['business_info']['email'],
+            'business_logo' => $data['business_info']['logo'],
+            'business_tax_number' => $data['business_info']['tax_number'],
+            'business_website' => $data['business_info']['website'],
+            'client_name' => $data['client_info']['name'],
+            'client_address' => $data['client_info']['address'],
+            'client_phone' => $data['client_info']['phone'],
+            'client_email' => $data['client_info']['email'],
+            'issue_date' => $data['issue_date'],
+            'due_date' => $data['due_date'],
+            'currency' => $data['currency'],
+            'subtotal' => $data['subtotal'],
+            'tax_rate' => $data['tax_rate'],
+            'tax_amount' => $data['tax_amount'],
+            'discount_rate' => $data['discount_rate'],
+            'discount_amount' => $data['discount_amount'],
+            'total' => $data['total'],
+            'notes' => $data['notes'],
+            'terms' => $data['terms'],
+            'status' => $data['status'],
+            'template' => $data['template'],
+            'colors' => $data['colors'],
+            'signature' => $data['signature'],
+            'prepared_by' => $data['prepared_by'] ?? null,
+        ]);
+        
+        $model->save();
 
         // Sync line items
         $model->items()->delete();
@@ -188,7 +199,8 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
             updatedAt: Carbon::parse($model->updated_at),
             template: $model->template ? TemplateStyle::tryFrom($model->template) : null,
             colors: $model->colors ? ThemeColors::fromArray($model->colors) : null,
-            signature: $model->signature
+            signature: $model->signature,
+            preparedBy: $model->prepared_by
         );
     }
 }

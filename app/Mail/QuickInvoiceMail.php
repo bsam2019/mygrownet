@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Domain\QuickInvoice\Entities\Document;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -15,7 +16,7 @@ class QuickInvoiceMail extends Mailable
 
     public function __construct(
         public readonly Document $document,
-        public readonly string $pdfUrl,
+        public readonly string $pdfContent, // Raw PDF content for attachment
         public readonly ?string $customMessage = null
     ) {}
 
@@ -36,9 +37,25 @@ class QuickInvoiceMail extends Mailable
             view: 'emails.quick-invoice',
             with: [
                 'document' => $this->document->toArray(),
-                'pdfUrl' => $this->pdfUrl,
                 'customMessage' => $this->customMessage,
             ],
         );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        $type = str_replace('_', '-', $this->document->type()->value);
+        $number = $this->document->documentNumber()->value();
+        $filename = "{$type}-{$number}.pdf";
+
+        return [
+            Attachment::fromData(fn () => $this->pdfContent, $filename)
+                ->withMime('application/pdf'),
+        ];
     }
 }

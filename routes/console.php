@@ -122,6 +122,15 @@ Schedule::command('growbuilder:purge-deleted-sites')
     ->dailyAt('02:00')
     ->description('Permanently delete GrowBuilder sites past their scheduled deletion date');
 
+// ========================================
+// Quick Invoice Scheduled Tasks
+// ========================================
+
+// Clean up temporary PDF files - runs hourly
+Schedule::command('quick-invoice:cleanup-temp')
+    ->hourly()
+    ->description('Clean up temporary Quick Invoice PDF files older than 1 hour');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

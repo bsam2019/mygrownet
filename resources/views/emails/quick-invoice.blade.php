@@ -54,22 +54,17 @@
             margin-bottom: 20px;
             border-left: 4px solid #d97706;
         }
-        .btn {
-            display: inline-block;
-            background: #2563eb;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
+        .attachment-notice {
+            background: #dbeafe;
+            padding: 15px;
             border-radius: 6px;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-        .btn:hover {
-            background: #1d4ed8;
-        }
-        .cta {
+            margin: 20px 0;
             text-align: center;
-            margin: 30px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .attachment-notice p {
+            margin: 0;
+            color: #1e40af;
         }
         .footer {
             text-align: center;
@@ -100,7 +95,7 @@
         <div class="document-info">
             <p><strong>Document #:</strong> {{ $document['document_number'] }}</p>
             <p><strong>Date:</strong> {{ \Carbon\Carbon::parse($document['issue_date'])->format('d M Y') }}</p>
-            @if($document['due_date'])
+            @if(!empty($document['due_date']))
             <p><strong>Due Date:</strong> {{ \Carbon\Carbon::parse($document['due_date'])->format('d M Y') }}</p>
             @endif
             <p><strong>To:</strong> {{ $document['client_info']['name'] }}</p>
@@ -120,11 +115,11 @@
             {{ $symbol }} {{ number_format($document['total'], 2) }}
         </div>
 
-        <div class="cta">
-            <a href="{{ $pdfUrl }}" class="btn">Download {{ $document['type_label'] }}</a>
+        <div class="attachment-notice">
+            <p>📎 <strong>Your {{ strtolower($document['type_label']) }} is attached to this email as a PDF.</strong></p>
         </div>
 
-        @if($document['notes'])
+        @if(!empty($document['notes']))
         <div style="margin-top: 20px;">
             <strong>Notes:</strong>
             <p style="color: #6b7280;">{{ $document['notes'] }}</p>

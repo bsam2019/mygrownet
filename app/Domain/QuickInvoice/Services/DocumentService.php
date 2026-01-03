@@ -235,6 +235,10 @@ class DocumentService
         if (!empty($data['signature'])) {
             $document->setSignature($data['signature']);
         }
+        
+        if (!empty($data['prepared_by'])) {
+            $document->setPreparedBy($data['prepared_by']);
+        }
     }
 
     /**

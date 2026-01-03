@@ -1014,6 +1014,14 @@
                     <DocumentTextIcon class="h-5 w-5 text-amber-500 mr-3" />
                     <span class="text-sm font-medium">Business Tools</span>
                   </Link>
+                  <a
+                    href="/quick-invoice"
+                    class="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <DocumentDuplicateIcon class="h-5 w-5 text-emerald-500 mr-3" />
+                    <span class="text-sm font-medium">Quick Invoice</span>
+                    <span class="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Free</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -1044,7 +1052,8 @@ import {
   AcademicCapIcon,
   GiftIcon,
   Squares2X2Icon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {

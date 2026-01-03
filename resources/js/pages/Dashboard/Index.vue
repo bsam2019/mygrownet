@@ -15,7 +15,9 @@ import {
     HeartIcon,
     RocketLaunchIcon,
     ChevronRightIcon,
-    GlobeAltIcon
+    GlobeAltIcon,
+    WrenchScrewdriverIcon,
+    DocumentTextIcon
 } from '@heroicons/vue/24/solid';
 
 interface Module {
@@ -198,6 +200,47 @@ const handleModuleClick = (module: Module) => {
                                     {{ module.name }}
                                 </span>
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Free Tools Section -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <WrenchScrewdriverIcon class="w-5 h-5 text-amber-600" aria-hidden="true" />
+                                <h2 class="text-lg font-bold text-gray-900">Free Tools</h2>
+                            </div>
+                            <Link 
+                                href="/tools" 
+                                class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                            >
+                                View All
+                                <ChevronRightIcon class="w-4 h-4" aria-hidden="true" />
+                            </Link>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <!-- Quick Invoice -->
+                            <a
+                                href="/quick-invoice"
+                                class="group relative bg-white rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm border border-gray-100"
+                            >
+                                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-amber-500 transition-transform duration-300 group-hover:scale-110">
+                                    <DocumentTextIcon class="w-6 h-6 text-white" aria-hidden="true" />
+                                </div>
+                                
+                                <span class="text-gray-800 text-center font-semibold text-sm">
+                                    Quick Invoice
+                                </span>
+
+                                <span class="text-[11px] text-gray-500 text-center leading-tight">
+                                    Create invoices & receipts
+                                </span>
+
+                                <span class="absolute top-2 right-2 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-green-100 text-green-700 rounded">
+                                    Free
+                                </span>
+                            </a>
                         </div>
                     </div>
 

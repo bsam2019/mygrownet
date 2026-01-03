@@ -60,6 +60,7 @@ class CreateDocumentRequest extends FormRequest
             'colors.secondary' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'colors.accent' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'signature' => 'nullable|string|max:500',
+            'prepared_by' => 'nullable|string|max:255',
         ];
     }
 

@@ -16,6 +16,15 @@ class QuickInvoiceProfile extends Model
         'logo',
         'signature',
         'tax_number',
+        'default_tax_rate',
+        'default_discount_rate',
+        'default_notes',
+        'default_terms',
+    ];
+
+    protected $casts = [
+        'default_tax_rate' => 'float',
+        'default_discount_rate' => 'float',
     ];
 
     public function user(): BelongsTo

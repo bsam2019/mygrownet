@@ -53,19 +53,26 @@ class QuickInvoiceController extends Controller
         ]);
     }
 
+    /**
+     * Generate document - saves data only, PDF generated on-demand
+     */
     public function generate(CreateDocumentRequest $request): JsonResponse
     {
         $data = $request->validated();
         $data['session_id'] = session()->getId();
         $data['user_id'] = auth()->id();
 
-        $document = $this->documentService->createDocument($data);
-        $pdfUrl = $this->pdfGenerator->generate($document);
-        $shareData = $this->shareService->generateShareData($document, $pdfUrl);
+        \Log::info('QuickInvoice generate request', [
+            'prepared_by' => $data['prepared_by'] ?? 'NOT SET',
+            'signature' => isset($data['signature']) ? 'SET' : 'NOT SET',
+        ]);
 
-        if (auth()->check() || $request->boolean('save_document')) {
-            $this->documentService->saveDocument($document);
-        }
+        // Create and save the document (data only, no PDF storage)
+        $document = $this->documentService->createDocument($data);
+        $this->documentService->saveDocument($document);
+
+        // Generate share data with download URL (PDF generated on-demand when accessed)
+        $shareData = $this->shareService->generateShareData($document);
 
         return response()->json([
             'success' => true,
@@ -98,20 +105,49 @@ class QuickInvoiceController extends Controller
         return response()->json(['success' => true, 'url' => $signatureUrl]);
     }
 
+    /**
+     * Download PDF - generates on-demand
+     */
     public function downloadPdf(string $id)
     {
+        // Increase execution time for PDF generation
+        set_time_limit(120);
+        
         try {
-            $document = $this->documentService->findDocumentWithAccess(
-                $id, auth()->id(), session()->getId()
-            );
+            // For Quick Invoice, allow public download access via UUID
+            $document = $this->documentService->findDocument($id);
             return $this->pdfGenerator->download($document);
         } catch (DocumentNotFoundException $e) {
-            abort(404, $e->getMessage());
-        } catch (UnauthorizedAccessException $e) {
-            abort(403, $e->getMessage());
+            abort(404, 'Document not found');
+        } catch (\Exception $e) {
+            \Log::error('PDF generation failed', ['id' => $id, 'error' => $e->getMessage()]);
+            abort(500, 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
+    /**
+     * View PDF in browser - generates on-demand
+     */
+    public function viewPdf(string $id)
+    {
+        // Increase execution time for PDF generation
+        set_time_limit(120);
+        
+        try {
+            // For Quick Invoice, allow public view access via UUID
+            $document = $this->documentService->findDocument($id);
+            return $this->pdfGenerator->stream($document);
+        } catch (DocumentNotFoundException $e) {
+            abort(404, 'Document not found');
+        } catch (\Exception $e) {
+            \Log::error('PDF streaming failed', ['id' => $id, 'error' => $e->getMessage()]);
+            abort(500, 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send document via email - generates PDF on-demand for attachment
+     */
     public function sendEmail(SendEmailRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -119,9 +155,9 @@ class QuickInvoiceController extends Controller
         $data['user_id'] = auth()->id();
         
         $document = $this->documentService->createDocument($data);
-        $pdfUrl = $this->pdfGenerator->generate($document);
         
-        $sent = $this->shareService->sendEmail($document, $pdfUrl, $data['custom_message'] ?? null);
+        // Send email with on-demand PDF generation
+        $sent = $this->shareService->sendEmail($document);
 
         if ($sent) {
             $document->markAsSent();
@@ -132,6 +168,31 @@ class QuickInvoiceController extends Controller
             'success' => $sent,
             'message' => $sent ? 'Email sent successfully' : 'Failed to send email',
         ]);
+    }
+
+    /**
+     * Get WhatsApp share link with temporary PDF URL
+     */
+    public function getWhatsAppLink(string $id): JsonResponse
+    {
+        try {
+            $document = $this->documentService->findDocumentWithAccess(
+                $id, auth()->id(), session()->getId()
+            );
+            
+            // Generate temporary URL for WhatsApp sharing
+            $tempPdfUrl = $this->pdfGenerator->generateTemporaryUrl($document);
+            $whatsappLink = $this->shareService->generateWhatsAppLink($document, $tempPdfUrl);
+            
+            return response()->json([
+                'success' => true,
+                'whatsapp_link' => $whatsappLink,
+            ]);
+        } catch (DocumentNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
+        } catch (UnauthorizedAccessException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+        }
     }
 
     public function history(): Response
@@ -167,6 +228,10 @@ class QuickInvoiceController extends Controller
             'logo' => 'nullable|string|max:500',
             'signature' => 'nullable|string|max:500',
             'tax_number' => 'nullable|string|max:50',
+            'default_tax_rate' => 'nullable|numeric|min:0|max:100',
+            'default_discount_rate' => 'nullable|numeric|min:0|max:100',
+            'default_notes' => 'nullable|string|max:1000',
+            'default_terms' => 'nullable|string|max:1000',
         ]);
 
         $profile = QuickInvoiceProfile::updateOrCreate(
