@@ -13,8 +13,11 @@ return new class extends Migration
         }
 
         Schema::table('quick_invoice_profiles', function (Blueprint $table) {
+            if (!Schema::hasColumn('quick_invoice_profiles', 'signature')) {
+                $table->string('signature')->nullable()->after('logo');
+            }
             if (!Schema::hasColumn('quick_invoice_profiles', 'default_tax_rate')) {
-                $table->decimal('default_tax_rate', 5, 2)->default(0)->after('signature');
+                $table->decimal('default_tax_rate', 5, 2)->default(0)->after('tax_number');
             }
             if (!Schema::hasColumn('quick_invoice_profiles', 'default_discount_rate')) {
                 $table->decimal('default_discount_rate', 5, 2)->default(0)->after('default_tax_rate');

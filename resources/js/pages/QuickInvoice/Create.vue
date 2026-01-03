@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { 
     ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon,
@@ -56,6 +56,7 @@ const isAuthenticated = computed(() => !!page.props.auth?.user);
 const documentTypeLabels: Record<string, string> = { invoice: 'Invoice', delivery_note: 'Delivery Note', quotation: 'Quotation', receipt: 'Receipt' };
 
 const isLoading = ref(false);
+const isSavingProfile = ref(false);
 const showShareModal = ref(false);
 const showSetupWizard = ref(false);
 const showEditProfile = ref(false);
@@ -273,18 +274,35 @@ const sendEmail = async () => {
 
 const saveBusinessProfile = async () => {
     if (!isAuthenticated.value) { alert('Please log in to save your business profile'); return; }
+    isSavingProfile.value = true;
+    errors.value = {};
+    
+    // Ensure UI updates before making request
+    await nextTick();
+    
     try {
-        await axios.post(route('quick-invoice.save-profile'), {
+        const response = await axios.post(route('quick-invoice.save-profile'), {
             name: businessName.value, address: businessAddress.value, phone: businessPhone.value,
             email: businessEmail.value, logo: businessLogo.value, signature: signature.value, tax_number: businessTaxNumber.value,
             default_tax_rate: taxRate.value, default_discount_rate: discountRate.value,
             default_notes: notes.value, default_terms: terms.value,
         });
-        successMessage.value = 'Business profile saved!'; setTimeout(() => successMessage.value = '', 3000);
-        showSetupWizard.value = false;
-        showEditProfile.value = false;
-        hasSavedProfile.value = true;
-    } catch (error: any) { errors.value.general = 'Failed to save profile'; }
+        if (response.data.success) {
+            successMessage.value = 'Business profile saved!'; 
+            setTimeout(() => successMessage.value = '', 3000);
+            showSetupWizard.value = false;
+            showEditProfile.value = false;
+            hasSavedProfile.value = true;
+        } else {
+            errors.value.general = response.data.message || 'Failed to save profile';
+        }
+    } catch (error: any) { 
+        const message = error.response?.data?.message || error.response?.data?.errors?.name?.[0] || 'Failed to save profile';
+        errors.value.general = message;
+        console.error('Save profile error:', error.response?.data);
+    } finally {
+        isSavingProfile.value = false;
+    }
 };
 
 const skipSetupWizard = () => {
@@ -430,8 +448,8 @@ const skipSetupWizard = () => {
                                 <button v-if="isAuthenticated && hasSavedProfile" @click="openEditProfile" class="text-sm text-gray-600 hover:text-gray-700 flex items-center gap-1">
                                     <PencilIcon class="w-4 h-4" aria-hidden="true" />Edit Profile
                                 </button>
-                                <button v-if="isAuthenticated" @click="saveBusinessProfile" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                                    <BookmarkIcon class="w-4 h-4" aria-hidden="true" />Save Profile
+                                <button v-if="isAuthenticated" @click="saveBusinessProfile" :disabled="isSavingProfile" class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1">
+                                    <BookmarkIcon class="w-4 h-4" aria-hidden="true" />{{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
                                 </button>
                             </div>
                         </div>
@@ -858,9 +876,9 @@ const skipSetupWizard = () => {
                         <button @click="skipSetupWizard" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">
                             Skip for Now
                         </button>
-                        <button @click="saveBusinessProfile" :disabled="!businessName.trim()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <button @click="saveBusinessProfile" :disabled="!businessName.trim() || isSavingProfile" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
                             <BookmarkIcon class="w-5 h-5" aria-hidden="true" />
-                            Save Profile
+                            {{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
                         </button>
                     </div>
 
@@ -977,12 +995,12 @@ const skipSetupWizard = () => {
                     </div>
 
                     <div class="mt-6 flex gap-3">
-                        <button @click="showEditProfile = false" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">
+                        <button @click="showEditProfile = false" :disabled="isSavingProfile" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">
                             Cancel
                         </button>
-                        <button @click="saveBusinessProfile" :disabled="!businessName.trim()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <button @click="saveBusinessProfile" :disabled="!businessName.trim() || isSavingProfile" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
                             <BookmarkIcon class="w-5 h-5" aria-hidden="true" />
-                            Save Changes
+                            {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
                         </button>
                     </div>
                 </div>

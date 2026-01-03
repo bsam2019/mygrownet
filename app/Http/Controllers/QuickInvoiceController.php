@@ -220,29 +220,48 @@ class QuickInvoiceController extends Controller
 
     public function saveProfile(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'logo' => 'nullable|string|max:500',
-            'signature' => 'nullable|string|max:500',
-            'tax_number' => 'nullable|string|max:50',
-            'default_tax_rate' => 'nullable|numeric|min:0|max:100',
-            'default_discount_rate' => 'nullable|numeric|min:0|max:100',
-            'default_notes' => 'nullable|string|max:1000',
-            'default_terms' => 'nullable|string|max:1000',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'address' => 'nullable|string|max:500',
+                'phone' => 'nullable|string|max:50',
+                'email' => 'nullable|email|max:255',
+                'logo' => 'nullable|string|max:500',
+                'signature' => 'nullable|string|max:500',
+                'tax_number' => 'nullable|string|max:50',
+                'default_tax_rate' => 'nullable|numeric|min:0|max:100',
+                'default_discount_rate' => 'nullable|numeric|min:0|max:100',
+                'default_notes' => 'nullable|string|max:1000',
+                'default_terms' => 'nullable|string|max:1000',
+            ]);
 
-        $profile = QuickInvoiceProfile::updateOrCreate(
-            ['user_id' => auth()->id()],
-            $validated
-        );
+            $profile = QuickInvoiceProfile::updateOrCreate(
+                ['user_id' => auth()->id()],
+                $validated
+            );
 
-        return response()->json([
-            'success' => true,
-            'profile' => $profile->toArray(),
-        ]);
+            return response()->json([
+                'success' => true,
+                'profile' => $profile->toArray(),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Failed to save invoice profile', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save profile: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getProfile(): JsonResponse
