@@ -15,17 +15,25 @@ use Illuminate\Support\Facades\Cache;
  */
 class FirebasePushService
 {
-    private string $projectId;
+    private ?string $projectId;
     private ?array $serviceAccount = null;
 
     public function __construct()
     {
-        $this->projectId = config('services.firebase.project_id', '');
+        $this->projectId = config('services.firebase.project_id');
         $credentialsPath = config('services.firebase.credentials', '');
         
         if ($credentialsPath && file_exists($credentialsPath)) {
             $this->serviceAccount = json_decode(file_get_contents($credentialsPath), true);
         }
+    }
+    
+    /**
+     * Check if Firebase is configured
+     */
+    private function isConfigured(): bool
+    {
+        return !empty($this->projectId);
     }
 
     /**
@@ -33,6 +41,11 @@ class FirebasePushService
      */
     public function sendToUser(int $userId, string $title, string $body, array $data = []): bool
     {
+        if (!$this->isConfigured()) {
+            Log::warning('Firebase not configured, skipping push notification', ['user_id' => $userId]);
+            return false;
+        }
+        
         $tokens = $this->getUserTokens($userId);
         
         if (empty($tokens)) {
