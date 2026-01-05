@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
-    private string $fcmServerKey;
+    private ?string $fcmServerKey;
     private string $fcmUrl = 'https://fcm.googleapis.com/fcm/send';
     private FirebasePushService $pushService;
 
     public function __construct(FirebasePushService $pushService)
     {
-        $this->fcmServerKey = config('services.firebase.server_key', '');
+        $this->fcmServerKey = config('services.firebase.server_key');
         $this->pushService = $pushService;
     }
 
