@@ -34,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growbuilder.php'));
             Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
+            // GrowBuilder subdomain routes
+            Route::middleware('web')
+                ->group(base_path('routes/subdomain.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -60,6 +63,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // GrowBuilder site user middleware
             'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
             'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
+            'subdomain.check' => \App\Http\Middleware\SubdomainCheck::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group
