@@ -42,7 +42,7 @@ class CheckExpiringSubscriptions extends Command
         // Get users with active subscriptions expiring in X days
         $users = User::whereHas('subscription', function ($query) use ($targetDate, $endDate) {
             $query->where('status', 'active')
-                ->whereBetween('next_billing_date', [$targetDate, $endDate]);
+                ->whereBetween('end_date', [$targetDate, $endDate]);
         })->with('subscription')->get();
         
         foreach ($users as $user) {
@@ -65,7 +65,7 @@ class CheckExpiringSubscriptions extends Command
                         'title' => 'Subscription Expiring Soon',
                         'message' => "Your subscription expires in {$days} day" . ($days > 1 ? 's' : '') . ". Renew now to keep your benefits!",
                         'days_remaining' => $days,
-                        'expires_at' => $user->subscription->next_billing_date->format('M d, Y'),
+                        'expires_at' => $user->subscription->end_date->format('M d, Y'),
                         'action_url' => route('mygrownet.membership.show'),
                         'action_text' => 'Renew Now'
                     ]
@@ -84,10 +84,10 @@ class CheckExpiringSubscriptions extends Command
     
     private function checkExpired()
     {
-        // Get users with active subscriptions that have passed their billing date
+        // Get users with active subscriptions that have passed their end date
         $users = User::whereHas('subscription', function ($query) {
             $query->where('status', 'active')
-                ->where('next_billing_date', '<', Carbon::now());
+                ->where('end_date', '<', Carbon::now());
         })->with('subscription')->get();
         
         foreach ($users as $user) {
@@ -101,7 +101,7 @@ class CheckExpiringSubscriptions extends Command
                     data: [
                         'title' => 'Subscription Expired',
                         'message' => 'Your subscription has expired. Renew now to restore your access and benefits!',
-                        'expired_at' => $user->subscription->next_billing_date->format('M d, Y'),
+                        'expired_at' => $user->subscription->end_date->format('M d, Y'),
                         'action_url' => route('mygrownet.membership.show'),
                         'action_text' => 'Renew Subscription'
                     ]
