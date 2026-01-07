@@ -11,6 +11,7 @@ import NavigationRenderer from './components/NavigationRenderer.vue';
 import FooterRenderer from './components/FooterRenderer.vue';
 import ToastContainer from './components/ToastContainer.vue';
 import ContextMenu from './components/common/ContextMenu.vue';
+import OnboardingTutorial from './components/OnboardingTutorial.vue';
 import { NavigationInspector, FooterInspector, SectionInspector } from './components/inspectors';
 import { CreatePageModal, EditPageModal, ApplyTemplateModal, MediaLibraryModal, AIAssistantModal } from './components/modals';
 import { WidgetPalette, PagesList, EditorToolbar } from './components/sidebar';
@@ -41,6 +42,8 @@ import {
     ComputerDesktopIcon,
     QuestionMarkCircleIcon,
     PhotoIcon,
+    PencilSquareIcon,
+    Cog6ToothIcon,
 } from '@heroicons/vue/24/outline';
 
 // Composables
@@ -123,7 +126,6 @@ const hasAISEO = computed(() => {
 // UI State
 // ============================================
 const leftSidebarOpen = ref(true);
-const rightSidebarOpen = ref(true);
 const previewMode = ref<'desktop' | 'tablet' | 'mobile'>('desktop');
 const selectedSectionId = ref<string | null>(null);
 const saving = ref(false);
@@ -132,7 +134,7 @@ const isPublished = ref(props.site.status === 'published');
 const isDragging = ref(false);
 const activeInspectorTab = ref<'content' | 'style' | 'advanced'>('content');
 const hoveredSectionId = ref<string | null>(null);
-const activeLeftTab = ref<'pages' | 'widgets'>('widgets');
+const activeLeftTab = ref<'pages' | 'widgets' | 'inspector'>('widgets');
 const showNavSettings = ref(false);
 const showFooterSettings = ref(false);
 
@@ -148,6 +150,10 @@ const iframeKey = ref(0); // Force iframe refresh
 const canvasZoom = ref(100);
 const lastSaved = ref<Date | null>(null);
 const darkMode = ref(false);
+
+// Onboarding Tutorial
+const showOnboarding = ref(false);
+const ONBOARDING_KEY = 'growbuilder_onboarding_completed';
 
 // AI Usage tracking (local reactive copy of prop)
 const aiUsage = ref<AIUsage | undefined>(props.aiUsage);
@@ -437,7 +443,16 @@ const canvasWidth = computed(() => {
     if (isFullPreview.value) {
         return `max-w-[${previewWidth.value}px]`;
     }
-    return previewMode.value === 'mobile' ? 'max-w-sm' : previewMode.value === 'tablet' ? 'max-w-2xl' : 'max-w-4xl';
+    // Responsive canvas width based on preview mode
+    // When sidebar is collapsed, allow more width
+    if (previewMode.value === 'mobile') {
+        return 'max-w-sm';
+    } else if (previewMode.value === 'tablet') {
+        return 'max-w-2xl';
+    } else {
+        // Desktop mode - use larger width, will be constrained by available space
+        return leftSidebarOpen.value ? 'max-w-5xl' : 'max-w-6xl';
+    }
 });
 
 // Canvas zoom transform
@@ -462,7 +477,7 @@ const gridCols4 = computed(() => isMobilePreview.value ? 'grid-cols-2' : 'grid-c
 // ============================================
 const selectSection = (id: string) => {
     selectedSectionId.value = id;
-    rightSidebarOpen.value = true;
+    activeLeftTab.value = 'inspector';
     activeInspectorTab.value = 'content';
     showNavSettings.value = false;
     showFooterSettings.value = false;
@@ -602,14 +617,14 @@ const handleContextMenuAction = (action: string, sectionId: string | null) => {
             if (sectionId) {
                 selectedSectionId.value = sectionId;
                 activeInspectorTab.value = 'content';
-                rightSidebarOpen.value = true;
+                activeLeftTab.value = 'inspector';
             }
             break;
         case 'style':
             if (sectionId) {
                 selectedSectionId.value = sectionId;
                 activeInspectorTab.value = 'style';
-                rightSidebarOpen.value = true;
+                activeLeftTab.value = 'inspector';
             }
             break;
         case 'copy':
@@ -1567,12 +1582,14 @@ const handleNavClick = () => {
     showNavSettings.value = true;
     showFooterSettings.value = false;
     selectedSectionId.value = null;
+    activeLeftTab.value = 'inspector';
 };
 
 const handleFooterClick = () => {
     showFooterSettings.value = true;
     showNavSettings.value = false;
     selectedSectionId.value = null;
+    activeLeftTab.value = 'inspector';
 };
 
 const handleBack = () => {
@@ -1637,10 +1654,12 @@ const handleKeyboardShortcuts = (e: KeyboardEvent) => {
         e.preventDefault();
         leftSidebarOpen.value = !leftSidebarOpen.value;
     }
-    // Ctrl+] to toggle right sidebar
+    // Ctrl+] to cycle through sidebar tabs
     if ((e.ctrlKey || e.metaKey) && e.key === ']') {
         e.preventDefault();
-        rightSidebarOpen.value = !rightSidebarOpen.value;
+        const tabs = ['widgets', 'pages', 'inspector'];
+        const currentIndex = tabs.indexOf(activeLeftTab.value);
+        activeLeftTab.value = tabs[(currentIndex + 1) % tabs.length] as 'widgets' | 'pages' | 'inspector';
     }
     // Delete to delete selected section
     if (e.key === 'Delete' && selectedSectionId.value && !showNavSettings.value && !showFooterSettings.value) {
@@ -1677,14 +1696,16 @@ const handleKeyboardShortcuts = (e: KeyboardEvent) => {
 // ============================================
 // Full Preview Mode
 // ============================================
-const toggleFullPreview = async (useIframe = true) => {
+const toggleFullPreview = async (useIframe = false) => {
     if (!isFullPreview.value) {
-        await savePage();
+        // Only save if using iframe preview (which loads the actual site URL)
+        if (useIframe) {
+            await savePage();
+            iframeKey.value++; // Force iframe refresh
+        }
         isFullPreview.value = true;
         isIframePreview.value = useIframe;
-        iframeKey.value++; // Force iframe refresh
         leftSidebarOpen.value = false;
-        rightSidebarOpen.value = false;
         selectedSectionId.value = null;
         showNavSettings.value = false;
         showFooterSettings.value = false;
@@ -1697,14 +1718,15 @@ const exitFullPreview = () => {
     isFullPreview.value = false;
     isIframePreview.value = false;
     leftSidebarOpen.value = true;
-    rightSidebarOpen.value = true;
 };
 
-const togglePreviewMode = () => {
-    isIframePreview.value = !isIframePreview.value;
-    if (isIframePreview.value) {
+const togglePreviewMode = async () => {
+    if (!isIframePreview.value) {
+        // Switching to iframe mode - need to save first
+        await savePage();
         iframeKey.value++; // Refresh iframe when switching to it
     }
+    isIframePreview.value = !isIframePreview.value;
 };
 
 const setPreviewBreakpoint = (width: number) => {
@@ -1748,7 +1770,32 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeyboardShortcuts);
     // Attach drag-to-upload to the canvas area
     dragUpload.attachGlobal();
+    
+    // Check if onboarding should be shown (first-time users)
+    const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY);
+    if (!onboardingCompleted) {
+        // Small delay to let the editor render first
+        setTimeout(() => {
+            showOnboarding.value = true;
+        }, 500);
+    }
 });
+
+// Onboarding handlers
+const closeOnboarding = () => {
+    showOnboarding.value = false;
+};
+
+const completeOnboarding = () => {
+    showOnboarding.value = false;
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    toast.success('Tutorial complete! Start building your site.');
+};
+
+// Allow restarting the tutorial from help menu
+const restartOnboarding = () => {
+    showOnboarding.value = true;
+};
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyboardShortcuts);
@@ -1759,112 +1806,29 @@ onUnmounted(() => {
 <template>
     <Head :title="`Edit - ${site.name}`" />
 
-    <!-- Full Preview Mode Overlay -->
-    <div v-if="isFullPreview" class="fixed inset-0 z-50 bg-gray-900 flex flex-col">
-        <!-- Full Preview Toolbar -->
-        <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <button
-                    @click="exitFullPreview"
-                    class="flex items-center gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                    <XMarkIcon class="w-4 h-4" aria-hidden="true" />
-                    Exit Preview
-                </button>
-                <span class="text-gray-400 text-sm">Press <kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-xs">Esc</kbd> to exit</span>
-            </div>
-            
-            <!-- Preview Mode Toggle -->
-            <div class="flex items-center gap-4">
-                <!-- Interactive/Static Toggle -->
-                <div class="flex items-center bg-gray-700 rounded-lg p-1">
-                    <button
-                        @click="isIframePreview = true; iframeKey++"
-                        :class="[
-                            'px-3 py-1.5 text-sm rounded transition-colors',
-                            isIframePreview ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                        ]"
-                        title="Interactive preview with clickable links"
-                    >
-                        Interactive
-                    </button>
-                    <button
-                        @click="isIframePreview = false"
-                        :class="[
-                            'px-3 py-1.5 text-sm rounded transition-colors',
-                            !isIframePreview ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
-                        ]"
-                        title="Static preview (faster)"
-                    >
-                        Static
-                    </button>
-                </div>
-                
-                <!-- Responsive Breakpoints -->
-                <div class="flex items-center gap-2">
-                    <span class="text-gray-400 text-sm">{{ previewWidth }}px</span>
-                    <div class="flex items-center bg-gray-700 rounded-lg p-1">
-                        <button
-                            v-for="bp in breakpoints"
-                            :key="bp.width"
-                            @click="setPreviewBreakpoint(bp.width)"
-                            :class="[
-                                'p-2 rounded transition-colors',
-                                previewWidth === bp.width ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-600'
-                            ]"
-                            :title="`${bp.name} (${bp.width}px)`"
-                            :aria-label="`Set preview to ${bp.name}`"
-                        >
-                            <DevicePhoneMobileIcon v-if="bp.icon === 'phone'" class="w-5 h-5" aria-hidden="true" />
-                            <DeviceTabletIcon v-else-if="bp.icon === 'tablet'" class="w-5 h-5" aria-hidden="true" />
-                            <ComputerDesktopIcon v-else class="w-5 h-5" aria-hidden="true" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Actions -->
-            <div class="flex items-center gap-2">
-                <button
-                    @click="openPreview"
-                    class="px-3 py-1.5 text-gray-300 hover:text-white text-sm transition-colors"
-                >
-                    Open in New Tab
-                </button>
-            </div>
-        </div>
-        
-        <!-- Preview Container -->
-        <div class="flex-1 overflow-auto bg-gray-900 p-6 preview-container relative">
-            <!-- Interactive Preview (iframe) -->
-            <div 
+    <!-- Full Preview Mode Overlay - Fullscreen like Template Preview -->
+    <div v-if="isFullPreview" class="fixed inset-0 z-50 bg-gray-900 overflow-hidden">
+        <!-- Fullscreen iframe -->
+        <div class="w-full h-full overflow-hidden preview-frame">
+            <iframe
                 v-if="isIframePreview"
-                class="mx-auto bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300"
-                :style="{ width: `${previewWidth}px`, maxWidth: '100%', height: 'calc(100vh - 120px)' }"
-            >
-                <iframe
-                    :key="iframeKey"
-                    :src="site.url"
-                    class="w-full h-full border-0"
-                    title="Site Preview"
-                ></iframe>
-            </div>
+                :key="iframeKey"
+                :src="site.url"
+                class="w-full h-full border-0"
+                title="Site Preview"
+            ></iframe>
             
-            <!-- Static Preview (component-based) -->
+            <!-- Static Preview (component-based) - scrollable -->
             <div 
                 v-else
-                class="mx-auto bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300"
-                :style="{ width: `${previewWidth}px`, maxWidth: '100%' }"
+                class="w-full h-full overflow-y-auto bg-white"
             >
-                <!-- Navigation Preview -->
                 <NavigationRenderer
                     :navigation="siteNavigation"
                     :siteName="site.name"
                     :isMobile="previewWidth < 768"
                     :isEditing="false"
                 />
-                
-                <!-- Sections Preview -->
                 <div v-for="section in sections" :key="section.id">
                     <SectionRenderer
                         :section="section"
@@ -1888,8 +1852,6 @@ onUnmounted(() => {
                         :draggingElement="null"
                     />
                 </div>
-                
-                <!-- Footer Preview -->
                 <FooterRenderer
                     :footer="siteFooter"
                     :siteName="site.name"
@@ -1897,20 +1859,68 @@ onUnmounted(() => {
                     :isEditing="false"
                 />
             </div>
+        </div>
+
+        <!-- Floating toolbar at bottom -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-full shadow-2xl px-3 py-2 flex items-center gap-1">
+            <div class="px-3 py-1 border-r border-gray-200">
+                <p class="text-sm font-medium text-gray-900">{{ site.name }}</p>
+            </div>
             
-            <!-- Resize Handles (only for static mode) -->
-            <template v-if="!isIframePreview">
-                <div 
-                    class="absolute top-1/2 -translate-y-1/2 w-2 h-24 bg-gray-600 hover:bg-blue-500 rounded cursor-ew-resize transition-colors"
-                    :style="{ left: `calc(50% - ${previewWidth / 2}px - 16px)` }"
-                    @mousedown="startPreviewResize"
-                ></div>
-                <div 
-                    class="absolute top-1/2 -translate-y-1/2 w-2 h-24 bg-gray-600 hover:bg-blue-500 rounded cursor-ew-resize transition-colors"
-                    :style="{ left: `calc(50% + ${previewWidth / 2}px + 8px)` }"
-                    @mousedown="startPreviewResize"
-                ></div>
-            </template>
+            <div class="flex items-center border-r border-gray-200 px-2">
+                <button
+                    @click="isIframePreview = true; iframeKey++"
+                    :class="['px-3 py-1.5 text-sm rounded-full transition-colors', isIframePreview ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700']"
+                    title="Interactive preview"
+                >
+                    Live
+                </button>
+                <button
+                    @click="isIframePreview = false"
+                    :class="['px-3 py-1.5 text-sm rounded-full transition-colors', !isIframePreview ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700']"
+                    title="Static preview"
+                >
+                    Static
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-1 border-r border-gray-200 px-2">
+                <button
+                    v-for="bp in breakpoints"
+                    :key="bp.width"
+                    @click="setPreviewBreakpoint(bp.width)"
+                    :class="['p-2 rounded-full transition-colors', previewWidth === bp.width ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100']"
+                    :title="`${bp.name} (${bp.width}px)`"
+                    :aria-label="`Set preview to ${bp.name}`"
+                >
+                    <DevicePhoneMobileIcon v-if="bp.icon === 'phone'" class="w-5 h-5" aria-hidden="true" />
+                    <DeviceTabletIcon v-else-if="bp.icon === 'tablet'" class="w-5 h-5" aria-hidden="true" />
+                    <ComputerDesktopIcon v-else class="w-5 h-5" aria-hidden="true" />
+                </button>
+            </div>
+            
+            <a :href="site.url" target="_blank" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition" title="Open in new tab">
+                <ComputerDesktopIcon class="h-5 w-5" aria-hidden="true" />
+            </a>
+            
+            <button @click="exitFullPreview" class="px-4 py-2 text-gray-700 font-medium rounded-full hover:bg-gray-100 transition">
+                Close
+            </button>
+            
+            <button @click="exitFullPreview" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition inline-flex items-center gap-1.5">
+                <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
+                Edit
+            </button>
+        </div>
+
+        <!-- Close button top right -->
+        <button @click="exitFullPreview" class="absolute top-4 right-4 p-2.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-full shadow-lg hover:bg-white transition" aria-label="Close preview">
+            <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+        </button>
+        
+        <!-- Keyboard hint -->
+        <div class="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white/80 text-xs rounded-full">
+            Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded text-xs mx-1">Esc</kbd> to exit
         </div>
     </div>
 
@@ -1990,6 +2000,7 @@ onUnmounted(() => {
             :canRedo="history.canRedo.value"
             :zoom="canvasZoom"
             :darkMode="darkMode"
+            :sections="sections"
             @update:darkMode="darkMode = $event"
             @preview="toggleFullPreview"
             @save="savePage"
@@ -1998,44 +2009,65 @@ onUnmounted(() => {
             @undo="handleUndo"
             @redo="handleRedo"
             @showShortcuts="showKeyboardShortcuts = true"
+            @restartTutorial="restartOnboarding"
             @openAI="showAIModal = true"
             @back="router.visit(route('growbuilder.index'))"
         />
 
         <!-- Main Content Area -->
         <div class="flex-1 flex overflow-hidden">
-            <!-- Left Sidebar -->
+            <!-- Left Sidebar - Unified -->
             <aside :class="[
                 'flex flex-col transition-all duration-300 flex-shrink-0 border-r',
-                leftSidebarOpen ? 'w-56' : 'w-0',
+                leftSidebarOpen ? 'w-72' : 'w-0',
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             ]">
                 <div v-if="leftSidebarOpen" class="flex flex-col h-full overflow-hidden">
-                    <!-- Sidebar Tabs -->
+                    <!-- Sidebar Tabs - 3 tabs now -->
                     <div :class="['flex border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
                         <button
                             @click="activeLeftTab = 'widgets'"
+                            data-tour="add-tab"
                             :class="[
-                                'flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors border-b-2',
+                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2',
                                 activeLeftTab === 'widgets' 
                                     ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
                                     : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
                             ]"
                         >
-                            <Squares2X2Icon class="w-3.5 h-3.5" aria-hidden="true" />
-                            Widgets
+                            <Squares2X2Icon class="w-4 h-4" aria-hidden="true" />
+                            <span class="hidden sm:inline">Add</span>
                         </button>
                         <button
                             @click="activeLeftTab = 'pages'"
+                            data-tour="pages-tab"
                             :class="[
-                                'flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors border-b-2',
+                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2',
                                 activeLeftTab === 'pages' 
                                     ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
                                     : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
                             ]"
                         >
                             <DocumentIcon class="w-4 h-4" aria-hidden="true" />
-                            Pages
+                            <span class="hidden sm:inline">Pages</span>
+                        </button>
+                        <button
+                            @click="activeLeftTab = 'inspector'"
+                            data-tour="edit-tab"
+                            :class="[
+                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2 relative',
+                                activeLeftTab === 'inspector' 
+                                    ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
+                                    : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
+                            ]"
+                        >
+                            <Cog6ToothIcon class="w-4 h-4" aria-hidden="true" />
+                            <span class="hidden sm:inline">Edit</span>
+                            <!-- Indicator dot when something is selected -->
+                            <span 
+                                v-if="selectedSection || showNavSettings || showFooterSettings"
+                                class="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"
+                            ></span>
                         </button>
                     </div>
 
@@ -2068,6 +2100,89 @@ onUnmounted(() => {
                         @dragEnd="onDragEnd"
                         @update:sections="sections = $event"
                     />
+
+                    <!-- Inspector Tab (moved from right sidebar) -->
+                    <div v-if="activeLeftTab === 'inspector'" class="flex flex-col h-full overflow-hidden">
+                        <!-- Inspector Header -->
+                        <div :class="['p-3 border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
+                            <div v-if="showNavSettings" class="flex items-center gap-2">
+                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100']">
+                                    <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-indigo-400' : 'text-indigo-600']" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 :class="['text-sm font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Navigation</h3>
+                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Site-wide settings</p>
+                                </div>
+                            </div>
+                            <div v-else-if="showFooterSettings" class="flex items-center gap-2">
+                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-gray-700' : 'bg-gray-100']">
+                                    <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-gray-300' : 'text-gray-600']" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 :class="['text-sm font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Footer</h3>
+                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Site-wide settings</p>
+                                </div>
+                            </div>
+                            <div v-else-if="selectedSection" class="flex items-center gap-2">
+                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-blue-900/50' : 'bg-blue-100']">
+                                    <component :is="selectedSectionType?.icon || Squares2X2Icon" :class="['w-4 h-4', darkMode ? 'text-blue-400' : 'text-blue-600']" aria-hidden="true" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 :class="['text-sm font-semibold capitalize truncate', darkMode ? 'text-white' : 'text-gray-900']">{{ selectedSection.type }}</h3>
+                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Edit section</p>
+                                </div>
+                                <button
+                                    @click="selectedSectionId = null"
+                                    :class="['p-1.5 rounded-lg transition-colors', darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500']"
+                                    aria-label="Deselect section"
+                                >
+                                    <XMarkIcon class="w-4 h-4" aria-hidden="true" />
+                                </button>
+                            </div>
+                            <div v-else class="text-center py-4">
+                                <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2', darkMode ? 'bg-gray-700' : 'bg-gray-100']">
+                                    <Squares2X2Icon :class="['w-6 h-6', darkMode ? 'text-gray-500' : 'text-gray-400']" aria-hidden="true" />
+                                </div>
+                                <p :class="['text-sm font-medium', darkMode ? 'text-gray-300' : 'text-gray-600']">No selection</p>
+                                <p :class="['text-xs mt-1', darkMode ? 'text-gray-500' : 'text-gray-400']">Click a section to edit</p>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Settings Panel -->
+                        <NavigationInspector
+                            v-if="showNavSettings"
+                            :navigation="siteNavigation"
+                            :pages="pages"
+                            :darkMode="darkMode"
+                            class="flex-1 min-h-0 overflow-hidden"
+                            @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
+                        />
+
+                        <!-- Footer Settings Panel -->
+                        <FooterInspector
+                            v-else-if="showFooterSettings"
+                            :footer="siteFooter"
+                            :pages="pages"
+                            :darkMode="darkMode"
+                            class="flex-1 min-h-0 overflow-hidden"
+                            @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
+                        />
+
+                        <!-- Section Inspector -->
+                        <SectionInspector
+                            v-else-if="selectedSection"
+                            :section="selectedSection"
+                            :sectionType="selectedSectionType"
+                            :activeTab="activeInspectorTab"
+                            :darkMode="darkMode"
+                            :subdomain="site.subdomain"
+                            class="flex-1 min-h-0 overflow-hidden"
+                            @update:activeTab="activeInspectorTab = $event"
+                            @updateContent="updateSectionContent"
+                            @updateStyle="updateSectionStyle"
+                            @openMediaLibrary="(sectionId, field) => openMediaLibrary('section', sectionId, field)"
+                        />
+                    </div>
                 </div>
             </aside>
 
@@ -2075,8 +2190,8 @@ onUnmounted(() => {
             <button
                 @click="leftSidebarOpen = !leftSidebarOpen"
                 class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-gray-50 transition-colors"
-                :class="leftSidebarOpen ? 'ml-56' : 'ml-0'"
-                aria-label="Toggle left sidebar"
+                :class="leftSidebarOpen ? 'ml-72' : 'ml-0'"
+                aria-label="Toggle sidebar"
             >
                 <ChevronLeftIcon :class="['w-3.5 h-3.5 text-gray-500 transition-transform', leftSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
             </button>
@@ -2259,94 +2374,6 @@ onUnmounted(() => {
                     </div>
                 </div>
             </main>
-
-            <!-- Right Sidebar - Inspector -->
-            <aside :class="[
-                'flex flex-col transition-all duration-300 flex-shrink-0 border-l',
-                rightSidebarOpen ? 'w-64' : 'w-0',
-                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            ]">
-                <div v-if="rightSidebarOpen" class="flex flex-col h-full overflow-hidden">
-                    <!-- Inspector Header -->
-                    <div :class="['p-2 border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
-                        <div v-if="showNavSettings" class="flex items-center gap-2">
-                            <div :class="['w-8 h-8 rounded-md flex items-center justify-center', darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100']">
-                                <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-indigo-400' : 'text-indigo-600']" aria-hidden="true" />
-                            </div>
-                            <div>
-                                <h3 :class="['text-xs font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Navigation</h3>
-                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">All pages</p>
-                            </div>
-                        </div>
-                        <div v-else-if="showFooterSettings" class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-gray-700 rounded-md flex items-center justify-center">
-                                <Bars3BottomLeftIcon class="w-4 h-4 text-white" aria-hidden="true" />
-                            </div>
-                            <div>
-                                <h3 :class="['text-xs font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Footer</h3>
-                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">All pages</p>
-                            </div>
-                        </div>
-                        <div v-else-if="selectedSection" class="flex items-center gap-2">
-                            <div :class="['w-8 h-8 rounded-md flex items-center justify-center', darkMode ? 'bg-blue-900/50' : 'bg-blue-100']">
-                                <component :is="selectedSectionType?.icon || Squares2X2Icon" :class="['w-4 h-4', darkMode ? 'text-blue-400' : 'text-blue-600']" aria-hidden="true" />
-                            </div>
-                            <div>
-                                <h3 :class="['text-xs font-semibold capitalize', darkMode ? 'text-white' : 'text-gray-900']">{{ selectedSection.type }}</h3>
-                                <p :class="['text-[10px]', darkMode ? 'text-gray-400' : 'text-gray-500']">Edit properties</p>
-                            </div>
-                        </div>
-                        <div v-else class="text-center py-3">
-                            <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Select a section</p>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Settings Panel -->
-                    <NavigationInspector
-                        v-if="showNavSettings"
-                        :navigation="siteNavigation"
-                        :pages="pages"
-                        :darkMode="darkMode"
-                        class="flex-1 min-h-0 overflow-hidden"
-                        @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
-                    />
-
-                    <!-- Footer Settings Panel -->
-                    <FooterInspector
-                        v-else-if="showFooterSettings"
-                        :footer="siteFooter"
-                        :pages="pages"
-                        :darkMode="darkMode"
-                        class="flex-1 min-h-0 overflow-hidden"
-                        @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
-                    />
-
-                    <!-- Section Inspector -->
-                    <SectionInspector
-                        v-else-if="selectedSection"
-                        :section="selectedSection"
-                        :sectionType="selectedSectionType"
-                        :activeTab="activeInspectorTab"
-                        :darkMode="darkMode"
-                        :subdomain="site.subdomain"
-                        class="flex-1 min-h-0 overflow-hidden"
-                        @update:activeTab="activeInspectorTab = $event"
-                        @updateContent="updateSectionContent"
-                        @updateStyle="updateSectionStyle"
-                        @openMediaLibrary="(sectionId, field) => openMediaLibrary('section', sectionId, field)"
-                    />
-                </div>
-            </aside>
-
-            <!-- Toggle Right Sidebar -->
-            <button
-                @click="rightSidebarOpen = !rightSidebarOpen"
-                class="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-l-lg shadow-sm hover:bg-gray-50 transition-colors"
-                :class="rightSidebarOpen ? 'mr-64' : 'mr-0'"
-                aria-label="Toggle right sidebar"
-            >
-                <ChevronRightIcon :class="['w-3.5 h-3.5 text-gray-500 transition-transform', rightSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
-            </button>
         </div>
     </div>
 
@@ -2438,6 +2465,14 @@ onUnmounted(() => {
         :clipboard-type="clipboardType"
         @close="closeContextMenu"
         @action="handleContextMenuAction"
+    />
+
+    <!-- Onboarding Tutorial -->
+    <OnboardingTutorial
+        :show="showOnboarding"
+        :siteName="site.name"
+        @close="closeOnboarding"
+        @complete="completeOnboarding"
     />
 
     <!-- Toast Notifications -->

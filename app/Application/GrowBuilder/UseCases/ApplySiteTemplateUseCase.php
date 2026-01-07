@@ -88,17 +88,19 @@ class ApplySiteTemplateUseCase
                 // Add to nav links if it should show in nav
                 if ($templatePage->show_in_nav) {
                     $navLinks[] = [
+                        'id' => 'nav-' . $templatePage->slug,
                         'label' => $templatePage->title,
                         'url' => $templatePage->is_homepage ? '/' : '/' . $templatePage->slug,
                         'isExternal' => false,
+                        'children' => [],
                     ];
                 }
             }
 
-            // Update navigation links in settings
+            // Update navigation links in settings (use navItems for editor compatibility)
             $settings = $site->settings ?? [];
             $settings['navigation'] = $settings['navigation'] ?? [];
-            $settings['navigation']['links'] = $navLinks;
+            $settings['navigation']['navItems'] = $navLinks;
             $site->settings = $settings;
             $site->save();
 

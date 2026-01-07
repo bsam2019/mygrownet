@@ -12,6 +12,7 @@
                     src="{{ $image['url'] ?? $image }}" 
                     alt="{{ $image['alt'] ?? 'Gallery image' }}"
                     class="w-full h-full object-cover hover:scale-105 transition duration-300"
+                    loading="lazy"
                 >
             </div>
             @endforeach

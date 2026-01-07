@@ -15,9 +15,11 @@ import {
     SparklesIcon,
     PhotoIcon,
     XMarkIcon,
+    FolderIcon,
 } from '@heroicons/vue/24/outline';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
+import MediaLibraryModal from '@/pages/GrowBuilder/Editor/components/modals/MediaLibraryModal.vue';
 
 interface Site {
     id: number;
@@ -148,6 +150,42 @@ const submit = () => {
 
 const canDelete = computed(() => deleteConfirmation.value === props.site.subdomain);
 
+// SEO Score calculation
+const seoScore = computed(() => {
+    let score = 0;
+    const maxScore = 100;
+    
+    // Meta title (30 points)
+    if (form.meta_title) {
+        if (form.meta_title.length >= 30 && form.meta_title.length <= 60) {
+            score += 30;
+        } else if (form.meta_title.length > 0) {
+            score += 15;
+        }
+    }
+    
+    // Meta description (30 points)
+    if (form.meta_description) {
+        if (form.meta_description.length >= 120 && form.meta_description.length <= 160) {
+            score += 30;
+        } else if (form.meta_description.length > 0) {
+            score += 15;
+        }
+    }
+    
+    // OG Image (25 points)
+    if (form.og_image) {
+        score += 25;
+    }
+    
+    // Google Analytics (15 points - optional but good to have)
+    if (form.google_analytics_id) {
+        score += 15;
+    }
+    
+    return Math.round((score / maxScore) * 100);
+});
+
 const deleteSite = () => {
     if (!canDelete.value) return;
     isDeleting.value = true;
@@ -201,9 +239,17 @@ const generateSEO = async () => {
             page_title: form.name,
             page_content: form.description || form.name,
         });
-        if (response.data.meta_description) {
-            form.meta_title = form.name;
-            form.meta_description = response.data.meta_description;
+        if (response.data.success) {
+            // Use AI-generated meta title, or fallback to site name
+            if (response.data.meta_title) {
+                form.meta_title = response.data.meta_title;
+            } else {
+                form.meta_title = form.name;
+            }
+            
+            if (response.data.meta_description) {
+                form.meta_description = response.data.meta_description;
+            }
         }
     } catch (error: any) {
         aiError.value = error.response?.data?.message || 'Failed to generate SEO content';
@@ -240,8 +286,16 @@ const logoInput = ref<HTMLInputElement | null>(null);
 const uploadingLogo = ref(false);
 const generatingFavicon = ref(false);
 
+// OG Image Upload
+const ogImageInput = ref<HTMLInputElement | null>(null);
+const uploadingOgImage = ref(false);
+
 const triggerLogoUpload = () => {
     logoInput.value?.click();
+};
+
+const triggerOgImageUpload = () => {
+    ogImageInput.value?.click();
 };
 
 const handleLogoUpload = async (event: Event) => {
@@ -272,6 +326,149 @@ const handleLogoUpload = async (event: Event) => {
         if (input) input.value = '';
     }
 };
+
+const handleOgImageUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    
+    uploadingOgImage.value = true;
+    aiError.value = null;
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await axios.post(route('growbuilder.media.store', props.site.id), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        if (response.data.media?.url) {
+            form.og_image = response.data.media.url;
+        }
+    } catch (error: any) {
+        aiError.value = error.response?.data?.message || 'Failed to upload image';
+    } finally {
+        uploadingOgImage.value = false;
+        if (input) input.value = '';
+    }
+};
+
+const clearOgImage = () => {
+    form.og_image = '';
+};
+
+// Media Library for OG Image
+const showMediaLibrary = ref(false);
+const mediaLibrary = ref<any[]>([]);
+const uploadingMedia = ref(false);
+const mediaUploadError = ref<string | null>(null);
+const mediaTarget = ref<'logo' | 'og_image' | null>(null);
+
+const openMediaLibrary = (target: 'logo' | 'og_image') => {
+    mediaTarget.value = target;
+    showMediaLibrary.value = true;
+};
+
+const loadMediaLibrary = async () => {
+    try {
+        const response = await axios.get(route('growbuilder.media.index', props.site.id));
+        mediaLibrary.value = response.data.media || [];
+    } catch (error) {
+        console.error('Failed to load media library:', error);
+    }
+};
+
+const handleMediaUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    
+    uploadingMedia.value = true;
+    mediaUploadError.value = null;
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await axios.post(route('growbuilder.media.store', props.site.id), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        if (response.data.media) {
+            mediaLibrary.value.unshift(response.data.media);
+        }
+    } catch (error: any) {
+        mediaUploadError.value = error.response?.data?.message || 'Failed to upload';
+    } finally {
+        uploadingMedia.value = false;
+    }
+};
+
+const handleMediaSelect = (media: any) => {
+    if (mediaTarget.value === 'logo') {
+        form.logo = media.url;
+        autoGenerateFavicon(media.url);
+    } else if (mediaTarget.value === 'og_image') {
+        form.og_image = media.url;
+    }
+    showMediaLibrary.value = false;
+};
+
+const handleCroppedImage = async (dataUrl: string, originalMedia?: any) => {
+    // Upload the cropped image to get a proper URL (data URLs are too large to store)
+    try {
+        const response = await axios.post(route('growbuilder.media.store-base64', props.site.id), {
+            image: dataUrl,
+            filename: `cropped-${Date.now()}.jpg`,
+        });
+        
+        const imageUrl = response.data.media?.url || response.data.url;
+        
+        if (imageUrl) {
+            if (mediaTarget.value === 'logo') {
+                form.logo = imageUrl;
+                autoGenerateFavicon(imageUrl);
+            } else if (mediaTarget.value === 'og_image') {
+                form.og_image = imageUrl;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to upload cropped image:', error);
+        // Fallback: use original media URL if available
+        if (originalMedia?.url) {
+            if (mediaTarget.value === 'logo') {
+                form.logo = originalMedia.url;
+            } else if (mediaTarget.value === 'og_image') {
+                form.og_image = originalMedia.url;
+            }
+        }
+    }
+    showMediaLibrary.value = false;
+};
+
+const handleStockPhotoSelect = (url: string) => {
+    if (mediaTarget.value === 'logo') {
+        form.logo = url;
+    } else if (mediaTarget.value === 'og_image') {
+        form.og_image = url;
+    }
+    showMediaLibrary.value = false;
+};
+
+const handleMediaDelete = async (media: any) => {
+    try {
+        await axios.delete(route('growbuilder.media.destroy', [props.site.id, media.id]));
+        mediaLibrary.value = mediaLibrary.value.filter(m => m.id !== media.id);
+    } catch (error) {
+        console.error('Failed to delete media:', error);
+    }
+};
+
+// Load media library on mount
+onMounted(() => {
+    loadMediaLibrary();
+});
 
 const autoGenerateFavicon = async (logoUrl: string) => {
     generatingFavicon.value = true;
@@ -971,13 +1168,49 @@ const adjustColor = (hex: string, amount: number): string => {
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Social Share Image (OG Image)</label>
-                                <input
-                                    v-model="form.og_image"
-                                    type="url"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                                    placeholder="https://..."
-                                />
-                                <p class="mt-1 text-xs text-gray-500">Recommended: 1200x630 pixels</p>
+                                
+                                <!-- Image Preview -->
+                                <div v-if="form.og_image" class="mb-3 relative">
+                                    <img :src="form.og_image" alt="Social share preview" class="w-full max-w-md h-40 object-cover rounded-lg border border-gray-200" />
+                                    <button 
+                                        type="button"
+                                        @click="clearOgImage"
+                                        class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                        aria-label="Remove image"
+                                    >
+                                        <XMarkIcon class="h-4 w-4" aria-hidden="true" />
+                                    </button>
+                                </div>
+                                
+                                <!-- Upload Buttons -->
+                                <div class="flex gap-2">
+                                    <input
+                                        ref="ogImageInput"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        @change="handleOgImageUpload"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="triggerOgImageUpload"
+                                        :disabled="uploadingOgImage"
+                                        class="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                    >
+                                        <PhotoIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                        <span class="text-sm text-gray-600">{{ uploadingOgImage ? 'Uploading...' : 'Upload New' }}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="openMediaLibrary('og_image')"
+                                        class="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                                    >
+                                        <FolderIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                        <span class="text-sm text-gray-600">Media Library</span>
+                                    </button>
+                                </div>
+                                
+                                <p class="mt-2 text-xs text-gray-500">Recommended: 1200x630 pixels (Facebook/LinkedIn optimal size)</p>
                             </div>
 
                             <div>
@@ -992,7 +1225,7 @@ const adjustColor = (hex: string, amount: number): string => {
 
                             <!-- Search Preview -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Search Preview</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Google Search Preview</label>
                                 <div class="p-4 bg-white border border-gray-200 rounded-xl">
                                     <p class="text-blue-800 text-lg hover:underline cursor-pointer">
                                         {{ form.meta_title || site.name }}
@@ -1001,6 +1234,165 @@ const adjustColor = (hex: string, amount: number): string => {
                                     <p class="text-gray-600 text-sm mt-1">
                                         {{ form.meta_description || 'Add a meta description to improve your search ranking.' }}
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- Social Share Previews -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Social Share Previews</label>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <!-- Facebook Preview -->
+                                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                                        <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                            <span class="text-xs font-medium text-gray-600">Facebook</span>
+                                        </div>
+                                        <div class="bg-white">
+                                            <div class="h-32 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                                <img 
+                                                    v-if="form.og_image" 
+                                                    :src="form.og_image" 
+                                                    alt="Social share preview"
+                                                    class="w-full h-full object-cover"
+                                                    @error="(e) => e.target.style.display = 'none'"
+                                                />
+                                                <PhotoIcon v-else class="h-10 w-10 text-gray-300" aria-hidden="true" />
+                                            </div>
+                                            <div class="p-3">
+                                                <p class="text-xs text-gray-500 uppercase">{{ site.subdomain }}.mygrownet.com</p>
+                                                <p class="font-semibold text-gray-900 text-sm line-clamp-1">{{ form.meta_title || site.name }}</p>
+                                                <p class="text-xs text-gray-500 line-clamp-2">{{ form.meta_description || 'No description set' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- WhatsApp Preview -->
+                                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                                        <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
+                                            <svg class="h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                            <span class="text-xs font-medium text-gray-600">WhatsApp</span>
+                                        </div>
+                                        <div class="bg-[#e5ddd5] p-3">
+                                            <div class="bg-white rounded-lg overflow-hidden shadow-sm max-w-[280px]">
+                                                <div class="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                                    <img 
+                                                        v-if="form.og_image" 
+                                                        :src="form.og_image" 
+                                                        alt="Social share preview"
+                                                        class="w-full h-full object-cover"
+                                                        @error="(e) => e.target.style.display = 'none'"
+                                                    />
+                                                    <PhotoIcon v-else class="h-8 w-8 text-gray-300" aria-hidden="true" />
+                                                </div>
+                                                <div class="p-2">
+                                                    <p class="font-medium text-gray-900 text-sm line-clamp-1">{{ form.meta_title || site.name }}</p>
+                                                    <p class="text-xs text-gray-500 line-clamp-2">{{ form.meta_description || 'No description' }}</p>
+                                                    <p class="text-xs text-blue-500 mt-1">{{ site.subdomain }}.mygrownet.com</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SEO Score/Checklist -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">SEO Checklist</label>
+                                <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                                    <div class="flex items-center gap-3">
+                                        <div :class="[
+                                            'w-5 h-5 rounded-full flex items-center justify-center',
+                                            form.meta_title && form.meta_title.length >= 30 && form.meta_title.length <= 60 
+                                                ? 'bg-green-100 text-green-600' 
+                                                : form.meta_title && form.meta_title.length > 0 
+                                                    ? 'bg-yellow-100 text-yellow-600' 
+                                                    : 'bg-red-100 text-red-600'
+                                        ]">
+                                            <CheckCircleIcon v-if="form.meta_title && form.meta_title.length >= 30 && form.meta_title.length <= 60" class="h-4 w-4" />
+                                            <ExclamationTriangleIcon v-else class="h-4 w-4" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">Meta Title</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ !form.meta_title ? 'Missing - add a title' : 
+                                                   form.meta_title.length < 30 ? 'Too short (aim for 30-60 chars)' :
+                                                   form.meta_title.length > 60 ? 'Too long (may be truncated)' : 
+                                                   'Perfect length!' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div :class="[
+                                            'w-5 h-5 rounded-full flex items-center justify-center',
+                                            form.meta_description && form.meta_description.length >= 120 && form.meta_description.length <= 160 
+                                                ? 'bg-green-100 text-green-600' 
+                                                : form.meta_description && form.meta_description.length > 0 
+                                                    ? 'bg-yellow-100 text-yellow-600' 
+                                                    : 'bg-red-100 text-red-600'
+                                        ]">
+                                            <CheckCircleIcon v-if="form.meta_description && form.meta_description.length >= 120 && form.meta_description.length <= 160" class="h-4 w-4" />
+                                            <ExclamationTriangleIcon v-else class="h-4 w-4" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">Meta Description</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ !form.meta_description ? 'Missing - add a description' : 
+                                                   form.meta_description.length < 120 ? 'Too short (aim for 120-160 chars)' :
+                                                   form.meta_description.length > 160 ? 'Too long (may be truncated)' : 
+                                                   'Perfect length!' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div :class="[
+                                            'w-5 h-5 rounded-full flex items-center justify-center',
+                                            form.og_image ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
+                                        ]">
+                                            <CheckCircleIcon v-if="form.og_image" class="h-4 w-4" />
+                                            <ExclamationTriangleIcon v-else class="h-4 w-4" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">Social Share Image</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ form.og_image ? 'Set - your links will look great when shared!' : 'Missing - add an image for better social sharing' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div :class="[
+                                            'w-5 h-5 rounded-full flex items-center justify-center',
+                                            form.google_analytics_id ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                                        ]">
+                                            <CheckCircleIcon v-if="form.google_analytics_id" class="h-4 w-4" />
+                                            <span v-else class="text-xs">—</span>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">Google Analytics</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ form.google_analytics_id ? 'Connected - tracking your visitors' : 'Optional - add to track visitor analytics' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- SEO Score -->
+                                    <div class="pt-3 border-t border-gray-200">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-sm font-medium text-gray-900">SEO Score</span>
+                                            <span :class="[
+                                                'text-sm font-bold',
+                                                seoScore >= 80 ? 'text-green-600' : seoScore >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                            ]">{{ seoScore }}%</span>
+                                        </div>
+                                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div 
+                                                :class="[
+                                                    'h-full rounded-full transition-all',
+                                                    seoScore >= 80 ? 'bg-green-500' : seoScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                                ]"
+                                                :style="{ width: seoScore + '%' }"
+                                            ></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1172,6 +1564,22 @@ const adjustColor = (hex: string, amount: number): string => {
                 </div>
             </div>
         </div>
+
+        <!-- Media Library Modal -->
+        <MediaLibraryModal
+            :show="showMediaLibrary"
+            :mediaLibrary="mediaLibrary"
+            :uploading="uploadingMedia"
+            :uploadError="mediaUploadError"
+            :allowCrop="true"
+            :aspectRatio="mediaTarget === 'og_image' ? 1.91 : 1"
+            @close="showMediaLibrary = false"
+            @upload="handleMediaUpload"
+            @select="handleMediaSelect"
+            @selectCropped="handleCroppedImage"
+            @selectStockPhoto="handleStockPhotoSelect"
+            @delete="handleMediaDelete"
+        />
     </AppLayout>
 </template>
 

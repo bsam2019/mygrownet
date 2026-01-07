@@ -68,7 +68,7 @@ const backgroundStyle = computed(() => {
 
 <template>
     <div
-        class="section-preview h-full"
+        class="section-preview"
         :style="backgroundStyle"
     >
         <!-- Dynamic Section Component -->

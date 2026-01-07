@@ -101,6 +101,7 @@ const props = defineProps<{
     products?: Product[];
     isPreview?: boolean;
     showWatermark?: boolean;
+    isTemplatePreview?: boolean;
 }>();
 
 // Mobile menu state
@@ -321,13 +322,39 @@ const navLinks = computed(() => {
     }));
 });
 
+// Get template ID from URL for template preview navigation
+const getTemplateIdFromUrl = () => {
+    const match = window.location.pathname.match(/\/templates\/(\d+)/);
+    return match ? match[1] : null;
+};
+
 const getPageUrl = (page: NavPage) => {
+    // For template preview, use template render route
+    if (props.isTemplatePreview) {
+        const templateId = getTemplateIdFromUrl();
+        if (templateId) {
+            if (page.isHomepage) return `/growbuilder/templates/${templateId}/render`;
+            return `/growbuilder/templates/${templateId}/render/${page.slug}`;
+        }
+    }
     if (page.isHomepage) return `/sites/${props.site.subdomain}`;
     return `/sites/${props.site.subdomain}/${page.slug}`;
 };
 
 const getNavItemUrl = (navItem: any) => {
     if (navItem.isExternal) return navItem.url;
+    
+    // For template preview, use template render route
+    if (props.isTemplatePreview) {
+        const templateId = getTemplateIdFromUrl();
+        if (templateId) {
+            if (navItem.url === '/' || navItem.url === '') return `/growbuilder/templates/${templateId}/render`;
+            // Remove leading slash if present
+            const slug = navItem.url.startsWith('/') ? navItem.url.slice(1) : navItem.url;
+            return `/growbuilder/templates/${templateId}/render/${slug}`;
+        }
+    }
+    
     if (navItem.url === '/') return `/sites/${props.site.subdomain}`;
     return `/sites/${props.site.subdomain}${navItem.url}`;
 };

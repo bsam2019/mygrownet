@@ -6,7 +6,8 @@ import {
     DocumentArrowDownIcon, EnvelopeIcon, ChatBubbleLeftIcon,
     XMarkIcon, CheckCircleIcon, PencilIcon, BookmarkIcon, DocumentTextIcon
 } from '@heroicons/vue/24/outline';
-import axios from 'axios';
+// Use global axios with CSRF token configured
+const axios = (window as any).axios || require('axios').default;
 
 interface Currency { code: string; symbol: string; name: string; }
 interface LineItem { 
@@ -164,9 +165,15 @@ const handleLogoUpload = async (event: Event) => {
     const formData = new FormData();
     formData.append('logo', file);
     try {
-        const response = await axios.post(route('quick-invoice.upload-logo'), formData);
+        const response = await axios.post(route('quick-invoice.upload-logo'), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         businessLogo.value = response.data.url;
-    } catch (error: any) { errors.value.logo = error.response?.data?.message || 'Failed to upload logo'; }
+        console.log('Logo uploaded successfully:', response.data.url);
+    } catch (error: any) { 
+        console.error('Logo upload failed:', error.response?.data || error.message);
+        errors.value.logo = error.response?.data?.message || 'Failed to upload logo'; 
+    }
 };
 const removeLogo = () => { logoPreview.value = null; businessLogo.value = null; };
 
@@ -180,9 +187,15 @@ const handleSignatureUpload = async (event: Event) => {
     const formData = new FormData();
     formData.append('signature', file);
     try {
-        const response = await axios.post(route('quick-invoice.upload-signature'), formData);
+        const response = await axios.post(route('quick-invoice.upload-signature'), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         signature.value = response.data.url;
-    } catch (error: any) { errors.value.signature = error.response?.data?.message || 'Failed to upload signature'; }
+        console.log('Signature uploaded successfully:', response.data.url);
+    } catch (error: any) { 
+        console.error('Signature upload failed:', error.response?.data || error.message);
+        errors.value.signature = error.response?.data?.message || 'Failed to upload signature'; 
+    }
 };
 const removeSignature = () => { signaturePreview.value = null; signature.value = null; };
 

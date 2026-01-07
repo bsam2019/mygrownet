@@ -64,6 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
             'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
             'subdomain.check' => \App\Http\Middleware\SubdomainCheck::class,
+            'geopamu.admin' => \App\Http\Middleware\GeopamuAdmin::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

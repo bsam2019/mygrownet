@@ -144,4 +144,109 @@ class RenderController extends Controller
 
         return 'desktop';
     }
+
+    /**
+     * Generate sitemap.xml for the site
+     */
+    public function sitemap(Request $request, string $subdomain)
+    {
+        try {
+            $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
+        } catch (\Exception $e) {
+            abort(404);
+        }
+
+        if (!$site || !$site->isPublished()) {
+            abort(404);
+        }
+
+        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        $pages = $this->pageRepository->findPublishedBySiteId($site->getId());
+
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+        foreach ($pages as $page) {
+            $url = $page->isHomepage() ? $baseUrl : "{$baseUrl}/{$page->getSlug()}";
+            $lastmod = $page->getUpdatedAt()?->format('Y-m-d') ?? now()->format('Y-m-d');
+            $priority = $page->isHomepage() ? '1.0' : '0.8';
+
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>{$url}</loc>\n";
+            $xml .= "    <lastmod>{$lastmod}</lastmod>\n";
+            $xml .= "    <changefreq>weekly</changefreq>\n";
+            $xml .= "    <priority>{$priority}</priority>\n";
+            $xml .= "  </url>\n";
+        }
+
+        // Add blog posts if any
+        $blogPosts = \App\Infrastructure\GrowBuilder\Models\SiteBlogPost::where('site_id', $site->getId()->value())
+            ->where('status', 'published')
+            ->get();
+
+        foreach ($blogPosts as $post) {
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>{$baseUrl}/blog/{$post->slug}</loc>\n";
+            $xml .= "    <lastmod>{$post->updated_at->format('Y-m-d')}</lastmod>\n";
+            $xml .= "    <changefreq>monthly</changefreq>\n";
+            $xml .= "    <priority>0.6</priority>\n";
+            $xml .= "  </url>\n";
+        }
+
+        // Add products if any
+        $products = \App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct::where('site_id', $site->getId()->value())
+            ->where('is_active', true)
+            ->get();
+
+        foreach ($products as $product) {
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>{$baseUrl}/product/{$product->slug}</loc>\n";
+            $xml .= "    <lastmod>{$product->updated_at->format('Y-m-d')}</lastmod>\n";
+            $xml .= "    <changefreq>weekly</changefreq>\n";
+            $xml .= "    <priority>0.7</priority>\n";
+            $xml .= "  </url>\n";
+        }
+
+        $xml .= '</urlset>';
+
+        return response($xml, 200, [
+            'Content-Type' => 'application/xml',
+        ]);
+    }
+
+    /**
+     * Generate robots.txt for the site
+     */
+    public function robots(Request $request, string $subdomain)
+    {
+        try {
+            $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
+        } catch (\Exception $e) {
+            abort(404);
+        }
+
+        if (!$site) {
+            abort(404);
+        }
+
+        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        
+        // If site is not published, disallow all
+        if (!$site->isPublished()) {
+            $content = "User-agent: *\nDisallow: /\n";
+        } else {
+            $content = "User-agent: *\n";
+            $content .= "Allow: /\n";
+            $content .= "Disallow: /dashboard/\n";
+            $content .= "Disallow: /login\n";
+            $content .= "Disallow: /register\n";
+            $content .= "Disallow: /gb-api/\n";
+            $content .= "\n";
+            $content .= "Sitemap: {$baseUrl}/sitemap.xml\n";
+        }
+
+        return response($content, 200, [
+            'Content-Type' => 'text/plain',
+        ]);
+    }
 }

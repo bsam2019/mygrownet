@@ -57,6 +57,14 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::post('/sites/{id}/publish', [SiteController::class, 'publish'])->name('sites.publish');
     Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
 
+    // Site Messages (for site owners)
+    Route::get('/sites/{id}/messages', [SiteController::class, 'messages'])->name('sites.messages');
+    Route::get('/sites/{id}/messages/{messageId}', [SiteController::class, 'showMessage'])->name('sites.messages.show');
+    Route::post('/sites/{id}/messages/{messageId}/reply', [SiteController::class, 'replyMessage'])->name('sites.messages.reply');
+    Route::put('/sites/{id}/messages/{messageId}/status', [SiteController::class, 'updateMessageStatus'])->name('sites.messages.status');
+    Route::delete('/sites/{id}/messages/{messageId}', [SiteController::class, 'deleteMessage'])->name('sites.messages.delete');
+    Route::get('/sites/{id}/messages-export', [SiteController::class, 'exportMessages'])->name('sites.messages.export');
+
     // Site Users Management (for site owners)
     Route::get('/sites/{id}/users', [SiteController::class, 'users'])->name('sites.users');
     Route::post('/sites/{id}/users', [SiteController::class, 'createUser'])->name('sites.users.create');
@@ -87,6 +95,7 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     // Media (alternative URL pattern - sites prefix)
     Route::get('/sites/{siteId}/media', [MediaController::class, 'index'])->name('sites.media.index');
     Route::post('/sites/{siteId}/media', [MediaController::class, 'store'])->name('sites.media.store');
+    Route::post('/sites/{siteId}/media/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64');
     Route::delete('/sites/{siteId}/media/{mediaId}', [MediaController::class, 'destroy'])->name('sites.media.destroy');
     Route::post('/sites/{siteId}/generate-favicon', [MediaController::class, 'generateFavicon'])->name('media.generate-favicon');
 

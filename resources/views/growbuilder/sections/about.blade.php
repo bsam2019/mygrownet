@@ -16,6 +16,7 @@
                     src="{{ $content['image'] }}" 
                     alt="{{ $content['title'] ?? 'About' }}"
                     class="rounded-lg shadow-lg w-full"
+                    loading="lazy"
                 >
             </div>
             @endif

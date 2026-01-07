@@ -7,10 +7,12 @@ use App\Domain\Wedding\Repositories\WeddingEventRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingVendorRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingRsvpRepositoryInterface;
 use App\Domain\Wedding\Repositories\WeddingGuestRepositoryInterface;
+use App\Domain\Wedding\Repositories\WeddingTemplateRepositoryInterface;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingEventRepository;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingVendorRepository;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingRsvpRepository;
 use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingGuestRepository;
+use App\Infrastructure\Persistence\Repositories\Wedding\EloquentWeddingTemplateRepository;
 
 class WeddingServiceProvider extends ServiceProvider
 {
@@ -35,6 +37,11 @@ class WeddingServiceProvider extends ServiceProvider
         $this->app->bind(
             WeddingGuestRepositoryInterface::class,
             EloquentWeddingGuestRepository::class
+        );
+
+        $this->app->bind(
+            WeddingTemplateRepositoryInterface::class,
+            EloquentWeddingTemplateRepository::class
         );
     }
 

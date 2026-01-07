@@ -17,9 +17,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::domain('{subdomain}.mygrownet.com')->middleware('subdomain.check')->group(function () {
+    // Sitemap and robots.txt
+    Route::get('/sitemap.xml', [RenderController::class, 'sitemap'])->name('subdomain.sitemap');
+    Route::get('/robots.txt', [RenderController::class, 'robots'])->name('subdomain.robots');
+
     // Public site pages
     Route::get('/{slug?}', [RenderController::class, 'render'])
-        ->where('slug', '^(?!login|register|forgot-password|reset-password|dashboard|blog|product|checkout|gb-api).*')
+        ->where('slug', '^(?!login|register|forgot-password|reset-password|dashboard|blog|product|checkout|gb-api|sitemap\.xml|robots\.txt).*')
         ->name('subdomain.render');
 
     // Blog

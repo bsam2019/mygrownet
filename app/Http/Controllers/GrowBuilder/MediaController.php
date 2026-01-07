@@ -280,6 +280,127 @@ class MediaController extends Controller
     }
 
     /**
+     * Store a base64 encoded image (for cropped images)
+     */
+    public function storeBase64(Request $request, int $siteId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($siteId));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $request->validate([
+            'image' => 'required|string',
+            'filename' => 'nullable|string|max:255',
+        ]);
+
+        $imageData = $request->input('image');
+        $filename = $request->input('filename', 'cropped-' . time() . '.jpg');
+        $directory = "growbuilder/{$siteId}";
+
+        try {
+            // Extract base64 data from data URL
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
+                $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                
+                // Update filename extension if needed
+                $filename = pathinfo($filename, PATHINFO_FILENAME) . '.' . $extension;
+            }
+
+            $decodedImage = base64_decode($imageData);
+            if ($decodedImage === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid base64 image data',
+                ], 400);
+            }
+
+            // Check storage limit
+            $siteModel = GrowBuilderSite::find($siteId);
+            if ($siteModel && !$this->storageService->hasAvailableStorage($siteModel, strlen($decodedImage))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Storage limit exceeded. Please delete some files or upgrade your plan.',
+                ], 422);
+            }
+
+            // Generate unique filename
+            $uniqueFilename = Str::uuid() . '-' . $filename;
+            $path = "{$directory}/{$uniqueFilename}";
+
+            // Store the image
+            Storage::disk('public')->put($path, $decodedImage);
+
+            // Get image dimensions
+            $width = null;
+            $height = null;
+            $variants = [];
+
+            try {
+                $image = Image::read($decodedImage);
+                $width = $image->width();
+                $height = $image->height();
+
+                // Create thumbnail
+                $thumbPath = "{$directory}/thumbs/{$uniqueFilename}";
+                $thumb = $image->scale(width: 300);
+                Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
+                $variants['thumbnail'] = $thumbPath;
+            } catch (\Exception $e) {
+                \Log::warning('Failed to process cropped image dimensions', ['error' => $e->getMessage()]);
+            }
+
+            // Create media record
+            $media = GrowBuilderMedia::create([
+                'site_id' => $siteId,
+                'filename' => $uniqueFilename,
+                'original_name' => $filename,
+                'path' => $path,
+                'disk' => 'public',
+                'mime_type' => 'image/jpeg',
+                'size' => strlen($decodedImage),
+                'width' => $width,
+                'height' => $height,
+                'variants' => $variants,
+                'metadata' => ['source' => 'cropped'],
+            ]);
+
+            // Update storage usage
+            if ($siteModel) {
+                $this->storageService->updateStorageUsage($siteModel);
+            }
+
+            return response()->json([
+                'success' => true,
+                'media' => [
+                    'id' => $media->id,
+                    'url' => $media->url,
+                    'thumbnailUrl' => $media->thumbnail_url,
+                    'filename' => $media->filename,
+                    'originalName' => $media->original_name,
+                    'size' => $media->human_size,
+                    'width' => $media->width,
+                    'height' => $media->height,
+                ],
+                'url' => $media->url,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Base64 image upload failed', [
+                'error' => $e->getMessage(),
+                'siteId' => $siteId,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload image: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Generate a favicon from the site logo
      */
     public function generateFavicon(Request $request, int $siteId)

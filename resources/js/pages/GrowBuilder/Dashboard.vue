@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import CreateSiteWizard from '@/components/GrowBuilder/CreateSiteWizard.vue';
 import {
     PlusIcon,
     GlobeAltIcon,
@@ -17,8 +18,42 @@ import {
     ArrowUpCircleIcon,
     CpuChipIcon,
     WrenchScrewdriverIcon,
+    EnvelopeIcon,
+    ChatBubbleLeftEllipsisIcon,
+    ExclamationTriangleIcon,
+    LightBulbIcon,
+    PhotoIcon,
+    MagnifyingGlassIcon,
+    PhoneIcon,
+    ShareIcon,
+    DocumentIcon,
 } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
+
+interface SiteTemplatePage {
+    title: string;
+    slug: string;
+    isHomepage: boolean;
+}
+
+interface SiteTemplate {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    industry: string;
+    thumbnail: string | null;
+    theme: Record<string, string> | null;
+    isPremium: boolean;
+    pagesCount: number;
+    pages: SiteTemplatePage[];
+}
+
+interface Industry {
+    slug: string;
+    name: string;
+    icon: string;
+}
 
 interface Site {
     id: number;
@@ -39,6 +74,29 @@ interface Site {
     storageUsedFormatted?: string;
     storageLimitFormatted?: string;
     storagePercentage?: number;
+    messagesCount?: number;
+    unreadMessages?: number;
+    healthSuggestions?: HealthSuggestion[];
+}
+
+interface HealthSuggestion {
+    type: 'warning' | 'info';
+    icon: string;
+    message: string;
+    action: string;
+    actionRoute: string;
+}
+
+interface RecentMessage {
+    id: number;
+    siteId: number;
+    siteName: string;
+    siteSubdomain: string;
+    name: string;
+    email: string;
+    subject: string | null;
+    message: string;
+    createdAt: string;
 }
 
 interface Stats {
@@ -47,6 +105,8 @@ interface Stats {
     totalPageViews: number;
     totalOrders: number;
     totalRevenue: number;
+    totalMessages?: number;
+    unreadMessages?: number;
 }
 
 interface Subscription {
@@ -95,7 +155,21 @@ const props = defineProps<{
     tierRestrictions?: TierRestrictions;
     availableTiers?: AvailableTier[] | null;
     isAdmin?: boolean;
+    siteTemplates?: SiteTemplate[];
+    industries?: Industry[];
+    recentMessages?: RecentMessage[];
 }>();
+
+// Create site wizard modal
+const showCreateWizard = ref(false);
+
+const openCreateWizard = () => {
+    showCreateWizard.value = true;
+};
+
+const closeCreateWizard = () => {
+    showCreateWizard.value = false;
+};
 
 // Admin tier switcher
 const showTierDropdown = ref(false);
@@ -214,14 +288,15 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             <SparklesIcon class="h-5 w-5" aria-hidden="true" />
                             <span class="hidden sm:inline">{{ subscription?.tierName || 'Free' }} Plan</span>
                         </Link>
-                        <Link
+                        <button
                             v-if="subscription?.canCreateSite !== false"
-                            :href="route('growbuilder.sites.create')"
+                            type="button"
+                            @click="openCreateWizard"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
                         >
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             Create Website
-                        </Link>
+                        </button>
                         <template v-else>
                             <Link
                                 v-if="subscription?.tier !== 'agency'"
@@ -335,7 +410,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                 </div>
 
                 <!-- Stats Cards -->
-                <div v-if="stats && sites.length > 0" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <div v-if="stats && sites.length > 0" class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
                     <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                         <div class="flex items-center gap-3">
                             <div class="p-2.5 bg-blue-100 rounded-lg">
@@ -380,6 +455,27 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             </div>
                         </div>
                     </div>
+                    <!-- Messages Card -->
+                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-amber-100 rounded-lg relative">
+                                <EnvelopeIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                                <span 
+                                    v-if="stats.unreadMessages && stats.unreadMessages > 0"
+                                    class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+                                >
+                                    {{ stats.unreadMessages > 9 ? '9+' : stats.unreadMessages }}
+                                </span>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(stats.totalMessages || 0) }}</p>
+                                <p class="text-sm text-gray-500">
+                                    Messages
+                                    <span v-if="stats.unreadMessages" class="text-amber-600">({{ stats.unreadMessages }} new)</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                     <!-- AI Usage Card -->
                     <div v-if="aiUsage" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                         <div class="flex items-center gap-3">
@@ -410,6 +506,50 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                     </div>
                 </div>
 
+                <!-- Recent Messages Panel -->
+                <div v-if="recentMessages && recentMessages.length > 0" class="bg-white rounded-xl border border-gray-200 shadow-sm mb-8 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-amber-100 rounded-lg">
+                                <ChatBubbleLeftEllipsisIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Recent Messages</h3>
+                                <p class="text-sm text-gray-500">New inquiries from your websites</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-medium">
+                            {{ recentMessages.length }} unread
+                        </span>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <div 
+                            v-for="message in recentMessages" 
+                            :key="message.id"
+                            class="px-5 py-4 hover:bg-gray-50 transition cursor-pointer"
+                        >
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                                    {{ message.name.charAt(0).toUpperCase() }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-gray-900">{{ message.name }}</span>
+                                            <span class="text-xs text-gray-400">•</span>
+                                            <span class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{{ message.siteName }}</span>
+                                        </div>
+                                        <span class="text-xs text-gray-400 flex-shrink-0">{{ message.createdAt }}</span>
+                                    </div>
+                                    <p v-if="message.subject" class="text-sm font-medium text-gray-700 mb-0.5">{{ message.subject }}</p>
+                                    <p class="text-sm text-gray-500 truncate">{{ message.message }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ message.email }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Empty State -->
                 <div v-if="sites.length === 0" class="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
                     <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-6">
@@ -419,13 +559,14 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                     <p class="text-gray-500 mb-8 max-w-md mx-auto">
                         Build a professional website for your business in minutes. No coding required.
                     </p>
-                    <Link
-                        :href="route('growbuilder.sites.create')"
+                    <button
+                        type="button"
+                        @click="openCreateWizard"
                         class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
                     >
                         <PlusIcon class="h-5 w-5" aria-hidden="true" />
                         Get Started
-                    </Link>
+                    </button>
                     
                     <!-- Features -->
                     <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto text-left">
@@ -453,30 +594,63 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                     </div>
                 </div>
 
-                <!-- Sites Grid -->
+                <!-- Sites Grid - Modern Card Design -->
                 <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div
                         v-for="site in sites"
                         :key="site.id"
-                        class="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200"
+                        class="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300"
                     >
-                        <!-- Preview -->
-                        <div class="relative h-44 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 overflow-hidden">
-                            <img
-                                v-if="site.thumbnail"
-                                :src="site.thumbnail"
-                                :alt="site.name"
-                                class="w-full h-full object-cover"
-                            />
-                            <div v-else class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-white/90 text-5xl font-bold">{{ site.name.charAt(0).toUpperCase() }}</span>
+                        <!-- Live Preview Thumbnail -->
+                        <div class="relative h-48 bg-gray-100 overflow-hidden">
+                            <!-- Iframe Preview (scaled down) -->
+                            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                                <iframe
+                                    :src="route('growbuilder.preview', { subdomain: site.subdomain })"
+                                    class="w-[200%] h-[200%] origin-top-left scale-50 border-0"
+                                    :title="`Preview of ${site.name}`"
+                                    loading="lazy"
+                                ></iframe>
                             </div>
                             
-                            <!-- Quick Actions Overlay -->
-                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <!-- Gradient overlay for better text visibility -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            <!-- Status Badge - Top Left -->
+                            <div class="absolute top-3 left-3 z-10">
+                                <span :class="[
+                                    'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full shadow-sm backdrop-blur-sm',
+                                    site.status === 'published' ? 'bg-green-500/90 text-white' :
+                                    site.status === 'draft' ? 'bg-amber-500/90 text-white' :
+                                    'bg-red-500/90 text-white'
+                                ]">
+                                    <span :class="[
+                                        'w-1.5 h-1.5 rounded-full',
+                                        site.status === 'published' ? 'bg-green-200 animate-pulse' :
+                                        site.status === 'draft' ? 'bg-amber-200' :
+                                        'bg-red-200'
+                                    ]"></span>
+                                    {{ site.status === 'published' ? 'Live' : site.status === 'draft' ? 'Draft' : 'Offline' }}
+                                </span>
+                            </div>
+                            
+                            <!-- Plan Badge - Top Right -->
+                            <div class="absolute top-3 right-3 z-10">
+                                <span :class="[
+                                    'px-2 py-1 text-xs font-medium rounded-full shadow-sm backdrop-blur-sm capitalize',
+                                    site.plan === 'agency' ? 'bg-purple-500/90 text-white' :
+                                    site.plan === 'business' ? 'bg-blue-500/90 text-white' :
+                                    'bg-gray-700/80 text-white'
+                                ]">
+                                    {{ site.plan }}
+                                </span>
+                            </div>
+                            
+                            <!-- Quick Actions - Appear on Hover -->
+                            <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
                                 <Link
                                     :href="route('growbuilder.editor', site.id)"
-                                    class="p-3 bg-white rounded-full text-gray-900 hover:bg-blue-50 transition"
+                                    class="p-3 bg-white/95 backdrop-blur-sm rounded-xl text-gray-900 hover:bg-white hover:scale-105 transition-all shadow-lg"
                                     aria-label="Edit site"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" aria-hidden="true" />
@@ -485,98 +659,119 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                                     v-if="site.isPublished"
                                     :href="site.url"
                                     target="_blank"
-                                    class="p-3 bg-white rounded-full text-gray-900 hover:bg-blue-50 transition"
+                                    class="p-3 bg-white/95 backdrop-blur-sm rounded-xl text-gray-900 hover:bg-white hover:scale-105 transition-all shadow-lg"
                                     aria-label="View live site"
                                 >
                                     <EyeIcon class="h-5 w-5" aria-hidden="true" />
                                 </a>
                                 <Link
                                     :href="route('growbuilder.sites.settings', site.id)"
-                                    class="p-3 bg-white rounded-full text-gray-900 hover:bg-blue-50 transition"
+                                    class="p-3 bg-white/95 backdrop-blur-sm rounded-xl text-gray-900 hover:bg-white hover:scale-105 transition-all shadow-lg"
                                     aria-label="Site settings"
                                 >
                                     <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
                                 </Link>
                             </div>
-                            
-                            <!-- Status Badge -->
-                            <div class="absolute top-3 right-3">
-                                <span :class="[getStatusBadge(site.status), 'px-2.5 py-1 text-xs font-semibold rounded-full capitalize shadow-sm']">
-                                    {{ site.status }}
-                                </span>
-                            </div>
                         </div>
 
+                        <!-- Card Content -->
                         <div class="p-5">
-                            <div class="flex items-start justify-between mb-3">
-                                <div>
-                                    <h3 class="font-semibold text-gray-900 text-lg">{{ site.name }}</h3>
-                                    <p class="text-sm text-gray-500">{{ site.subdomain }}.mygrownet.com</p>
-                                </div>
-                                <span :class="[getPlanBadge(site.plan), 'px-2 py-0.5 text-xs font-medium rounded-full capitalize']">
-                                    {{ site.plan }}
-                                </span>
+                            <!-- Site Info -->
+                            <div class="mb-4">
+                                <h3 class="font-semibold text-gray-900 text-lg truncate">{{ site.name }}</h3>
+                                <a 
+                                    :href="site.url" 
+                                    target="_blank"
+                                    class="text-sm text-gray-500 hover:text-blue-600 transition flex items-center gap-1"
+                                >
+                                    <GlobeAltIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                    {{ site.subdomain }}.mygrownet.com
+                                </a>
                             </div>
                             
-                            <!-- Site Stats -->
-                            <Link
-                                :href="route('growbuilder.sites.analytics', site.id)"
-                                class="flex items-center gap-4 text-sm text-gray-500 mb-4 hover:text-blue-600 transition"
-                            >
-                                <div class="flex items-center gap-1">
-                                    <ChartBarIcon class="h-4 w-4" aria-hidden="true" />
-                                    <span>{{ formatNumber(site.pageViews || 0) }} views</span>
-                                </div>
-                                <div v-if="site.ordersCount" class="flex items-center gap-1">
-                                    <ShoppingBagIcon class="h-4 w-4" aria-hidden="true" />
-                                    <span>{{ site.ordersCount }} orders</span>
-                                </div>
-                            </Link>
-
-                            <div class="flex items-center gap-2">
+                            <!-- Quick Stats Row -->
+                            <div class="flex items-center gap-3 mb-4 py-3 px-4 bg-gray-50 rounded-xl">
                                 <Link
-                                    :href="route('growbuilder.editor', site.id)"
-                                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition"
+                                    :href="route('growbuilder.sites.analytics', site.id)"
+                                    class="flex-1 text-center hover:bg-white rounded-lg py-1 transition"
                                 >
-                                    <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
-                                    Edit Site
+                                    <p class="text-lg font-bold text-gray-900">{{ formatNumber(site.pageViews || 0) }}</p>
+                                    <p class="text-xs text-gray-500">Views</p>
                                 </Link>
+                                <div class="w-px h-8 bg-gray-200"></div>
                                 <Link
                                     :href="route('growbuilder.products.index', site.id)"
-                                    class="p-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition"
-                                    aria-label="Manage products"
+                                    class="flex-1 text-center hover:bg-white rounded-lg py-1 transition"
                                 >
-                                    <ShoppingBagIcon class="h-5 w-5" aria-hidden="true" />
+                                    <p class="text-lg font-bold text-gray-900">{{ site.ordersCount || 0 }}</p>
+                                    <p class="text-xs text-gray-500">Orders</p>
+                                </Link>
+                                <div class="w-px h-8 bg-gray-200"></div>
+                                <Link
+                                    :href="route('growbuilder.sites.messages', site.id)"
+                                    class="flex-1 text-center hover:bg-white rounded-lg py-1 transition relative"
+                                >
+                                    <p class="text-lg font-bold text-gray-900">{{ site.messagesCount || 0 }}</p>
+                                    <p class="text-xs text-gray-500">Messages</p>
+                                    <span 
+                                        v-if="site.unreadMessages && site.unreadMessages > 0"
+                                        class="absolute -top-1 right-0 w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+                                    >
+                                        {{ site.unreadMessages > 9 ? '9+' : site.unreadMessages }}
+                                    </span>
                                 </Link>
                             </div>
-                            
-                            <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                                <div class="flex items-center gap-1">
-                                    <ClockIcon class="h-3.5 w-3.5" aria-hidden="true" />
-                                    Created {{ formatDate(site.createdAt) }}
+
+                            <!-- Primary Action -->
+                            <Link
+                                :href="route('growbuilder.editor', site.id)"
+                                class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition group/btn"
+                            >
+                                <PencilSquareIcon class="h-4 w-4 group-hover/btn:rotate-12 transition-transform" aria-hidden="true" />
+                                Edit Site
+                            </Link>
+
+                            <!-- Health Suggestions -->
+                            <div v-if="site.healthSuggestions && site.healthSuggestions.length > 0" class="mt-4 space-y-2">
+                                <div 
+                                    v-for="(suggestion, idx) in site.healthSuggestions.slice(0, 2)" 
+                                    :key="idx"
+                                    :class="[
+                                        'flex items-center gap-2 p-2 rounded-lg text-xs',
+                                        suggestion.type === 'warning' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
+                                    ]"
+                                >
+                                    <LightBulbIcon class="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                                    <span class="flex-1 truncate">{{ suggestion.message }}</span>
+                                    <Link
+                                        :href="route(suggestion.actionRoute, site.id)"
+                                        class="text-xs font-medium hover:underline flex-shrink-0"
+                                    >
+                                        {{ suggestion.action }} →
+                                    </Link>
                                 </div>
                             </div>
                             
-                            <!-- Storage Usage -->
-                            <div v-if="site.storageUsed !== undefined" class="mt-3 pt-3 border-t border-gray-100">
-                                <div class="flex items-center justify-between text-xs mb-1.5">
-                                    <span class="text-gray-500">Storage</span>
-                                    <span :class="[
-                                        (site.storagePercentage || 0) >= 90 ? 'text-red-600' : 
-                                        (site.storagePercentage || 0) >= 80 ? 'text-yellow-600' : 'text-gray-600'
-                                    ]">
-                                        {{ site.storageUsedFormatted }} / {{ site.storageLimitFormatted }}
-                                    </span>
+                            <!-- Footer Info -->
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                <div class="flex items-center gap-1 text-xs text-gray-400">
+                                    <ClockIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                    {{ formatDate(site.createdAt) }}
                                 </div>
-                                <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
-                                        :class="[
-                                            'h-full rounded-full transition-all',
-                                            (site.storagePercentage || 0) >= 90 ? 'bg-red-500' : 
-                                            (site.storagePercentage || 0) >= 80 ? 'bg-yellow-500' : 'bg-blue-500'
-                                        ]"
-                                        :style="{ width: Math.min(site.storagePercentage || 0, 100) + '%' }"
-                                    ></div>
+                                
+                                <!-- Storage Indicator (compact) -->
+                                <div v-if="site.storageUsed !== undefined" class="flex items-center gap-2">
+                                    <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                            :class="[
+                                                'h-full rounded-full transition-all',
+                                                (site.storagePercentage || 0) >= 90 ? 'bg-red-500' : 
+                                                (site.storagePercentage || 0) >= 80 ? 'bg-yellow-500' : 'bg-blue-500'
+                                            ]"
+                                            :style="{ width: Math.min(site.storagePercentage || 0, 100) + '%' }"
+                                        ></div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">{{ site.storageUsedFormatted }}</span>
                                 </div>
                             </div>
                         </div>
@@ -584,5 +779,13 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                 </div>
             </div>
         </div>
+
+        <!-- Create Site Wizard Modal -->
+        <CreateSiteWizard
+            :show="showCreateWizard"
+            :site-templates="siteTemplates || []"
+            :industries="industries || []"
+            @close="closeCreateWizard"
+        />
     </AppLayout>
 </template>

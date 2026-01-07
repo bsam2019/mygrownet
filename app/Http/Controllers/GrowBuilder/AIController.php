@@ -257,7 +257,7 @@ class AIController extends Controller
     }
     
     /**
-     * Generate SEO meta description
+     * Generate SEO meta title and description
      */
     public function generateMeta(Request $request, int $siteId)
     {
@@ -270,6 +270,12 @@ class AIController extends Controller
             'page_title' => 'required|string|max:255',
             'page_content' => 'required|string|max:5000',
         ]);
+        
+        $metaTitle = $this->aiService->generateMetaTitle(
+            $validated['page_title'],
+            $validated['page_content'],
+            $site->getName()
+        );
         
         $description = $this->aiService->generateMetaDescription(
             $validated['page_title'],
@@ -285,6 +291,7 @@ class AIController extends Controller
         
         return response()->json([
             'success' => true,
+            'meta_title' => $metaTitle,
             'meta_description' => $description,
             'keywords' => $keywords,
         ]);

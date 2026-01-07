@@ -20,6 +20,8 @@ import {
     ArrowTopRightOnSquareIcon,
 } from '@heroicons/vue/24/outline';
 import type { PreviewMode } from '../../types';
+import type { Section } from '../../types';
+import PageSpeedIndicator from '../PageSpeedIndicator.vue';
 
 const props = defineProps<{
     siteName: string;
@@ -35,6 +37,7 @@ const props = defineProps<{
     canRedo?: boolean;
     zoom?: number;
     darkMode?: boolean;
+    sections?: Section[];
 }>();
 
 const emit = defineEmits<{
@@ -47,6 +50,7 @@ const emit = defineEmits<{
     (e: 'undo'): void;
     (e: 'redo'): void;
     (e: 'showShortcuts'): void;
+    (e: 'restartTutorial'): void;
     (e: 'update:zoom', zoom: number): void;
     (e: 'update:darkMode', value: boolean): void;
     (e: 'openAI'): void;
@@ -158,7 +162,7 @@ const currentZoom = computed(() => props.zoom || 100);
             <div :class="['h-6 w-px', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
 
             <!-- Preview Mode Toggle -->
-            <div :class="['flex items-center rounded-lg p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
+            <div data-tour="preview-buttons" :class="['flex items-center rounded-lg p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
                 <button
                     @click="emit('update:previewMode', 'desktop')"
                     :class="[
@@ -236,6 +240,13 @@ const currentZoom = computed(() => props.zoom || 100);
 
         <!-- Right Section: Actions -->
         <div class="flex items-center gap-2">
+            <!-- Page Speed Indicator -->
+            <PageSpeedIndicator 
+                v-if="sections?.length"
+                :sections="sections" 
+                :darkMode="darkMode" 
+            />
+
             <!-- Auto-save indicator -->
             <div v-if="lastSavedText" :class="['flex items-center gap-1.5 text-xs mr-2', darkMode ? 'text-gray-400' : 'text-gray-500']">
                 <CheckCircleIcon class="w-4 h-4 text-green-500" aria-hidden="true" />
@@ -245,6 +256,7 @@ const currentZoom = computed(() => props.zoom || 100);
             <!-- AI Assistant Button -->
             <button
                 @click="emit('openAI')"
+                data-tour="ai-button"
                 :class="[
                     'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all',
                     'bg-gradient-to-r from-purple-500 to-indigo-600 text-white',
@@ -273,20 +285,47 @@ const currentZoom = computed(() => props.zoom || 100);
                 <MoonIcon v-else class="w-5 h-5" aria-hidden="true" />
             </button>
 
-            <!-- Keyboard Shortcuts -->
-            <button
-                @click="emit('showShortcuts')"
-                :class="[
-                    'p-2 rounded-lg transition-colors',
-                    darkMode 
-                        ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800' 
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-                ]"
-                title="Keyboard Shortcuts (Ctrl+/)"
-                aria-label="Show keyboard shortcuts"
-            >
-                <QuestionMarkCircleIcon class="w-5 h-5" aria-hidden="true" />
-            </button>
+            <!-- Help Menu (Shortcuts + Tutorial) -->
+            <div class="relative group">
+                <button
+                    :class="[
+                        'p-2 rounded-lg transition-colors',
+                        darkMode 
+                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800' 
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    ]"
+                    title="Help"
+                    aria-label="Help menu"
+                >
+                    <QuestionMarkCircleIcon class="w-5 h-5" aria-hidden="true" />
+                </button>
+                <!-- Dropdown -->
+                <div :class="[
+                    'absolute right-0 top-full mt-1 w-48 rounded-lg shadow-lg border py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50',
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                ]">
+                    <button
+                        @click="emit('showShortcuts')"
+                        :class="[
+                            'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors',
+                            darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        ]"
+                    >
+                        <span>⌨️</span>
+                        <span>Keyboard Shortcuts</span>
+                    </button>
+                    <button
+                        @click="emit('restartTutorial')"
+                        :class="[
+                            'w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors',
+                            darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        ]"
+                    >
+                        <span>🎓</span>
+                        <span>Restart Tutorial</span>
+                    </button>
+                </div>
+            </div>
 
             <div :class="['h-6 w-px', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
 

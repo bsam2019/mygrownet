@@ -100,7 +100,7 @@
             <div class="flex justify-between items-center">
               <span class="text-gray-700">Cost per guest:</span>
               <span class="font-semibold text-blue-600">
-                {{ formatCurrency(results.recommended_budget.amount / results.guest_count) }}
+                {{ formatCurrency((results.recommended_budget?.amount || results.recommended_budget || 0) / results.guest_count) }}
               </span>
             </div>
           </div>

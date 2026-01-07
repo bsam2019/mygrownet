@@ -23,6 +23,156 @@ class WeddingController extends Controller
         private WeddingGuestRepositoryInterface $guestRepository
     ) {}
 
+    /**
+     * Public landing page for wedding services
+     */
+    public function landingPage()
+    {
+        // Get all active templates
+        $templates = \App\Infrastructure\Persistence\Eloquent\Wedding\WeddingTemplateModel::where('is_active', true)
+            ->orderBy('is_premium', 'asc')
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(fn($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'slug' => $t->slug,
+                'category' => $t->category ?? 'wedding',
+                'category_name' => $t->category_name ?? 'Wedding',
+                'category_icon' => $t->category_icon ?? '💍',
+                'preview_text' => $t->preview_text ?? 'Your Event',
+                'description' => $t->description,
+                'preview_image' => $t->preview_image,
+                'is_premium' => $t->is_premium,
+                'settings' => $t->settings,
+            ])
+            ->values()
+            ->toArray();
+
+        // Pricing packages
+        $packages = [
+            [
+                'name' => 'Basic',
+                'price' => 500,
+                'currency' => 'K',
+                'features' => [
+                    '1 Template Design',
+                    'Up to 50 Guests',
+                    'RSVP Management',
+                    'Mobile Responsive',
+                    '3 Months Active',
+                ],
+                'popular' => false,
+            ],
+            [
+                'name' => 'Standard',
+                'price' => 1500,
+                'currency' => 'K',
+                'features' => [
+                    'All Templates',
+                    'Up to 150 Guests',
+                    'RSVP Management',
+                    'Guest List Export',
+                    'Custom Colors',
+                    '6 Months Active',
+                ],
+                'popular' => true,
+            ],
+            [
+                'name' => 'Premium',
+                'price' => 3000,
+                'currency' => 'K',
+                'features' => [
+                    'All Templates + Premium',
+                    'Unlimited Guests',
+                    'RSVP Management',
+                    'Guest List Export',
+                    'Custom Domain',
+                    'Photo Gallery',
+                    '12 Months Active',
+                    'Priority Support',
+                ],
+                'popular' => false,
+            ],
+        ];
+
+        return Inertia::render('Wedding/LandingPage', [
+            'templates' => $templates,
+            'packages' => $packages,
+        ]);
+    }
+
+    /**
+     * Preview a template with demo data
+     */
+    public function previewTemplate($slug)
+    {
+        $template = \App\Infrastructure\Persistence\Eloquent\Wedding\WeddingTemplateModel::where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$template) {
+            abort(404, 'Template not found');
+        }
+
+        $settings = $template->settings;
+        $demoImages = $settings['demoImages'] ?? [];
+
+        // Demo wedding event data
+        $demoWeddingEvent = [
+            'id' => 0,
+            'bride_name' => 'Sarah',
+            'groom_name' => 'Michael',
+            'wedding_date' => now()->addMonths(3)->format('Y-m-d'),
+            'venue_name' => 'Grand Ballroom',
+            'venue_address' => 'Lusaka, Zambia',
+            'guest_count' => 150,
+            'budget' => 50000,
+            'ceremony_time' => '2:00 PM',
+            'reception_time' => '5:00 PM',
+            'reception_venue' => 'Grand Ballroom',
+            'reception_address' => 'Lusaka, Zambia',
+            'dress_code' => 'Formal Attire',
+            'rsvp_deadline' => now()->addMonths(2)->addWeeks(2)->format('Y-m-d'),
+            'hero_image' => $demoImages['hero'] ?? $template->preview_image,
+            'story_image' => $demoImages['couple'] ?? $template->preview_image,
+            'how_we_met' => 'Our love story began when we met at a friend\'s wedding. Little did we know that day would change our lives forever.',
+            'proposal_story' => 'On a beautiful sunset evening, surrounded by the golden glow of the setting sun, Michael got down on one knee and asked the question that would begin our forever.',
+        ];
+
+        $ogMeta = [
+            'title' => "{$template->name} Template Preview - MyGrowNet Weddings",
+            'description' => $template->description,
+            'image' => $template->preview_image,
+            'url' => url()->current(),
+            'type' => 'website',
+        ];
+
+        // Map template slug to component
+        $templateComponentMap = [
+            'flora-classic' => 'Wedding/WeddingWebsite',
+            'modern-minimal' => 'Wedding/Templates/ModernMinimal',
+            'elegant-gold' => 'Wedding/Templates/ElegantGold',
+            'garden-party' => 'Wedding/Templates/GardenParty',
+            'sunset-romance' => 'Wedding/Templates/SunsetRomance',
+        ];
+
+        $component = $templateComponentMap[$slug] ?? 'Wedding/WeddingWebsite';
+
+        return Inertia::render($component, [
+            'weddingEvent' => $demoWeddingEvent,
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'slug' => $template->slug,
+                'settings' => $settings,
+            ],
+            'galleryImages' => [],
+            'ogMeta' => $ogMeta,
+            'isPreview' => true,
+        ])->rootView('wedding')->withViewData(['ogMeta' => $ogMeta]);
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -150,19 +300,54 @@ class WeddingController extends Controller
 
     public function weddingWebsite($slug)
     {
-        // Find wedding event by slug or ID
-        $weddingEvent = $this->weddingEventRepository->findBySlug($slug);
+        // Find wedding event by slug using Eloquent model directly (supports new template fields)
+        $wedding = \App\Infrastructure\Persistence\Eloquent\Wedding\WeddingEventModel::with('template')
+            ->where('slug', $slug)
+            ->first();
         
-        if (!$weddingEvent) {
+        if (!$wedding) {
             // Try finding by ID if slug doesn't work
             if (is_numeric($slug)) {
-                $weddingEvent = $this->weddingEventRepository->findById((int)$slug);
+                $wedding = \App\Infrastructure\Persistence\Eloquent\Wedding\WeddingEventModel::with('template')
+                    ->find((int)$slug);
             }
         }
         
-        if (!$weddingEvent) {
+        if (!$wedding) {
             abort(404, 'Wedding website not found');
         }
+
+        // Check if published (unless in preview mode)
+        if (!$wedding->is_published && !request()->has('preview')) {
+            abort(404, 'Wedding website not found');
+        }
+
+        // Get template settings (use Flora Classic defaults if no template)
+        $templateSettings = $wedding->template?->settings ?? [
+            'colors' => [
+                'primary' => '#9333ea',
+                'secondary' => '#ec4899',
+                'accent' => '#f59e0b',
+                'background' => '#ffffff',
+                'text' => '#1f2937',
+                'textLight' => '#6b7280',
+            ],
+            'fonts' => [
+                'heading' => 'Great Vibes',
+                'body' => 'Inter',
+            ],
+            'layout' => [
+                'heroStyle' => 'centered',
+                'navigationStyle' => 'tabs',
+                'showCountdown' => true,
+                'showGallery' => true,
+            ],
+            'decorations' => [
+                'backgroundPattern' => 'flora',
+                'headerImage' => '/images/Wedding/flora.jpg',
+                'borderStyle' => 'elegant',
+            ],
+        ];
 
         // Get gallery images (placeholder for now)
         $galleryImages = [
@@ -170,45 +355,47 @@ class WeddingController extends Controller
             ['url' => '/images/wedding/gallery/couple-2.jpg'],
             ['url' => '/images/wedding/gallery/couple-3.jpg'],
             ['url' => '/images/wedding/gallery/couple-4.jpg'],
-            ['url' => '/images/wedding/gallery/engagement-1.jpg'],
-            ['url' => '/images/wedding/gallery/engagement-2.jpg'],
-            ['url' => '/images/wedding/gallery/venue-1.jpg'],
-            ['url' => '/images/wedding/gallery/venue-2.jpg'],
         ];
 
-        $groomName = auth()->user()->name ?? 'Groom';
-        $brideName = $weddingEvent->getPartnerName();
-        $weddingDate = $weddingEvent->getWeddingDate();
+        $groomName = $wedding->groom_name ?? 'Groom';
+        $brideName = $wedding->bride_name ?? $wedding->partner_name ?? 'Bride';
+        $weddingDate = $wedding->wedding_date;
         
         // Open Graph meta data for social sharing
         $ogMeta = [
             'title' => "{$groomName} & {$brideName} Wedding - " . $weddingDate->format('F j, Y'),
             'description' => "You are invited to celebrate the wedding of {$groomName} & {$brideName} on " . $weddingDate->format('F j, Y') . ".",
-            'image' => url('/images/wedding/default-couple.jpg'),
+            'image' => $wedding->hero_image ? url($wedding->hero_image) : url('/images/wedding/default-couple.jpg'),
             'url' => url()->current(),
             'type' => 'website',
         ];
         
         return Inertia::render('Wedding/WeddingWebsite', [
             'weddingEvent' => [
-                'id' => $weddingEvent->getId(),
+                'id' => $wedding->id,
                 'bride_name' => $brideName,
                 'groom_name' => $groomName,
                 'wedding_date' => $weddingDate->format('Y-m-d'),
-                'venue_name' => $weddingEvent->getVenueName() ?? 'Beautiful Wedding Venue',
-                'venue_address' => $weddingEvent->getVenueLocation() ?? 'Lusaka, Zambia',
-                'guest_count' => $weddingEvent->getGuestCount(),
-                'budget' => $weddingEvent->getBudget()->getAmount(),
-                'ceremony_time' => '2:00 PM',
-                'reception_time' => '5:00 PM',
-                'reception_venue' => $weddingEvent->getVenueName() ?? 'Beautiful Wedding Venue',
-                'reception_address' => $weddingEvent->getVenueLocation() ?? 'Lusaka, Zambia',
-                'dress_code' => 'Formal Attire',
-                'rsvp_deadline' => $weddingDate->subDays(14)->format('Y-m-d'),
-                'hero_image' => '/images/wedding/default-couple.jpg',
-                'story_image' => '/images/wedding/couple-story.jpg',
-                'how_we_met' => 'Our love story began in the most unexpected way, and we knew from that moment that we were meant to be together.',
-                'proposal_story' => 'It was a moment we\'ll never forget - surrounded by love, laughter, and the promise of forever.',
+                'venue_name' => $wedding->venue_name ?? 'Beautiful Wedding Venue',
+                'venue_address' => $wedding->venue_location ?? 'Lusaka, Zambia',
+                'guest_count' => $wedding->guest_count,
+                'budget' => $wedding->budget,
+                'ceremony_time' => $wedding->ceremony_time ?? '2:00 PM',
+                'reception_time' => $wedding->reception_time ?? '5:00 PM',
+                'reception_venue' => $wedding->reception_venue ?? $wedding->venue_name ?? 'Beautiful Wedding Venue',
+                'reception_address' => $wedding->reception_address ?? $wedding->venue_location ?? 'Lusaka, Zambia',
+                'dress_code' => $wedding->dress_code ?? 'Formal Attire',
+                'rsvp_deadline' => $wedding->rsvp_deadline?->format('Y-m-d') ?? $weddingDate->copy()->subDays(14)->format('Y-m-d'),
+                'hero_image' => $wedding->hero_image ?? '/images/wedding/default-couple.jpg',
+                'story_image' => $wedding->story_image ?? '/images/wedding/couple-story.jpg',
+                'how_we_met' => $wedding->how_we_met ?? 'Our love story began in the most unexpected way, and we knew from that moment that we were meant to be together.',
+                'proposal_story' => $wedding->proposal_story ?? 'It was a moment we\'ll never forget - surrounded by love, laughter, and the promise of forever.',
+            ],
+            'template' => [
+                'id' => $wedding->template?->id,
+                'name' => $wedding->template?->name ?? 'Flora Classic',
+                'slug' => $wedding->template?->slug ?? 'flora-classic',
+                'settings' => $templateSettings,
             ],
             'galleryImages' => $galleryImages,
             'ogMeta' => $ogMeta,
@@ -338,9 +525,42 @@ class WeddingController extends Controller
             'type' => 'website',
         ];
 
+        // Flora Classic template settings (default for Kaoma & Mubanga)
+        $templateSettings = [
+            'colors' => [
+                'primary' => '#9333ea',
+                'secondary' => '#ec4899',
+                'accent' => '#f59e0b',
+                'background' => '#ffffff',
+                'text' => '#1f2937',
+                'textLight' => '#6b7280',
+            ],
+            'fonts' => [
+                'heading' => 'Great Vibes',
+                'body' => 'Inter',
+            ],
+            'layout' => [
+                'heroStyle' => 'centered',
+                'navigationStyle' => 'tabs',
+                'showCountdown' => true,
+                'showGallery' => true,
+            ],
+            'decorations' => [
+                'backgroundPattern' => 'flora',
+                'headerImage' => '/images/Wedding/flora.jpg',
+                'borderStyle' => 'elegant',
+            ],
+        ];
+
         // Pass OG meta to the view for server-side rendering (important for social crawlers)
         return Inertia::render('Wedding/WeddingWebsite', [
             'weddingEvent' => $demoWeddingEvent,
+            'template' => [
+                'id' => 1,
+                'name' => 'Flora Classic',
+                'slug' => 'flora-classic',
+                'settings' => $templateSettings,
+            ],
             'galleryImages' => $galleryImages,
             'ogMeta' => $ogMeta,
         ])->rootView('wedding')->withViewData(['ogMeta' => $ogMeta]);

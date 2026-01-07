@@ -1246,18 +1246,86 @@ PROMPT;
     }
     
     /**
+     * Generate SEO meta title
+     */
+    public function generateMetaTitle(string $pageTitle, string $pageContent, string $businessName): string
+    {
+        $systemPrompt = <<<PROMPT
+You are an expert SEO copywriter. Generate a compelling meta title (page title for search results) that:
+- Is between 30-60 characters (optimal for search results)
+- Includes the primary keyword near the beginning
+- Includes the business/brand name
+- Is compelling and click-worthy
+- Uses separator like | or - between parts
+- Avoids keyword stuffing
+
+Return ONLY the meta title text, no quotes or explanation.
+PROMPT;
+
+        $userPrompt = <<<PROMPT
+Generate a meta title for:
+- Business: {$businessName}
+- Page: {$pageTitle}
+- Content summary: {$pageContent}
+
+Write a compelling 30-60 character meta title for search results.
+PROMPT;
+        
+        try {
+            $response = $this->callAI($systemPrompt, $userPrompt);
+            $title = trim($response, " \n\r\t\v\0\"'");
+            
+            // Ensure it's not too short
+            if (strlen($title) < 20) {
+                $title = "{$pageTitle} | {$businessName}";
+            }
+            
+            return substr($title, 0, 70);
+        } catch (\Exception $e) {
+            // Fallback: Page Title | Business Name
+            $fallback = "{$pageTitle} | {$businessName}";
+            return substr($fallback, 0, 70);
+        }
+    }
+    
+    /**
      * Generate SEO meta description
      */
     public function generateMetaDescription(string $pageTitle, string $pageContent, string $businessName): string
     {
-        $systemPrompt = "You are an SEO expert. Generate a compelling meta description (max 155 characters) that includes relevant keywords and encourages clicks.";
-        $userPrompt = "Generate a meta description for a page titled '{$pageTitle}' for {$businessName}. Page content summary: {$pageContent}";
+        $systemPrompt = <<<PROMPT
+You are an expert SEO copywriter. Generate a compelling meta description that:
+- Is between 120-155 characters (optimal for search results)
+- Includes the business name naturally
+- Contains a clear value proposition or benefit
+- Includes a subtle call-to-action (e.g., "Learn more", "Discover", "Get started")
+- Uses active voice and engaging language
+- Avoids generic phrases like "Welcome to" or "We are a company that"
+
+Return ONLY the meta description text, no quotes or explanation.
+PROMPT;
+
+        $userPrompt = <<<PROMPT
+Generate a meta description for:
+- Business: {$businessName}
+- Page: {$pageTitle}
+- Content summary: {$pageContent}
+
+Write a compelling 120-155 character meta description that would make someone want to click.
+PROMPT;
         
         try {
             $response = $this->callAI($systemPrompt, $userPrompt);
-            return substr(trim($response), 0, 155);
+            $description = trim($response, " \n\r\t\v\0\"'");
+            
+            // Ensure it's not too short (minimum 80 chars for good SEO)
+            if (strlen($description) < 80) {
+                $description = "{$businessName} - {$pageTitle}. Discover quality services and solutions tailored to your needs. Contact us today to learn more.";
+            }
+            
+            return substr($description, 0, 160);
         } catch (\Exception $e) {
-            return "{$businessName} - {$pageTitle}. Learn more about our services and offerings.";
+            return "{$businessName} offers professional {$pageTitle} services. Discover quality solutions tailored to your needs. Contact us today to get started.";
         }
     }
     
@@ -1266,15 +1334,44 @@ PROMPT;
      */
     public function generateKeywords(string $businessName, string $businessType, string $pageContent): array
     {
-        $systemPrompt = "You are an SEO expert. Generate relevant keywords for a business website. Return as JSON array of strings.";
-        $userPrompt = "Generate 10 SEO keywords for {$businessName}, a {$businessType} business. Content: {$pageContent}";
+        $systemPrompt = <<<PROMPT
+You are an SEO expert specializing in keyword research. Generate relevant, searchable keywords that:
+- Include the business name and type
+- Mix short-tail and long-tail keywords
+- Include location-based keywords if relevant (Zambia, Africa)
+- Focus on user intent (what people search for)
+- Avoid generic terms that are too competitive
+
+Return ONLY a JSON array of 8-12 keyword strings, no explanation.
+Example: ["keyword 1", "keyword 2", "keyword 3"]
+PROMPT;
+
+        $userPrompt = <<<PROMPT
+Generate SEO keywords for:
+- Business: {$businessName}
+- Type: {$businessType}
+- Content: {$pageContent}
+
+Return a JSON array of 8-12 relevant keywords.
+PROMPT;
         
         try {
             $response = $this->callAI($systemPrompt, $userPrompt);
+            // Clean up response - remove markdown code blocks if present
+            $response = preg_replace('/```json?\s*/', '', $response);
+            $response = preg_replace('/```\s*/', '', $response);
+            $response = trim($response);
+            
             $keywords = json_decode($response, true);
-            return is_array($keywords) ? $keywords : [];
+            
+            if (is_array($keywords) && count($keywords) >= 3) {
+                return array_slice($keywords, 0, 12);
+            }
+            
+            // Fallback if parsing fails
+            return [$businessName, $businessType, "{$businessName} {$businessType}", "{$businessType} services", "{$businessType} Zambia", "professional {$businessType}"];
         } catch (\Exception $e) {
-            return [$businessName, $businessType, 'services', 'quality', 'professional'];
+            return [$businessName, $businessType, "{$businessName} services", "professional {$businessType}", "{$businessType} Zambia"];
         }
     }
     

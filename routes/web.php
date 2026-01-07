@@ -21,6 +21,9 @@ use App\Http\Controllers\EarningsProjectionController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\BroadcastAuthController;
 use App\Http\Controllers\Auth\BladeAuthController;
+use App\Http\Controllers\GeopamuController;
+use App\Http\Controllers\Geopamu\BlogController;
+use App\Http\Controllers\Geopamu\Admin\BlogAdminController;
 
 // Custom broadcasting auth that handles both Laravel auth and session-based investor auth
 Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate'])
@@ -232,12 +235,40 @@ Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
 Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
 Route::get('/privacy', fn() => Inertia::render('Privacy'))->name('privacy');
 
-// Wedding Platform Routes
-Route::prefix('weddings')->name('weddings.')->group(function () {
-    // Public wedding showcase
-    Route::get('/', [App\Http\Controllers\Wedding\WeddingController::class, 'publicLanding'])->name('public');
-    Route::get('/alinuswe-usonje', fn() => Inertia::render('Wedding/PublicLanding'))->name('showcase');
+// Wedding Platform Routes - Public Landing (no auth required)
+Route::get('/weddings', [App\Http\Controllers\Wedding\WeddingController::class, 'landingPage'])->name('weddings.landing');
+Route::get('/weddings/templates/{slug}/preview', [App\Http\Controllers\Wedding\WeddingController::class, 'previewTemplate'])->name('weddings.template.preview');
+
+// Celebrations Platform Routes (rebranded from weddings)
+Route::get('/celebrations', [App\Http\Controllers\Wedding\WeddingController::class, 'landingPage'])->name('celebrations.landing');
+Route::get('/celebrations/contact', function () {
+    return Inertia::render('Celebrations/ContactPage');
+})->name('celebrations.contact');
+
+// Geopamu Business Website Routes
+Route::prefix('geopamu')->name('geopamu.')->group(function () {
+    Route::get('/', [GeopamuController::class, 'home'])->name('home');
+    Route::get('/services', [GeopamuController::class, 'services'])->name('services');
+    Route::get('/portfolio', [GeopamuController::class, 'portfolio'])->name('portfolio');
+    Route::get('/about', [GeopamuController::class, 'about'])->name('about');
+    Route::get('/contact', [GeopamuController::class, 'contact'])->name('contact');
+    
+    // Blog Routes
+    Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+    Route::get('/blog/category/{category}', [BlogController::class, 'category'])->name('blog.category');
+    Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+    
+    // Admin Blog Routes (protected)
+    Route::middleware(['geopamu.admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/blog', [BlogAdminController::class, 'index'])->name('blog.index');
+        Route::get('/blog/create', [BlogAdminController::class, 'create'])->name('blog.create');
+        Route::post('/blog', [BlogAdminController::class, 'store'])->name('blog.store');
+        Route::get('/blog/{post}/edit', [BlogAdminController::class, 'edit'])->name('blog.edit');
+        Route::put('/blog/{post}', [BlogAdminController::class, 'update'])->name('blog.update');
+        Route::delete('/blog/{post}', [BlogAdminController::class, 'destroy'])->name('blog.destroy');
+    });
 });
+
 Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
 Route::get('/wallet/policy', fn() => Inertia::render('Wallet/Policy'))->name('wallet.policy');
 Route::get('/loyalty-reward/policy', fn() => Inertia::render('LoyaltyReward/Policy'))->name('loyalty-reward.policy');
@@ -424,6 +455,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin Impersonation Routes
     Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::post('/impersonate/{user}', [App\Http\Controllers\Admin\ImpersonateController::class, 'impersonate'])->name('impersonate');
+    });
+
+    // Admin Geopamu Management Routes
+    Route::middleware(['admin'])->prefix('admin/geopamu-admins')->name('admin.geopamu-admins.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\GeopamuAdminManagementController::class, 'index'])->name('index');
+        Route::post('/assign', [App\Http\Controllers\Admin\GeopamuAdminManagementController::class, 'assign'])->name('assign');
+        Route::post('/revoke', [App\Http\Controllers\Admin\GeopamuAdminManagementController::class, 'revoke'])->name('revoke');
     });
 
     // Admin Announcement Management Routes
@@ -1283,8 +1321,8 @@ require __DIR__.'/bgf.php';
         Route::post('/update-progress', [App\Http\Controllers\StarterKitController::class, 'updateProgress'])->name('update-progress');
     });
 
-// Wedding Platform Routes
-Route::prefix('weddings')->name('wedding.')->middleware('auth')->group(function () {
+// Wedding Platform Routes - Member Dashboard (auth required)
+Route::prefix('my-weddings')->name('wedding.')->middleware('auth')->group(function () {
     Route::get('/', [App\Http\Controllers\Wedding\WeddingController::class, 'index'])->name('index');
     Route::get('/create', [App\Http\Controllers\Wedding\WeddingController::class, 'create'])->name('create');
     Route::post('/', [App\Http\Controllers\Wedding\WeddingController::class, 'store'])->name('store');
@@ -1312,7 +1350,20 @@ Route::prefix('wedding')->name('wedding.')->group(function () {
     Route::post('/{id}/guest-inquiry', [App\Http\Controllers\Wedding\WeddingController::class, 'guestInquiry'])->name('guest.inquiry');
 });
 
-// Wedding Admin Routes (private access with code)
+// Staff Admin Wedding Card Management Routes (authenticated admin users)
+Route::middleware(['auth', 'admin'])->prefix('admin/weddings')->name('admin.weddings.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Admin\WeddingCardController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\Admin\WeddingCardController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\Admin\WeddingCardController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [App\Http\Controllers\Admin\WeddingCardController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [App\Http\Controllers\Admin\WeddingCardController::class, 'update'])->name('update');
+    Route::delete('/{id}', [App\Http\Controllers\Admin\WeddingCardController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/toggle-publish', [App\Http\Controllers\Admin\WeddingCardController::class, 'togglePublish'])->name('toggle-publish');
+    Route::get('/{id}/preview', [App\Http\Controllers\Admin\WeddingCardController::class, 'preview'])->name('preview');
+    Route::post('/{id}/regenerate-code', [App\Http\Controllers\Admin\WeddingCardController::class, 'regenerateAccessCode'])->name('regenerate-code');
+});
+
+// Wedding Client Admin Routes (private access with code - for couples)
 Route::middleware(['web'])->prefix('wedding-admin')->name('wedding.admin.')->group(function () {
     Route::get('/{slug}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'accessPage'])->name('access');
     Route::post('/{slug}/verify', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'verifyAccess'])->name('verify');

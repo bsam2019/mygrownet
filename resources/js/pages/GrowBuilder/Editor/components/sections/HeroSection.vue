@@ -145,7 +145,7 @@ onUnmounted(() => {
 
 <template>
     <div
-        class="h-full relative overflow-hidden"
+        class="relative overflow-hidden"
         :style="backgroundStyle"
     >
         <!-- Slideshow Layout -->
@@ -253,7 +253,7 @@ onUnmounted(() => {
 
             <!-- Content -->
             <div
-                class="h-full flex flex-col justify-center relative z-10"
+                class="flex flex-col justify-center relative z-10"
                 :class="[
                     spacing.section,
                     {
@@ -262,6 +262,7 @@ onUnmounted(() => {
                         'text-right items-end': content.textPosition === 'right'
                     }
                 ]"
+                :style="{ minHeight: minHeight }"
             >
                 <div
                     class="w-full max-w-3xl"

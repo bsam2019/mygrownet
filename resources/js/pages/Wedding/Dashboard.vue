@@ -46,19 +46,20 @@
               </div>
               <div>
                 <h3 class="font-semibold text-gray-900 mb-2">Budget</h3>
-                <p class="text-2xl font-bold text-green-600">{{ formatCurrency(activeEvent.budget.amount) }}</p>
+                <p class="text-2xl font-bold text-green-600">{{ formatCurrency(activeEvent.budget) }}</p>
                 <p class="text-gray-600">Total Budget</p>
               </div>
               <div>
                 <h3 class="font-semibold text-gray-900 mb-2">Status</h3>
-                <span :class="getStatusClass(activeEvent.status.value)" class="px-3 py-1 rounded-full text-sm font-medium">
-                  {{ activeEvent.status.label }}
+                <span :class="getStatusClass(activeEvent.status?.value || activeEvent.status)" class="px-3 py-1 rounded-full text-sm font-medium">
+                  {{ activeEvent.status?.label || activeEvent.status || 'Planning' }}
                 </span>
                 <p class="text-gray-600 mt-2">{{ getDaysUntilWedding(activeEvent.weddingDate) }}</p>
               </div>
             </div>
             <div class="mt-6 flex space-x-4">
               <Link
+                v-if="activeEvent.id"
                 :href="route('wedding.show', activeEvent.id)"
                 class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors"
               >
@@ -142,12 +143,12 @@
               <div>
                 <h3 class="font-semibold text-gray-900">{{ event.partnerName }}</h3>
                 <p class="text-gray-600">{{ formatDate(event.weddingDate) }}</p>
-                <span :class="getStatusClass(event.status.value)" class="px-2 py-1 rounded-full text-xs font-medium">
-                  {{ event.status.label }}
+                <span :class="getStatusClass(event.status?.value || event.status)" class="px-2 py-1 rounded-full text-xs font-medium">
+                  {{ event.status?.label || event.status || 'Planning' }}
                 </span>
               </div>
               <div class="text-right">
-                <p class="font-semibold text-gray-900">{{ formatCurrency(event.budget.amount) }}</p>
+                <p class="font-semibold text-gray-900">{{ formatCurrency(event.budget) }}</p>
                 <p class="text-gray-600 text-sm">{{ event.guestCount }} guests</p>
               </div>
             </div>
@@ -197,7 +198,10 @@ const formatDate = (date) => {
 }
 
 const formatCurrency = (amount) => {
-  return `K${parseFloat(amount).toLocaleString()}`
+  if (amount === null || amount === undefined) return 'K0'
+  // Handle both object with amount property and direct number
+  const value = typeof amount === 'object' && amount !== null ? amount.amount : amount
+  return `K${parseFloat(value || 0).toLocaleString()}`
 }
 
 const getStatusClass = (status) => {

@@ -128,6 +128,15 @@ class PdfGeneratorService
                 return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
             }
 
+            // Try direct storage path (for paths like "quick-invoice/logos/...")
+            $directPath = ltrim(parse_url($imageUrl, PHP_URL_PATH) ?? '', '/');
+            $directPath = preg_replace('#^storage/#', '', $directPath);
+            if ($directPath && Storage::disk('public')->exists($directPath)) {
+                $contents = Storage::disk('public')->get($directPath);
+                $mimeType = $this->getMimeType($directPath);
+                return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+            }
+
             // Fallback: try to fetch from URL directly
             if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                 $contents = @file_get_contents($imageUrl);
@@ -138,14 +147,23 @@ class PdfGeneratorService
                 }
             }
 
-            // Try as absolute path
-            $absolutePath = public_path(str_replace('/storage/', 'storage/', parse_url($imageUrl, PHP_URL_PATH) ?? ''));
-            if (file_exists($absolutePath)) {
-                $contents = file_get_contents($absolutePath);
-                $mimeType = mime_content_type($absolutePath) ?: 'image/png';
+            // Try as absolute path using storage_path directly
+            $storagePath = storage_path('app/public/' . $directPath);
+            if (file_exists($storagePath)) {
+                $contents = file_get_contents($storagePath);
+                $mimeType = mime_content_type($storagePath) ?: 'image/png';
                 return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
             }
 
+            // Try public path as last resort
+            $publicPath = public_path('storage/' . $directPath);
+            if (file_exists($publicPath)) {
+                $contents = file_get_contents($publicPath);
+                $mimeType = mime_content_type($publicPath) ?: 'image/png';
+                return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
+            }
+
+            \Log::warning('Image not found for base64 conversion', ['url' => $imageUrl, 'tried_path' => $directPath]);
             return null;
         } catch (\Exception $e) {
             \Log::warning('Failed to convert image to base64: ' . $e->getMessage(), ['url' => $imageUrl]);

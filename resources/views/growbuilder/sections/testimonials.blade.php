@@ -10,7 +10,7 @@
             <div class="bg-gray-50 p-6 rounded-lg">
                 <div class="flex items-center mb-4">
                     @if(isset($item['image']) && $item['image'])
-                    <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="w-12 h-12 rounded-full mr-4">
+                    <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="w-12 h-12 rounded-full mr-4" loading="lazy">
                     @else
                     <div class="w-12 h-12 rounded-full mr-4 flex items-center justify-center text-white font-bold" style="background-color: var(--primary-color)">
                         {{ substr($item['name'] ?? 'A', 0, 1) }}

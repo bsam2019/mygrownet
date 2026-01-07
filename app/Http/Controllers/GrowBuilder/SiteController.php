@@ -60,6 +60,36 @@ class SiteController extends Controller
             ->get()
             ->keyBy('site_id');
 
+        // Get contact messages per site
+        $messagesPerSite = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::whereIn('site_id', $siteIds)
+            ->select('site_id', DB::raw('COUNT(*) as total'), DB::raw('SUM(CASE WHEN status = "unread" THEN 1 ELSE 0 END) as unread'))
+            ->groupBy('site_id')
+            ->get()
+            ->keyBy('site_id');
+
+        // Get recent unread messages across all sites (for dashboard notification)
+        $recentMessages = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::whereIn('site_id', $siteIds)
+            ->with('site:id,name,subdomain')
+            ->where('status', 'unread')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'siteId' => $m->site_id,
+                'siteName' => $m->site->name ?? 'Unknown',
+                'siteSubdomain' => $m->site->subdomain ?? '',
+                'name' => $m->name,
+                'email' => $m->email,
+                'subject' => $m->subject,
+                'message' => \Illuminate\Support\Str::limit($m->message, 100),
+                'createdAt' => $m->created_at->diffForHumans(),
+            ]);
+
+        $totalUnreadMessages = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::whereIn('site_id', $siteIds)
+            ->where('status', 'unread')
+            ->count();
+
         // Calculate totals for stats
         $stats = [
             'totalSites' => count($sites),
@@ -67,6 +97,8 @@ class SiteController extends Controller
             'totalPageViews' => array_sum($pageViews),
             'totalOrders' => $orders->sum('count'),
             'totalRevenue' => $orders->sum('revenue') ?? 0,
+            'totalMessages' => $messagesPerSite->sum('total'),
+            'unreadMessages' => $totalUnreadMessages,
         ];
 
         // Get subscription info - use tierRestrictionService which has proper fallback defaults
@@ -131,12 +163,14 @@ class SiteController extends Controller
         }
 
         return Inertia::render('GrowBuilder/Dashboard', [
-            'sites' => collect($sites)->map(function ($site) use ($pageViews, $orders) {
+            'sites' => collect($sites)->map(function ($site) use ($pageViews, $orders, $messagesPerSite) {
                 $siteId = $site->getId()->value();
                 $siteArray = $this->siteToArray($site);
                 $siteArray['pageViews'] = $pageViews[$siteId] ?? 0;
                 $siteArray['ordersCount'] = $orders[$siteId]->count ?? 0;
                 $siteArray['revenue'] = $orders[$siteId]->revenue ?? 0;
+                $siteArray['messagesCount'] = $messagesPerSite[$siteId]->total ?? 0;
+                $siteArray['unreadMessages'] = $messagesPerSite[$siteId]->unread ?? 0;
                 
                 // Add storage info from the model
                 $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
@@ -146,6 +180,9 @@ class SiteController extends Controller
                     $siteArray['storageUsedFormatted'] = $siteModel->storage_used_formatted;
                     $siteArray['storageLimitFormatted'] = $siteModel->storage_limit_formatted;
                     $siteArray['storagePercentage'] = $siteModel->storage_percentage;
+                    
+                    // Add site health suggestions
+                    $siteArray['healthSuggestions'] = $this->getSiteHealthSuggestions($siteModel, $site);
                 }
                 
                 return $siteArray;
@@ -157,6 +194,37 @@ class SiteController extends Controller
             'storageStats' => $userStorageStats, // User's total storage across all sites
             'availableTiers' => $availableTiers,
             'isAdmin' => $isAdmin,
+            // Site templates and industries for the create wizard modal
+            'siteTemplates' => \App\Models\GrowBuilder\SiteTemplate::with('pages')
+                ->active()
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn($t) => [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'slug' => $t->slug,
+                    'description' => $t->description,
+                    'industry' => $t->industry,
+                    'thumbnail' => $t->thumbnail_url,
+                    'theme' => $t->theme,
+                    'isPremium' => $t->is_premium,
+                    'pagesCount' => $t->pages->count(),
+                    'pages' => $t->pages->map(fn($p) => [
+                        'title' => $p->title,
+                        'slug' => $p->slug,
+                        'isHomepage' => $p->is_homepage,
+                    ]),
+                ]),
+            'industries' => \App\Models\GrowBuilder\SiteTemplateIndustry::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn($i) => [
+                    'slug' => $i->slug,
+                    'name' => $i->name,
+                    'icon' => $i->icon,
+                ]),
+            // Contact messages for dashboard
+            'recentMessages' => $recentMessages,
         ]);
     }
 
@@ -413,6 +481,191 @@ class SiteController extends Controller
         ]);
     }
 
+    /**
+     * List contact messages for a site (owner view)
+     */
+    public function messages(Request $request, int $id)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $query = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->orderBy('created_at', 'desc');
+
+        // Filter by status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        $messages = $query->paginate(20);
+        $unreadCount = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->unread()->count();
+        $totalCount = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)->count();
+
+        return Inertia::render('GrowBuilder/Sites/Messages', [
+            'site' => $this->siteToArray($site),
+            'messages' => $messages,
+            'unreadCount' => $unreadCount,
+            'totalCount' => $totalCount,
+            'filters' => $request->only(['status', 'search']),
+        ]);
+    }
+
+    /**
+     * Show a single message
+     */
+    public function showMessage(Request $request, int $id, int $messageId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->findOrFail($messageId);
+
+        // Mark as read
+        $message->markAsRead();
+
+        return Inertia::render('GrowBuilder/Sites/MessageDetail', [
+            'site' => $this->siteToArray($site),
+            'message' => $message,
+        ]);
+    }
+
+    /**
+     * Reply to a message
+     */
+    public function replyMessage(Request $request, int $id, int $messageId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->findOrFail($messageId);
+
+        $validated = $request->validate([
+            'reply' => 'required|string|max:5000',
+        ]);
+
+        $message->update([
+            'reply' => $validated['reply'],
+            'status' => 'replied',
+            'replied_at' => now(),
+        ]);
+
+        // TODO: Send email notification to the sender
+
+        return back()->with('success', 'Reply sent successfully.');
+    }
+
+    /**
+     * Update message status
+     */
+    public function updateMessageStatus(Request $request, int $id, int $messageId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->findOrFail($messageId);
+
+        $validated = $request->validate([
+            'status' => 'required|in:unread,read,replied,archived',
+        ]);
+
+        $message->update(['status' => $validated['status']]);
+
+        return back()->with('success', 'Status updated.');
+    }
+
+    /**
+     * Delete a message
+     */
+    public function deleteMessage(Request $request, int $id, int $messageId)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $message = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->findOrFail($messageId);
+
+        $message->delete();
+
+        return redirect()->route('growbuilder.sites.messages', $id)
+            ->with('success', 'Message deleted.');
+    }
+
+    /**
+     * Export messages to CSV
+     */
+    public function exportMessages(Request $request, int $id)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            abort(404);
+        }
+
+        $messages = \App\Infrastructure\GrowBuilder\Models\SiteContactMessage::forSite($id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $filename = $site->getName() . '_messages_' . now()->format('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($messages) {
+            $file = fopen('php://output', 'w');
+            
+            // Header row
+            fputcsv($file, ['Date', 'Name', 'Email', 'Phone', 'Subject', 'Message', 'Status', 'Reply']);
+            
+            foreach ($messages as $message) {
+                fputcsv($file, [
+                    $message->created_at->format('Y-m-d H:i'),
+                    $message->name,
+                    $message->email,
+                    $message->phone ?? '',
+                    $message->subject ?? '',
+                    $message->message,
+                    $message->status,
+                    $message->reply ?? '',
+                ]);
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function update(Request $request, int $id)
     {
         $validated = $request->validate([
@@ -436,9 +689,9 @@ class SiteController extends Controller
             'splash_style' => 'nullable|string|in:none,minimal,pulse,wave,gradient,particles,elegant',
             'splash_tagline' => 'nullable|string|max:100',
             // SEO
-            'meta_title' => 'nullable|string|max:60',
+            'meta_title' => 'nullable|string|max:70',
             'meta_description' => 'nullable|string|max:160',
-            'og_image' => 'nullable|string|max:500',
+            'og_image' => 'nullable|string|max:2000',
             'google_analytics_id' => 'nullable|string|max:50',
             // Social
             'facebook' => 'nullable|string|max:255',
@@ -1303,5 +1556,87 @@ class SiteController extends Controller
             'publishedAt' => $site->getPublishedAt()?->format('Y-m-d H:i:s'),
             'createdAt' => $site->getCreatedAt()->format('Y-m-d H:i:s'),
         ];
+    }
+
+    /**
+     * Get site health suggestions for dashboard
+     */
+    private function getSiteHealthSuggestions($siteModel, $site): array
+    {
+        $suggestions = [];
+        
+        // Check if site is published
+        if (!$site->isPublished()) {
+            $suggestions[] = [
+                'type' => 'warning',
+                'icon' => 'globe',
+                'message' => 'Your site is not published yet',
+                'action' => 'Publish',
+                'actionRoute' => 'growbuilder.sites.settings',
+            ];
+        }
+        
+        // Check for logo
+        if (empty($site->getLogo())) {
+            $suggestions[] = [
+                'type' => 'info',
+                'icon' => 'photo',
+                'message' => 'Add a logo to build your brand',
+                'action' => 'Add Logo',
+                'actionRoute' => 'growbuilder.sites.settings',
+            ];
+        }
+        
+        // Check for SEO settings
+        $seoSettings = $site->getSeoSettings();
+        if (empty($seoSettings['metaTitle']) || empty($seoSettings['metaDescription'])) {
+            $suggestions[] = [
+                'type' => 'info',
+                'icon' => 'magnifying-glass',
+                'message' => 'Improve SEO with meta title & description',
+                'action' => 'Add SEO',
+                'actionRoute' => 'growbuilder.sites.settings',
+            ];
+        }
+        
+        // Check for contact info
+        $contactInfo = $site->getContactInfo();
+        if (empty($contactInfo['phone']) && empty($contactInfo['email'])) {
+            $suggestions[] = [
+                'type' => 'info',
+                'icon' => 'phone',
+                'message' => 'Add contact info so customers can reach you',
+                'action' => 'Add Contact',
+                'actionRoute' => 'growbuilder.sites.settings',
+            ];
+        }
+        
+        // Check for social links
+        $socialLinks = $site->getSocialLinks();
+        $hasSocial = !empty($socialLinks['facebook']) || !empty($socialLinks['instagram']) || !empty($socialLinks['whatsapp']);
+        if (!$hasSocial) {
+            $suggestions[] = [
+                'type' => 'info',
+                'icon' => 'share',
+                'message' => 'Connect your social media accounts',
+                'action' => 'Add Social',
+                'actionRoute' => 'growbuilder.sites.settings',
+            ];
+        }
+        
+        // Check page count
+        $pageCount = $siteModel->pages()->count();
+        if ($pageCount < 2) {
+            $suggestions[] = [
+                'type' => 'info',
+                'icon' => 'document',
+                'message' => 'Add more pages to your site',
+                'action' => 'Add Pages',
+                'actionRoute' => 'growbuilder.editor',
+            ];
+        }
+        
+        // Limit to top 3 suggestions
+        return array_slice($suggestions, 0, 3);
     }
 }
