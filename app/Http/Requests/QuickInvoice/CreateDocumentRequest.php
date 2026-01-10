@@ -16,6 +16,7 @@ class CreateDocumentRequest extends FormRequest
         return [
             'document_type' => 'required|in:invoice,delivery_note,quotation,receipt',
             'document_number' => 'nullable|string|max:50',
+            'document_id' => 'nullable|string|uuid', // For editing existing documents
             
             // Business Info
             'business_name' => 'required|string|max:255',

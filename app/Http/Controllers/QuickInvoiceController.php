@@ -50,7 +50,43 @@ class QuickInvoiceController extends Controller
             'currencies' => $this->getCurrencies(),
             'templates' => TemplateStyle::all(),
             'savedProfile' => $savedProfile,
+            'editDocument' => null,
         ]);
+    }
+
+    /**
+     * Edit an existing document
+     */
+    public function edit(string $id): Response
+    {
+        try {
+            $document = $this->documentService->findDocumentWithAccess(
+                $id, 
+                auth()->id(), 
+                session()->getId()
+            );
+            
+            $savedProfile = null;
+            if (auth()->check()) {
+                $profile = QuickInvoiceProfile::where('user_id', auth()->id())->first();
+                if ($profile) {
+                    $savedProfile = $profile->toArray();
+                }
+            }
+
+            return Inertia::render('QuickInvoice/Create', [
+                'documentType' => $document->type()->value,
+                'initialTemplate' => $document->template()->value,
+                'currencies' => $this->getCurrencies(),
+                'templates' => TemplateStyle::all(),
+                'savedProfile' => $savedProfile,
+                'editDocument' => $document->toArray(),
+            ]);
+        } catch (DocumentNotFoundException $e) {
+            abort(404, 'Document not found');
+        } catch (UnauthorizedAccessException $e) {
+            abort(403, 'You do not have permission to edit this document');
+        }
     }
 
     /**
@@ -65,7 +101,32 @@ class QuickInvoiceController extends Controller
         \Log::info('QuickInvoice generate request', [
             'prepared_by' => $data['prepared_by'] ?? 'NOT SET',
             'signature' => isset($data['signature']) ? 'SET' : 'NOT SET',
+            'document_id' => $data['document_id'] ?? 'NEW',
         ]);
+
+        // Check if this is an update to an existing document
+        if (!empty($data['document_id'])) {
+            try {
+                // Verify access to the existing document
+                $existingDocument = $this->documentService->findDocumentWithAccess(
+                    $data['document_id'],
+                    auth()->id(),
+                    session()->getId()
+                );
+                
+                // Delete the old document and create a new one with the same ID
+                $this->documentService->deleteDocument($data['document_id'], auth()->id(), session()->getId());
+                
+                // Keep the same document number for updates
+                if (empty($data['document_number'])) {
+                    $data['document_number'] = $existingDocument->documentNumber()->value();
+                }
+            } catch (DocumentNotFoundException $e) {
+                return response()->json(['success' => false, 'message' => 'Document not found'], 404);
+            } catch (UnauthorizedAccessException $e) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+        }
 
         // Create and save the document (data only, no PDF storage)
         $document = $this->documentService->createDocument($data);

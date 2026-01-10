@@ -36,6 +36,44 @@ interface SavedProfile {
     default_terms: string | null;
 }
 
+interface EditDocument {
+    id: string;
+    type: string;
+    document_number: string;
+    business_info: {
+        name: string;
+        address?: string;
+        phone?: string;
+        email?: string;
+        logo?: string;
+        tax_number?: string;
+    };
+    client_info: {
+        name: string;
+        address?: string;
+        phone?: string;
+        email?: string;
+    };
+    issue_date: string;
+    due_date?: string;
+    currency: string;
+    items: Array<{
+        id?: string;
+        description: string;
+        quantity: number;
+        unit?: string;
+        unit_price: number;
+    }>;
+    tax_rate: number;
+    discount_rate: number;
+    notes?: string;
+    terms?: string;
+    template: string;
+    colors: { primary: string };
+    signature?: string;
+    prepared_by?: string;
+}
+
 // Template preview data
 const templatePreviews: Record<string, { name: string; description: string; style: string }> = {
     classic: { name: 'Classic', description: 'Traditional business style with clean lines', style: 'border-blue-600' },
@@ -50,10 +88,12 @@ const props = defineProps<{
     currencies: Currency[];
     savedProfile?: SavedProfile;
     initialTemplate?: string;
+    editDocument?: EditDocument | null;
 }>();
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
+const isEditing = computed(() => !!props.editDocument);
 const documentTypeLabels: Record<string, string> = { invoice: 'Invoice', delivery_note: 'Delivery Note', quotation: 'Quotation', receipt: 'Receipt' };
 
 const isLoading = ref(false);
@@ -93,7 +133,9 @@ const terms = ref('');
 const items = ref<LineItem[]>([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0, useAreaCalc: false, length: 0, width: 0 }]);
 
 onMounted(() => { 
-    if (props.savedProfile) {
+    if (props.editDocument) {
+        loadEditDocument(props.editDocument);
+    } else if (props.savedProfile) {
         loadSavedProfile(props.savedProfile);
         hasSavedProfile.value = true;
     } else if (isAuthenticated.value) {
@@ -101,6 +143,60 @@ onMounted(() => {
         showSetupWizard.value = true;
     }
 });
+
+const loadEditDocument = (doc: EditDocument) => {
+    // Load business info
+    businessName.value = doc.business_info.name || '';
+    businessAddress.value = doc.business_info.address || '';
+    businessPhone.value = doc.business_info.phone || '';
+    businessEmail.value = doc.business_info.email || '';
+    businessTaxNumber.value = doc.business_info.tax_number || '';
+    if (doc.business_info.logo) { 
+        businessLogo.value = doc.business_info.logo; 
+        logoPreview.value = doc.business_info.logo; 
+    }
+    
+    // Load client info
+    clientName.value = doc.client_info.name || '';
+    clientAddress.value = doc.client_info.address || '';
+    clientPhone.value = doc.client_info.phone || '';
+    clientEmail.value = doc.client_info.email || '';
+    
+    // Load document details
+    documentNumber.value = doc.document_number || '';
+    issueDate.value = doc.issue_date || new Date().toISOString().split('T')[0];
+    dueDate.value = doc.due_date || '';
+    currency.value = doc.currency || 'ZMW';
+    taxRate.value = doc.tax_rate || 0;
+    discountRate.value = doc.discount_rate || 0;
+    notes.value = doc.notes || '';
+    terms.value = doc.terms || '';
+    
+    // Load template & styling
+    selectedTemplate.value = doc.template || 'classic';
+    if (doc.colors?.primary) {
+        primaryColor.value = doc.colors.primary;
+    }
+    if (doc.signature) {
+        signature.value = doc.signature;
+        signaturePreview.value = doc.signature;
+    }
+    preparedByName.value = doc.prepared_by || '';
+    
+    // Load items
+    if (doc.items && doc.items.length > 0) {
+        items.value = doc.items.map(item => ({
+            id: item.id || crypto.randomUUID(),
+            description: item.description || '',
+            quantity: item.quantity || 1,
+            unit: item.unit || '',
+            unit_price: item.unit_price || 0,
+            useAreaCalc: false,
+            length: 0,
+            width: 0,
+        }));
+    }
+};
 
 const loadSavedProfile = (profile: SavedProfile) => {
     businessName.value = profile.name || '';
@@ -211,7 +307,7 @@ const generateDocument = async () => {
     if (!validateForm()) { document.querySelector('.text-red-600')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     isLoading.value = true; errors.value = {}; successMessage.value = '';
     try {
-        const response = await axios.post(route('quick-invoice.generate'), {
+        const payload: Record<string, any> = {
             document_type: props.documentType, document_number: documentNumber.value || undefined,
             business_name: businessName.value, business_address: businessAddress.value || undefined,
             business_phone: businessPhone.value || undefined, business_email: businessEmail.value || undefined,
@@ -230,8 +326,15 @@ const generateDocument = async () => {
                 // Include area calc details for display purposes
                 area_calc: item.useAreaCalc ? { length: item.length, width: item.width } : undefined
             })),
-        });
-        shareData.value = response.data.share; showShareModal.value = true; successMessage.value = 'Document generated!';
+        };
+        
+        // If editing, include the document ID to update instead of create
+        if (isEditing.value && props.editDocument) {
+            payload.document_id = props.editDocument.id;
+        }
+        
+        const response = await axios.post(route('quick-invoice.generate'), payload);
+        shareData.value = response.data.share; showShareModal.value = true; successMessage.value = isEditing.value ? 'Document updated!' : 'Document generated!';
     } catch (error: any) {
         if (error.response?.data?.errors) {
             for (const [key, messages] of Object.entries(error.response.data.errors)) {
@@ -324,22 +427,22 @@ const skipSetupWizard = () => {
 </script>
 
 <template>
-    <Head :title="`Create ${documentTypeLabels[documentType]}`" />
+    <Head :title="`${isEditing ? 'Edit' : 'Create'} ${documentTypeLabels[documentType]}`" />
     <div class="min-h-screen bg-gray-50">
         <header class="bg-white shadow-sm sticky top-0 z-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <Link :href="route('quick-invoice.index')" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Go back">
+                        <Link :href="isEditing ? route('quick-invoice.history') : route('quick-invoice.index')" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Go back">
                             <ArrowLeftIcon class="w-5 h-5 text-gray-600" aria-hidden="true" />
                         </Link>
                         <div>
-                            <h1 class="text-xl font-bold text-gray-900">Create {{ documentTypeLabels[documentType] }}</h1>
-                            <p class="text-sm text-gray-500">Fill in the details below</p>
+                            <h1 class="text-xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
+                            <p class="text-sm text-gray-500">{{ isEditing ? 'Update the details below' : 'Fill in the details below' }}</p>
                         </div>
                     </div>
                     <button @click="generateDocument" :disabled="isLoading" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
-                        {{ isLoading ? 'Generating...' : `Generate ${documentTypeLabels[documentType]}` }}
+                        {{ isLoading ? 'Generating...' : (isEditing ? `Update ${documentTypeLabels[documentType]}` : `Generate ${documentTypeLabels[documentType]}`) }}
                     </button>
                 </div>
             </div>

@@ -160,4 +160,3 @@ const formatDate = (date: string) => {
   @apply border-l-4 border-blue-600 pl-4 italic my-6;
 }
 </style>
-</template>

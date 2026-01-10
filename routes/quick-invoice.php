@@ -17,6 +17,7 @@ Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
     // Public pages
     Route::get('/', [QuickInvoiceController::class, 'index'])->name('index');
     Route::get('/create', [QuickInvoiceController::class, 'create'])->name('create');
+    Route::get('/edit/{id}', [QuickInvoiceController::class, 'edit'])->name('edit');
     Route::get('/history', [QuickInvoiceController::class, 'history'])->name('history');
     
     // API endpoints

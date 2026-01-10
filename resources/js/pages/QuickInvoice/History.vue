@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeftIcon, DocumentTextIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
+import { ArrowLeftIcon, DocumentTextIcon, TrashIcon, ArrowDownTrayIcon, PencilSquareIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 import { ref } from 'vue';
 
@@ -91,6 +91,9 @@ const downloadPdf = (id: string) => {
                     <div class="flex items-center gap-4">
                         <span class="font-semibold text-gray-900">{{ formatCurrency(doc.total, doc.currency) }}</span>
                         <div class="flex gap-2">
+                            <Link :href="route('quick-invoice.edit', doc.id)" class="p-2 text-gray-600 hover:bg-gray-50 rounded-lg" aria-label="Edit document">
+                                <PencilSquareIcon class="w-5 h-5" aria-hidden="true" />
+                            </Link>
                             <button @click="downloadPdf(doc.id)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" aria-label="Download PDF">
                                 <ArrowDownTrayIcon class="w-5 h-5" aria-hidden="true" />
                             </button>

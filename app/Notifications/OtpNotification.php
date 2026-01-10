@@ -47,14 +47,14 @@ class OtpNotification extends Notification implements ShouldQueue
         $expiryMinutes = now()->diffInMinutes($this->otpToken->expires_at);
 
         return (new MailMessage)
-            ->subject('VBIF - Your Verification Code')
+            ->subject('MyGrowNet - Your Verification Code')
             ->greeting('Hello ' . $notifiable->name . '!')
             ->line("You have requested a verification code for {$purposeText}.")
             ->line("Your verification code is: **{$this->otpToken->token}**")
             ->line("This code will expire in {$expiryMinutes} minutes.")
             ->line('If you did not request this code, please ignore this email or contact support if you have concerns.')
             ->line('For security reasons, never share this code with anyone.')
-            ->salutation('Best regards, VBIF Security Team');
+            ->salutation('Best regards, MyGrowNet Security Team');
     }
 
     public function toSms($notifiable): string
@@ -62,7 +62,7 @@ class OtpNotification extends Notification implements ShouldQueue
         $purposeText = $this->getPurposeText($this->otpToken->purpose);
         $expiryMinutes = now()->diffInMinutes($this->otpToken->expires_at);
 
-        return "VBIF: Your verification code for {$purposeText} is {$this->otpToken->token}. Valid for {$expiryMinutes} minutes. Never share this code.";
+        return "MyGrowNet: Your verification code for {$purposeText} is {$this->otpToken->token}. Valid for {$expiryMinutes} minutes. Never share this code.";
     }
 
     protected function getPurposeText(string $purpose): string
