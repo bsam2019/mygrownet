@@ -32,14 +32,50 @@ onMounted(() => {
         }, 30000);
     });
 
-    // Register service worker
+    // Register service worker with force update
     if ('serviceWorker' in navigator) {
+        // First, unregister any old service workers to force fresh install
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => {
+                // Check if it's an old version by checking the script URL
+                if (registration.active) {
+                    registration.update(); // Force check for updates
+                }
+            });
+        });
+
         navigator.serviceWorker.register('/marketplace-sw.js', {
-            scope: '/marketplace'
+            scope: '/marketplace',
+            updateViaCache: 'none' // Always fetch fresh SW from network
         }).then((registration) => {
             console.log('Service Worker registered:', registration);
+            
+            // Force update check
+            registration.update();
+            
+            // Listen for updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New version available, skip waiting
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    });
+                }
+            });
         }).catch((error) => {
             console.error('Service Worker registration failed:', error);
+        });
+
+        // Reload when new SW takes control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                window.location.reload();
+            }
         });
     }
 });

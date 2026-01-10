@@ -12,6 +12,13 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
+// Handle skip waiting message from client
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating service worker...');
