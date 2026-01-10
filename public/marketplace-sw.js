@@ -1,9 +1,9 @@
 // GrowNet Market Service Worker
-// Version 1.0.0
+// Version 1.0.1
 
-const CACHE_NAME = 'grownet-market-v1';
-const RUNTIME_CACHE = 'grownet-market-runtime-v1';
-const IMAGE_CACHE = 'grownet-market-images-v1';
+const CACHE_NAME = 'grownet-market-v1.0.1';
+const RUNTIME_CACHE = 'grownet-market-runtime-v1.0.1';
+const IMAGE_CACHE = 'grownet-market-images-v1.0.1';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
