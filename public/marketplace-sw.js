@@ -10,8 +10,6 @@ const PRECACHE_ASSETS = [
     '/marketplace',
     '/marketplace/cart',
     '/marketplace/search',
-    '/marketplace-assets/icon-192x192.png',
-    '/marketplace-assets/icon-512x512.png',
 ];
 
 // Install event - cache core assets
@@ -22,7 +20,15 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[SW] Precaching assets');
-                return cache.addAll(PRECACHE_ASSETS);
+                // Cache assets individually to handle failures gracefully
+                return Promise.allSettled(
+                    PRECACHE_ASSETS.map(url => 
+                        cache.add(url).catch(err => {
+                            console.warn('[SW] Failed to cache:', url, err);
+                            return Promise.resolve();
+                        })
+                    )
+                );
             })
             .then(() => self.skipWaiting())
     );
