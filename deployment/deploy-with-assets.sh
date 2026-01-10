@@ -37,33 +37,16 @@ if [ -f public/build/manifest.json ]; then
     echo "✅ Vite manifest copied to .vite directory"
 fi
 
-# Copy built assets to droplet
+# Upload built assets using rsync with compression
+# Note: Vite generates new hashed filenames each build, so most files will be "new"
+# But rsync still helps with compression (-z) and is more reliable than scp
 echo "📤 Uploading built assets to droplet..."
-scp -r public/build ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
+rsync -avz --progress --delete public/build/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/
 
 # SSH and run deployment commands
 ssh ${DROPLET_USER}@${DROPLET_IP} << ENDSSH
 
 cd ${PROJECT_PATH}
-
-# Git pull is handled separately by deploy.sh
-# Uncomment below if you want to pull code changes with assets
-# # Remove untracked files that might conflict
-# echo "🗑️  Removing conflicting files..."
-# rm -f routes/debug.php
-# 
-# # Fix permissions before git operations
-# echo "🔓 Fixing file permissions..."
-# echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R ${DROPLET_USER}:${DROPLET_USER} .
-# echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R u+w .
-# 
-# # Reset any local changes
-# echo "🔄 Resetting local changes..."
-# git reset --hard HEAD
-# 
-# # Pull latest changes
-# echo "📥 Pulling from GitHub..."
-# git pull https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/${GITHUB_USERNAME}/mygrownet.git main
 
 # Verify manifest location on server
 echo "📦 Verifying Vite manifest location..."
@@ -80,16 +63,11 @@ php artisan optimize:clear
 # Fix permissions
 echo "🔧 Fixing permissions..."
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
 
 # Optimize
 echo "🚀 Optimizing..."
 php artisan optimize
-
-# Restore secure permissions
-echo "🔒 Restoring secure permissions..."
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
-echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
 
 echo "✅ Deployment complete!"
 

@@ -1,0 +1,71 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Ensure Vite manifest location
+        run: |
+          mkdir -p public/build/.vite
+          if [ -f public/build/manifest.json ]; then
+            cp public/build/manifest.json public/build/.vite/manifest.json
+          fi
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /var/www/mygrownet.com
+            git pull origin main
+            php artisan optimize:clear
+            php artisan optimize
+
+      - name: Upload built assets
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "public/build/"
+          target: "/var/www/mygrownet.com/public/"
+          strip_components: 1
+
+      - name: Fix permissions and finalize
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /var/www/mygrownet.com
+            mkdir -p public/build/.vite
+            if [ -f public/build/manifest.json ]; then
+              cp public/build/manifest.json public/build/.vite/manifest.json
+            fi
+            php artisan optimize:clear
+            php artisan optimize
+            echo "✅ Deployment complete!"
