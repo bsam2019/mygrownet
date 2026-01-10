@@ -1,37 +1,15 @@
 // GrowNet Market Service Worker
-// Version 1.0.1
+// Version 2.0.0 - Simplified without precaching
 
-const CACHE_NAME = 'grownet-market-v1.0.1';
-const RUNTIME_CACHE = 'grownet-market-runtime-v1.0.1';
-const IMAGE_CACHE = 'grownet-market-images-v1.0.1';
+const CACHE_NAME = 'grownet-market-v2';
+const RUNTIME_CACHE = 'grownet-market-runtime-v2';
+const IMAGE_CACHE = 'grownet-market-images-v2';
 
-// Assets to cache on install
-const PRECACHE_ASSETS = [
-    '/marketplace',
-    '/marketplace/cart',
-    '/marketplace/search',
-];
-
-// Install event - cache core assets
+// Install event - skip precaching to avoid errors
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
-    
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[SW] Precaching assets');
-                // Cache assets individually to handle failures gracefully
-                return Promise.allSettled(
-                    PRECACHE_ASSETS.map(url => 
-                        cache.add(url).catch(err => {
-                            console.warn('[SW] Failed to cache:', url, err);
-                            return Promise.resolve();
-                        })
-                    )
-                );
-            })
-            .then(() => self.skipWaiting())
-    );
+    console.log('[SW] Installing service worker v2.0.0...');
+    // Skip waiting to activate immediately
+    self.skipWaiting();
 });
 
 // Activate event - clean up old caches
@@ -84,14 +62,14 @@ self.addEventListener('fetch', (event) => {
 
 // Handle image requests - cache first, then network
 async function handleImageRequest(request) {
-    const cache = await caches.open(IMAGE_CACHE);
-    const cached = await cache.match(request);
-    
-    if (cached) {
-        return cached;
-    }
-
     try {
+        const cache = await caches.open(IMAGE_CACHE);
+        const cached = await cache.match(request);
+        
+        if (cached) {
+            return cached;
+        }
+
         const response = await fetch(request);
         if (response.ok) {
             cache.put(request, response.clone());
@@ -99,23 +77,22 @@ async function handleImageRequest(request) {
         return response;
     } catch (error) {
         console.log('[SW] Image fetch failed:', error);
-        // Return placeholder image
         return new Response('', { status: 404 });
     }
 }
 
 // Handle API requests - network first, then cache
 async function handleApiRequest(request) {
-    const cache = await caches.open(RUNTIME_CACHE);
-    
     try {
         const response = await fetch(request);
         if (response.ok) {
+            const cache = await caches.open(RUNTIME_CACHE);
             cache.put(request, response.clone());
         }
         return response;
     } catch (error) {
         console.log('[SW] API fetch failed, trying cache:', error);
+        const cache = await caches.open(RUNTIME_CACHE);
         const cached = await cache.match(request);
         if (cached) {
             return cached;
@@ -129,23 +106,21 @@ async function handleApiRequest(request) {
 
 // Handle navigation requests - network first, then cache
 async function handleNavigationRequest(request) {
-    const cache = await caches.open(RUNTIME_CACHE);
-    
     try {
         const response = await fetch(request);
         if (response.ok) {
+            const cache = await caches.open(RUNTIME_CACHE);
             cache.put(request, response.clone());
         }
         return response;
     } catch (error) {
         console.log('[SW] Navigation fetch failed, trying cache:', error);
+        const cache = await caches.open(RUNTIME_CACHE);
         const cached = await cache.match(request);
         if (cached) {
             return cached;
         }
-        
-        // Return offline page
-        return caches.match('/marketplace');
+        return new Response('Offline', { status: 503 });
     }
 }
 
@@ -160,11 +135,9 @@ self.addEventListener('sync', (event) => {
 
 async function syncCart() {
     try {
-        // Get pending cart updates from IndexedDB
         const db = await openCartDB();
         const pendingUpdates = await getPendingCartUpdates(db);
         
-        // Sync each update
         for (const update of pendingUpdates) {
             await fetch('/marketplace/cart/sync', {
                 method: 'POST',
@@ -173,12 +146,10 @@ async function syncCart() {
             });
         }
         
-        // Clear pending updates
         await clearPendingCartUpdates(db);
         console.log('[SW] Cart synced successfully');
     } catch (error) {
         console.error('[SW] Cart sync failed:', error);
-        throw error;
     }
 }
 
@@ -190,13 +161,7 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'GrowNet Market';
     const options = {
         body: data.body || 'You have a new notification',
-        icon: '/marketplace-assets/icon-192x192.png',
-        badge: '/marketplace-assets/icon-96x96.png',
-        data: data.url || '/marketplace',
-        actions: [
-            { action: 'open', title: 'View' },
-            { action: 'close', title: 'Dismiss' }
-        ]
+        data: data.url || '/marketplace'
     };
     
     event.waitUntil(
@@ -206,26 +171,17 @@ self.addEventListener('push', (event) => {
 
 // Notification click
 self.addEventListener('notificationclick', (event) => {
-    console.log('[SW] Notification clicked:', event.action);
-    
     event.notification.close();
-    
-    if (event.action === 'open' || !event.action) {
-        const url = event.notification.data || '/marketplace';
-        event.waitUntil(
-            clients.openWindow(url)
-        );
-    }
+    const url = event.notification.data || '/marketplace';
+    event.waitUntil(clients.openWindow(url));
 });
 
-// Helper functions for IndexedDB (cart sync)
+// Helper functions for IndexedDB
 function openCartDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('GrowNetMarketCart', 1);
-        
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
-        
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains('pendingUpdates')) {
@@ -240,7 +196,6 @@ function getPendingCartUpdates(db) {
         const transaction = db.transaction(['pendingUpdates'], 'readonly');
         const store = transaction.objectStore('pendingUpdates');
         const request = store.getAll();
-        
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
     });
@@ -251,10 +206,9 @@ function clearPendingCartUpdates(db) {
         const transaction = db.transaction(['pendingUpdates'], 'readwrite');
         const store = transaction.objectStore('pendingUpdates');
         const request = store.clear();
-        
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
     });
 }
 
-console.log('[SW] Service worker loaded');
+console.log('[SW] Service worker v2.0.0 loaded');
