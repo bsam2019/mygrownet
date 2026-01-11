@@ -62,6 +62,8 @@ class RenderController extends Controller
         // Check if site has e-commerce enabled
         $hasEcommerce = GrowBuilderPaymentSettings::where('site_id', $site->getId()->value())->exists();
 
+        $settings = $site->getSettings();
+        
         return view('growbuilder.render', [
             'subdomain' => $site->getSubdomain()->value(),
             'site' => [
@@ -71,12 +73,12 @@ class RenderController extends Controller
                 'description' => $site->getDescription(),
                 'logo' => $site->getLogo(),
                 'favicon' => $site->getFavicon(),
-                'favicons' => $site->getSettings()['favicons'] ?? null,
+                'favicons' => $settings['favicons'] ?? null,
                 'theme' => $site->getTheme()?->toArray() ?? [],
                 'socialLinks' => $site->getSocialLinks(),
                 'contactInfo' => $site->getContactInfo(),
                 'seoSettings' => $site->getSeoSettings(),
-                'settings' => $site->getSettings(),
+                'settings' => $settings,
                 'hasEcommerce' => $hasEcommerce,
             ],
             'page' => [
@@ -87,6 +89,11 @@ class RenderController extends Controller
                 'sections' => $page->getContent()->getSections(),
             ],
             'navigation' => $navPages,
+            'settings' => [
+                'splash' => $settings['splash'] ?? ['enabled' => true, 'style' => 'minimal', 'tagline' => ''],
+                'navigation' => $settings['navigation'] ?? [],
+                'footer' => $settings['footer'] ?? [],
+            ],
         ]);
     }
 
