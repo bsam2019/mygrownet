@@ -3,6 +3,7 @@
 use App\Http\Controllers\GrowBuilder\AIController;
 use App\Http\Controllers\GrowBuilder\CheckoutController;
 use App\Http\Controllers\GrowBuilder\EditorController;
+use App\Http\Controllers\GrowBuilder\FormSubmissionController;
 use App\Http\Controllers\GrowBuilder\MediaController;
 use App\Http\Controllers\GrowBuilder\OrderController;
 use App\Http\Controllers\GrowBuilder\PaymentSettingsController;
@@ -112,6 +113,14 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::get('/sites/{siteId}/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
     Route::put('/sites/{siteId}/orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::post('/sites/{siteId}/orders/{orderId}/mark-paid', [OrderController::class, 'markAsPaid'])->name('orders.mark-paid');
+
+    // Form Submissions
+    Route::get('/sites/{siteId}/form-submissions', [FormSubmissionController::class, 'index'])->name('form-submissions.index');
+    Route::get('/sites/{siteId}/form-submissions/export', [FormSubmissionController::class, 'export'])->name('form-submissions.export');
+    Route::get('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'show'])->name('form-submissions.show');
+    Route::post('/sites/{siteId}/form-submissions/{submissionId}/toggle-read', [FormSubmissionController::class, 'toggleRead'])->name('form-submissions.toggle-read');
+    Route::post('/sites/{siteId}/form-submissions/{submissionId}/spam', [FormSubmissionController::class, 'markSpam'])->name('form-submissions.spam');
+    Route::delete('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'destroy'])->name('form-submissions.destroy');
 
     // Payment Settings (legacy)
     Route::get('/sites/{siteId}/payments', [PaymentSettingsController::class, 'index'])->name('payments.index');

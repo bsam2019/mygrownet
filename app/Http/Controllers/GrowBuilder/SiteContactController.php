@@ -5,6 +5,7 @@ namespace App\Http\Controllers\GrowBuilder;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use App\Infrastructure\GrowBuilder\Models\SiteContactMessage;
+use App\Notifications\GrowBuilder\ContactFormSubmitted;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,7 +28,7 @@ class SiteContactController extends Controller
             'message' => 'required|string|max:5000',
         ]);
 
-        SiteContactMessage::create([
+        $message = SiteContactMessage::create([
             'site_id' => $site->id,
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -37,7 +38,29 @@ class SiteContactController extends Controller
             'status' => 'unread',
         ]);
 
+        // Send email notification to site owner
+        $this->notifySiteOwner($site, $message);
+
         return response()->json(['success' => true, 'message' => 'Message sent successfully!']);
+    }
+    
+    /**
+     * Notify site owner about new contact message
+     */
+    private function notifySiteOwner(GrowBuilderSite $site, SiteContactMessage $message): void
+    {
+        try {
+            $owner = $site->user;
+            if ($owner) {
+                $siteUrl = $site->custom_domain 
+                    ? "https://{$site->custom_domain}"
+                    : "https://{$site->subdomain}.mygrownet.com";
+                    
+                $owner->notify(new ContactFormSubmitted($message, $site->name, $siteUrl));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send contact form notification: ' . $e->getMessage());
+        }
     }
 
     /**

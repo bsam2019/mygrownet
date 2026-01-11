@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -17,13 +18,19 @@ class DetectSubdomain
 
     /**
      * Handle an incoming request.
-     * Detect if request is for a GrowBuilder subdomain and route accordingly.
+     * Detect if request is for a GrowBuilder subdomain or custom domain and route accordingly.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $host = $request->getHost();
         
         \Log::info('DetectSubdomain: Host = ' . $host);
+        
+        // First, check if this is a custom domain
+        $customDomainSite = $this->findSiteByCustomDomain($host);
+        if ($customDomainSite) {
+            return $this->renderSite($request, $customDomainSite, $host, true);
+        }
         
         // Check if this is a subdomain request
         if (preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
@@ -52,26 +59,7 @@ class DetectSubdomain
                 \Log::info('DetectSubdomain: Site found = ' . ($site ? 'yes' : 'no') . ', published = ' . ($site && $site->isPublished() ? 'yes' : 'no'));
                 
                 if ($site && $site->isPublished()) {
-                    // Set the asset URL to the current subdomain to avoid CORS issues
-                    $currentUrl = "https://{$subdomain}.mygrownet.com";
-                    URL::forceRootUrl($currentUrl);
-                    config(['app.url' => $currentUrl]);
-                    
-                    // Forward to subdomain route handler
-                    $path = $request->path();
-                    $path = $path === '/' ? '' : $path;
-                    
-                    // Dispatch to the subdomain render controller
-                    $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
-                        ->render($request, $subdomain, $path ?: null);
-                    
-                    // Handle Inertia Response properly
-                    if ($result instanceof \Inertia\Response) {
-                        return $result->toResponse($request);
-                    }
-                    
-                    // Ensure we return a Response, not a View
-                    return $result instanceof Response ? $result : response($result);
+                    return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
                 }
             } catch (\Exception $e) {
                 \Log::error('DetectSubdomain: Exception - ' . $e->getMessage());
@@ -80,5 +68,62 @@ class DetectSubdomain
         }
 
         return $next($request);
+    }
+    
+    /**
+     * Find a site by custom domain
+     */
+    private function findSiteByCustomDomain(string $host): ?object
+    {
+        // Remove www. prefix if present
+        $domain = preg_replace('/^www\./i', '', $host);
+        
+        // Skip mygrownet.com domains
+        if (str_ends_with($domain, 'mygrownet.com')) {
+            return null;
+        }
+        
+        $siteModel = GrowBuilderSite::where('custom_domain', $domain)
+            ->orWhere('custom_domain', 'www.' . $domain)
+            ->where('status', 'published')
+            ->first();
+            
+        if (!$siteModel) {
+            return null;
+        }
+        
+        // Convert to domain entity
+        try {
+            return $this->siteRepository->findBySubdomain(Subdomain::fromString($siteModel->subdomain));
+        } catch (\Exception $e) {
+            \Log::error('DetectSubdomain: Custom domain lookup failed - ' . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Render the site using the RenderController
+     */
+    private function renderSite(Request $request, object $site, string $baseUrl, bool $isCustomDomain): Response
+    {
+        // Set the asset URL
+        URL::forceRootUrl($baseUrl);
+        config(['app.url' => $baseUrl]);
+        
+        // Forward to subdomain route handler
+        $path = $request->path();
+        $path = $path === '/' ? '' : $path;
+        
+        // Dispatch to the subdomain render controller
+        $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
+            ->render($request, $site->getSubdomain()->value(), $path ?: null);
+        
+        // Handle Inertia Response properly
+        if ($result instanceof \Inertia\Response) {
+            return $result->toResponse($request);
+        }
+        
+        // Ensure we return a Response, not a View
+        return $result instanceof Response ? $result : response($result);
     }
 }
