@@ -119,12 +119,26 @@
     <!-- Page Content -->
     <main>
         @foreach($page['sections'] as $section)
-            @include('growbuilder.sections.' . $section['type'], [
-                'content' => $section['content'], 
-                'style' => $section['style'] ?? [],
-                'site' => $site,
-                'subdomain' => $subdomain ?? $site['subdomain'] ?? ''
-            ])
+            @php
+                $sectionView = 'growbuilder.sections.' . $section['type'];
+                $viewExists = view()->exists($sectionView);
+            @endphp
+            
+            @if($viewExists)
+                @include($sectionView, [
+                    'content' => $section['content'], 
+                    'style' => $section['style'] ?? [],
+                    'site' => $site,
+                    'subdomain' => $subdomain ?? $site['subdomain'] ?? ''
+                ])
+            @else
+                {{-- Fallback for missing section types --}}
+                @include('growbuilder.sections.fallback', [
+                    'sectionType' => $section['type'],
+                    'content' => $section['content'], 
+                    'style' => $section['style'] ?? [],
+                ])
+            @endif
         @endforeach
     </main>
 
