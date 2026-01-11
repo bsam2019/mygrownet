@@ -21,9 +21,20 @@ class DetectSubdomain
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $host = $request->getHost();
+        // Try multiple headers for the host (Cloudflare may use different ones)
+        $host = $request->header('X-Forwarded-Host') 
+            ?? $request->header('X-Original-Host')
+            ?? $request->header('Host')
+            ?? $request->getHost();
         
         \Log::info('DetectSubdomain: Host = ' . $host);
+        \Log::info('DetectSubdomain: All headers = ' . json_encode([
+            'Host' => $request->header('Host'),
+            'X-Forwarded-Host' => $request->header('X-Forwarded-Host'),
+            'X-Original-Host' => $request->header('X-Original-Host'),
+            'CF-Connecting-IP' => $request->header('CF-Connecting-IP'),
+            'getHost()' => $request->getHost(),
+        ]));
         
         // Check if this is a subdomain request
         if (preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
