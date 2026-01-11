@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
+            // GrowBuilder subdomain routes - MUST be loaded FIRST for domain matching
+            Route::middleware('web')
+                ->group(base_path('routes/subdomain.php'));
             Route::middleware('web')
                 ->group(base_path('routes/employee-portal.php'));
             Route::middleware('web')
@@ -34,9 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growbuilder.php'));
             Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
-            // GrowBuilder subdomain routes
-            Route::middleware('web')
-                ->group(base_path('routes/subdomain.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController

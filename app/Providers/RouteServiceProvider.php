@@ -59,6 +59,10 @@ class RouteServiceProvider extends ServiceProvider
                 
             Route::middleware('web')
                 ->group(base_path('routes/marketplace.php'));
+                
+            // GrowBuilder subdomain routes - must be loaded for subdomain handling
+            Route::middleware('web')
+                ->group(base_path('routes/subdomain.php'));
         });
     }
 }
