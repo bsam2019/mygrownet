@@ -65,6 +65,11 @@ class DetectSubdomain
                     $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
                         ->render($request, $subdomain, $path ?: null);
                     
+                    // Handle Inertia Response properly
+                    if ($result instanceof \Inertia\Response) {
+                        return $result->toResponse($request);
+                    }
+                    
                     // Ensure we return a Response, not a View
                     return $result instanceof Response ? $result : response($result);
                 }
