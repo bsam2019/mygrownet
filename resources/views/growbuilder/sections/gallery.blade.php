@@ -7,10 +7,14 @@
         @if(isset($content['images']) && count($content['images']) > 0)
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($content['images'] as $image)
+            @php
+                $imageUrl = is_array($image) ? ($image['url'] ?? ($image['src'] ?? '')) : $image;
+                $imageAlt = is_array($image) ? ($image['alt'] ?? ($image['caption'] ?? 'Gallery image')) : 'Gallery image';
+            @endphp
             <div class="aspect-square overflow-hidden rounded-lg">
                 <img 
-                    src="{{ $image['url'] ?? $image }}" 
-                    alt="{{ $image['alt'] ?? 'Gallery image' }}"
+                    src="{{ $imageUrl }}" 
+                    alt="{{ $imageAlt }}"
                     class="w-full h-full object-cover hover:scale-105 transition duration-300"
                     loading="lazy"
                 >
