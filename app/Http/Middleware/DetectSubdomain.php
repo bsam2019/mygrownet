@@ -23,13 +23,9 @@ class DetectSubdomain
     {
         $host = $request->getHost();
         
-        \Log::info('DetectSubdomain: Host = ' . $host);
-        
         // Check if this is a subdomain request
         if (preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
             $subdomain = strtolower($matches[1]);
-            
-            \Log::info('DetectSubdomain: Subdomain detected = ' . $subdomain);
             
             // Skip main domain variations
             if (in_array($subdomain, ['www', 'mygrownet'])) {
@@ -51,11 +47,7 @@ class DetectSubdomain
             try {
                 $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
                 
-                \Log::info('DetectSubdomain: Site found = ' . ($site ? 'yes' : 'no'));
-                
                 if ($site && $site->isPublished()) {
-                    \Log::info('DetectSubdomain: Rendering site for subdomain ' . $subdomain);
-                    
                     // Set the asset URL to the current subdomain to avoid CORS issues
                     $currentUrl = "https://{$subdomain}.mygrownet.com";
                     URL::forceRootUrl($currentUrl);
@@ -70,9 +62,7 @@ class DetectSubdomain
                         ->render($request, $subdomain, $path ?: null);
                 }
             } catch (\Exception $e) {
-                \Log::error('DetectSubdomain: Error - ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
-                \Log::error('DetectSubdomain: Stack trace - ' . $e->getTraceAsString());
-                // Site not found, continue to main site
+                // Site not found or error, continue to main site
             }
         }
 
