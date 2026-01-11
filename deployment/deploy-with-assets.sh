@@ -37,16 +37,27 @@ if [ -f public/build/manifest.json ]; then
     echo "✅ Vite manifest copied to .vite directory"
 fi
 
-# Upload built assets using rsync with compression
-# Note: Vite generates new hashed filenames each build, so most files will be "new"
-# But rsync still helps with compression (-z) and is more reliable than scp
+# Upload built assets using scp
 echo "📤 Uploading built assets to droplet..."
-rsync -avz --progress --delete public/build/ ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/build/
+echo "⚠️  You may be prompted for the SSH password..."
+# Create a tar archive for faster upload
+cd public
+tar -czf build.tar.gz build/
+scp build.tar.gz ${DROPLET_USER}@${DROPLET_IP}:${PROJECT_PATH}/public/
+rm build.tar.gz
+cd ..
 
 # SSH and run deployment commands
 ssh ${DROPLET_USER}@${DROPLET_IP} << ENDSSH
 
 cd ${PROJECT_PATH}
+
+# Extract uploaded assets
+echo "📦 Extracting assets..."
+cd public
+tar -xzf build.tar.gz
+rm build.tar.gz
+cd ..
 
 # Verify manifest location on server
 echo "📦 Verifying Vite manifest location..."

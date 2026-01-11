@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 class SubdomainCheck
@@ -30,6 +31,12 @@ class SubdomainCheck
         if (in_array(strtolower($subdomain), $reserved)) {
             abort(404, 'This subdomain is reserved.');
         }
+
+        // Set the asset URL to the current subdomain to avoid CORS issues
+        $currentUrl = "https://{$subdomain}.mygrownet.com";
+        URL::forceRootUrl($currentUrl);
+        config(['app.url' => $currentUrl]);
+        config(['app.asset_url' => $currentUrl]);
 
         return $next($request);
     }

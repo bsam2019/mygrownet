@@ -22,6 +22,7 @@ export default defineConfig({
             },
         }),
     ],
+    base: '/build/',
     build: {
         manifest: '.vite/manifest.json',
     },
