@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -12,13 +12,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
-import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon, Smartphone as SmartphoneIcon } from 'lucide-vue-next';
+import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon, Smartphone as SmartphoneIcon, Download as DownloadIcon } from 'lucide-vue-next';
 import type { BreadcrumbItemType } from '@/types';
 import axios from 'axios';
+import { usePWA } from '@/composables/usePWA';
 
 defineProps<{
   breadcrumbs?: BreadcrumbItemType[];
 }>();
+
+// PWA install functionality
+const { isInstallable, isInstalled, isStandalone, promptInstall } = usePWA();
+const canInstall = computed(() => isInstallable.value && !isInstalled.value && !isStandalone.value);
 
 // Derive current user name from Inertia props if available
 const page = usePage();
@@ -141,6 +146,16 @@ const toggleMobileDashboard = async () => {
               <SmartphoneIcon class="mr-2 h-4 w-4" />
               <span>Mobile Dashboard</span>
               <span v-if="userDashboardPreference === 'mobile'" class="ml-auto text-primary">✓</span>
+            </button>
+          </DropdownMenuItem>
+          <DropdownMenuItem v-if="canInstall" as-child>
+            <button 
+              type="button"
+              class="w-full"
+              @click.prevent="promptInstall"
+            >
+              <DownloadIcon class="mr-2 h-4 w-4" />
+              <span>Install App</span>
             </button>
           </DropdownMenuItem>
         </div>

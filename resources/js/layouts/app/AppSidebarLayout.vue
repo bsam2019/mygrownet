@@ -2,7 +2,6 @@
 import AppSidebar from '@/components/MyGrowNetSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
-import InstallPrompt from '@/Components/Mobile/InstallPrompt.vue';
 import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';
 import type { BreadcrumbItemType, NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
@@ -82,9 +81,6 @@ onMounted(() => {
                 <slot />
             </main>
         </div>
-        
-        <!-- PWA Install Prompt -->
-        <InstallPrompt />
 
         <!-- Live Chat Support Widget -->
         <UnifiedLiveChatWidget
