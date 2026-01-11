@@ -58,8 +58,11 @@ class DetectSubdomain
                     $path = $path === '/' ? '' : $path;
                     
                     // Dispatch to the subdomain render controller
-                    return app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
+                    $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
                         ->render($request, $subdomain, $path ?: null);
+                    
+                    // Ensure we return a Response, not a View
+                    return $result instanceof Response ? $result : response($result);
                 }
             } catch (\Exception $e) {
                 // Site not found or error, continue to main site
