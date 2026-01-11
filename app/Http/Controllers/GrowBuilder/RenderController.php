@@ -8,7 +8,10 @@ use App\Domain\GrowBuilder\ValueObjects\Subdomain;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderPaymentSettings;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderProduct;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RenderController extends Controller
 {
@@ -48,64 +51,88 @@ class RenderController extends Controller
         // Track page view
         $this->trackPageView($request, $site, $page);
 
+        // Get the Eloquent model for additional data
+        $siteModel = GrowBuilderSite::find($site->getId()->value());
+
         // Get navigation pages
-        $navPages = collect($this->pageRepository->findPublishedBySiteId($site->getId()))
-            ->filter(fn($p) => $p->showInNav())
-            ->sortBy(fn($p) => $p->getNavOrder())
+        $navPages = $siteModel->pages()
+            ->where('is_published', true)
+            ->where('show_in_nav', true)
+            ->orderBy('nav_order')
+            ->get()
             ->map(fn($p) => [
-                'title' => $p->getTitle(),
-                'slug' => $p->getSlug(),
-                'isHomepage' => $p->isHomepage(),
-            ])
-            ->values();
+                'id' => $p->id,
+                'title' => $p->title,
+                'slug' => $p->slug,
+                'isHomepage' => $p->is_homepage,
+            ]);
 
-        // Check if site has e-commerce enabled
-        $hasEcommerce = GrowBuilderPaymentSettings::where('site_id', $site->getId()->value())->exists();
+        // Get page model
+        $pageModel = $siteModel->pages()->where('slug', $slug ?? '')->first() 
+            ?? $siteModel->pages()->where('is_homepage', true)->first();
 
-        $settings = $site->getSettings();
-        
-        return view('growbuilder.render', [
-            'subdomain' => $site->getSubdomain()->value(),
+        // Get products if e-commerce is enabled
+        $products = GrowBuilderProduct::where('site_id', $site->getId()->value())
+            ->where('is_active', true)
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'slug' => $p->slug,
+                'price' => $p->price,
+                'priceFormatted' => $p->formatted_price,
+                'comparePrice' => $p->compare_price,
+                'comparePriceFormatted' => $p->compare_price ? 'K' . number_format($p->compare_price / 100, 2) : null,
+                'image' => $p->main_image,
+                'images' => $p->images,
+                'shortDescription' => $p->short_description,
+                'category' => $p->category,
+                'inStock' => $p->isInStock(),
+                'isFeatured' => $p->is_featured,
+                'hasDiscount' => $p->hasDiscount(),
+                'discountPercentage' => $p->discount_percentage,
+            ]);
+
+        // Use Inertia to render the same Vue component as preview
+        return Inertia::render('GrowBuilder/Preview/Site', [
             'site' => [
                 'id' => $site->getId()->value(),
                 'name' => $site->getName(),
                 'subdomain' => $site->getSubdomain()->value(),
-                'description' => $site->getDescription(),
+                'theme' => $site->getTheme()?->toArray() ?? [],
                 'logo' => $site->getLogo(),
                 'favicon' => $site->getFavicon(),
-                'favicons' => $settings['favicons'] ?? null,
-                'theme' => $site->getTheme()?->toArray() ?? [],
-                'socialLinks' => $site->getSocialLinks(),
-                'contactInfo' => $site->getContactInfo(),
-                'seoSettings' => $site->getSeoSettings(),
-                'settings' => $settings,
-                'hasEcommerce' => $hasEcommerce,
+                'url' => "https://{$subdomain}.mygrownet.com",
             ],
             'page' => [
-                'title' => $page->getTitle(),
-                'metaTitle' => $page->getEffectiveMetaTitle(),
-                'metaDescription' => $page->getMetaDescription(),
-                'ogImage' => $page->getOgImage(),
-                'sections' => $page->getContent()->getSections(),
+                'id' => $pageModel->id,
+                'title' => $pageModel->title,
+                'slug' => $pageModel->slug,
+                'content' => $pageModel->content_json,
+                'isHomepage' => $pageModel->is_homepage,
             ],
-            'navigation' => $navPages,
-            'settings' => [
-                'splash' => $settings['splash'] ?? ['enabled' => true, 'style' => 'minimal', 'tagline' => ''],
-                'navigation' => $settings['navigation'] ?? [],
-                'footer' => $settings['footer'] ?? [],
-            ],
+            'pages' => $navPages,
+            'settings' => $siteModel->settings,
+            'products' => $products,
+            'isPreview' => false,
+            'showWatermark' => false, // Don't show watermark on live subdomain
         ]);
     }
 
     private function renderCheckout($site)
     {
+        $siteModel = GrowBuilderSite::find($site->getId()->value());
         $paymentSettings = GrowBuilderPaymentSettings::where('site_id', $site->getId()->value())->first();
 
-        return view('growbuilder.checkout', [
+        return Inertia::render('GrowBuilder/Preview/Checkout', [
             'site' => [
+                'id' => $site->getId()->value(),
                 'name' => $site->getName(),
                 'subdomain' => $site->getSubdomain()->value(),
+                'theme' => $site->getTheme()?->toArray() ?? [],
+                'logo' => $site->getLogo(),
             ],
+            'settings' => $siteModel->settings,
             'paymentSettings' => $paymentSettings ? $paymentSettings->toArray() : [
                 'momo_enabled' => false,
                 'airtel_enabled' => false,
