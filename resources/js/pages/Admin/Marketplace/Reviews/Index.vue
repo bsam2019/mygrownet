@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import MarketplaceAdminLayout from '@/layouts/MarketplaceAdminLayout.vue';
 import { StarIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/vue/24/outline';
 
@@ -76,15 +77,8 @@ const renderStars = (rating: number) => {
 <template>
   <Head title="Review Moderation - Admin" />
 
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Review Moderation</h1>
-        <p class="mt-2 text-gray-600">Approve or reject product reviews</p>
-      </div>
-
-      <!-- Filters -->
+  <MarketplaceAdminLayout title="Review Moderation">
+    <!-- Filters -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-end gap-4">
           <div class="flex-1">
@@ -223,6 +217,5 @@ const renderStars = (rating: number) => {
           </Link>
         </div>
       </div>
-    </div>
-  </div>
+  </MarketplaceAdminLayout>
 </template>

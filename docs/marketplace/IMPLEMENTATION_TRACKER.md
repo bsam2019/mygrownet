@@ -1,361 +1,366 @@
 # GrowNet Market - Implementation Tracker
 
-**Last Updated:** December 19, 2025  
-**Status:** Phase 1 - Foundation Building
+**Last Updated:** January 11, 2026  
+**Status:** MVP Ready for Soft Launch (Testing/Demo)
 
 ---
 
-## Implementation Progress
+## Current Status Summary
 
-### 🔴 CRITICAL PRIORITY
+| Area | Status | Notes |
+|------|--------|-------|
+| Seller Registration | ✅ Complete | KYC workflow, verification |
+| Product Management | ✅ Complete | CRUD, media library, moderation |
+| Product Moderation | ✅ Complete | Approve/reject/request changes, appeals |
+| Commission System | ✅ Complete | Tiered: 10%/8%/5% based on performance |
+| Buyer Flow | ✅ Complete | Browse, cart, checkout, orders |
+| Admin Panel | ✅ Complete | All moderation features |
+| Payment Integration | 🔴 Missing | **CRITICAL** - Placeholder only |
+| Seller Payouts | 🔴 Missing | **CRITICAL** - No withdrawal system |
+| Notifications | 🟠 Partial | Flash messages only, no email/SMS |
 
-#### 1. PWA Setup ✅ IN PROGRESS
-- [x] Create PWA manifest (grownet-market-manifest.json)
-- [ ] Create service worker for offline support
-- [ ] Add "Add to Home Screen" prompt
-- [ ] Implement offline product browsing
-- [ ] Cache product images
-- [ ] Background sync for cart
+---
 
-**Files:**
-- `public/grownet-market-manifest.json` ✅
-- `public/marketplace-sw.js` (pending)
-- `resources/js/pwa/marketplace-install.ts` (pending)
+## ✅ COMPLETED FEATURES
 
-#### 2. Admin Panel ✅ COMPLETE
-- [x] Admin authentication & authorization
-- [x] Seller approval workflow
+### Seller System
+- [x] Seller registration wizard with KYC upload
+- [x] KYC approval/rejection workflow
+- [x] Seller dashboard with stats
+- [x] Tiered commission system (New 10%, Trusted 8%, Top 5%)
+- [x] Automatic tier calculation based on performance
+- [x] Seller profile management
+- [x] Media library for product images
+- [x] `EnsureUserIsSeller` middleware for route protection
+
+### Product Management
+- [x] Product CRUD operations
+- [x] Image upload with media library integration
 - [x] Product moderation queue
-- [x] Order monitoring dashboard
-- [x] Dispute resolution interface
+- [x] Rejection categories (8 types)
+- [x] Field-specific feedback for sellers
+- [x] "Request Changes" status
+- [x] Appeal flow for rejected products
+- [x] Product status tracking (pending, active, rejected, changes_requested)
+
+### Buyer Experience
+- [x] Product browsing and search
+- [x] Category navigation
+- [x] Product detail pages
+- [x] Shopping cart (session-based)
+- [x] Checkout flow
+- [x] Order tracking
+- [x] Order history
+- [x] Reviews and ratings
+
+### Admin Panel
+- [x] Dashboard with stats
+- [x] Seller approval/rejection
+- [x] Product moderation with detailed feedback
+- [x] Order monitoring
+- [x] Dispute resolution
 - [x] Review moderation
-- [x] Analytics dashboard (basic)
-- [ ] Category management (future)
-- [ ] User management (future)
+- [x] Category management
+- [x] MarketplaceAdminLayout with navigation
 
-**Files:**
-- `app/Http/Controllers/Admin/MarketplaceAdminController.php` ✅
-- `app/Http/Middleware/MarketplaceAdmin.php` ✅
-- `resources/js/pages/Admin/Marketplace/Dashboard.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Sellers/Index.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Products/Index.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Disputes/Show.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Reviews/Index.vue` ✅
-- `routes/admin-marketplace.php` ✅
-
-#### 3. Ratings & Reviews ✅ COMPLETE
-- [x] Database schema (reviews table)
-- [x] Review submission form
-- [x] Rating display on products
-- [x] Seller rating aggregation
-- [x] Review moderation
-- [x] Verified purchase badges
-- [x] Helpful votes on reviews
-- [x] Seller responses to reviews
-
-**Files:**
-- `database/migrations/*_create_marketplace_reviews_table.php` ✅
-- `app/Models/MarketplaceReview.php` ✅
-- `app/Http/Controllers/Marketplace/ReviewController.php` ✅
-- `resources/js/components/Marketplace/ReviewForm.vue` ✅
-- `resources/js/components/Marketplace/ReviewList.vue` ✅
+### Technical Infrastructure
+- [x] Domain services (SellerService, ProductService, OrderService, EscrowService, SellerTierService)
+- [x] Marketplace config (`config/marketplace.php`)
+- [x] Route protection middleware
+- [x] Artisan command for tier recalculation
 
 ---
 
-### 🟠 HIGH PRIORITY
+## 🔴 CRITICAL MISSING FEATURES
 
-#### 4. Delivery & Logistics ✅ BACKEND READY
-- [x] Courier service interface
-- [x] Manual courier service (Postnet, DHL, Aramex, Fedex)
-- [x] DHL API adapter (future)
-- [x] Configuration setup
-- [ ] Delivery method selector UI
-- [ ] Seller shipping interface
-- [ ] Tracking display for buyers
-- [ ] Pickup station management
-- [ ] Delivery scheduling
-- [ ] Proof of delivery upload
+### 1. Payment Gateway Integration
+**Priority:** CRITICAL  
+**Blocks:** Real transactions
 
-**Files:**
-- `app/Services/Delivery/CourierInterface.php` ✅
-- `app/Services/Delivery/ManualCourierService.php` ✅
-- `app/Services/Delivery/DHLAdapter.php` ✅
-- `config/marketplace.php` ✅ (delivery section)
-- `resources/js/components/Marketplace/DeliveryMethodSelector.vue` (pending)
-- `resources/js/components/Marketplace/TrackingDisplay.vue` (pending)
-
-#### 5. Trust & Safety 📋 PLANNED
-- [ ] Dispute resolution workflow
-- [ ] Fraud detection system
-- [ ] Seller performance metrics
-- [ ] Buyer protection guarantee
-- [ ] Report listing functionality
-- [ ] Blacklist/ban system
+**Required:**
+- MTN Mobile Money API integration
+- Airtel Money API integration
+- Payment verification callbacks
+- Transaction logging
+- Error handling and retries
 
 **Files Needed:**
-- `app/Models/MarketplaceDispute.php`
-- `app/Domain/Marketplace/Services/DisputeService.php`
-- `app/Domain/Marketplace/Services/FraudDetectionService.php`
+```
+app/Domain/Marketplace/Services/PaymentService.php
+app/Domain/Marketplace/Services/MoMoPaymentAdapter.php
+app/Domain/Marketplace/Services/AirtelPaymentAdapter.php
+app/Http/Controllers/Marketplace/PaymentCallbackController.php
+database/migrations/xxxx_create_marketplace_transactions_table.php
+```
 
-#### 6. Financial Management 📋 PLANNED
-- [ ] Automated payout system
-- [ ] Payout scheduling
-- [ ] Transaction history
-- [ ] Invoice generation
-- [ ] Tax calculation
-- [ ] Commission management
-- [ ] Refund processing
+**Existing Infrastructure:**
+- `app/Services/Payment/` - Check if MoMo integration exists for other modules
+- May be able to reuse existing payment adapters
 
-**Files Needed:**
-- `app/Services/Financial/PayoutService.php`
-- `app/Models/MarketplacePayout.php`
-- `app/Models/MarketplaceTransaction.php`
+### 2. Seller Payout System
+**Priority:** CRITICAL  
+**Blocks:** Seller earnings withdrawal
 
----
-
-### 🟡 MEDIUM PRIORITY
-
-#### 7. Search & Discovery 📋 PLANNED
-- [ ] Advanced filters (price, location, rating)
-- [ ] Search autocomplete
-- [ ] Search history
-- [ ] Trending products
-- [ ] Personalized recommendations
-- [ ] "Customers also bought"
-- [ ] Recently viewed
-- [ ] Wishlist
-- [ ] Product comparison
+**Required:**
+- Payout request form
+- Payout approval workflow (admin)
+- Mobile money disbursement
+- Payout history
+- Minimum payout threshold
+- Payout scheduling (instant vs batch)
 
 **Files Needed:**
-- `app/Services/Search/ProductSearchService.php`
-- `app/Services/Recommendation/RecommendationEngine.php`
-- `app/Models/MarketplaceWishlist.php`
+```
+app/Models/MarketplacePayout.php
+app/Domain/Marketplace/Services/PayoutService.php
+app/Http/Controllers/Marketplace/SellerPayoutController.php
+resources/js/pages/Marketplace/Seller/Payouts/Index.vue
+resources/js/pages/Marketplace/Seller/Payouts/Request.vue
+resources/js/pages/Admin/Marketplace/Payouts/Index.vue
+database/migrations/xxxx_create_marketplace_payouts_table.php
+```
 
-#### 8. Seller Tools 📋 PLANNED
-- [ ] Bulk product upload (CSV)
-- [ ] Inventory management
-- [ ] Low stock alerts
-- [ ] Sales analytics
-- [ ] Customer insights
-- [ ] Marketing tools (promotions, coupons)
-- [ ] Product variants
-- [ ] Shipping templates
-- [ ] Automated responses
+**Business Rules:**
+- Minimum payout: K50 (configurable)
+- Processing time: 24-48 hours
+- Payout methods: MTN MoMo, Airtel Money, Bank Transfer
+- Commission deducted before payout
+
+### 3. Escrow Release Logic
+**Priority:** CRITICAL  
+**Blocks:** Proper fund flow
+
+**Current State:**
+- `EscrowService` exists but release logic incomplete
+- Funds held in escrow after payment
+- No automatic release on order completion
+
+**Required:**
+- Auto-release after buyer confirms delivery
+- Auto-release after X days if no dispute
+- Hold funds during dispute
+- Partial release for partial refunds
+
+**Files to Update:**
+```
+app/Domain/Marketplace/Services/EscrowService.php
+app/Console/Commands/ReleaseEscrowFunds.php (scheduled task)
+```
+
+---
+
+## 🟠 HIGH PRIORITY MISSING FEATURES
+
+### 4. Order Notifications
+**Priority:** HIGH  
+**Impact:** User experience
+
+**Required:**
+- Email notifications (order placed, shipped, delivered)
+- SMS notifications (optional)
+- In-app notifications
+- Seller notifications (new order, dispute opened)
 
 **Files Needed:**
-- `app/Services/Seller/BulkUploadService.php`
-- `app/Services/Seller/InventoryService.php`
-- `app/Models/MarketplacePromotion.php`
-- `app/Models/MarketplaceCoupon.php`
+```
+app/Notifications/Marketplace/OrderPlacedNotification.php
+app/Notifications/Marketplace/OrderShippedNotification.php
+app/Notifications/Marketplace/OrderDeliveredNotification.php
+app/Notifications/Marketplace/NewOrderForSellerNotification.php
+app/Notifications/Marketplace/DisputeOpenedNotification.php
+```
 
-#### 9. Communication 📋 PLANNED
-- [ ] In-app messaging (buyer-seller)
-- [ ] SMS notifications
-- [ ] WhatsApp notifications
-- [ ] Email templates
-- [ ] Push notifications
-- [ ] Order status updates
-- [ ] Marketing communications
+### 5. Delivery/Shipping System
+**Priority:** HIGH  
+**Impact:** Order fulfillment
 
-**Files Needed:**
-- `app/Services/Communication/MessagingService.php`
-- `app/Services/Communication/WhatsAppService.php`
-- `app/Models/MarketplaceMessage.php`
-- `app/Notifications/Marketplace/*.php`
+**Current State:**
+- Backend services exist (`ManualCourierService`, `DHLAdapter`)
+- No UI for sellers to manage shipping
 
----
-
-### 🟢 GROWTH FEATURES
-
-#### 10. Marketing & Growth 📋 PLANNED
-- [ ] Referral program
-- [ ] Affiliate system
-- [ ] Social media integration
-- [ ] Email marketing
-- [ ] SMS marketing
-- [ ] Promotional banners
-- [ ] Flash sales
-- [ ] Daily deals
-- [ ] SEO optimization
+**Required:**
+- Shipping method selector at checkout
+- Seller shipping interface (add tracking, mark shipped)
+- Tracking display for buyers
+- Delivery cost calculation
 
 **Files Needed:**
-- `app/Services/Marketing/ReferralService.php`
-- `app/Services/Marketing/CampaignService.php`
-- `app/Models/MarketplaceReferral.php`
+```
+resources/js/components/Marketplace/DeliveryMethodSelector.vue
+resources/js/components/Marketplace/TrackingDisplay.vue
+resources/js/pages/Marketplace/Seller/Orders/Ship.vue
+```
 
 ---
 
-## Current Session Focus
+## 🟡 MEDIUM PRIORITY MISSING FEATURES
 
-### Session 3: Models + PWA Complete (Dec 19, 2025) ✅
-**Goal:** Complete all models and PWA implementation
+### 6. Admin Pages (Incomplete)
+**Priority:** MEDIUM
 
-**Completed:**
-1. ✅ Created 10 Eloquent models with relationships
-2. ✅ Created service worker with offline support
-3. ✅ Created PWA install prompt component
-4. ✅ Integrated PWA into marketplace layout
-5. ✅ Implemented caching strategies
-6. ✅ Added background sync for cart
-7. ✅ Added push notification support
+**Missing:**
+- `Admin/Marketplace/Sellers/Index.vue` - List all sellers
+- `Admin/Marketplace/Orders/Show.vue` - Order details
+- `Admin/Marketplace/Payouts/Index.vue` - Payout management
 
-**Time Spent:** ~2 hours
+### 7. Analytics Dashboard
+**Priority:** MEDIUM
 
-**Files Created:**
-- 10 model files (MarketplaceReview, Dispute, Message, etc.)
-- `public/marketplace-sw.js` (service worker)
-- `resources/js/components/Marketplace/PWAInstallPrompt.vue`
+**Current:** Placeholder page only
 
----
+**Required:**
+- Sales charts (daily, weekly, monthly)
+- Top sellers
+- Top products
+- Revenue breakdown
+- Order status distribution
 
-## Next Sessions
+### 8. Search & Filters
+**Priority:** MEDIUM
 
-### Session 4: Admin Panel + Reviews Complete (Dec 19, 2025) ✅
-**Goal:** Complete admin panel and reviews UI
+**Current:** Basic search only
 
-**Completed:**
-1. ✅ Admin backend complete (all CRUD operations)
-2. ✅ Admin middleware for authorization
-3. ✅ Admin routes registered
-4. ✅ Admin Dashboard page
-5. ✅ Sellers Index page with filters
-6. ✅ Products Index page with moderation queue
-7. ✅ Disputes Show page with resolution interface
-8. ✅ Reviews Index page with approval/rejection
-9. ✅ Review submission and display components
-10. ✅ Delivery system backend (ManualCourierService + DHLAdapter)
-
-**Time Spent:** ~4 hours
-
-**Files Created:**
-- `app/Http/Controllers/Admin/MarketplaceAdminController.php` ✅
-- `app/Http/Middleware/MarketplaceAdmin.php` ✅
-- `routes/admin-marketplace.php` ✅
-- `resources/js/pages/Admin/Marketplace/Dashboard.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Sellers/Index.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Products/Index.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Disputes/Show.vue` ✅
-- `resources/js/pages/Admin/Marketplace/Reviews/Index.vue` ✅
-- `app/Services/Delivery/ManualCourierService.php` ✅
-- `app/Services/Delivery/DHLAdapter.php` ✅
+**Required:**
+- Price range filter
+- Location filter
+- Rating filter
+- Sort options (price, rating, newest)
+- Search autocomplete
 
 ---
 
-### Session 5: Delivery UI + Payment Integration (NEXT)
-**Estimated Time:** 10-14 hours
+## 🟢 LOW PRIORITY (Future Enhancements)
 
-**Tasks:**
-- [ ] Create DeliveryMethodSelector component
-- [ ] Add "Ship Order" functionality to seller order page
-- [ ] Create tracking number input modal
-- [ ] Create TrackingDisplay component for buyers
-- [ ] MTN MoMo API integration
-- [ ] Airtel Money API integration
-- [ ] Zamtel Kwacha integration
-- [ ] Payment verification system
-- [ ] Automated payout system
+### 9. Seller Tools
+- Bulk product upload (CSV)
+- Inventory alerts
+- Sales analytics
+- Promotional tools (coupons, discounts)
 
-### Session 6: Advanced Features
-**Estimated Time:** 12-16 hours
+### 10. Communication
+- In-app messaging (buyer-seller)
+- WhatsApp integration
+- Automated responses
 
-**Tasks:**
-- [ ] Advanced search & filters
-- [ ] Seller tools (bulk upload, analytics)
-- [ ] In-app messaging UI
-- [ ] WhatsApp integration
-- [ ] Marketing tools
-
----### Session 6: Delivery & Tracking
-**Estimated Time:** 6-8 hours
-
-**Tasks:**
-- [ ] Courier integration (Zoom, DHL)
-- [ ] Tracking system
-- [ ] Pickup station management
-- [ ] Delivery cost calculator
-
-### Session 7: Advanced Features
-**Estimated Time:** 12-16 hours
-
-**Tasks:**
-- [ ] Advanced search & filters
-- [ ] Seller tools (bulk upload, analytics)
-- [ ] In-app messaging UI
-- [ ] WhatsApp integration
-- [ ] Marketing tools
+### 11. Marketing
+- Referral program
+- Flash sales
+- Featured products
+- Email marketing
 
 ---
 
-## Technical Debt & Improvements
+## Implementation Order (Recommended)
 
-### Code Quality
-- [ ] Add comprehensive tests for all features
-- [ ] Improve error handling
-- [ ] Add logging for critical operations
-- [ ] Performance optimization
+### Phase 1: Payment (1-2 weeks)
+1. Payment gateway integration (MTN MoMo first)
+2. Payment verification callbacks
+3. Transaction logging
 
-### Documentation
-- [ ] API documentation
-- [ ] Seller onboarding guide
-- [ ] Admin manual
-- [ ] Developer setup guide
+### Phase 2: Payouts (1 week)
+1. Payout request system
+2. Admin approval workflow
+3. Mobile money disbursement
 
-### Security
-- [ ] Security audit
-- [ ] Penetration testing
-- [ ] Rate limiting
-- [ ] CSRF protection review
+### Phase 3: Escrow & Notifications (1 week)
+1. Escrow release logic
+2. Email notifications
+3. In-app notifications
 
----
+### Phase 4: Shipping (1 week)
+1. Shipping UI for sellers
+2. Tracking display
+3. Delivery cost calculation
 
-## Metrics to Track
-
-### Development Metrics
-- Features completed per week
-- Bug fix rate
-- Code coverage
-- Performance benchmarks
-
-### Business Metrics
-- Seller signups
-- Product listings
-- Order completion rate
-- Payment success rate
-- Dispute rate
-- Customer satisfaction
+### Phase 5: Polish (ongoing)
+1. Missing admin pages
+2. Analytics dashboard
+3. Search improvements
 
 ---
 
-## Notes
+## Database Migrations Needed
 
-- This is a massive implementation spanning 10+ major feature areas
-- Prioritization is critical - focus on revenue-generating features first
-- Each feature should be tested thoroughly before moving to next
-- Documentation should be updated as features are completed
-- Regular demos to stakeholders for feedback
+```php
+// 1. Transactions table
+Schema::create('marketplace_transactions', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('order_id')->constrained('marketplace_orders');
+    $table->string('payment_method'); // momo, airtel, bank
+    $table->string('transaction_reference')->unique();
+    $table->string('external_reference')->nullable();
+    $table->integer('amount');
+    $table->string('status'); // pending, completed, failed
+    $table->json('metadata')->nullable();
+    $table->timestamps();
+});
+
+// 2. Payouts table
+Schema::create('marketplace_payouts', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('seller_id')->constrained('marketplace_sellers');
+    $table->integer('amount');
+    $table->string('payout_method'); // momo, airtel, bank
+    $table->string('account_number');
+    $table->string('account_name');
+    $table->string('status'); // pending, processing, completed, failed
+    $table->string('reference')->unique();
+    $table->text('notes')->nullable();
+    $table->foreignId('approved_by')->nullable()->constrained('users');
+    $table->timestamp('approved_at')->nullable();
+    $table->timestamp('processed_at')->nullable();
+    $table->timestamps();
+});
+```
 
 ---
 
-## Resources Needed
+## Config Updates Needed
 
-### Development
-- 1-2 full-time developers
-- 1 UI/UX designer
-- 1 QA tester
+```php
+// config/marketplace.php additions
+'payments' => [
+    'providers' => [
+        'momo' => [
+            'enabled' => true,
+            'api_key' => env('MTN_MOMO_API_KEY'),
+            'api_secret' => env('MTN_MOMO_API_SECRET'),
+            'environment' => env('MTN_MOMO_ENV', 'sandbox'),
+        ],
+        'airtel' => [
+            'enabled' => true,
+            'client_id' => env('AIRTEL_CLIENT_ID'),
+            'client_secret' => env('AIRTEL_CLIENT_SECRET'),
+        ],
+    ],
+],
 
-### Infrastructure
-- Payment gateway accounts (MTN, Airtel, Zamtel)
-- Courier API access
-- SMS gateway
-- WhatsApp Business API
-- Cloud storage (images)
+'payouts' => [
+    'minimum_amount' => 5000, // K50 in ngwee
+    'processing_days' => 2,
+    'auto_approve_threshold' => 100000, // K1000 - auto-approve below this
+],
 
-### Legal & Compliance
-- Terms of Service review
-- Privacy Policy update
-- Payment license (if required)
-- Tax compliance setup
+'escrow' => [
+    'auto_release_days' => 7, // Release funds 7 days after delivery if no dispute
+    'dispute_hold_days' => 14, // Hold funds during dispute resolution
+],
+```
 
 ---
 
-**Remember:** Build incrementally, test thoroughly, ship frequently. Quality over speed.
+## Changelog
+
+### January 11, 2026
+- Updated tracker with current implementation status
+- Added detailed missing features documentation
+- Added implementation order recommendation
+- Added database migration schemas
+- Added config updates needed
+- Marked MVP features as complete
+
+### December 19, 2025
+- Initial tracker created
+- Admin panel completed
+- Reviews system completed
+- Delivery backend completed

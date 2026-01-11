@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\MarketplaceAdminController;
+use App\Http\Middleware\MarketplaceAdmin;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,7 +17,7 @@ use App\Http\Controllers\Admin\MarketplaceAdminController;
 |
 */
 
-Route::middleware(['auth', 'verified', App\Http\Middleware\MarketplaceAdmin::class])
+Route::middleware(['auth', 'verified', MarketplaceAdmin::class])
     ->prefix('admin/marketplace')
     ->name('admin.marketplace.')
     ->group(function () {
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\MarketplaceAdmin::cla
         Route::get('/products/{id}', [MarketplaceAdminController::class, 'productShow'])->name('products.show');
         Route::post('/products/{id}/approve', [MarketplaceAdminController::class, 'approveProduct'])->name('products.approve');
         Route::post('/products/{id}/reject', [MarketplaceAdminController::class, 'rejectProduct'])->name('products.reject');
+        Route::post('/products/{id}/request-changes', [MarketplaceAdminController::class, 'requestChanges'])->name('products.request-changes');
         
         // Order Monitoring
         Route::get('/orders', [MarketplaceAdminController::class, 'orders'])->name('orders.index');
@@ -49,8 +51,7 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\MarketplaceAdmin::cla
         
         // Reviews Moderation
         Route::get('/reviews', [MarketplaceAdminController::class, 'reviews'])->name('reviews.index');
-        Route::post('/reviews/{id}/approve', [MarketplaceAdminController::class, 'approveReview'])->name('reviews.approve');
-        Route::post('/reviews/{id}/reject', [MarketplaceAdminController::class, 'rejectReview'])->name('reviews.reject');
+        Route::delete('/reviews/{id}', [MarketplaceAdminController::class, 'deleteReview'])->name('reviews.destroy');
         
         // Categories Management
         Route::get('/categories', [MarketplaceAdminController::class, 'categories'])->name('categories.index');

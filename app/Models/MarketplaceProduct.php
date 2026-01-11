@@ -26,14 +26,23 @@ class MarketplaceProduct extends Model
         'is_featured',
         'views',
         'rejection_reason',
+        'rejection_category',
+        'field_feedback',
+        'appeal_message',
+        'appealed_at',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
         'images' => 'array',
+        'field_feedback' => 'array',
         'is_featured' => 'boolean',
         'is_bizboost_synced' => 'boolean',
         'price' => 'integer',
         'compare_price' => 'integer',
+        'appealed_at' => 'datetime',
+        'reviewed_at' => 'datetime',
     ];
 
     protected $appends = [

@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'account.type' => \App\Presentation\Http\Middleware\CheckAccountType::class,
         'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
         'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
+        'marketplaceAdmin' => \App\Http\Middleware\MarketplaceAdmin::class,
     ];
 }

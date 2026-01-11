@@ -23,10 +23,17 @@ class MarketplaceSeller extends Model
         'description',
         'logo_path',
         'trust_level',
+        'commission_rate',
         'kyc_status',
         'kyc_documents',
         'kyc_rejection_reason',
         'total_orders',
+        'completed_orders',
+        'total_sales_amount',
+        'dispute_rate',
+        'cancellation_rate',
+        'response_rate',
+        'tier_calculated_at',
         'rating',
         'is_active',
     ];
@@ -36,6 +43,18 @@ class MarketplaceSeller extends Model
         'is_active' => 'boolean',
         'is_bizboost_synced' => 'boolean',
         'rating' => 'float',
+        'commission_rate' => 'float',
+        'dispute_rate' => 'float',
+        'cancellation_rate' => 'float',
+        'response_rate' => 'float',
+        'tier_calculated_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'logo_url',
+        'trust_badge',
+        'trust_label',
+        'effective_commission_rate',
     ];
 
     public function user(): BelongsTo
@@ -61,6 +80,11 @@ class MarketplaceSeller extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(MarketplaceReview::class, 'seller_id');
+    }
+
+    public function disputes(): HasMany
+    {
+        return $this->hasMany(MarketplaceDispute::class, 'seller_id');
     }
 
     public function getLogoUrlAttribute(): ?string
@@ -93,5 +117,26 @@ class MarketplaceSeller extends Model
     public function canAcceptOrders(): bool
     {
         return $this->is_active && $this->kyc_status === 'approved';
+    }
+
+    /**
+     * Get the effective commission rate (custom or tier-based)
+     */
+    public function getEffectiveCommissionRateAttribute(): float
+    {
+        if ($this->commission_rate && $this->commission_rate > 0) {
+            return $this->commission_rate;
+        }
+
+        $rates = config('marketplace.commission.rates', []);
+        return $rates[$this->trust_level] ?? 10.0;
+    }
+
+    /**
+     * Get formatted total sales
+     */
+    public function getFormattedTotalSalesAttribute(): string
+    {
+        return 'K' . number_format(($this->total_sales_amount ?? 0) / 100, 2);
     }
 }

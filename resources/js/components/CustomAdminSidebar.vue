@@ -33,7 +33,12 @@ import {
     MessageCircle as LiveChatIcon,
     Globe,
     Trash2,
-    HardDrive as HardDriveIcon
+    HardDrive as HardDriveIcon,
+    ShoppingBag,
+    Store,
+    Package,
+    AlertTriangle,
+    MessageSquare
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -124,6 +129,17 @@ const growBuilderNavItems: NavItem[] = [
     { title: 'Deleted Sites', href: safeRoute('admin.growbuilder.deleted'), icon: Trash2 },
     { title: 'Storage', href: safeRoute('admin.growbuilder.storage'), icon: HardDriveIcon },
     { title: 'Analytics', href: safeRoute('admin.growbuilder.analytics'), icon: ChartBarIcon },
+];
+
+const marketplaceNavItems: NavItem[] = [
+    { title: 'Dashboard', href: safeRoute('admin.marketplace.dashboard'), icon: LayoutGrid },
+    { title: 'Sellers', href: safeRoute('admin.marketplace.sellers.index'), icon: Store },
+    { title: 'Products', href: safeRoute('admin.marketplace.products.index'), icon: Package },
+    { title: 'Orders', href: safeRoute('admin.marketplace.orders.index'), icon: ShoppingBag },
+    { title: 'Disputes', href: safeRoute('admin.marketplace.disputes.index'), icon: AlertTriangle },
+    { title: 'Reviews', href: safeRoute('admin.marketplace.reviews.index'), icon: MessageSquare },
+    { title: 'Categories', href: safeRoute('admin.marketplace.categories.index'), icon: Folder },
+    { title: 'Analytics', href: safeRoute('admin.marketplace.analytics'), icon: ChartBarIcon },
 ];
 
 const reportsNavItems: NavItem[] = [
@@ -542,6 +558,23 @@ onMounted(() => {
                             <span class="ml-3">{{ item.title }}</span>
                         </Link>
                     </div>
+                </div>
+
+                <!-- Marketplace Section -->
+                <div class="pt-2">
+                    <Link
+                        :href="safeRoute('admin.marketplace.dashboard')"
+                        :class="[
+                            'w-full flex items-center px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            isUrlActive('/admin/marketplace') ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600' : 'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'Marketplace')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <ShoppingBag class="h-5 w-5" />
+                        <span v-show="!isCollapsed || isMobile" class="ml-3">Marketplace</span>
+                    </Link>
                 </div>
 
                 <!-- Reports Section -->

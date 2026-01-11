@@ -7,6 +7,7 @@ use App\Domain\Marketplace\Services\SellerService;
 use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\OrderService;
 use App\Domain\Marketplace\Services\EscrowService;
+use App\Domain\Marketplace\Services\SellerTierService;
 use App\Models\MarketplaceSeller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,7 @@ class SellerDashboardController extends Controller
         private ProductService $productService,
         private OrderService $orderService,
         private EscrowService $escrowService,
+        private SellerTierService $tierService,
     ) {}
 
     /**
@@ -39,11 +41,9 @@ class SellerDashboardController extends Controller
 
     public function index(Request $request)
     {
-        $seller = $this->sellerService->getByUserId($request->user()->id);
-
-        if (!$seller) {
-            return redirect()->route('marketplace.seller.register');
-        }
+        // Seller is guaranteed by middleware
+        $seller = $request->attributes->get('seller') 
+            ?? $this->sellerService->getByUserId($request->user()->id);
 
         // Basic Stats
         $totalProducts = $seller->products()->count();
@@ -162,6 +162,8 @@ class SellerDashboardController extends Controller
             'topProducts' => $topProducts,
             'salesChartData' => $salesChartData,
             'recentReviews' => $recentReviews,
+            'tierProgress' => $this->tierService->getTierProgress($seller),
+            'tierInfo' => SellerTierService::getTierInfo(),
         ]);
     }
 
@@ -228,11 +230,8 @@ class SellerDashboardController extends Controller
 
     public function profile(Request $request)
     {
-        $seller = $this->sellerService->getByUserId($request->user()->id);
-
-        if (!$seller) {
-            return redirect()->route('marketplace.seller.register');
-        }
+        $seller = $request->attributes->get('seller') 
+            ?? $this->sellerService->getByUserId($request->user()->id);
 
         return Inertia::render('Marketplace/Seller/Profile', [
             'seller' => $seller,
@@ -242,11 +241,8 @@ class SellerDashboardController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $seller = $this->sellerService->getByUserId($request->user()->id);
-
-        if (!$seller) {
-            abort(404);
-        }
+        $seller = $request->attributes->get('seller') 
+            ?? $this->sellerService->getByUserId($request->user()->id);
 
         $validated = $request->validate([
             'business_name' => 'required|string|max:255',

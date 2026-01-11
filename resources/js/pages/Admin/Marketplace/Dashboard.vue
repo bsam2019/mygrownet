@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import MarketplaceAdminLayout from '@/layouts/MarketplaceAdminLayout.vue';
 import {
     UserGroupIcon,
     CubeIcon,
@@ -18,7 +19,7 @@ interface Stats {
     total_products: number;
     total_orders: number;
     open_disputes: number;
-    pending_reviews: number;
+    total_reviews: number;
     total_revenue: number;
 }
 
@@ -56,7 +57,7 @@ interface Dispute {
     };
 }
 
-defineProps<{
+const props = defineProps<{
     stats: Stats;
     recentSellers: Seller[];
     recentProducts: Product[];
@@ -71,16 +72,15 @@ const formatPrice = (amount: number) => {
 <template>
     <Head title="Marketplace Admin - Dashboard" />
     
-    <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
-        <div class="bg-white border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <h1 class="text-2xl font-bold text-gray-900">GrowNet Market Admin</h1>
-                <p class="text-sm text-gray-600">Manage sellers, products, orders, and disputes</p>
-            </div>
-        </div>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <MarketplaceAdminLayout 
+        title="Marketplace Dashboard" 
+        :stats="{
+            pending_sellers: stats.pending_sellers,
+            pending_products: stats.pending_products,
+            open_disputes: stats.open_disputes,
+            total_reviews: stats.total_reviews
+        }"
+    >
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <!-- Pending Sellers -->
@@ -144,8 +144,8 @@ const formatPrice = (amount: number) => {
                     <p class="text-xl font-bold text-gray-900">{{ stats.total_orders }}</p>
                 </div>
                 <div class="bg-white rounded-lg border border-gray-200 p-4">
-                    <p class="text-sm text-gray-600">Pending Reviews</p>
-                    <p class="text-xl font-bold text-gray-900">{{ stats.pending_reviews }}</p>
+                    <p class="text-sm text-gray-600">Total Reviews</p>
+                    <p class="text-xl font-bold text-gray-900">{{ stats.total_reviews }}</p>
                 </div>
             </div>
 
@@ -234,6 +234,5 @@ const formatPrice = (amount: number) => {
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+    </MarketplaceAdminLayout>
 </template>

@@ -53,8 +53,12 @@ class SellerProductController extends Controller
         }
 
         if (!$seller->canAcceptOrders()) {
+            $message = $seller->kyc_status === 'pending' 
+                ? 'Your account is under review. You can add products once your verification is approved.'
+                : 'Your account must be verified before adding products.';
+            
             return redirect()->route('marketplace.seller.products.index')
-                ->withErrors(['seller' => 'Your account must be verified before adding products.']);
+                ->withErrors(['seller' => $message]);
         }
 
         $categories = $this->productService->getCategories();
@@ -81,12 +85,33 @@ class SellerProductController extends Controller
             'price' => 'required|numeric|min:1|max:1000000',
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
-            'images' => 'required|array|min:1|max:8',
+            'images' => 'nullable|array|max:8',
             'images.*' => 'image|max:5120',
+            'media_ids' => 'nullable|array|max:8',
+            'media_ids.*' => 'integer|exists:marketplace_seller_media,id',
         ]);
 
-        // Process images based on current phase
+        // Ensure at least one image source is provided
+        $hasImages = !empty($request->file('images'));
+        $hasMediaIds = !empty($request->media_ids);
+        
+        if (!$hasImages && !$hasMediaIds) {
+            return back()->withErrors(['images' => 'At least one product image is required.']);
+        }
+
+        // Process new uploaded images
         $images = $this->processProductImages($request->file('images', []), $seller);
+        
+        // Add images from media library references (no re-upload needed)
+        if ($hasMediaIds) {
+            $mediaItems = \App\Models\MarketplaceSellerMedia::whereIn('id', $request->media_ids)
+                ->where('seller_id', $seller->id)
+                ->get();
+            
+            foreach ($mediaItems as $media) {
+                $images[] = $media->path;
+            }
+        }
 
         $product = $this->productService->create($seller->id, [
             'name' => $validated['name'],
@@ -135,24 +160,36 @@ class SellerProductController extends Controller
             'price' => 'required|numeric|min:1|max:1000000',
             'compare_price' => 'nullable|numeric|min:1|max:1000000',
             'stock_quantity' => 'required|integer|min:0|max:10000',
-            'new_images' => 'nullable|array|max:8',
-            'new_images.*' => 'image|max:5120',
-            'remove_images' => 'nullable|array',
+            'images' => 'nullable|array|max:8',
+            'images.*' => 'image|max:5120',
+            'existing_images' => 'nullable|array|max:8',
+            'existing_images.*' => 'string',
+            'media_ids' => 'nullable|array|max:8',
+            'media_ids.*' => 'integer|exists:marketplace_seller_media,id',
         ]);
 
-        $images = $product->images ?? [];
+        // Start with existing images that weren't removed
+        $images = $request->existing_images ?? [];
 
-        // Remove specified images
-        foreach ($request->remove_images ?? [] as $imageToRemove) {
-            if (($key = array_search($imageToRemove, $images)) !== false) {
-                Storage::disk('public')->delete($imageToRemove);
-                unset($images[$key]);
+        // Add new uploaded images
+        $newImages = $this->processProductImages($request->file('images', []), $seller);
+        $images = array_merge($images, $newImages);
+        
+        // Add images from media library references (no re-upload needed)
+        if (!empty($request->media_ids)) {
+            $mediaItems = \App\Models\MarketplaceSellerMedia::whereIn('id', $request->media_ids)
+                ->where('seller_id', $seller->id)
+                ->get();
+            
+            foreach ($mediaItems as $media) {
+                $images[] = $media->path;
             }
         }
 
-        // Add new images
-        $newImages = $this->processProductImages($request->file('new_images', []), $seller);
-        $images = array_merge($images, $newImages);
+        // Ensure at least one image
+        if (empty($images)) {
+            return back()->withErrors(['images' => 'At least one product image is required.']);
+        }
 
         $this->productService->update($id, [
             'name' => $validated['name'],
@@ -162,11 +199,11 @@ class SellerProductController extends Controller
             'compare_price' => $validated['compare_price'] ? (int) ($validated['compare_price'] * 100) : null,
             'stock_quantity' => $validated['stock_quantity'],
             'images' => array_values($images),
-            'status' => $product->status === 'rejected' ? 'pending' : $product->status,
+            'status' => in_array($product->status, ['rejected', 'changes_requested']) ? 'pending' : $product->status,
         ]);
 
         return redirect()->route('marketplace.seller.products.index')
-            ->with('success', 'Product updated.');
+            ->with('success', 'Product updated and resubmitted for review.');
     }
 
     public function destroy(Request $request, int $id)
@@ -182,6 +219,38 @@ class SellerProductController extends Controller
 
         return redirect()->route('marketplace.seller.products.index')
             ->with('success', 'Product deleted.');
+    }
+
+    /**
+     * Submit an appeal for a rejected product
+     */
+    public function appeal(Request $request, int $id)
+    {
+        $seller = $this->sellerService->getByUserId($request->user()->id);
+        $product = $this->productService->getById($id);
+
+        if (!$seller || !$product || $product->seller_id !== $seller->id) {
+            abort(404);
+        }
+
+        if ($product->status !== 'rejected') {
+            return back()->withErrors(['appeal' => 'Only rejected products can be appealed.']);
+        }
+
+        if ($product->appeal_message) {
+            return back()->withErrors(['appeal' => 'This product has already been appealed.']);
+        }
+
+        $validated = $request->validate([
+            'appeal_message' => 'required|string|min:20|max:1000',
+        ]);
+
+        $this->productService->update($id, [
+            'appeal_message' => $validated['appeal_message'],
+            'appealed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Appeal submitted. Our team will review your product again.');
     }
 
     /**

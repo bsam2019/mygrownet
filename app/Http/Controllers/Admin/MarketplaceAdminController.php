@@ -26,7 +26,7 @@ class MarketplaceAdminController extends Controller
             'total_products' => MarketplaceProduct::count(),
             'total_orders' => MarketplaceOrder::count(),
             'open_disputes' => MarketplaceDispute::where('status', 'open')->count(),
-            'pending_reviews' => MarketplaceReview::where('is_approved', false)->count(),
+            'total_reviews' => MarketplaceReview::count(),
             'total_revenue' => MarketplaceOrder::where('status', 'completed')->sum('total'),
         ];
 
@@ -140,6 +140,28 @@ class MarketplaceAdminController extends Controller
         return back()->with('success', 'Seller rejected.');
     }
 
+    public function suspendSeller(int $id)
+    {
+        $seller = MarketplaceSeller::findOrFail($id);
+        
+        $seller->update(['is_active' => false]);
+
+        // TODO: Send notification to seller
+
+        return back()->with('success', 'Seller suspended.');
+    }
+
+    public function activateSeller(int $id)
+    {
+        $seller = MarketplaceSeller::findOrFail($id);
+        
+        $seller->update(['is_active' => true]);
+
+        // TODO: Send notification to seller
+
+        return back()->with('success', 'Seller activated.');
+    }
+
     /**
      * Product Moderation
      */
@@ -165,11 +187,31 @@ class MarketplaceAdminController extends Controller
         ]);
     }
 
+    public function productShow(int $id)
+    {
+        $product = MarketplaceProduct::with(['seller.user', 'category'])
+            ->findOrFail($id);
+
+        return Inertia::render('Admin/Marketplace/Products/Show', [
+            'product' => $product,
+            'rejectionCategories' => self::getRejectionCategories(),
+        ]);
+    }
+
     public function approveProduct(int $id)
     {
         $product = MarketplaceProduct::findOrFail($id);
         
-        $product->update(['status' => 'active']);
+        $product->update([
+            'status' => 'active',
+            'rejection_reason' => null,
+            'rejection_category' => null,
+            'field_feedback' => null,
+            'appeal_message' => null,
+            'appealed_at' => null,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+        ]);
 
         // TODO: Send notification to seller
 
@@ -180,6 +222,10 @@ class MarketplaceAdminController extends Controller
     {
         $request->validate([
             'reason' => 'required|string|max:500',
+            'category' => 'required|string|in:policy_violation,poor_quality,misleading_info,prohibited_item,incomplete_info,pricing_issue,image_issue,other',
+            'field_feedback' => 'nullable|array',
+            'field_feedback.*.field' => 'required_with:field_feedback|string',
+            'field_feedback.*.message' => 'required_with:field_feedback|string',
         ]);
 
         $product = MarketplaceProduct::findOrFail($id);
@@ -187,11 +233,117 @@ class MarketplaceAdminController extends Controller
         $product->update([
             'status' => 'rejected',
             'rejection_reason' => $request->reason,
+            'rejection_category' => $request->category,
+            'field_feedback' => $request->field_feedback,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
         ]);
 
         // TODO: Send notification to seller
 
         return back()->with('success', 'Product rejected.');
+    }
+
+    public function requestChanges(Request $request, int $id)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+            'category' => 'required|string|in:policy_violation,poor_quality,misleading_info,prohibited_item,incomplete_info,pricing_issue,image_issue,other',
+            'field_feedback' => 'nullable|array',
+            'field_feedback.*.field' => 'required_with:field_feedback|string',
+            'field_feedback.*.message' => 'required_with:field_feedback|string',
+        ]);
+
+        $product = MarketplaceProduct::findOrFail($id);
+        
+        $product->update([
+            'status' => 'changes_requested',
+            'rejection_reason' => $request->reason,
+            'rejection_category' => $request->category,
+            'field_feedback' => $request->field_feedback,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+        ]);
+
+        // TODO: Send notification to seller
+
+        return back()->with('success', 'Changes requested from seller.');
+    }
+
+    /**
+     * Get rejection categories for frontend
+     */
+    public static function getRejectionCategories(): array
+    {
+        return [
+            'policy_violation' => [
+                'label' => 'Policy Violation',
+                'description' => 'Product violates marketplace policies or terms of service',
+            ],
+            'poor_quality' => [
+                'label' => 'Poor Quality Images/Content',
+                'description' => 'Images are blurry, low resolution, or content is poorly written',
+            ],
+            'misleading_info' => [
+                'label' => 'Misleading Information',
+                'description' => 'Product description or title is misleading or inaccurate',
+            ],
+            'prohibited_item' => [
+                'label' => 'Prohibited Item',
+                'description' => 'This type of product is not allowed on the marketplace',
+            ],
+            'incomplete_info' => [
+                'label' => 'Incomplete Information',
+                'description' => 'Missing required details like specifications or sizing',
+            ],
+            'pricing_issue' => [
+                'label' => 'Pricing Issue',
+                'description' => 'Price seems incorrect, too high, or suspicious',
+            ],
+            'image_issue' => [
+                'label' => 'Image Issue',
+                'description' => 'Images contain watermarks, text overlays, or are not of the actual product',
+            ],
+            'other' => [
+                'label' => 'Other',
+                'description' => 'Other issue not listed above',
+            ],
+        ];
+    }
+
+    /**
+     * Order Monitoring
+     */
+    public function orders(Request $request)
+    {
+        $query = MarketplaceOrder::with(['buyer', 'seller']);
+
+        // Filter by status
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by seller
+        if ($request->has('seller_id')) {
+            $query->where('seller_id', $request->seller_id);
+        }
+
+        $orders = $query->latest()->paginate(20);
+
+        return Inertia::render('Admin/Marketplace/Orders/Index', [
+            'orders' => $orders,
+            'filters' => $request->only(['status', 'seller_id']),
+        ]);
+    }
+
+    public function orderShow(int $id)
+    {
+        $order = MarketplaceOrder::with(['buyer', 'seller', 'items.product'])
+            ->findOrFail($id);
+
+        return Inertia::render('Admin/Marketplace/Orders/Show', [
+            'order' => $order,
+        ]);
     }
 
     /**
@@ -252,35 +404,86 @@ class MarketplaceAdminController extends Controller
      */
     public function reviews(Request $request)
     {
-        $query = MarketplaceReview::with(['product', 'buyer']);
+        $query = MarketplaceReview::with(['product', 'buyer', 'seller']);
 
-        // Filter by approval status
-        if ($request->has('approved')) {
-            $query->where('is_approved', $request->approved === 'true');
+        // Search by rating
+        if ($request->has('rating')) {
+            $query->where('rating', $request->rating);
         }
 
         $reviews = $query->latest()->paginate(20);
 
         return Inertia::render('Admin/Marketplace/Reviews/Index', [
             'reviews' => $reviews,
-            'filters' => $request->only(['approved']),
+            'filters' => $request->only(['rating']),
         ]);
     }
 
-    public function approveReview(int $id)
+    public function deleteReview(int $id)
     {
         $review = MarketplaceReview::findOrFail($id);
-        $review->update(['is_approved' => true]);
+        $review->delete();
 
-        return back()->with('success', 'Review approved.');
+        return back()->with('success', 'Review deleted.');
     }
 
-    public function rejectReview(int $id)
+    /**
+     * Categories Management
+     */
+    public function categories(Request $request)
     {
-        $review = MarketplaceReview::findOrFail($id);
-        $review->update(['is_approved' => false]);
+        $query = MarketplaceCategory::query();
 
-        return back()->with('success', 'Review rejected.');
+        $categories = $query->orderBy('sort_order')->get();
+
+        return Inertia::render('Admin/Marketplace/Categories/Index', [
+            'categories' => $categories,
+        ]);
+    }
+
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:marketplace_categories,slug',
+            'icon' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        MarketplaceCategory::create($request->all());
+
+        return back()->with('success', 'Category created.');
+    }
+
+    public function updateCategory(Request $request, int $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:marketplace_categories,slug,' . $id,
+            'icon' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $category = MarketplaceCategory::findOrFail($id);
+        $category->update($request->all());
+
+        return back()->with('success', 'Category updated.');
+    }
+
+    public function deleteCategory(int $id)
+    {
+        $category = MarketplaceCategory::findOrFail($id);
+        
+        // Check if category has products
+        if ($category->products()->count() > 0) {
+            return back()->withErrors(['error' => 'Cannot delete category with products.']);
+        }
+
+        $category->delete();
+
+        return back()->with('success', 'Category deleted.');
     }
 
     /**
@@ -301,5 +504,12 @@ class MarketplaceAdminController extends Controller
         // TODO: Implement marketplace settings
 
         return Inertia::render('Admin/Marketplace/Settings');
+    }
+
+    public function updateSettings(Request $request)
+    {
+        // TODO: Implement settings update logic
+        
+        return back()->with('success', 'Settings updated.');
     }
 }

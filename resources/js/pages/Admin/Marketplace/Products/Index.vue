@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import MarketplaceAdminLayout from '@/layouts/MarketplaceAdminLayout.vue';
 import { MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/vue/24/outline';
 
 interface Product {
@@ -10,6 +11,8 @@ interface Product {
   formatted_price: string;
   status: 'pending' | 'active' | 'rejected' | 'inactive';
   images: string[];
+  image_urls: string[];
+  primary_image_url: string | null;
   seller: {
     id: number;
     business_name: string;
@@ -109,15 +112,8 @@ const getStatusBadge = (status: string) => {
 <template>
   <Head title="Product Moderation - Admin" />
 
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Product Moderation</h1>
-        <p class="mt-2 text-gray-600">Review and approve product listings</p>
-      </div>
-
-      <!-- Filters -->
+  <MarketplaceAdminLayout title="Product Moderation">
+    <!-- Filters -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Search -->
@@ -179,8 +175,8 @@ const getStatusBadge = (status: string) => {
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <img
-                      v-if="product.images[0]"
-                      :src="product.images[0]"
+                      v-if="product.primary_image_url"
+                      :src="product.primary_image_url"
                       :alt="product.name"
                       class="w-12 h-12 rounded-lg object-cover"
                     />
@@ -215,8 +211,7 @@ const getStatusBadge = (status: string) => {
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
                     <Link
-                      :href="`/marketplace/products/${product.id}`"
-                      target="_blank"
+                      :href="`/admin/marketplace/products/${product.id}`"
                       class="text-gray-600 hover:text-gray-900 text-sm font-medium"
                     >
                       View
@@ -276,38 +271,37 @@ const getStatusBadge = (status: string) => {
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Reject Modal -->
-  <div v-if="showRejectModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg max-w-md w-full p-6">
-      <h3 class="text-lg font-bold text-gray-900 mb-4">Reject Product</h3>
-      <p class="text-sm text-gray-600 mb-4">
-        Please provide a reason for rejecting "{{ selectedProduct?.name }}"
-      </p>
-      <textarea
-        v-model="rejectReason"
-        rows="4"
-        placeholder="Enter rejection reason..."
-        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white placeholder-gray-400"
-      ></textarea>
-      <div class="mt-6 flex gap-3 justify-end">
-        <button
-          @click="showRejectModal = false"
-          :disabled="processing"
-          class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          @click="rejectProduct"
-          :disabled="!rejectReason.trim() || processing"
-          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {{ processing ? 'Rejecting...' : 'Reject Product' }}
-        </button>
+    <!-- Reject Modal -->
+    <div v-if="showRejectModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Reject Product</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          Please provide a reason for rejecting "{{ selectedProduct?.name }}"
+        </p>
+        <textarea
+          v-model="rejectReason"
+          rows="4"
+          placeholder="Enter rejection reason..."
+          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white placeholder-gray-400"
+        ></textarea>
+        <div class="mt-6 flex gap-3 justify-end">
+          <button
+            @click="showRejectModal = false"
+            :disabled="processing"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            @click="rejectProduct"
+            :disabled="!rejectReason.trim() || processing"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ processing ? 'Rejecting...' : 'Reject Product' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </MarketplaceAdminLayout>
 </template>

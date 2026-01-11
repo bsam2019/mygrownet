@@ -1283,10 +1283,16 @@ Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->grou
 });
 
 require __DIR__.'/admin.php';
+require __DIR__.'/admin-marketplace.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
 require __DIR__.'/venture.php';
 require __DIR__.'/bgf.php';
+
+// Test route
+Route::get('/admin/marketplace-test', function() {
+    dd('Marketplace test route works!');
+});
 
     // MyGrow Shop Routes
     Route::prefix('shop')->name('shop.')->group(function () {

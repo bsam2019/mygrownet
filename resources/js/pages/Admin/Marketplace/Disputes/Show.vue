@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import MarketplaceAdminLayout from '@/layouts/MarketplaceAdminLayout.vue';
 import { 
   ExclamationTriangleIcon, 
   CheckCircleIcon,
@@ -96,23 +97,21 @@ const getStatusBadge = (status: string) => {
 <template>
   <Head :title="`Dispute #${dispute.id} - Admin`" />
 
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="mb-6">
-        <Link href="/admin/marketplace/disputes" class="text-orange-600 hover:text-orange-700 text-sm font-medium mb-2 inline-block">
-          ← Back to Disputes
-        </Link>
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">Dispute #{{ dispute.id }}</h1>
-            <p class="mt-1 text-gray-600">Order {{ dispute.order.order_number }}</p>
-          </div>
-          <span :class="getStatusBadge(dispute.status)" class="px-3 py-1.5 rounded-full text-sm font-medium">
-            {{ dispute.status }}
-          </span>
+  <MarketplaceAdminLayout title="Dispute Details">
+    <div class="mb-6">
+      <Link href="/admin/marketplace/disputes" class="text-orange-600 hover:text-orange-700 text-sm font-medium mb-2 inline-block">
+        ← Back to Disputes
+      </Link>
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Dispute #{{ dispute.id }}</h2>
+          <p class="mt-1 text-gray-600">Order {{ dispute.order.order_number }}</p>
         </div>
+        <span :class="getStatusBadge(dispute.status)" class="px-3 py-1.5 rounded-full text-sm font-medium">
+          {{ dispute.status }}
+        </span>
       </div>
+    </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Content -->
@@ -230,10 +229,8 @@ const getStatusBadge = (status: string) => {
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Resolve Modal -->
+    <!-- Resolve Modal -->
   <div v-if="showResolveModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg max-w-lg w-full p-6">
       <h3 class="text-lg font-bold text-gray-900 mb-4">Resolve Dispute</h3>
@@ -283,4 +280,5 @@ const getStatusBadge = (status: string) => {
       </div>
     </div>
   </div>
+  </MarketplaceAdminLayout>
 </template>

@@ -48,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'marketplace.data' => \App\Http\Middleware\InjectMarketplaceData::class,
+            'marketplace.seller' => \App\Http\Middleware\EnsureUserIsSeller::class,
             'admin.or.role' => \App\Http\Middleware\AdminOrRoleMiddleware::class,
             'role.dashboard' => \App\Http\Middleware\RoleBasedDashboard::class,
             'otp' => \App\Http\Middleware\RequireOtpVerification::class,

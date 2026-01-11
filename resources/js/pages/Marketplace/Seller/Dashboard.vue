@@ -36,6 +36,9 @@ interface Seller {
     is_active: boolean;
     rating: number;
     total_orders: number;
+    effective_commission_rate: number;
+    completed_orders: number;
+    total_sales_amount: number;
 }
 
 interface Stats {
@@ -97,6 +100,27 @@ interface Review {
     };
 }
 
+interface TierProgressItem {
+    current: number;
+    required: number;
+    met: boolean;
+}
+
+interface TierProgress {
+    current_tier: string;
+    next_tier: string | null;
+    progress: Record<string, TierProgressItem>;
+    is_max_tier: boolean;
+}
+
+interface TierInfoItem {
+    name: string;
+    badge: string;
+    commission: number;
+    description: string;
+    color: string;
+}
+
 const props = defineProps<{
     seller: Seller;
     stats: Stats;
@@ -104,6 +128,8 @@ const props = defineProps<{
     topProducts: Product[];
     salesChartData: ChartData[];
     recentReviews: Review[];
+    tierProgress: TierProgress;
+    tierInfo: Record<string, TierInfoItem>;
 }>();
 
 const selectedPeriod = ref('week');
@@ -153,6 +179,59 @@ const isNewSeller = computed(() => {
 const hasAnySales = computed(() => {
     return props.stats.total_revenue > 0;
 });
+
+// Tier progress helpers
+const currentTierInfo = computed(() => {
+    return props.tierInfo[props.tierProgress.current_tier] || props.tierInfo['new'];
+});
+
+const nextTierInfo = computed(() => {
+    if (!props.tierProgress.next_tier) return null;
+    return props.tierInfo[props.tierProgress.next_tier];
+});
+
+const getTierColor = (tier: string) => {
+    const colors: Record<string, string> = {
+        'new': 'gray',
+        'verified': 'blue',
+        'trusted': 'green',
+        'top': 'amber',
+    };
+    return colors[tier] || 'gray';
+};
+
+const getProgressPercentage = (item: TierProgressItem) => {
+    if (item.met) return 100;
+    return Math.min(100, Math.round((item.current / item.required) * 100));
+};
+
+const formatProgressLabel = (key: string) => {
+    const labels: Record<string, string> = {
+        'completed_orders': 'Completed Orders',
+        'total_sales': 'Total Sales',
+        'rating': 'Rating',
+        'dispute_rate': 'Dispute Rate',
+        'cancellation_rate': 'Cancellation Rate',
+        'account_age': 'Account Age',
+    };
+    return labels[key] || key;
+};
+
+const formatProgressValue = (key: string, value: number) => {
+    if (key === 'total_sales') {
+        return formatPrice(value);
+    }
+    if (key === 'rating') {
+        return value.toFixed(1);
+    }
+    if (key.includes('rate')) {
+        return value.toFixed(1) + '%';
+    }
+    if (key === 'account_age') {
+        return value + ' days';
+    }
+    return value.toString();
+};
 
 </script>
 
@@ -217,6 +296,15 @@ const hasAnySales = computed(() => {
                             <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
                             Add Your First Product
                         </Link>
+                        <button
+                            v-else-if="seller.kyc_status !== 'approved' && stats.active_products === 0"
+                            disabled
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed font-medium text-sm"
+                            :title="seller.kyc_status === 'pending' ? 'Your account is under review' : 'Complete profile verification to add products'"
+                        >
+                            <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            Add Your First Product
+                        </button>
                     </div>
                 </div>
             </div>
@@ -366,6 +454,102 @@ const hasAnySales = computed(() => {
                 </div>
             </div>
 
+            <!-- Seller Tier & Commission Card -->
+            <div class="bg-white rounded-xl border border-gray-200 p-5 mb-5">
+                <div class="flex flex-col lg:flex-row lg:items-start gap-5">
+                    <!-- Current Tier Info -->
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div :class="[
+                                'w-12 h-12 rounded-full flex items-center justify-center',
+                                tierProgress.current_tier === 'top' ? 'bg-amber-100' :
+                                tierProgress.current_tier === 'trusted' ? 'bg-green-100' :
+                                tierProgress.current_tier === 'verified' ? 'bg-blue-100' : 'bg-gray-100'
+                            ]">
+                                <span class="text-2xl">{{ currentTierInfo.badge }}</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900">{{ currentTierInfo.name }}</h3>
+                                <p class="text-sm text-gray-600">{{ currentTierInfo.description }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 mt-3">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-orange-600">{{ seller.effective_commission_rate }}%</p>
+                                <p class="text-xs text-gray-500">Commission Rate</p>
+                            </div>
+                            <div class="text-center border-l border-gray-200 pl-4">
+                                <p class="text-2xl font-bold text-gray-900">{{ seller.completed_orders }}</p>
+                                <p class="text-xs text-gray-500">Completed Orders</p>
+                            </div>
+                            <div class="text-center border-l border-gray-200 pl-4">
+                                <p class="text-2xl font-bold text-gray-900">{{ formatPrice(seller.total_sales_amount || 0) }}</p>
+                                <p class="text-xs text-gray-500">Total Sales</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress to Next Tier -->
+                    <div v-if="!tierProgress.is_max_tier && nextTierInfo" class="flex-1 lg:border-l lg:border-gray-200 lg:pl-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-semibold text-gray-700">Progress to {{ nextTierInfo.name }}</h4>
+                            <span :class="[
+                                'text-xs px-2 py-1 rounded-full font-medium',
+                                tierProgress.next_tier === 'top' ? 'bg-amber-100 text-amber-700' :
+                                tierProgress.next_tier === 'trusted' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                            ]">
+                                {{ nextTierInfo.badge }} {{ nextTierInfo.commission }}% commission
+                            </span>
+                        </div>
+                        <div class="space-y-3">
+                            <div 
+                                v-for="(item, key) in tierProgress.progress" 
+                                :key="key"
+                                class="flex items-center gap-3"
+                            >
+                                <div class="flex-shrink-0 w-5">
+                                    <CheckCircleIcon 
+                                        v-if="item.met" 
+                                        class="h-5 w-5 text-green-500" 
+                                        aria-hidden="true" 
+                                    />
+                                    <div 
+                                        v-else 
+                                        class="h-5 w-5 rounded-full border-2 border-gray-300"
+                                    ></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-gray-600">{{ formatProgressLabel(key as string) }}</span>
+                                        <span class="text-xs font-medium" :class="item.met ? 'text-green-600' : 'text-gray-900'">
+                                            {{ formatProgressValue(key as string, item.current) }} / {{ formatProgressValue(key as string, item.required) }}
+                                        </span>
+                                    </div>
+                                    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                            :class="[
+                                                'h-full rounded-full transition-all',
+                                                item.met ? 'bg-green-500' : 'bg-orange-500'
+                                            ]"
+                                            :style="{ width: getProgressPercentage(item) + '%' }"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Max Tier Achieved -->
+                    <div v-else-if="tierProgress.is_max_tier" class="flex-1 lg:border-l lg:border-gray-200 lg:pl-5">
+                        <div class="text-center py-4">
+                            <SparklesIcon class="h-10 w-10 text-amber-500 mx-auto mb-2" aria-hidden="true" />
+                            <h4 class="font-bold text-gray-900 mb-1">You've reached the top tier!</h4>
+                            <p class="text-sm text-gray-600">Enjoy the lowest commission rate of {{ currentTierInfo.commission }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sales Chart & Quick Actions -->
             <div class="grid lg:grid-cols-3 gap-5 mb-5">
                 <!-- Sales Chart -->
@@ -385,12 +569,22 @@ const hasAnySales = computed(() => {
                         <p class="text-gray-900 font-medium mb-1">No sales data yet</p>
                         <p class="text-sm text-gray-500 mb-4">Add products and promote your store to start selling</p>
                         <Link 
+                            v-if="seller.kyc_status === 'approved'"
                             :href="route('marketplace.seller.products.create')"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
                         >
                             <PlusCircleIcon class="h-4 w-4" aria-hidden="true" />
                             Add Your First Product
                         </Link>
+                        <button
+                            v-else
+                            disabled
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed text-sm font-medium"
+                            :title="seller.kyc_status === 'pending' ? 'Your account is under review' : 'Complete profile verification to add products'"
+                        >
+                            <PlusCircleIcon class="h-4 w-4" aria-hidden="true" />
+                            Add Your First Product
+                        </button>
                     </div>
                     
                     <!-- Chart with Data -->
@@ -434,15 +628,39 @@ const hasAnySales = computed(() => {
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
                     <h2 class="font-semibold text-gray-900 mb-4">Quick Actions</h2>
                     <div class="space-y-2">
-                        <!-- New Seller Actions -->
+                        <!-- Add Product Button -->
+                        <Link 
+                            v-if="seller.kyc_status === 'approved'"
+                            :href="route('marketplace.seller.products.create')"
+                            class="flex items-center gap-3 p-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                        >
+                            <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            <span class="font-medium text-sm">{{ isNewSeller ? 'Add First Product' : 'Add Product' }}</span>
+                        </Link>
+                        <button
+                            v-else
+                            disabled
+                            class="flex items-center gap-3 p-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
+                            :title="seller.kyc_status === 'pending' ? 'Your account is under review' : 'Complete profile verification to add products'"
+                        >
+                            <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            <span class="font-medium text-sm">{{ isNewSeller ? 'Add First Product' : 'Add Product' }}</span>
+                        </button>
+
+                        <!-- My Products - Always visible -->
+                        <Link 
+                            :href="route('marketplace.seller.products.index')"
+                            class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            <CubeIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
+                            <span class="font-medium text-gray-900 text-sm">My Products</span>
+                            <span v-if="stats.total_products > 0" class="ml-auto text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                {{ stats.total_products }}
+                            </span>
+                        </Link>
+
+                        <!-- New Seller specific -->
                         <template v-if="isNewSeller">
-                            <Link 
-                                :href="route('marketplace.seller.products.create')"
-                                class="flex items-center gap-3 p-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                            >
-                                <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
-                                <span class="font-medium text-sm">Add First Product</span>
-                            </Link>
                             <Link 
                                 :href="route('marketplace.seller.profile')"
                                 class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -455,18 +673,14 @@ const hasAnySales = computed(() => {
                         <!-- Active Seller Actions -->
                         <template v-else>
                             <Link 
-                                :href="route('marketplace.seller.products.create')"
-                                class="flex items-center gap-3 p-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                            >
-                                <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
-                                <span class="font-medium text-sm">Add Product</span>
-                            </Link>
-                            <Link 
                                 :href="route('marketplace.seller.orders.index')"
                                 class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 <ShoppingCartIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
                                 <span class="font-medium text-gray-900 text-sm">View Orders</span>
+                                <span v-if="stats.pending_orders > 0" class="ml-auto text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                                    {{ stats.pending_orders }} pending
+                                </span>
                             </Link>
                             <button
                                 class="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -476,11 +690,11 @@ const hasAnySales = computed(() => {
                                 <span class="font-medium text-gray-900 text-sm">Withdraw Funds</span>
                             </button>
                             <Link 
-                                :href="route('marketplace.seller.products.index')"
+                                :href="route('marketplace.seller.profile')"
                                 class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <CubeIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
-                                <span class="font-medium text-gray-900 text-sm">Manage Products</span>
+                                <CheckBadgeIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
+                                <span class="font-medium text-gray-900 text-sm">Store Settings</span>
                             </Link>
                         </template>
                     </div>
@@ -525,12 +739,22 @@ const hasAnySales = computed(() => {
                         <p class="text-sm text-gray-900 font-medium mb-1">No sales yet</p>
                         <p class="text-xs text-gray-500 mb-3">Add products and promote your store to start selling</p>
                         <Link 
+                            v-if="seller.kyc_status === 'approved'"
                             :href="route('marketplace.seller.products.create')"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-xs font-medium"
                         >
                             <PlusCircleIcon class="h-4 w-4" aria-hidden="true" />
                             Add Product
                         </Link>
+                        <button
+                            v-else
+                            disabled
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed text-xs font-medium"
+                            :title="seller.kyc_status === 'pending' ? 'Your account is under review' : 'Complete profile verification to add products'"
+                        >
+                            <PlusCircleIcon class="h-4 w-4" aria-hidden="true" />
+                            Add Product
+                        </button>
                     </div>
                     
                     <div v-else class="space-y-2">

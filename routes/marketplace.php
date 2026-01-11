@@ -81,9 +81,16 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
     ->name('marketplace.seller.')
     ->group(function () {
         
-        // Registration (for authenticated users)
+        // Registration (for authenticated users who are NOT yet sellers)
         Route::get('/register', [SellerDashboardController::class, 'register'])->name('register');
         Route::post('/register', [SellerDashboardController::class, 'store'])->name('store');
+    });
+
+// Seller dashboard routes (requires registered seller)
+Route::middleware(['auth', 'verified', 'marketplace.data', 'marketplace.seller'])
+    ->prefix('growmarket/seller')
+    ->name('marketplace.seller.')
+    ->group(function () {
         
         // Dashboard
         Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
@@ -92,6 +99,12 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
         Route::get('/profile', [SellerDashboardController::class, 'profile'])->name('profile');
         Route::put('/profile', [SellerDashboardController::class, 'updateProfile'])->name('profile.update');
         
+        // Media Library
+        Route::get('/media', [\App\Http\Controllers\Marketplace\SellerMediaController::class, 'index'])->name('media.index');
+        Route::post('/media', [\App\Http\Controllers\Marketplace\SellerMediaController::class, 'store'])->name('media.store');
+        Route::post('/media/base64', [\App\Http\Controllers\Marketplace\SellerMediaController::class, 'storeBase64'])->name('media.store-base64');
+        Route::delete('/media/{mediaId}', [\App\Http\Controllers\Marketplace\SellerMediaController::class, 'destroy'])->name('media.destroy');
+        
         // Products
         Route::get('/products', [SellerProductController::class, 'index'])->name('products.index');
         Route::get('/products/create', [SellerProductController::class, 'create'])->name('products.create');
@@ -99,6 +112,7 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
         Route::get('/products/{id}/edit', [SellerProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{id}', [SellerProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{id}', [SellerProductController::class, 'destroy'])->name('products.destroy');
+        Route::post('/products/{id}/appeal', [SellerProductController::class, 'appeal'])->name('products.appeal');
         
         // Orders
         Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');
