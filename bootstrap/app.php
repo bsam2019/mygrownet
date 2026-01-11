@@ -70,6 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Add Inertia and cache prevention to web middleware group
         $middleware->web(append: [
+            \App\Http\Middleware\DetectSubdomain::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\PreventBrowserCaching::class,
             \App\Http\Middleware\RefreshCsrfToken::class,
