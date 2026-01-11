@@ -12,8 +12,13 @@
             $isGrowFinance = request()->is('growfinance*');
             $isGrowBuilderSite = request()->is('sites/*');
             
+            // Detect GrowBuilder subdomain (e.g., ndelimas.mygrownet.com)
+            $host = request()->getHost();
+            $isGrowBuilderSubdomain = preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches) 
+                && !in_array(strtolower($matches[1] ?? ''), ['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev']);
+            
             // Module-specific PWA configuration
-            if ($isGrowBuilderSite) {
+            if ($isGrowBuilderSite || $isGrowBuilderSubdomain) {
                 // GrowBuilder sites - no splash screen, use site's own branding
                 $themeColor = '#2563eb';
                 $appTitle = 'Site Preview';
