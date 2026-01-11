@@ -70,7 +70,8 @@ class DetectSubdomain
                         ->render($request, $subdomain, $path ?: null);
                 }
             } catch (\Exception $e) {
-                \Log::error('DetectSubdomain: Error - ' . $e->getMessage());
+                \Log::error('DetectSubdomain: Error - ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                \Log::error('DetectSubdomain: Stack trace - ' . $e->getTraceAsString());
                 // Site not found, continue to main site
             }
         }
