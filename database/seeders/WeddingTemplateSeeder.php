@@ -18,20 +18,31 @@ class WeddingTemplateSeeder extends Seeder
                 'category_name' => 'Wedding',
                 'category_icon' => '💍',
                 'preview_text' => 'Michael & Sarah',
-                'description' => 'Clean, minimalist design with elegant typography. Perfect for modern couples who appreciate simplicity and sophistication.',
+                'description' => 'Ultra-clean monochrome design with bold typography and dramatic contrast. Perfect for contemporary couples who value sophistication and timeless elegance.',
                 'preview_image' => 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800&q=80',
                 'is_active' => true,
                 'is_premium' => false,
                 'settings' => [
                     'colors' => [
-                        'primary' => '#18181b',
-                        'secondary' => '#71717a',
-                        'accent' => '#f4f4f5',
-                        'background' => '#ffffff',
+                        'primary' => '#000000',        // Pure black for maximum contrast
+                        'secondary' => '#1a1a1a',      // Deep charcoal
+                        'accent' => '#f5f5f5',         // Off-white
+                        'background' => '#ffffff',     // Pure white
                     ],
                     'fonts' => [
-                        'heading' => 'Playfair Display',
+                        'heading' => 'Cormorant Garamond',  // Elegant serif with personality
                         'body' => 'Inter',
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'minimal',
+                        'headerImage' => '/images/Wedding/minimal-flora.jpg',
+                        'borderStyle' => 'sharp',
                     ],
                 ],
             ],
@@ -42,20 +53,31 @@ class WeddingTemplateSeeder extends Seeder
                 'category_name' => 'Wedding',
                 'category_icon' => '💍',
                 'preview_text' => 'James & Emily',
-                'description' => 'Luxurious design with gold accents and ornate details. Ideal for formal, sophisticated wedding celebrations.',
+                'description' => 'Luxurious champagne and gold design with ornate flourishes. Exudes opulence and grandeur for formal, black-tie celebrations.',
                 'preview_image' => 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=800&q=80',
                 'is_active' => true,
                 'is_premium' => true,
                 'settings' => [
                     'colors' => [
-                        'primary' => '#b45309',
-                        'secondary' => '#d97706',
-                        'accent' => '#fef3c7',
-                        'background' => '#fffbeb',
+                        'primary' => '#8b6914',        // Rich antique gold
+                        'secondary' => '#c4941f',      // Bright gold
+                        'accent' => '#fef9e7',         // Champagne cream
+                        'background' => '#fffef7',     // Warm ivory
                     ],
                     'fonts' => [
-                        'heading' => 'Playfair Display',
-                        'body' => 'Lato',
+                        'heading' => 'Cinzel',         // Regal, classical serif
+                        'body' => 'Crimson Text',      // Elegant body font
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'ornate',
+                        'headerImage' => '/images/Wedding/gold-flora.jpg',
+                        'borderStyle' => 'ornate',
                     ],
                 ],
             ],
@@ -66,20 +88,31 @@ class WeddingTemplateSeeder extends Seeder
                 'category_name' => 'Wedding',
                 'category_icon' => '💍',
                 'preview_text' => 'David & Grace',
-                'description' => 'Fresh green and natural tones with botanical elements. Perfect for outdoor garden weddings and nature lovers.',
+                'description' => 'Fresh botanical design with lush greens and natural textures. Brings the beauty of nature to life for outdoor garden ceremonies.',
                 'preview_image' => 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800&q=80',
                 'is_active' => true,
                 'is_premium' => false,
                 'settings' => [
                     'colors' => [
-                        'primary' => '#059669',
-                        'secondary' => '#10b981',
-                        'accent' => '#d1fae5',
-                        'background' => '#ecfdf5',
+                        'primary' => '#047857',        // Deep forest green
+                        'secondary' => '#059669',      // Emerald green
+                        'accent' => '#d1fae5',         // Mint cream
+                        'background' => '#f0fdf4',     // Soft sage
                     ],
                     'fonts' => [
-                        'heading' => 'Dancing Script',
-                        'body' => 'Open Sans',
+                        'heading' => 'Libre Baskerville',  // Natural, organic serif
+                        'body' => 'Lato',
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'botanical',
+                        'headerImage' => '/images/Wedding/garden-flora.jpg',
+                        'borderStyle' => 'organic',
                     ],
                 ],
             ],
@@ -90,20 +123,31 @@ class WeddingTemplateSeeder extends Seeder
                 'category_name' => 'Wedding',
                 'category_icon' => '💍',
                 'preview_text' => 'Alex & Sophie',
-                'description' => 'Warm oranges and pinks inspired by beautiful sunset ceremonies. Romantic and vibrant design.',
+                'description' => 'Dreamy coral and blush palette inspired by golden hour. Radiates warmth and romance for intimate sunset ceremonies.',
                 'preview_image' => 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80',
                 'is_active' => true,
                 'is_premium' => false,
                 'settings' => [
                     'colors' => [
-                        'primary' => '#ea580c',
-                        'secondary' => '#ec4899',
-                        'accent' => '#fecaca',
-                        'background' => '#fff7ed',
+                        'primary' => '#dc2626',        // Deep coral red
+                        'secondary' => '#f97316',      // Sunset orange
+                        'accent' => '#ffe4e6',         // Soft blush
+                        'background' => '#fff7ed',     // Warm cream
                     ],
                     'fonts' => [
-                        'heading' => 'Parisienne',
-                        'body' => 'Nunito',
+                        'heading' => 'Allura',         // Flowing, romantic script
+                        'body' => 'Quicksand',         // Soft, rounded sans-serif
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'sunset',
+                        'headerImage' => '/images/Wedding/sunset-flora.jpg',
+                        'borderStyle' => 'soft',
                     ],
                 ],
             ],
