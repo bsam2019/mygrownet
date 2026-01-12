@@ -148,18 +148,8 @@ class WeddingController extends Controller
             'type' => 'website',
         ];
 
-        // Map template slug to component
-        $templateComponentMap = [
-            'flora-classic' => 'Wedding/WeddingWebsite',
-            'modern-minimal' => 'Wedding/Templates/ModernMinimal',
-            'elegant-gold' => 'Wedding/Templates/ElegantGold',
-            'garden-party' => 'Wedding/Templates/GardenParty',
-            'sunset-romance' => 'Wedding/Templates/SunsetRomance',
-        ];
-
-        $component = $templateComponentMap[$slug] ?? 'Wedding/WeddingWebsite';
-
-        return Inertia::render($component, [
+        // All templates use the same component with different settings
+        return Inertia::render('Wedding/WeddingWebsite', [
             'weddingEvent' => $demoWeddingEvent,
             'template' => [
                 'id' => $template->id,
