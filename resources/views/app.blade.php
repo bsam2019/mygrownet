@@ -20,11 +20,18 @@
             // Module-specific PWA configuration
             if ($isGrowBuilderSite || $isGrowBuilderSubdomain) {
                 // GrowBuilder sites - no splash screen, use site's own branding
-                $themeColor = '#2563eb';
-                $appTitle = 'Site Preview';
+                // Get site favicon from Inertia page props if available
+                $siteFavicon = $page['props']['site']['favicon'] ?? null;
+                $siteLogo = $page['props']['site']['logo'] ?? null;
+                $siteName = $page['props']['site']['name'] ?? 'Site Preview';
+                $siteTheme = $page['props']['site']['theme'] ?? [];
+                
+                $themeColor = $siteTheme['primaryColor'] ?? '#2563eb';
+                $appTitle = $siteName;
                 $manifestPath = '/manifest.json';
-                $iconPath = '/images/icon-192x192.png';
-                $faviconPath = asset('logo.png');
+                // Use site favicon, then logo, then default
+                $faviconPath = $siteFavicon ?: ($siteLogo ?: asset('logo.png'));
+                $iconPath = $faviconPath;
                 $showSplash = false;
             } elseif ($isBizBoost) {
                 $themeColor = '#7c3aed'; // Violet
