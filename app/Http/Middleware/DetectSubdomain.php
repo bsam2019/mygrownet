@@ -42,16 +42,21 @@ class DetectSubdomain
                 return $next($request);
             }
             
-            // Handle geopamu subdomain - redirect to /geopamu path
+            // Handle geopamu subdomain - rewrite path to /geopamu internally
             if ($subdomain === 'geopamu') {
                 $path = $request->path();
+                
                 // If already on /geopamu path, continue
                 if (str_starts_with($path, 'geopamu')) {
                     return $next($request);
                 }
-                // Redirect to /geopamu with the current path
-                $redirectPath = $path === '/' ? '/geopamu' : '/geopamu/' . $path;
-                return redirect($redirectPath);
+                
+                // Rewrite the request path internally without redirecting
+                $newPath = $path === '/' ? '/geopamu' : '/geopamu/' . $path;
+                $request->server->set('REQUEST_URI', $newPath);
+                $request->server->set('PATH_INFO', $newPath);
+                
+                return $next($request);
             }
             
             // Skip other reserved subdomains
