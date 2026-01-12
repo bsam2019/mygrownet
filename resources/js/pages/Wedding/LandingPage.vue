@@ -556,10 +556,23 @@ interface TemplateSettings {
   colors?: {
     primary?: string
     secondary?: string
+    accent?: string
     background?: string
   }
   fonts?: {
     heading?: string
+    body?: string
+  }
+  layout?: {
+    heroStyle?: string
+    navigationStyle?: string
+    showCountdown?: boolean
+    showGallery?: boolean
+  }
+  decorations?: {
+    backgroundPattern?: string
+    headerImage?: string
+    borderStyle?: string
   }
 }
 
@@ -567,9 +580,14 @@ interface Template {
   id: number
   name: string
   slug: string
+  category: string
+  category_name: string
+  category_icon: string
+  preview_text: string
   description: string
   preview_image: string
   is_premium: boolean
+  is_active: boolean
   settings: TemplateSettings
 }
 
@@ -657,7 +675,7 @@ const deviceFrameClass = computed(() => {
 
 const previewUrl = computed(() => {
   if (!selectedTemplate.value) return ''
-  return `/weddings/templates/${selectedTemplate.value.slug}/preview`
+  return `/wowthem/templates/${selectedTemplate.value.slug}/preview`
 })
 
 const openPreview = (template: Template) => {
