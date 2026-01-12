@@ -42,21 +42,9 @@ class DetectSubdomain
                 return $next($request);
             }
             
-            // Handle geopamu subdomain - rewrite path to /geopamu internally
+            // Handle geopamu subdomain - dispatch directly to controller
             if ($subdomain === 'geopamu') {
-                $path = $request->path();
-                
-                // If already on /geopamu path, continue
-                if (str_starts_with($path, 'geopamu')) {
-                    return $next($request);
-                }
-                
-                // Rewrite the request path internally without redirecting
-                $newPath = $path === '/' ? '/geopamu' : '/geopamu/' . $path;
-                $request->server->set('REQUEST_URI', $newPath);
-                $request->server->set('PATH_INFO', $newPath);
-                
-                return $next($request);
+                return $this->handleGeopamuSubdomain($request);
             }
             
             // Skip other reserved subdomains
@@ -85,6 +73,48 @@ class DetectSubdomain
         }
 
         return $next($request);
+    }
+    
+    /**
+     * Handle Geopamu subdomain requests
+     */
+    private function handleGeopamuSubdomain(Request $request): Response
+    {
+        $path = $request->path();
+        $controller = app()->make(\App\Http\Controllers\GeopamuController::class);
+        
+        // Map paths to controller methods
+        $result = match(true) {
+            $path === '/' => $controller->home(),
+            str_starts_with($path, 'services') => $controller->services(),
+            str_starts_with($path, 'portfolio') => $controller->portfolio(),
+            str_starts_with($path, 'about') => $controller->about(),
+            str_starts_with($path, 'contact') => $controller->contact(),
+            str_starts_with($path, 'blog') => $this->handleGeopamuBlog($request, $path),
+            default => $controller->home() // Fallback to home
+        };
+        
+        // Handle Inertia Response properly
+        if ($result instanceof \Inertia\Response) {
+            return $result->toResponse($request);
+        }
+        
+        return $result instanceof Response ? $result : response($result);
+    }
+    
+    /**
+     * Handle Geopamu blog routes
+     */
+    private function handleGeopamuBlog(Request $request, string $path): mixed
+    {
+        $blogController = app()->make(\App\Http\Controllers\Geopamu\BlogController::class);
+        
+        // Extract slug if present
+        if (preg_match('#^blog/([^/]+)$#', $path, $matches)) {
+            return $blogController->show($matches[1]);
+        }
+        
+        return $blogController->index();
     }
     
     /**
