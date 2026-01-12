@@ -240,15 +240,14 @@ Route::get('/faq', fn() => Inertia::render('FAQ'))->name('faq');
 Route::get('/policies', fn() => Inertia::render('Policies'))->name('policies');
 Route::get('/privacy', fn() => Inertia::render('Privacy'))->name('privacy');
 
-// Wedding Platform Routes - Public Landing (no auth required)
-Route::get('/weddings', [App\Http\Controllers\Wedding\WeddingController::class, 'landingPage'])->name('weddings.landing');
-Route::get('/weddings/templates/{slug}/preview', [App\Http\Controllers\Wedding\WeddingController::class, 'previewTemplate'])->name('weddings.template.preview');
+// WowThem Platform Routes - Public Landing (no auth required)
+Route::get('/wowthem', [App\Http\Controllers\Wedding\WeddingController::class, 'landingPage'])->name('wowthem.landing');
+Route::get('/wowthem/templates/{slug}/preview', [App\Http\Controllers\Wedding\WeddingController::class, 'previewTemplate'])->name('wowthem.template.preview');
 
-// Celebrations Platform Routes (rebranded from weddings)
-Route::get('/celebrations', [App\Http\Controllers\Wedding\WeddingController::class, 'landingPage'])->name('celebrations.landing');
-Route::get('/celebrations/contact', function () {
-    return Inertia::render('Celebrations/ContactPage');
-})->name('celebrations.contact');
+// Legacy redirects
+Route::get('/weddings', fn() => redirect('/wowthem', 301));
+Route::get('/celebrations', fn() => redirect('/wowthem', 301));
+Route::get('/celebrations/contact', fn() => redirect('/wowthem', 301));
 
 // Geopamu Business Website Routes
 Route::prefix('geopamu')->name('geopamu.')->group(function () {

@@ -47,6 +47,11 @@ class DetectSubdomain
                 return $this->handleGeopamuSubdomain($request);
             }
             
+            // Handle wowthem subdomain - dispatch directly to controller
+            if ($subdomain === 'wowthem') {
+                return $this->handleWowthemSubdomain($request);
+            }
+            
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
@@ -115,6 +120,29 @@ class DetectSubdomain
         }
         
         return $blogController->index();
+    }
+    
+    /**
+     * Handle WowThem subdomain requests
+     */
+    private function handleWowthemSubdomain(Request $request): Response
+    {
+        $path = $request->path();
+        $controller = app()->make(\App\Http\Controllers\Wedding\WeddingController::class);
+        
+        // Map paths to controller methods
+        $result = match(true) {
+            $path === '/' => $controller->landingPage(),
+            preg_match('#^templates/([^/]+)/preview$#', $path) => $controller->previewTemplate($request->route('slug') ?? ''),
+            default => $controller->landingPage() // Fallback to landing page
+        };
+        
+        // Handle Inertia Response properly
+        if ($result instanceof \Inertia\Response) {
+            return $result->toResponse($request);
+        }
+        
+        return $result instanceof Response ? $result : response($result);
     }
     
     /**
