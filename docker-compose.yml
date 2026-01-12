@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # PHP Application
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: mygrownet_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - mygrownet
+    depends_on:
+      - mysql
+      - redis
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: mygrownet_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - mygrownet
+    depends_on:
+      - app
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: mygrownet_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-mygrownet}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-mygrownet}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mygrownet
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: mygrownet_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - mygrownet
+
+  # Node.js for Vite
+  node:
+    image: node:20-alpine
+    container_name: mygrownet_node
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - mygrownet
+
+  # Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: mygrownet_queue
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    command: php artisan queue:work --tries=3
+    networks:
+      - mygrownet
+    depends_on:
+      - mysql
+      - redis
+
+networks:
+  mygrownet:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

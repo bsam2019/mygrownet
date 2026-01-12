@@ -48,6 +48,11 @@ Route::get('/training', function () {
     return Inertia::render('Training/Index');
 })->name('training');
 
+// Browser Requirements & Help
+Route::get('/browser-requirements', function () {
+    return Inertia::render('BrowserRequirements');
+})->name('browser-requirements');
+
 Route::get('/rewards', function () {
     return Inertia::render('Rewards/Index');
 })->name('rewards');

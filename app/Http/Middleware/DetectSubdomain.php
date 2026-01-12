@@ -42,7 +42,19 @@ class DetectSubdomain
                 return $next($request);
             }
             
-            // Skip reserved subdomains
+            // Handle geopamu subdomain - redirect to /geopamu path
+            if ($subdomain === 'geopamu') {
+                $path = $request->path();
+                // If already on /geopamu path, continue
+                if (str_starts_with($path, 'geopamu')) {
+                    return $next($request);
+                }
+                // Redirect to /geopamu with the current path
+                $redirectPath = $path === '/' ? '/geopamu' : '/geopamu/' . $path;
+                return redirect($redirectPath);
+            }
+            
+            // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',

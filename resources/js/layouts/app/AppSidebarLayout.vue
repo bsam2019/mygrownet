@@ -3,6 +3,7 @@ import AppSidebar from '@/components/MyGrowNetSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';
+import UpdateNotification from '@/components/UpdateNotification.vue';
 import type { BreadcrumbItemType, NavItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed, ref, onMounted } from 'vue';
@@ -81,6 +82,9 @@ onMounted(() => {
                 <slot />
             </main>
         </div>
+
+        <!-- Update Notification -->
+        <UpdateNotification />
 
         <!-- Live Chat Support Widget -->
         <UnifiedLiveChatWidget
