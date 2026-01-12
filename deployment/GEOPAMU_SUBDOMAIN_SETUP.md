@@ -1,7 +1,7 @@
 # Geopamu Subdomain Setup
 
 **Last Updated:** January 12, 2026
-**Status:** Ready for deployment
+**Status:** Production
 
 ## Overview
 
@@ -35,8 +35,8 @@ TTL: Auto
 
 1. **User visits:** `geopamu.mygrownet.com`
 2. **Middleware detects:** `geopamu` subdomain
-3. **Redirects to:** `/geopamu` path on main site
-4. **Result:** Geopamu website loads seamlessly
+3. **Rewrites path internally:** Maps requests to `/geopamu` routes without changing URL
+4. **Result:** Geopamu website loads with clean URLs (no `/geopamu` visible)
 
 ## Implementation
 
@@ -44,8 +44,8 @@ TTL: Auto
 
 **app/Http/Middleware/DetectSubdomain.php**
 - Added special handling for `geopamu` subdomain
-- Redirects `geopamu.mygrownet.com` → `/geopamu`
-- Preserves path (e.g., `geopamu.mygrownet.com/services` → `/geopamu/services`)
+- Rewrites request path internally from `/` to `/geopamu` without redirecting
+- Preserves clean URLs (e.g., `geopamu.mygrownet.com/services` shows as-is, not `/geopamu/services`)
 
 ### Routes
 
@@ -141,6 +141,10 @@ php artisan cache:clear
 php artisan route:clear
 ```
 
+### Issue: URL shows /geopamu path
+
+**This is now fixed** - The middleware rewrites paths internally without redirecting, so URLs stay clean.
+
 ### Issue: SSL certificate error
 
 **Fix:**
@@ -167,8 +171,13 @@ If Geopamu wants their own domain (e.g., `geopamu.com`):
 
 ## Changelog
 
+### January 12, 2026 - 12:06 UTC
+- Fixed URL rewriting to keep clean URLs without `/geopamu` path visible
+- Changed from redirect to internal path rewriting
+- URLs now stay as `geopamu.mygrownet.com/services` instead of showing `/geopamu/services`
+
 ### January 12, 2026
 - Initial subdomain setup
 - Added middleware detection for `geopamu` subdomain
 - Documented DNS configuration
-- Ready for production deployment
+- Deployed to production
