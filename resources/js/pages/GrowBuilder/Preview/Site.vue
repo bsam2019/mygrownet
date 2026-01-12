@@ -297,6 +297,9 @@ const prevTestimonial = (sectionId: string, total: number) => {
 
 // Get product URL
 const getProductUrl = (product: Product) => {
+    if (isOnSubdomain.value) {
+        return `/product/${product.slug}`;
+    }
     return `/sites/${props.site.subdomain}/product/${product.slug}`;
 };
 
@@ -304,7 +307,11 @@ const getProductUrl = (product: Product) => {
 const proceedToCheckout = () => {
     // Store cart in sessionStorage for checkout page
     sessionStorage.setItem(`gb_checkout_${props.site.subdomain}`, JSON.stringify(cart.value));
-    window.location.href = `/sites/${props.site.subdomain}/checkout`;
+    if (isOnSubdomain.value) {
+        window.location.href = '/checkout';
+    } else {
+        window.location.href = `/sites/${props.site.subdomain}/checkout`;
+    }
 };
 
 // Use navItems from settings if available, otherwise fall back to pages
@@ -328,6 +335,20 @@ const getTemplateIdFromUrl = () => {
     return match ? match[1] : null;
 };
 
+// Detect if we're viewing on a subdomain (e.g., ndelimas.mygrownet.com)
+const isOnSubdomain = computed(() => {
+    const host = window.location.hostname;
+    // Check if hostname matches subdomain pattern
+    const match = host.match(/^([a-z0-9-]+)\.mygrownet\.com$/i);
+    if (match) {
+        const subdomain = match[1].toLowerCase();
+        // Exclude reserved subdomains
+        return !['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev'].includes(subdomain);
+    }
+    // Also check for custom domains (not mygrownet.com)
+    return !host.includes('mygrownet.com') && !host.includes('localhost') && !host.includes('127.0.0.1');
+});
+
 const getPageUrl = (page: NavPage) => {
     // For template preview, use template render route
     if (props.isTemplatePreview) {
@@ -336,6 +357,11 @@ const getPageUrl = (page: NavPage) => {
             if (page.isHomepage) return `/growbuilder/templates/${templateId}/render`;
             return `/growbuilder/templates/${templateId}/render/${page.slug}`;
         }
+    }
+    // On subdomain, use relative paths
+    if (isOnSubdomain.value) {
+        if (page.isHomepage) return '/';
+        return `/${page.slug}`;
     }
     if (page.isHomepage) return `/sites/${props.site.subdomain}`;
     return `/sites/${props.site.subdomain}/${page.slug}`;
@@ -355,6 +381,11 @@ const getNavItemUrl = (navItem: any) => {
         }
     }
     
+    // On subdomain, use relative paths
+    if (isOnSubdomain.value) {
+        return navItem.url || '/';
+    }
+    
     if (navItem.url === '/') return `/sites/${props.site.subdomain}`;
     return `/sites/${props.site.subdomain}${navItem.url}`;
 };
@@ -369,8 +400,8 @@ const isNavItemActive = (navItem: any) => {
 };
 
 // Auth URLs for site members
-const loginUrl = computed(() => `/sites/${props.site.subdomain}/login`);
-const registerUrl = computed(() => `/sites/${props.site.subdomain}/register`);
+const loginUrl = computed(() => isOnSubdomain.value ? '/login' : `/sites/${props.site.subdomain}/login`);
+const registerUrl = computed(() => isOnSubdomain.value ? '/register' : `/sites/${props.site.subdomain}/register`);
 
 // Hero section helper functions (matching editor)
 const getHeroBackgroundStyle = (section: Section) => {
