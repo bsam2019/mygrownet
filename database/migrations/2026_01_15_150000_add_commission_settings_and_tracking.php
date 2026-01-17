@@ -12,13 +12,13 @@ return new class extends Migration
         // Add commission tracking fields to referral_commissions table (if not exist)
         Schema::table('referral_commissions', function (Blueprint $table) {
             if (!Schema::hasColumn('referral_commissions', 'commission_base_percentage')) {
-                $table->decimal('commission_base_percentage', 5, 2)->default(50.00)->after('commission_base_amount');
+                $table->decimal('commission_base_percentage', 5, 2)->default(50.00);
             }
             if (!Schema::hasColumn('referral_commissions', 'non_kit_multiplier')) {
-                $table->decimal('non_kit_multiplier', 5, 2)->default(1.00)->after('commission_base_percentage');
+                $table->decimal('non_kit_multiplier', 5, 2)->default(1.00);
             }
             if (!Schema::hasColumn('referral_commissions', 'referrer_has_kit')) {
-                $table->boolean('referrer_has_kit')->default(true)->after('non_kit_multiplier');
+                $table->boolean('referrer_has_kit')->default(true);
             }
         });
 
