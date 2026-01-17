@@ -182,6 +182,14 @@ class SellerDashboardController extends Controller
 
     public function store(Request $request)
     {
+        // Log the request for debugging
+        \Log::info('Seller registration attempt', [
+            'user_id' => $request->user()->id,
+            'has_nrc_front' => $request->hasFile('nrc_front'),
+            'has_nrc_back' => $request->hasFile('nrc_back'),
+            'has_business_cert' => $request->hasFile('business_cert'),
+        ]);
+
         $validated = $request->validate([
             'business_name' => 'required|string|max:255',
             'business_type' => 'required|in:individual,registered',
@@ -190,42 +198,107 @@ class SellerDashboardController extends Controller
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'description' => 'nullable|string|max:1000',
-            'nrc_front' => 'required|image|max:5120',
-            'nrc_back' => 'required|image|max:5120',
-            'business_cert' => 'nullable|file|max:5120',
+            'nrc_front' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240', // Increased to 10MB
+            'nrc_back' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240', // Increased to 10MB
+            'business_cert' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:10240', // Increased to 10MB
         ]);
 
-        // Upload KYC documents
-        $kycDocuments = [];
-        
-        if ($request->hasFile('nrc_front')) {
-            $kycDocuments['nrc_front'] = $request->file('nrc_front')
-                ->store('marketplace/kyc', 'public');
-        }
-        
-        if ($request->hasFile('nrc_back')) {
-            $kycDocuments['nrc_back'] = $request->file('nrc_back')
-                ->store('marketplace/kyc', 'public');
-        }
-        
-        if ($request->hasFile('business_cert')) {
-            $kycDocuments['business_cert'] = $request->file('business_cert')
-                ->store('marketplace/kyc', 'public');
-        }
+        try {
+            // Upload and optimize KYC documents
+            $kycDocuments = [];
+            
+            if ($request->hasFile('nrc_front')) {
+                $kycDocuments['nrc_front'] = $this->optimizeAndStoreKycDocument(
+                    $request->file('nrc_front'),
+                    'nrc_front'
+                );
+            }
+            
+            if ($request->hasFile('nrc_back')) {
+                $kycDocuments['nrc_back'] = $this->optimizeAndStoreKycDocument(
+                    $request->file('nrc_back'),
+                    'nrc_back'
+                );
+            }
+            
+            if ($request->hasFile('business_cert')) {
+                // PDFs are not optimized, just stored
+                if ($request->file('business_cert')->getMimeType() === 'application/pdf') {
+                    $kycDocuments['business_cert'] = $request->file('business_cert')
+                        ->store('marketplace/kyc', 'public');
+                } else {
+                    $kycDocuments['business_cert'] = $this->optimizeAndStoreKycDocument(
+                        $request->file('business_cert'),
+                        'business_cert'
+                    );
+                }
+            }
 
-        $seller = $this->sellerService->register($request->user()->id, [
-            'business_name' => $validated['business_name'],
-            'business_type' => $validated['business_type'],
-            'province' => $validated['province'],
-            'district' => $validated['district'],
-            'phone' => $validated['phone'],
-            'email' => $validated['email'],
-            'description' => $validated['description'],
-            'kyc_documents' => $kycDocuments,
+            $seller = $this->sellerService->register($request->user()->id, [
+                'business_name' => $validated['business_name'],
+                'business_type' => $validated['business_type'],
+                'province' => $validated['province'],
+                'district' => $validated['district'],
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
+                'description' => $validated['description'],
+                'kyc_documents' => $kycDocuments,
+            ]);
+
+            \Log::info('Seller registration successful', ['seller_id' => $seller->id]);
+
+            return redirect()->route('marketplace.seller.dashboard')
+                ->with('success', 'Registration submitted! We will review your documents and notify you.');
+        } catch (\Exception $e) {
+            \Log::error('Seller registration failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->withErrors(['error' => 'Registration failed. Please try again or contact support.'])
+                ->withInput();
+        }
+    }
+
+    /**
+     * Optimize and store KYC document image
+     * Reduces file size while maintaining readability for verification
+     */
+    private function optimizeAndStoreKycDocument($file, string $documentType): string
+    {
+        $image = \Intervention\Image\Laravel\Facades\Image::read($file->getRealPath());
+        
+        // Get original dimensions
+        $width = $image->width();
+        $height = $image->height();
+        
+        // Resize if larger than 1920px on longest side (maintains readability)
+        $maxDimension = 1920;
+        if ($width > $maxDimension || $height > $maxDimension) {
+            if ($width > $height) {
+                $image->scaleDown(width: $maxDimension);
+            } else {
+                $image->scaleDown(height: $maxDimension);
+            }
+        }
+        
+        // Generate filename
+        $filename = \Illuminate\Support\Str::random(40) . '.jpg';
+        $path = 'marketplace/kyc/' . $filename;
+        
+        // Encode as JPEG with good quality (85% - readable but smaller)
+        $encoded = $image->toJpeg(quality: 85);
+        
+        // Store optimized image
+        Storage::disk('public')->put($path, $encoded);
+        
+        \Log::info('KYC document optimized', [
+            'type' => $documentType,
+            'original_size' => $file->getSize(),
+            'optimized_path' => $path,
         ]);
-
-        return redirect()->route('marketplace.seller.dashboard')
-            ->with('success', 'Registration submitted! We will review your documents and notify you.');
+        
+        return $path;
     }
 
     public function profile(Request $request)
@@ -270,5 +343,53 @@ class SellerDashboardController extends Controller
         $this->sellerService->updateProfile($seller->id, $data);
 
         return back()->with('success', 'Profile updated.');
+    }
+
+    /**
+     * Upload shop logo
+     */
+    public function uploadLogo(Request $request)
+    {
+        $seller = $request->attributes->get('seller') 
+            ?? $this->sellerService->getByUserId($request->user()->id);
+
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+        ]);
+
+        // Delete old logo
+        if ($seller->logo_path) {
+            Storage::disk('public')->delete($seller->logo_path);
+        }
+
+        $path = $request->file('logo')->store('marketplace/logos', 'public');
+        
+        $seller->update(['logo_path' => $path]);
+
+        return back()->with('success', 'Shop logo updated successfully.');
+    }
+
+    /**
+     * Upload shop cover image
+     */
+    public function uploadCover(Request $request)
+    {
+        $seller = $request->attributes->get('seller') 
+            ?? $this->sellerService->getByUserId($request->user()->id);
+
+        $request->validate([
+            'cover_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        // Delete old cover
+        if ($seller->cover_image_path) {
+            Storage::disk('public')->delete($seller->cover_image_path);
+        }
+
+        $path = $request->file('cover_image')->store('marketplace/covers', 'public');
+        
+        $seller->update(['cover_image_path' => $path]);
+
+        return back()->with('success', 'Cover image updated successfully.');
     }
 }

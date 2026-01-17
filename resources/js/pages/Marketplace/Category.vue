@@ -8,7 +8,11 @@ interface Category {
     name: string;
     slug: string;
     icon: string;
+    image_url?: string | null;
+    parent_id?: number | null;
+    description?: string | null;
     products_count?: number;
+    children?: Category[];
 }
 
 interface Product {
@@ -17,7 +21,9 @@ interface Product {
     slug: string;
     price: number;
     compare_price: number | null;
-    images: string[];
+    primary_image_url: string | null;
+    formatted_price: string;
+    discount_percentage: number;
     seller: {
         id: number;
         business_name: string;
@@ -34,10 +40,12 @@ interface Props {
         meta?: any;
     };
     categories: Category[];
+    subcategories?: Category[];
     provinces: string[];
     filters: {
         province: string;
         sort: string;
+        subcategory?: string;
     };
 }
 
@@ -45,6 +53,24 @@ const props = defineProps<Props>();
 
 const selectedProvince = ref(props.filters.province);
 const selectedSort = ref(props.filters.sort);
+const selectedSubcategory = ref(props.filters.subcategory || '');
+
+// Get parent categories for sidebar
+const parentCategories = computed(() => props.categories.filter(c => !c.parent_id));
+
+// Get subcategories of current category (if it's a parent)
+const currentSubcategories = computed(() => props.subcategories || []);
+
+// Check if current category is a parent
+const isParentCategory = computed(() => !props.category.parent_id);
+
+// Get parent category if viewing a subcategory
+const parentCategory = computed(() => {
+    if (props.category.parent_id) {
+        return props.categories.find(c => c.id === props.category.parent_id);
+    }
+    return null;
+});
 
 const sortOptions = [
     { value: 'newest', label: 'Newest First' },
@@ -54,21 +80,26 @@ const sortOptions = [
 ];
 
 const applyFilters = () => {
-    router.get(route('marketplace.category', props.category.slug), {
-        province: selectedProvince.value || undefined,
-        sort: selectedSort.value,
-    }, {
+    const params: Record<string, string> = {};
+    
+    if (selectedProvince.value) params.province = selectedProvince.value;
+    if (selectedSort.value) params.sort = selectedSort.value;
+    if (selectedSubcategory.value) params.subcategory = selectedSubcategory.value;
+
+    router.get(route('marketplace.category', props.category.slug), params, {
         preserveState: true,
         preserveScroll: true,
     });
 };
 
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-ZM', {
-        style: 'currency',
-        currency: 'ZMW',
-        minimumFractionDigits: 0,
-    }).format(price / 100);
+const selectSubcategory = (subcategoryId: string) => {
+    selectedSubcategory.value = subcategoryId;
+    applyFilters();
+};
+
+const clearSubcategoryFilter = () => {
+    selectedSubcategory.value = '';
+    applyFilters();
 };
 
 const getTrustBadge = (level: string) => {
@@ -90,12 +121,28 @@ const getTrustBadge = (level: string) => {
             <!-- Category Header -->
             <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-8">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Breadcrumb for subcategories -->
+                    <div v-if="category.parent_id" class="flex items-center gap-2 text-amber-100 text-sm mb-2">
+                        <Link :href="route('marketplace.home')" class="hover:text-white">Home</Link>
+                        <span>›</span>
+                        <Link 
+                            v-for="parent in categories.filter(c => c.id === category.parent_id)"
+                            :key="parent.id"
+                            :href="route('marketplace.category', parent.slug)" 
+                            class="hover:text-white"
+                        >
+                            {{ parent.name }}
+                        </Link>
+                        <span>›</span>
+                        <span class="text-white">{{ category.name }}</span>
+                    </div>
+                    
                     <div class="flex items-center gap-4">
                         <span class="text-4xl">{{ category.icon }}</span>
                         <div>
                             <h1 class="text-2xl font-bold">{{ category.name }}</h1>
                             <p class="text-amber-100">
-                                {{ products.data?.length || 0 }} products available
+                                {{ category.description || `${products.data?.length || 0} products available` }}
                             </p>
                         </div>
                     </div>
@@ -142,12 +189,44 @@ const getTrustBadge = (level: string) => {
                                 </select>
                             </div>
 
+                            <!-- Subcategories (if parent category) -->
+                            <div v-if="currentSubcategories.length > 0" class="mb-6">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">Filter by Subcategory</h4>
+                                <div class="space-y-1">
+                                    <!-- All in this category option -->
+                                    <button
+                                        @click="clearSubcategoryFilter"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                            !selectedSubcategory 
+                                                ? 'bg-amber-100 text-amber-700 font-medium' 
+                                                : 'text-gray-600 hover:bg-amber-50 hover:text-amber-600'
+                                        ]"
+                                    >
+                                        All {{ category.name }}
+                                    </button>
+                                    <button
+                                        v-for="sub in currentSubcategories"
+                                        :key="sub.id"
+                                        @click="selectSubcategory(String(sub.id))"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                            selectedSubcategory === String(sub.id)
+                                                ? 'bg-amber-100 text-amber-700 font-medium' 
+                                                : 'text-gray-600 hover:bg-amber-50 hover:text-amber-600'
+                                        ]"
+                                    >
+                                        {{ sub.icon }} {{ sub.name }}
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Other Categories -->
                             <div>
-                                <h4 class="text-sm font-medium text-gray-700 mb-2">Other Categories</h4>
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">All Categories</h4>
                                 <div class="space-y-1">
                                     <Link
-                                        v-for="cat in categories.filter(c => c.id !== category.id)"
+                                        v-for="cat in parentCategories.filter(c => c.id !== category.id && c.id !== category.parent_id)"
                                         :key="cat.id"
                                         :href="route('marketplace.category', cat.slug)"
                                         class="block px-3 py-2 text-sm text-gray-600 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors"
@@ -171,8 +250,8 @@ const getTrustBadge = (level: string) => {
                                 <!-- Product Image -->
                                 <div class="aspect-square bg-gray-100 relative overflow-hidden">
                                     <img
-                                        v-if="product.images?.length"
-                                        :src="product.images[0]"
+                                        v-if="product.primary_image_url"
+                                        :src="product.primary_image_url"
                                         :alt="product.name"
                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     />
@@ -184,10 +263,10 @@ const getTrustBadge = (level: string) => {
                                     
                                     <!-- Discount Badge -->
                                     <div
-                                        v-if="product.compare_price && product.compare_price > product.price"
+                                        v-if="product.discount_percentage > 0"
                                         class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded"
                                     >
-                                        -{{ Math.round((1 - product.price / product.compare_price) * 100) }}%
+                                        -{{ product.discount_percentage }}%
                                     </div>
                                 </div>
 
@@ -199,10 +278,16 @@ const getTrustBadge = (level: string) => {
                                     
                                     <!-- Seller Info -->
                                     <div class="flex items-center gap-1 text-sm text-gray-500 mb-2">
-                                        <span :class="getTrustBadge(product.seller.trust_level).color">
-                                            {{ getTrustBadge(product.seller.trust_level).icon }}
-                                        </span>
-                                        <span class="truncate">{{ product.seller.business_name }}</span>
+                                        <Link
+                                            :href="route('marketplace.seller.show', product.seller.id)"
+                                            @click.stop
+                                            class="flex items-center gap-1 hover:text-amber-600 transition-colors"
+                                        >
+                                            <span :class="getTrustBadge(product.seller.trust_level).color">
+                                                {{ getTrustBadge(product.seller.trust_level).icon }}
+                                            </span>
+                                            <span class="truncate">{{ product.seller.business_name }}</span>
+                                        </Link>
                                         <span class="text-gray-300">•</span>
                                         <span>{{ product.seller.province }}</span>
                                     </div>
@@ -210,13 +295,13 @@ const getTrustBadge = (level: string) => {
                                     <!-- Price -->
                                     <div class="flex items-baseline gap-2">
                                         <span class="text-lg font-bold text-amber-600">
-                                            {{ formatPrice(product.price) }}
+                                            {{ product.formatted_price }}
                                         </span>
                                         <span
                                             v-if="product.compare_price && product.compare_price > product.price"
                                             class="text-sm text-gray-400 line-through"
                                         >
-                                            {{ formatPrice(product.compare_price) }}
+                                            K{{ (product.compare_price / 100).toFixed(0) }}
                                         </span>
                                     </div>
                                 </div>

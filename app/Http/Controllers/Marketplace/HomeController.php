@@ -36,9 +36,24 @@ class HomeController extends Controller
 
     public function search(Request $request)
     {
+        // Determine which category IDs to filter by
+        $categoryIds = null;
+        
+        if ($request->subcategory) {
+            // If subcategory is selected, filter by that specific subcategory
+            $categoryIds = [(int) $request->subcategory];
+        } elseif ($request->category) {
+            // If only parent category is selected, include parent and all its children
+            $parentId = (int) $request->category;
+            $childIds = MarketplaceCategory::where('parent_id', $parentId)
+                ->pluck('id')
+                ->toArray();
+            $categoryIds = array_merge([$parentId], $childIds);
+        }
+
         $filters = [
             'search' => $request->q,
-            'category_id' => $request->category,
+            'category_ids' => $categoryIds,
             'province' => $request->province,
             'min_price' => $request->min_price ? $request->min_price * 100 : null,
             'max_price' => $request->max_price ? $request->max_price * 100 : null,
@@ -55,6 +70,7 @@ class HomeController extends Controller
             'filters' => [
                 'q' => $request->q ?? '',
                 'category' => $request->category ?? '',
+                'subcategory' => $request->subcategory ?? '',
                 'province' => $request->province ?? '',
                 'min_price' => $request->min_price ?? '',
                 'max_price' => $request->max_price ?? '',
@@ -67,8 +83,28 @@ class HomeController extends Controller
     {
         $category = MarketplaceCategory::where('slug', $slug)->firstOrFail();
         
+        // If this is a parent category, also include products from subcategories
+        $categoryIds = [$category->id];
+        $subcategories = [];
+        
+        if (is_null($category->parent_id)) {
+            // This is a parent category - get subcategories
+            $subcategories = MarketplaceCategory::where('parent_id', $category->id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
+            
+            // Check if filtering by specific subcategory
+            if ($request->subcategory) {
+                $categoryIds = [(int) $request->subcategory];
+            } else {
+                // Include all subcategory IDs for product filtering
+                $categoryIds = array_merge($categoryIds, $subcategories->pluck('id')->toArray());
+            }
+        }
+        
         $filters = [
-            'category_id' => $category->id,
+            'category_ids' => $categoryIds,
             'province' => $request->province,
             'sort' => $request->sort ?? 'newest',
         ];
@@ -80,10 +116,12 @@ class HomeController extends Controller
             'category' => $category,
             'products' => $products,
             'categories' => $categories,
+            'subcategories' => $subcategories,
             'provinces' => $this->sellerService->getProvinces(),
             'filters' => [
                 'province' => $request->province ?? '',
                 'sort' => $request->sort ?? 'newest',
+                'subcategory' => $request->subcategory ?? '',
             ],
         ]);
     }
@@ -111,7 +149,7 @@ class HomeController extends Controller
         ]);
     }
 
-    public function seller(string $id)
+    public function seller(Request $request, string $id)
     {
         $seller = $this->sellerService->getById((int) $id);
         
@@ -124,9 +162,75 @@ class HomeController extends Controller
             24
         );
 
+        // Get follower count
+        $followersCount = $seller->followers()->count();
+        
+        // Check if current user is following
+        $isFollowing = false;
+        if ($request->user()) {
+            $isFollowing = $seller->followers()
+                ->where('user_id', $request->user()->id)
+                ->exists();
+        }
+
+        // Get review stats
+        $reviewCount = $seller->reviews()->where('is_approved', true)->count();
+        
+        // Get rating breakdown
+        $ratingBreakdown = $seller->reviews()
+            ->where('is_approved', true)
+            ->selectRaw('rating, count(*) as count')
+            ->groupBy('rating')
+            ->pluck('count', 'rating')
+            ->toArray();
+
+        $breakdown = [];
+        for ($i = 5; $i >= 1; $i--) {
+            $count = $ratingBreakdown[$i] ?? 0;
+            $breakdown[$i] = [
+                'count' => $count,
+                'percentage' => $reviewCount > 0 ? round(($count / $reviewCount) * 100) : 0,
+            ];
+        }
+
+        // Get recent reviews
+        $reviews = $seller->reviews()
+            ->with(['buyer:id,name', 'product:id,name,slug'])
+            ->where('is_approved', true)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        // Get product categories for this seller
+        $categories = $seller->products()
+            ->where('status', 'active')
+            ->with('category:id,name,slug')
+            ->get()
+            ->pluck('category')
+            ->unique('id')
+            ->map(function ($cat) use ($seller) {
+                return [
+                    'id' => $cat->id,
+                    'name' => $cat->name,
+                    'slug' => $cat->slug,
+                    'count' => $seller->products()
+                        ->where('status', 'active')
+                        ->where('category_id', $cat->id)
+                        ->count(),
+                ];
+            })
+            ->values();
+
         return Inertia::render('Marketplace/Seller', [
-            'seller' => $seller,
+            'seller' => array_merge($seller->toArray(), [
+                'followers_count' => $followersCount,
+                'review_count' => $reviewCount,
+            ]),
             'products' => $products,
+            'isFollowing' => $isFollowing,
+            'ratingBreakdown' => $breakdown,
+            'reviews' => $reviews,
+            'categories' => $categories,
         ]);
     }
 

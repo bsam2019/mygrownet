@@ -107,10 +107,16 @@
                       Member
                     </th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      Tier
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
                       Status
                     </th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
                       Progress
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      Daily Rate
                     </th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
                       Earned
@@ -127,6 +133,24 @@
                         <div class="font-medium text-gray-900">{{ cycle.user.name }}</div>
                         <div class="text-gray-500">{{ cycle.user.email }}</div>
                       </div>
+                    </td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm">
+                      <span
+                        :class="[
+                          'inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize',
+                          cycle.tier === 'lite'
+                            ? 'bg-gray-100 text-gray-800'
+                            : cycle.tier === 'basic'
+                              ? 'bg-blue-100 text-blue-800'
+                              : cycle.tier === 'growth_plus'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : cycle.tier === 'pro'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-indigo-100 text-indigo-800',
+                        ]"
+                      >
+                        {{ cycle.tier?.replace('_', ' ') || 'basic' }}
+                      </span>
                     </td>
                     <td class="whitespace-nowrap px-4 py-3 text-sm">
                       <span
@@ -152,6 +176,9 @@
                           ></div>
                         </div>
                       </div>
+                    </td>
+                    <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-blue-600">
+                      K{{ cycle.daily_rate?.toFixed(2) || '25.00' }}/day
                     </td>
                     <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-green-600">
                       K{{ cycle.total_earned_lgc.toFixed(2) }}

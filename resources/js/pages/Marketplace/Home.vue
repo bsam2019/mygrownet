@@ -37,6 +37,8 @@ interface Category {
     name: string;
     slug: string;
     icon: string | null;
+    image_url: string | null;
+    parent_id: number | null;
 }
 
 defineProps<{
@@ -73,28 +75,6 @@ const sellerBenefits = [
     { icon: BuildingStorefrontIcon, title: 'Easy Store Setup', desc: 'List products in minutes, no tech skills needed' },
     { icon: SparklesIcon, title: 'Grow Your Business', desc: 'Tools and insights to scale your sales' },
 ];
-
-const categoryIcons: Record<string, string> = {
-    'Electronics': '📱',
-    'Fashion': '👗',
-    'Home & Garden': '🏠',
-    'Health & Beauty': '💄',
-    'Food & Groceries': '🍎',
-    'Sports': '⚽',
-    'Books': '📚',
-    'Automotive': '🚗',
-    'Agriculture': '🌾',
-    'Services': '🛠️',
-};
-
-const categoryImages: Record<string, string> = {
-    'Electronics': 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=300&h=200&fit=crop',
-    'Fashion': 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=200&fit=crop',
-    'Home & Garden': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=200&fit=crop',
-    'Health & Beauty': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&h=200&fit=crop',
-    'Food & Groceries': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop',
-    'Agriculture': 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=300&h=200&fit=crop',
-};
 </script>
 
 <template>
@@ -228,40 +208,30 @@ const categoryImages: Record<string, string> = {
                     </Link>
                 </div>
                 
-                <!-- Featured Categories with Images -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                <!-- Main Categories Grid with Images -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     <Link
-                        v-for="category in categories.slice(0, 6)"
+                        v-for="category in categories.filter(c => !c.parent_id)"
                         :key="category.id"
                         :href="route('marketplace.category', category.slug)"
                         class="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all"
                     >
                         <div class="aspect-[4/3] bg-gradient-to-br from-orange-100 to-amber-50 relative overflow-hidden">
                             <img 
-                                v-if="categoryImages[category.name]"
-                                :src="categoryImages[category.name]"
+                                v-if="category.image_url"
+                                :src="category.image_url"
                                 :alt="category.name"
                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
+                            <div v-else class="w-full h-full flex items-center justify-center">
+                                <span class="text-4xl">{{ category.icon || '📦' }}</span>
+                            </div>
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-                            <div class="absolute bottom-0 left-0 right-0 p-4">
-                                <span class="text-2xl mb-1 block">{{ categoryIcons[category.name] || '📦' }}</span>
-                                <h3 class="font-semibold text-white text-sm">{{ category.name }}</h3>
+                            <div class="absolute bottom-0 left-0 right-0 p-3">
+                                <span class="text-xl mb-1 block">{{ category.icon || '📦' }}</span>
+                                <h3 class="font-semibold text-white text-sm leading-tight">{{ category.name }}</h3>
                             </div>
                         </div>
-                    </Link>
-                </div>
-
-                <!-- Remaining Categories as Pills -->
-                <div v-if="categories.length > 6" class="flex flex-wrap gap-2">
-                    <Link
-                        v-for="category in categories.slice(6)"
-                        :key="category.id"
-                        :href="route('marketplace.category', category.slug)"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all text-sm"
-                    >
-                        <span>{{ categoryIcons[category.name] || '📦' }}</span>
-                        <span class="font-medium text-gray-700">{{ category.name }}</span>
                     </Link>
                 </div>
             </div>
@@ -311,10 +281,14 @@ const categoryImages: Record<string, string> = {
                             <h3 class="font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-orange-600 transition-colors">
                                 {{ product.name }}
                             </h3>
-                            <div class="flex items-center gap-1 text-xs text-gray-500 mb-3">
+                            <Link
+                                :href="route('marketplace.seller.show', product.seller.id)"
+                                @click.stop
+                                class="flex items-center gap-1 text-xs text-gray-500 mb-3 hover:text-orange-600 transition-colors w-fit"
+                            >
                                 <span class="text-green-600">{{ product.seller.trust_badge }}</span>
                                 <span class="truncate">{{ product.seller.business_name }}</span>
-                            </div>
+                            </Link>
                             <div class="flex items-baseline gap-2">
                                 <span class="text-xl font-bold text-orange-600">{{ product.formatted_price }}</span>
                                 <span 

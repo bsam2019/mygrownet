@@ -56,13 +56,29 @@ class StarterKitController extends Controller
                         'submitted_at' => $pendingPayment->created_at->format('M j, Y H:i'),
                     ],
                     'tiers' => [
+                        'lite' => [
+                            'price' => StarterKitService::PRICE_LITE,
+                            'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
+                            'lgrDailyRate' => 12.50,
+                            'lpAward' => 15,
+                        ],
                         'basic' => [
                             'price' => StarterKitService::PRICE_BASIC,
                             'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                            'lgrDailyRate' => 25.00,
+                            'lpAward' => 25,
                         ],
-                        'premium' => [
-                            'price' => StarterKitService::PRICE_PREMIUM,
-                            'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                        'growth_plus' => [
+                            'price' => StarterKitService::PRICE_GROWTH_PLUS,
+                            'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
+                            'lgrDailyRate' => 37.50,
+                            'lpAward' => 50,
+                        ],
+                        'pro' => [
+                            'price' => StarterKitService::PRICE_PRO,
+                            'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
+                            'lgrDailyRate' => 62.50,
+                            'lpAward' => 100,
                         ],
                     ],
                     'contentItems' => $contentItems,
@@ -79,13 +95,29 @@ class StarterKitController extends Controller
                 'hasStarterKit' => false,
                 'hasPendingPayment' => false,
                 'tiers' => [
+                    'lite' => [
+                        'price' => StarterKitService::PRICE_LITE,
+                        'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
+                        'lgrDailyRate' => 12.50,
+                        'lpAward' => 15,
+                    ],
                     'basic' => [
                         'price' => StarterKitService::PRICE_BASIC,
                         'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                        'lgrDailyRate' => 25.00,
+                        'lpAward' => 25,
                     ],
-                    'premium' => [
-                        'price' => StarterKitService::PRICE_PREMIUM,
-                        'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
+                    'growth_plus' => [
+                        'price' => StarterKitService::PRICE_GROWTH_PLUS,
+                        'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
+                        'lgrDailyRate' => 37.50,
+                        'lpAward' => 50,
+                    ],
+                    'pro' => [
+                        'price' => StarterKitService::PRICE_PRO,
+                        'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
+                        'lgrDailyRate' => 62.50,
+                        'lpAward' => 100,
                     ],
                 ],
                 'purchaseUrl' => route('mygrownet.starter-kit.purchase'),
@@ -206,17 +238,37 @@ class StarterKitController extends Controller
         
         return Inertia::render('MyGrowNet/StarterKitPurchase', [
             'tiers' => [
+                'lite' => [
+                    'name' => 'Lite Knowledge Pack',
+                    'price' => StarterKitService::PRICE_LITE,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
+                    'lgrDailyRate' => 12.50,
+                    'lgrMaxEarnings' => 875.00,
+                    'lpAward' => 15,
+                ],
                 'basic' => [
-                    'name' => 'Basic Starter Kit',
+                    'name' => 'Basic Growth Pack',
                     'price' => StarterKitService::PRICE_BASIC,
                     'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
-                    'lgrMultiplier' => 1.0,
+                    'lgrDailyRate' => 25.00,
+                    'lgrMaxEarnings' => 1750.00,
+                    'lpAward' => 25,
                 ],
-                'premium' => [
-                    'name' => 'Premium Starter Kit',
-                    'price' => StarterKitService::PRICE_PREMIUM,
-                    'shopCredit' => StarterKitService::SHOP_CREDIT_PREMIUM,
-                    'lgrMultiplier' => 1.5,
+                'growth_plus' => [
+                    'name' => 'Growth Plus Pack',
+                    'price' => StarterKitService::PRICE_GROWTH_PLUS,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
+                    'lgrDailyRate' => 37.50,
+                    'lgrMaxEarnings' => 2625.00,
+                    'lpAward' => 50,
+                ],
+                'pro' => [
+                    'name' => 'Pro Access Pack',
+                    'price' => StarterKitService::PRICE_PRO,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
+                    'lgrDailyRate' => 62.50,
+                    'lgrMaxEarnings' => 4375.00,
+                    'lpAward' => 100,
                 ],
             ],
             'walletBalance' => $walletBalance,
@@ -231,7 +283,7 @@ class StarterKitController extends Controller
     public function storePurchase(Request $request)
     {
         $validated = $request->validate([
-            'tier' => 'required|string|in:basic,premium',
+            'tier' => 'required|string|in:lite,basic,growth_plus,pro',
             'payment_method' => 'required|string|in:mobile_money,bank_transfer,wallet',
             'terms_accepted' => 'required|accepted',
         ]);

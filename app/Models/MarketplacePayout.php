@@ -13,63 +13,151 @@ class MarketplacePayout extends Model
     protected $fillable = [
         'seller_id',
         'amount',
-        'status',
-        'method',
+        'commission_deducted',
+        'net_amount',
+        'payout_method',
         'account_number',
         'account_name',
-        'reference_number',
-        'failure_reason',
+        'bank_name',
+        'status',
+        'reference',
+        'seller_notes',
+        'admin_notes',
+        'rejection_reason',
+        'approved_by',
+        'approved_at',
+        'processed_by',
         'processed_at',
-        'completed_at',
+        'transaction_reference',
+        'metadata',
     ];
 
     protected $casts = [
+        'amount' => 'integer',
+        'commission_deducted' => 'integer',
+        'net_amount' => 'integer',
+        'approved_at' => 'datetime',
         'processed_at' => 'datetime',
-        'completed_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
-    protected $appends = ['formatted_amount', 'status_label', 'method_label'];
-
+    /**
+     * Get the seller that owns the payout
+     */
     public function seller(): BelongsTo
     {
         return $this->belongsTo(MarketplaceSeller::class, 'seller_id');
     }
 
-    public function getFormattedAmountAttribute(): string
+    /**
+     * Get the admin who approved the payout
+     */
+    public function approvedBy(): BelongsTo
     {
-        return 'K' . number_format($this->amount / 100, 2);
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function getStatusLabelAttribute(): string
+    /**
+     * Get the admin who processed the payout
+     */
+    public function processedBy(): BelongsTo
     {
-        return match($this->status) {
-            'pending' => 'Pending',
-            'processing' => 'Processing',
-            'completed' => 'Completed',
-            'failed' => 'Failed',
-            'cancelled' => 'Cancelled',
-            default => ucfirst($this->status),
-        };
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
-    public function getMethodLabelAttribute(): string
-    {
-        return match($this->method) {
-            'momo' => 'MTN MoMo',
-            'airtel' => 'Airtel Money',
-            'zamtel' => 'Zamtel Kwacha',
-            'bank' => 'Bank Transfer',
-            default => ucfirst($this->method),
-        };
-    }
-
+    /**
+     * Scope for pending payouts
+     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
+    /**
+     * Scope for approved payouts
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
+     * Scope for completed payouts
+     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    /**
+     * Check if payout can be approved
+     */
+    public function canBeApproved(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    /**
+     * Check if payout can be rejected
+     */
+    public function canBeRejected(): bool
+    {
+        return in_array($this->status, ['pending', 'approved']);
+    }
+
+    /**
+     * Check if payout can be processed
+     */
+    public function canBeProcessed(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    /**
+     * Get formatted amount
+     */
+    public function getFormattedAmountAttribute(): string
+    {
+        return 'K' . number_format($this->amount / 100, 2);
+    }
+
+    /**
+     * Get formatted net amount
+     */
+    public function getFormattedNetAmountAttribute(): string
+    {
+        return 'K' . number_format($this->net_amount / 100, 2);
+    }
+
+    /**
+     * Get status badge color
+     */
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'yellow',
+            'approved' => 'blue',
+            'processing' => 'indigo',
+            'completed' => 'green',
+            'rejected' => 'red',
+            'failed' => 'red',
+            default => 'gray',
+        };
+    }
+
+    /**
+     * Get status label
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Pending Review',
+            'approved' => 'Approved',
+            'processing' => 'Processing',
+            'completed' => 'Completed',
+            'rejected' => 'Rejected',
+            'failed' => 'Failed',
+            default => ucfirst($this->status),
+        };
     }
 }

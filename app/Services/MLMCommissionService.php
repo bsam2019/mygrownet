@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class MLMCommissionService
 {
+    public function __construct(
+        private readonly CommissionSettingsService $commissionSettings
+    ) {}
+
     /**
      * Process seven-level MLM commissions for a package purchase
      */
@@ -21,6 +25,14 @@ class MLMCommissionService
         string $packageType = 'subscription'
     ): array {
         $commissions = [];
+        
+        // Check if commissions are enabled
+        if (!$this->commissionSettings->isEnabled()) {
+            Log::info("MLM commissions disabled, skipping", [
+                'purchaser_id' => $purchaser->id,
+            ]);
+            return $commissions;
+        }
         
         Log::info("Starting MLM commission processing", [
             'purchaser_id' => $purchaser->id,
@@ -39,6 +51,16 @@ class MLMCommissionService
             Log::info("Upline referrers found", [
                 'count' => count($uplineReferrers),
                 'referrers' => $uplineReferrers
+            ]);
+            
+            // Calculate commission base amount (50% of purchase by default)
+            $commissionBaseAmount = $this->commissionSettings->calculateBaseAmount($packageAmount);
+            $basePercentage = $this->commissionSettings->getBasePercentage();
+            
+            Log::info("Commission base calculated", [
+                'package_amount' => $packageAmount,
+                'base_percentage' => $basePercentage,
+                'commission_base_amount' => $commissionBaseAmount,
             ]);
             
             foreach ($uplineReferrers as $referrerData) {
@@ -77,28 +99,41 @@ class MLMCommissionService
                     }
                 }
                 
-                // Calculate commission amount for this level
-                // IMPORTANT: Only award commission if referrer has purchased starter kit
-                if (!$referrer->has_starter_kit) {
-                    Log::info("Skipping commission - referrer has no starter kit", [
+                // Check if referrer has starter kit (affects commission multiplier)
+                $referrerHasKit = (bool) $referrer->has_starter_kit;
+                $nonKitMultiplier = $referrerHasKit ? 1.0 : $this->commissionSettings->getNonKitMultiplier();
+                
+                // Calculate commission using settings service
+                $commissionData = $this->commissionSettings->calculateCommission(
+                    $packageAmount,
+                    $level,
+                    $referrerHasKit
+                );
+                
+                $commissionRate = $commissionData['level_rate'];
+                $commissionAmount = $commissionData['commission_amount'];
+                
+                // Skip if commission is zero (non-kit members with 0% multiplier)
+                if ($commissionAmount <= 0) {
+                    Log::info("Commission amount is zero, skipping", [
                         'referrer_id' => $referrer->id,
-                        'referrer_name' => $referrer->name,
-                        'level' => $level,
+                        'referrer_has_kit' => $referrerHasKit,
+                        'non_kit_multiplier' => $nonKitMultiplier,
                     ]);
                     continue;
                 }
-                
-                $commissionRate = ReferralCommission::getCommissionRate($level);
-                $commissionAmount = $packageAmount * ($commissionRate / 100);
                 
                 Log::info("Creating commission", [
                     'referrer_id' => $referrer->id,
                     'level' => $level,
                     'rate' => $commissionRate,
-                    'amount' => $commissionAmount
+                    'base_amount' => $commissionBaseAmount,
+                    'non_kit_multiplier' => $nonKitMultiplier,
+                    'final_amount' => $commissionAmount,
+                    'referrer_has_kit' => $referrerHasKit,
                 ]);
                 
-                // Create commission record
+                // Create commission record with tracking fields
                 $commission = ReferralCommission::create([
                     'referrer_id' => $referrer->id,
                     'referred_id' => $purchaser->id,
@@ -109,6 +144,10 @@ class MLMCommissionService
                     'commission_type' => 'REFERRAL',
                     'package_type' => $packageType,
                     'package_amount' => $packageAmount,
+                    'commission_base_amount' => $commissionBaseAmount,
+                    'commission_base_percentage' => $basePercentage,
+                    'non_kit_multiplier' => $nonKitMultiplier,
+                    'referrer_has_kit' => $referrerHasKit,
                     'team_volume' => $referrer->current_team_volume ?? 0,
                     'personal_volume' => $referrer->current_personal_volume ?? 0,
                 ]);
@@ -120,12 +159,16 @@ class MLMCommissionService
                 
                 // Send notification
                 try {
+                    $notificationMessage = $referrerHasKit 
+                        ? 'You earned a Level ' . $level . ' commission'
+                        : 'You earned a Level ' . $level . ' commission (50% - purchase starter kit for full commissions!)';
+                    
                     app(SendNotificationUseCase::class)->execute(
                         userId: $referrer->id,
                         type: 'commission.earned',
                         data: [
                             'title' => 'Commission Earned',
-                            'message' => 'You earned a Level ' . $level . ' commission',
+                            'message' => $notificationMessage,
                             'amount' => 'K' . number_format($commissionAmount, 2),
                             'level' => (string)$level,
                             'from_user' => $purchaser->name,
@@ -149,6 +192,7 @@ class MLMCommissionService
             Log::info("MLM commissions processed", [
                 'purchaser_id' => $purchaser->id,
                 'package_amount' => $packageAmount,
+                'commission_base' => $commissionBaseAmount,
                 'commissions_count' => count($commissions),
                 'total_commission_amount' => collect($commissions)->sum('amount')
             ]);

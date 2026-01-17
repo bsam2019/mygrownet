@@ -22,14 +22,20 @@ class StarterKitService
     /**
      * Starter Kit tiers
      */
+    public const TIER_LITE = 'lite';
     public const TIER_BASIC = 'basic';
-    public const TIER_PREMIUM = 'premium';
+    public const TIER_GROWTH_PLUS = 'growth_plus';
+    public const TIER_PRO = 'pro';
+    public const TIER_PREMIUM = 'premium'; // Legacy
     
     /**
      * Starter Kit prices in Kwacha.
      */
+    public const PRICE_LITE = 300.00;
     public const PRICE_BASIC = 500.00;
-    public const PRICE_PREMIUM = 1000.00;
+    public const PRICE_GROWTH_PLUS = 1000.00;
+    public const PRICE_PRO = 2000.00;
+    public const PRICE_PREMIUM = 1000.00; // Legacy
     
     /**
      * Legacy price constant (for backward compatibility)
@@ -39,8 +45,11 @@ class StarterKitService
     /**
      * Shop credit amounts in Kwacha.
      */
+    public const SHOP_CREDIT_LITE = 50.00;
     public const SHOP_CREDIT_BASIC = 100.00;
-    public const SHOP_CREDIT_PREMIUM = 200.00;
+    public const SHOP_CREDIT_GROWTH_PLUS = 200.00;
+    public const SHOP_CREDIT_PRO = 400.00;
+    public const SHOP_CREDIT_PREMIUM = 200.00; // Legacy
 
     /**
      * Shop credit expiry days.
@@ -74,8 +83,24 @@ class StarterKitService
         
         return DB::transaction(function () use ($user, $paymentMethod, $paymentReference, $tier) {
             // Get price based on tier
-            $price = $tier === self::TIER_PREMIUM ? self::PRICE_PREMIUM : self::PRICE_BASIC;
-            $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+            $prices = [
+                'lite' => self::PRICE_LITE,
+                'basic' => self::PRICE_BASIC,
+                'growth_plus' => self::PRICE_GROWTH_PLUS,
+                'pro' => self::PRICE_PRO,
+                'premium' => self::PRICE_PREMIUM,
+            ];
+            
+            $shopCredits = [
+                'lite' => self::SHOP_CREDIT_LITE,
+                'basic' => self::SHOP_CREDIT_BASIC,
+                'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
+                'pro' => self::SHOP_CREDIT_PRO,
+                'premium' => self::SHOP_CREDIT_PREMIUM,
+            ];
+            
+            $price = $prices[$tier] ?? self::PRICE_BASIC;
+            $shopCredit = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
             
             Log::info('Tier pricing calculated', [
                 'tier' => $tier,
@@ -347,7 +372,15 @@ class StarterKitService
      */
     protected function addShopCredit(User $user, string $tier = self::TIER_BASIC): void
     {
-        $creditAmount = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+        $shopCredits = [
+            'lite' => self::SHOP_CREDIT_LITE,
+            'basic' => self::SHOP_CREDIT_BASIC,
+            'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
+            'pro' => self::SHOP_CREDIT_PRO,
+            'premium' => self::SHOP_CREDIT_PREMIUM,
+        ];
+        
+        $creditAmount = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
         
         $user->update([
             'starter_kit_shop_credit' => $creditAmount,
@@ -469,16 +502,24 @@ class StarterKitService
      * This includes starter kit bonus + retroactive referral bonuses.
      * 
      * IMPORTANT: 
-     * - Basic tier (K500): 25 LP
-     * - Premium tier (K1000): 50 LP (member gets full points for their investment)
+     * - Lite (K300): 15 LP
+     * - Basic (K500): 25 LP
+     * - Growth Plus (K1000): 50 LP
+     * - Pro (K2000): 100 LP
      * - BUT referral commissions to uplines are ALWAYS based on K500 only
      */
     protected function awardRegistrationBonus(User $user): void
     {
         // 1. Award LP for starter kit purchase based on tier
-        // Basic (K500) = 25 LP, Premium (K1000) = 50 LP
-        // Member gets full points for their investment
-        $lpAmount = $user->starter_kit_tier === 'premium' ? 50 : 25;
+        $lpAmounts = [
+            'lite' => 15,
+            'basic' => 25,
+            'growth_plus' => 50,
+            'pro' => 100,
+            'premium' => 50, // Legacy tier
+        ];
+        
+        $lpAmount = $lpAmounts[$user->starter_kit_tier] ?? 25;
         
         DB::table('point_transactions')->insert([
             'user_id' => $user->id,
@@ -700,15 +741,28 @@ class StarterKitService
                 return;
             }
             
-            $tierName = $tier === self::TIER_PREMIUM ? 'Premium' : 'Basic';
-            $shopCredit = $tier === self::TIER_PREMIUM ? self::SHOP_CREDIT_PREMIUM : self::SHOP_CREDIT_BASIC;
+            $tierNames = [
+                'lite' => 'Lite Knowledge Pack',
+                'basic' => 'Basic Growth Pack',
+                'growth_plus' => 'Growth Plus Pack',
+                'pro' => 'Pro Access Pack',
+                'premium' => 'Premium Pack',
+            ];
             
-            $message = "Welcome to MyGrowNet! Your {$tierName} Starter Kit is now active. ";
+            $shopCredits = [
+                'lite' => self::SHOP_CREDIT_LITE,
+                'basic' => self::SHOP_CREDIT_BASIC,
+                'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
+                'pro' => self::SHOP_CREDIT_PRO,
+                'premium' => self::SHOP_CREDIT_PREMIUM,
+            ];
+            
+            $tierName = $tierNames[$tier] ?? 'Basic Growth Pack';
+            $shopCredit = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
+            
+            $message = "Welcome to MyGrowNet! Your {$tierName} is now active. ";
             $message .= "You've received K{$shopCredit} shop credit and access to all content.";
-            
-            if ($tier === self::TIER_PREMIUM) {
-                $message .= " You're now qualified for LGR quarterly profit sharing!";
-            }
+            $message .= " You're now qualified for LGR (Loyalty Growth Reward)!";
             
             $this->notificationService->execute(
                 userId: $user->id,

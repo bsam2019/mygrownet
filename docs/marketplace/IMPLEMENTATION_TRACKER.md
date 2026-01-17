@@ -1,7 +1,7 @@
 # GrowNet Market - Implementation Tracker
 
-**Last Updated:** January 11, 2026  
-**Status:** MVP Ready for Soft Launch (Testing/Demo)
+**Last Updated:** January 17, 2026  
+**Status:** Payout System Complete ✅
 
 ---
 
@@ -9,19 +9,76 @@
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Seller Registration | ✅ Complete | KYC workflow, verification |
-| Product Management | ✅ Complete | CRUD, media library, moderation |
+| Seller Registration | ✅ Complete | KYC workflow, verification, auto image optimization |
+| Product Management | ✅ Complete | CRUD, media library, moderation, two-step categories |
 | Product Moderation | ✅ Complete | Approve/reject/request changes, appeals |
 | Commission System | ✅ Complete | Tiered: 10%/8%/5% based on performance |
 | Buyer Flow | ✅ Complete | Browse, cart, checkout, orders |
 | Admin Panel | ✅ Complete | All moderation features |
+| **Payout System** | ✅ **Complete** | Full workflow: request, approve, process, complete |
 | Payment Integration | 🔴 Missing | **CRITICAL** - Placeholder only |
-| Seller Payouts | 🔴 Missing | **CRITICAL** - No withdrawal system |
 | Notifications | 🟠 Partial | Flash messages only, no email/SMS |
+| Escrow Release | 🔴 Missing | Auto-release logic needed |
+| Shipping UI | 🔴 Missing | Seller shipping interface needed |
 
 ---
 
 ## ✅ COMPLETED FEATURES
+
+### Payout System (Week 3) - COMPLETE ✅
+**Status:** Fully Implemented, Tested, and Integrated
+
+**All Components:**
+- [x] Database migration for payouts table
+- [x] MarketplacePayout model with relationships
+- [x] PayoutService with full business logic
+- [x] Seller payout controller (request, view history)
+- [x] Admin payout controller (approve, reject, process, complete)
+- [x] Payout routes (seller & admin)
+- [x] Config settings for payouts
+- [x] Seller payouts relationship in MarketplaceSeller model
+- [x] **Seller payout index page** - View balance and history
+- [x] **Seller payout request form** - Request withdrawal with validation
+- [x] **Seller payout details page** - View individual payout status
+- [x] **Admin payout list page** - View all payouts with filters and stats
+- [x] **Admin payout details/action page** - Approve, reject, process, complete
+- [x] **Seller dashboard integration** - "View Payouts" button on balance card
+- [x] **Admin sidebar integration** - Payouts nav item with pending badge
+- [x] **Admin dashboard stats** - Pending payouts count in header
+
+**Features:**
+- K50 minimum payout (configurable)
+- Multiple payout methods (MTN MoMo, Airtel Money, Bank Transfer)
+- Complete workflow: pending → approved → processing → completed
+- Rejection/failure with automatic balance refund
+- Prevent multiple pending payouts per seller
+- Real-time balance tracking
+- Comprehensive admin controls
+- Detailed audit trail with timestamps
+- Transaction reference tracking
+- Notes and rejection reasons
+
+**Business Logic:**
+- Available balance validation
+- Minimum payout enforcement
+- Commission calculation (currently 0% on payouts)
+- Balance deduction on request
+- Balance refund on rejection/failure
+- Unique reference generation (PO-XXXXXXXXXX)
+- Status transitions with validation
+- Admin approval workflow
+- Processing tracking
+- Completion verification
+
+---
+
+## 🟡 IN PROGRESS
+
+None currently.
+
+---
+
+## ✅ COMPLETED FEATURES (Continued)
 
 ### Seller System
 - [x] Seller registration wizard with KYC upload
@@ -31,10 +88,16 @@
 - [x] Automatic tier calculation based on performance
 - [x] Seller profile management
 - [x] Media library for product images
+- [x] Image editor with crop, filters, and adjustments
+- [x] Stock photo integration (Unsplash)
+- [x] Square aspect ratio enforcement for product images
 - [x] `EnsureUserIsSeller` middleware for route protection
 
 ### Product Management
 - [x] Product CRUD operations
+- [x] Two-step category selection (main category → subcategory)
+- [x] Category breadcrumb display
+- [x] Auto-select single subcategory
 - [x] Image upload with media library integration
 - [x] Product moderation queue
 - [x] Rejection categories (8 types)

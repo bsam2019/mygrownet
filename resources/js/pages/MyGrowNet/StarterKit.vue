@@ -19,6 +19,9 @@ interface Tier {
     price: number;
     shopCredit: number;
     lgrMultiplier?: number;
+    lgrDailyRate?: number;
+    lgrMaxEarnings?: number;
+    lpAward?: number;
 }
 
 interface Props {
@@ -31,8 +34,10 @@ interface Props {
         submitted_at: string;
     };
     tiers?: {
+        lite: Tier;
         basic: Tier;
-        premium: Tier;
+        growth_plus: Tier;
+        pro: Tier;
     };
     purchaseUrl?: string;
     contentItems?: Record<string, ContentItem[]>;
@@ -83,9 +88,11 @@ const totalContentValue = computed(() => {
     return total;
 });
 
-// Get basic tier for display (default option)
-const basicTier = computed(() => props.tiers?.basic || { price: 500, shopCredit: 100 });
-const premiumTier = computed(() => props.tiers?.premium || { price: 1000, shopCredit: 200 });
+// Get tiers for display
+const liteTier = computed(() => props.tiers?.lite || { price: 300, shopCredit: 50, lgrDailyRate: 12.50, lpAward: 15 });
+const basicTier = computed(() => props.tiers?.basic || { price: 500, shopCredit: 100, lgrDailyRate: 25, lpAward: 25 });
+const growthPlusTier = computed(() => props.tiers?.growth_plus || { price: 1000, shopCredit: 200, lgrDailyRate: 37.50, lpAward: 50 });
+const proTier = computed(() => props.tiers?.pro || { price: 2000, shopCredit: 400, lgrDailyRate: 62.50, lpAward: 100 });
 
 const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
@@ -170,7 +177,7 @@ const formatCurrency = (amount: number) => {
                             <div>
                                 <h2 class="text-3xl font-bold mb-2">MyGrowNet Starter Kit</h2>
                                 <p class="text-blue-100 text-lg">Everything you need to succeed on the platform</p>
-                                <p class="text-blue-200 mt-2">Total Value: K{{ totalContentValue + basicTier.shopCredit }} • Starting from K{{ basicTier.price }}</p>
+                                <p class="text-blue-200 mt-2">Total Value: K{{ totalContentValue + liteTier.shopCredit }} • Starting from K{{ liteTier.price }}</p>
                             </div>
                             <Link
                                 :href="purchaseUrl"
@@ -209,56 +216,100 @@ const formatCurrency = (amount: number) => {
                                 </div>
                             </div>
 
-                            <!-- Basic Tier Bonuses -->
-                            <div class="border border-green-200 bg-green-50 rounded-lg p-4">
+                            <!-- Lite Tier -->
+                            <div class="border border-gray-200 bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-3xl">📦</span>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">Lite (K{{ liteTier.price }})</h4>
+                                        <ul class="space-y-1 text-sm text-gray-600">
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Basic content access</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>+{{ liteTier.lpAward }} Lifetime Points</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-gray-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Community access</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic Tier -->
+                            <div class="border border-blue-200 bg-blue-50 rounded-lg p-4">
                                 <div class="flex items-start gap-3">
                                     <span class="text-3xl">🎁</span>
                                     <div class="flex-1">
-                                        <h4 class="font-semibold text-gray-900 mb-2">Basic Tier (K{{ basicTier.price }})</h4>
+                                        <h4 class="font-semibold text-gray-900 mb-2">Basic (K{{ basicTier.price }})</h4>
                                         <ul class="space-y-1 text-sm text-gray-600">
                                             <li class="flex items-start">
-                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>K{{ basicTier.shopCredit }} Shop Credit (90 days)</span>
+                                                <CheckCircleIcon class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>All content access</span>
                                             </li>
                                             <li class="flex items-start">
-                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>+37.5 Lifetime Points</span>
+                                                <CheckCircleIcon class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>+{{ basicTier.lpAward }} Lifetime Points</span>
                                             </li>
                                             <li class="flex items-start">
-                                                <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>Full Platform Access</span>
+                                                <CheckCircleIcon class="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Full platform access</span>
                                             </li>
                                         </ul>
-                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ basicTier.shopCredit }}</p>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Premium Tier Bonuses -->
-                            <div class="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                            <!-- Growth Plus Tier -->
+                            <div class="border border-emerald-200 bg-emerald-50 rounded-lg p-4 relative">
+                                <span class="absolute -top-2 right-2 bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded">POPULAR</span>
+                                <div class="flex items-start gap-3">
+                                    <span class="text-3xl">🚀</span>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-gray-900 mb-2">Growth Plus (K{{ growthPlusTier.price }})</h4>
+                                        <ul class="space-y-1 text-sm text-gray-600">
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>All content + extras</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>+{{ growthPlusTier.lpAward }} Lifetime Points</span>
+                                            </li>
+                                            <li class="flex items-start">
+                                                <CheckCircleIcon class="w-4 h-4 text-emerald-500 mr-2 mt-0.5 flex-shrink-0" />
+                                                <span>Priority support</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pro Tier -->
+                            <div class="border border-purple-200 bg-purple-50 rounded-lg p-4 relative">
+                                <span class="absolute -top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded">BEST VALUE</span>
                                 <div class="flex items-start gap-3">
                                     <span class="text-3xl">✨</span>
                                     <div class="flex-1">
-                                        <h4 class="font-semibold text-gray-900 mb-2">Premium Tier (K{{ premiumTier.price }})</h4>
+                                        <h4 class="font-semibold text-gray-900 mb-2">Pro (K{{ proTier.price }})</h4>
                                         <ul class="space-y-1 text-sm text-gray-600">
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>K{{ premiumTier.shopCredit }} Shop Credit (90 days)</span>
+                                                <span>Full library access</span>
                                             </li>
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>+37.5 Lifetime Points</span>
+                                                <span>+{{ proTier.lpAward }} Lifetime Points</span>
                                             </li>
                                             <li class="flex items-start">
                                                 <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>LGR Qualification 🚀</span>
-                                            </li>
-                                            <li class="flex items-start">
-                                                <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span>Quarterly Profit Sharing</span>
+                                                <span>Premium benefits</span>
                                             </li>
                                         </ul>
-                                        <p class="text-xs text-gray-500 mt-2">Value: K{{ premiumTier.shopCredit }} + LGR Access</p>
                                     </div>
                                 </div>
                             </div>
@@ -272,7 +323,7 @@ const formatCurrency = (amount: number) => {
                                 Choose Your Tier
                             </Link>
                             <p class="text-sm text-gray-600 mt-3">
-                                Basic: K{{ basicTier.price }} • Premium: K{{ premiumTier.price }} (includes LGR qualification)
+                                Lite: K{{ liteTier.price }} • Basic: K{{ basicTier.price }} • Growth Plus: K{{ growthPlusTier.price }} • Pro: K{{ proTier.price }}
                             </p>
                         </div>
                     </div>

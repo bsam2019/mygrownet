@@ -84,7 +84,7 @@
             <div class="flex-1 min-w-0">
               <h3 class="text-white font-bold text-lg">Get Your Starter Kit</h3>
               <p class="text-purple-100 text-sm mt-1.5 leading-relaxed">
-                Unlock learning resources, shop credit, and earning opportunities. Starting at K500!
+                Unlock learning resources, shop credit, and earning opportunities. Starting at K300!
               </p>
               <div class="flex items-center gap-2 mt-4 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 w-fit border border-white/30">
                 <span class="text-white text-sm font-bold">Learn More</span>
@@ -924,9 +924,9 @@
             header-gradient="from-purple-600 to-pink-600"
             :tools="premiumTools"
             badge="Premium"
-            locked-message="Upgrade to Premium starter kit to unlock these tools"
-            :upgrade-action="user?.starter_kit_tier !== 'premium'"
-            upgrade-button-text="Upgrade to Premium"
+            locked-message="Upgrade to Growth Plus or Pro starter kit to unlock these tools"
+            :upgrade-action="!['growth_plus', 'pro'].includes(user?.starter_kit_tier)"
+            upgrade-button-text="Upgrade to Growth Plus"
             @tool-click="handleToolClick"
             @upgrade="handleUpgrade"
           />
@@ -991,9 +991,9 @@
 
             <!-- LGR Calculator -->
             <div v-if="calcEarningType === 'lgr'" class="space-y-3">
-              <div v-if="user?.starter_kit_tier !== 'premium'" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div v-if="!['growth_plus', 'pro'].includes(user?.starter_kit_tier)" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p class="text-sm text-purple-800">
-                  🔒 Upgrade to Premium tier to qualify for LGR profit sharing!
+                  🔒 Upgrade to Growth Plus or Pro tier to maximize LGR earnings!
                 </p>
               </div>
               <div v-else>
@@ -1110,7 +1110,7 @@
             <div class="flex-1">
               <h3 class="text-white font-bold text-lg">Get Your Starter Kit</h3>
               <p class="text-blue-100 text-sm mt-1.5">
-                Unlock e-books, videos, tools, and more. Starting at K500!
+                Unlock e-books, videos, tools, and more. Starting at K300!
               </p>
               <div class="mt-4 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2.5 w-fit border border-white/30">
                 <span class="text-white text-sm font-bold">Purchase Now →</span>
@@ -1169,7 +1169,7 @@
 
             <!-- Premium Tools -->
             <button
-              v-if="user?.starter_kit_tier === 'premium'"
+              v-if="['growth_plus', 'pro'].includes(user?.starter_kit_tier)"
               @click="showBusinessPlanModal = true"
               class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
             >
@@ -1183,7 +1183,7 @@
             </button>
 
             <button
-              v-if="user?.starter_kit_tier === 'premium'"
+              v-if="['growth_plus', 'pro'].includes(user?.starter_kit_tier)"
               @click="showROICalculatorModal = true"
               class="bg-white rounded-xl shadow-sm p-4 text-left hover:shadow-md transition-all active:scale-95"
             >
@@ -1636,7 +1636,7 @@
     <ROICalculatorModal
       :show="showROICalculatorModal"
       :investments="{
-        starter_kit: user?.starter_kit_tier === 'premium' ? 1000 : 500,
+        starter_kit: user?.starter_kit_tier === 'pro' ? 2000 : user?.starter_kit_tier === 'growth_plus' ? 1000 : user?.starter_kit_tier === 'basic' ? 500 : 300,
         total_earnings: stats?.total_earnings || 0
       }"
       @close="showROICalculatorModal = false"
@@ -2369,7 +2369,7 @@ const premiumTools = computed(() => [
     iconColor: 'text-indigo-600',
     bgGradient: 'from-indigo-50 to-purple-50',
     borderColor: 'border-indigo-200',
-    locked: props.user?.starter_kit_tier !== 'premium',
+    locked: !['growth_plus', 'pro'].includes(props.user?.starter_kit_tier),
     premium: true,
     action: 'business-plan'
   },
@@ -2382,7 +2382,7 @@ const premiumTools = computed(() => [
     iconColor: 'text-yellow-600',
     bgGradient: 'from-yellow-50 to-orange-50',
     borderColor: 'border-yellow-200',
-    locked: props.user?.starter_kit_tier !== 'premium',
+    locked: !['growth_plus', 'pro'].includes(props.user?.starter_kit_tier),
     premium: true,
     action: 'roi-calculator'
   },

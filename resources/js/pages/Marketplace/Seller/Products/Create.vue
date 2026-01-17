@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import MediaLibraryModal from '@/pages/GrowBuilder/Editor/components/modals/MediaLibraryModal.vue';
-import { ArrowLeftIcon, PhotoIcon, XMarkIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
+import { ArrowLeftIcon, PhotoIcon, XMarkIcon, InformationCircleIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 
-interface Category { id: number; name: string; }
+interface Category { 
+    id: number; 
+    name: string;
+    parent_id: number | null;
+    icon?: string;
+}
 interface ImageGuidelines {
     recommended_size: string;
     max_file_size: string;
@@ -50,6 +55,49 @@ const form = useForm({
     images: [] as File[],
     media_ids: [] as number[], // Reference existing media library images (no re-upload)
 });
+
+// Two-step category selection
+const selectedMainCategory = ref<number | null>(null);
+const selectedSubcategory = ref<number | null>(null);
+
+// Computed: Get main categories (parent_id is null)
+const mainCategories = computed(() => 
+    props.categories.filter(cat => cat.parent_id === null)
+);
+
+// Computed: Get subcategories for selected main category
+const subcategories = computed(() => {
+    if (!selectedMainCategory.value) return [];
+    return props.categories.filter(cat => cat.parent_id === selectedMainCategory.value);
+});
+
+// Computed: Category breadcrumb display
+const categoryBreadcrumb = computed(() => {
+    if (!selectedMainCategory.value) return '';
+    const mainCat = mainCategories.value.find(c => c.id === selectedMainCategory.value);
+    if (!selectedSubcategory.value) return mainCat?.name || '';
+    const subCat = subcategories.value.find(c => c.id === selectedSubcategory.value);
+    return `${mainCat?.name} > ${subCat?.name}`;
+});
+
+// Watch main category changes
+const handleMainCategoryChange = () => {
+    selectedSubcategory.value = null;
+    form.category_id = '';
+    
+    // Auto-select if only one subcategory exists
+    if (subcategories.value.length === 1) {
+        selectedSubcategory.value = subcategories.value[0].id;
+        form.category_id = subcategories.value[0].id.toString();
+    }
+};
+
+// Watch subcategory changes
+const handleSubcategoryChange = () => {
+    if (selectedSubcategory.value) {
+        form.category_id = selectedSubcategory.value.toString();
+    }
+};
 
 const imagePreviews = ref<string[]>([]);
 // Track each image: 'file' = new upload, 'media' = reference to existing media library item
@@ -218,7 +266,42 @@ const removeImage = (index: number) => {
 };
 
 const submit = () => {
-    form.post(route('marketplace.seller.products.store'), { forceFormData: true });
+    // Debug: Log form data before submission
+    console.log('Submitting product form:', {
+        name: form.name,
+        category_id: form.category_id,
+        description: form.description,
+        price: form.price,
+        stock_quantity: form.stock_quantity,
+        images_count: form.images.length,
+        media_ids_count: form.media_ids.length,
+        media_ids: form.media_ids,
+    });
+
+    // Validate we have at least one image
+    if (form.images.length === 0 && form.media_ids.length === 0) {
+        alert('Please add at least one product image');
+        return;
+    }
+
+    // Validate category is selected
+    if (!form.category_id) {
+        alert('Please select a category');
+        return;
+    }
+
+    // When using forceFormData, we need to ensure arrays are properly formatted
+    // Inertia will handle File objects correctly, but we need to be explicit about arrays
+    form.post(route('marketplace.seller.products.store'), {
+        forceFormData: true,
+        preserveScroll: true,
+        onError: (errors) => {
+            console.error('Form submission errors:', errors);
+        },
+        onSuccess: () => {
+            console.log('Product created successfully');
+        }
+    });
 };
 </script>
 
@@ -234,24 +317,70 @@ const submit = () => {
             </div>
 
             <form @submit.prevent="submit" class="bg-white rounded-xl border p-6 space-y-6">
+                <!-- Show general errors at the top -->
+                <div v-if="Object.keys(form.errors).length > 0" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</p>
+                    <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                        <li v-for="(error, field) in form.errors" :key="field">{{ error }}</li>
+                    </ul>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                    <input v-model="form.name" type="text" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="e.g. iPhone 13 Pro" />
+                    <input v-model="form.name" type="text" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="e.g. iPhone 13 Pro" />
                     <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                    <select v-model="form.category_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors">
-                        <option value="">Select category</option>
-                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                    </select>
+                    
+                    <!-- Main Category Selection -->
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Main Category</label>
+                            <select 
+                                v-model="selectedMainCategory" 
+                                @change="handleMainCategoryChange"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                            >
+                                <option :value="null">Select main category</option>
+                                <option v-for="cat in mainCategories" :key="cat.id" :value="cat.id">
+                                    {{ cat.icon }} {{ cat.name }}
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <!-- Subcategory Selection (appears after main category selected) -->
+                        <div v-if="selectedMainCategory && subcategories.length > 0">
+                            <label class="block text-xs text-gray-600 mb-1">Subcategory</label>
+                            <select 
+                                v-model="selectedSubcategory" 
+                                @change="handleSubcategoryChange"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                            >
+                                <option :value="null">Select subcategory</option>
+                                <option v-for="cat in subcategories" :key="cat.id" :value="cat.id">
+                                    {{ cat.name }}
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <!-- Category Breadcrumb Display -->
+                        <div v-if="categoryBreadcrumb" class="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                            <span class="text-sm text-gray-700">
+                                <span class="font-medium">Selected:</span> {{ categoryBreadcrumb }}
+                            </span>
+                        </div>
+                    </div>
+                    
                     <p v-if="form.errors.category_id" class="mt-1 text-sm text-red-600">{{ form.errors.category_id }}</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                    <textarea v-model="form.description" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" 
+                    <textarea v-model="form.description" rows="4" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" 
                         placeholder="Describe your product..."></textarea>
                     <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</p>
                 </div>
@@ -259,7 +388,7 @@ const submit = () => {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Price (K) *</label>
-                        <input v-model="form.price" type="number" step="0.01" min="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="0.00" />
+                        <input v-model="form.price" type="number" step="0.01" min="1" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="0.00" />
                         <p v-if="form.errors.price" class="mt-1 text-sm text-red-600">{{ form.errors.price }}</p>
                     </div>
                     <div>
@@ -270,7 +399,7 @@ const submit = () => {
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity *</label>
-                    <input v-model="form.stock_quantity" type="number" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="0" />
+                    <input v-model="form.stock_quantity" type="number" min="0" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="0" />
                     <p v-if="form.errors.stock_quantity" class="mt-1 text-sm text-red-600">{{ form.errors.stock_quantity }}</p>
                 </div>
 
@@ -282,6 +411,17 @@ const submit = () => {
                             <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
                             Image Guidelines
                         </button>
+                    </div>
+
+                    <!-- Image Requirements Alert -->
+                    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p class="text-sm font-medium text-blue-900">📐 Image Requirements:</p>
+                        <ul class="mt-1 text-sm text-blue-800 space-y-1">
+                            <li>• Minimum size: <strong>500×500 pixels</strong></li>
+                            <li>• Square images work best (1:1 ratio)</li>
+                            <li>• Max file size: 5MB per image</li>
+                            <li>• Formats: JPG, PNG, WebP</li>
+                        </ul>
                     </div>
 
                     <!-- Image Guidelines Panel -->
@@ -354,6 +494,8 @@ const submit = () => {
             :uploading="uploadingImage"
             :uploadError="imageUploadError"
             :allowCrop="true"
+            :aspectRatio="1"
+            :forceAspectRatio="true"
             @close="showMediaLibrary = false"
             @upload="uploadImage"
             @select="selectMediaImage"

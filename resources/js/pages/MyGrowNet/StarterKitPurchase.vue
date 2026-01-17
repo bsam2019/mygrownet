@@ -19,12 +19,17 @@ interface Tier {
     price: number;
     shopCredit: number;
     lgrMultiplier?: number;
+    lgrDailyRate?: number;
+    lgrMaxEarnings?: number;
+    lpAward?: number;
 }
 
 interface Props {
     tiers: {
+        lite: Tier;
         basic: Tier;
-        premium: Tier;
+        growth_plus: Tier;
+        pro: Tier;
     };
     walletBalance: number;
     paymentMethods: Array<{
@@ -39,7 +44,14 @@ interface Props {
 const props = defineProps<Props>();
 
 // Get selected tier based on form
-const selectedTier = computed(() => form.tier === 'premium' ? props.tiers.premium : props.tiers.basic);
+const selectedTier = computed(() => {
+    switch(form.tier) {
+        case 'lite': return props.tiers.lite;
+        case 'growth_plus': return props.tiers.growth_plus;
+        case 'pro': return props.tiers.pro;
+        default: return props.tiers.basic;
+    }
+});
 const price = computed(() => selectedTier.value.price);
 const shopCredit = computed(() => selectedTier.value.shopCredit);
 
@@ -125,88 +137,165 @@ const formatCurrency = (amount: number) => {
                     <!-- Tier Selection -->
                     <div class="px-6 py-6 bg-white border-b">
                         <h3 class="font-semibold text-gray-900 mb-4">Choose Your Tier</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Basic Tier -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Lite Tier -->
                             <div
-                                @click="form.tier = 'basic'"
+                                @click="form.tier = 'lite'"
                                 :class="[
-                                    'border-2 rounded-lg p-6 cursor-pointer transition',
-                                    form.tier === 'basic'
-                                        ? 'border-green-600 bg-green-50'
-                                        : 'border-gray-200 hover:border-green-300'
+                                    'border-2 rounded-lg p-4 cursor-pointer transition',
+                                    form.tier === 'lite'
+                                        ? 'border-gray-600 bg-gray-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                 ]"
                             >
-                                <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-start justify-between mb-2">
                                     <div>
-                                        <h4 class="text-lg font-bold text-gray-900">Basic Tier</h4>
-                                        <p class="text-2xl font-bold text-green-600 mt-1">{{ formatCurrency(tiers.basic.price) }}</p>
+                                        <h4 class="text-base font-bold text-gray-900">Lite</h4>
+                                        <p class="text-xl font-bold text-gray-600 mt-1">{{ formatCurrency(tiers.lite.price) }}</p>
                                     </div>
-                                    <div v-if="form.tier === 'basic'" class="flex-shrink-0">
-                                        <CheckCircleIcon class="w-6 h-6 text-green-600" />
+                                    <div v-if="form.tier === 'lite'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-5 h-5 text-gray-600" />
                                     </div>
                                 </div>
-                                <ul class="space-y-2 text-sm text-gray-700">
+                                <ul class="space-y-1.5 text-xs text-gray-700">
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>All educational content</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-gray-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>Basic content</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>{{ formatCurrency(tiers.basic.shopCredit) }} shop credit</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-gray-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.lite.shopCredit) }} shop credit</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>+37.5 Lifetime Points</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-gray-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>+{{ tiers.lite.lpAward || 15 }} LP</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>Full platform access</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-gray-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">LGR: K{{ tiers.lite.lgrDailyRate || 12.50 }}/day</span>
                                     </li>
                                 </ul>
                             </div>
 
-                            <!-- Premium Tier -->
+                            <!-- Basic Tier -->
                             <div
-                                @click="form.tier = 'premium'"
+                                @click="form.tier = 'basic'"
                                 :class="[
-                                    'border-2 rounded-lg p-6 cursor-pointer transition relative',
-                                    form.tier === 'premium'
+                                    'border-2 rounded-lg p-4 cursor-pointer transition',
+                                    form.tier === 'basic'
+                                        ? 'border-blue-600 bg-blue-50'
+                                        : 'border-gray-200 hover:border-blue-300'
+                                ]"
+                            >
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <h4 class="text-base font-bold text-gray-900">Basic</h4>
+                                        <p class="text-xl font-bold text-blue-600 mt-1">{{ formatCurrency(tiers.basic.price) }}</p>
+                                    </div>
+                                    <div v-if="form.tier === 'basic'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-5 h-5 text-blue-600" />
+                                    </div>
+                                </div>
+                                <ul class="space-y-1.5 text-xs text-gray-700">
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-blue-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>All content</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-blue-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.basic.shopCredit) }} shop credit</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-blue-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>+{{ tiers.basic.lpAward || 25 }} LP</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-blue-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">LGR: K{{ tiers.basic.lgrDailyRate || 25 }}/day</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Growth Plus Tier -->
+                            <div
+                                @click="form.tier = 'growth_plus'"
+                                :class="[
+                                    'border-2 rounded-lg p-4 cursor-pointer transition relative',
+                                    form.tier === 'growth_plus'
+                                        ? 'border-emerald-600 bg-emerald-50'
+                                        : 'border-gray-200 hover:border-emerald-300'
+                                ]"
+                            >
+                                <div class="absolute top-0 right-0 bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-lg">
+                                    POPULAR
+                                </div>
+                                <div class="flex items-start justify-between mb-2">
+                                    <div>
+                                        <h4 class="text-base font-bold text-gray-900">Growth Plus</h4>
+                                        <p class="text-xl font-bold text-emerald-600 mt-1">{{ formatCurrency(tiers.growth_plus.price) }}</p>
+                                    </div>
+                                    <div v-if="form.tier === 'growth_plus'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-5 h-5 text-emerald-600" />
+                                    </div>
+                                </div>
+                                <ul class="space-y-1.5 text-xs text-gray-700">
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>All content + extras</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.growth_plus.shopCredit) }} shop credit</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>+{{ tiers.growth_plus.lpAward || 50 }} LP</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <CheckCircleIcon class="w-3 h-3 text-emerald-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">LGR: K{{ tiers.growth_plus.lgrDailyRate || 37.50 }}/day</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Pro Tier -->
+                            <div
+                                @click="form.tier = 'pro'"
+                                :class="[
+                                    'border-2 rounded-lg p-4 cursor-pointer transition relative',
+                                    form.tier === 'pro'
                                         ? 'border-purple-600 bg-purple-50'
                                         : 'border-gray-200 hover:border-purple-300'
                                 ]"
                             >
-                                <div class="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                                    RECOMMENDED
+                                <div class="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-lg">
+                                    BEST VALUE
                                 </div>
-                                <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-start justify-between mb-2">
                                     <div>
-                                        <h4 class="text-lg font-bold text-gray-900">Premium Tier</h4>
-                                        <p class="text-2xl font-bold text-purple-600 mt-1">{{ formatCurrency(tiers.premium.price) }}</p>
+                                        <h4 class="text-base font-bold text-gray-900">Pro</h4>
+                                        <p class="text-xl font-bold text-purple-600 mt-1">{{ formatCurrency(tiers.pro.price) }}</p>
                                     </div>
-                                    <div v-if="form.tier === 'premium'" class="flex-shrink-0">
-                                        <CheckCircleIcon class="w-6 h-6 text-purple-600" />
+                                    <div v-if="form.tier === 'pro'" class="flex-shrink-0">
+                                        <CheckCircleIcon class="w-5 h-5 text-purple-600" />
                                     </div>
                                 </div>
-                                <ul class="space-y-2 text-sm text-gray-700">
+                                <ul class="space-y-1.5 text-xs text-gray-700">
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>All educational content</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-purple-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>Full library access</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>{{ formatCurrency(tiers.premium.shopCredit) }} shop credit</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-purple-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>{{ formatCurrency(tiers.pro.shopCredit) }} shop credit</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span>+37.5 Lifetime Points</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-purple-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span>+{{ tiers.pro.lpAward || 100 }} LP</span>
                                     </li>
                                     <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span class="font-semibold">LGR Qualification 🚀</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <CheckCircleIcon class="w-4 h-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                                        <span class="font-semibold">Quarterly Profit Sharing</span>
+                                        <CheckCircleIcon class="w-3 h-3 text-purple-500 mr-1.5 mt-0.5 flex-shrink-0" />
+                                        <span class="font-semibold">LGR: K{{ tiers.pro.lgrDailyRate || 62.50 }}/day 🚀</span>
                                     </li>
                                 </ul>
                             </div>

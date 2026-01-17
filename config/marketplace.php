@@ -61,6 +61,61 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Payout Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for seller payouts and withdrawals
+    |
+    */
+    'payouts' => [
+        // Minimum payout amount in ngwee (K50 = 5000 ngwee)
+        'minimum_amount' => 5000,
+        
+        // Processing time in business days
+        'processing_days' => 2,
+        
+        // Auto-approve threshold (payouts below this are auto-approved)
+        // Set to 0 to disable auto-approval
+        'auto_approve_threshold' => 0, // Disabled by default
+        
+        // Available payout methods
+        'methods' => [
+            'momo' => [
+                'enabled' => true,
+                'label' => 'MTN Mobile Money',
+                'fee' => 0, // No additional fee
+            ],
+            'airtel' => [
+                'enabled' => true,
+                'label' => 'Airtel Money',
+                'fee' => 0,
+            ],
+            'bank' => [
+                'enabled' => true,
+                'label' => 'Bank Transfer',
+                'fee' => 0,
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Escrow Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for escrow fund management
+    |
+    */
+    'escrow' => [
+        // Auto-release funds X days after delivery if no dispute
+        'auto_release_days' => 7,
+        
+        // Hold funds during dispute resolution
+        'dispute_hold_days' => 14,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Processing Configuration
     |--------------------------------------------------------------------------
     */

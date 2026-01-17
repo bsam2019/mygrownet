@@ -12,6 +12,7 @@ import {
     FolderTree,
     BarChart3,
     Clock,
+    Wallet,
 } from 'lucide-vue-next';
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
         pending_products?: number;
         open_disputes?: number;
         total_reviews?: number;
+        pending_payouts?: number;
     };
 }
 
@@ -37,6 +39,7 @@ const navItems = [
     { name: 'Sellers', href: '/admin/marketplace/sellers', icon: Store, badge: 'pending_sellers' },
     { name: 'Products', href: '/admin/marketplace/products', icon: Package, badge: 'pending_products' },
     { name: 'Orders', href: '/admin/marketplace/orders', icon: ShoppingBag },
+    { name: 'Payouts', href: '/admin/marketplace/payouts', icon: Wallet, badge: 'pending_payouts' },
     { name: 'Disputes', href: '/admin/marketplace/disputes', icon: AlertTriangle, badge: 'open_disputes' },
     { name: 'Reviews', href: '/admin/marketplace/reviews', icon: MessageSquare },
     { name: 'Categories', href: '/admin/marketplace/categories', icon: FolderTree },
@@ -87,6 +90,13 @@ const breadcrumbs = [
                                 <span class="text-2xl font-bold">{{ stats.pending_products }}</span>
                             </div>
                             <p class="text-xs text-orange-100">Pending Products</p>
+                        </div>
+                        <div v-if="stats.pending_payouts" class="text-center">
+                            <div class="flex items-center gap-1">
+                                <Wallet class="h-4 w-4" />
+                                <span class="text-2xl font-bold">{{ stats.pending_payouts }}</span>
+                            </div>
+                            <p class="text-xs text-orange-100">Pending Payouts</p>
                         </div>
                         <div v-if="stats.open_disputes" class="text-center">
                             <div class="flex items-center gap-1">

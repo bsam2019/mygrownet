@@ -572,6 +572,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/move-user', [App\Http\Controllers\Admin\NetworkManagementController::class, 'moveUser'])->name('move-user');
     });
     
+    // Admin Commission Settings Routes
+    Route::middleware(['admin'])->prefix('admin/commission-settings')->name('admin.commission-settings.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'update'])->name('update');
+        Route::post('/preview', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'preview'])->name('preview');
+    });
+    
     // Admin LGR Management Routes
     Route::middleware(['admin'])->prefix('admin/lgr')->name('admin.lgr.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\LgrAdminController::class, 'index'])->name('index');

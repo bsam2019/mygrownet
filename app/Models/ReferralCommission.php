@@ -90,10 +90,17 @@ class ReferralCommission extends Model
 
     /**
      * Get commission rate for specific level
+     * Uses CommissionSettingsService if available, falls back to constants
      */
     public static function getCommissionRate(int $level): float
     {
-        return self::COMMISSION_RATES[$level] ?? 0.0;
+        try {
+            $settingsService = app(\App\Services\CommissionSettingsService::class);
+            return $settingsService->getRateForLevel($level);
+        } catch (\Exception $e) {
+            // Fallback to constants if service not available
+            return self::COMMISSION_RATES[$level] ?? 0.0;
+        }
     }
     
     /**

@@ -49,6 +49,15 @@ Route::middleware(['auth', 'verified', MarketplaceAdmin::class])
         Route::get('/disputes/{id}', [MarketplaceAdminController::class, 'disputeShow'])->name('disputes.show');
         Route::post('/disputes/{id}/resolve', [MarketplaceAdminController::class, 'resolveDispute'])->name('disputes.resolve');
         
+        // Payout Management
+        Route::get('/payouts', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'index'])->name('payouts.index');
+        Route::get('/payouts/{id}', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'show'])->name('payouts.show');
+        Route::post('/payouts/{id}/approve', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'approve'])->name('payouts.approve');
+        Route::post('/payouts/{id}/reject', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'reject'])->name('payouts.reject');
+        Route::post('/payouts/{id}/process', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'process'])->name('payouts.process');
+        Route::post('/payouts/{id}/complete', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'complete'])->name('payouts.complete');
+        Route::post('/payouts/{id}/fail', [\App\Http\Controllers\Admin\MarketplacePayoutController::class, 'fail'])->name('payouts.fail');
+        
         // Reviews Moderation
         Route::get('/reviews', [MarketplaceAdminController::class, 'reviews'])->name('reviews.index');
         Route::delete('/reviews/{id}', [MarketplaceAdminController::class, 'deleteReview'])->name('reviews.destroy');

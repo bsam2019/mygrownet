@@ -27,7 +27,7 @@
               <span class="text-2xl">📝</span>
             </h3>
             <p class="text-emerald-100">
-              Join MyGrowNet with a Starter Kit (from K500). Get instant access to learning resources, 
+              Join MyGrowNet with a Starter Kit (from K300). Get instant access to learning resources, 
               shop credit, and earning opportunities.
             </p>
           </div>

@@ -7,6 +7,7 @@ import {
     ClockIcon,
     XCircleIcon,
     EyeIcon,
+    BuildingStorefrontIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Seller {
@@ -177,13 +178,23 @@ const getStatusIcon = (status: string) => {
                                 {{ seller.rating.toFixed(1) }} ⭐
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Link
-                                    :href="route('admin.marketplace.sellers.show', seller.id)"
-                                    class="inline-flex items-center gap-1 text-orange-600 hover:text-orange-900"
-                                >
-                                    <EyeIcon class="h-4 w-4" aria-hidden="true" />
-                                    View
-                                </Link>
+                                <div class="flex items-center justify-end gap-3">
+                                    <Link
+                                        :href="route('admin.marketplace.sellers.show', seller.id)"
+                                        class="inline-flex items-center gap-1 text-orange-600 hover:text-orange-900"
+                                    >
+                                        <EyeIcon class="h-4 w-4" aria-hidden="true" />
+                                        View
+                                    </Link>
+                                    <Link
+                                        :href="route('marketplace.seller.show', seller.id)"
+                                        target="_blank"
+                                        class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-900"
+                                    >
+                                        <BuildingStorefrontIcon class="h-4 w-4" aria-hidden="true" />
+                                        Shop
+                                    </Link>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

@@ -11,12 +11,14 @@ class LgrQualificationService
 {
     public function checkQualification(int $userId): array
     {
-        // Check if user has premium tier (only premium qualifies for LGR)
+        // Check if user has any starter kit tier (all tiers now qualify for LGR)
         $user = User::find($userId);
-        if (!$user || $user->starter_kit_tier !== 'premium') {
+        $validTiers = ['lite', 'basic', 'growth_plus', 'pro', 'premium'];
+        
+        if (!$user || !in_array($user->starter_kit_tier, $validTiers)) {
             return [
                 'qualified' => false,
-                'reason' => 'LGR is only available for Premium Starter Kit members',
+                'reason' => 'LGR requires a Starter Kit purchase. Choose from Lite, Basic, Growth Plus, or Pro tiers.',
                 'tier' => $user?->starter_kit_tier ?? 'none',
             ];
         }
@@ -77,11 +79,11 @@ class LgrQualificationService
 
     private function hasCompletedStarterPackage(User $user): bool
     {
-        // Check if user has purchased PREMIUM tier starter kit (only premium qualifies for LGR)
+        // Check if user has purchased ANY tier starter kit (all tiers qualify for LGR)
         return DB::table('starter_kit_purchases')
             ->where('user_id', $user->id)
             ->where('status', 'completed')
-            ->where('tier', 'premium')
+            ->whereIn('tier', ['lite', 'basic', 'growth_plus', 'pro', 'premium'])
             ->exists();
     }
 

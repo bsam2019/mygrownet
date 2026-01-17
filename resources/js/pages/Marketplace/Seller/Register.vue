@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import {
@@ -7,6 +7,8 @@ import {
     DocumentTextIcon,
     ShieldCheckIcon,
     ArrowRightIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline';
 
 defineProps<{
@@ -27,12 +29,44 @@ const form = useForm({
 });
 
 const step = ref(1);
+const fileErrors = ref<Record<string, string>>({});
+const uploadedFiles = ref<Record<string, boolean>>({});
+
+// File size limit: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
+const validateFileSize = (file: File, fieldName: string): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        fileErrors.value[fieldName] = `File is too large (${sizeMB}MB). Maximum size is 10MB. Please compress or resize the image.`;
+        return false;
+    }
+    fileErrors.value[fieldName] = '';
+    return true;
+};
 
 const handleFileChange = (field: 'nrc_front' | 'nrc_back' | 'business_cert', event: Event) => {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files[0]) {
-        form[field] = target.files[0];
+        const file = target.files[0];
+        
+        // Validate file size
+        if (validateFileSize(file, field)) {
+            form[field] = file;
+            uploadedFiles.value[field] = true;
+        } else {
+            // Clear the file input
+            target.value = '';
+            form[field] = null;
+            uploadedFiles.value[field] = false;
+        }
     }
+};
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 };
 
 const nextStep = () => {
@@ -60,6 +94,12 @@ const submit = () => {
     // Final validation
     if (!form.nrc_front || !form.nrc_back) {
         alert('Please upload both sides of your NRC');
+        return;
+    }
+    
+    // Check for file size errors
+    if (Object.values(fileErrors.value).some(error => error !== '')) {
+        alert('Please fix file size errors before submitting');
         return;
     }
     
@@ -242,15 +282,37 @@ const submit = () => {
                         </div>
                     </div>
 
+                    <!-- File Size Info -->
+                    <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p class="text-sm text-orange-900">
+                            <strong>📸 Photo Tips:</strong> Maximum file size is 10MB per image. 
+                            If your photos are too large, try compressing them or taking new photos with lower resolution.
+                        </p>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">NRC Front *</label>
                         <input 
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
                             @change="(e) => handleFileChange('nrc_front', e)"
                             class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
-                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the front of your NRC</p>
+                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the front of your NRC (Max: 10MB)</p>
+                        
+                        <!-- File uploaded indicator -->
+                        <div v-if="uploadedFiles.nrc_front && form.nrc_front" class="mt-2 flex items-center gap-2 text-sm text-green-600">
+                            <CheckCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            <span>{{ form.nrc_front.name }} ({{ formatFileSize(form.nrc_front.size) }})</span>
+                        </div>
+                        
+                        <!-- File size error -->
+                        <p v-if="fileErrors.nrc_front" class="mt-2 flex items-start gap-2 text-sm text-red-600">
+                            <ExclamationTriangleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                            <span>{{ fileErrors.nrc_front }}</span>
+                        </p>
+                        
+                        <!-- Server validation error -->
                         <p v-if="form.errors.nrc_front" class="mt-1 text-sm text-red-600">{{ form.errors.nrc_front }}</p>
                     </div>
 
@@ -258,11 +320,25 @@ const submit = () => {
                         <label class="block text-sm font-medium text-gray-700 mb-1">NRC Back *</label>
                         <input 
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
                             @change="(e) => handleFileChange('nrc_back', e)"
                             class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
-                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the back of your NRC</p>
+                        <p class="mt-1 text-xs text-gray-500">Upload a clear photo of the back of your NRC (Max: 10MB)</p>
+                        
+                        <!-- File uploaded indicator -->
+                        <div v-if="uploadedFiles.nrc_back && form.nrc_back" class="mt-2 flex items-center gap-2 text-sm text-green-600">
+                            <CheckCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            <span>{{ form.nrc_back.name }} ({{ formatFileSize(form.nrc_back.size) }})</span>
+                        </div>
+                        
+                        <!-- File size error -->
+                        <p v-if="fileErrors.nrc_back" class="mt-2 flex items-start gap-2 text-sm text-red-600">
+                            <ExclamationTriangleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                            <span>{{ fileErrors.nrc_back }}</span>
+                        </p>
+                        
+                        <!-- Server validation error -->
                         <p v-if="form.errors.nrc_back" class="mt-1 text-sm text-red-600">{{ form.errors.nrc_back }}</p>
                     </div>
 
@@ -270,11 +346,25 @@ const submit = () => {
                         <label class="block text-sm font-medium text-gray-700 mb-1">Business Registration Certificate</label>
                         <input 
                             type="file"
-                            accept="image/*,.pdf"
+                            accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                             @change="(e) => handleFileChange('business_cert', e)"
                             class="w-full border border-gray-300 rounded-lg p-2 text-gray-900 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
                         />
-                        <p class="mt-1 text-xs text-gray-500">Upload your business registration certificate (image or PDF)</p>
+                        <p class="mt-1 text-xs text-gray-500">Upload your business registration certificate (image or PDF, Max: 10MB)</p>
+                        
+                        <!-- File uploaded indicator -->
+                        <div v-if="uploadedFiles.business_cert && form.business_cert" class="mt-2 flex items-center gap-2 text-sm text-green-600">
+                            <CheckCircleIcon class="h-5 w-5" aria-hidden="true" />
+                            <span>{{ form.business_cert.name }} ({{ formatFileSize(form.business_cert.size) }})</span>
+                        </div>
+                        
+                        <!-- File size error -->
+                        <p v-if="fileErrors.business_cert" class="mt-2 flex items-start gap-2 text-sm text-red-600">
+                            <ExclamationTriangleIcon class="h-5 w-5 flex-shrink-0" aria-hidden="true" />
+                            <span>{{ fileErrors.business_cert }}</span>
+                        </p>
+                        
+                        <!-- Server validation error -->
                         <p v-if="form.errors.business_cert" class="mt-1 text-sm text-red-600">{{ form.errors.business_cert }}</p>
                     </div>
                 </div>

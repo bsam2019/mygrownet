@@ -35,7 +35,11 @@ class LgrCycleService
             throw new \Exception('User already has an active LGR cycle');
         }
 
-        $cycle = LgrCycle::create($userId, Carbon::today());
+        // Get user's starter kit tier
+        $user = \App\Models\User::find($userId);
+        $tier = $user->starter_kit_tier ?? 'basic';
+
+        $cycle = LgrCycle::create($userId, Carbon::today(), $tier);
         
         $model = LgrCycleModel::create($cycle->toArray());
         

@@ -88,6 +88,7 @@ const lgrNavItems: NavItem[] = [
 const financeNavItems: NavItem[] = [
     { title: 'Payment Approvals', href: safeRoute('admin.payments.index'), icon: DollarSign },
     { title: 'Receipts', href: safeRoute('admin.receipts.index'), icon: FileText },
+    { title: 'Commission Settings', href: safeRoute('admin.commission-settings.index'), icon: Settings },
     { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },

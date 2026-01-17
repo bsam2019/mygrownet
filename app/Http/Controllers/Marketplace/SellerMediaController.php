@@ -81,7 +81,7 @@ class SellerMediaController extends Controller
         }
 
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:5120',
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:5120|dimensions:min_width=500,min_height=500',
         ]);
 
         $file = $request->file('file');

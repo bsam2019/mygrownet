@@ -2,7 +2,7 @@
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import MediaLibraryModal from '@/pages/GrowBuilder/Editor/components/modals/MediaLibraryModal.vue';
-import { PhotoIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { PhotoIcon, XMarkIcon, ExclamationTriangleIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 
@@ -10,6 +10,8 @@ interface Category {
     id: number;
     name: string;
     slug: string;
+    parent_id: number | null;
+    icon?: string;
 }
 
 interface FieldFeedback {
@@ -85,6 +87,67 @@ const mediaLibrary = ref<MediaItem[]>([]);
 const showAppealForm = ref(false);
 const appealMessage = ref('');
 const appealProcessing = ref(false);
+
+// Two-step category selection
+const selectedMainCategory = ref<number | null>(null);
+const selectedSubcategory = ref<number | null>(null);
+
+// Initialize category selection based on product's current category
+const initializeCategories = () => {
+    const currentCategory = props.categories.find(c => c.id === props.product.category_id);
+    if (currentCategory) {
+        if (currentCategory.parent_id) {
+            // Product is in a subcategory
+            selectedMainCategory.value = currentCategory.parent_id;
+            selectedSubcategory.value = currentCategory.id;
+        } else {
+            // Product is in a main category
+            selectedMainCategory.value = currentCategory.id;
+        }
+    }
+};
+
+// Computed: Get main categories (parent_id is null)
+const mainCategories = computed(() => 
+    props.categories.filter(cat => !cat.parent_id)
+);
+
+// Computed: Get subcategories for selected main category
+const subcategories = computed(() => {
+    if (!selectedMainCategory.value) return [];
+    return props.categories.filter(cat => cat.parent_id === selectedMainCategory.value);
+});
+
+// Computed: Category breadcrumb display
+const categoryBreadcrumb = computed(() => {
+    if (!selectedMainCategory.value) return '';
+    const mainCat = mainCategories.value.find(c => c.id === selectedMainCategory.value);
+    if (!selectedSubcategory.value) return mainCat?.name || '';
+    const subCat = subcategories.value.find(c => c.id === selectedSubcategory.value);
+    return `${mainCat?.name} > ${subCat?.name}`;
+});
+
+// Watch main category changes
+const handleMainCategoryChange = () => {
+    selectedSubcategory.value = null;
+    form.category_id = selectedMainCategory.value || 0;
+    
+    // Auto-select if only one subcategory exists
+    if (subcategories.value.length === 1) {
+        selectedSubcategory.value = subcategories.value[0].id;
+        form.category_id = subcategories.value[0].id;
+    }
+};
+
+// Watch subcategory changes
+const handleSubcategoryChange = () => {
+    if (selectedSubcategory.value) {
+        form.category_id = selectedSubcategory.value;
+    }
+};
+
+// Initialize on mount
+initializeCategories();
 
 // Check if product needs attention
 const needsChanges = computed(() => props.product.status === 'changes_requested');
@@ -252,11 +315,52 @@ const removeImage = (index: number) => {
 };
 
 const submit = () => {
-    form.transform((data) => ({
-        ...data,
-        _method: 'PUT',
-    })).post(route('marketplace.seller.products.update', props.product.id), {
-        forceFormData: true,
+    // Use Inertia's form with proper transformation for file uploads
+    const formData = new FormData();
+    
+    formData.append('_method', 'PUT');
+    formData.append('name', form.name);
+    formData.append('description', form.description);
+    formData.append('price', String(form.price));
+    if (form.compare_price) {
+        formData.append('compare_price', String(form.compare_price));
+    }
+    formData.append('stock_quantity', String(form.stock_quantity));
+    formData.append('category_id', String(form.category_id));
+    
+    // Add existing images - ensure they are strings (paths only)
+    form.existing_images.forEach((img, index) => {
+        // Only add if it's a valid string path
+        if (typeof img === 'string' && img.length > 0) {
+            formData.append(`existing_images[${index}]`, img);
+        }
+    });
+    
+    // Add new image files
+    form.images.forEach((file, index) => {
+        formData.append(`images[${index}]`, file);
+    });
+    
+    // Add media IDs
+    form.media_ids.forEach((id, index) => {
+        formData.append(`media_ids[${index}]`, String(id));
+    });
+
+    form.processing = true;
+    router.post(route('marketplace.seller.products.update', props.product.id), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.processing = false;
+        },
+        onError: (errors) => {
+            form.processing = false;
+            Object.keys(errors).forEach(key => {
+                form.setError(key as keyof typeof form.errors, errors[key]);
+            });
+        },
+        onFinish: () => {
+            form.processing = false;
+        },
     });
 };
 
@@ -325,16 +429,47 @@ const submitAppeal = () => {
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Category *
                                 </label>
-                                <select
-                                    v-model="form.category_id"
-                                    required
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                                >
-                                    <option value="">Select a category</option>
-                                    <option v-for="category in categories" :key="category.id" :value="category.id">
-                                        {{ category.name }}
-                                    </option>
-                                </select>
+                                
+                                <!-- Main Category Selection -->
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-gray-600 mb-1">Main Category</label>
+                                        <select 
+                                            v-model="selectedMainCategory" 
+                                            @change="handleMainCategoryChange"
+                                            required
+                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                        >
+                                            <option :value="null">Select main category</option>
+                                            <option v-for="cat in mainCategories" :key="cat.id" :value="cat.id">
+                                                {{ cat.icon }} {{ cat.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Subcategory Selection (appears after main category selected) -->
+                                    <div v-if="selectedMainCategory && subcategories.length > 0">
+                                        <label class="block text-xs text-gray-600 mb-1">Subcategory</label>
+                                        <select 
+                                            v-model="selectedSubcategory" 
+                                            @change="handleSubcategoryChange"
+                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                        >
+                                            <option :value="null">Select subcategory</option>
+                                            <option v-for="cat in subcategories" :key="cat.id" :value="cat.id">
+                                                {{ cat.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Category Breadcrumb Display -->
+                                    <div v-if="categoryBreadcrumb" class="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg">
+                                        <span class="text-sm text-gray-700">
+                                            <span class="font-medium">Selected:</span> {{ categoryBreadcrumb }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
                                 <p v-if="form.errors.category_id" class="mt-1 text-sm text-red-600">{{ form.errors.category_id }}</p>
                             </div>
 
@@ -605,6 +740,8 @@ const submitAppeal = () => {
             :uploading="uploadingImage"
             :uploadError="imageUploadError"
             :allowCrop="true"
+            :aspectRatio="1"
+            :forceAspectRatio="true"
             @close="showMediaLibrary = false"
             @upload="uploadImage"
             @select="selectMediaImage"

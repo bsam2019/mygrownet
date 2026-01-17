@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
 import {
     ShoppingBagIcon,
     FunnelIcon,
     XMarkIcon,
-    AdjustmentsHorizontalIcon,
+    ChevronDownIcon,
+    ChevronRightIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Product {
@@ -30,11 +31,14 @@ interface Category {
     id: number;
     name: string;
     slug: string;
+    icon?: string;
+    parent_id?: number | null;
 }
 
 interface Filters {
     q: string;
     category: string;
+    subcategory: string;
     province: string;
     min_price: string;
     max_price: string;
@@ -49,7 +53,46 @@ const props = defineProps<{
 }>();
 
 const showFilters = ref(false);
-const localFilters = ref({ ...props.filters });
+const localFilters = ref({ ...props.filters, subcategory: props.filters.subcategory || '' });
+
+// Parent categories
+const parentCategories = computed(() => props.categories.filter(c => !c.parent_id));
+
+// Get subcategories for selected parent category
+const subcategories = computed(() => {
+    if (!localFilters.value.category) return [];
+    return props.categories.filter(c => c.parent_id === Number(localFilters.value.category));
+});
+
+// Track expanded categories
+const expandedCategories = ref<Set<number>>(new Set(
+    localFilters.value.category ? [Number(localFilters.value.category)] : []
+));
+
+const toggleCategory = (categoryId: number) => {
+    if (expandedCategories.value.has(categoryId)) {
+        expandedCategories.value.delete(categoryId);
+    } else {
+        expandedCategories.value.add(categoryId);
+    }
+};
+
+const selectCategory = (categoryId: number | string) => {
+    localFilters.value.category = String(categoryId);
+    localFilters.value.subcategory = '';
+    if (categoryId) {
+        expandedCategories.value.add(Number(categoryId));
+    }
+};
+
+const selectSubcategory = (subcategoryId: number | string) => {
+    localFilters.value.subcategory = String(subcategoryId);
+};
+
+// Get subcategories for a specific parent
+const getSubcategoriesFor = (parentId: number) => {
+    return props.categories.filter(c => c.parent_id === parentId);
+};
 
 const sortOptions = [
     { value: 'newest', label: 'Newest First' },
@@ -63,6 +106,7 @@ const applyFilters = () => {
     
     if (localFilters.value.q) params.q = localFilters.value.q;
     if (localFilters.value.category) params.category = localFilters.value.category;
+    if (localFilters.value.subcategory) params.subcategory = localFilters.value.subcategory;
     if (localFilters.value.province) params.province = localFilters.value.province;
     if (localFilters.value.min_price) params.min_price = localFilters.value.min_price;
     if (localFilters.value.max_price) params.max_price = localFilters.value.max_price;
@@ -78,17 +122,19 @@ const clearFilters = () => {
     localFilters.value = {
         q: '',
         category: '',
+        subcategory: '',
         province: '',
         min_price: '',
         max_price: '',
         sort: 'newest',
     };
+    expandedCategories.value.clear();
     router.get(route('marketplace.search'));
     showFilters.value = false;
 };
 
 const hasActiveFilters = () => {
-    return props.filters.category || props.filters.province || 
+    return props.filters.category || props.filters.subcategory || props.filters.province || 
            props.filters.min_price || props.filters.max_price;
 };
 </script>
@@ -126,20 +172,73 @@ const hasActiveFilters = () => {
                         <!-- Categories -->
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-3">Category</h3>
-                            <div class="space-y-2">
-                                <label 
-                                    v-for="category in categories" 
-                                    :key="category.id"
-                                    class="flex items-center gap-2 cursor-pointer"
+                            <div class="space-y-1 max-h-80 overflow-y-auto">
+                                <!-- All Categories option -->
+                                <button 
+                                    @click="selectCategory('')"
+                                    :class="[
+                                        'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                        !localFilters.category ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
+                                    ]"
                                 >
-                                    <input 
-                                        type="radio" 
-                                        :value="category.id"
-                                        v-model="localFilters.category"
-                                        class="text-orange-500 focus:ring-orange-500"
-                                    />
-                                    <span class="text-sm text-gray-700">{{ category.name }}</span>
-                                </label>
+                                    All Categories
+                                </button>
+                                
+                                <!-- Parent categories with expandable subcategories -->
+                                <div v-for="category in parentCategories" :key="category.id">
+                                    <div class="flex items-center">
+                                        <button
+                                            v-if="getSubcategoriesFor(category.id).length > 0"
+                                            @click="toggleCategory(category.id)"
+                                            class="p-1 hover:bg-gray-100 rounded"
+                                            :aria-label="`Toggle ${category.name} subcategories`"
+                                        >
+                                            <ChevronDownIcon 
+                                                v-if="expandedCategories.has(category.id)"
+                                                class="h-4 w-4 text-gray-500" 
+                                                aria-hidden="true" 
+                                            />
+                                            <ChevronRightIcon 
+                                                v-else
+                                                class="h-4 w-4 text-gray-500" 
+                                                aria-hidden="true" 
+                                            />
+                                        </button>
+                                        <span v-else class="w-6"></span>
+                                        
+                                        <button 
+                                            @click="selectCategory(category.id)"
+                                            :class="[
+                                                'flex-1 text-left px-2 py-1.5 text-sm rounded-lg transition-colors',
+                                                localFilters.category === String(category.id) && !localFilters.subcategory
+                                                    ? 'bg-orange-100 text-orange-700 font-medium' 
+                                                    : 'text-gray-700 hover:bg-gray-100'
+                                            ]"
+                                        >
+                                            {{ category.icon }} {{ category.name }}
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Subcategories -->
+                                    <div 
+                                        v-if="expandedCategories.has(category.id) && getSubcategoriesFor(category.id).length > 0"
+                                        class="ml-6 mt-1 space-y-1 border-l-2 border-gray-100 pl-2"
+                                    >
+                                        <button
+                                            v-for="sub in getSubcategoriesFor(category.id)"
+                                            :key="sub.id"
+                                            @click="localFilters.category = String(category.id); selectSubcategory(sub.id)"
+                                            :class="[
+                                                'w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors',
+                                                localFilters.subcategory === String(sub.id)
+                                                    ? 'bg-orange-100 text-orange-700 font-medium' 
+                                                    : 'text-gray-600 hover:bg-gray-100'
+                                            ]"
+                                        >
+                                            {{ sub.icon }} {{ sub.name }}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -252,10 +351,14 @@ const hasActiveFilters = () => {
                                 <h3 class="font-medium text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-orange-600">
                                     {{ product.name }}
                                 </h3>
-                                <div class="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                                <Link
+                                    :href="route('marketplace.seller.show', product.seller.id)"
+                                    @click.stop
+                                    class="flex items-center gap-1 text-xs text-gray-500 mb-2 hover:text-orange-600 transition-colors w-fit"
+                                >
                                     <span>{{ product.seller.trust_badge }}</span>
                                     <span class="truncate">{{ product.seller.business_name }}</span>
-                                </div>
+                                </Link>
                                 <span class="text-base font-bold text-orange-600">{{ product.formatted_price }}</span>
                             </div>
                         </Link>
@@ -328,20 +431,70 @@ const hasActiveFilters = () => {
                         <!-- Same filter content as desktop -->
                         <div>
                             <h3 class="font-semibold text-gray-900 mb-3">Category</h3>
-                            <div class="space-y-2">
-                                <label 
-                                    v-for="category in categories" 
-                                    :key="category.id"
-                                    class="flex items-center gap-2 cursor-pointer"
+                            <div class="space-y-1 max-h-64 overflow-y-auto">
+                                <button 
+                                    @click="selectCategory('')"
+                                    :class="[
+                                        'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                        !localFilters.category ? 'bg-orange-100 text-orange-700 font-medium' : 'text-gray-700 hover:bg-gray-100'
+                                    ]"
                                 >
-                                    <input 
-                                        type="radio" 
-                                        :value="category.id"
-                                        v-model="localFilters.category"
-                                        class="text-orange-500 focus:ring-orange-500"
-                                    />
-                                    <span class="text-sm text-gray-700">{{ category.name }}</span>
-                                </label>
+                                    All Categories
+                                </button>
+                                
+                                <div v-for="category in parentCategories" :key="category.id">
+                                    <div class="flex items-center">
+                                        <button
+                                            v-if="getSubcategoriesFor(category.id).length > 0"
+                                            @click="toggleCategory(category.id)"
+                                            class="p-1 hover:bg-gray-100 rounded"
+                                            :aria-label="`Toggle ${category.name} subcategories`"
+                                        >
+                                            <ChevronDownIcon 
+                                                v-if="expandedCategories.has(category.id)"
+                                                class="h-4 w-4 text-gray-500" 
+                                                aria-hidden="true" 
+                                            />
+                                            <ChevronRightIcon 
+                                                v-else
+                                                class="h-4 w-4 text-gray-500" 
+                                                aria-hidden="true" 
+                                            />
+                                        </button>
+                                        <span v-else class="w-6"></span>
+                                        
+                                        <button 
+                                            @click="selectCategory(category.id)"
+                                            :class="[
+                                                'flex-1 text-left px-2 py-1.5 text-sm rounded-lg transition-colors',
+                                                localFilters.category === String(category.id) && !localFilters.subcategory
+                                                    ? 'bg-orange-100 text-orange-700 font-medium' 
+                                                    : 'text-gray-700 hover:bg-gray-100'
+                                            ]"
+                                        >
+                                            {{ category.icon }} {{ category.name }}
+                                        </button>
+                                    </div>
+                                    
+                                    <div 
+                                        v-if="expandedCategories.has(category.id) && getSubcategoriesFor(category.id).length > 0"
+                                        class="ml-6 mt-1 space-y-1 border-l-2 border-gray-100 pl-2"
+                                    >
+                                        <button
+                                            v-for="sub in getSubcategoriesFor(category.id)"
+                                            :key="sub.id"
+                                            @click="localFilters.category = String(category.id); selectSubcategory(sub.id)"
+                                            :class="[
+                                                'w-full text-left px-2 py-1.5 text-sm rounded-lg transition-colors',
+                                                localFilters.subcategory === String(sub.id)
+                                                    ? 'bg-orange-100 text-orange-700 font-medium' 
+                                                    : 'text-gray-600 hover:bg-gray-100'
+                                            ]"
+                                        >
+                                            {{ sub.icon }} {{ sub.name }}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

@@ -32,12 +32,17 @@ class CartService
             }
             $cart[$key]['quantity'] = $newQuantity;
         } else {
+            // Get first image - images is an array
+            $firstImage = is_array($product->images) && count($product->images) > 0 
+                ? $product->images[0] 
+                : null;
+            
             $cart[$key] = [
                 'product_id' => $productId,
                 'seller_id' => $product->seller_id,
                 'name' => $product->name,
                 'price' => $product->price,
-                'image' => $product->images[0] ?? null,
+                'image' => $firstImage,
                 'quantity' => $quantity,
                 'max_quantity' => $product->stock_quantity,
             ];
@@ -99,10 +104,22 @@ class CartService
             $itemCount += $item['quantity'];
             $sellerIds[$item['seller_id']] = true;
 
+            // Handle image - could be string, array, or null from old cart data
+            $image = $item['image'] ?? null;
+            $imageUrl = null;
+            if ($image) {
+                if (is_array($image)) {
+                    $firstImage = reset($image); // Safely get first element
+                    $imageUrl = $firstImage ? asset('storage/' . $firstImage) : null;
+                } else {
+                    $imageUrl = asset('storage/' . $image);
+                }
+            }
+
             $items[] = [
                 ...$item,
                 'total' => $itemTotal,
-                'image_url' => $item['image'] ? asset('storage/' . $item['image']) : null,
+                'image_url' => $imageUrl,
             ];
         }
 

@@ -15,28 +15,110 @@ class ImageProcessingService
         return $file->store($path, 'public');
     }
 
-    // Phase 2: Basic optimization (resize, compress)
+    /**
+     * Validate image dimensions meet minimum requirements
+     */
+    public function validateDimensions(UploadedFile $file, int $minWidth = 400, int $minHeight = 400): array
+    {
+        try {
+            $image = Image::read($file->getRealPath());
+            $width = $image->width();
+            $height = $image->height();
+            
+            if ($width < $minWidth || $height < $minHeight) {
+                return [
+                    'valid' => false,
+                    'message' => "Image must be at least {$minWidth}x{$minHeight} pixels. Your image is {$width}x{$height}.",
+                    'width' => $width,
+                    'height' => $height,
+                ];
+            }
+            
+            return [
+                'valid' => true,
+                'width' => $width,
+                'height' => $height,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'valid' => false,
+                'message' => 'Could not read image dimensions.',
+            ];
+        }
+    }
+
+    // Phase 2: Basic optimization (resize, compress) with standardization
     public function uploadOptimized(UploadedFile $file, string $path = 'marketplace/products'): array
     {
-        $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
-        $fullPath = $path . '/' . $filename;
-
+        $filename = Str::random(40) . '.jpg'; // Always save as JPG for consistency
+        
         // Load image
         $image = Image::read($file->getRealPath());
 
-        // Get original dimensions
-        $width = $image->width();
-        $height = $image->height();
+        // Standardize to square (1:1 aspect ratio) with white background
+        $standardizedImage = $this->standardizeToSquare($image, 1200);
 
-        // Generate multiple sizes
+        // Generate multiple sizes from the standardized image
         $sizes = [
-            'original' => $this->processImage($image, $width, $height, $path, $filename, 'original'),
-            'large' => $this->processImage($image, 1200, null, $path, $filename, 'large'),
-            'medium' => $this->processImage($image, 800, null, $path, $filename, 'medium'),
-            'thumbnail' => $this->processImage($image, 300, null, $path, $filename, 'thumbnail'),
+            'original' => $this->saveImage($standardizedImage, $path, $filename, 'original', 1200),
+            'large' => $this->saveImage($standardizedImage, $path, $filename, 'large', 800),
+            'medium' => $this->saveImage($standardizedImage, $path, $filename, 'medium', 600),
+            'thumbnail' => $this->saveImage($standardizedImage, $path, $filename, 'thumbnail', 300),
         ];
 
         return $sizes;
+    }
+
+    /**
+     * Standardize image to square format with white background
+     * This ensures consistent presentation across all product images
+     */
+    private function standardizeToSquare($image, int $targetSize = 1200)
+    {
+        $width = $image->width();
+        $height = $image->height();
+        
+        // Determine the larger dimension
+        $maxDimension = max($width, $height);
+        
+        // If image is already square and large enough, just resize
+        if ($width === $height) {
+            return $image->resize($targetSize, $targetSize);
+        }
+        
+        // Create a square canvas with white background
+        $canvas = Image::create($maxDimension, $maxDimension)->fill('#ffffff');
+        
+        // Calculate position to center the image
+        $x = (int) (($maxDimension - $width) / 2);
+        $y = (int) (($maxDimension - $height) / 2);
+        
+        // Place the original image on the canvas
+        $canvas->place($image, 'top-left', $x, $y);
+        
+        // Resize to target size
+        return $canvas->resize($targetSize, $targetSize);
+    }
+
+    /**
+     * Save image at specific size
+     */
+    private function saveImage($image, string $path, string $filename, string $suffix, int $size): string
+    {
+        $processedFilename = pathinfo($filename, PATHINFO_FILENAME) . '_' . $suffix . '.jpg';
+        $fullPath = $path . '/' . $processedFilename;
+
+        // Clone and resize
+        $processed = clone $image;
+        $processed->resize($size, $size);
+
+        // Encode as JPEG with good quality
+        $encoded = $processed->toJpeg(quality: 85);
+
+        // Save to storage
+        Storage::disk('public')->put($fullPath, $encoded);
+
+        return $fullPath;
     }
 
     // Phase 3: Background removal for featured products
@@ -114,11 +196,11 @@ class ImageProcessingService
     }
 
     /**
-     * Process and save image at specific size
+     * Process and save image at specific size (legacy method for compatibility)
      */
     private function processImage($image, ?int $width, ?int $height, string $path, string $filename, string $suffix): string
     {
-        $processedFilename = pathinfo($filename, PATHINFO_FILENAME) . '_' . $suffix . '.' . pathinfo($filename, PATHINFO_EXTENSION);
+        $processedFilename = pathinfo($filename, PATHINFO_FILENAME) . '_' . $suffix . '.jpg';
         $fullPath = $path . '/' . $processedFilename;
 
         // Clone image to avoid modifying original
@@ -126,7 +208,7 @@ class ImageProcessingService
 
         // Resize maintaining aspect ratio
         if ($width && $height) {
-            $processed->scale($width, $height);
+            $processed->resize($width, $height);
         } elseif ($width) {
             $processed->scaleDown($width);
         } elseif ($height) {
@@ -291,15 +373,18 @@ class ImageProcessingService
     public static function getGuidelines(): array
     {
         return [
-            'recommended_size' => '1200x1200px minimum',
+            'minimum_size' => '400x400px minimum',
+            'recommended_size' => '1200x1200px for best quality',
             'max_file_size' => '5MB',
             'formats' => ['JPG', 'PNG', 'WebP'],
-            'background' => 'White or neutral backgrounds preferred',
+            'aspect_ratio' => 'Images will be automatically converted to square (1:1) format',
+            'background' => 'White or neutral backgrounds preferred (non-square images will get white padding)',
             'lighting' => 'Good lighting, avoid shadows',
             'angles' => 'Show product from multiple angles',
             'details' => 'Include close-ups of important features',
             'lifestyle' => 'Include lifestyle shots where relevant',
             'consistency' => 'Use consistent style across all images',
+            'note' => 'All images are automatically optimized and standardized for consistent display',
         ];
     }
 }

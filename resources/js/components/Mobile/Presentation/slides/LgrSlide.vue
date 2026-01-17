@@ -22,8 +22,8 @@
         <h3 class="font-bold text-lg mb-4 text-center">What is LGR?</h3>
         <p class="text-pink-100 mb-4">
           LGR (Loyalty Gift Rewards) is our exclusive program that rewards members who demonstrate 
-          commitment through their <span class="font-bold text-white">Premium Starter Kit</span> purchase 
-          and active participation.
+          commitment through their <span class="font-bold text-white">Starter Kit</span> purchase 
+          and active participation. All tiers qualify!
         </p>
         
         <div class="space-y-3">
@@ -32,8 +32,8 @@
               <span class="text-lg">✓</span>
             </div>
             <div>
-              <div class="font-semibold">Quarterly Profit Sharing</div>
-              <div class="text-sm text-pink-200">Receive your share of company profits every quarter</div>
+              <div class="font-semibold">Daily LGR Earnings</div>
+              <div class="text-sm text-pink-200">Earn daily rewards based on your tier (K12.50 - K62.50/day)</div>
             </div>
           </div>
           
@@ -59,25 +59,25 @@
         </div>
       </div>
       
-      <!-- How to qualify -->
+      <!-- LGR Rates by Tier -->
       <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-4 border border-amber-400/30">
-        <h3 class="font-bold mb-3">How to Qualify for LGR</h3>
+        <h3 class="font-bold mb-3">LGR Daily Rates by Tier</h3>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="flex items-center gap-2">
-            <span class="text-amber-400">⭐</span>
-            <span>Premium Starter Kit (K1,000)</span>
+            <span class="text-gray-300">📦</span>
+            <span>Lite: K12.50/day</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-amber-400">⭐</span>
-            <span>Active subscription</span>
+            <span class="text-blue-400">🎁</span>
+            <span>Basic: K25/day</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-amber-400">⭐</span>
-            <span>Monthly activity points</span>
+            <span class="text-emerald-400">🚀</span>
+            <span>Growth Plus: K37.50/day</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-amber-400">⭐</span>
-            <span>Network building</span>
+            <span class="text-amber-400">✨</span>
+            <span>Pro: K62.50/day</span>
           </div>
         </div>
       </div>
@@ -85,7 +85,7 @@
       <!-- CTA -->
       <p class="mt-6 text-sm text-pink-200">
         <span class="text-xl mr-1">💡</span>
-        Premium members automatically qualify for LGR benefits!
+        All starter kit members qualify for LGR - higher tiers earn more!
       </p>
     </div>
   </div>

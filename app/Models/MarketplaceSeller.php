@@ -22,6 +22,7 @@ class MarketplaceSeller extends Model
         'email',
         'description',
         'logo_path',
+        'cover_image_path',
         'trust_level',
         'commission_rate',
         'kyc_status',
@@ -52,6 +53,7 @@ class MarketplaceSeller extends Model
 
     protected $appends = [
         'logo_url',
+        'cover_image_url',
         'trust_badge',
         'trust_label',
         'effective_commission_rate',
@@ -82,6 +84,16 @@ class MarketplaceSeller extends Model
         return $this->hasMany(MarketplaceReview::class, 'seller_id');
     }
 
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(MarketplacePayout::class, 'seller_id');
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(MarketplaceSellerFollower::class, 'seller_id');
+    }
+
     public function disputes(): HasMany
     {
         return $this->hasMany(MarketplaceDispute::class, 'seller_id');
@@ -90,6 +102,11 @@ class MarketplaceSeller extends Model
     public function getLogoUrlAttribute(): ?string
     {
         return $this->logo_path ? asset('storage/' . $this->logo_path) : null;
+    }
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        return $this->cover_image_path ? asset('storage/' . $this->cover_image_path) : null;
     }
 
     public function getTrustBadgeAttribute(): string

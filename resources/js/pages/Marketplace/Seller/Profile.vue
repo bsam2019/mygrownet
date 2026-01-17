@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import MarketplaceLayout from '@/layouts/MarketplaceLayout.vue';
+import {
+    CameraIcon,
+    PhotoIcon,
+    ArrowLeftIcon,
+    CheckCircleIcon,
+    ExclamationCircleIcon,
+} from '@heroicons/vue/24/outline';
 
 interface Seller {
     id: number;
@@ -15,6 +23,8 @@ interface Seller {
     kyc_status: string;
     total_orders: number;
     rating: number | null;
+    logo_url: string | null;
+    cover_image_url: string | null;
 }
 
 interface Props {
@@ -31,8 +41,63 @@ const form = useForm({
     email: props.seller.email || '',
 });
 
+const logoPreview = ref<string | null>(props.seller.logo_url);
+const coverPreview = ref<string | null>(props.seller.cover_image_url);
+const uploadingLogo = ref(false);
+const uploadingCover = ref(false);
+
 const submit = () => {
     form.put(route('marketplace.seller.profile.update'));
+};
+
+const handleLogoUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    
+    const file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Logo must be less than 2MB');
+        return;
+    }
+    
+    logoPreview.value = URL.createObjectURL(file);
+    uploadingLogo.value = true;
+    
+    const formData = new FormData();
+    formData.append('logo', file);
+    
+    router.post(route('marketplace.seller.profile.upload-logo'), formData, {
+        forceFormData: true,
+        preserveScroll: true,
+        onFinish: () => {
+            uploadingLogo.value = false;
+        },
+    });
+};
+
+const handleCoverUpload = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Cover image must be less than 5MB');
+        return;
+    }
+    
+    coverPreview.value = URL.createObjectURL(file);
+    uploadingCover.value = true;
+    
+    const formData = new FormData();
+    formData.append('cover_image', file);
+    
+    router.post(route('marketplace.seller.profile.upload-cover'), formData, {
+        forceFormData: true,
+        preserveScroll: true,
+        onFinish: () => {
+            uploadingCover.value = false;
+        },
+    });
 };
 
 const getTrustBadge = (level: string) => {
@@ -65,15 +130,91 @@ const getKycBadge = (status: string) => {
                 <div class="mb-8">
                     <Link
                         :href="route('marketplace.seller.dashboard')"
-                        class="text-amber-600 hover:text-amber-700 text-sm font-medium flex items-center gap-1 mb-4"
+                        class="text-orange-600 hover:text-orange-700 text-sm font-medium flex items-center gap-1 mb-4"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ArrowLeftIcon class="w-4 h-4" aria-hidden="true" />
                         Back to Dashboard
                     </Link>
-                    <h1 class="text-2xl font-bold text-gray-900">Seller Profile</h1>
-                    <p class="text-gray-500 mt-1">Manage your business information</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Store Settings</h1>
+                    <p class="text-gray-500 mt-1">Customize your shop appearance and business information</p>
+                </div>
+
+                <!-- Shop Appearance Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Shop Appearance</h2>
+                        <p class="text-sm text-gray-500 mt-1">Customize how your shop looks to customers</p>
+                    </div>
+                    
+                    <!-- Cover Image -->
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-r from-orange-500 to-amber-500 relative overflow-hidden">
+                            <img 
+                                v-if="coverPreview"
+                                :src="coverPreview"
+                                alt="Cover image"
+                                class="w-full h-full object-cover"
+                            />
+                            <div v-else class="absolute inset-0 flex items-center justify-center">
+                                <div class="text-center text-white/80">
+                                    <PhotoIcon class="h-12 w-12 mx-auto mb-2" aria-hidden="true" />
+                                    <p class="text-sm">Add a cover image to make your shop stand out</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Cover Upload Button -->
+                            <label class="absolute bottom-4 right-4 cursor-pointer">
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    class="hidden" 
+                                    @change="handleCoverUpload"
+                                    :disabled="uploadingCover"
+                                />
+                                <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-gray-700 rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-lg">
+                                    <CameraIcon class="h-4 w-4" aria-hidden="true" />
+                                    {{ uploadingCover ? 'Uploading...' : 'Change Cover' }}
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Logo -->
+                        <div class="absolute -bottom-12 left-6">
+                            <div class="relative">
+                                <div class="w-24 h-24 bg-white rounded-xl shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
+                                    <img 
+                                        v-if="logoPreview"
+                                        :src="logoPreview"
+                                        alt="Shop logo"
+                                        class="w-full h-full object-cover"
+                                    />
+                                    <span v-else class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-amber-600">
+                                        {{ seller.business_name.charAt(0) }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Logo Upload Button -->
+                                <label class="absolute -bottom-1 -right-1 cursor-pointer">
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        class="hidden" 
+                                        @change="handleLogoUpload"
+                                        :disabled="uploadingLogo"
+                                    />
+                                    <span class="flex items-center justify-center w-8 h-8 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-colors">
+                                        <CameraIcon class="h-4 w-4" aria-hidden="true" />
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-16 pb-6 px-6">
+                        <p class="text-sm text-gray-500">
+                            <strong>Logo:</strong> Square image, max 2MB. <strong>Cover:</strong> 1200x400px recommended, max 5MB.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Status Cards -->

@@ -7,8 +7,26 @@ use Carbon\Carbon;
 class LgrCycle
 {
     public const CYCLE_DURATION_DAYS = 70;
-    public const DAILY_RATE = 25.00;
-    public const MAX_EARNINGS = 1750.00; // 70 days × K25
+    public const DAILY_RATE = 25.00; // Default rate (Basic tier)
+    public const MAX_EARNINGS = 1750.00; // 70 days × K25 (Basic tier)
+    
+    // Tier-based daily rates
+    public const TIER_DAILY_RATES = [
+        'lite' => 12.50,        // K12.50/day (50% of basic)
+        'basic' => 25.00,       // K25/day (baseline)
+        'growth_plus' => 37.50, // K37.50/day (150% of basic)
+        'pro' => 62.50,         // K62.50/day (250% of basic)
+        'premium' => 37.50,     // K37.50/day (legacy, same as growth_plus)
+    ];
+    
+    // Tier-based max earnings (70 days × daily rate)
+    public const TIER_MAX_EARNINGS = [
+        'lite' => 875.00,       // 70 × K12.50
+        'basic' => 1750.00,     // 70 × K25
+        'growth_plus' => 2625.00, // 70 × K37.50
+        'pro' => 4375.00,       // 70 × K62.50
+        'premium' => 2625.00,   // 70 × K37.50 (legacy)
+    ];
 
     private function __construct(
         private ?int $id,
@@ -18,11 +36,14 @@ class LgrCycle
         private string $status,
         private int $activeDays,
         private float $totalEarnedLgc,
-        private float $dailyRate
+        private float $dailyRate,
+        private ?string $tier = null
     ) {}
 
-    public static function create(int $userId, Carbon $startDate): self
+    public static function create(int $userId, Carbon $startDate, ?string $tier = 'basic'): self
     {
+        $dailyRate = self::TIER_DAILY_RATES[$tier] ?? self::DAILY_RATE;
+        
         return new self(
             id: null,
             userId: $userId,
@@ -31,7 +52,8 @@ class LgrCycle
             status: 'active',
             activeDays: 0,
             totalEarnedLgc: 0,
-            dailyRate: self::DAILY_RATE
+            dailyRate: $dailyRate,
+            tier: $tier
         );
     }
 
@@ -45,7 +67,8 @@ class LgrCycle
             status: $data['status'],
             activeDays: $data['active_days'],
             totalEarnedLgc: $data['total_earned_lgc'],
-            dailyRate: $data['daily_rate']
+            dailyRate: $data['daily_rate'],
+            tier: $data['tier'] ?? null
         );
     }
 
@@ -77,9 +100,13 @@ class LgrCycle
 
     public function canEarnToday(Carbon $date): bool
     {
+        $maxEarnings = $this->tier 
+            ? (self::TIER_MAX_EARNINGS[$this->tier] ?? self::MAX_EARNINGS)
+            : self::MAX_EARNINGS;
+            
         return $this->isActive() 
             && $date->between($this->startDate, $this->endDate)
-            && $this->totalEarnedLgc < self::MAX_EARNINGS;
+            && $this->totalEarnedLgc < $maxEarnings;
     }
 
     public function getRemainingDays(): int
@@ -93,10 +120,14 @@ class LgrCycle
 
     public function getProjectedEarnings(): float
     {
+        $maxEarnings = $this->tier 
+            ? (self::TIER_MAX_EARNINGS[$this->tier] ?? self::MAX_EARNINGS)
+            : self::MAX_EARNINGS;
+            
         $remainingDays = $this->getRemainingDays();
         $potentialEarnings = $this->totalEarnedLgc + ($remainingDays * $this->dailyRate);
         
-        return min($potentialEarnings, self::MAX_EARNINGS);
+        return min($potentialEarnings, $maxEarnings);
     }
 
     public function getCompletionRate(): float
@@ -113,12 +144,14 @@ class LgrCycle
     public function getActiveDays(): int { return $this->activeDays; }
     public function getTotalEarnedLgc(): float { return $this->totalEarnedLgc; }
     public function getDailyRate(): float { return $this->dailyRate; }
+    public function getTier(): ?string { return $this->tier; }
 
     public function toArray(): array
     {
         return [
             'id' => $this->id,
             'user_id' => $this->userId,
+            'tier' => $this->tier,
             'start_date' => $this->startDate->toDateString(),
             'end_date' => $this->endDate->toDateString(),
             'status' => $this->status,

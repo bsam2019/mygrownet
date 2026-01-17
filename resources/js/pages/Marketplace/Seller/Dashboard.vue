@@ -356,7 +356,14 @@ const formatProgressValue = (key: string, value: number) => {
                     </div>
                     <p class="text-xs opacity-90 mb-1 uppercase tracking-wide">Available Balance</p>
                     <p class="text-3xl font-bold mb-1">{{ formatPrice(stats.available_balance) }}</p>
-                    <p class="text-xs opacity-80">Ready to withdraw</p>
+                    <p class="text-xs opacity-80 mb-3">Ready to withdraw</p>
+                    <Link 
+                        href="/growmarket/seller/payouts"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors"
+                    >
+                        <BanknotesIcon class="h-4 w-4" aria-hidden="true" />
+                        View Payouts
+                    </Link>
                 </div>
 
                 <!-- Pending Balance -->
@@ -682,13 +689,13 @@ const formatProgressValue = (key: string, value: number) => {
                                     {{ stats.pending_orders }} pending
                                 </span>
                             </Link>
-                            <button
-                                class="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                                title="Coming soon"
+                            <Link 
+                                :href="route('marketplace.seller.payouts.index')"
+                                class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 <BanknotesIcon class="h-5 w-5 text-gray-600" aria-hidden="true" />
                                 <span class="font-medium text-gray-900 text-sm">Withdraw Funds</span>
-                            </button>
+                            </Link>
                             <Link 
                                 :href="route('marketplace.seller.profile')"
                                 class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

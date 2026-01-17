@@ -8,6 +8,7 @@ use App\Http\Controllers\Marketplace\OrderController;
 use App\Http\Controllers\Marketplace\SellerDashboardController;
 use App\Http\Controllers\Marketplace\SellerProductController;
 use App\Http\Controllers\Marketplace\SellerOrderController;
+use App\Http\Controllers\Marketplace\SellerShopController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +69,10 @@ Route::middleware(['auth', 'verified', 'marketplace.data'])
         // Reviews
         Route::post('/reviews', [\App\Http\Controllers\Marketplace\ReviewController::class, 'store'])->name('reviews.store');
         Route::post('/reviews/{id}/vote', [\App\Http\Controllers\Marketplace\ReviewController::class, 'vote'])->name('reviews.vote');
+        
+        // Seller Shop Interactions
+        Route::post('/shop/{sellerId}/follow', [SellerShopController::class, 'follow'])->name('shop.follow');
+        Route::delete('/shop/{sellerId}/unfollow', [SellerShopController::class, 'unfollow'])->name('shop.unfollow');
     });
 
 // Public seller landing page (no auth required)
@@ -98,6 +103,8 @@ Route::middleware(['auth', 'verified', 'marketplace.data', 'marketplace.seller']
         // Profile
         Route::get('/profile', [SellerDashboardController::class, 'profile'])->name('profile');
         Route::put('/profile', [SellerDashboardController::class, 'updateProfile'])->name('profile.update');
+        Route::post('/profile/upload-logo', [SellerDashboardController::class, 'uploadLogo'])->name('profile.upload-logo');
+        Route::post('/profile/upload-cover', [SellerDashboardController::class, 'uploadCover'])->name('profile.upload-cover');
         
         // Media Library
         Route::get('/media', [\App\Http\Controllers\Marketplace\SellerMediaController::class, 'index'])->name('media.index');
@@ -110,9 +117,15 @@ Route::middleware(['auth', 'verified', 'marketplace.data', 'marketplace.seller']
         Route::get('/products/create', [SellerProductController::class, 'create'])->name('products.create');
         Route::post('/products', [SellerProductController::class, 'store'])->name('products.store');
         Route::get('/products/{id}/edit', [SellerProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{id}', [SellerProductController::class, 'update'])->name('products.update');
+        Route::match(['put', 'post'], '/products/{id}', [SellerProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{id}', [SellerProductController::class, 'destroy'])->name('products.destroy');
         Route::post('/products/{id}/appeal', [SellerProductController::class, 'appeal'])->name('products.appeal');
+        
+        // Payouts
+        Route::get('/payouts', [\App\Http\Controllers\Marketplace\SellerPayoutController::class, 'index'])->name('payouts.index');
+        Route::get('/payouts/request', [\App\Http\Controllers\Marketplace\SellerPayoutController::class, 'create'])->name('payouts.create');
+        Route::post('/payouts', [\App\Http\Controllers\Marketplace\SellerPayoutController::class, 'store'])->name('payouts.store');
+        Route::get('/payouts/{id}', [\App\Http\Controllers\Marketplace\SellerPayoutController::class, 'show'])->name('payouts.show');
         
         // Orders
         Route::get('/orders', [SellerOrderController::class, 'index'])->name('orders.index');

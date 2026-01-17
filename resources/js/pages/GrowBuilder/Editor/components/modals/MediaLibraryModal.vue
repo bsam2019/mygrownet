@@ -38,6 +38,7 @@ const props = defineProps<{
     uploadError: string | null;
     allowCrop?: boolean;
     aspectRatio?: number;
+    forceAspectRatio?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -358,6 +359,7 @@ const selectCategory = (cat: string) => {
         :show="showImageEditor"
         :image-url="selectedMediaForEdit?.url || ''"
         :aspect-ratio="aspectRatio"
+        :force-aspect-ratio="forceAspectRatio"
         @close="closeImageEditor"
         @save="handleCropSave"
     />

@@ -88,8 +88,15 @@ class ProductService
             ->where('stock_quantity', '>', 0)
             ->whereHas('seller', fn($q) => $q->where('is_active', true));
 
-        if (!empty($filters['category_id'])) {
+        // Support both single category_id and array of category_ids
+        if (!empty($filters['category_ids'])) {
+            $query->whereIn('category_id', $filters['category_ids']);
+        } elseif (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
+        }
+
+        if (!empty($filters['seller_id'])) {
+            $query->where('seller_id', $filters['seller_id']);
         }
 
         if (!empty($filters['province'])) {

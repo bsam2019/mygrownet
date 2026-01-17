@@ -135,6 +135,16 @@ const formatDate = (date: string) => {
             
             <!-- Action Buttons -->
             <div class="flex items-center gap-3">
+                <!-- View Shop Button -->
+                <Link
+                    :href="route('marketplace.seller.show', seller.id)"
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                    <BuildingStorefrontIcon class="h-5 w-5" aria-hidden="true" />
+                    View Shop
+                </Link>
+                
                 <template v-if="seller.kyc_status === 'pending'">
                     <button
                         @click="approve"

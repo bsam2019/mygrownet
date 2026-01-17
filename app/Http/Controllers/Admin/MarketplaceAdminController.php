@@ -22,6 +22,7 @@ class MarketplaceAdminController extends Controller
         $stats = [
             'pending_sellers' => MarketplaceSeller::where('kyc_status', 'pending')->count(),
             'pending_products' => MarketplaceProduct::where('status', 'pending')->count(),
+            'pending_payouts' => \App\Models\MarketplacePayout::where('status', 'pending')->count(),
             'active_sellers' => MarketplaceSeller::where('is_active', true)->count(),
             'total_products' => MarketplaceProduct::count(),
             'total_orders' => MarketplaceOrder::count(),

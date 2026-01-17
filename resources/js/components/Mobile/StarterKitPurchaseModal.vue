@@ -58,14 +58,33 @@
                   </div>
                 </div>
 
+                <!-- Upgrade Option (if lite) -->
+                <div v-if="tier === 'lite'" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                  <div class="flex items-start gap-3">
+                    <SparklesIcon class="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                      <h4 class="text-sm font-semibold text-blue-900">Upgrade Your Kit</h4>
+                      <p class="text-xs text-blue-700 mt-1">
+                        Unlock more content, higher LGR earnings, and premium benefits!
+                      </p>
+                      <button
+                        @click="handleUpgrade"
+                        class="mt-3 w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all"
+                      >
+                        Upgrade Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Upgrade Option (if basic) -->
                 <div v-if="tier === 'basic'" class="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4">
                   <div class="flex items-start gap-3">
                     <SparklesIcon class="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div class="flex-1">
-                      <h4 class="text-sm font-semibold text-amber-900">Upgrade to Premium</h4>
+                      <h4 class="text-sm font-semibold text-amber-900">Upgrade to Growth Plus</h4>
                       <p class="text-xs text-amber-700 mt-1">
-                        Get LGR access, double shop credit, and more benefits for just K500!
+                        Get higher LGR earnings, more shop credit, and premium benefits!
                       </p>
                       <button
                         @click="handleUpgrade"
@@ -100,34 +119,64 @@
                 <div class="space-y-3">
                   <h4 class="text-sm font-semibold text-gray-900">Choose Your Tier</h4>
                   
+                  <!-- Lite Tier -->
+                  <div
+                    @click="selectedTier = 'lite'"
+                    :class="[
+                      'border-2 rounded-xl p-4 cursor-pointer transition-all',
+                      selectedTier === 'lite'
+                        ? 'border-gray-600 bg-gray-50'
+                        : 'border-gray-200 bg-white'
+                    ]"
+                  >
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <h5 class="text-base font-bold text-gray-900">Lite</h5>
+                        <p class="text-2xl font-bold text-gray-600 mt-1">K300</p>
+                        <ul class="text-xs text-gray-600 mt-2 space-y-1">
+                          <li>✓ Basic content access</li>
+                          <li>✓ Community access</li>
+                          <li>✓ +15 Lifetime Points</li>
+                        </ul>
+                      </div>
+                      <div
+                        :class="[
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                          selectedTier === 'lite'
+                            ? 'border-gray-600 bg-gray-600'
+                            : 'border-gray-300'
+                        ]"
+                      >
+                        <div v-if="selectedTier === 'lite'" class="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Basic Tier -->
                   <div
                     @click="selectedTier = 'basic'"
                     :class="[
                       'border-2 rounded-xl p-4 cursor-pointer transition-all',
                       selectedTier === 'basic'
-                        ? 'border-indigo-600 bg-indigo-50'
+                        ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 bg-white'
                     ]"
                   >
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                          <h5 class="text-base font-bold text-gray-900">Basic</h5>
-                          <span class="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">Popular</span>
-                        </div>
-                        <p class="text-2xl font-bold text-indigo-600 mt-1">K500</p>
+                        <h5 class="text-base font-bold text-gray-900">Basic</h5>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">K500</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ K100 shop credit</li>
-                          <li>✓ Learning resources</li>
-                          <li>✓ Community access</li>
+                          <li>✓ All content access</li>
+                          <li>✓ +25 Lifetime Points</li>
+                          <li>✓ Full platform access</li>
                         </ul>
                       </div>
                       <div
                         :class="[
                           'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                           selectedTier === 'basic'
-                            ? 'border-indigo-600 bg-indigo-600'
+                            ? 'border-blue-600 bg-blue-600'
                             : 'border-gray-300'
                         ]"
                       >
@@ -136,12 +185,50 @@
                     </div>
                   </div>
 
-                  <!-- Premium Tier -->
+                  <!-- Growth Plus Tier -->
                   <div
-                    @click="selectedTier = 'premium'"
+                    @click="selectedTier = 'growth_plus'"
                     :class="[
                       'border-2 rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden',
-                      selectedTier === 'premium'
+                      selectedTier === 'growth_plus'
+                        ? 'border-emerald-600 bg-emerald-50'
+                        : 'border-gray-200 bg-white'
+                    ]"
+                  >
+                    <div class="absolute top-2 right-2">
+                      <span class="text-xs bg-emerald-600 text-white px-2 py-1 rounded-full font-semibold">
+                        Popular
+                      </span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <h5 class="text-base font-bold text-gray-900">Growth Plus</h5>
+                        <p class="text-2xl font-bold text-emerald-600 mt-1">K1,000</p>
+                        <ul class="text-xs text-gray-600 mt-2 space-y-1">
+                          <li>✓ All content + extras</li>
+                          <li>✓ +50 Lifetime Points</li>
+                          <li>✓ Priority support</li>
+                        </ul>
+                      </div>
+                      <div
+                        :class="[
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                          selectedTier === 'growth_plus'
+                            ? 'border-emerald-600 bg-emerald-600'
+                            : 'border-gray-300'
+                        ]"
+                      >
+                        <div v-if="selectedTier === 'growth_plus'" class="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pro Tier -->
+                  <div
+                    @click="selectedTier = 'pro'"
+                    :class="[
+                      'border-2 rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden',
+                      selectedTier === 'pro'
                         ? 'border-purple-600 bg-purple-50'
                         : 'border-gray-200 bg-white'
                     ]"
@@ -153,24 +240,23 @@
                     </div>
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <h5 class="text-base font-bold text-gray-900">Premium</h5>
-                        <p class="text-2xl font-bold text-purple-600 mt-1">K1,000</p>
+                        <h5 class="text-base font-bold text-gray-900">Pro</h5>
+                        <p class="text-2xl font-bold text-purple-600 mt-1">K2,000</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ K200 shop credit</li>
-                          <li>✓ LGR profit sharing</li>
-                          <li>✓ Priority support</li>
-                          <li>✓ Enhanced earnings</li>
+                          <li>✓ Full library access</li>
+                          <li>✓ +100 Lifetime Points</li>
+                          <li>✓ Premium benefits</li>
                         </ul>
                       </div>
                       <div
                         :class="[
                           'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                          selectedTier === 'premium'
+                          selectedTier === 'pro'
                             ? 'border-purple-600 bg-purple-600'
                             : 'border-gray-300'
                         ]"
                       >
-                        <div v-if="selectedTier === 'premium'" class="w-2 h-2 bg-white rounded-full"></div>
+                        <div v-if="selectedTier === 'pro'" class="w-2 h-2 bg-white rounded-full"></div>
                       </div>
                     </div>
                   </div>
@@ -199,7 +285,7 @@
                     <div class="text-sm text-red-800">
                       <p class="font-medium mb-1">Insufficient Balance</p>
                       <p class="text-xs">
-                        You need K{{ selectedTier === 'basic' ? '500' : '1,000' }} to purchase this tier. 
+                        You need K{{ selectedTierPrice.toLocaleString() }} to purchase this tier. 
                         Please deposit funds to your wallet first.
                       </p>
                     </div>
@@ -226,7 +312,7 @@
                 >
                   <span v-if="purchasing">Processing...</span>
                   <span v-else-if="!hasSufficientBalance">Insufficient Balance</span>
-                  <span v-else>Purchase {{ selectedTier === 'basic' ? 'K500' : 'K1,000' }} from Wallet</span>
+                  <span v-else>Purchase K{{ selectedTierPrice.toLocaleString() }} from Wallet</span>
                 </button>
               </div>
             </div>
@@ -265,14 +351,30 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['close', 'success', 'error']);
 
-const selectedTier = ref('basic');
+const selectedTier = ref('lite');
 const termsAccepted = ref(false);
 const purchasing = ref(false);
 
 // Check if user has sufficient balance
 const hasSufficientBalance = computed(() => {
-  const requiredAmount = selectedTier.value === 'basic' ? 500 : 1000;
+  const tierPrices: Record<string, number> = {
+    lite: 300,
+    basic: 500,
+    growth_plus: 1000,
+    pro: 2000
+  };
+  const requiredAmount = tierPrices[selectedTier.value] || 500;
   return props.walletBalance >= requiredAmount;
+});
+
+const selectedTierPrice = computed(() => {
+  const tierPrices: Record<string, number> = {
+    lite: 300,
+    basic: 500,
+    growth_plus: 1000,
+    pro: 2000
+  };
+  return tierPrices[selectedTier.value] || 500;
 });
 
 const handlePurchase = async () => {
