@@ -90,7 +90,8 @@ export type SectionType =
     | 'timeline'
     | 'cta-banner'
     | 'logo-cloud'
-    | 'video-hero';
+    | 'video-hero'
+    | 'whatsapp';
 
 export interface SectionBlock {
     type: SectionType;

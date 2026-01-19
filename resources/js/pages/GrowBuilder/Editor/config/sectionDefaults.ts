@@ -253,6 +253,17 @@ export function getDefaultContent(
             buttonText: 'Learn More',
             buttonLink: '#about',
         },
+        'whatsapp': {
+            phoneNumber: '',
+            message: `Hi! I'm interested in learning more about ${siteName}.`,
+            buttonText: 'Chat on WhatsApp',
+            buttonStyle: 'solid',
+            buttonSize: 'md',
+            alignment: 'center',
+            showIcon: true,
+            backgroundColor: '#25D366',
+            textColor: '#ffffff',
+        },
     };
 
     return defaults[type] || {};

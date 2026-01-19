@@ -141,6 +141,9 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
 
     // AI Content Generation
     Route::get('/ai/status', [AIController::class, 'status'])->name('ai.status');
+    Route::post('/ai/generate-website', [AIController::class, 'generateWebsite'])->name('ai.generate-website');
+    Route::post('/ai/refine-website', [AIController::class, 'refineWebsite'])->name('ai.refine-website');
+    Route::post('/ai/publish-generated-website', [AIController::class, 'publishGeneratedWebsite'])->name('ai.publish-generated-website');
     Route::post('/sites/{siteId}/ai/feedback', [AIController::class, 'recordFeedback'])->name('ai.feedback');
     Route::get('/sites/{siteId}/ai/feedback-stats', [AIController::class, 'getFeedbackStats'])->name('ai.feedback-stats');
     Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');

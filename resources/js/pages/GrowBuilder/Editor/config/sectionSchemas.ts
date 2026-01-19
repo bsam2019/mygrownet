@@ -795,6 +795,37 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             minHeightField,
         ],
     },
+
+    'whatsapp': {
+        type: 'whatsapp',
+        name: 'WhatsApp',
+        fields: [
+            { key: 'phoneNumber', type: 'text', label: 'Phone Number', placeholder: '+260 XXX XXX XXX', helpText: 'Include country code (e.g., +260 for Zambia)' },
+            { key: 'message', type: 'textarea', label: 'Pre-filled Message', rows: 3, placeholder: 'Hi! I\'m interested in...' },
+            { key: 'divider1', type: 'divider', label: 'Button Style' },
+            { key: 'buttonText', type: 'text', label: 'Button Text', placeholder: 'Chat on WhatsApp' },
+            { key: 'buttonStyle', type: 'buttonGroup', label: 'Button Style', options: [
+                { label: 'Solid', value: 'solid' },
+                { label: 'Outline', value: 'outline' },
+                { label: 'Minimal', value: 'minimal' },
+            ]},
+            { key: 'buttonSize', type: 'buttonGroup', label: 'Button Size', options: [
+                { label: 'Small', value: 'sm' },
+                { label: 'Medium', value: 'md' },
+                { label: 'Large', value: 'lg' },
+            ]},
+            { key: 'alignment', type: 'buttonGroup', label: 'Alignment', options: [
+                { label: 'Left', value: 'left' },
+                { label: 'Center', value: 'center' },
+                { label: 'Right', value: 'right' },
+            ]},
+            { key: 'showIcon', type: 'checkbox', label: 'Show WhatsApp Icon' },
+        ],
+        styleFields: [
+            { key: 'backgroundColor', type: 'color', label: 'Button Color', presets: ['#25D366', '#128C7E', '#075E54', '#2563eb', '#7c3aed'] },
+            { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#111827'] },
+        ],
+    },
 };
 
 /**

@@ -27,6 +27,7 @@ import {
     RocketLaunchIcon,
     BuildingOffice2Icon,
     FilmIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline';
 import type { SectionBlock, SectionCategory } from '../types';
 
@@ -69,6 +70,7 @@ export const sectionBlocks: SectionBlock[] = [
     
     // Forms
     { type: 'contact', name: 'Contact', icon: EnvelopeIcon, category: 'Forms', description: 'Contact form' },
+    { type: 'whatsapp', name: 'WhatsApp', icon: ChatBubbleLeftRightIcon, category: 'Forms', description: 'WhatsApp click-to-chat button' },
 ];
 
 /**

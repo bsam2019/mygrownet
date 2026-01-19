@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import CreateSiteWizard from '@/components/GrowBuilder/CreateSiteWizard.vue';
+import WebsiteGeneratorModal from '@/pages/GrowBuilder/Editor/components/modals/WebsiteGeneratorModal.vue';
 import {
     PlusIcon,
     GlobeAltIcon,
@@ -162,6 +163,7 @@ const props = defineProps<{
 
 // Create site wizard modal
 const showCreateWizard = ref(false);
+const showAIGenerator = ref(false);
 
 const openCreateWizard = () => {
     showCreateWizard.value = true;
@@ -169,6 +171,14 @@ const openCreateWizard = () => {
 
 const closeCreateWizard = () => {
     showCreateWizard.value = false;
+};
+
+const openAIGenerator = () => {
+    showAIGenerator.value = true;
+};
+
+const closeAIGenerator = () => {
+    showAIGenerator.value = false;
 };
 
 // Admin tier switcher
@@ -291,11 +301,22 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         <button
                             v-if="subscription?.canCreateSite !== false"
                             type="button"
+                            @click="openAIGenerator"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                        >
+                            <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                            <span class="hidden sm:inline">AI Express</span>
+                            <span class="sm:hidden">AI</span>
+                        </button>
+                        <button
+                            v-if="subscription?.canCreateSite !== false"
+                            type="button"
                             @click="openCreateWizard"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
                         >
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                            Create Website
+                            <span class="hidden sm:inline">Pro Builder</span>
+                            <span class="sm:hidden">Create</span>
                         </button>
                         <template v-else>
                             <Link
@@ -552,30 +573,54 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
 
                 <!-- Empty State -->
                 <div v-if="sites.length === 0" class="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                    <div class="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                        <GlobeAltIcon class="h-10 w-10 text-blue-600" aria-hidden="true" />
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-6">
+                        <SparklesIcon class="h-10 w-10 text-indigo-600" aria-hidden="true" />
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Create your first website</h3>
-                    <p class="text-gray-500 mb-8 max-w-md mx-auto">
-                        Build a professional website for your business in minutes. No coding required.
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Create your first website</h3>
+                    <p class="text-gray-600 mb-8 max-w-md mx-auto">
+                        Choose how you want to build: Let AI do it for you, or use our powerful builder.
                     </p>
-                    <button
-                        type="button"
-                        @click="openCreateWizard"
-                        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
-                    >
-                        <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                        Get Started
-                    </button>
+                    
+                    <!-- Two Options -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                        <button
+                            type="button"
+                            @click="openAIGenerator"
+                            class="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                        >
+                            <SparklesIcon class="h-6 w-6" aria-hidden="true" />
+                            <div class="text-left">
+                                <div class="text-lg">AI Express</div>
+                                <div class="text-xs text-indigo-100 font-normal">Describe your business, get a website</div>
+                            </div>
+                            <span class="absolute -top-2 -right-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
+                                Recommended
+                            </span>
+                        </button>
+                        
+                        <div class="text-gray-400 font-medium">or</div>
+                        
+                        <button
+                            type="button"
+                            @click="openCreateWizard"
+                            class="inline-flex items-center gap-3 px-8 py-4 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all"
+                        >
+                            <PlusIcon class="h-6 w-6" aria-hidden="true" />
+                            <div class="text-left">
+                                <div class="text-lg">Pro Builder</div>
+                                <div class="text-xs text-gray-500 font-normal">Full control with templates</div>
+                            </div>
+                        </button>
+                    </div>
                     
                     <!-- Features -->
                     <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto text-left">
                         <div class="p-4">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                                <ArrowTrendingUpIcon class="h-5 w-5 text-green-600" aria-hidden="true" />
+                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-3">
+                                <SparklesIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
                             </div>
-                            <h4 class="font-medium text-gray-900 mb-1">Easy to Use</h4>
-                            <p class="text-sm text-gray-500">Drag and drop builder with beautiful templates</p>
+                            <h4 class="font-medium text-gray-900 mb-1">AI-Powered</h4>
+                            <p class="text-sm text-gray-500">Generate complete websites from text descriptions</p>
                         </div>
                         <div class="p-4">
                             <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
@@ -786,6 +831,12 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
             :site-templates="siteTemplates || []"
             :industries="industries || []"
             @close="closeCreateWizard"
+        />
+        
+        <!-- AI Website Generator Modal -->
+        <WebsiteGeneratorModal
+            v-if="showAIGenerator"
+            @close="closeAIGenerator"
         />
     </AppLayout>
 </template>

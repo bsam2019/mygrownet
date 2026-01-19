@@ -34,6 +34,7 @@ const DividerSection = defineAsyncComponent(() => import('./DividerSection.vue')
 const PageHeaderSection = defineAsyncComponent(() => import('./PageHeaderSection.vue'));
 const ProductsSection = defineAsyncComponent(() => import('./ProductsSection.vue'));
 const MemberCtaSection = defineAsyncComponent(() => import('./MemberCtaSection.vue'));
+const WhatsAppSection = defineAsyncComponent(() => import('./WhatsAppSection.vue'));
 
 // Phase 1 New Sections
 const TimelineSection = defineAsyncComponent(() => import('./TimelineSection.vue'));
@@ -69,6 +70,7 @@ export const sectionComponents: Record<SectionType, Component> = {
     'cta-banner': CtaBannerSection,
     'logo-cloud': LogoCloudSection,
     'video-hero': VideoHeroSection,
+    'whatsapp': WhatsAppSection,
 };
 
 /**

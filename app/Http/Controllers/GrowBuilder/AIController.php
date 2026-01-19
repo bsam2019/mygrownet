@@ -550,4 +550,247 @@ class AIController extends Controller
         
         return $site;
     }
+    
+    /**
+     * Generate a complete website from a text prompt
+     */
+    public function generateWebsite(Request $request)
+    {
+        // Check AI access
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+        
+        $validated = $request->validate([
+            'prompt' => 'required|string|min:20|max:1000',
+        ]);
+        
+        try {
+            $websiteGenerator = app(\App\Services\GrowBuilder\WebsiteGeneratorService::class);
+            $result = $websiteGenerator->generateWebsite(
+                $validated['prompt'],
+                $request->user()->id
+            );
+            
+            if (!$result['success']) {
+                return response()->json([
+                    'error' => 'Generation failed',
+                    'message' => $result['error'] ?? 'Failed to generate website',
+                ], 500);
+            }
+            
+            // Record usage
+            $this->recordUsage(
+                $request,
+                'website_generation',
+                $validated['prompt'],
+                0,
+                null
+            );
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Website generation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'error' => 'Generation failed',
+                'message' => 'An error occurred while generating your website. Please try again.',
+            ], 500);
+        }
+    }
+    
+    /**
+     * Refine an existing generated website
+     */
+    public function refineWebsite(Request $request)
+    {
+        // Check AI access
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+        
+        $validated = $request->validate([
+            'current_website' => 'required|array',
+            'refinement_prompt' => 'required|string|min:5|max:500',
+        ]);
+        
+        try {
+            $websiteGenerator = app(\App\Services\GrowBuilder\WebsiteGeneratorService::class);
+            $result = $websiteGenerator->refineWebsite(
+                $validated['current_website'],
+                $validated['refinement_prompt'],
+                $request->user()->id
+            );
+            
+            if (!$result['success']) {
+                return response()->json([
+                    'error' => 'Refinement failed',
+                    'message' => $result['error'] ?? 'Failed to refine website',
+                ], 500);
+            }
+            
+            // Record usage
+            $this->recordUsage(
+                $request,
+                'website_refinement',
+                $validated['refinement_prompt'],
+                0,
+                null
+            );
+            
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Website refinement failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'error' => 'Refinement failed',
+                'message' => 'An error occurred while refining your website. Please try again.',
+            ], 500);
+        }
+    }
+    
+    /**
+     * Publish generated website (create site from generated content)
+     */
+    public function publishGeneratedWebsite(Request $request)
+    {
+        $validated = $request->validate([
+            'website' => 'required|array',
+            'website.analysis' => 'required|array',
+            'website.pages' => 'required|array',
+            'website.settings' => 'required|array',
+        ]);
+        
+        $user = $request->user();
+        $website = $validated['website'];
+        $analysis = $website['analysis'];
+        
+        try {
+            // Generate subdomain from business name
+            $subdomain = $this->generateSubdomain($analysis['business_name']);
+            
+            // Check if subdomain is available
+            $existingSite = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('subdomain', $subdomain)->first();
+            if ($existingSite) {
+                // Add random number if taken
+                $subdomain = $subdomain . '-' . rand(100, 999);
+            }
+            
+            // Create site using the existing use case
+            $createSiteUseCase = app(\App\Application\GrowBuilder\UseCases\CreateSiteUseCase::class);
+            $dto = new \App\Application\GrowBuilder\DTOs\CreateSiteDTO(
+                userId: $user->id,
+                name: $analysis['business_name'],
+                subdomain: $subdomain,
+                templateId: null,
+                description: $analysis['description'] ?? null,
+            );
+            
+            $site = $createSiteUseCase->execute($dto);
+            $siteId = $site->getId()->value();
+            
+            // Get the site model to update
+            $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+            
+            // Apply settings
+            if (!empty($website['settings'])) {
+                $settings = $website['settings'];
+                $siteModel->update([
+                    'contact_info' => $settings['contact_info'] ?? null,
+                    'business_hours' => $settings['business_hours'] ?? null,
+                    'seo_settings' => $settings['seo_settings'] ?? null,
+                ]);
+            }
+            
+            // Create pages
+            foreach ($website['pages'] as $pageData) {
+                $page = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::create([
+                    'site_id' => $siteId,
+                    'title' => $pageData['title'] ?? $pageData['name'],
+                    'slug' => $pageData['slug'],
+                    'content_json' => json_encode($pageData['sections'] ?? []),
+                    'is_homepage' => $pageData['is_home'] ?? false,
+                    'is_published' => true,
+                    'show_in_nav' => true,
+                    'nav_order' => 0,
+                ]);
+            }
+            
+            // Publish the site
+            $siteModel->update([
+                'status' => 'published',
+                'published_at' => now(),
+            ]);
+            
+            // Generate site URL
+            $siteUrl = config('app.url');
+            if (str_contains($siteUrl, 'localhost')) {
+                $fullUrl = "http://{$subdomain}.localhost:8000";
+            } else {
+                $domain = parse_url($siteUrl, PHP_URL_HOST);
+                $fullUrl = "https://{$subdomain}.{$domain}";
+            }
+            
+            return response()->json([
+                'success' => true,
+                'site_id' => $siteId,
+                'subdomain' => $subdomain,
+                'url' => $fullUrl,
+                'editor_url' => route('growbuilder.editor', $siteId),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Website publishing failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'error' => 'Publishing failed',
+                'message' => 'An error occurred while publishing your website. Please try again.',
+            ], 500);
+        }
+    }
+    
+    /**
+     * Generate a clean subdomain from business name
+     */
+    private function generateSubdomain(string $businessName): string
+    {
+        // Convert to lowercase
+        $subdomain = strtolower($businessName);
+        
+        // Remove special characters, keep only alphanumeric and spaces
+        $subdomain = preg_replace('/[^a-z0-9\s-]/', '', $subdomain);
+        
+        // Replace spaces with hyphens
+        $subdomain = preg_replace('/\s+/', '-', $subdomain);
+        
+        // Remove multiple consecutive hyphens
+        $subdomain = preg_replace('/-+/', '-', $subdomain);
+        
+        // Trim hyphens from start and end
+        $subdomain = trim($subdomain, '-');
+        
+        // Limit length to 63 characters (DNS limit)
+        $subdomain = substr($subdomain, 0, 63);
+        
+        // Ensure it starts and ends with alphanumeric
+        $subdomain = preg_replace('/^[^a-z0-9]+/', '', $subdomain);
+        $subdomain = preg_replace('/[^a-z0-9]+$/', '', $subdomain);
+        
+        // If empty after cleaning, use default
+        if (empty($subdomain)) {
+            $subdomain = 'site-' . time();
+        }
+        
+        return $subdomain;
+    }
 }
