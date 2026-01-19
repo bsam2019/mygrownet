@@ -85,6 +85,12 @@ class MarketplaceProduct extends Model
             if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
                 return $img;
             }
+            
+            // Check if it starts with 'marketplace/' (from media library)
+            if (is_string($img) && str_starts_with($img, 'marketplace/')) {
+                return \Storage::url($img);
+            }
+            
             return asset('storage/' . $img);
         })->filter()->values()->toArray();
     }
@@ -106,6 +112,12 @@ class MarketplaceProduct extends Model
         if (is_string($img) && (str_starts_with($img, 'http://') || str_starts_with($img, 'https://'))) {
             return $img;
         }
+        
+        // Check if it starts with 'marketplace/' (from media library)
+        if (is_string($img) && str_starts_with($img, 'marketplace/')) {
+            return \Storage::url($img);
+        }
+        
         return asset('storage/' . $img);
     }
 

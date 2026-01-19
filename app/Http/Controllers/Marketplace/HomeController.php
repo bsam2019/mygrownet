@@ -143,9 +143,26 @@ class HomeController extends Controller
             4
         )->items();
 
+        // Prepare Open Graph meta tags for social sharing
+        $ogImage = $product->primary_image_url ?: asset('images/marketplace-default-product.jpg');
+        $ogTitle = $product->name . ' - MyGrowNet Marketplace';
+        $ogDescription = \Str::limit(strip_tags($product->description), 150);
+        $ogUrl = route('marketplace.product', $product->slug);
+        $ogPrice = 'K' . number_format($product->price / 100, 2);
+
         return Inertia::render('Marketplace/Product', [
             'product' => $product,
             'relatedProducts' => collect($relatedProducts)->filter(fn($p) => $p->id !== $product->id)->values(),
+            // Open Graph meta tags
+            'meta' => [
+                'title' => $ogTitle,
+                'description' => $ogDescription,
+                'image' => $ogImage,
+                'url' => $ogUrl,
+                'type' => 'product',
+                'price' => $ogPrice,
+                'currency' => 'ZMW',
+            ],
         ]);
     }
 
@@ -221,6 +238,14 @@ class HomeController extends Controller
             })
             ->values();
 
+        // Prepare Open Graph meta tags for social sharing
+        $ogImage = $seller->cover_image_url ?: $seller->logo_url ?: asset('images/marketplace-default-shop.jpg');
+        $ogTitle = $seller->business_name . ' - MyGrowNet Marketplace';
+        $ogDescription = $seller->description 
+            ? \Str::limit($seller->description, 150) 
+            : "Shop from {$seller->business_name} on MyGrowNet Marketplace. {$products->total()} products available.";
+        $ogUrl = route('marketplace.seller.show', $seller->id);
+
         return Inertia::render('Marketplace/Seller', [
             'seller' => array_merge($seller->toArray(), [
                 'followers_count' => $followersCount,
@@ -231,6 +256,14 @@ class HomeController extends Controller
             'ratingBreakdown' => $breakdown,
             'reviews' => $reviews,
             'categories' => $categories,
+            // Open Graph meta tags
+            'meta' => [
+                'title' => $ogTitle,
+                'description' => $ogDescription,
+                'image' => $ogImage,
+                'url' => $ogUrl,
+                'type' => 'website',
+            ],
         ]);
     }
 

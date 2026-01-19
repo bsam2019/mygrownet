@@ -84,6 +84,13 @@ interface Props {
     isFollowing?: boolean;
     ratingBreakdown?: RatingBreakdown;
     reviews?: Review[];
+    meta?: {
+        title: string;
+        description: string;
+        image: string;
+        url: string;
+        type: string;
+    };
 }
 
 const props = defineProps<Props>();
@@ -311,7 +318,23 @@ const sendChatMessage = async () => {
 </script>
 
 <template>
-    <Head :title="`${seller.business_name} - Official Store`" />
+    <Head :title="`${seller.business_name} - Official Store`">
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" :content="meta?.type || 'website'" />
+        <meta property="og:url" :content="meta?.url || ''" />
+        <meta property="og:title" :content="meta?.title || `${seller.business_name} - Official Store`" />
+        <meta property="og:description" :content="meta?.description || `Shop from ${seller.business_name} on MyGrowNet Marketplace`" />
+        <meta property="og:image" :content="meta?.image || ''" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" :content="meta?.url || ''" />
+        <meta name="twitter:title" :content="meta?.title || `${seller.business_name} - Official Store`" />
+        <meta name="twitter:description" :content="meta?.description || `Shop from ${seller.business_name} on MyGrowNet Marketplace`" />
+        <meta name="twitter:image" :content="meta?.image || ''" />
+    </Head>
     
     <MarketplaceLayout>
         <div class="min-h-screen bg-gray-100">
@@ -674,8 +697,8 @@ const sendChatMessage = async () => {
                             <!-- Product Image -->
                             <div class="aspect-square bg-gray-50 relative overflow-hidden">
                                 <img
-                                    v-if="product.images?.length"
-                                    :src="product.images[0]"
+                                    v-if="product.image_urls?.length"
+                                    :src="product.image_urls[0]"
                                     :alt="product.name"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
@@ -742,8 +765,8 @@ const sendChatMessage = async () => {
                         >
                             <div class="w-32 h-32 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden">
                                 <img
-                                    v-if="product.images?.length"
-                                    :src="product.images[0]"
+                                    v-if="product.image_urls?.length"
+                                    :src="product.image_urls[0]"
                                     :alt="product.name"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                 />
