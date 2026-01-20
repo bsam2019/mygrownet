@@ -39,12 +39,18 @@ class RenderController extends Controller
 
         // Get page
         if ($slug) {
+            \Log::info("RenderController: Looking for page with slug: {$slug}");
             $page = $this->pageRepository->findBySiteIdAndSlug($site->getId(), $slug);
+            \Log::info("RenderController: Page found: " . ($page ? 'yes' : 'no'));
+            if ($page) {
+                \Log::info("RenderController: Page published: " . ($page->isPublished() ? 'yes' : 'no'));
+            }
         } else {
             $page = $this->pageRepository->findHomepage($site->getId());
         }
 
         if (!$page || !$page->isPublished()) {
+            \Log::error("RenderController: Aborting 404 - Page: " . ($page ? 'found' : 'not found') . ", Published: " . ($page ? ($page->isPublished() ? 'yes' : 'no') : 'N/A'));
             abort(404);
         }
 
