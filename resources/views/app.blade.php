@@ -26,10 +26,12 @@
                 $siteLogo = $page['props']['site']['logo'] ?? null;
                 $siteName = $page['props']['site']['name'] ?? 'Site Preview';
                 $siteTheme = $page['props']['site']['theme'] ?? [];
+                $siteSubdomain = $page['props']['site']['subdomain'] ?? ($matches[1] ?? null);
                 
                 $themeColor = $siteTheme['primaryColor'] ?? '#2563eb';
                 $appTitle = $siteName;
-                $manifestPath = '/manifest.json';
+                // Use dynamic manifest for GrowBuilder sites
+                $manifestPath = $siteSubdomain ? "/sites/{$siteSubdomain}/manifest.json" : '/manifest.json';
                 // Use site favicon, then logo, then default
                 $faviconPath = $siteFavicon ?: ($siteLogo ?: asset('logo.png'));
                 $iconPath = $faviconPath;

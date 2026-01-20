@@ -4,6 +4,7 @@ use App\Http\Controllers\GrowBuilder\AIController;
 use App\Http\Controllers\GrowBuilder\CheckoutController;
 use App\Http\Controllers\GrowBuilder\EditorController;
 use App\Http\Controllers\GrowBuilder\FormSubmissionController;
+use App\Http\Controllers\GrowBuilder\ManifestController;
 use App\Http\Controllers\GrowBuilder\MediaController;
 use App\Http\Controllers\GrowBuilder\OrderController;
 use App\Http\Controllers\GrowBuilder\PaymentSettingsController;
@@ -251,6 +252,9 @@ Route::prefix('sites/{subdomain}')->group(function () {
         });
     });
 });
+
+// Dynamic PWA manifest for GrowBuilder sites
+Route::get('/sites/{subdomain}/manifest.json', [ManifestController::class, 'manifest'])->name('site.manifest');
 
 // Public blog routes (before the catch-all preview route)
 Route::get('/sites/{subdomain}/blog', [SiteBlogController::class, 'index'])->name('site.blog.index');
