@@ -22,7 +22,7 @@ class AgricultureTemplateSeeder extends Seeder
                 'price' => 0,
                 'structure_json' => [
                     'pages' => [
-                    [
+                        [
                         'name' => 'Home',
                         'slug' => 'home',
                         'is_home' => true,
