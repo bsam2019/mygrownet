@@ -131,6 +131,12 @@ class Site
         $this->updatedAt = new DateTimeImmutable();
     }
 
+    public function updateSubdomain(Subdomain $subdomain): void
+    {
+        $this->subdomain = $subdomain;
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
     public function updateDescription(?string $description): void
     {
         $this->description = $description;

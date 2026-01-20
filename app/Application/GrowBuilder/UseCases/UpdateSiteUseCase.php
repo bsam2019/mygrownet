@@ -33,6 +33,19 @@ class UpdateSiteUseCase
             $site->updateName($dto->name);
         }
 
+        if ($dto->subdomain !== null) {
+            // Check if subdomain is already taken by another site
+            $existingSite = $this->siteRepository->findBySubdomain(
+                \App\Domain\GrowBuilder\ValueObjects\Subdomain::fromString($dto->subdomain)
+            );
+            
+            if ($existingSite && $existingSite->getId()->value() !== $site->getId()->value()) {
+                throw new \DomainException('This subdomain is already in use');
+            }
+            
+            $site->updateSubdomain(\App\Domain\GrowBuilder\ValueObjects\Subdomain::fromString($dto->subdomain));
+        }
+
         if ($dto->description !== null) {
             $site->updateDescription($dto->description);
         }

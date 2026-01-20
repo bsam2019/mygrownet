@@ -746,6 +746,7 @@ class SiteController extends Controller
                 siteId: $id,
                 userId: $request->user()->id,
                 name: $validated['name'] ?? null,
+                subdomain: $validated['subdomain'] ?? null,
                 description: $validated['description'] ?? null,
                 logo: $validated['logo'] ?? null,
                 favicon: $validated['favicon'] ?? null,
