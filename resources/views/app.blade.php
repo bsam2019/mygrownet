@@ -252,6 +252,31 @@
         @inertia
         
         <script>
+            // Mobile error logging
+            window.mobileErrors = [];
+            window.addEventListener('error', function(e) {
+                window.mobileErrors.push({
+                    message: e.message,
+                    file: e.filename,
+                    line: e.lineno,
+                    col: e.colno,
+                    time: new Date().toISOString()
+                });
+                console.error('Global error:', e.message, e.filename, e.lineno);
+            });
+            
+            window.addEventListener('unhandledrejection', function(e) {
+                window.mobileErrors.push({
+                    message: 'Promise rejection: ' + e.reason,
+                    time: new Date().toISOString()
+                });
+                console.error('Unhandled promise rejection:', e.reason);
+            });
+            
+            // Log page load
+            console.log('Page loading started:', new Date().toISOString());
+            console.log('User Agent:', navigator.userAgent);
+            
             // Hide splash screen when Inertia page is loaded
             (function() {
                 var splash = document.getElementById('app-splash');
@@ -285,6 +310,7 @@
                     setTimeout(function() {
                         clearInterval(checkInertia);
                         hideSplash();
+                        console.log('Splash hidden by timeout');
                     }, 3000);
                 });
                 
@@ -293,9 +319,18 @@
                         splash.classList.add('hidden');
                         setTimeout(function() {
                             splash.remove();
+                            console.log('Splash removed');
                         }, 500);
                     }
                 }
+                
+                // Emergency fallback: force hide after 5 seconds no matter what
+                setTimeout(function() {
+                    if (splash && splash.parentNode) {
+                        splash.style.display = 'none';
+                        console.log('Splash force-hidden by emergency timeout');
+                    }
+                }, 5000);
             })();
         </script>
     </body>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Errors - Chisambo Farms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .error-box {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #ef4444;
+        }
+        h1 { color: #ef4444; }
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            padding: 10px 20px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Error Viewer</h1>
+    
+    <button onclick="checkErrors()">Check for Errors</button>
+    <button onclick="clearErrors()">Clear Errors</button>
+    <button onclick="location.href='https://chisambofarms.mygrownet.com'">Go to Main Site</button>
+    
+    <div id="error-container"></div>
+
+    <script>
+        function checkErrors() {
+            // Try to get errors from main site via iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = 'https://chisambofarms.mygrownet.com';
+            document.body.appendChild(iframe);
+            
+            setTimeout(() => {
+                try {
+                    const errors = iframe.contentWindow.mobileErrors || [];
+                    displayErrors(errors);
+                    if (errors.length === 0) {
+                        document.getElementById('error-container').innerHTML = 
+                            '<div class="error-box"><h3>No errors captured yet</h3><p>Visit the main site first, then come back here to check for errors.</p></div>';
+                    }
+                } catch (e) {
+                    document.getElementById('error-container').innerHTML = 
+                        '<div class="error-box"><h3>Cannot access errors</h3><pre>' + e.message + '</pre><p>Due to browser security, errors must be checked from the main site console.</p></div>';
+                }
+                iframe.remove();
+            }, 2000);
+        }
+        
+        function displayErrors(errors) {
+            const container = document.getElementById('error-container');
+            container.innerHTML = '';
+            
+            if (errors.length === 0) {
+                container.innerHTML = '<div class="error-box"><h3>✓ No errors found!</h3></div>';
+                return;
+            }
+            
+            errors.forEach((error, index) => {
+                const errorBox = document.createElement('div');
+                errorBox.className = 'error-box';
+                errorBox.innerHTML = `
+                    <h3>Error #${index + 1}</h3>
+                    <pre>${JSON.stringify(error, null, 2)}</pre>
+                `;
+                container.appendChild(errorBox);
+            });
+        }
+        
+        function clearErrors() {
+            localStorage.removeItem('mobileErrors');
+            document.getElementById('error-container').innerHTML = '<div class="error-box"><h3>Errors cleared</h3></div>';
+        }
+        
+        // Check for stored errors
+        window.addEventListener('load', () => {
+            const stored = localStorage.getItem('mobileErrors');
+            if (stored) {
+                try {
+                    const errors = JSON.parse(stored);
+                    displayErrors(errors);
+                } catch (e) {
+                    console.error('Failed to parse stored errors:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
