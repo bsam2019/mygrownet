@@ -39,6 +39,21 @@ const emit = defineEmits<{
     (e: 'openMediaLibrary', sectionId: string, field: string): void;
 }>();
 
+// Prevent text deselection when clicking on inspector UI elements
+const handleInspectorMouseDown = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    // Allow normal behavior for input elements
+    const isInput = target.tagName === 'INPUT' || 
+                    target.tagName === 'TEXTAREA' || 
+                    target.tagName === 'SELECT' ||
+                    target.isContentEditable;
+    
+    // Prevent default for labels, buttons, and other UI elements to preserve text selection
+    if (!isInput) {
+        event.preventDefault();
+    }
+};
+
 // Get schema for current section type
 const schema = computed<SectionSchema | undefined>(() => getSectionSchema(props.section.type));
 
@@ -186,13 +201,13 @@ const getInfoClasses = (variant?: 'info' | 'warning' | 'success') => {
     <div class="flex flex-col h-full min-h-0">
         <!-- Inspector Tabs -->
         <div class="flex border-b border-gray-200 flex-shrink-0">
-            <button @click="emit('update:activeTab', 'content')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'content' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Content</button>
-            <button @click="emit('update:activeTab', 'style')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'style' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Style</button>
-            <button @click="emit('update:activeTab', 'advanced')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'advanced' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Advanced</button>
+            <button @mousedown.prevent @click="emit('update:activeTab', 'content')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'content' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Content</button>
+            <button @mousedown.prevent @click="emit('update:activeTab', 'style')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'style' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Style</button>
+            <button @mousedown.prevent @click="emit('update:activeTab', 'advanced')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'advanced' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Advanced</button>
         </div>
 
         <!-- Inspector Content -->
-        <div :class="['flex-1 overflow-y-auto p-2', darkMode ? 'custom-scrollbar-dark' : 'custom-scrollbar']">
+        <div @mousedown="handleInspectorMouseDown" :class="['flex-1 overflow-y-auto p-2', darkMode ? 'custom-scrollbar-dark' : 'custom-scrollbar']">
             <div v-if="!schema" class="text-center py-8 text-gray-500">
                 <p class="text-xs">No configuration available for this section type.</p>
             </div>
@@ -226,7 +241,7 @@ const getInfoClasses = (variant?: 'info' | 'warning' | 'success') => {
                         <!-- Text Input -->
                         <template v-else-if="field.type === 'text'">
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                <label @mousedown.prevent class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
                                 <input :value="getFieldValue(field)" @input="updateField(field, ($event.target as HTMLInputElement).value)" :placeholder="field.placeholder" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs text-gray-900" />
                             </div>
                         </template>
@@ -234,7 +249,7 @@ const getInfoClasses = (variant?: 'info' | 'warning' | 'success') => {
                         <!-- Textarea -->
                         <template v-else-if="field.type === 'textarea'">
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                <label @mousedown.prevent class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
                                 <textarea :value="getFieldValue(field)" @input="updateField(field, ($event.target as HTMLTextAreaElement).value)" :placeholder="field.placeholder" :rows="field.rows || 3" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs text-gray-900"></textarea>
                             </div>
                         </template>
@@ -242,7 +257,7 @@ const getInfoClasses = (variant?: 'info' | 'warning' | 'success') => {
                         <!-- Number -->
                         <template v-else-if="field.type === 'number'">
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                <label @mousedown.prevent class="block text-xs font-medium text-gray-700 mb-1">{{ field.label }}</label>
                                 <input type="number" :value="getFieldValue(field)" @input="updateField(field, parseFloat(($event.target as HTMLInputElement).value))" :min="field.min" :max="field.max" :step="field.step" class="w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs text-gray-900" />
                             </div>
                         </template>
