@@ -32,13 +32,18 @@ class DetectSubdomain
             return $this->renderSite($request, $customDomainSite, $host, true);
         }
         
-        // Check if this is a subdomain request
-        if (preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
+        // Check if this is a subdomain request (including www.subdomain.mygrownet.com)
+        if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
             \Log::info('DetectSubdomain: Matched subdomain = ' . $matches[1]);
             $subdomain = strtolower($matches[1]);
             
-            // Skip main domain variations
-            if (in_array($subdomain, ['www', 'mygrownet'])) {
+            // Skip main domain variations (but not www.subdomain)
+            if ($subdomain === 'mygrownet') {
+                return $next($request);
+            }
+            
+            // If it's just www.mygrownet.com (no subdomain), skip
+            if ($subdomain === 'www' && $host === 'www.mygrownet.com') {
                 return $next($request);
             }
             

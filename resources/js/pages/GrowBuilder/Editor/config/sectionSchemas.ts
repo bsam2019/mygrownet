@@ -188,6 +188,62 @@ const minHeightField: RangeField = {
     tab: 'style',
 };
 
+// Reusable Font Size Fields
+const titleFontSizeField: RangeField = {
+    key: 'titleFontSize',
+    type: 'range',
+    label: 'Title Size',
+    min: 16,
+    max: 72,
+    step: 2,
+    unit: 'px',
+    tab: 'style',
+};
+
+const subtitleFontSizeField: RangeField = {
+    key: 'subtitleFontSize',
+    type: 'range',
+    label: 'Subtitle Size',
+    min: 12,
+    max: 32,
+    step: 1,
+    unit: 'px',
+    tab: 'style',
+};
+
+const bodyFontSizeField: RangeField = {
+    key: 'bodyFontSize',
+    type: 'range',
+    label: 'Body Text Size',
+    min: 12,
+    max: 24,
+    step: 1,
+    unit: 'px',
+    tab: 'style',
+};
+
+const headingFontSizeField: RangeField = {
+    key: 'headingFontSize',
+    type: 'range',
+    label: 'Heading Size',
+    min: 18,
+    max: 48,
+    step: 2,
+    unit: 'px',
+    tab: 'style',
+};
+
+const textFontSizeField: RangeField = {
+    key: 'textFontSize',
+    type: 'range',
+    label: 'Text Size',
+    min: 14,
+    max: 28,
+    step: 1,
+    unit: 'px',
+    tab: 'style',
+};
+
 /**
  * Section Schemas - Define fields for each section type
  */
@@ -238,6 +294,9 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'backgroundColor', type: 'color', label: 'Background Color' },
             { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#111827'] },
             minHeightField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
         ],
     },
 
@@ -254,6 +313,9 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'backgroundColor', type: 'color', label: 'Background Color' },
             { key: 'textColor', type: 'color', label: 'Text Color' },
             { key: 'minHeight', type: 'range', label: 'Height', min: 100, max: 400, step: 20, unit: 'px' },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
         ],
     },
 
@@ -271,7 +333,12 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'image', type: 'image', label: 'Image' },
             textPositionField,
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            bodyFontSizeField,
+        ],
     },
 
     services: {
@@ -301,7 +368,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'link', type: 'text', label: 'Link (optional)', placeholder: '#' },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     features: {
@@ -323,7 +397,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'description', type: 'textarea', label: 'Description', rows: 2 },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     testimonials: {
@@ -353,7 +434,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'image', type: 'image', label: 'Photo' },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     pricing: {
@@ -380,7 +468,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'buttonLink', type: 'text', label: 'Button Link', placeholder: '#contact' },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     products: {
@@ -408,7 +503,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'featuredOnly', type: 'checkbox', label: 'Featured Products Only' },
             { key: 'manageLink', type: 'link', label: 'Manage Products', url: '/dashboard/products' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     'product-search': {
@@ -444,7 +546,12 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'divider2', type: 'divider', label: 'Form' },
             { key: 'showForm', type: 'checkbox', label: 'Show Contact Form' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            bodyFontSizeField,
+        ],
     },
 
     cta: {
@@ -465,6 +572,9 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         ],
         styleFields: [
             { key: 'backgroundColor', type: 'color', label: 'Background Color', presets: ['#2563eb', '#1e40af', '#059669', '#7c3aed'] },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            textFontSizeField,
         ],
     },
 
@@ -491,6 +601,10 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             { key: 'backgroundColor', type: 'color', label: 'Background Color' },
             { key: 'textColor', type: 'color', label: 'Text Color' },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            bodyFontSizeField,
         ],
     },
 
@@ -511,7 +625,13 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'answer', type: 'textarea', label: 'Answer', rows: 3 },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     team: {
@@ -536,7 +656,13 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'email', type: 'text', label: 'Email' },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     stats: {
@@ -560,6 +686,10 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             { key: 'backgroundColor', type: 'color', label: 'Background Color', presets: ['#2563eb', '#1e40af', '#111827'] },
             { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#f9fafb', '#e5e7eb'] },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
         ],
     },
 
@@ -582,7 +712,11 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'divider1', type: 'divider', label: 'Images' },
             { key: 'images', type: 'galleryImages', label: 'Gallery Images' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+        ],
     },
 
     blog: {
@@ -616,7 +750,14 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'showViewAll', type: 'checkbox', label: 'Show View All Button' },
             { key: 'manageLink', type: 'link', label: 'Manage Posts', url: '/dashboard/posts' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            bodyFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     video: {
@@ -627,7 +768,12 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'description', type: 'textarea', label: 'Description', rows: 2 },
             { key: 'videoUrl', type: 'video', label: 'Video URL' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            bodyFontSizeField,
+        ],
     },
 
     map: {
@@ -639,7 +785,12 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'address', type: 'textarea', label: 'Address', rows: 2 },
             { key: 'showAddress', type: 'checkbox', label: 'Show Address Below Map' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            textFontSizeField,
+        ],
     },
 
     text: {
@@ -648,7 +799,11 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         fields: [
             { key: 'content', type: 'textarea', label: 'Content', rows: 8, placeholder: 'Enter your text content here...' },
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            bodyFontSizeField,
+        ],
     },
 
     divider: {
@@ -693,6 +848,11 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             backgroundColorField,
             { key: 'accentColor', type: 'color', label: 'Accent Color', presets: ['#2563eb', '#059669', '#7c3aed', '#dc2626'], tab: 'style' },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
         ],
     },
 
@@ -720,6 +880,11 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             backgroundColorField,
             { key: 'lineColor', type: 'color', label: 'Timeline Line Color', presets: ['#2563eb', '#059669', '#7c3aed'], tab: 'style' },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+            headingFontSizeField,
+            textFontSizeField,
         ],
     },
 
@@ -745,6 +910,9 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             { key: 'backgroundColor', type: 'color', label: 'Background Color', presets: ['#2563eb', '#059669', '#7c3aed', '#dc2626'], tab: 'style' },
             { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#111827'], tab: 'style' },
             { key: 'gradient', type: 'checkbox', label: 'Use Gradient Background', tab: 'style' },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
         ],
     },
 
@@ -768,7 +936,12 @@ export const sectionSchemas: Record<string, SectionSchema> = {
                 { key: 'link', type: 'text', label: 'Link (optional)', placeholder: 'https://...' },
             ]},
         ],
-        styleFields: [backgroundColorField],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
+        ],
     },
 
     'video-hero': {
@@ -794,6 +967,9 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             { key: 'overlay', type: 'checkbox', label: 'Dark Overlay', condition: (c) => c.layout === 'overlay', tab: 'style' },
             minHeightField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            titleFontSizeField,
+            subtitleFontSizeField,
         ],
     },
 
@@ -825,6 +1001,8 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         styleFields: [
             { key: 'backgroundColor', type: 'color', label: 'Button Color', presets: ['#25D366', '#128C7E', '#075E54', '#2563eb', '#7c3aed'] },
             { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#111827'] },
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            textFontSizeField,
         ],
     },
 };
