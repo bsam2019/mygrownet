@@ -67,6 +67,7 @@ export const sectionBlocks: SectionBlock[] = [
     // Commerce
     { type: 'pricing', name: 'Pricing', icon: CurrencyDollarIcon, category: 'Commerce', description: 'Pricing plans' },
     { type: 'products', name: 'Products', icon: ShoppingBagIcon, category: 'Commerce', description: 'Product catalog' },
+    { type: 'marketplaceProducts', name: 'Marketplace Products', icon: ShoppingBagIcon, category: 'Commerce', description: 'Products from marketplace shop' },
     
     // Forms
     { type: 'contact', name: 'Contact', icon: EnvelopeIcon, category: 'Forms', description: 'Contact form' },

@@ -264,6 +264,15 @@ export function getDefaultContent(
             backgroundColor: '#25D366',
             textColor: '#ffffff',
         },
+        'marketplaceProducts': {
+            title: 'Our Products',
+            subtitle: 'Browse our collection of quality products',
+            displayMode: 'all',
+            limit: 12,
+            columns: 3,
+            showPrices: true,
+            showAddToCart: true,
+        },
     };
 
     return defaults[type] || {};

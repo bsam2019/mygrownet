@@ -16,6 +16,7 @@ import {
     PhotoIcon,
     XMarkIcon,
     FolderIcon,
+    ShoppingBagIcon,
 } from '@heroicons/vue/24/outline';
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
@@ -142,6 +143,7 @@ const tabs = [
     { id: 'splash', name: 'Splash Screen', icon: SparklesIcon },
     { id: 'seo', name: 'SEO', icon: MagnifyingGlassIcon },
     { id: 'social', name: 'Social & Contact', icon: ShareIcon },
+    { id: 'marketplace', name: 'Marketplace', icon: ShoppingBagIcon },
 ];
 
 const submit = () => {
@@ -1482,6 +1484,27 @@ const adjustColor = (hex: string, amount: number): string => {
                                         ></textarea>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Marketplace Tab -->
+                        <div v-show="activeTab === 'marketplace'" class="space-y-6">
+                            <div class="text-center py-12">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl mb-4">
+                                    <ShoppingBagIcon class="h-8 w-8 text-white" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">Marketplace Integration</h3>
+                                <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                                    Connect your site to MyGrowNet Marketplace to sell products directly from your website
+                                </p>
+                                <Link
+                                    :href="route('growbuilder.marketplace.show', site.id)"
+                                    class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+                                >
+                                    <ShoppingBagIcon class="h-5 w-5" aria-hidden="true" />
+                                    Manage Marketplace Integration
+                                    <ChevronRightIcon class="h-4 w-4" aria-hidden="true" />
+                                </Link>
                             </div>
                         </div>
 

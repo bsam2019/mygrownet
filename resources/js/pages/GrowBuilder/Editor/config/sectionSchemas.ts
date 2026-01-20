@@ -1005,6 +1005,57 @@ export const sectionSchemas: Record<string, SectionSchema> = {
             textFontSizeField,
         ],
     },
+
+    // Marketplace Products Section
+    marketplaceProducts: {
+        type: 'marketplaceProducts',
+        name: 'Marketplace Products',
+        icon: 'ShoppingBagIcon',
+        category: 'ecommerce',
+        contentFields: [
+            { key: 'title', type: 'text', label: 'Section Title', placeholder: 'Our Products' },
+            { key: 'subtitle', type: 'textarea', label: 'Subtitle', placeholder: 'Browse our collection', rows: 2 },
+            { key: 'divider-display', type: 'divider', label: 'Display Options' },
+            { 
+                key: 'displayMode', 
+                type: 'select', 
+                label: 'Display Mode',
+                options: [
+                    { label: 'All Products', value: 'all' },
+                    { label: 'Featured Only', value: 'featured' },
+                    { label: 'By Category', value: 'category' },
+                ],
+            },
+            { 
+                key: 'limit', 
+                type: 'number', 
+                label: 'Products to Show', 
+                min: 1, 
+                max: 50,
+                helpText: 'Maximum number of products to display',
+            },
+            { 
+                key: 'columns', 
+                type: 'select', 
+                label: 'Columns',
+                options: [
+                    { label: '2 Columns', value: 2 },
+                    { label: '3 Columns', value: 3 },
+                    { label: '4 Columns', value: 4 },
+                ],
+            },
+            { key: 'showPrices', type: 'checkbox', label: 'Show Prices' },
+            { key: 'showAddToCart', type: 'checkbox', label: 'Show "Buy Now" Buttons' },
+        ],
+        styleFields: [
+            backgroundColorField,
+            { key: 'divider-spacing', type: 'divider', label: 'Spacing' },
+            minHeightField,
+            { key: 'divider-typography', type: 'divider', label: 'Typography' },
+            headingFontSizeField,
+            subtitleFontSizeField,
+        ],
+    },
 };
 
 /**

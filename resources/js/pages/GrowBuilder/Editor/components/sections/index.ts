@@ -35,6 +35,7 @@ const PageHeaderSection = defineAsyncComponent(() => import('./PageHeaderSection
 const ProductsSection = defineAsyncComponent(() => import('./ProductsSection.vue'));
 const MemberCtaSection = defineAsyncComponent(() => import('./MemberCtaSection.vue'));
 const WhatsAppSection = defineAsyncComponent(() => import('./WhatsAppSection.vue'));
+const MarketplaceProductsSection = defineAsyncComponent(() => import('./MarketplaceProductsSection.vue'));
 
 // Phase 1 New Sections
 const TimelineSection = defineAsyncComponent(() => import('./TimelineSection.vue'));
@@ -71,6 +72,7 @@ export const sectionComponents: Record<SectionType, Component> = {
     'logo-cloud': LogoCloudSection,
     'video-hero': VideoHeroSection,
     'whatsapp': WhatsAppSection,
+    'marketplaceProducts': MarketplaceProductsSection,
 };
 
 /**
