@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Test - Chisambo Farms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        .info { border-left: 4px solid #3b82f6; }
+        h1 { color: #059669; }
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌾 Chisambo Farms - Mobile Diagnostic</h1>
+    
+    <div class="test-box info">
+        <h3>Device Information</h3>
+        <pre id="device-info">Loading...</pre>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Network Test</h3>
+        <pre id="network-test">Testing...</pre>
+    </div>
+    
+    <div class="test-box info">
+        <h3>JavaScript Test</h3>
+        <pre id="js-test">Testing...</pre>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Asset Loading Test</h3>
+        <pre id="asset-test">Testing...</pre>
+    </div>
+    
+    <div class="test-box info">
+        <h3>Main Site Test</h3>
+        <button onclick="testMainSite()" style="padding: 10px 20px; background: #059669; color: white; border: none; border-radius: 4px; font-size: 16px;">
+            Test Main Site
+        </button>
+        <pre id="main-site-test">Click button to test</pre>
+    </div>
+
+    <script>
+        // Device Info
+        document.getElementById('device-info').textContent = 
+            'User Agent: ' + navigator.userAgent + '\n' +
+            'Screen: ' + screen.width + 'x' + screen.height + '\n' +
+            'Viewport: ' + window.innerWidth + 'x' + window.innerHeight + '\n' +
+            'Device Pixel Ratio: ' + window.devicePixelRatio + '\n' +
+            'Touch Support: ' + ('ontouchstart' in window) + '\n' +
+            'Online: ' + navigator.onLine + '\n' +
+            'Language: ' + navigator.language;
+
+        // Network Test
+        fetch('https://chisambofarms.mygrownet.com')
+            .then(response => {
+                document.getElementById('network-test').textContent = 
+                    'Status: ' + response.status + ' ' + response.statusText + '\n' +
+                    'Headers:\n' + Array.from(response.headers.entries()).map(([k,v]) => k + ': ' + v).join('\n');
+                document.getElementById('network-test').parentElement.className = 'test-box success';
+            })
+            .catch(error => {
+                document.getElementById('network-test').textContent = 'Error: ' + error.message;
+                document.getElementById('network-test').parentElement.className = 'test-box error';
+            });
+
+        // JS Test
+        try {
+            const testObj = { test: 'value' };
+            const testJson = JSON.stringify(testObj);
+            const testParse = JSON.parse(testJson);
+            document.getElementById('js-test').textContent = 
+                'JSON: ✓\n' +
+                'Fetch API: ' + (typeof fetch !== 'undefined' ? '✓' : '✗') + '\n' +
+                'Promise: ' + (typeof Promise !== 'undefined' ? '✓' : '✗') + '\n' +
+                'Arrow Functions: ✓\n' +
+                'Template Literals: ✓';
+            document.getElementById('js-test').parentElement.className = 'test-box success';
+        } catch (error) {
+            document.getElementById('js-test').textContent = 'Error: ' + error.message;
+            document.getElementById('js-test').parentElement.className = 'test-box error';
+        }
+
+        // Asset Test
+        Promise.all([
+            fetch('/build/manifest.json').then(r => r.ok ? 'Vite Manifest: ✓' : 'Vite Manifest: ✗'),
+            fetch('/manifest.json').then(r => r.ok ? 'PWA Manifest: ✓' : 'PWA Manifest: ✗'),
+            fetch('/logo.png').then(r => r.ok ? 'Logo: ✓' : 'Logo: ✗')
+        ]).then(results => {
+            document.getElementById('asset-test').textContent = results.join('\n');
+            document.getElementById('asset-test').parentElement.className = 'test-box success';
+        }).catch(error => {
+            document.getElementById('asset-test').textContent = 'Error: ' + error.message;
+            document.getElementById('asset-test').parentElement.className = 'test-box error';
+        });
+
+        // Main Site Test
+        function testMainSite() {
+            document.getElementById('main-site-test').textContent = 'Loading...';
+            fetch('https://chisambofarms.mygrownet.com')
+                .then(response => response.text())
+                .then(html => {
+                    const hasInertia = html.includes('data-page');
+                    const hasVite = html.includes('/build/');
+                    const hasTitle = html.includes('Chisambo Farms');
+                    
+                    document.getElementById('main-site-test').textContent = 
+                        'HTML Length: ' + html.length + ' bytes\n' +
+                        'Has Inertia: ' + (hasInertia ? '✓' : '✗') + '\n' +
+                        'Has Vite Assets: ' + (hasVite ? '✓' : '✗') + '\n' +
+                        'Has Title: ' + (hasTitle ? '✓' : '✗') + '\n\n' +
+                        'First 500 chars:\n' + html.substring(0, 500);
+                    
+                    if (hasInertia && hasVite) {
+                        document.getElementById('main-site-test').parentElement.className = 'test-box success';
+                    } else {
+                        document.getElementById('main-site-test').parentElement.className = 'test-box error';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('main-site-test').textContent = 'Error: ' + error.message;
+                    document.getElementById('main-site-test').parentElement.className = 'test-box error';
+                });
+        }
+
+        // Auto-run main site test after 2 seconds
+        setTimeout(testMainSite, 2000);
+    </script>
+</body>
+</html>

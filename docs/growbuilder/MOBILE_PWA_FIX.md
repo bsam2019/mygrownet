@@ -212,10 +212,145 @@ php artisan tinker
 - [ ] All assets load successfully
 - [ ] Theme colors match site configuration
 
+## Current Status (January 20, 2026 - 5:30 PM)
+
+### ✅ Working
+- Site loads correctly on desktop browsers
+- Main MyGrowNet site is operational
+- Dynamic manifest system implemented (manifest.php created)
+- DetectSubdomain middleware updated to handle manifest requests
+
+### ❌ Not Working
+- **Blank page on mobile devices** - Site doesn't render on mobile browsers
+- **PWA shows MyGrowNet branding** - Install prompt shows wrong logo/name
+- Static manifest.json still being served (needs Nginx configuration)
+
+### Root Cause Analysis
+
+The blank page on mobile is likely caused by:
+1. **JavaScript errors** - Mobile browsers may have stricter JavaScript requirements
+2. **Asset loading failures** - HTTPS mixed content or CORS issues
+3. **Viewport/rendering issues** - CSS or layout problems specific to mobile
+4. **Service Worker conflicts** - Old service worker caching wrong content
+
+## Mobile Debugging Steps
+
+### Step 1: Enable Remote Debugging
+
+**For Chrome on Android:**
+1. On your phone: Enable Developer Options and USB Debugging
+2. Connect phone to computer via USB
+3. On computer: Open Chrome and go to `chrome://inspect`
+4. Select your device and click "Inspect" on the chisambofarms page
+5. Check Console tab for JavaScript errors
+6. Check Network tab for failed requests
+
+**For Safari on iOS:**
+1. On iPhone: Settings > Safari > Advanced > Enable Web Inspector
+2. Connect iPhone to Mac via USB
+3. On Mac: Safari > Develop > [Your iPhone] > chisambofarms.mygrownet.com
+4. Check Console and Network tabs
+
+### Step 2: Check for Common Mobile Issues
+
+Run these checks via remote debugging console:
+
+```javascript
+// Check if Inertia loaded
+console.log('Inertia:', typeof Inertia);
+
+// Check if Vue loaded
+console.log('Vue:', typeof Vue);
+
+// Check for errors
+console.log('Errors:', window.onerror);
+
+// Check page props
+console.log('Page:', document.querySelector('[data-page]'));
+```
+
+### Step 3: Test with Mobile User Agent on Desktop
+
+```bash
+# Test with mobile user agent
+curl -A "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)" https://chisambofarms.mygrownet.com
+```
+
+### Step 4: Check Service Worker
+
+On mobile browser:
+1. Open DevTools (if available)
+2. Go to Application > Service Workers
+3. Unregister any active service workers
+4. Clear site data
+5. Reload page
+
+## Quick Fixes to Try
+
+### Fix 1: Clear All Caches
+
+```bash
+ssh sammy@138.197.187.134
+cd /var/www/mygrownet.com
+
+# Clear Laravel caches
+php artisan cache:clear
+php artisan view:clear
+php artisan config:clear
+php artisan route:clear
+
+# Clear Cloudflare cache (if using)
+# Go to Cloudflare dashboard > Caching > Purge Everything
+```
+
+### Fix 2: Check Vite Manifest
+
+```bash
+# Ensure Vite assets are built
+ssh sammy@138.197.187.134
+cd /var/www/mygrownet.com
+npm run build
+```
+
+### Fix 3: Add Mobile-Specific Error Logging
+
+Add to `resources/views/app.blade.php` before closing `</body>`:
+
+```html
+<script>
+// Mobile error logging
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.message, e.filename, e.lineno);
+    // Send to server for logging
+    fetch('/api/log-error', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            message: e.message,
+            file: e.filename,
+            line: e.lineno,
+            userAgent: navigator.userAgent
+        })
+    }).catch(() => {});
+});
+
+// Log when page loads
+console.log('Page loaded:', new Date().toISOString());
+console.log('User Agent:', navigator.userAgent);
+</script>
+```
+
 ## Changelog
 
-### January 20, 2026
+### January 20, 2026 - 5:30 PM
+- **Status Update**: Site works on desktop but blank on mobile
+- Added mobile debugging guide
+- Added remote debugging instructions
+- Identified need for mobile-specific error logging
+
+### January 20, 2026 - 4:30 PM
 - Created ManifestController for dynamic PWA manifests
 - Updated routes to serve dynamic manifests
 - Modified app.blade.php to use dynamic manifest path
 - Documented troubleshooting steps
+- Fixed permission issues that caused site downtime
