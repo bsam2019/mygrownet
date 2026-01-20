@@ -79,6 +79,11 @@ class DetectSubdomain
                         return $this->handleManifest($request, $site);
                     }
                     
+                    // Handle auth routes (login, register, etc.)
+                    if ($this->isAuthRoute($request->path())) {
+                        return $this->handleAuthRoute($request, $subdomain);
+                    }
+                    
                     // Only render site if published
                     if ($site->isPublished()) {
                         try {
@@ -208,6 +213,54 @@ class DetectSubdomain
     {
         $result = app()->make(\App\Http\Controllers\GrowBuilder\ManifestController::class)
             ->manifest($request, $site->getSubdomain()->value());
+        
+        return $result instanceof Response ? $result : response($result);
+    }
+    
+    /**
+     * Check if the path is an auth route
+     */
+    private function isAuthRoute(string $path): bool
+    {
+        $authPaths = ['login', 'register', 'forgot-password', 'reset-password', 'logout'];
+        
+        foreach ($authPaths as $authPath) {
+            if ($path === $authPath || str_starts_with($path, $authPath . '/')) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Handle auth routes for subdomain
+     */
+    private function handleAuthRoute(Request $request, string $subdomain): Response
+    {
+        $path = $request->path();
+        $method = $request->method();
+        
+        $authController = app()->make(\App\Http\Controllers\GrowBuilder\SiteAuthController::class);
+        
+        // Map paths to controller methods
+        $result = match(true) {
+            $path === 'login' && $method === 'GET' => $authController->showLogin($subdomain),
+            $path === 'login' && $method === 'POST' => $authController->login($request, $subdomain),
+            $path === 'register' && $method === 'GET' => $authController->showRegister($subdomain),
+            $path === 'register' && $method === 'POST' => $authController->register($request, $subdomain),
+            $path === 'logout' && $method === 'POST' => $authController->logout($request, $subdomain),
+            str_starts_with($path, 'forgot-password') && $method === 'GET' => $authController->showForgotPassword($subdomain),
+            str_starts_with($path, 'forgot-password') && $method === 'POST' => $authController->sendResetLink($request, $subdomain),
+            preg_match('#^reset-password/([^/]+)$#', $path, $matches) && $method === 'GET' => $authController->showResetPassword($subdomain, $matches[1]),
+            $path === 'reset-password' && $method === 'POST' => $authController->resetPassword($request, $subdomain),
+            default => abort(404)
+        };
+        
+        // Handle Inertia Response properly
+        if ($result instanceof \Inertia\Response) {
+            return $result->toResponse($request);
+        }
         
         return $result instanceof Response ? $result : response($result);
     }
