@@ -99,10 +99,24 @@ class SubscriptionController extends Controller
         $amount = (float) $request->input('amount');
         $tier = $request->input('tier');
 
+        // Log the purchase attempt
+        \Log::info('GrowBuilder subscription purchase attempt', [
+            'user_id' => $user->id,
+            'tier' => $tier,
+            'amount' => $amount,
+            'billing_cycle' => $request->input('billing_cycle'),
+            'wallet_balance' => $this->walletService->calculateBalance($user),
+        ]);
+
         // Free tier doesn't need payment
         if ($amount > 0) {
             $balance = $this->walletService->calculateBalance($user);
             if ($balance < $amount) {
+                \Log::warning('GrowBuilder subscription purchase failed: insufficient balance', [
+                    'user_id' => $user->id,
+                    'required' => $amount,
+                    'balance' => $balance,
+                ]);
                 return back()->with('error', 'Insufficient wallet balance. Please top up your wallet.');
             }
         }
@@ -157,11 +171,26 @@ class SubscriptionController extends Controller
 
             DB::commit();
 
+            \Log::info('GrowBuilder subscription purchase successful', [
+                'user_id' => $user->id,
+                'tier' => $tier,
+                'amount' => $amount,
+            ]);
+
             return redirect()->route('growbuilder.subscription.index')
                 ->with('success', 'Subscription activated successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            \Log::error('GrowBuilder subscription purchase failed', [
+                'user_id' => $user->id,
+                'tier' => $tier,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return back()->with('error', 'An error occurred. Please try again.');
         }
     }
