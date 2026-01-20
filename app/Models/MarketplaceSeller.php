@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,6 +13,7 @@ class MarketplaceSeller extends Model
 
     protected $fillable = [
         'user_id',
+        'growbuilder_site_id',
         'bizboost_business_id',
         'is_bizboost_synced',
         'business_name',
@@ -99,6 +101,11 @@ class MarketplaceSeller extends Model
         return $this->hasMany(MarketplaceDispute::class, 'seller_id');
     }
 
+    public function growbuilderSite(): BelongsTo
+    {
+        return $this->belongsTo(GrowBuilderSite::class, 'growbuilder_site_id');
+    }
+
     public function getLogoUrlAttribute(): ?string
     {
         return $this->logo_path ? asset('storage/' . $this->logo_path) : null;
@@ -155,5 +162,13 @@ class MarketplaceSeller extends Model
     public function getFormattedTotalSalesAttribute(): string
     {
         return 'K' . number_format(($this->total_sales_amount ?? 0) / 100, 2);
+    }
+
+    /**
+     * Check if seller has GrowBuilder integration
+     */
+    public function hasGrowBuilderIntegration(): bool
+    {
+        return $this->growbuilder_site_id !== null;
     }
 }

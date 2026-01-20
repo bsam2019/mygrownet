@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\GrowBuilder\Models;
 
+use App\Models\MarketplaceSeller;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,9 @@ class GrowBuilderSite extends Model
 
     protected $fillable = [
         'user_id',
+        'marketplace_seller_id',
+        'marketplace_enabled',
+        'marketplace_linked_at',
         'template_id',
         'name',
         'subdomain',
@@ -47,6 +51,8 @@ class GrowBuilderSite extends Model
         'contact_info' => 'array',
         'business_hours' => 'array',
         'seo_settings' => 'array',
+        'marketplace_enabled' => 'boolean',
+        'marketplace_linked_at' => 'datetime',
         'published_at' => 'datetime',
         'plan_expires_at' => 'datetime',
         'scheduled_deletion_at' => 'datetime',
@@ -98,6 +104,11 @@ class GrowBuilderSite extends Model
     public function sitePosts(): HasMany
     {
         return $this->hasMany(SitePost::class, 'site_id');
+    }
+
+    public function marketplaceSeller(): BelongsTo
+    {
+        return $this->belongsTo(MarketplaceSeller::class, 'marketplace_seller_id');
     }
 
     public function scopePublished($query)
@@ -175,6 +186,17 @@ class GrowBuilderSite extends Model
     public function isStorageOverLimit(): bool
     {
         return ($this->storage_used ?? 0) > ($this->storage_limit ?? 0);
+    }
+
+    public function hasMarketplaceIntegration(): bool
+    {
+        return $this->marketplace_enabled && $this->marketplace_seller_id !== null;
+    }
+
+    public function canEnableMarketplace(): bool
+    {
+        // Can enable if user has a marketplace seller account
+        return $this->user->marketplaceSeller()->exists();
     }
 
     private function formatBytes(int $bytes, int $precision = 2): string

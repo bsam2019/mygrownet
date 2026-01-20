@@ -123,6 +123,12 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::post('/sites/{siteId}/form-submissions/{submissionId}/spam', [FormSubmissionController::class, 'markSpam'])->name('form-submissions.spam');
     Route::delete('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'destroy'])->name('form-submissions.destroy');
 
+    // Marketplace Integration
+    Route::get('/sites/{site}/marketplace', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'show'])->name('marketplace.show');
+    Route::post('/sites/{site}/marketplace/enable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'enable'])->name('marketplace.enable');
+    Route::post('/sites/{site}/marketplace/disable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'disable'])->name('marketplace.disable');
+    Route::get('/sites/{site}/marketplace/products', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'products'])->name('marketplace.products');
+
     // Payment Settings (legacy)
     Route::get('/sites/{siteId}/payments', [PaymentSettingsController::class, 'index'])->name('payments.index');
     Route::put('/sites/{siteId}/payments', [PaymentSettingsController::class, 'update'])->name('payments.update');
