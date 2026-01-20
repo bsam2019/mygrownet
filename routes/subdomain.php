@@ -23,7 +23,7 @@ Route::domain('{subdomain}.mygrownet.com')->middleware('subdomain.check')->group
 
     // Public site pages
     Route::get('/{slug?}', [RenderController::class, 'render'])
-        ->where('slug', '^(?!login|register|forgot-password|reset-password|dashboard|blog|product|checkout|gb-api|sitemap\.xml|robots\.txt).*')
+        ->where('slug', '^(?!login$|register$|forgot-password$|reset-password$|dashboard|blog/|product/|checkout$|gb-api/|sitemap\.xml$|robots\.txt$).*')
         ->name('subdomain.render');
 
     // Blog
