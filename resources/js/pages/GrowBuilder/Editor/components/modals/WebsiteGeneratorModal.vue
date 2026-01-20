@@ -230,7 +230,7 @@ const totalSections = computed(() => {
                                 <h4 class="font-semibold text-green-900">Website Generated Successfully!</h4>
                                 <p class="text-sm text-green-700 mt-1">
                                     We've created {{ generatedWebsite.pages.length }} pages with {{ totalSections }} sections of professional content.
-                                    Review below and refine with chat, or click "Publish Website" when ready.
+                                    Click "Create Website" to publish and start editing.
                                 </p>
                             </div>
                         </div>
@@ -284,57 +284,8 @@ const totalSections = computed(() => {
                         </div>
                     </div>
                     
-                    <!-- Refinement Chat -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <SparklesIcon class="w-5 h-5 text-blue-600" aria-hidden="true" />
-                            Refine Your Website
-                        </h4>
-                        <p class="text-sm text-gray-600 mb-4">
-                            Tell us what you'd like to change. Examples: "Add a pricing page", "Make it more colorful", "Change the about section to be friendlier"
-                        </p>
-                        
-                        <!-- Refinement History -->
-                        <div v-if="refinementHistory.length > 0" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                            <div v-for="(item, index) in refinementHistory" :key="index" class="text-sm">
-                                <div class="bg-blue-50 rounded-lg p-3 mb-2">
-                                    <p class="text-blue-900 font-medium">You: {{ item.prompt }}</p>
-                                </div>
-                                <div class="bg-gray-50 rounded-lg p-3 mb-2">
-                                    <p class="text-gray-700">✓ {{ item.response }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Refinement Input -->
-                        <div class="flex gap-2">
-                            <input
-                                v-model="refinementPrompt"
-                                type="text"
-                                placeholder="What would you like to change?"
-                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                @keyup.enter="refineWebsite"
-                                :disabled="isRefining"
-                            />
-                            <button
-                                @click="refineWebsite"
-                                :disabled="!refinementPrompt.trim() || isRefining"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <span v-if="!isRefining">Refine</span>
-                                <span v-else class="flex items-center gap-2">
-                                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Refining...
-                                </span>
-                            </button>
-                        </div>
-                        
-                        <div v-if="error" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                            {{ error }}
-                        </div>
+                    <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {{ error }}
                     </div>
                 </div>
             </div>
@@ -374,14 +325,14 @@ const totalSections = computed(() => {
                 >
                     <template v-if="!isGenerating">
                         <CheckCircleIcon class="w-5 h-5" aria-hidden="true" />
-                        Publish Website
+                        Create Website
                     </template>
                     <template v-else>
                         <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Publishing...
+                        Creating...
                     </template>
                 </button>
             </div>

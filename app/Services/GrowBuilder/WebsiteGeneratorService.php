@@ -418,9 +418,10 @@ PROMPT;
      */
     private function generateHomePage(array $analysis): array
     {
-        $businessName = $analysis['business_name'];
-        $businessType = $analysis['business_type'];
-        $description = $analysis['description'];
+        $businessName = $analysis['business_name'] ?? 'My Business';
+        $businessType = $analysis['business_type'] ?? 'business';
+        $location = $analysis['location'] ?? 'Zambia';
+        $description = $analysis['description'] ?? "A {$businessType} in {$location}";
         
         // Use AI to generate home page content
         $pageData = $this->aiService->generatePageDetailed(
@@ -431,7 +432,7 @@ PROMPT;
                 'sections' => ['hero', 'about', 'services', 'testimonials', 'cta', 'contact'],
                 'tone' => 'professional',
                 'businessContext' => $description,
-                'targetAudience' => $analysis['target_audience'],
+                'targetAudience' => $analysis['target_audience'] ?? 'General public',
                 'contentGuidelines' => [
                     'Use original content, no lorem ipsum',
                     'Make it specific to ' . $businessType,
@@ -454,9 +455,10 @@ PROMPT;
      */
     private function generateInnerPage(string $pageType, array $analysis): array
     {
-        $businessName = $analysis['business_name'];
-        $businessType = $analysis['business_type'];
-        $description = $analysis['description'];
+        $businessName = $analysis['business_name'] ?? 'My Business';
+        $businessType = $analysis['business_type'] ?? 'business';
+        $location = $analysis['location'] ?? 'Zambia';
+        $description = $analysis['description'] ?? "A {$businessType} in {$location}";
         
         // Use AI to generate page content
         $pageData = $this->aiService->generatePage(
@@ -480,20 +482,25 @@ PROMPT;
      */
     private function generateSettings(array $analysis): array
     {
+        $businessName = $analysis['business_name'] ?? 'My Business';
+        $businessType = $analysis['business_type'] ?? 'business';
+        $location = $analysis['location'] ?? 'Zambia';
+        $description = $analysis['description'] ?? "A {$businessType} in {$location}";
+        
         return [
-            'name' => $analysis['business_name'],
-            'description' => $analysis['description'],
+            'name' => $businessName,
+            'description' => $description,
             'contact_info' => [
-                'email' => $analysis['email'],
-                'phone' => $analysis['phone'],
-                'address' => $analysis['location'],
+                'email' => $analysis['email'] ?? 'info@example.com',
+                'phone' => $analysis['phone'] ?? '+260 XXX XXX XXX',
+                'address' => $location,
             ],
             'business_hours' => [
-                'hours' => $analysis['hours'],
+                'hours' => $analysis['hours'] ?? 'Monday - Friday, 8am - 5pm',
             ],
             'seo_settings' => [
-                'meta_title' => $analysis['business_name'] . ' - ' . ucfirst($analysis['business_type']) . ' in ' . $analysis['location'],
-                'meta_description' => $analysis['description'],
+                'meta_title' => $businessName . ' - ' . ucfirst($businessType) . ' in ' . $location,
+                'meta_description' => $description,
             ],
         ];
     }

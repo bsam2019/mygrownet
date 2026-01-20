@@ -674,8 +674,11 @@ class AIController extends Controller
         $analysis = $website['analysis'];
         
         try {
+            // Get business name with fallback
+            $businessName = $analysis['business_name'] ?? 'My Business';
+            
             // Generate subdomain from business name
-            $subdomain = $this->generateSubdomain($analysis['business_name']);
+            $subdomain = $this->generateSubdomain($businessName);
             
             // Check if subdomain is available
             $existingSite = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('subdomain', $subdomain)->first();
@@ -688,7 +691,7 @@ class AIController extends Controller
             $createSiteUseCase = app(\App\Application\GrowBuilder\UseCases\CreateSiteUseCase::class);
             $dto = new \App\Application\GrowBuilder\DTOs\CreateSiteDTO(
                 userId: $user->id,
-                name: $analysis['business_name'],
+                name: $businessName,
                 subdomain: $subdomain,
                 templateId: null,
                 description: $analysis['description'] ?? null,
@@ -699,6 +702,9 @@ class AIController extends Controller
             
             // Get the site model to update
             $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+            
+            // Delete any existing pages (in case of retry on same site)
+            \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::where('site_id', $siteId)->delete();
             
             // Apply settings
             if (!empty($website['settings'])) {
@@ -711,16 +717,17 @@ class AIController extends Controller
             }
             
             // Create pages
+            $navOrder = 0;
             foreach ($website['pages'] as $pageData) {
                 $page = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::create([
                     'site_id' => $siteId,
                     'title' => $pageData['title'] ?? $pageData['name'],
                     'slug' => $pageData['slug'],
-                    'content_json' => json_encode($pageData['sections'] ?? []),
+                    'content_json' => ['sections' => $pageData['sections'] ?? []],
                     'is_homepage' => $pageData['is_home'] ?? false,
                     'is_published' => true,
                     'show_in_nav' => true,
-                    'nav_order' => 0,
+                    'nav_order' => $navOrder++,
                 ]);
             }
             
@@ -749,12 +756,21 @@ class AIController extends Controller
         } catch (\Exception $e) {
             \Log::error('Website publishing failed', [
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
+                'website_data' => $website ?? null,
             ]);
             
             return response()->json([
                 'error' => 'Publishing failed',
-                'message' => 'An error occurred while publishing your website. Please try again.',
+                'message' => config('app.debug') 
+                    ? $e->getMessage() 
+                    : 'An error occurred while publishing your website. Please try again.',
+                'debug' => config('app.debug') ? [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ] : null,
             ], 500);
         }
     }
