@@ -423,30 +423,101 @@ PROMPT;
         $location = $analysis['location'] ?? 'Zambia';
         $description = $analysis['description'] ?? "A {$businessType} in {$location}";
         
-        // Use AI to generate home page content
-        $pageData = $this->aiService->generatePageDetailed(
-            'home',
-            $businessName,
-            $businessType,
-            [
-                'sections' => ['hero', 'about', 'services', 'testimonials', 'cta', 'contact'],
-                'tone' => 'professional',
-                'businessContext' => $description,
-                'targetAudience' => $analysis['target_audience'] ?? 'General public',
-                'contentGuidelines' => [
-                    'Use original content, no lorem ipsum',
-                    'Make it specific to ' . $businessType,
-                    'Include Zambian context where appropriate',
-                ],
-            ]
-        );
+        // Generate sections using template (fallback if AI not configured)
+        $sections = $this->generateHomePageSections($businessName, $businessType, $location, $description, $analysis);
         
         return [
             'name' => 'Home',
             'slug' => 'home',
             'is_home' => true,
-            'title' => $pageData['title'] ?? 'Home',
-            'sections' => $pageData['sections'] ?? [],
+            'title' => 'Home',
+            'sections' => $sections,
+        ];
+    }
+    
+    /**
+     * Generate home page sections with template
+     */
+    private function generateHomePageSections(string $businessName, string $businessType, string $location, string $description, array $analysis): array
+    {
+        $services = $analysis['services'] ?? [];
+        $phone = $analysis['phone'] ?? '+260 XXX XXX XXX';
+        $email = $analysis['email'] ?? 'info@' . strtolower(str_replace(' ', '', $businessName)) . '.com';
+        
+        return [
+            [
+                'type' => 'hero',
+                'content' => [
+                    'title' => "Welcome to {$businessName}",
+                    'subtitle' => $description,
+                    'buttonText' => 'Get Started',
+                    'buttonLink' => '#contact',
+                    'textPosition' => 'center',
+                ],
+                'style' => [
+                    'backgroundColor' => '#1e40af',
+                    'textColor' => '#ffffff',
+                ],
+            ],
+            [
+                'type' => 'about',
+                'content' => [
+                    'title' => "About {$businessName}",
+                    'description' => "We are a leading {$businessType} based in {$location}. {$description}",
+                    'imagePosition' => 'right',
+                ],
+                'style' => [
+                    'backgroundColor' => '#ffffff',
+                    'textColor' => '#111827',
+                ],
+            ],
+            [
+                'type' => 'services',
+                'content' => [
+                    'title' => 'Our Services',
+                    'subtitle' => 'What we offer',
+                    'items' => !empty($services) ? array_map(fn($service) => [
+                        'title' => $service,
+                        'description' => "Professional {$service} services tailored to your needs.",
+                    ], array_slice($services, 0, 6)) : [
+                        ['title' => 'Service 1', 'description' => 'Professional service description'],
+                        ['title' => 'Service 2', 'description' => 'Professional service description'],
+                        ['title' => 'Service 3', 'description' => 'Professional service description'],
+                    ],
+                ],
+                'style' => [
+                    'backgroundColor' => '#f9fafb',
+                    'textColor' => '#111827',
+                ],
+            ],
+            [
+                'type' => 'cta',
+                'content' => [
+                    'title' => 'Ready to Get Started?',
+                    'description' => "Contact {$businessName} today and let us help you achieve your goals.",
+                    'buttonText' => 'Contact Us',
+                    'buttonLink' => '#contact',
+                ],
+                'style' => [
+                    'backgroundColor' => '#1e40af',
+                    'textColor' => '#ffffff',
+                ],
+            ],
+            [
+                'type' => 'contact',
+                'content' => [
+                    'title' => 'Get in Touch',
+                    'description' => "We'd love to hear from you. Contact us today!",
+                    'showForm' => true,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'address' => $location,
+                ],
+                'style' => [
+                    'backgroundColor' => '#ffffff',
+                    'textColor' => '#111827',
+                ],
+            ],
         ];
     }
     

@@ -1708,16 +1708,30 @@ PROMPT;
     private function parsePageResponse(string $response): array
     {
         try {
+            // Log the raw response for debugging
+            Log::debug('AI Page Response', ['response' => substr($response, 0, 500)]);
+            
             // Extract JSON from response
             $jsonMatch = preg_match('/\{[\s\S]*\}/', $response, $matches);
             if ($jsonMatch) {
                 $data = json_decode($matches[0], true);
-                if (is_array($data) && isset($data['sections'])) {
-                    return $data;
+                if (is_array($data)) {
+                    Log::debug('Parsed page data', [
+                        'has_sections' => isset($data['sections']),
+                        'sections_count' => count($data['sections'] ?? []),
+                        'keys' => array_keys($data),
+                    ]);
+                    
+                    if (isset($data['sections'])) {
+                        return $data;
+                    }
                 }
             }
+            
+            Log::warning('Failed to parse AI page response', ['response_length' => strlen($response)]);
             return ['title' => 'Page', 'subtitle' => '', 'sections' => []];
         } catch (\Exception $e) {
+            Log::error('Error parsing page response', ['error' => $e->getMessage()]);
             return ['title' => 'Page', 'subtitle' => '', 'sections' => []];
         }
     }
