@@ -154,12 +154,8 @@ class SubscriptionController extends Controller
                     'transaction_type' => 'subscription_payment',
                     'amount' => -$amount,
                     'status' => 'completed',
-                    'description' => "GrowBuilder {$tier} subscription",
-                    'metadata' => json_encode([
-                        'module_id' => self::MODULE_ID,
-                        'tier' => $tier,
-                        'billing_cycle' => $request->input('billing_cycle'),
-                    ]),
+                    'reference_number' => 'GB-SUB-' . strtoupper(uniqid()),
+                    'description' => "GrowBuilder {$tier} subscription ({$request->input('billing_cycle')})",
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
