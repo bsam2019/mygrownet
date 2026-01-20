@@ -819,6 +819,32 @@ The AI Website Generator ("AI Express") is now **fully implemented and integrate
 
 ## Changelog
 
+### January 20, 2026 - Image Fix: Added Section Normalization
+- **Added section normalization** - Post-processes AI responses to match GrowBuilder schema
+  - Fixes type mismatches (header → page-header)
+  - Flattens nested content structures
+  - Ensures images are at correct level (backgroundImage for hero, image for about)
+  - Normalizes field names (story → description, services → items, stats → items)
+- **Enhanced AI prompts** - More explicit about exact JSON structure and section types
+- **Added detailed logging** - Full response logging and normalization tracking
+- Status: **Testing image display with normalization**
+
+### January 20, 2026 - Critical Fixes: Navigation, Images & Publishing Flow
+- **Fixed publishing flow** - Sites now created as DRAFT instead of published immediately
+  - User can preview and customize in editor before publishing
+  - Changed `is_published` to false and `status` to 'draft' in controller
+  - Updated modal messaging to reflect draft creation
+- **Fixed navigation links** - Page titles now use concise names (Home, About, Services) instead of full sentences
+- **Added Unsplash image integration** - All sections now include contextual images:
+  - Hero/page-header sections: Background images (1600x900)
+  - About sections: Side images (800x600)
+  - Team members: Professional portraits (400x400)
+  - Gallery sections: Multiple images in arrays
+  - Blog articles: Featured images (600x400)
+- **Business-type image keywords** - 25+ business types with relevant Unsplash keywords
+- Updated AI prompts to enforce short page titles and include image URLs
+- Added `getUnsplashKeywords()` helper method to both services
+
 ### January 19, 2026 - Phase 4 Complete: Dashboard Integration ✅ FEATURE COMPLETE!
 - Added "AI Express" button to dashboard header with gradient styling
 - Added "Recommended" badge to highlight AI Express

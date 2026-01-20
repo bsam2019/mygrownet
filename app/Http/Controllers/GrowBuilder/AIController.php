@@ -725,16 +725,16 @@ class AIController extends Controller
                     'slug' => $pageData['slug'],
                     'content_json' => ['sections' => $pageData['sections'] ?? []],
                     'is_homepage' => $pageData['is_home'] ?? false,
-                    'is_published' => true,
+                    'is_published' => false, // Changed to false - pages are drafts
                     'show_in_nav' => true,
                     'nav_order' => $navOrder++,
                 ]);
             }
             
-            // Publish the site
+            // Keep site as draft (user will publish from editor)
             $siteModel->update([
-                'status' => 'published',
-                'published_at' => now(),
+                'status' => 'draft', // Changed to draft
+                'published_at' => null, // No publish date yet
             ]);
             
             // Generate site URL

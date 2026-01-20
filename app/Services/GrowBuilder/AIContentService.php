@@ -1579,24 +1579,79 @@ Tone & Style: {$tone}, credible, and client-focused.
 {$guidelinesText}
 
 CRITICAL REQUIREMENTS:
-1. All content must be original - NO "Lorem ipsum" or filler text
-2. Use semantic section types that match our builder: hero, about, services, features, testimonials, pricing, faq, contact, cta, team, gallery, stats
-3. Content should be specific, detailed, and realistic
-4. Include proper heading hierarchy in content
-5. Make content suitable for the target audience
 
-Return ONLY valid JSON in this exact format:
+1. PAGE TITLE: Must be SHORT and CONCISE (1-2 words maximum)
+   - Use "Home", "About", "Services", "Contact", "Pricing", "Gallery", "Blog", "FAQ", "Team", "Testimonials"
+   - DO NOT use full sentences, taglines, or descriptive phrases as the page title
+
+2. SECTION TYPES: Use ONLY these exact types:
+   - page-header (for page headers with background images)
+   - hero (for main hero sections with background images)
+   - about (for about/story sections)
+   - services (for service listings)
+   - features (for feature lists)
+   - testimonials (for customer reviews)
+   - pricing (for pricing plans)
+   - faq (for Q&A sections)
+   - contact (for contact forms)
+   - cta (for call-to-action sections)
+   - team (for team member listings)
+   - gallery (for image galleries)
+   - stats (for statistics/numbers)
+
+3. IMAGES: Include images DIRECTLY in content object (NOT nested):
+   For hero/page-header sections:
+   {
+     "type": "hero",
+     "content": {
+       "title": "Welcome",
+       "subtitle": "Tagline",
+       "backgroundImage": "https://source.unsplash.com/1600x900/?keywords",
+       "buttonText": "Get Started"
+     }
+   }
+   
+   For about sections:
+   {
+     "type": "about",
+     "content": {
+       "title": "About Us",
+       "description": "Story text",
+       "image": "https://source.unsplash.com/800x600/?keywords"
+     }
+   }
+   
+   For team sections:
+   {
+     "type": "team",
+     "content": {
+       "title": "Our Team",
+       "items": [
+         {
+           "name": "John Doe",
+           "role": "CEO",
+           "image": "https://source.unsplash.com/400x400/?portrait,professional"
+         }
+       ]
+     }
+   }
+
+4. CONTENT: All content must be original - NO "Lorem ipsum" or filler text
+
+Return ONLY valid JSON in this EXACT format:
 {
-    "title": "Page Title",
-    "subtitle": "Page subtitle or tagline",
+    "title": "Short Page Title",
+    "subtitle": "Page subtitle",
     "sections": [
         {
-            "type": "section_type",
+            "type": "hero",
             "content": {
                 "title": "Section Title",
-                "subtitle": "Optional subtitle",
-                "description": "Main content text",
-                "items": [...] // for lists, features, team members, etc.
+                "subtitle": "Subtitle",
+                "description": "Text",
+                "backgroundImage": "https://source.unsplash.com/1600x900/?keywords",
+                "buttonText": "Button",
+                "buttonLink": "#contact"
             },
             "style": {
                 "backgroundColor": "#ffffff",
@@ -1635,6 +1690,9 @@ PROMPT;
         $audienceText = $targetAudience ? "\n\nTarget Audience: {$targetAudience}" : '';
         $styleText = $stylePreferences ? "\n\nStyle Preferences: {$stylePreferences}" : '';
         
+        // Get Unsplash keywords based on business type
+        $unsplashKeywords = $this->getUnsplashKeywords($businessType);
+        
         return <<<PROMPT
 Create a complete, professional "{$pageType}" page for "{$businessName}".
 
@@ -1644,7 +1702,29 @@ Business Type: {$businessType}
 {$sectionsText}
 {$styleText}
 
-Generate comprehensive, original content for each section. Make it specific to this business type and suitable for the target audience. Include realistic details, not generic placeholders.
+CRITICAL REQUIREMENTS:
+
+1. PAGE TITLE: Use a SHORT, CONCISE title (1-2 words max):
+   - For "home" page: Use "Home"
+   - For "about" page: Use "About" or "About Us"
+   - For "services" page: Use "Services"
+   - For "contact" page: Use "Contact"
+   - For "pricing" page: Use "Pricing"
+   - For "gallery" page: Use "Gallery"
+   - For "blog" page: Use "Blog"
+   - For "faq" page: Use "FAQ"
+   - For "testimonials" page: Use "Testimonials"
+   - For "team" page: Use "Team"
+   DO NOT use full sentences or taglines as the page title!
+
+2. IMAGES: Add Unsplash images to sections using these formats:
+   - For hero/page-header sections: Add "backgroundImage": "https://source.unsplash.com/1600x900/?{$unsplashKeywords}"
+   - For about sections: Add "image": "https://source.unsplash.com/800x600/?{$unsplashKeywords}"
+   - For gallery sections: Add "images": ["https://source.unsplash.com/800x600/?{$unsplashKeywords},professional", "https://source.unsplash.com/800x600/?{$unsplashKeywords},modern", "https://source.unsplash.com/800x600/?{$unsplashKeywords},quality"]
+   - For team members: Add "image": "https://source.unsplash.com/400x400/?portrait,professional"
+   - For service/feature items: Add "icon" or "image" where appropriate
+
+3. CONTENT: Generate comprehensive, original content for each section. Make it specific to this business type and suitable for the target audience. Include realistic details, not generic placeholders.
 
 For team sections, use realistic professional names and roles.
 For testimonials, create authentic-sounding reviews with specific details.
@@ -1675,28 +1755,81 @@ PROMPT;
     }
     
     /**
+     * Get Unsplash keywords based on business type
+     */
+    private function getUnsplashKeywords(string $businessType): string
+    {
+        $keywords = [
+            'salon' => 'beauty,salon,hair',
+            'hair salon' => 'beauty,salon,hair',
+            'beauty salon' => 'beauty,salon,spa',
+            'restaurant' => 'restaurant,food,dining',
+            'cafe' => 'cafe,coffee,restaurant',
+            'hotel' => 'hotel,hospitality,luxury',
+            'gym' => 'fitness,gym,workout',
+            'fitness' => 'fitness,gym,health',
+            'spa' => 'spa,wellness,relaxation',
+            'shop' => 'retail,shopping,store',
+            'store' => 'retail,shopping,store',
+            'boutique' => 'fashion,boutique,shopping',
+            'law firm' => 'office,professional,business',
+            'accounting' => 'office,finance,business',
+            'consulting' => 'office,business,professional',
+            'real estate' => 'property,realestate,home',
+            'construction' => 'construction,building,architecture',
+            'photography' => 'photography,camera,creative',
+            'design' => 'design,creative,studio',
+            'marketing' => 'marketing,business,digital',
+            'tech' => 'technology,computer,digital',
+            'education' => 'education,learning,school',
+            'healthcare' => 'healthcare,medical,clinic',
+            'dental' => 'dental,healthcare,clinic',
+            'automotive' => 'automotive,car,vehicle',
+            'agriculture' => 'agriculture,farming,nature',
+        ];
+        
+        $businessTypeLower = strtolower($businessType);
+        
+        // Check for exact match
+        if (isset($keywords[$businessTypeLower])) {
+            return $keywords[$businessTypeLower];
+        }
+        
+        // Check for partial match
+        foreach ($keywords as $key => $value) {
+            if (str_contains($businessTypeLower, $key) || str_contains($key, $businessTypeLower)) {
+                return $value;
+            }
+        }
+        
+        // Default fallback
+        return 'business,professional,office';
+    }
+
+    /**
      * Build user prompt for page generation
      */
     private function buildPageUserPrompt(string $pageType, string $businessName, string $businessType, ?string $description): string
     {
         $context = $description ? " Business description: {$description}." : "";
+        $unsplashKeywords = $this->getUnsplashKeywords($businessType);
         
         $prompts = [
-            'about' => "Create an About page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header with compelling title, 2) About section with company story (2-3 paragraphs), 3) Core values/features (4 items), 4) Stats section (4 impressive metrics), 5) Team section (3 members with Zambian names), 6) CTA section. Make content specific to {$businessType} industry.",
+            'about' => "Create an About page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'About' or 'About Us' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) About section with company story and image: 'https://source.unsplash.com/800x600/?{$unsplashKeywords},team', 3) Core values/features (4 items), 4) Stats section, 5) Team section (3 members with Zambian names, each with image: 'https://source.unsplash.com/400x400/?portrait,professional'), 6) CTA section.",
             
-            'services' => "Create a Services page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) Services section with 4-6 specific services for {$businessType}, 3) Features/benefits section (4 items), 4) CTA section. Use industry-specific terminology.",
+            'services' => "Create a Services page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Services' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) Services section with 4-6 specific services, 3) Features section with image: 'https://source.unsplash.com/800x600/?{$unsplashKeywords},quality', 4) CTA section.",
             
-            'contact' => "Create a Contact page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) Contact form section with Lusaka address and Zambian phone format (+260), 3) Features section (4 reasons to contact), 4) Map placeholder. Make it welcoming and professional.",
+            'contact' => "Create a Contact page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Contact' or 'Contact Us' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) Contact form section with Lusaka address and +260 phone format, 3) Features section (4 reasons to contact), 4) Map placeholder.",
             
-            'pricing' => "Create a Pricing page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) Pricing section with 3 plans (use Kwacha currency K), 3) Features section (what's included), 4) FAQ section (4 pricing questions), 5) CTA. Make pricing realistic for Zambian market.",
+            'pricing' => "Create a Pricing page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Pricing' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) Pricing section with 3 plans (use Kwacha K), 3) Features section, 4) FAQ section (4 questions), 5) CTA.",
             
-            'faq' => "Create an FAQ page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) FAQ section with 8-10 questions specific to {$businessType} industry, 3) CTA section. Questions should address common customer concerns.",
+            'faq' => "Create an FAQ page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'FAQ' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) FAQ section with 8-10 questions specific to {$businessType}, 3) CTA section.",
             
-            'testimonials' => "Create a Testimonials page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) About section (brief intro), 3) Testimonials section with 4-6 reviews from customers with Zambian names, 4) Stats section, 5) CTA. Make testimonials specific to {$businessType} services.",
+            'testimonials' => "Create a Testimonials page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Testimonials' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) About section (brief intro), 3) Testimonials section with 4-6 reviews from Zambian customers, 4) Stats section, 5) CTA.",
             
-            'gallery' => "Create a Gallery/Portfolio page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header, 2) About section (portfolio intro), 3) Gallery placeholder section, 4) Testimonials (2-3), 5) CTA. Focus on showcasing work quality.",
+            'gallery' => "Create a Gallery page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Gallery' or 'Portfolio' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) About section, 3) Gallery section with images array: ['https://source.unsplash.com/800x600/?{$unsplashKeywords},1', 'https://source.unsplash.com/800x600/?{$unsplashKeywords},2', 'https://source.unsplash.com/800x600/?{$unsplashKeywords},3'], 4) Testimonials, 5) CTA.",
             
-            'blog' => "Create a Blog page for '{$businessName}', a {$businessType} business in Zambia.{$context} Include: 1) Page header with title 'Our Blog' and subtitle about latest news/insights, 2) Blog section with 3 sample article previews relevant to {$businessType} (title, excerpt, date), 3) CTA section encouraging newsletter signup. Make article topics relevant to {$businessType} industry.",
+            'blog' => "Create a Blog page for '{$businessName}', a {$businessType} business in Zambia.{$context} PAGE TITLE: Use 'Blog' (NOT a full sentence). Include: 1) Page header with backgroundImage: 'https://source.unsplash.com/1600x900/?{$unsplashKeywords}', 2) Blog section with 3 article previews (each with image: 'https://source.unsplash.com/600x400/?{$unsplashKeywords},article'), 3) CTA section.",
         ];
         
         return $prompts[$pageType] ?? "Create a {$pageType} page for '{$businessName}', a {$businessType} business.{$context}";
@@ -1709,7 +1842,7 @@ PROMPT;
     {
         try {
             // Log the raw response for debugging
-            Log::debug('AI Page Response', ['response' => substr($response, 0, 500)]);
+            Log::debug('AI Page Response (full)', ['response' => $response]);
             
             // Extract JSON from response
             $jsonMatch = preg_match('/\{[\s\S]*\}/', $response, $matches);
@@ -1720,9 +1853,12 @@ PROMPT;
                         'has_sections' => isset($data['sections']),
                         'sections_count' => count($data['sections'] ?? []),
                         'keys' => array_keys($data),
+                        'first_section' => $data['sections'][0] ?? null,
                     ]);
                     
                     if (isset($data['sections'])) {
+                        // Normalize sections to match our schema
+                        $data['sections'] = $this->normalizeSections($data['sections']);
                         return $data;
                     }
                 }
@@ -1737,31 +1873,138 @@ PROMPT;
     }
     
     /**
+     * Normalize AI-generated sections to match our schema
+     */
+    private function normalizeSections(array $sections): array
+    {
+        $normalized = [];
+        
+        foreach ($sections as $section) {
+            $type = $section['type'] ?? 'about';
+            $content = $section['content'] ?? [];
+            
+            // Fix common type mismatches
+            if ($type === 'header') {
+                $type = 'page-header';
+            }
+            
+            // Flatten nested structures (AI sometimes nests content)
+            if (isset($content['header']) && is_array($content['header'])) {
+                // Merge header content into main content
+                $content = array_merge($content, $content['header']);
+                unset($content['header']);
+            }
+            
+            // Fix nested description with image
+            if (isset($content['description']) && is_array($content['description'])) {
+                $desc = $content['description'];
+                if (isset($desc['text'])) {
+                    $content['description'] = $desc['text'];
+                }
+                if (isset($desc['image'])) {
+                    $content['image'] = $desc['image'];
+                }
+            }
+            
+            if (isset($content['story'])) {
+                // Convert 'story' to 'description'
+                if (is_string($content['story'])) {
+                    $content['description'] = $content['story'];
+                } elseif (is_array($content['story']) && isset($content['story']['text'])) {
+                    $content['description'] = $content['story']['text'];
+                    if (isset($content['story']['image'])) {
+                        $content['image'] = $content['story']['image'];
+                    }
+                }
+                unset($content['story']);
+            }
+            
+            // Ensure images are at the right level
+            if ($type === 'hero' || $type === 'page-header') {
+                // Make sure backgroundImage is in content, not nested
+                if (!isset($content['backgroundImage']) && isset($content['image'])) {
+                    $content['backgroundImage'] = $content['image'];
+                    unset($content['image']);
+                }
+            }
+            
+            // For services, ensure items structure is correct
+            if ($type === 'services' && isset($content['services'])) {
+                $content['items'] = $content['services'];
+                unset($content['services']);
+            }
+            
+            // For stats, ensure correct structure
+            if ($type === 'stats' && isset($content['stats'])) {
+                $content['items'] = $content['stats'];
+                unset($content['stats']);
+            }
+            
+            $normalized[] = [
+                'type' => $type,
+                'content' => $content,
+                'style' => $section['style'] ?? [],
+            ];
+        }
+        
+        Log::debug('Normalized sections', [
+            'count' => count($normalized),
+            'types' => array_column($normalized, 'type'),
+            'first_section_full' => $normalized[0] ?? null,
+            'has_background_images' => array_map(function($s) {
+                return [
+                    'type' => $s['type'],
+                    'has_backgroundImage' => isset($s['content']['backgroundImage']),
+                    'has_image' => isset($s['content']['image']),
+                    'backgroundImage' => $s['content']['backgroundImage'] ?? null,
+                    'image' => $s['content']['image'] ?? null,
+                ];
+            }, $normalized),
+        ]);
+        
+        return $normalized;
+    }
+    
+    /**
      * Apply business-appropriate styling to page sections
      */
     private function applyBusinessStyling(array $pageData, string $businessType, ?array $existingColors = null): array
     {
         $colors = $existingColors ?? $this->getBusinessColors($businessType);
         
-        // Add page header section if not present
+        // Only add page header if not already present
         if (!empty($pageData['sections'])) {
-            array_unshift($pageData['sections'], [
-                'type' => 'page-header',
-                'content' => [
-                    'title' => $pageData['title'] ?? 'Page',
-                    'subtitle' => $pageData['subtitle'] ?? '',
-                    'backgroundColor' => $colors['dark'],
-                    'textColor' => '#ffffff',
-                    'textPosition' => 'center',
-                ],
-                'style' => ['minHeight' => 220],
-            ]);
+            $hasHeader = false;
+            foreach ($pageData['sections'] as $section) {
+                if (in_array($section['type'], ['page-header', 'hero'])) {
+                    $hasHeader = true;
+                    break;
+                }
+            }
+            
+            // Only add header if none exists
+            if (!$hasHeader) {
+                array_unshift($pageData['sections'], [
+                    'type' => 'page-header',
+                    'content' => [
+                        'title' => $pageData['title'] ?? 'Page',
+                        'subtitle' => $pageData['subtitle'] ?? '',
+                        'backgroundColor' => $colors['dark'],
+                        'textColor' => '#ffffff',
+                        'textPosition' => 'center',
+                    ],
+                    'style' => ['minHeight' => 220],
+                ]);
+            }
         }
         
         // Apply alternating backgrounds and styling
         $lightBg = true;
         foreach ($pageData['sections'] as $i => &$section) {
-            if ($i === 0) continue; // Skip header
+            // Skip first section (header/hero)
+            if ($i === 0 && in_array($section['type'], ['page-header', 'hero'])) {
+                continue;
+            }
             
             if (!isset($section['style'])) {
                 $section['style'] = [];
@@ -1770,8 +2013,10 @@ PROMPT;
             // Alternate backgrounds
             if ($section['type'] === 'cta') {
                 $section['style']['backgroundColor'] = $colors['primary'];
+                $section['style']['textColor'] = '#ffffff';
             } else {
                 $section['style']['backgroundColor'] = $lightBg ? '#ffffff' : '#f8fafc';
+                $section['style']['textColor'] = '#111827';
                 $lightBg = !$lightBg;
             }
         }

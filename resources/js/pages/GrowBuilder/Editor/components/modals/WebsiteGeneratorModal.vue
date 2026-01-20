@@ -104,18 +104,17 @@ const acceptWebsite = async () => {
         });
         
         if (response.data.success) {
-            // Show success message with site URL
-            const siteUrl = response.data.url;
+            // Redirect to editor (site is created as draft)
             const editorUrl = response.data.editor_url;
             
-            // Redirect to success page or show modal
-            window.location.href = editorUrl + '?published=true&url=' + encodeURIComponent(siteUrl);
+            // Redirect to editor where user can preview and publish
+            window.location.href = editorUrl + '?ai_generated=true';
         } else {
-            throw new Error(response.data.error || 'Publishing failed');
+            throw new Error(response.data.error || 'Site creation failed');
         }
     } catch (err: any) {
-        console.error('Website publishing error:', err);
-        error.value = err.response?.data?.message || err.message || 'Failed to publish website. Please try again.';
+        console.error('Website creation error:', err);
+        error.value = err.response?.data?.message || err.message || 'Failed to create website. Please try again.';
         isGenerating.value = false;
     }
 };
@@ -230,7 +229,7 @@ const totalSections = computed(() => {
                                 <h4 class="font-semibold text-green-900">Website Generated Successfully!</h4>
                                 <p class="text-sm text-green-700 mt-1">
                                     We've created {{ generatedWebsite.pages.length }} pages with {{ totalSections }} sections of professional content.
-                                    Click "Create Website" to publish and start editing.
+                                    Review the pages below, then click "Create Website" to open the editor where you can preview and customize before publishing.
                                 </p>
                             </div>
                         </div>

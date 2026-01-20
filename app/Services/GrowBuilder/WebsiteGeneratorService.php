@@ -444,6 +444,9 @@ PROMPT;
         $phone = $analysis['phone'] ?? '+260 XXX XXX XXX';
         $email = $analysis['email'] ?? 'info@' . strtolower(str_replace(' ', '', $businessName)) . '.com';
         
+        // Get Unsplash keywords
+        $unsplashKeywords = $this->getUnsplashKeywords($businessType);
+        
         return [
             [
                 'type' => 'hero',
@@ -453,6 +456,7 @@ PROMPT;
                     'buttonText' => 'Get Started',
                     'buttonLink' => '#contact',
                     'textPosition' => 'center',
+                    'backgroundImage' => "https://source.unsplash.com/1600x900/?{$unsplashKeywords}",
                 ],
                 'style' => [
                     'backgroundColor' => '#1e40af',
@@ -465,6 +469,7 @@ PROMPT;
                     'title' => "About {$businessName}",
                     'description' => "We are a leading {$businessType} based in {$location}. {$description}",
                     'imagePosition' => 'right',
+                    'image' => "https://source.unsplash.com/800x600/?{$unsplashKeywords},team",
                 ],
                 'style' => [
                     'backgroundColor' => '#ffffff',
@@ -519,6 +524,58 @@ PROMPT;
                 ],
             ],
         ];
+    }
+    
+    /**
+     * Get Unsplash keywords based on business type
+     */
+    private function getUnsplashKeywords(string $businessType): string
+    {
+        $keywords = [
+            'salon' => 'beauty,salon,hair',
+            'hair salon' => 'beauty,salon,hair',
+            'beauty salon' => 'beauty,salon,spa',
+            'restaurant' => 'restaurant,food,dining',
+            'cafe' => 'cafe,coffee,restaurant',
+            'hotel' => 'hotel,hospitality,luxury',
+            'gym' => 'fitness,gym,workout',
+            'fitness' => 'fitness,gym,health',
+            'spa' => 'spa,wellness,relaxation',
+            'shop' => 'retail,shopping,store',
+            'store' => 'retail,shopping,store',
+            'boutique' => 'fashion,boutique,shopping',
+            'law firm' => 'office,professional,business',
+            'accounting' => 'office,finance,business',
+            'consulting' => 'office,business,professional',
+            'real estate' => 'property,realestate,home',
+            'construction' => 'construction,building,architecture',
+            'photography' => 'photography,camera,creative',
+            'design' => 'design,creative,studio',
+            'marketing' => 'marketing,business,digital',
+            'tech' => 'technology,computer,digital',
+            'education' => 'education,learning,school',
+            'healthcare' => 'healthcare,medical,clinic',
+            'dental' => 'dental,healthcare,clinic',
+            'automotive' => 'automotive,car,vehicle',
+            'agriculture' => 'agriculture,farming,nature',
+        ];
+        
+        $businessTypeLower = strtolower($businessType);
+        
+        // Check for exact match
+        if (isset($keywords[$businessTypeLower])) {
+            return $keywords[$businessTypeLower];
+        }
+        
+        // Check for partial match
+        foreach ($keywords as $key => $value) {
+            if (str_contains($businessTypeLower, $key) || str_contains($key, $businessTypeLower)) {
+                return $value;
+            }
+        }
+        
+        // Default fallback
+        return 'business,professional,office';
     }
     
     /**
