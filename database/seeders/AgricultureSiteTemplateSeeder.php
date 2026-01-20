@@ -49,7 +49,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                 'title' => 'Home',
                 'slug' => 'home',
                 'is_homepage' => true,
-                'content' => json_encode([
+                'content' => ['sections' => [
                     [
                         'type' => 'hero',
                         'content' => [
@@ -140,7 +140,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                             'textColor' => '#111827',
                         ],
                     ],
-                ]),
+                ]],
                 'sort_order' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -150,7 +150,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                 'title' => 'Products',
                 'slug' => 'products',
                 'is_homepage' => false,
-                'content' => json_encode([
+                'content' => ['sections' => [
                     [
                         'type' => 'page-header',
                         'content' => [
@@ -193,7 +193,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                             'textColor' => '#111827',
                         ],
                     ],
-                ]),
+                ]],
                 'sort_order' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -203,7 +203,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                 'title' => 'Contact',
                 'slug' => 'contact',
                 'is_homepage' => false,
-                'content' => json_encode([
+                'content' => ['sections' => [
                     [
                         'type' => 'page-header',
                         'content' => [
@@ -229,7 +229,7 @@ class AgricultureSiteTemplateSeeder extends Seeder
                             'textColor' => '#111827',
                         ],
                     ],
-                ]),
+                ]],
                 'sort_order' => 3,
                 'created_at' => now(),
                 'updated_at' => now(),
