@@ -1926,6 +1926,10 @@ PROMPT;
                     $content['backgroundImage'] = $content['image'];
                     unset($content['image']);
                 }
+                // Set backgroundType to 'image' if backgroundImage exists
+                if (isset($content['backgroundImage'])) {
+                    $content['backgroundType'] = 'image';
+                }
             }
             
             // For services, ensure items structure is correct

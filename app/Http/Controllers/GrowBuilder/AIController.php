@@ -718,6 +718,7 @@ class AIController extends Controller
             
             // Create pages
             $navOrder = 0;
+            $pageLinks = []; // Collect page links for footer
             foreach ($website['pages'] as $pageData) {
                 $page = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::create([
                     'site_id' => $siteId,
@@ -729,12 +730,32 @@ class AIController extends Controller
                     'show_in_nav' => true,
                     'nav_order' => $navOrder++,
                 ]);
+                
+                // Collect for footer
+                $pageLinks[] = [
+                    'id' => uniqid(),
+                    'label' => $pageData['title'] ?? $pageData['name'],
+                    'url' => $pageData['is_home'] ? '/' : '/' . $pageData['slug'],
+                ];
+            }
+            
+            // Set up footer with page links
+            $footerSettings = $siteModel->footer_settings ?? [];
+            if (empty($footerSettings['columns'])) {
+                $footerSettings['columns'] = [
+                    [
+                        'id' => uniqid(),
+                        'title' => 'Quick Links',
+                        'links' => $pageLinks,
+                    ],
+                ];
             }
             
             // Keep site as draft (user will publish from editor)
             $siteModel->update([
                 'status' => 'draft', // Changed to draft
                 'published_at' => null, // No publish date yet
+                'footer_settings' => $footerSettings,
             ]);
             
             // Generate site URL

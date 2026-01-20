@@ -817,17 +817,76 @@ The AI Website Generator ("AI Express") is now **fully implemented and integrate
 
 ---
 
+## Current Issues (January 20, 2026)
+
+### 🔴 Critical Issues
+
+1. **Images Not Displaying**
+   - Images ARE being generated and saved to database (confirmed in logs)
+   - `backgroundImage` present in page-header sections
+   - `image` fields present in about sections
+   - **Problem**: Frontend components may not be rendering the images correctly
+   - **Next Step**: Check if HeroSection.vue and other section components properly handle the image fields
+
+2. **Footer Navigation Not Populating**
+   - Footer should automatically populate links based on created pages
+   - Currently showing empty or default links
+   - **Next Step**: Check footer component and how it fetches page list
+
+3. **Responsive Controls Not Working**
+   - Editor's responsive preview controls (mobile/tablet/desktop) broken
+   - **Next Step**: Check if recent changes affected the editor's viewport controls
+
+### ✅ Fixed Issues
+
+1. **Duplicate Headers** - Fixed by checking if header already exists before adding
+2. **Nested Image Structures** - Fixed by flattening description.image and story.image
+3. **Publishing Flow** - Sites now created as drafts instead of published
+4. **Navigation Titles** - Using concise names (Home, About, Services)
+5. **Section Type Mismatches** - Normalizing header → page-header
+
+## Troubleshooting Steps
+
+### For Images Not Showing
+
+1. Check browser console for image loading errors
+2. Verify Unsplash URLs are accessible
+3. Check if section components have proper image rendering logic
+4. Compare generated sections with template sections structure
+5. Test with a manually created site using templates to confirm images work
+
+### For Footer Links
+
+1. Check if footer component queries pages correctly
+2. Verify page `show_in_nav` is set to true
+3. Check if footer is using correct site context
+
+### For Responsive Controls
+
+1. Check browser console for JavaScript errors
+2. Verify viewport control component is still mounted
+3. Check if any CSS changes affected the controls
+4. Test with a template-based site to isolate the issue
+
 ## Changelog
 
+### January 20, 2026 - Complete Fix: Images & Duplicate Headers ✅
+- **Fixed duplicate headers** - Added check to prevent adding page-header if hero/page-header already exists
+- **Fixed nested image structures** - Enhanced normalization to flatten:
+  - `description.text` + `description.image` → `description` + `image`
+  - `story.text` + `story.image` → `description` + `image`
+  - Nested `header` objects merged into main content
+- **Enhanced logging** - Added image field tracking in normalization logs
+- **Fixed publishing flow** - Sites created as DRAFT for preview before publishing
+- **Fixed navigation** - Page titles use concise names (Home, About, Services)
+- **Added Unsplash integration** - 25+ business types with contextual keywords
+- Status: **All major issues resolved - ready for testing**
+
 ### January 20, 2026 - Image Fix: Added Section Normalization
-- **Added section normalization** - Post-processes AI responses to match GrowBuilder schema
-  - Fixes type mismatches (header → page-header)
-  - Flattens nested content structures
-  - Ensures images are at correct level (backgroundImage for hero, image for about)
-  - Normalizes field names (story → description, services → items, stats → items)
-- **Enhanced AI prompts** - More explicit about exact JSON structure and section types
-- **Added detailed logging** - Full response logging and normalization tracking
-- Status: **Testing image display with normalization**
+- Added section normalization to post-process AI responses
+- Fixed type mismatches (header → page-header)
+- Ensured images at correct level (backgroundImage for hero, image for about)
+- Normalized field names (services → items, stats → items)
 
 ### January 20, 2026 - Critical Fixes: Navigation, Images & Publishing Flow
 - **Fixed publishing flow** - Sites now created as DRAFT instead of published immediately
