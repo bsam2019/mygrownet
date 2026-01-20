@@ -22,9 +22,12 @@ class RenderController extends Controller
 
     public function render(Request $request, string $subdomain, ?string $slug = null)
     {
+        \Log::info("RenderController::render called - subdomain: {$subdomain}, slug: " . ($slug ?? 'null'));
+        
         try {
             $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
         } catch (\Exception $e) {
+            \Log::error("RenderController: Exception finding site - " . $e->getMessage());
             abort(404);
         }
 
