@@ -212,26 +212,32 @@ php artisan tinker
 - [ ] All assets load successfully
 - [ ] Theme colors match site configuration
 
-## Current Status (January 20, 2026 - 5:30 PM)
+## Current Status (January 20, 2026 - 6:00 PM)
 
-### ✅ Working
-- Site loads correctly on desktop browsers
-- Main MyGrowNet site is operational
-- Dynamic manifest system implemented (manifest.php created)
-- DetectSubdomain middleware updated to handle manifest requests
+### ✅ Fixed
+- Identified root cause: Vite assets loading from wrong domain
+- Error: `Failed to fetch dynamically imported module: https://mygrownet.com/build/assets/Site-xne4HQ-R.js`
+- Solution: Force `app.asset_url` config in DetectSubdomain middleware
 
-### ❌ Not Working
-- **Blank page on mobile devices** - Site doesn't render on mobile browsers
-- **PWA shows MyGrowNet branding** - Install prompt shows wrong logo/name
-- Static manifest.json still being served (needs Nginx configuration)
+### 🔧 In Progress
+- Testing asset URL fix on mobile
+- Verifying Vite assets load from correct subdomain
 
-### Root Cause Analysis
+### Root Cause
 
-The blank page on mobile is likely caused by:
-1. **JavaScript errors** - Mobile browsers may have stricter JavaScript requirements
-2. **Asset loading failures** - HTTPS mixed content or CORS issues
-3. **Viewport/rendering issues** - CSS or layout problems specific to mobile
-4. **Service Worker conflicts** - Old service worker caching wrong content
+The blank page was caused by JavaScript module loading failure. Vite was generating asset URLs pointing to `mygrownet.com` instead of `chisambofarms.mygrownet.com`, causing CORS errors and failed module imports on mobile browsers.
+
+**Error captured:**
+```
+Promise rejection: TypeError: Failed to fetch dynamically imported module: 
+https://mygrownet.com/build/assets/Site-xne4HQ-R.js
+```
+
+**Fix applied:**
+```php
+// In DetectSubdomain middleware
+config(['app.asset_url' => $baseUrl]); // Force Vite to use subdomain URL
+```
 
 ## Mobile Debugging Steps
 

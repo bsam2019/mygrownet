@@ -212,9 +212,12 @@ class DetectSubdomain
      */
     private function renderSite(Request $request, object $site, string $baseUrl, bool $isCustomDomain): Response
     {
-        // Set the asset URL
+        // Set the asset URL for Vite assets
         URL::forceRootUrl($baseUrl);
         config(['app.url' => $baseUrl]);
+        
+        // CRITICAL: Force asset URL for Vite to use subdomain
+        config(['app.asset_url' => $baseUrl]);
         
         // Forward to subdomain route handler
         $path = $request->path();
