@@ -559,6 +559,7 @@ export const sectionSchemas: Record<string, SectionSchema> = {
         ],
         styleFields: [
             { key: 'backgroundColor', type: 'color', label: 'Background Color', presets: ['#2563eb', '#1e40af', '#111827'] },
+            { key: 'textColor', type: 'color', label: 'Text Color', presets: ['#ffffff', '#f9fafb', '#e5e7eb'] },
         ],
     },
 

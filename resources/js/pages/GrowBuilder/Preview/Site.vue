@@ -831,7 +831,10 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                 <section
                     v-else-if="section.type === 'stats'"
                     class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
-                    :style="{ backgroundColor: section.style?.backgroundColor || '#2563eb' }"
+                    :style="{ 
+                        backgroundColor: section.style?.backgroundColor || '#2563eb',
+                        color: section.style?.textColor || '#ffffff'
+                    }"
                 >
                     <div 
                         class="max-w-6xl mx-auto"
@@ -842,12 +845,12 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                             'text-center': !section.content.textPosition || section.content.textPosition === 'center',
                             'text-right': section.content.textPosition === 'right'
                         }">
-                            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-8 sm:mb-12">{{ section.content.title }}</h2>
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-8 sm:mb-12">{{ section.content.title }}</h2>
                         </div>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center text-white">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
                             <div v-for="(stat, idx) in section.content.items" :key="idx" class="p-4">
                                 <p class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">{{ stat.value }}</p>
-                                <p class="text-sm sm:text-base text-white/80">{{ stat.label }}</p>
+                                <p class="text-sm sm:text-base opacity-80">{{ stat.label }}</p>
                             </div>
                         </div>
                     </div>
