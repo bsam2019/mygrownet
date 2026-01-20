@@ -46,10 +46,10 @@ class AgricultureSiteTemplateSeeder extends Seeder
         $pages = [
             [
                 'site_template_id' => $templateId,
-                'name' => 'Home',
+                'title' => 'Home',
                 'slug' => 'home',
-                'is_home' => true,
-                'sections' => json_encode([
+                'is_homepage' => true,
+                'content' => json_encode([
                     [
                         'type' => 'hero',
                         'content' => [
@@ -147,10 +147,10 @@ class AgricultureSiteTemplateSeeder extends Seeder
             ],
             [
                 'site_template_id' => $templateId,
-                'name' => 'Products',
+                'title' => 'Products',
                 'slug' => 'products',
-                'is_home' => false,
-                'sections' => json_encode([
+                'is_homepage' => false,
+                'content' => json_encode([
                     [
                         'type' => 'page-header',
                         'content' => [
@@ -200,10 +200,10 @@ class AgricultureSiteTemplateSeeder extends Seeder
             ],
             [
                 'site_template_id' => $templateId,
-                'name' => 'Contact',
+                'title' => 'Contact',
                 'slug' => 'contact',
-                'is_home' => false,
-                'sections' => json_encode([
+                'is_homepage' => false,
+                'content' => json_encode([
                     [
                         'type' => 'page-header',
                         'content' => [
