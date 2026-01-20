@@ -69,10 +69,22 @@ class DetectSubdomain
                 \Log::info('DetectSubdomain: Site found = ' . ($site ? 'yes' : 'no') . ', published = ' . ($site && $site->isPublished() ? 'yes' : 'no'));
                 
                 if ($site && $site->isPublished()) {
-                    return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
+                    try {
+                        return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
+                    } catch (\Exception $renderException) {
+                        \Log::error('DetectSubdomain: Render exception - ' . $renderException->getMessage());
+                        \Log::error('DetectSubdomain: Stack trace - ' . $renderException->getTraceAsString());
+                        // Re-throw to show error instead of falling back to main site
+                        throw $renderException;
+                    }
                 }
             } catch (\Exception $e) {
                 \Log::error('DetectSubdomain: Exception - ' . $e->getMessage());
+                \Log::error('DetectSubdomain: Stack trace - ' . $e->getTraceAsString());
+                // If it's a render exception, re-throw it
+                if (isset($renderException)) {
+                    throw $e;
+                }
                 // Site not found or error, continue to main site
             }
         }
