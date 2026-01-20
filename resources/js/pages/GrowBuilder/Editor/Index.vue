@@ -55,6 +55,7 @@ import { useAutoSave } from './composables/useAutoSave';
 import { useDragUpload } from './composables/useDragUpload';
 import { useClipboard } from './composables/useClipboard';
 import { useAIContext } from './composables/useAIContext';
+import { useImageOptimization } from './composables/useImageOptimization';
 
 // AI Components
 import AIFloatingButton from './components/ai/AIFloatingButton.vue';
@@ -249,6 +250,7 @@ const { draggingElement, draggingSectionContent, startElementDrag, startSectionC
 const toast = useToast();
 const history = useHistory({ maxHistory: 50 });
 const { copySection, cutSection, pasteSection, hasClipboard, clipboardType } = useClipboard();
+const { optimizeImage, optimizeLogo, formatFileSize, isImage, needsOptimization } = useImageOptimization();
 
 // AI Context - provides site/page awareness to AI assistant
 const siteRef = computed(() => props.site);
@@ -290,10 +292,38 @@ const autoSave = useAutoSave({
 
 // Drag-to-upload setup
 const handleDragUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
+    // Validate file type
+    if (!isImage(file)) {
+        toast.error('Please drop an image file');
+        return;
+    }
     
     try {
+        // Optimize image before upload
+        let uploadFile = file;
+        if (needsOptimization(file)) {
+            const originalSize = file.size;
+            toast.info('Optimizing image...');
+            
+            const result = await optimizeImage(file, {
+                maxWidth: 1920,
+                maxHeight: 1080,
+                quality: 0.85,
+                format: 'jpeg',
+            });
+            
+            uploadFile = result.file;
+            
+            if (result.compressionRatio > 0) {
+                toast.success(
+                    `Image optimized: ${formatFileSize(originalSize)} → ${formatFileSize(result.optimizedSize)} (${result.compressionRatio}% smaller)`
+                );
+            }
+        }
+        
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        
         const response = await axios.post(`/growbuilder/media/${props.site.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
@@ -1062,21 +1092,62 @@ const openMediaLibrary = async (
 const uploadImage = async (event: Event) => {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    const file = input.files[0];
+    
+    let file = input.files[0];
+    
+    // Validate file type
+    if (!isImage(file)) {
+        imageUploadError.value = 'Please select an image file';
+        input.value = '';
+        return;
+    }
+    
     uploadingImage.value = true;
     imageUploadError.value = null;
-    const formData = new FormData();
-    formData.append('file', file);
+    
     try {
+        // Optimize image before upload
+        if (needsOptimization(file)) {
+            const originalSize = file.size;
+            toast.info('Optimizing image...');
+            
+            // Determine optimization type based on target
+            const isLogoUpload = mediaLibraryTarget.value?.target === 'navigation' || 
+                                 mediaLibraryTarget.value?.target === 'footer';
+            
+            const result = isLogoUpload 
+                ? await optimizeLogo(file)
+                : await optimizeImage(file, {
+                    maxWidth: 1920,
+                    maxHeight: 1080,
+                    quality: 0.85,
+                    format: 'jpeg',
+                });
+            
+            file = result.file;
+            
+            // Show optimization results
+            if (result.compressionRatio > 0) {
+                toast.success(
+                    `Image optimized: ${formatFileSize(originalSize)} → ${formatFileSize(result.optimizedSize)} (${result.compressionRatio}% smaller)`
+                );
+            }
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
         const response = await axios.post(`/growbuilder/media/${props.site.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
+        
         if (response.data.success) {
             mediaLibrary.value.unshift(response.data.media);
             selectMediaImage(response.data.media);
         }
     } catch (error: any) {
         imageUploadError.value = error.response?.data?.message || 'Failed to upload image';
+        toast.error(imageUploadError.value);
     } finally {
         uploadingImage.value = false;
         input.value = '';
