@@ -30,8 +30,8 @@
                 
                 $themeColor = $siteTheme['primaryColor'] ?? '#2563eb';
                 $appTitle = $siteName;
-                // Use dynamic manifest for GrowBuilder sites
-                $manifestPath = $siteSubdomain ? "/sites/{$siteSubdomain}/manifest.json" : '/manifest.json';
+                // Use /manifest.json when on subdomain, or /sites/{subdomain}/manifest.json for preview
+                $manifestPath = $isGrowBuilderSubdomain ? '/manifest.json' : ($siteSubdomain ? "/sites/{$siteSubdomain}/manifest.json" : '/manifest.json');
                 // Use site favicon, then logo, then default
                 $faviconPath = $siteFavicon ?: ($siteLogo ?: asset('logo.png'));
                 $iconPath = $faviconPath;

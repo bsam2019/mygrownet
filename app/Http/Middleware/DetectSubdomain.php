@@ -68,14 +68,22 @@ class DetectSubdomain
                 $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
                 \Log::info('DetectSubdomain: Site found = ' . ($site ? 'yes' : 'no') . ', published = ' . ($site && $site->isPublished() ? 'yes' : 'no'));
                 
-                if ($site && $site->isPublished()) {
-                    try {
-                        return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
-                    } catch (\Exception $renderException) {
-                        \Log::error('DetectSubdomain: Render exception - ' . $renderException->getMessage());
-                        \Log::error('DetectSubdomain: Stack trace - ' . $renderException->getTraceAsString());
-                        // Re-throw to show error instead of falling back to main site
-                        throw $renderException;
+                if ($site) {
+                    // Handle manifest.json request
+                    if ($request->path() === 'manifest.json') {
+                        return $this->handleManifest($request, $site);
+                    }
+                    
+                    // Only render site if published
+                    if ($site->isPublished()) {
+                        try {
+                            return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
+                        } catch (\Exception $renderException) {
+                            \Log::error('DetectSubdomain: Render exception - ' . $renderException->getMessage());
+                            \Log::error('DetectSubdomain: Stack trace - ' . $renderException->getTraceAsString());
+                            // Re-throw to show error instead of falling back to main site
+                            throw $renderException;
+                        }
                     }
                 }
             } catch (\Exception $e) {
@@ -186,6 +194,17 @@ class DetectSubdomain
             \Log::error('DetectSubdomain: Custom domain lookup failed - ' . $e->getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Handle manifest.json request for GrowBuilder site
+     */
+    private function handleManifest(Request $request, object $site): Response
+    {
+        $result = app()->make(\App\Http\Controllers\GrowBuilder\ManifestController::class)
+            ->manifest($request, $site->getSubdomain()->value());
+        
+        return $result instanceof Response ? $result : response($result);
     }
     
     /**
