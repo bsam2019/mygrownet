@@ -78,7 +78,7 @@ class UnifiedWalletService
                 
                 SELECT 'service_expenses' as type, COALESCE(SUM(ABS(amount)), 0) as total 
                 FROM transactions 
-                WHERE user_id = ? AND transaction_type IN ('purchase', 'service_payment', 'starter_kit_purchase') AND status = 'completed'
+                WHERE user_id = ? AND transaction_type IN ('purchase', 'service_payment', 'starter_kit_purchase', 'subscription_payment') AND status = 'completed'
             ", [$user->id, $user->id, $user->id, $user->id, $user->id, $user->id]);
             
             // Parse results into associative array
