@@ -442,6 +442,7 @@ class AgricultureTemplateSeeder extends Seeder
                             ],
                         ],
                     ],
+                    ],
                 ],
                 'default_styles' => [
                     'primaryColor' => '#059669',      // Emerald green for organic/nature
