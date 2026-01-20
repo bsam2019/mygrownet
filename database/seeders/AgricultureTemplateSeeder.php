@@ -14,14 +14,14 @@ class AgricultureTemplateSeeder extends Seeder
                 'name' => 'Organic Farm',
                 'slug' => 'organic-farm',
                 'category' => 'agriculture',
-                'category_name' => 'Agriculture',
-                'category_icon' => '🌱',
-                'preview_text' => 'Green Valley Organics',
                 'description' => 'Professional template for organic farming, agricultural products, and eco-friendly businesses',
                 'preview_image' => 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800&q=80',
+                'thumbnail' => 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400&q=80',
                 'is_active' => true,
                 'is_premium' => false,
-                'pages' => [
+                'price' => 0,
+                'structure_json' => [
+                    'pages' => [
                     [
                         'name' => 'Home',
                         'slug' => 'home',
@@ -443,21 +443,15 @@ class AgricultureTemplateSeeder extends Seeder
                         ],
                     ],
                 ],
-                'settings' => [
-                    'colors' => [
-                        'primary' => '#059669',      // Emerald green for organic/nature
-                        'secondary' => '#10b981',    // Lighter green
-                        'accent' => '#f59e0b',       // Amber for warmth
-                        'background' => '#ffffff',   // Clean white
-                    ],
-                    'fonts' => [
-                        'heading' => 'Inter',
-                        'body' => 'Inter',
-                    ],
-                    'layout' => [
-                        'navigationStyle' => 'horizontal',
-                        'footerStyle' => 'detailed',
-                    ],
+                'default_styles' => [
+                    'primaryColor' => '#059669',      // Emerald green for organic/nature
+                    'secondaryColor' => '#10b981',    // Lighter green
+                    'accentColor' => '#f59e0b',       // Amber for warmth
+                    'backgroundColor' => '#ffffff',   // Clean white
+                    'textColor' => '#1f2937',
+                    'headingFont' => 'Inter',
+                    'bodyFont' => 'Inter',
+                    'borderRadius' => 8,
                 ],
             ],
         ];
