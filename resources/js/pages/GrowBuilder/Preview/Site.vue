@@ -335,7 +335,7 @@ const getTemplateIdFromUrl = () => {
     return match ? match[1] : null;
 };
 
-// Detect if we're viewing on a subdomain (e.g., ndelimas.mygrownet.com)
+// Detect if we're viewing on a subdomain (e.g., chisambofarms.mygrownet.com)
 const isOnSubdomain = computed(() => {
     const host = window.location.hostname;
     // Check if hostname matches subdomain pattern (including www.subdomain.mygrownet.com)
@@ -345,12 +345,16 @@ const isOnSubdomain = computed(() => {
         // Exclude reserved subdomains and main domain
         const reserved = ['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev', 'growbuilder', 'app', 'dashboard'];
         const isReserved = reserved.includes(subdomain);
-        // Check if it matches our site's subdomain
-        const matchesSite = subdomain === props.site.subdomain.toLowerCase();
+        // Check if it matches our site's subdomain (case-insensitive comparison)
+        const siteSubdomain = props.site.subdomain.toLowerCase().trim();
+        const matchesSite = subdomain === siteSubdomain;
+        console.log('Subdomain detection:', { host, subdomain, siteSubdomain, matchesSite, isReserved });
         return !isReserved && matchesSite;
     }
     // Also check for custom domains (not mygrownet.com)
-    return !host.includes('mygrownet.com') && !host.includes('localhost') && !host.includes('127.0.0.1');
+    const isCustomDomain = !host.includes('mygrownet.com') && !host.includes('localhost') && !host.includes('127.0.0.1');
+    console.log('Custom domain check:', { host, isCustomDomain });
+    return isCustomDomain;
 });
 
 const getPageUrl = (page: NavPage) => {

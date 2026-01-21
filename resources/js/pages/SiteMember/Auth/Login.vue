@@ -26,6 +26,26 @@ const form = useForm({
 
 const primaryColor = computed(() => props.site.theme?.primaryColor || '#2563eb');
 
+// Detect if we're on a subdomain
+const isOnSubdomain = computed(() => {
+    const host = window.location.hostname;
+    const match = host.match(/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i);
+    if (match) {
+        const subdomain = match[1].toLowerCase();
+        const reserved = ['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev', 'growbuilder', 'app', 'dashboard'];
+        return !reserved.includes(subdomain);
+    }
+    return !host.includes('mygrownet.com') && !host.includes('localhost') && !host.includes('127.0.0.1');
+});
+
+const registerUrl = computed(() => {
+    return isOnSubdomain.value ? '/register' : route('site.register', { subdomain: props.subdomain });
+});
+
+const forgotPasswordUrl = computed(() => {
+    return isOnSubdomain.value ? '/forgot-password' : route('site.password.request', { subdomain: props.subdomain });
+});
+
 const submit = () => {
     form.post(route('site.login.submit', { subdomain: props.subdomain }), {
         onFinish: () => form.reset('password'),
@@ -117,7 +137,7 @@ const submit = () => {
                     </div>
 
                     <Link
-                        :href="route('site.password.request', { subdomain })"
+                        :href="forgotPasswordUrl"
                         class="text-sm font-medium hover:underline"
                         :style="{ color: primaryColor }"
                     >
@@ -138,7 +158,7 @@ const submit = () => {
                 <p class="text-center text-sm text-gray-600">
                     Don't have an account?
                     <Link
-                        :href="route('site.register', { subdomain })"
+                        :href="registerUrl"
                         class="font-medium hover:underline"
                         :style="{ color: primaryColor }"
                     >
