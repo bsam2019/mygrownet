@@ -806,7 +806,7 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                 <!-- Page Header Section - Mobile Optimized -->
                 <section
                     v-else-if="section.type === 'page-header'"
-                    class="relative overflow-hidden"
+                    class="relative overflow-hidden flex"
                     :style="{
                         backgroundColor: section.content.backgroundColor || '#1e40af',
                         color: section.content.textColor || '#ffffff',
@@ -818,7 +818,7 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                         <div class="absolute inset-0 bg-black/40"></div>
                     </div>
                     <div
-                        class="relative z-10 h-full flex flex-col justify-center py-10 sm:py-12 px-4 sm:px-6 lg:px-8"
+                        class="relative z-10 w-full flex flex-col justify-center py-10 sm:py-12 px-4 sm:px-6 lg:px-8"
                         :class="{
                             'items-start text-left': section.content.textPosition === 'left',
                             'items-center text-center': !section.content.textPosition || section.content.textPosition === 'center',
