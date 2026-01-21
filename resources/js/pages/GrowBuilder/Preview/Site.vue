@@ -338,12 +338,16 @@ const getTemplateIdFromUrl = () => {
 // Detect if we're viewing on a subdomain (e.g., ndelimas.mygrownet.com)
 const isOnSubdomain = computed(() => {
     const host = window.location.hostname;
-    // Check if hostname matches subdomain pattern
-    const match = host.match(/^([a-z0-9-]+)\.mygrownet\.com$/i);
+    // Check if hostname matches subdomain pattern (including www.subdomain.mygrownet.com)
+    const match = host.match(/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i);
     if (match) {
         const subdomain = match[1].toLowerCase();
-        // Exclude reserved subdomains
-        return !['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev'].includes(subdomain);
+        // Exclude reserved subdomains and main domain
+        const reserved = ['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev', 'growbuilder', 'app', 'dashboard'];
+        const isReserved = reserved.includes(subdomain);
+        // Check if it matches our site's subdomain
+        const matchesSite = subdomain === props.site.subdomain.toLowerCase();
+        return !isReserved && matchesSite;
     }
     // Also check for custom domains (not mygrownet.com)
     return !host.includes('mygrownet.com') && !host.includes('localhost') && !host.includes('127.0.0.1');
