@@ -29,7 +29,7 @@ Write-Host "-----------------------------------"
 
 $sshTarget = "$DROPLET_USER@$DROPLET_IP"
 
-ssh $sshTarget "cd /var/www/mygrownet.com && echo '$DROPLET_SUDO_PASSWORD' | sudo -S bash deployment/fix-www-ssl-auto.sh"
+ssh $sshTarget 'cd /var/www/mygrownet.com && echo '"'$DROPLET_SUDO_PASSWORD'"' | sudo -S bash deployment/fix-www-ssl-auto.sh'
 
 Write-Host ""
 Write-Host "✅ Auto-fix complete!" -ForegroundColor Green

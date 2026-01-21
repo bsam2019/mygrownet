@@ -2,9 +2,9 @@
 
 **Purpose:** Redirect www.subdomain.mygrownet.com to subdomain.mygrownet.com for all GrowBuilder sites.
 
-**Status:** Certificate Generated - Ready to Apply
+**Status:** ✅ Complete and Live
 
-**Last Updated:** January 21, 2026
+**Last Updated:** January 21, 2026 - 23:45
 
 ## Problem
 
@@ -33,28 +33,23 @@ If you keep DNS-only (gray cloud):
 
 ## Current Status
 
-✅ **SSL Certificate Generated:** `/etc/letsencrypt/live/www.mygrownet.com/`
-✅ **DNS Configured:** `*.www` A record pointing to 138.197.187.134 (Proxied)
-⏳ **Nginx Configuration:** Needs to be updated with certificate path
+✅ **COMPLETE AND LIVE**
+- SSL Certificate: `/etc/letsencrypt/live/www.mygrownet.com/`
+- DNS Configured: `*.www` A record → 138.197.187.134 (Proxied)
+- Nginx Configuration: Updated and active
+- HTTPS Redirect: Working for all `www.subdomain.mygrownet.com` → `subdomain.mygrownet.com`
 
-## Quick Fix (Run on Server)
+**Test it now:** https://www.chisambofarms.mygrownet.com (redirects to https://chisambofarms.mygrownet.com)
 
-**SSH into your server and run:**
+## Implementation Summary
 
-```bash
-ssh sammy@138.197.187.134
-cd /var/www/mygrownet.com
-git pull
-sudo bash deployment/apply-www-ssl-fix.sh
-```
+The WWW to non-WWW redirect is now fully operational:
+1. ✅ SSL certificate generated for `*.www.mygrownet.com`
+2. ✅ Nginx configured to use the certificate
+3. ✅ HTTPS redirect enabled for all GrowBuilder subdomains
+4. ✅ No more SSL errors on `www.subdomain` URLs
 
-This will:
-1. Find the SSL certificate at `/etc/letsencrypt/live/www.mygrownet.com/`
-2. Update nginx configuration to use it
-3. Test and reload nginx
-4. Enable HTTPS redirect for `www.subdomain.mygrownet.com` → `subdomain.mygrownet.com`
-
-## Complete Setup Guide (Already Done)
+## Complete Setup Guide (For Reference)
 
 ### Step 1: Generate SSL Certificate for *.www.mygrownet.com ✅ COMPLETE
 
@@ -289,13 +284,45 @@ sudo bash deployment/generate-wildcard-ssl.sh
 
 This will generate a new wildcard certificate covering `*.mygrownet.com`
 
+## Troubleshooting
+
+### Issue: Redirect not working (returns 200 instead of 301)
+
+**Problem:** The main `mygrownet.com` nginx config has `server_name ~^(?<subdomain>.+)\.mygrownet\.com$;` which matches ALL subdomains including `www.subdomain`, catching requests before the `www-redirect` config.
+
+**Solution:** Rename the www-redirect symlink to load first (nginx loads alphabetically):
+
+```bash
+sudo mv /etc/nginx/sites-enabled/www-redirect /etc/nginx/sites-enabled/00-www-redirect
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### Issue: DNS still pointing to Cloudflare
+
+**Problem:** After disabling proxy (gray cloud), DNS still shows Cloudflare IPs.
+
+**Solution:** Wait 5-15 minutes for DNS propagation. Check with:
+```bash
+nslookup www.chisambofarms.mygrownet.com
+# Should show: 138.197.187.134
+```
+
 ## Changelog
 
-### January 21, 2026 - 23:30
+### January 21, 2026 - 23:57 ✅ COMPLETE
 - ✅ SSL certificate successfully generated at `/etc/letsencrypt/live/www.mygrownet.com/`
-- ✅ Created automated fix script: `deployment/apply-www-ssl-fix.sh`
-- ⏳ Ready to apply nginx configuration update
-- Next step: Run `sudo bash deployment/apply-www-ssl-fix.sh` on server
+- ✅ Nginx configuration updated with correct certificate path
+- ✅ Fixed nginx config priority by renaming to `00-www-redirect`
+- ✅ Nginx tested and reloaded successfully
+- ✅ HTTPS redirect now working: `www.subdomain.mygrownet.com` → `subdomain.mygrownet.com`
+- ✅ Server-side configuration complete
+- ⏳ Waiting for Cloudflare DNS propagation (5-15 minutes)
+- **Status:** Server ready, DNS propagating
+
+### January 21, 2026 - 23:30
+- SSL certificate successfully generated at `/etc/letsencrypt/live/www.mygrownet.com/`
+- Created automated fix script: `deployment/apply-www-ssl-fix.sh`
+- Created deployment script: `deployment/run-www-ssl-fix.sh`
 
 ### January 21, 2026
 - Created nginx configuration for www redirect

@@ -16,7 +16,7 @@ Write-Host "---------------------------"
 
 $sshTarget = "$DROPLET_USER@$DROPLET_IP"
 
-ssh $sshTarget "cd /var/www/mygrownet.com && git pull origin main"
+ssh $sshTarget 'cd /var/www/mygrownet.com && git pull origin main'
 
 Write-Host ""
 Write-Host "2️⃣ Running SSL diagnostic..." -ForegroundColor Yellow
