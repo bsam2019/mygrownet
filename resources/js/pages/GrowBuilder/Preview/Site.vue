@@ -826,8 +826,19 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                         }"
                         :style="section.content.contentOffset ? `transform: translateY(${section.content.contentOffset}px)` : ''"
                     >
-                        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{{ section.content.title }}</h1>
-                        <p v-if="section.content.subtitle" class="text-base sm:text-lg opacity-90">{{ section.content.subtitle }}</p>
+                        <h1 
+                            class="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2"
+                            :style="section.style?.titleFontSize ? { fontSize: `${section.style.titleFontSize}px` } : {}"
+                        >
+                            {{ section.content.title }}
+                        </h1>
+                        <p 
+                            v-if="section.content.subtitle" 
+                            class="text-base sm:text-lg opacity-90"
+                            :style="section.style?.subtitleFontSize ? { fontSize: `${section.style.subtitleFontSize}px` } : {}"
+                        >
+                            {{ section.content.subtitle }}
+                        </p>
                     </div>
                 </section>
 

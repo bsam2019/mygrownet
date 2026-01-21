@@ -30,6 +30,15 @@ const editValue = computed({
     get: () => props.editingValue,
     set: (val) => emit('update:editingValue', val)
 });
+
+// Computed styles for font sizes from section.style
+const titleStyle = computed(() => ({
+    fontSize: props.section.style?.titleFontSize ? `${props.section.style.titleFontSize}px` : undefined,
+}));
+
+const subtitleStyle = computed(() => ({
+    fontSize: props.section.style?.subtitleFontSize ? `${props.section.style.subtitleFontSize}px` : undefined,
+}));
 </script>
 
 <template>
@@ -45,7 +54,8 @@ const editValue = computed({
         ]"
         :style="{
             backgroundColor: content.backgroundColor || '#1e40af',
-            color: content.textColor || '#ffffff'
+            color: content.textColor || '#ffffff',
+            minHeight: section.style?.minHeight ? `${section.style.minHeight}px` : '180px'
         }"
     >
         <!-- Background Image -->
@@ -70,7 +80,7 @@ const editValue = computed({
                     @keydown="handleInlineKeydown"
                     class="inline-edit-input font-bold bg-white/20 border border-white/40 rounded px-3 py-1 w-full"
                     :class="textSize.h2"
-                    :style="{ color: content.textColor || '#ffffff' }"
+                    :style="{ color: content.textColor || '#ffffff', ...titleStyle }"
                 />
             </h1>
             <h1
@@ -78,6 +88,7 @@ const editValue = computed({
                 @click.stop="startInlineEdit(section.id, 'title', content.title)"
                 class="font-bold mb-2 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors group/title"
                 :class="textSize.h2"
+                :style="titleStyle"
             >
                 {{ content.title || 'Page Title' }}
                 <PencilIcon class="w-4 h-4 inline opacity-0 group-hover/title:opacity-70 ml-2" aria-hidden="true" />
@@ -88,6 +99,7 @@ const editValue = computed({
                 v-if="content.subtitle"
                 class="opacity-90 cursor-pointer hover:bg-white/10 rounded px-2 py-1 transition-colors group/sub"
                 :class="textSize.p"
+                :style="subtitleStyle"
                 @click.stop="startInlineEdit(section.id, 'subtitle', content.subtitle)"
             >
                 <template v-if="isEditing(section.id, 'subtitle')">
@@ -97,7 +109,7 @@ const editValue = computed({
                         @keydown="handleInlineKeydown"
                         class="inline-edit-input bg-white/20 border border-white/40 rounded px-3 py-1 w-full"
                         :class="textSize.p"
-                        :style="{ color: content.textColor || '#ffffff' }"
+                        :style="{ color: content.textColor || '#ffffff', ...subtitleStyle }"
                     />
                 </template>
                 <template v-else>

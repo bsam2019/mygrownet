@@ -253,6 +253,14 @@ Route::get('/sites/{site}/marketplace/products', [MarketplaceIntegrationControll
 
 ## Changelog
 
+### January 21, 2026 - Section Fixes
+- ✅ Fixed page header vertical alignment in editor and live site
+- ✅ Added minHeight style support to PageHeaderSection
+- ✅ Implemented font size controls for page header sections
+- ✅ Added titleFontSize and subtitleFontSize style properties
+- ✅ Font size range controls now work in section inspector
+- ✅ Both editor preview and live site respect custom font sizes
+
 ### January 21, 2026 - Frontend Complete
 - ✅ Created marketplace integration settings page
 - ✅ Added marketplace tab to site settings
