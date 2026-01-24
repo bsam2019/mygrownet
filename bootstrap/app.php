@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growbuilder.php'));
             Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/ubumi.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController

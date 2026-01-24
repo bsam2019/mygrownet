@@ -26,6 +26,8 @@ class MatrixSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'referral_code' => 'ROOT001',
+                'account_type' => 'member',
+                'account_types' => ['member'],
             ]
         );
 
@@ -53,6 +55,8 @@ class MatrixSeeder extends Seeder
                     'referrer_id' => $rootSponsor->id,
                     'referral_code' => "L1U{$i}",
                     'current_professional_level' => 'associate',
+                    'account_type' => 'member',
+                    'account_types' => ['member'],
                 ]
             );
 
@@ -83,6 +87,8 @@ class MatrixSeeder extends Seeder
                         'referrer_id' => $sponsor->id,
                         'referral_code' => "L2U{$userNum}",
                         'current_professional_level' => 'professional',
+                        'account_type' => 'member',
+                        'account_types' => ['member'],
                     ]
                 );
 
@@ -113,6 +119,8 @@ class MatrixSeeder extends Seeder
                         'referrer_id' => $sponsor->id,
                         'referral_code' => "L3U{$userNum}",
                         'current_professional_level' => 'senior',
+                        'account_type' => 'member',
+                        'account_types' => ['member'],
                     ]
                 );
 
@@ -139,6 +147,8 @@ class MatrixSeeder extends Seeder
                     'referrer_id' => $rootSponsor->id,
                     'referral_code' => "PEND{$i}",
                     'current_professional_level' => 'associate',
+                    'account_type' => 'member',
+                    'account_types' => ['member'],
                 ]
             );
             $this->command->info("✓ Created Pending User {$i} (for spillover queue)");

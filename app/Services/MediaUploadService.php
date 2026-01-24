@@ -5,7 +5,6 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 
 /**
  * Centralized Media Upload Service
@@ -168,18 +167,78 @@ class MediaUploadService
      */
     protected function optimizeImage(UploadedFile $file, int $maxWidth): string
     {
-        $image = Image::make($file);
+        // Use PHP's built-in GD library for image optimization
+        $mimeType = $file->getMimeType();
+        $sourcePath = $file->getRealPath();
+        
+        // Create image resource based on type
+        $image = match($mimeType) {
+            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($sourcePath),
+            'image/png' => imagecreatefrompng($sourcePath),
+            'image/gif' => imagecreatefromgif($sourcePath),
+            'image/webp' => imagecreatefromwebp($sourcePath),
+            default => null,
+        };
 
-        // Resize if wider than max width
-        if ($image->width() > $maxWidth) {
-            $image->resize($maxWidth, null, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
+        if (!$image) {
+            // If we can't process it, return original
+            return file_get_contents($sourcePath);
         }
 
-        // Optimize quality
-        return $image->encode($file->getClientOriginalExtension(), 85)->encoded;
+        // Get original dimensions
+        $originalWidth = imagesx($image);
+        $originalHeight = imagesy($image);
+
+        // Calculate new dimensions if needed
+        if ($originalWidth > $maxWidth) {
+            $ratio = $maxWidth / $originalWidth;
+            $newWidth = $maxWidth;
+            $newHeight = (int)($originalHeight * $ratio);
+        } else {
+            $newWidth = $originalWidth;
+            $newHeight = $originalHeight;
+        }
+
+        // Create new image with calculated dimensions
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+        // Preserve transparency for PNG and GIF
+        if ($mimeType === 'image/png' || $mimeType === 'image/gif') {
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            $transparent = imagecolorallocatealpha($resized, 255, 255, 255, 127);
+            imagefilledrectangle($resized, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+
+        // Resize the image with high quality
+        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+        // Output to buffer
+        ob_start();
+        
+        switch($mimeType) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                imagejpeg($resized, null, 85); // 85% quality - good balance
+                break;
+            case 'image/png':
+                imagepng($resized, null, 6); // Compression level 6 (0-9)
+                break;
+            case 'image/gif':
+                imagegif($resized);
+                break;
+            case 'image/webp':
+                imagewebp($resized, null, 85);
+                break;
+        }
+        
+        $imageData = ob_get_clean();
+
+        // Free memory
+        imagedestroy($image);
+        imagedestroy($resized);
+
+        return $imageData;
     }
 
     /**

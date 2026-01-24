@@ -15,6 +15,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create admin user
+        // Note: DB enum has 'admin', 'member', 'investor' but AccountType enum doesn't have 'admin'
         $admin = User::firstOrCreate(
             ['email' => 'admin@mygrownet.com'],
             [
@@ -24,6 +25,10 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('mygrownet@2025!'),
                 'remember_token' => Str::random(10),
                 'created_at' => now()->subYear(),
+                'updated_at' => now()->subYear(),
+                'referral_code' => 'ADMIN' . strtoupper(Str::random(5)),
+                'account_type' => 'member', // Use 'member' since 'admin' not in AccountType enum
+                'account_types' => ['member'], // Pass as array, not JSON string
             ]
         );
 
@@ -42,6 +47,10 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'remember_token' => Str::random(10),
                 'created_at' => now()->subMonths(11),
+                'updated_at' => now()->subMonths(11),
+                'referral_code' => 'MGR' . strtoupper(Str::random(5)),
+                'account_type' => 'member',
+                'account_types' => ['member'], // Pass as array, not JSON string
             ]
         );
 
@@ -61,6 +70,10 @@ class UserSeeder extends Seeder
                     'password' => Hash::make('password'),
                     'remember_token' => Str::random(10),
                     'created_at' => now()->subMonths(10 + $i),
+                    'updated_at' => now()->subMonths(10 + $i),
+                    'referral_code' => 'SUP' . strtoupper(Str::random(5)),
+                    'account_type' => 'member',
+                    'account_types' => ['member'], // Pass as array, not JSON string
                 ]
             );
 
@@ -80,6 +93,10 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'remember_token' => Str::random(10),
                 'created_at' => now()->subMonths(6),
+                'updated_at' => now()->subMonths(6),
+                'referral_code' => 'MEM' . strtoupper(Str::random(5)),
+                'account_type' => 'member',
+                'account_types' => ['member'], // Pass as array, not JSON string
             ]
         );
 
