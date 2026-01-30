@@ -95,10 +95,14 @@ const form = useForm({
 });
 
 const generateSubdomain = () => {
+    if (!form.name.trim()) {
+        form.subdomain = '';
+        return;
+    }
+    
     form.subdomain = form.name
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
+        .replace(/[^a-z0-9]+/g, '') // Remove all non-alphanumeric characters (no hyphens)
         .substring(0, 63);
 };
 
@@ -205,7 +209,7 @@ const getIndustryIcon = (industry: string) => {
                                     type="text"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="My Business"
-                                    @blur="generateSubdomain"
+                                    @input="generateSubdomain"
                                     required
                                 />
                                 <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>

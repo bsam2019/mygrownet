@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Cache;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Symfony\Component\HttpFoundation\Response;
 
 class SubdomainCheck
@@ -25,11 +27,22 @@ class SubdomainCheck
         $reserved = [
             'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
             'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-            'growbuilder', 'app', 'dashboard', 'portal'
+            'growbuilder', 'app', 'dashboard', 'portal', 'test', 'staging',
+            'dev', 'development', 'demo', 'sandbox'
         ];
         
         if (in_array(strtolower($subdomain), $reserved)) {
             abort(404, 'This subdomain is reserved.');
+        }
+
+        // Validate that the subdomain exists in the database
+        // Cache the result for 5 minutes to reduce database queries
+        $siteExists = Cache::remember("subdomain_exists:{$subdomain}", 300, function () use ($subdomain) {
+            return GrowBuilderSite::where('subdomain', $subdomain)->exists();
+        });
+
+        if (!$siteExists) {
+            abort(404, 'Site not found.');
         }
 
         // Set the asset URL to the current subdomain to avoid CORS issues
