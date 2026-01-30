@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { 
@@ -92,6 +92,19 @@ const form = useForm({
     subdomain: '',
     site_template_id: null as number | null,
     description: '',
+});
+
+// Watch for name changes and auto-generate subdomain
+watch(() => form.name, (newName) => {
+    if (!newName.trim()) {
+        form.subdomain = '';
+        return;
+    }
+    
+    form.subdomain = newName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '') // Remove all non-alphanumeric characters (no hyphens)
+        .substring(0, 63);
 });
 
 const generateSubdomain = () => {

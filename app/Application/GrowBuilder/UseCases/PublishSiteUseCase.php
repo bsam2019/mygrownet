@@ -44,6 +44,23 @@ class PublishSiteUseCase
             throw new \DomainException('Site must have a homepage before publishing');
         }
 
+        // Publish the homepage if it's not already published
+        if (!$homepage->isPublished()) {
+            $homepage->publish();
+            $this->pageRepository->save($homepage);
+            \Log::info("PublishSiteUseCase: Published homepage for site {$siteId}");
+        }
+
+        // Publish all other pages for the site
+        $pages = $this->pageRepository->findBySiteId($site->getId());
+        foreach ($pages as $page) {
+            if (!$page->isPublished() && !$page->isHomepage()) {
+                $page->publish();
+                $this->pageRepository->save($page);
+                \Log::info("PublishSiteUseCase: Published page {$page->getId()->value()} for site {$siteId}");
+            }
+        }
+
         $site->publish();
 
         return $this->siteRepository->save($site);

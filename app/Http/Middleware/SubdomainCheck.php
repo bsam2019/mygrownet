@@ -27,23 +27,14 @@ class SubdomainCheck
         $reserved = [
             'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
             'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-            'growbuilder', 'app', 'dashboard', 'portal', 'test', 'staging',
-            'dev', 'development', 'demo', 'sandbox'
         ];
         
         if (in_array(strtolower($subdomain), $reserved)) {
             abort(404, 'This subdomain is reserved.');
         }
 
-        // Validate that the subdomain exists in the database
-        // Cache the result for 5 minutes to reduce database queries
-        $siteExists = Cache::remember("subdomain_exists:{$subdomain}", 300, function () use ($subdomain) {
-            return GrowBuilderSite::where('subdomain', $subdomain)->exists();
-        });
-
-        if (!$siteExists) {
-            abort(404, 'Site not found.');
-        }
+        // Note: GrowBuilder sites are handled by DetectSubdomain middleware
+        // This middleware only handles non-GrowBuilder subdomains
 
         // Set the asset URL to the current subdomain to avoid CORS issues
         $currentUrl = "https://{$subdomain}.mygrownet.com";

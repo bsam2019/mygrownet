@@ -31,6 +31,7 @@ class SiteController extends Controller
         private CreateSiteUseCase $createSiteUseCase,
         private UpdateSiteUseCase $updateSiteUseCase,
         private PublishSiteUseCase $publishSiteUseCase,
+        private \App\Application\GrowBuilder\UseCases\UnpublishSiteUseCase $unpublishSiteUseCase,
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
         private StorageService $storageService,
@@ -784,16 +785,12 @@ class SiteController extends Controller
 
     public function unpublish(Request $request, int $id)
     {
-        $site = $this->siteRepository->findById(SiteId::fromInt($id));
-
-        if (!$site || $site->getUserId() !== $request->user()->id) {
-            abort(404);
+        try {
+            $this->unpublishSiteUseCase->execute($id, $request->user()->id);
+            return back()->with('success', 'Site and all pages unpublished successfully!');
+        } catch (\DomainException $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $site->unpublish();
-        $this->siteRepository->save($site);
-
-        return back()->with('success', 'Site unpublished');
     }
 
     /**

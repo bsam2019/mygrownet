@@ -72,7 +72,12 @@ class CreateSiteUseCase
             isHomepage: true,
         );
 
-        $this->pageRepository->save($homepage);
+        // Publish the homepage by default
+        $homepage->publish();
+
+        $savedPage = $this->pageRepository->save($homepage);
+        
+        \Log::info("CreateSiteUseCase: Created homepage for site {$site->getId()->value()} - Page ID: {$savedPage->getId()->value()}, Published: " . ($savedPage->isPublished() ? 'yes' : 'no'));
     }
 
     private function getDefaultHomeContent(): PageContent
