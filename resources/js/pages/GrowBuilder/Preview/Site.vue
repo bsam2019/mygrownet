@@ -1,7 +1,32 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, ref, onMounted } from 'vue';
-import { Bars3Icon, XMarkIcon, StarIcon, CheckIcon, ShoppingBagIcon, ShoppingCartIcon } from '@heroicons/vue/24/outline';
+import { 
+    Bars3Icon, 
+    XMarkIcon, 
+    StarIcon, 
+    CheckIcon, 
+    ShoppingBagIcon, 
+    ShoppingCartIcon,
+    SparklesIcon,
+    DocumentTextIcon,
+    PhotoIcon,
+    CalendarIcon,
+    PrinterIcon,
+    IdentificationIcon,
+    UsersIcon,
+    VideoCameraIcon,
+    FilmIcon,
+    DevicePhoneMobileIcon,
+    LightBulbIcon,
+    ChartBarIcon,
+    BriefcaseIcon,
+    GlobeAltIcon,
+    CogIcon,
+    ShieldCheckIcon,
+    CubeIcon,
+    CodeBracketIcon
+} from '@heroicons/vue/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/vue/24/solid';
 import SplashScreen from '@/components/GrowBuilder/SplashScreens.vue';
 
@@ -208,7 +233,62 @@ onMounted(() => {
     }
     // Initialize slideshows
     initSlideshows();
+    // Initialize scroll animations
+    initScrollAnimations();
 });
+
+// Icon mapping helper
+const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+        'sparkles': SparklesIcon,
+        'document': DocumentTextIcon,
+        'photo': PhotoIcon,
+        'calendar': CalendarIcon,
+        'printer': PrinterIcon,
+        'shopping-bag': ShoppingBagIcon,
+        'document-duplicate': DocumentTextIcon,
+        'camera': PhotoIcon,
+        'identification': IdentificationIcon,
+        'users': UsersIcon,
+        'photograph': PhotoIcon,
+        'video-camera': VideoCameraIcon,
+        'film': FilmIcon,
+        'star': StarIcon,
+        'device-mobile': DevicePhoneMobileIcon,
+        'light-bulb': LightBulbIcon,
+        'chart-bar': ChartBarIcon,
+        'briefcase': BriefcaseIcon,
+        'globe': GlobeAltIcon,
+        'code': CodeBracketIcon,
+        'cog': CogIcon,
+        'shield': ShieldCheckIcon,
+        'cube': CubeIcon,
+    };
+    return iconMap[iconName] || CubeIcon;
+};
+
+// Scroll animations
+const initScrollAnimations = () => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-in');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    // Observe all sections after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+    }, 100);
+};
 
 // Save cart to localStorage
 const saveCart = () => {
@@ -437,6 +517,31 @@ const getHeroBackgroundStyle = (section: Section) => {
     };
 };
 
+// CTA section background helper
+const getCTABackgroundStyle = (section: Section) => {
+    const s = section.style;
+    
+    // Check for gradient background
+    if (s?.backgroundType === 'gradient' && s?.gradientFrom && s?.gradientTo) {
+        const degMap: Record<string, string> = {
+            'to-r': '90deg',
+            'to-b': '180deg',
+            'to-br': '135deg',
+            'to-tr': '45deg',
+        };
+        const direction = degMap[s.gradientDirection || 'to-br'] || '135deg';
+        return {
+            background: `linear-gradient(${direction}, ${s.gradientFrom}, ${s.gradientTo})`,
+            color: s?.textColor || '#ffffff',
+        };
+    }
+    
+    return {
+        backgroundColor: s?.backgroundColor || '#2563eb',
+        color: s?.textColor || '#ffffff',
+    };
+};
+
 const hasImageBackground = (section: Section) => {
     const c = section.content;
     return (!c.backgroundType || c.backgroundType === 'image') && c.backgroundImage;
@@ -658,58 +763,99 @@ const getElementTransform = (section: Section, elementKey: string): string => {
 
         <!-- Page Content -->
         <main>
-            <template v-for="section in sections" :key="section.id">
+            <template v-for="(section, index) in sections" :key="index">
                 <!-- Hero Section - Multiple Layouts -->
                 <section
                     v-if="section.type === 'hero'"
                     class="relative overflow-hidden"
                     :style="getHeroBackgroundStyle(section)"
                 >
-                    <!-- Slideshow Layout -->
+                    <!-- Slideshow Layout - Enhanced with Modern Animations -->
                     <template v-if="section.content.layout === 'slideshow' && section.content.slides?.length">
                         <div class="relative" style="min-height: inherit;">
                             <!-- Slides -->
                             <div 
                                 v-for="(slide, idx) in section.content.slides" 
                                 :key="idx"
-                                class="absolute inset-0 transition-opacity duration-500"
-                                :class="idx === (currentSlide[section.id] || 0) ? 'opacity-100 z-10' : 'opacity-0 z-0'"
+                                class="absolute inset-0 transition-all duration-1000 ease-out"
+                                :class="idx === (currentSlide[section.id] || 0) ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-105'"
                             >
-                                <img v-if="slide.backgroundImage" :src="slide.backgroundImage" class="w-full h-full object-cover" :alt="slide.title" />
-                                <div class="absolute inset-0 bg-black/40"></div>
+                                <!-- Background Image with Ken Burns Effect -->
+                                <div class="absolute inset-0 overflow-hidden">
+                                    <img 
+                                        v-if="slide.backgroundImage" 
+                                        :src="slide.backgroundImage" 
+                                        class="w-full h-full object-cover"
+                                        :style="idx === (currentSlide[section.id] || 0) ? { animation: 'kenBurnsZoom 10s ease-out forwards' } : {}"
+                                        :alt="slide.title" 
+                                    />
+                                </div>
+                                
+                                <!-- Gradient Overlay for Better Text Readability -->
+                                <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60"></div>
+                                
+                                <!-- Content with Slide-in Animations -->
                                 <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
-                                    <h1 class="font-bold mb-4 text-3xl sm:text-4xl lg:text-5xl text-white">{{ slide.title }}</h1>
-                                    <p v-if="slide.subtitle" class="mb-6 text-base sm:text-lg text-white/90 max-w-2xl">{{ slide.subtitle }}</p>
-                                    <a v-if="slide.buttonText" :href="slide.buttonLink || '#'" class="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-                                        {{ slide.buttonText }}
-                                    </a>
+                                    <div class="max-w-4xl">
+                                        <!-- Title with Slide Up Animation -->
+                                        <h1 
+                                            class="font-bold mb-4 text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-white drop-shadow-2xl transition-all duration-1000 ease-out"
+                                            :class="idx === (currentSlide[section.id] || 0) ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'"
+                                            :style="{ transitionDelay: idx === (currentSlide[section.id] || 0) ? '200ms' : '0ms' }"
+                                        >
+                                            {{ slide.title }}
+                                        </h1>
+                                        
+                                        <!-- Subtitle with Slide Up Animation (Delayed) -->
+                                        <p 
+                                            v-if="slide.subtitle" 
+                                            class="mb-8 text-lg sm:text-xl lg:text-2xl text-white/95 max-w-3xl mx-auto drop-shadow-lg transition-all duration-1000 ease-out font-light"
+                                            :class="idx === (currentSlide[section.id] || 0) ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'"
+                                            :style="{ transitionDelay: idx === (currentSlide[section.id] || 0) ? '400ms' : '0ms' }"
+                                        >
+                                            {{ slide.subtitle }}
+                                        </p>
+                                        
+                                        <!-- Button with Slide Up Animation (More Delayed) -->
+                                        <a 
+                                            v-if="slide.buttonText" 
+                                            :href="slide.buttonLink || '#'" 
+                                            class="inline-block px-8 py-4 bg-white text-blue-600 font-bold text-lg rounded-xl hover:bg-blue-50 hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl"
+                                            :class="idx === (currentSlide[section.id] || 0) ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'"
+                                            :style="{ transitionDelay: idx === (currentSlide[section.id] || 0) ? '600ms' : '0ms' }"
+                                        >
+                                            {{ slide.buttonText }}
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Slide Navigation Dots -->
-                            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                            
+                            <!-- Slide Navigation Dots - Enhanced with Elegant Styling -->
+                            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3 bg-gradient-to-r from-black/30 via-black/20 to-black/30 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 shadow-2xl">
                                 <button 
                                     v-for="(_, idx) in section.content.slides" 
                                     :key="idx"
                                     @click="setSlide(section.id, idx)"
-                                    class="w-3 h-3 rounded-full transition-colors"
-                                    :class="idx === (currentSlide[section.id] || 0) ? 'bg-white' : 'bg-white/50 hover:bg-white/75'"
+                                    class="slide-nav-dot transition-all duration-300 rounded-full"
+                                    :class="idx === (currentSlide[section.id] || 0) ? 'w-10 h-3 bg-white shadow-lg' : 'w-3 h-3 bg-white/40 hover:bg-white/70'"
                                     :aria-label="`Go to slide ${idx + 1}`"
                                 ></button>
                             </div>
-                            <!-- Slide Arrows -->
+                            
+                            <!-- Slide Arrows - Enhanced with Elegant Styling -->
                             <button 
                                 @click="prevSlide(section.id, section.content.slides.length)"
-                                class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+                                class="slide-nav-arrow absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 sm:w-16 sm:h-16 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center text-white border border-white/20 shadow-2xl group"
                                 aria-label="Previous slide"
                             >
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                                <svg class="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
                             </button>
                             <button 
                                 @click="nextSlide(section.id, section.content.slides.length)"
-                                class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+                                class="slide-nav-arrow absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 sm:w-16 sm:h-16 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center text-white border border-white/20 shadow-2xl group"
                                 aria-label="Next slide"
                             >
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                <svg class="w-6 h-6 sm:w-8 sm:h-8 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                             </button>
                         </div>
                     </template>
@@ -907,16 +1053,21 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                             </div>
                         </div>
                         
-                        <!-- Cards with Images Layout -->
+                        <!-- Cards with Images Layout - Enhanced -->
                         <div v-else-if="section.content.layout === 'cards-images'" :class="`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${section.content.columns || 3} gap-6 sm:gap-8`">
-                            <div v-for="(item, idx) in section.content.items" :key="idx" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group">
-                                <div v-if="item.image" class="aspect-video bg-gray-100 overflow-hidden">
-                                    <img :src="item.image" :alt="item.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div 
+                                v-for="(item, idx) in section.content.items" 
+                                :key="idx" 
+                                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
+                            >
+                                <div v-if="item.image" class="aspect-video bg-gray-100 overflow-hidden relative">
+                                    <img :src="item.image" :alt="item.title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </div>
                                 <div class="p-5 sm:p-6">
-                                    <h3 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">{{ item.title }}</h3>
-                                    <p class="text-gray-600 text-sm sm:text-base">{{ item.description }}</p>
-                                    <a v-if="item.link" :href="item.link" class="inline-flex items-center gap-1 mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                    <h3 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 group-hover:text-blue-600 transition-colors">{{ item.title }}</h3>
+                                    <p class="text-gray-600 text-sm sm:text-base leading-relaxed">{{ item.description }}</p>
+                                    <a v-if="item.link" :href="item.link" class="inline-flex items-center gap-1 mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium group-hover:gap-2 transition-all">
                                         Learn more <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                                     </a>
                                 </div>
@@ -925,11 +1076,14 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                         
                         <!-- Alternating Rows Layout -->
                         <div v-else-if="section.content.layout === 'alternating'" class="space-y-12 sm:space-y-16">
-                            <div v-for="(item, idx) in section.content.items" :key="idx" class="flex flex-col lg:flex-row gap-8 items-center" :class="idx % 2 === 1 ? 'lg:flex-row-reverse' : ''">
+                            <div v-for="(item, idx) in section.content.items" :key="idx" class="flex flex-col lg:flex-row gap-8 items-center animate-on-scroll opacity-0 translate-y-8 transition-all duration-700" :class="idx % 2 === 1 ? 'lg:flex-row-reverse' : ''">
                                 <div class="lg:w-1/2">
-                                    <div v-if="item.icon" class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                                        <span class="text-blue-600 text-2xl">{{ item.icon === 'chart' ? '📊' : item.icon === 'code' ? '💻' : item.icon === 'sparkles' ? '✨' : item.icon === 'briefcase' ? '💼' : item.icon === 'globe' ? '🌍' : item.icon === 'cog' ? '⚙️' : item.icon === 'users' ? '👥' : item.icon === 'shield' ? '🛡️' : '📦' }}</span>
-                                    </div>
+                                    <component 
+                                        v-if="item.icon" 
+                                        :is="getIconComponent(item.icon)" 
+                                        class="w-14 h-14 text-blue-600 mb-4"
+                                        aria-hidden="true"
+                                    />
                                     <h3 class="text-xl sm:text-2xl font-semibold mb-3">{{ item.title }}</h3>
                                     <p class="text-gray-600">{{ item.description }}</p>
                                     <a v-if="item.link" :href="item.link" class="inline-flex items-center gap-1 mt-4 text-blue-600 hover:text-blue-700 font-medium">
@@ -945,15 +1099,24 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                             </div>
                         </div>
                         
-                        <!-- Default Grid Layout -->
+                        <!-- Default Grid Layout - Enhanced with Hover Effects and Icons -->
                         <div v-else :class="`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${section.content.columns || 3} gap-6 sm:gap-8`">
-                            <div v-for="(item, idx) in section.content.items" :key="idx" class="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-100">
-                                <div v-if="item.icon" class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                                    <span class="text-blue-600 text-xl">{{ item.icon === 'chart' ? '📊' : item.icon === 'code' ? '💻' : item.icon === 'sparkles' ? '✨' : item.icon === 'briefcase' ? '💼' : item.icon === 'globe' ? '🌍' : item.icon === 'cog' ? '⚙️' : item.icon === 'users' ? '👥' : item.icon === 'shield' ? '🛡️' : '📦' }}</span>
+                            <div 
+                                v-for="(item, idx) in section.content.items" 
+                                :key="idx" 
+                                class="group bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 animate-on-scroll opacity-0 translate-y-8"
+                                :style="{ transitionDelay: `${idx * 100}ms` }"
+                            >
+                                <div v-if="item.icon" class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
+                                    <component 
+                                        :is="getIconComponent(item.icon)" 
+                                        class="w-6 h-6 text-white"
+                                        aria-hidden="true"
+                                    />
                                 </div>
-                                <h3 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-3">{{ item.title }}</h3>
-                                <p class="text-gray-600 text-sm sm:text-base">{{ item.description }}</p>
-                                <a v-if="item.link" :href="item.link" class="inline-flex items-center gap-1 mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                <h3 class="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 group-hover:text-blue-600 transition-colors">{{ item.title }}</h3>
+                                <p class="text-gray-600 text-sm sm:text-base leading-relaxed">{{ item.description }}</p>
+                                <a v-if="item.link" :href="item.link" class="inline-flex items-center gap-1 mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium group-hover:gap-2 transition-all">
                                     Learn more <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                                 </a>
                             </div>
@@ -1484,9 +1647,7 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                 <section
                     v-else-if="section.type === 'cta'"
                     class="relative overflow-hidden"
-                    :style="{ 
-                        backgroundColor: section.style?.backgroundColor || '#2563eb'
-                    }"
+                    :style="getCTABackgroundStyle(section)"
                 >
                     <!-- Standard Layout with Offset Support -->
                     <div 
@@ -1829,6 +1990,434 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                     </div>
                 </section>
 
+                <!-- Logo Cloud Section -->
+                <section
+                    v-else-if="section.type === 'logo-cloud'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor || '#f9fafb', color: section.style?.textColor }"
+                >
+                    <div class="max-w-6xl mx-auto text-center">
+                        <h2 v-if="section.content.title" class="text-xl sm:text-2xl font-bold mb-2">{{ section.content.title }}</h2>
+                        <p v-if="section.content.subtitle" class="text-gray-600 mb-8 sm:mb-12">{{ section.content.subtitle }}</p>
+                        <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-12 opacity-60">
+                            <div v-for="(logo, idx) in section.content.logos" :key="idx" class="text-2xl sm:text-3xl font-bold text-gray-400">
+                                {{ logo.name }}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Timeline Section -->
+                <section
+                    v-else-if="section.type === 'timeline'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor, color: section.style?.textColor }"
+                >
+                    <div class="max-w-4xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-blue-200 hidden sm:block"></div>
+                            <div class="space-y-8">
+                                <div v-for="(item, idx) in section.content.items" :key="idx" class="relative flex gap-4 sm:gap-6">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg z-10">
+                                        {{ idx + 1 }}
+                                    </div>
+                                    <div class="flex-1 pb-8">
+                                        <h3 class="text-lg sm:text-xl font-bold mb-2">{{ item.title }}</h3>
+                                        <p v-if="item.date" class="text-sm text-gray-500 mb-2">{{ item.date }}</p>
+                                        <p class="text-gray-600">{{ item.description }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CTA Banner Section -->
+                <section
+                    v-else-if="section.type === 'cta-banner'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
+                    :style="{ backgroundColor: section.style?.backgroundColor || '#2563eb', color: section.style?.textColor || '#ffffff' }"
+                >
+                    <div class="max-w-4xl mx-auto text-center">
+                        <h2 class="text-2xl sm:text-3xl font-bold mb-4">{{ section.content.title }}</h2>
+                        <p v-if="section.content.description" class="text-lg mb-6 opacity-90">{{ section.content.description }}</p>
+                        <a 
+                            v-if="section.content.buttonText"
+                            :href="section.content.buttonLink || '#'"
+                            class="inline-block px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            {{ section.content.buttonText }}
+                        </a>
+                    </div>
+                </section>
+
+                <!-- Video Hero Section -->
+                <section
+                    v-else-if="section.type === 'video-hero'"
+                    class="relative overflow-hidden"
+                    :style="{ minHeight: section.style?.minHeight ? `${section.style.minHeight}px` : '600px' }"
+                >
+                    <video 
+                        v-if="section.content.videoUrl"
+                        autoplay 
+                        loop 
+                        muted 
+                        playsinline
+                        class="absolute inset-0 w-full h-full object-cover"
+                    >
+                        <source :src="section.content.videoUrl" type="video/mp4">
+                    </video>
+                    <div class="absolute inset-0 bg-black/50"></div>
+                    <div class="relative z-10 h-full flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
+                        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 text-white">{{ section.content.title }}</h1>
+                        <p v-if="section.content.subtitle" class="text-lg sm:text-xl mb-6 text-white/90 max-w-2xl">{{ section.content.subtitle }}</p>
+                        <div class="flex flex-wrap gap-4 justify-center">
+                            <a 
+                                v-if="section.content.buttonText"
+                                :href="section.content.buttonLink || '#'"
+                                class="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                {{ section.content.buttonText }}
+                            </a>
+                            <a 
+                                v-if="section.content.secondaryButtonText"
+                                :href="section.content.secondaryButtonLink || '#'"
+                                class="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-colors"
+                            >
+                                {{ section.content.secondaryButtonText }}
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Stats Section -->
+                <section
+                    v-else-if="section.type === 'stats'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
+                    :style="{ backgroundColor: section.style?.backgroundColor || '#2563eb', color: section.style?.textColor || '#ffffff' }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="opacity-90">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                            <div v-for="(stat, idx) in section.content.items" :key="idx">
+                                <div class="text-3xl sm:text-4xl font-bold mb-2">{{ stat.value }}</div>
+                                <div class="text-sm sm:text-base opacity-90">{{ stat.label }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Page Header Section -->
+                <section
+                    v-else-if="section.type === 'page-header'"
+                    class="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 text-center"
+                    :style="{ 
+                        backgroundColor: section.content.backgroundColor || section.style?.backgroundColor || '#1e40af',
+                        color: section.content.textColor || section.style?.textColor || '#ffffff',
+                        minHeight: section.style?.minHeight ? `${section.style.minHeight}px` : '300px'
+                    }"
+                >
+                    <div class="max-w-4xl mx-auto flex flex-col justify-center h-full">
+                        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">{{ section.content.title }}</h1>
+                        <p v-if="section.content.subtitle" class="text-lg sm:text-xl opacity-90">{{ section.content.subtitle }}</p>
+                    </div>
+                </section>
+
+                <!-- Features Section -->
+                <section
+                    v-else-if="section.type === 'features'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div v-for="(feature, idx) in section.content.items" :key="idx" class="text-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                    <CheckIcon class="w-6 h-6 text-blue-600" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-lg font-semibold mb-2">{{ feature.title }}</h3>
+                                <p class="text-gray-600">{{ feature.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Services Section -->
+                <section
+                    v-else-if="section.type === 'services'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div v-for="(service, idx) in section.content.items" :key="idx" class="text-center">
+                                <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                    <CheckIcon class="w-8 h-8 text-blue-600" aria-hidden="true" />
+                                </div>
+                                <h3 class="text-xl font-semibold mb-3">{{ service.title }}</h3>
+                                <p class="text-gray-600">{{ service.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Pricing Section -->
+                <section
+                    v-else-if="section.type === 'pricing'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div v-for="(plan, idx) in section.content.plans" :key="idx" class="bg-white rounded-lg shadow-lg border border-gray-200 p-6" :class="{ 'ring-2 ring-blue-500': plan.popular }">
+                                <div v-if="plan.popular" class="text-center mb-4">
+                                    <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">Most Popular</span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-2">{{ plan.name }}</h3>
+                                <div class="text-3xl font-bold mb-4">{{ plan.price }}</div>
+                                <ul class="space-y-2 mb-6">
+                                    <li v-for="(feature, fidx) in plan.features" :key="fidx" class="flex items-start gap-2">
+                                        <CheckIcon class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                                        <span class="text-sm">{{ feature }}</span>
+                                    </li>
+                                </ul>
+                                <button class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                                    Choose Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contact Section -->
+                <section
+                    v-else-if="section.type === 'contact'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.description" class="text-gray-600">{{ section.content.description }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            <!-- Contact Form -->
+                            <div v-if="section.content.showForm" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <form class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                        <textarea rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                    </div>
+                                    <button type="submit" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                                        Send Message
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Contact Info -->
+                            <div class="space-y-6">
+                                <div v-if="section.content.email">
+                                    <h4 class="font-semibold mb-2">Email</h4>
+                                    <p class="text-gray-600">{{ section.content.email }}</p>
+                                </div>
+                                <div v-if="section.content.phone">
+                                    <h4 class="font-semibold mb-2">Phone</h4>
+                                    <p class="text-gray-600">{{ section.content.phone }}</p>
+                                </div>
+                                <div v-if="section.content.address">
+                                    <h4 class="font-semibold mb-2">Address</h4>
+                                    <p class="text-gray-600">{{ section.content.address }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Team Section -->
+                <section
+                    v-else-if="section.type === 'team'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div v-for="(member, idx) in section.content.items" :key="idx" class="text-center">
+                                <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden bg-gray-200">
+                                    <img v-if="member.image" :src="member.image" :alt="member.name" class="w-full h-full object-cover" />
+                                    <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                                        <span class="text-2xl font-bold">{{ member.name?.charAt(0) }}</span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-semibold mb-1">{{ member.name }}</h3>
+                                <p class="text-blue-600 font-medium mb-2">{{ member.role }}</p>
+                                <p v-if="member.bio" class="text-gray-600 text-sm">{{ member.bio }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Map Section -->
+                <section
+                    v-else-if="section.type === 'map'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                        </div>
+                        <div class="bg-gray-200 rounded-lg h-96 flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <p class="font-medium">Map Location</p>
+                                <p v-if="section.content.address" class="text-sm mt-1">{{ section.content.address }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CTA Section -->
+                <section
+                    v-else-if="section.type === 'cta'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8"
+                    :style="{ backgroundColor: section.style?.backgroundColor || '#2563eb', color: section.style?.textColor || '#ffffff' }"
+                >
+                    <div class="max-w-4xl mx-auto text-center">
+                        <h2 class="text-2xl sm:text-3xl font-bold mb-4">{{ section.content.title }}</h2>
+                        <p v-if="section.content.description" class="text-lg mb-6 opacity-90">{{ section.content.description }}</p>
+                        <a 
+                            v-if="section.content.buttonText"
+                            :href="section.content.buttonLink || '#'"
+                            class="inline-block px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            {{ section.content.buttonText }}
+                        </a>
+                    </div>
+                </section>
+
+                <!-- FAQ Section -->
+                <section
+                    v-else-if="section.type === 'faq'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor || '#f9fafb' }"
+                >
+                    <div class="max-w-4xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <details v-for="(item, idx) in section.content.items" :key="idx" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                                <summary class="px-6 py-4 cursor-pointer hover:bg-gray-50 font-medium text-left">
+                                    {{ item.question }}
+                                </summary>
+                                <div class="px-6 pb-4 text-gray-600">
+                                    {{ item.answer }}
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gallery Section -->
+                <section
+                    v-else-if="section.type === 'gallery'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="(item, idx) in section.content.items" :key="idx" class="group cursor-pointer">
+                                <div class="aspect-square overflow-hidden rounded-lg bg-gray-200">
+                                    <img 
+                                        v-if="item.image" 
+                                        :src="item.image" 
+                                        :alt="item.title || `Gallery image ${idx + 1}`"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                    <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                                        <span class="text-sm">Image {{ idx + 1 }}</span>
+                                    </div>
+                                </div>
+                                <h3 v-if="item.title" class="mt-3 font-medium">{{ item.title }}</h3>
+                                <p v-if="item.description" class="mt-1 text-sm text-gray-600">{{ item.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Products Section -->
+                <section
+                    v-else-if="section.type === 'products'"
+                    class="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden"
+                    :style="{ backgroundColor: section.style?.backgroundColor }"
+                >
+                    <div class="max-w-6xl mx-auto">
+                        <div v-if="section.content.title" class="text-center mb-12">
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-3">{{ section.content.title }}</h2>
+                            <p v-if="section.content.subtitle" class="text-gray-600">{{ section.content.subtitle }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div v-for="(product, idx) in section.content.products" :key="idx" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                                <div class="aspect-square bg-gray-100">
+                                    <img 
+                                        v-if="product.image" 
+                                        :src="product.image" 
+                                        :alt="product.name"
+                                        class="w-full h-full object-cover"
+                                    />
+                                    <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                                        <span class="text-sm">{{ product.name }}</span>
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <h3 class="font-medium mb-1">{{ product.name }}</h3>
+                                    <p v-if="product.description" class="text-sm text-gray-600 mb-2">{{ product.description }}</p>
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-lg">{{ product.price }}</span>
+                                        <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                                            Add to Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Default/Unknown Section -->
                 <section v-else class="py-10 sm:py-12 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
                     <p class="text-sm sm:text-base">{{ section.type }} section</p>
@@ -2077,5 +2666,114 @@ details summary::-webkit-details-marker {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+</style>
+
+
+<style scoped>
+/* Scroll Animation Styles */
+.animate-on-scroll {
+    transition-property: opacity, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-on-scroll.animate-in {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Ensure animations work on initial load */
+@media (prefers-reduced-motion: no-preference) {
+    .animate-on-scroll {
+        will-change: opacity, transform;
+    }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .animate-on-scroll {
+        transition: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* Enhanced Slideshow Animations */
+@keyframes kenBurnsZoom {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Slideshow navigation enhancements */
+.slide-nav-dot {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-nav-dot:hover {
+    transform: scale(1.2);
+}
+
+.slide-nav-arrow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+
+.slide-nav-arrow:hover {
+    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.slide-nav-arrow:active {
+    transform: scale(0.95);
+}
+
+/* Card hover animations */
+.service-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.service-card-image {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-card:hover .service-card-image {
+    transform: scale(1.1);
+}
+
+.service-card-icon {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-card:hover .service-card-icon {
+    transform: rotate(5deg) scale(1.1);
 }
 </style>

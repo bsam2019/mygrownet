@@ -13,6 +13,15 @@ class MasterSiteTemplatesSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('🌱 Seeding all site templates...');
+        $this->command->newLine();
+        
+        // Clear existing templates
+        $this->command->info('🗑️  Clearing existing templates...');
+        \DB::table('site_template_pages')->delete();
+        \DB::table('site_templates')->delete();
+        \DB::table('site_template_industries')->delete();
+        $this->command->info('✅ Tables cleared');
+        $this->command->newLine();
         
         $seeders = [
             SiteTemplatesSeeder::class,
@@ -21,9 +30,11 @@ class MasterSiteTemplatesSeeder extends Seeder
             IndustryTemplatesSeeder::class,
             EnhancedTemplatesSeeder::class,
             FinalSiteTemplatesSeeder::class,
-            PremiumTemplatesSeeder::class,
-            AllTemplatesSeeder::class,
             AgricultureSiteTemplateSeeder::class,
+            DHCreativeStudioSeeder::class,
+            NdelimaConstructionSeeder::class,
+            NdelimaConstructionV2Seeder::class,
+            FlamesOfHopeChurchSeeder::class,
         ];
 
         foreach ($seeders as $seeder) {

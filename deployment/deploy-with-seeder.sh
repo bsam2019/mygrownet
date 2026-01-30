@@ -29,3 +29,35 @@ echo "✅ Seeder completed!"
 ENDSSH
 
 echo "🎉 All done!"
+# Clear first
+echo "🧹 Clearing caches..."
+php artisan optimize:clear
+
+# Fix permissions - set www-data as owner and sammy as group member
+echo "🔧 Fixing permissions..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S usermod -a -G www-data sammy
+
+# Run seeder
+echo "🌱 Running production seeder..."
+php artisan db:seed --class=ProductionSeeder
+
+# Set proper permissions for optimization
+echo "🔧 Setting permissions for optimization..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/cache
+
+# Optimize
+echo "🚀 Optimizing..."
+php artisan optimize
+
+# Restore proper permissions
+echo "🔒 Restoring secure permissions..."
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 775 storage bootstrap/cache
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
+
+echo "✅ Deployment complete!"
+
+ENDSSH
+
+echo "🎉 All done!"

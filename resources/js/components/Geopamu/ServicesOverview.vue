@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { 
   PrinterIcon, 
@@ -48,12 +49,34 @@ const services = [
     color: 'red'
   }
 ];
+
+// Scroll animations
+onMounted(() => {
+  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-in');
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+  
+  setTimeout(() => {
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+  }, 100);
+});
 </script>
 
 <template>
   <section class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
+      <div class="text-center mb-16 animate-on-scroll opacity-0 translate-y-8 transition-all duration-700">
         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           Our Services
         </h2>
@@ -64,20 +87,21 @@ const services = [
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div
-          v-for="service in services"
+          v-for="(service, index) in services"
           :key="service.title"
-          class="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all group"
+          class="service-card bg-white p-8 rounded-xl shadow-sm hover:shadow-xl transition-all group animate-on-scroll opacity-0 translate-y-8"
+          :style="{ transitionDelay: `${index * 100}ms`, transitionDuration: '700ms' }"
         >
           <div 
             :class="[
-              'w-14 h-14 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform',
+              'service-card-icon w-14 h-14 rounded-lg flex items-center justify-center mb-6 transition-all duration-300',
               service.color === 'blue' ? 'bg-blue-100' : 'bg-red-100'
             ]"
           >
             <component 
               :is="service.icon" 
               :class="[
-                'h-7 w-7',
+                'h-7 w-7 transition-transform duration-300',
                 service.color === 'blue' ? 'text-blue-600' : 'text-red-600'
               ]"
               aria-hidden="true"
@@ -104,10 +128,10 @@ const services = [
         </div>
       </div>
 
-      <div class="text-center mt-12">
+      <div class="text-center mt-12 animate-on-scroll opacity-0 translate-y-8 transition-all duration-700" style="transition-delay: 600ms;">
         <Link
           href="/geopamu/services"
-          class="inline-flex items-center bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+          class="inline-flex items-center bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-700 hover:scale-105 transition-all shadow-lg hover:shadow-xl"
         >
           View All Services
           <ArrowRightIcon class="ml-2 h-5 w-5" aria-hidden="true" />
@@ -116,3 +140,22 @@ const services = [
     </div>
   </section>
 </template>
+
+<style scoped>
+.service-card {
+  transition-property: transform, box-shadow, opacity;
+}
+
+.service-card:hover {
+  transform: translateY(-8px);
+}
+
+.service-card:hover .service-card-icon {
+  transform: rotate(5deg) scale(1.1);
+}
+
+.animate-on-scroll.animate-in {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+</style>

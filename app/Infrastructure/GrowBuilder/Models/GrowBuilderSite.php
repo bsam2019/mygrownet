@@ -66,9 +66,9 @@ class GrowBuilderSite extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function template(): BelongsTo
+    public function siteTemplate(): BelongsTo
     {
-        return $this->belongsTo(GrowBuilderTemplate::class, 'template_id');
+        return $this->belongsTo(\App\Models\GrowBuilder\SiteTemplate::class, 'site_template_id');
     }
 
     public function pages(): HasMany

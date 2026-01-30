@@ -8,29 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Templates
-        Schema::create('growbuilder_templates', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('category'); // business, restaurant, church, tutor, portfolio
-            $table->text('description')->nullable();
-            $table->string('preview_image')->nullable();
-            $table->string('thumbnail')->nullable();
-            $table->json('structure_json'); // Default page structure
-            $table->json('default_styles')->nullable(); // Default colors, fonts
-            $table->boolean('is_premium')->default(false);
-            $table->integer('price')->default(0); // In Kwacha
-            $table->boolean('is_active')->default(true);
-            $table->integer('usage_count')->default(0);
-            $table->timestamps();
-        });
-
         // Sites
         Schema::create('growbuilder_sites', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('template_id')->nullable()->constrained('growbuilder_templates')->nullOnDelete();
+            $table->foreignId('site_template_id')->nullable()->constrained('site_templates')->nullOnDelete();
             $table->string('name');
             $table->string('subdomain')->unique();
             $table->string('custom_domain')->nullable()->unique();
@@ -168,6 +150,5 @@ return new class extends Migration
         Schema::dropIfExists('growbuilder_section_types');
         Schema::dropIfExists('growbuilder_pages');
         Schema::dropIfExists('growbuilder_sites');
-        Schema::dropIfExists('growbuilder_templates');
     }
 };

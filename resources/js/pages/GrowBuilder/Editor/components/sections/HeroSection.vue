@@ -132,8 +132,8 @@ const goToSlide = (idx: number) => {
 };
 
 onMounted(() => {
-    if (layout.value === 'slideshow' && content.value.autoPlay && slides.value.length > 1) {
-        const interval = content.value.slideInterval || 5000;
+    if ((layout.value === 'slideshow' || layout.value === 'slider') && (content.value.autoPlay || content.value.autoplay) && slides.value.length > 1) {
+        const interval = content.value.slideInterval || content.value.interval || 5000;
         slideInterval = setInterval(nextSlide, interval);
     }
 });
@@ -148,8 +148,8 @@ onUnmounted(() => {
         class="relative overflow-hidden"
         :style="backgroundStyle"
     >
-        <!-- Slideshow Layout -->
-        <template v-if="layout === 'slideshow' && slides.length > 0">
+        <!-- Slideshow/Slider Layout -->
+        <template v-if="(layout === 'slideshow' || layout === 'slider') && slides.length > 0">
             <div class="relative h-full" style="min-height: inherit;">
                 <!-- Slides -->
                 <div 
@@ -159,11 +159,12 @@ onUnmounted(() => {
                     :class="idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'"
                 >
                     <img v-if="slide.backgroundImage" :src="slide.backgroundImage" class="w-full h-full object-cover" :alt="slide.title" />
-                    <div class="absolute inset-0 bg-black/40"></div>
+                    <div class="absolute inset-0" :style="overlayStyle"></div>
                     <div class="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
                         <h1 :class="[textSize.h1, 'font-bold mb-4 text-white']">{{ slide.title || 'Slide Title' }}</h1>
-                        <p v-if="slide.subtitle" :class="[textSize.p, 'mb-6 text-white/90 max-w-2xl']">{{ slide.subtitle }}</p>
-                        <button v-if="slide.buttonText" class="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg">
+                        <p v-if="slide.subtitle" :class="[textSize.h2, 'mb-2 text-white/90 max-w-2xl']">{{ slide.subtitle }}</p>
+                        <p v-if="slide.description" :class="[textSize.p, 'mb-6 text-white/80 max-w-2xl']">{{ slide.description }}</p>
+                        <button v-if="slide.buttonText" class="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
                             {{ slide.buttonText }}
                         </button>
                     </div>

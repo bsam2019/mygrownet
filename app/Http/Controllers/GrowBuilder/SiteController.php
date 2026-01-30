@@ -8,7 +8,6 @@ use App\Application\GrowBuilder\UseCases\CreateSiteUseCase;
 use App\Application\GrowBuilder\UseCases\PublishSiteUseCase;
 use App\Application\GrowBuilder\UseCases\UpdateSiteUseCase;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
-use App\Domain\GrowBuilder\Repositories\TemplateRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
@@ -29,7 +28,6 @@ class SiteController extends Controller
 
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
-        private TemplateRepositoryInterface $templateRepository,
         private CreateSiteUseCase $createSiteUseCase,
         private UpdateSiteUseCase $updateSiteUseCase,
         private PublishSiteUseCase $publishSiteUseCase,
@@ -230,8 +228,6 @@ class SiteController extends Controller
 
     public function create(Request $request)
     {
-        $templates = $this->templateRepository->findActive();
-
         // Get site templates (full website templates)
         $siteTemplates = \App\Models\GrowBuilder\SiteTemplate::with('pages')
             ->active()
@@ -265,18 +261,6 @@ class SiteController extends Controller
             ]);
 
         return Inertia::render('GrowBuilder/Sites/Create', [
-            'templates' => collect($templates)->map(fn($t) => [
-                'id' => $t->getId()->value(),
-                'name' => $t->getName(),
-                'slug' => $t->getSlug(),
-                'category' => $t->getCategory()->value(),
-                'categoryLabel' => $t->getCategory()->label(),
-                'description' => $t->getDescription(),
-                'thumbnail' => $t->getThumbnail(),
-                'previewImage' => $t->getPreviewImage(),
-                'isPremium' => $t->isPremium(),
-                'price' => $t->getPrice(),
-            ]),
             'siteTemplates' => $siteTemplates,
             'industries' => $industries,
         ]);
@@ -310,7 +294,6 @@ class SiteController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'subdomain' => 'required|string|min:3|max:63|regex:/^[a-z0-9][a-z0-9-]*[a-z0-9]$/',
-            'template_id' => 'nullable|integer|exists:growbuilder_templates,id',
             'site_template_id' => 'nullable|integer|exists:site_templates,id',
             'description' => 'nullable|string|max:500',
         ]);
@@ -320,7 +303,7 @@ class SiteController extends Controller
                 userId: $request->user()->id,
                 name: $validated['name'],
                 subdomain: $validated['subdomain'],
-                templateId: $validated['template_id'] ?? null,
+                templateId: $validated['site_template_id'] ?? null,
                 description: $validated['description'] ?? null,
             );
 

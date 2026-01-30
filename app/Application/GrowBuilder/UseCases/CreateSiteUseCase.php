@@ -9,11 +9,8 @@ use App\Domain\GrowBuilder\Entities\Page;
 use App\Domain\GrowBuilder\Entities\Site;
 use App\Domain\GrowBuilder\Repositories\PageRepositoryInterface;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
-use App\Domain\GrowBuilder\Repositories\TemplateRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\PageContent;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
-use App\Domain\GrowBuilder\ValueObjects\TemplateId;
-use App\Domain\GrowBuilder\ValueObjects\Theme;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use App\Services\GrowBuilder\SiteRoleService;
 
@@ -21,7 +18,6 @@ class CreateSiteUseCase
 {
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
-        private TemplateRepositoryInterface $templateRepository,
         private PageRepositoryInterface $pageRepository,
         private SiteRoleService $siteRoleService,
     ) {}
@@ -43,16 +39,6 @@ class CreateSiteUseCase
             description: $dto->description,
         );
 
-        // Apply template theme if selected
-        if ($dto->templateId) {
-            $template = $this->templateRepository->findById(TemplateId::fromInt($dto->templateId));
-            if ($template && $template->getDefaultStyles()) {
-                $site->updateTheme(Theme::fromArray($template->getDefaultStyles()));
-            }
-            $template->incrementUsage();
-            $this->templateRepository->save($template);
-        }
-
         // Save site
         $site = $this->siteRepository->save($site);
 
@@ -60,7 +46,7 @@ class CreateSiteUseCase
         $this->createDefaultRoles($site);
 
         // Create default homepage
-        $this->createDefaultHomepage($site, $dto->templateId);
+        $this->createDefaultHomepage($site);
 
         return $site;
     }
@@ -74,9 +60,9 @@ class CreateSiteUseCase
         }
     }
 
-    private function createDefaultHomepage(Site $site, ?int $templateId): void
+    private function createDefaultHomepage(Site $site): void
     {
-        $content = $this->getDefaultHomeContent($templateId);
+        $content = $this->getDefaultHomeContent();
 
         $homepage = Page::create(
             siteId: $site->getId()->value(),
@@ -89,15 +75,8 @@ class CreateSiteUseCase
         $this->pageRepository->save($homepage);
     }
 
-    private function getDefaultHomeContent(?int $templateId): PageContent
+    private function getDefaultHomeContent(): PageContent
     {
-        if ($templateId) {
-            $template = $this->templateRepository->findById(TemplateId::fromInt($templateId));
-            if ($template && !empty($template->getStructureJson())) {
-                return PageContent::fromArray($template->getStructureJson()['sections'] ?? []);
-            }
-        }
-
         // Default content
         return PageContent::fromArray([
             [
