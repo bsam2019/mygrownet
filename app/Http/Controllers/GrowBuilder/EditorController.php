@@ -278,6 +278,7 @@ class EditorController extends Controller
             'navigation' => 'nullable|array',
             'navigation.logoText' => 'nullable|string|max:255',
             'navigation.logo' => 'nullable|string|max:500',
+            'navigation.logoSize' => 'nullable|string|in:small,medium,large,xlarge',
             'navigation.navItems' => 'nullable|array',
             'navigation.showCta' => 'nullable|boolean',
             'navigation.ctaText' => 'nullable|string|max:100',
