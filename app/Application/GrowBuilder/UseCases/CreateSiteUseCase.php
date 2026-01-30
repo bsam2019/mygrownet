@@ -42,6 +42,9 @@ class CreateSiteUseCase
         // Save site
         $site = $this->siteRepository->save($site);
 
+        // Initialize default settings (navigation and footer)
+        $this->initializeDefaultSettings($site);
+
         // Create default roles for the site
         $this->createDefaultRoles($site);
 
@@ -58,6 +61,95 @@ class CreateSiteUseCase
         if ($siteModel) {
             $this->siteRoleService->createDefaultRolesForSite($siteModel);
         }
+    }
+
+    private function initializeDefaultSettings(Site $site): void
+    {
+        $siteModel = GrowBuilderSite::find($site->getId()->value());
+        if (!$siteModel) {
+            return;
+        }
+
+        // Initialize default navigation
+        $defaultNavigation = [
+            'logoText' => $site->getName(),
+            'logo' => '',
+            'logoSize' => 'medium',
+            'navItems' => [
+                [
+                    'id' => 'nav-home',
+                    'label' => 'Home',
+                    'url' => '/',
+                    'pageId' => null,
+                    'isExternal' => false,
+                    'children' => [],
+                ],
+                [
+                    'id' => 'nav-about',
+                    'label' => 'About',
+                    'url' => '#about',
+                    'pageId' => null,
+                    'isExternal' => false,
+                    'children' => [],
+                ],
+                [
+                    'id' => 'nav-contact',
+                    'label' => 'Contact',
+                    'url' => '#contact',
+                    'pageId' => null,
+                    'isExternal' => false,
+                    'children' => [],
+                ],
+            ],
+            'showCta' => false,
+            'ctaText' => 'Get Started',
+            'ctaLink' => '#contact',
+            'sticky' => true,
+            'showAuthButtons' => false,
+        ];
+
+        // Initialize default footer with links matching navigation
+        $defaultFooter = [
+            'logo' => '',
+            'copyrightText' => '© ' . date('Y') . ' ' . $site->getName() . '. All rights reserved.',
+            'columns' => [
+                [
+                    'id' => 'footer-col-1',
+                    'title' => 'Quick Links',
+                    'links' => [
+                        [
+                            'id' => 'footer-link-home',
+                            'label' => 'Home',
+                            'url' => '/',
+                            'isExternal' => false,
+                        ],
+                        [
+                            'id' => 'footer-link-about',
+                            'label' => 'About',
+                            'url' => '#about',
+                            'isExternal' => false,
+                        ],
+                        [
+                            'id' => 'footer-link-contact',
+                            'label' => 'Contact',
+                            'url' => '#contact',
+                            'isExternal' => false,
+                        ],
+                    ],
+                ],
+            ],
+            'socialLinks' => [],
+            'backgroundColor' => '#1f2937',
+            'textColor' => '#ffffff',
+            'layout' => 'columns',
+        ];
+
+        // Save settings
+        $siteModel->settings = [
+            'navigation' => $defaultNavigation,
+            'footer' => $defaultFooter,
+        ];
+        $siteModel->save();
     }
 
     private function createDefaultHomepage(Site $site): void
