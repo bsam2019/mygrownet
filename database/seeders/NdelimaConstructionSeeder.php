@@ -14,7 +14,7 @@ class NdelimaConstructionSeeder extends Seeder
             ['slug' => 'ndelima-construction'],
             [
                 'name' => 'Ndelima Enterprises',
-                'description' => 'Professional construction template for electrical, plumbing, aluminium windows, plastering, ceiling work, thatching, and complete turnkey solutions.',
+                'description' => 'Professional construction template for electrical, plumbing, aluminium windows, plastering, ceiling work, painting, and complete turnkey solutions.',
                 'industry' => 'construction',
                 'thumbnail' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80',
                 'is_premium' => false,
@@ -52,7 +52,7 @@ class NdelimaConstructionSeeder extends Seeder
             'sort_order' => 1,
             'content' => ['sections' => [
                 // Hero Section
-                ['type' => 'hero', 'content' => ['layout' => 'centered', 'title' => 'Your One-Stop Construction Solution', 'subtitle' => 'Quality craftsmanship for electrical, plumbing, aluminium windows, plastering, ceiling work, thatching, and more', 'buttonText' => 'Get Free Quote', 'buttonLink' => '/contact', 'secondaryButtonText' => 'Our Services', 'secondaryButtonLink' => '/services', 'backgroundImage' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1920&q=80', 'overlayColor' => 'black', 'overlayOpacity' => 50], 'style' => ['minHeight' => 650]],
+                ['type' => 'hero', 'content' => ['layout' => 'centered', 'title' => 'Your One-Stop Construction Solution', 'subtitle' => 'Quality craftsmanship for electrical, plumbing, aluminium windows, plastering, ceiling work, painting, and more', 'buttonText' => 'Get Free Quote', 'buttonLink' => '/contact', 'secondaryButtonText' => 'Our Services', 'secondaryButtonLink' => '/services', 'backgroundImage' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1920&q=80', 'overlayColor' => 'black', 'overlayOpacity' => 50], 'style' => ['minHeight' => 650]],
                 
                 // Stats Section
                 ['type' => 'stats', 'content' => ['layout' => 'row', 'items' => [
@@ -65,13 +65,13 @@ class NdelimaConstructionSeeder extends Seeder
                 // About Section
                 ['type' => 'about', 'content' => ['layout' => 'image-right', 'title' => 'Building Excellence Since Day One', 'description' => 'Ndelima Enterprises is your trusted partner for all construction needs. From electrical wiring to thatching, we provide comprehensive turnkey solutions with one point of contact. Our experienced team delivers quality workmanship, timely completion, and competitive pricing on every project.', 'image' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80', 'features' => ['Licensed & Insured', 'Experienced Professionals', 'Quality Materials', 'Competitive Pricing']], 'style' => ['backgroundColor' => '#ffffff']],
                 
-                // Services Section - Main Services
-                ['type' => 'services', 'content' => ['layout' => 'cards-images', 'title' => 'Our Services', 'subtitle' => 'Complete construction solutions under one roof', 'items' => [
+                // Services Section - Main Services (No Thatching)
+                ['type' => 'services', 'content' => ['layout' => 'cards-images', 'title' => 'Our Services', 'subtitle' => 'Professional construction solutions', 'items' => [
                     ['title' => 'Electrical Wiring', 'description' => 'Professional electrical installations, repairs, and maintenance for residential and commercial properties', 'icon' => 'light-bulb', 'image' => 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=80'],
                     ['title' => 'Plumbing Services', 'description' => 'Complete plumbing solutions including installations, repairs, and bathroom fittings', 'icon' => 'cog', 'image' => 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&q=80'],
                     ['title' => 'Aluminium Windows', 'description' => 'Custom aluminium window installations for modern, durable, and energy-efficient solutions', 'icon' => 'cube', 'image' => 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80'],
                     ['title' => 'Plastering & Ceiling', 'description' => 'Expert plastering and ceiling work for smooth, professional finishes', 'icon' => 'briefcase', 'image' => 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&q=80'],
-                    ['title' => 'Thatching Services', 'description' => 'Traditional and modern thatching for roofs, gazebos, and outdoor structures', 'icon' => 'sparkles', 'image' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80'],
+                    ['title' => 'Painting Services', 'description' => 'Interior and exterior painting with premium finishes and attention to detail', 'icon' => 'sparkles', 'image' => 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600&q=80'],
                     ['title' => 'Turnkey Solutions', 'description' => 'Complete project management from start to finish - one point of contact for all your needs', 'icon' => 'check', 'image' => 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80'],
                 ]], 'style' => ['backgroundColor' => '#f8fafc']],
                 
@@ -112,7 +112,7 @@ class NdelimaConstructionSeeder extends Seeder
                     ['title' => 'Plumbing & Bathroom Fittings', 'description' => 'Professional plumbing services including pipe installations, repairs, water heater installations, bathroom and kitchen fittings, drainage systems, and emergency plumbing. We use quality materials and provide warranties on all work.', 'icon' => 'cog', 'image' => 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&q=80'],
                     ['title' => 'Aluminium Windows & Doors', 'description' => 'Custom-made aluminium windows and doors for modern homes and offices. Energy-efficient, durable, and stylish. We handle measurements, manufacturing, and professional installation. Available in various colors and styles.', 'icon' => 'cube', 'image' => 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80'],
                     ['title' => 'Plastering & Ceiling Work', 'description' => 'Expert plastering for walls and ceilings, including smooth finishes, textured finishes, and repairs. We also install suspended ceilings, gypsum ceilings, and decorative ceiling designs for residential and commercial spaces.', 'icon' => 'briefcase', 'image' => 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&q=80'],
-                    ['title' => 'Thatching Services', 'description' => 'Traditional and modern thatching for roofs, gazebos, lapa structures, and outdoor entertainment areas. We use quality thatch materials and provide waterproofing treatments for long-lasting results.', 'icon' => 'sparkles', 'image' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80'],
+                    ['title' => 'Painting Services', 'description' => 'Professional interior and exterior painting services for residential and commercial properties. We use premium paints and finishes, provide color consultation, and ensure meticulous preparation and application for long-lasting, beautiful results.', 'icon' => 'sparkles', 'image' => 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600&q=80'],
                     ['title' => 'Turnkey Construction Projects', 'description' => 'Complete project management from design to completion. We coordinate all trades, manage timelines, and ensure quality control. One point of contact for your entire construction project - residential, commercial, or industrial.', 'icon' => 'check', 'image' => 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80'],
                 ]], 'style' => ['backgroundColor' => '#ffffff']],
                 
@@ -144,7 +144,7 @@ class NdelimaConstructionSeeder extends Seeder
                     ['url' => 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=600&q=80', 'alt' => 'Plumbing Installation'],
                     ['url' => 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80', 'alt' => 'Aluminium Windows'],
                     ['url' => 'https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&q=80', 'alt' => 'Ceiling Work'],
-                    ['url' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80', 'alt' => 'Thatching'],
+                    ['url' => 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=600&q=80', 'alt' => 'Painting Services'],
                     ['url' => 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80', 'alt' => 'Complete Project'],
                 ]], 'style' => ['backgroundColor' => '#1f2937']],
             ]],

@@ -13,17 +13,17 @@ class NdelimaConstructionV2Seeder extends Seeder
         $template = SiteTemplate::updateOrCreate(
             ['slug' => 'ndelima-construction-v2'],
             [
-                'name' => 'Ndelima Enterprises v2',
-                'description' => 'Enhanced construction template with 5-slide hero slideshow, Ken Burns zoom effects, elegant navigation controls, and modern animations for electrical, plumbing, aluminium windows, plastering, ceiling work, thatching, and turnkey solutions.',
+                'name' => 'Ndelima Enterprises Pro',
+                'description' => 'Premium construction template featuring traditional African thatching alongside modern services - electrical, plumbing, aluminium windows, plastering, and ceiling work. Perfect for showcasing authentic craftsmanship.',
                 'industry' => 'construction',
-                'thumbnail' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80',
+                'thumbnail' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
                 'is_premium' => false,
                 'is_active' => true,
                 'sort_order' => 8,
                 'theme' => [
-                    'primaryColor' => '#dc2626',
-                    'secondaryColor' => '#ea580c',
-                    'accentColor' => '#fbbf24',
+                    'primaryColor' => '#16a34a',
+                    'secondaryColor' => '#ca8a04',
+                    'accentColor' => '#dc2626',
                 ],
                 'settings' => [
                     'navigation' => [
@@ -79,7 +79,7 @@ class NdelimaConstructionV2Seeder extends Seeder
                     ['value' => '500+', 'label' => 'Happy Clients'],
                     ['value' => '50+', 'label' => 'Skilled Craftsmen'],
                     ['value' => '100%', 'label' => 'Quality Guarantee'],
-                ]], 'style' => ['backgroundColor' => '#dc2626', 'textColor' => '#ffffff']],
+                ]], 'style' => ['backgroundColor' => '#16a34a', 'textColor' => '#ffffff']],
                 
                 // Featured Projects Section
                 ['type' => 'gallery', 'content' => ['layout' => 'grid', 'title' => 'Recent Projects', 'subtitle' => 'See the quality we deliver', 'images' => [
@@ -98,7 +98,7 @@ class NdelimaConstructionV2Seeder extends Seeder
                 ]], 'style' => ['backgroundColor' => '#f8fafc']],
                 
                 // CTA Section
-                ['type' => 'cta', 'content' => ['layout' => 'centered', 'title' => 'Ready to Build Your Dream?', 'description' => 'Get a free consultation and detailed quote. Let\'s discuss how we can bring your vision to life.', 'buttonText' => 'Request Free Quote', 'buttonLink' => '/contact', 'secondaryButtonText' => 'Call Us Now', 'secondaryButtonLink' => 'tel:+260971234567'], 'style' => ['backgroundColor' => '#dc2626']],
+                ['type' => 'cta', 'content' => ['layout' => 'centered', 'title' => 'Ready to Build Your Dream?', 'description' => 'Get a free consultation and detailed quote. Let\'s discuss how we can bring your vision to life.', 'buttonText' => 'Request Free Quote', 'buttonLink' => '/contact', 'secondaryButtonText' => 'Call Us Now', 'secondaryButtonLink' => 'tel:+260971234567'], 'style' => ['backgroundColor' => '#16a34a']],
             ]],
         ]);
 
@@ -111,7 +111,7 @@ class NdelimaConstructionV2Seeder extends Seeder
             'show_in_nav' => true,
             'sort_order' => 2,
             'content' => ['sections' => [
-                ['type' => 'page-header', 'content' => ['title' => 'About Ndelima Enterprises', 'subtitle' => 'Building Dreams Since 2009', 'backgroundImage' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80', 'backgroundColor' => '#dc2626', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 400]],
+                ['type' => 'page-header', 'content' => ['title' => 'About Ndelima Enterprises', 'subtitle' => 'Building Dreams Since 2009', 'backgroundImage' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80', 'backgroundColor' => '#16a34a', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 400]],
                 
                 ['type' => 'about', 'content' => ['layout' => 'image-right', 'title' => 'Our Story', 'description' => 'Founded in 2009, Ndelima Enterprises began with a simple mission: to provide honest, quality construction services to the people of Zambia. What started as a small electrical contracting business has grown into a full-service construction company, trusted by hundreds of homeowners and businesses across the country. Our success is built on three pillars: quality craftsmanship, transparent pricing, and unwavering commitment to our clients.', 'image' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&q=80', 'features' => ['Family-Owned Business', 'Zambian Roots', 'Community Focused', 'Ethical Practices']], 'style' => ['backgroundColor' => '#ffffff']],
                 
@@ -129,7 +129,7 @@ class NdelimaConstructionV2Seeder extends Seeder
                     ['value' => '500+', 'label' => 'Projects Completed'],
                     ['value' => '50+', 'label' => 'Team Members'],
                     ['value' => '98%', 'label' => 'Client Satisfaction'],
-                ]], 'style' => ['backgroundColor' => '#dc2626', 'textColor' => '#ffffff']],
+                ]], 'style' => ['backgroundColor' => '#16a34a', 'textColor' => '#ffffff']],
             ]],
         ]);
 
@@ -142,7 +142,7 @@ class NdelimaConstructionV2Seeder extends Seeder
             'show_in_nav' => true,
             'sort_order' => 3,
             'content' => ['sections' => [
-                ['type' => 'page-header', 'content' => ['title' => 'Our Services', 'subtitle' => 'Comprehensive Construction Solutions', 'backgroundImage' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80', 'backgroundColor' => '#dc2626', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 350]],
+                ['type' => 'page-header', 'content' => ['title' => 'Our Services', 'subtitle' => 'Comprehensive Construction Solutions', 'backgroundImage' => 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80', 'backgroundColor' => '#16a34a', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 350]],
                 
                 // Detailed Services with Images
                 ['type' => 'services', 'content' => ['layout' => 'cards-images', 'title' => 'What We Do Best', 'subtitle' => 'Expert services across all construction trades', 'items' => [
@@ -175,7 +175,7 @@ class NdelimaConstructionV2Seeder extends Seeder
             'show_in_nav' => true,
             'sort_order' => 4,
             'content' => ['sections' => [
-                ['type' => 'page-header', 'content' => ['title' => 'Project Gallery', 'subtitle' => 'Our Work Speaks for Itself', 'backgroundImage' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1920&q=80', 'backgroundColor' => '#dc2626', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 350]],
+                ['type' => 'page-header', 'content' => ['title' => 'Project Gallery', 'subtitle' => 'Our Work Speaks for Itself', 'backgroundImage' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1920&q=80', 'backgroundColor' => '#16a34a', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 350]],
                 
                 ['type' => 'gallery', 'content' => ['layout' => 'masonry', 'title' => 'Completed Projects', 'subtitle' => 'Quality craftsmanship in every detail', 'images' => [
                     ['url' => 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=80', 'alt' => 'Modern Electrical Installation'],
@@ -188,7 +188,7 @@ class NdelimaConstructionV2Seeder extends Seeder
                     ['url' => 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=600&q=80', 'alt' => 'Residential Project'],
                 ]], 'style' => ['backgroundColor' => '#1f2937']],
                 
-                ['type' => 'cta', 'content' => ['layout' => 'banner', 'title' => 'Want Your Project Featured Here?', 'description' => 'Let\'s create something amazing together. Contact us for a free consultation.', 'buttonText' => 'Start Your Project', 'buttonLink' => '/contact'], 'style' => ['backgroundColor' => '#dc2626']],
+                ['type' => 'cta', 'content' => ['layout' => 'banner', 'title' => 'Want Your Project Featured Here?', 'description' => 'Let\'s create something amazing together. Contact us for a free consultation.', 'buttonText' => 'Start Your Project', 'buttonLink' => '/contact'], 'style' => ['backgroundColor' => '#16a34a']],
             ]],
         ]);
 
@@ -201,7 +201,7 @@ class NdelimaConstructionV2Seeder extends Seeder
             'show_in_nav' => true,
             'sort_order' => 5,
             'content' => ['sections' => [
-                ['type' => 'page-header', 'content' => ['title' => 'Get In Touch', 'subtitle' => 'Let\'s Discuss Your Project', 'backgroundColor' => '#dc2626', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 300]],
+                ['type' => 'page-header', 'content' => ['title' => 'Get In Touch', 'subtitle' => 'Let\'s Discuss Your Project', 'backgroundColor' => '#16a34a', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 300]],
                 ['type' => 'contact', 'content' => ['layout' => 'side-by-side', 'title' => 'Request Your Free Quote', 'description' => 'Fill out the form below and we\'ll get back to you within 24 hours with a detailed, no-obligation quote.', 'showForm' => true, 'email' => 'info@ndelima.co.zm', 'phone' => '+260 97 123 4567', 'address' => 'Plot 123, Industrial Area, Lusaka, Zambia', 'hours' => 'Mon-Fri: 7:30 AM - 5:30 PM, Sat: 8:00 AM - 1:00 PM'], 'style' => ['backgroundColor' => '#ffffff']],
                 
                 ['type' => 'features', 'content' => ['layout' => 'grid', 'title' => 'Why Choose Us', 'subtitle' => 'What makes Ndelima different', 'items' => [
