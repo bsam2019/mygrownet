@@ -66,6 +66,7 @@ interface Settings {
     navigation?: {
         logoText?: string;
         logo?: string;
+        logoSize?: 'small' | 'medium' | 'large' | 'xlarge';
         navItems?: any[];
         showCta?: boolean;
         ctaText?: string;
@@ -605,7 +606,19 @@ const getElementTransform = (section: Section, elementKey: string): string => {
                     <!-- Logo -->
                     <div class="flex items-center">
                         <a :href="getPageUrl({ id: 0, title: '', slug: '', isHomepage: true })" class="flex items-center">
-                            <img v-if="navigation.logo" :src="navigation.logo" class="h-8" :alt="site.name" />
+                            <img 
+                                v-if="navigation.logo" 
+                                :src="navigation.logo" 
+                                :class="[
+                                    'object-contain',
+                                    navigation.logoSize === 'small' ? 'h-6' : 
+                                    navigation.logoSize === 'large' ? 'h-12' : 
+                                    navigation.logoSize === 'xlarge' ? 'h-16' : 
+                                    'h-8'
+                                ]"
+                                :style="{ maxWidth: '200px' }"
+                                :alt="site.name" 
+                            />
                             <span v-else class="text-lg sm:text-xl font-bold text-gray-900">{{ navigation.logoText || site.name }}</span>
                         </a>
                     </div>

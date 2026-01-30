@@ -266,7 +266,7 @@ GrowBuilderSite::all()->each(function ($site) {
 
 ## Changelog
 
-### January 30, 2026 - 13:14 UTC
+### January 30, 2026 - 13:36 UTC
 - **CRITICAL FIX:** Fixed 404 errors for published sites
   - Root cause: `PublishSiteUseCase` only published the site entity, not the pages
   - Solution: Modified `PublishSiteUseCase` to automatically publish all pages when site is published
@@ -276,9 +276,15 @@ GrowBuilderSite::all()->each(function ($site) {
     - `app/Application/GrowBuilder/UseCases/UnpublishSiteUseCase.php` (new)
     - `app/Http/Controllers/GrowBuilder/SiteController.php`
   - This was the actual issue - pages remained unpublished even after clicking "Publish Site"
+  - **DEPLOYED AND WORKING** - Publish button now works correctly
 - Added debug logging to trace page lookup issues
 - Fixed subdomain generation to remove hyphens in both Create page and CreateSiteWizard modal
 - Changed to real-time subdomain updates using Vue watch
 - Removed conflicting database validation from SubdomainCheck middleware (DetectSubdomain handles GrowBuilder sites)
 - Updated help text to reflect no hyphens allowed
 - Deployed to production
+
+### Known Issues
+- Logo sizing: Fixed height (h-8/32px) doesn't work well for square logos
+- No option to adjust logo size in settings
+- Need to add logo size controls and better aspect ratio handling
