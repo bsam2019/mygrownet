@@ -17,31 +17,50 @@ GrowBuilder has a unified template system using the `site_templates` table for f
 
 ## Ndelima Enterprises Construction Templates
 
-Professional construction templates for turnkey solutions in electrical, plumbing, aluminium windows, plastering, ceiling work, and thatching.
+Professional construction templates for turnkey solutions in electrical, plumbing, aluminium windows, plastering, ceiling work, and painting/thatching.
 
-**Tagline:** "Your One-Stop Construction Solution"
-
-### Version 1 (Original)
+### Version 1 (Standard - No Thatching)
 
 **Slug:** `ndelima-construction`  
-**Database ID:** 210
+**Database ID:** 210  
+**Tagline:** "Your One-Stop Construction Solution"
+
+**Services Focus:**
+- ✅ Electrical Wiring & Installations
+- ✅ Plumbing & Bathroom Fittings
+- ✅ Aluminium Windows & Doors
+- ✅ Plastering & Ceiling Work
+- ✅ **Painting Services** (Interior & Exterior)
+- ✅ Turnkey Construction Projects
+- ❌ **NO Thatching Services**
 
 **Features:**
 - **Static Hero Section**: Centered layout with construction imagery
 - **Stats Bar**: 500+ projects, 100% quality, 15+ years, 24/7 support
-- **Comprehensive Services**: 6 main service categories with images
+- **6 Service Categories**: All with professional images
 - **4 Pages**: Home, Services, Projects, Contact
 - **Color Scheme**: Orange (#ea580c) with red accent (#dc2626)
 - **Responsive Layout**: Works on all devices
 
-### Version 2 (Enhanced with Animations)
+### Version 2 (Pro - With Thatching & African Focus)
 
 **Slug:** `ndelima-construction-v2`  
-**Database ID:** 211
+**Database ID:** 211  
+**Tagline:** "Building Dreams, Creating Futures"  
+**Name:** Ndelima Enterprises Pro
+
+**Services Focus:**
+- ✅ Electrical Solutions
+- ✅ Plumbing Expertise
+- ✅ Aluminium Windows
+- ✅ Plastering & Ceilings
+- ✅ **Traditional Thatching** (African/Local Focus)
+- ✅ Project Management
+- ❌ **NO Painting Services**
 
 **Key Differences from v1:**
-- **Different Color Scheme**: Red primary (#dc2626) vs Orange (#ea580c)
-- **Different Tagline**: "Building Dreams, Creating Futures" vs "Your One-Stop Construction Solution"
+- **Color Scheme**: Green primary (#16a34a), Amber secondary (#ca8a04), Red accent (#dc2626)
+- **Emphasis**: Traditional African thatching and local craftsmanship
 - **5 Pages** (vs 4 in v1): Home, About Us, Services, Gallery, Contact
 - **Different Navigation**: Includes "About Us" and separate "Gallery" page
 - **Different CTA**: "Request Quote" vs "Get Quote"
@@ -424,6 +443,36 @@ After seeding, verify the template:
 **Note**: If you see what appears to be double headers, check if one is a `hero` and one is a `page-header` - this is intentional design.
 
 ## Changelog
+
+### January 30, 2026 (Ndelima Template Differentiation)
+- **DIFFERENTIATED**: Ndelima v1 and v2 templates to serve different markets
+  - **Version 1 Changes**:
+    - **REMOVED**: Thatching services completely (home, services, gallery pages)
+    - **ADDED**: Painting services instead (interior & exterior)
+    - **Updated**: Hero subtitle to remove thatching mention
+    - **Updated**: Service descriptions to focus on painting
+    - **Gallery**: Replaced thatching image with painting image
+    - **Target Market**: Standard construction without thatching
+  - **Version 2 Changes**:
+    - **NAME**: Changed from "Ndelima Enterprises v2" to "Ndelima Enterprises Pro"
+    - **DESCRIPTION**: Emphasizes traditional African thatching and local craftsmanship
+    - **THEME COLORS**: Changed from red to green-focused
+      - Primary: #16a34a (green) - was #dc2626 (red)
+      - Secondary: #ca8a04 (amber) - was #ea580c (orange)
+      - Accent: #dc2626 (red) - was #fbbf24 (amber)
+    - **APPLIED**: New green theme throughout all sections
+      - Stats sections: Green background
+      - Page headers: Green background
+      - CTA sections: Green background
+    - **THUMBNAIL**: Changed to thatching image
+    - **KEPT**: Thatching services as core offering
+    - **Target Market**: Premium with African/local thatching focus
+- **RESULT**: Two distinct templates for different customer needs
+  - v1: Modern construction without thatching (orange theme)
+  - v2: Premium with traditional thatching (green theme)
+- **FILES MODIFIED**:
+  - `database/seeders/NdelimaConstructionSeeder.php`
+  - `database/seeders/NdelimaConstructionV2Seeder.php`
 
 ### January 28, 2026 (Flames of Hope Church Template)
 - **ADDED**: New church template - Flames of Hope Church
