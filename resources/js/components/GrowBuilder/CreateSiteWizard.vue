@@ -51,6 +51,7 @@ const props = defineProps<{
     show: boolean;
     siteTemplates: SiteTemplate[];
     industries: Industry[];
+    hasGrowBuilderSubscription?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -64,6 +65,7 @@ const searchQuery = ref('');
 const previewTemplate = ref<SiteTemplate | null>(null);
 const showPreviewModal = ref(false);
 const showIndustryDropdown = ref(false);
+const showUpgradeModal = ref(false);
 
 const industryIcons: Record<string, any> = {
     consulting: BriefcaseIcon,
@@ -164,6 +166,16 @@ const getIndustryIcon = (industry: string) => {
 };
 
 const selectTemplate = (id: number | null) => {
+    // Check if template is premium and user doesn't have subscription
+    if (id !== null) {
+        const template = props.siteTemplates.find(t => t.id === id);
+        if (template?.isPremium && !props.hasGrowBuilderSubscription) {
+            // Show upgrade prompt instead of selecting
+            showUpgradeModal.value = true;
+            return;
+        }
+    }
+    
     selectedSiteTemplate.value = id;
     form.site_template_id = id;
 };
@@ -203,6 +215,7 @@ const prevStep = () => {
 };
 
 const close = () => {
+    showUpgradeModal.value = false;
     emit('close');
 };
 
@@ -410,10 +423,11 @@ const getPreviewUrl = (templateId: number) => {
                                     v-for="template in filteredSiteTemplates"
                                     :key="template.id"
                                     :class="[
-                                        'relative border-2 rounded-xl text-left transition overflow-hidden group cursor-pointer',
+                                        'relative border-2 rounded-xl text-left transition overflow-hidden group',
                                         selectedSiteTemplate === template.id
                                             ? 'border-blue-500 ring-2 ring-blue-200'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                            : 'border-gray-200 hover:border-gray-300',
+                                        template.isPremium && !hasGrowBuilderSubscription ? 'cursor-pointer' : 'cursor-pointer'
                                     ]"
                                     @click="selectTemplate(template.id)"
                                 >
@@ -428,8 +442,24 @@ const getPreviewUrl = (templateId: number) => {
                                             <component :is="getIndustryIcon(template.industry)" class="h-8 w-8 text-gray-300" aria-hidden="true" />
                                         </div>
 
-                                        <!-- Hover overlay -->
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <!-- Lock overlay for premium templates without subscription -->
+                                        <div 
+                                            v-if="template.isPremium && !hasGrowBuilderSubscription"
+                                            class="absolute inset-0 bg-black/60 flex items-center justify-center"
+                                        >
+                                            <div class="text-center">
+                                                <svg class="h-8 w-8 text-white mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                                <span class="text-white text-xs font-medium">Upgrade</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hover overlay (only for unlocked templates) -->
+                                        <div 
+                                            v-if="!template.isPremium || hasGrowBuilderSubscription"
+                                            class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                        >
                                             <button
                                                 type="button"
                                                 class="px-2 py-1 bg-white text-gray-900 text-xs font-medium rounded-lg hover:bg-gray-100 transition inline-flex items-center gap-1"
@@ -582,6 +612,76 @@ const getPreviewUrl = (templateId: number) => {
             >
                 <XMarkIcon class="h-5 w-5" aria-hidden="true" />
             </button>
+        </div>
+        
+        <!-- Upgrade Modal -->
+        <div
+            v-if="showUpgradeModal"
+            class="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4"
+            @click="showUpgradeModal = false"
+        >
+            <div 
+                class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+                @click.stop
+            >
+                <div class="text-center">
+                    <!-- Icon -->
+                    <div class="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+                        <SparklesIcon class="h-8 w-8 text-white" aria-hidden="true" />
+                    </div>
+                    
+                    <!-- Title -->
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                        Premium Template
+                    </h3>
+                    
+                    <!-- Description -->
+                    <p class="text-gray-600 mb-6">
+                        This template is only available with a GrowBuilder subscription. Upgrade now to unlock all premium templates and features.
+                    </p>
+                    
+                    <!-- Benefits -->
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 mb-6 text-left">
+                        <p class="text-sm font-semibold text-gray-900 mb-2">With GrowBuilder Pro you get:</p>
+                        <ul class="space-y-1.5 text-sm text-gray-700">
+                            <li class="flex items-start gap-2">
+                                <CheckIcon class="h-4 w-4 text-purple-600 mt-0.5 shrink-0" aria-hidden="true" />
+                                <span>Access to all premium templates</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <CheckIcon class="h-4 w-4 text-purple-600 mt-0.5 shrink-0" aria-hidden="true" />
+                                <span>Advanced customization options</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <CheckIcon class="h-4 w-4 text-purple-600 mt-0.5 shrink-0" aria-hidden="true" />
+                                <span>Priority support</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <CheckIcon class="h-4 w-4 text-purple-600 mt-0.5 shrink-0" aria-hidden="true" />
+                                <span>Remove GrowBuilder branding</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex gap-3">
+                        <button
+                            type="button"
+                            class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
+                            @click="showUpgradeModal = false"
+                        >
+                            Maybe Later
+                        </button>
+                        <a
+                            :href="route('growbuilder.subscription.index')"
+                            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transition inline-flex items-center justify-center gap-2"
+                        >
+                            <SparklesIcon class="h-4 w-4" aria-hidden="true" />
+                            Upgrade Now
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </Teleport>
 </template>

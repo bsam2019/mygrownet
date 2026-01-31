@@ -302,11 +302,16 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             v-if="subscription?.canCreateSite !== false"
                             type="button"
                             @click="openAIGenerator"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                            disabled
+                            class="relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-xl cursor-not-allowed opacity-75"
+                            title="AI Express - Coming Soon"
                         >
                             <SparklesIcon class="h-5 w-5" aria-hidden="true" />
                             <span class="hidden sm:inline">AI Express</span>
                             <span class="sm:hidden">AI</span>
+                            <span class="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                Soon
+                            </span>
                         </button>
                         <button
                             v-if="subscription?.canCreateSite !== false"
@@ -586,15 +591,17 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         <button
                             type="button"
                             @click="openAIGenerator"
-                            class="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+                            disabled
+                            class="relative group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-xl cursor-not-allowed opacity-75"
+                            title="AI Express - Coming Soon"
                         >
                             <SparklesIcon class="h-6 w-6" aria-hidden="true" />
                             <div class="text-left">
                                 <div class="text-lg">AI Express</div>
-                                <div class="text-xs text-indigo-100 font-normal">Describe your business, get a website</div>
+                                <div class="text-xs text-gray-100 font-normal">Describe your business, get a website</div>
                             </div>
-                            <span class="absolute -top-2 -right-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full">
-                                Recommended
+                            <span class="absolute -top-2 -right-2 px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg">
+                                Coming Soon
                             </span>
                         </button>
                         

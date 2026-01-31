@@ -444,6 +444,31 @@ After seeding, verify the template:
 
 ## Changelog
 
+### January 31, 2026 (Premium Template Restrictions)
+- **IMPLEMENTED**: Premium template access control for paid subscriptions
+  - **Migration**: `2026_01_31_090310_mark_templates_as_premium.php`
+    - Marked all templates as premium except "Consulting Pro" (consulting-pro)
+    - Consulting Pro remains the only free template
+  - **Frontend Changes** (`CreateSiteWizard.vue`):
+    - Added `hasGrowBuilderSubscription` prop to check user subscription status
+    - Added lock overlay on premium templates for free users
+    - Added upgrade modal with benefits and call-to-action
+    - Disabled preview for locked premium templates
+    - Visual indicators: Lock icon, "Upgrade" badge, "Pro" badge
+  - **Backend Changes** (`SiteController.php`):
+    - Pass `hasGrowBuilderSubscription` status to dashboard and create pages
+    - Added validation in `store()` method to prevent API bypass
+    - Returns error if free user tries to use premium template
+  - **User Experience**:
+    - Free users see lock overlay on premium templates
+    - Clicking locked template shows upgrade modal
+    - Upgrade modal links to subscription page
+    - Clear visual distinction between free and premium templates
+  - **Security**: Backend validation prevents bypassing frontend restrictions
+- **RESULT**: Only paid subscribers can access premium templates
+- **FREE TEMPLATE**: Consulting Pro (consulting-pro) available to all users
+- **PREMIUM TEMPLATES**: All other 31 templates require subscription
+
 ### January 30, 2026 (Ndelima Template Differentiation)
 - **DIFFERENTIATED**: Ndelima v1 and v2 templates to serve different markets
   - **Version 1 Changes**:

@@ -222,6 +222,8 @@ class SiteController extends Controller
                     'name' => $i->name,
                     'icon' => $i->icon,
                 ]),
+            // Pass subscription status for template restrictions
+            'hasGrowBuilderSubscription' => $currentTier !== 'free',
             // Contact messages for dashboard
             'recentMessages' => $recentMessages,
         ]);
@@ -229,6 +231,11 @@ class SiteController extends Controller
 
     public function create(Request $request)
     {
+        $user = $request->user();
+        
+        // Get user's subscription tier
+        $currentTier = $this->tierRestrictionService->getUserTier($user);
+        
         // Get site templates (full website templates)
         $siteTemplates = \App\Models\GrowBuilder\SiteTemplate::with('pages')
             ->active()
@@ -264,6 +271,7 @@ class SiteController extends Controller
         return Inertia::render('GrowBuilder/Sites/Create', [
             'siteTemplates' => $siteTemplates,
             'industries' => $industries,
+            'hasGrowBuilderSubscription' => $currentTier !== 'free',
         ]);
     }
 
@@ -298,6 +306,17 @@ class SiteController extends Controller
             'site_template_id' => 'nullable|integer|exists:site_templates,id',
             'description' => 'nullable|string|max:500',
         ]);
+
+        // Validate premium template access
+        if (!empty($validated['site_template_id'])) {
+            $template = \App\Models\GrowBuilder\SiteTemplate::find($validated['site_template_id']);
+            
+            if ($template && $template->is_premium && $currentTier === 'free') {
+                return back()->withErrors([
+                    'site_template_id' => 'This premium template requires a GrowBuilder subscription. Please upgrade to access premium templates.'
+                ]);
+            }
+        }
 
         try {
             $dto = new CreateSiteDTO(
