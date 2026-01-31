@@ -3,6 +3,9 @@
   
   <!-- Modern Mobile SPA Layout -->
   <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Impersonation Banner -->
+    <ImpersonationBanner v-if="isImpersonating" :user-name="user?.name || ''" />
+    
     <!-- Enhanced Header with Vibrant Gradient -->
     <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white shadow-xl">
       <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
@@ -1663,8 +1666,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import BalanceCard from '@/components/Mobile/BalanceCard.vue';
 import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';
 import StatCard from '@/components/Mobile/StatCard.vue';
@@ -1783,6 +1787,12 @@ const props = withDefaults(defineProps<{
   messagingData: () => ({ unread_count: 0 }),
   networkGrowth: () => [],
   earningsTrend: () => []
+});
+
+// Check if admin is impersonating
+const page = usePage();
+const isImpersonating = computed(() => {
+    return page.props.impersonate_admin_id !== undefined && page.props.impersonate_admin_id !== null;
 });
 
 const loading = ref(false);

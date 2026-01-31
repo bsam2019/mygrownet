@@ -28,6 +28,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { UserCircleIcon as UserCircleIconSolid } from '@heroicons/vue/24/solid';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import { useAppearance } from '@/composables/useAppearance';
 
 interface Props {
@@ -52,6 +53,15 @@ const activeTab = ref<'profile' | 'password' | 'appearance'>('profile');
 const user = computed(() => page.props.auth?.user);
 const isAdmin = computed(() => props.isAdmin || page.props.isAdmin);
 const isManager = computed(() => props.isManager || page.props.isManager);
+
+// Check if admin is impersonating
+const isImpersonating = computed(() => {
+    return page.props.impersonate_admin_id !== undefined && page.props.impersonate_admin_id !== null;
+});
+
+const currentUserName = computed(() => {
+    return user.value?.name || '';
+});
 
 // Watch for flash messages
 watch(() => page.props.flash, (flash: any) => {
@@ -127,6 +137,9 @@ const themes = [
 
 <template>
     <div class="min-h-screen bg-gray-50 flex flex-col">
+        <!-- Impersonation Banner -->
+        <ImpersonationBanner v-if="isImpersonating" :user-name="currentUserName" />
+        
         <!-- Flash Messages -->
         <Transition
             enter-active-class="transition ease-out duration-300"
