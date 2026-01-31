@@ -51,27 +51,43 @@ Users need to point their domain to MyGrowNet's server IP address:
 
 #### Step 2: Configure DNS Records
 
-**Option A: Using Root Domain (e.g., `mybusiness.com`)**
+Choose ONE option based on what type of domain you want to use:
 
-Add an **A Record**:
-- **Type:** A
-- **Name:** @ (or leave blank)
-- **Value/Points to:** `138.197.187.134`
-- **TTL:** 3600 (or Auto)
+---
 
-Add a **CNAME Record** for www:
-- **Type:** CNAME
-- **Name:** www
-- **Value/Points to:** `mybusiness.com` (your root domain)
-- **TTL:** 3600 (or Auto)
+**Option A: Using Root Domain (e.g., `mybusiness.com`) - RECOMMENDED**
+
+You need BOTH records:
+
+1. Add an **A Record** (REQUIRED):
+   - **Type:** A
+   - **Name:** @ (or leave blank)
+   - **Value/Points to:** `138.197.187.134`
+   - **TTL:** 3600 (or Auto)
+
+2. Add a **CNAME Record** for www (OPTIONAL but recommended):
+   - **Type:** CNAME
+   - **Name:** www
+   - **Value/Points to:** `mybusiness.com` (your root domain)
+   - **TTL:** 3600 (or Auto)
+
+**Result:** Both `mybusiness.com` and `www.mybusiness.com` will work
+
+---
 
 **Option B: Using Subdomain (e.g., `shop.mybusiness.com`)**
+
+You only need ONE record:
 
 Add a **CNAME Record**:
 - **Type:** CNAME
 - **Name:** shop (or your chosen subdomain)
 - **Value/Points to:** `yoursitename.mygrownet.com`
 - **TTL:** 3600 (or Auto)
+
+**Result:** Only `shop.mybusiness.com` will work (not the root domain)
+
+**Note:** This option is simpler but less common. Most users prefer Option A.
 
 #### Step 3: Wait for DNS Propagation
 - DNS changes can take 5 minutes to 48 hours to propagate
@@ -299,6 +315,20 @@ A: No, you can use any domain from any registrar. We don't sell domains.
 **Q: Can I use a domain I already own?**  
 A: Yes! Just point the DNS records to our server and add it in your site settings.
 
+**Q: What's the difference between Option A and Option B?**  
+A: 
+- **Option A (Root Domain):** Your site is at `mybusiness.com` - looks more professional, requires A record
+- **Option B (Subdomain):** Your site is at `shop.mybusiness.com` - easier setup, only needs CNAME
+
+**Q: Can I use just the CNAME record for my root domain?**  
+A: No, DNS specifications don't allow CNAME records for root domains. You must use an A record for root domains.
+
+**Q: Do I need both the A record AND the CNAME for www?**  
+A: The A record is required. The www CNAME is optional but recommended so both `mybusiness.com` and `www.mybusiness.com` work.
+
+**Q: If I use Option B (subdomain), will my root domain work?**  
+A: No. If you set up `shop.mybusiness.com`, only that subdomain will work. The root domain `mybusiness.com` won't point to your site unless you also add an A record.
+
 **Q: How long does setup take?**  
 A: DNS propagation: 15 minutes to 48 hours. SSL generation: 2-5 minutes after DNS propagates.
 
@@ -317,6 +347,29 @@ A: No, custom domains are for websites only. For email, use Google Workspace, Mi
 **Q: What about .co.zm or .zm domains?**  
 A: Yes! Any valid domain extension works, including Zambian domains.
 
+## Real-World Setup Example: flamesofhopechurch.com
+
+### Issue Encountered
+When setting up flamesofhopechurch.com (purchased on Cloudflare), the domain was initially configured with Cloudflare proxy enabled (orange cloud). This caused the DNS to point to Cloudflare's IPs instead of MyGrowNet's server.
+
+**DNS Check Result:**
+```
+nslookup flamesofhopechurch.com
+Addresses: 104.21.20.78, 172.67.191.229 (Cloudflare IPs)
+Expected: 138.197.187.134 (MyGrowNet server)
+```
+
+### Solution
+1. Log in to Cloudflare dashboard
+2. Go to DNS settings for flamesofhopechurch.com
+3. Find the A record pointing to 138.197.187.134
+4. Click the orange cloud icon to change it to gray cloud (DNS only)
+5. Wait 5-10 minutes for DNS to propagate
+6. Verify with: `nslookup flamesofhopechurch.com` (should show 138.197.187.134)
+7. Then run the server setup script
+
+**Critical:** Cloudflare proxy MUST be disabled for custom domains to work with GrowBuilder.
+
 ## Changelog
 
 ### January 30, 2026
@@ -325,3 +378,4 @@ A: Yes! Any valid domain extension works, including Zambian domains.
 - Included DNS provider-specific guides
 - Added troubleshooting section
 - Documented technical implementation details
+- Added real-world example with Cloudflare proxy issue
