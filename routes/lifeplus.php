@@ -119,6 +119,16 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\InjectLifePlusAccess
             Route::post('/sync', [TaskController::class, 'sync'])->name('sync');
         });
 
+        // Schedule / Day Plan
+        Route::prefix('schedule')->name('schedule.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'index'])->name('index');
+            Route::get('/week', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'week'])->name('week');
+            Route::post('/', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'store'])->name('store');
+            Route::put('/{id}', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'update'])->name('update');
+            Route::post('/{id}/toggle', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'toggle'])->name('toggle');
+            Route::delete('/{id}', [\App\Http\Controllers\LifePlus\ScheduleController::class, 'destroy'])->name('destroy');
+        });
+
         // Habits
         Route::prefix('habits')->name('habits.')->group(function () {
             Route::get('/', [HabitController::class, 'index'])->name('index');

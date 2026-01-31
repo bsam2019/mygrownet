@@ -383,6 +383,17 @@ const getGreeting = () => {
                     </Link>
                     
                     <Link 
+                        :href="route('lifeplus.schedule.index')"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-blue-50 transition-colors"
+                        @click="moreMenuOpen = false"
+                    >
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
+                            <ClockIcon class="h-5 w-5 text-white" aria-hidden="true" />
+                        </div>
+                        <span class="font-medium text-sm">Day Plan</span>
+                    </Link>
+                    
+                    <Link 
                         :href="route('lifeplus.habits.index')"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 hover:bg-purple-50 transition-colors"
                         @click="moreMenuOpen = false"
