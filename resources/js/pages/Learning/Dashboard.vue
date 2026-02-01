@@ -208,7 +208,7 @@
           <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden mb-6">
             <div class="p-8 sm:p-12">
               <!-- Page Content -->
-              <div class="prose prose-lg max-w-none" v-html="currentPageContent"></div>
+              <div class="prose prose-lg max-w-none" v-html="renderedContent"></div>
             </div>
           </div>
 
@@ -361,8 +361,17 @@ const contentPages = computed(() => {
 
 const totalPages = computed(() => contentPages.value.length);
 
-const currentPageContent = computed(() => {
+const renderedContent = computed(() => {
   if (contentPages.value.length === 0) return '';
+  
+  // Configure marked for better rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+    headerIds: true,
+    mangle: false,
+  });
+  
   return marked(contentPages.value[currentPage.value] || '');
 });
 
@@ -454,140 +463,203 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style>
 /* Enhanced Prose Styling with Better Hierarchy */
 .prose {
-  @apply text-gray-700 leading-relaxed;
-  font-size: 17px;
-  line-height: 1.8;
+  color: #374151;
+  line-height: 1.75;
+  font-size: 1.0625rem;
 }
 
-.prose h1 {
-  @apply text-4xl font-extrabold text-gray-900 mt-0 mb-8 pb-4 border-b-4 border-blue-500;
+.prose :where(h1):not(:where([class~="not-prose"] *)) {
+  color: #111827;
+  font-weight: 800;
+  font-size: 2.25rem;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 4px solid #3b82f6;
   line-height: 1.2;
 }
 
-.prose h2 {
-  @apply text-3xl font-bold text-gray-900 mt-12 mb-6 pb-2 border-b-2 border-gray-200;
+.prose :where(h2):not(:where([class~="not-prose"] *)) {
+  color: #111827;
+  font-weight: 700;
+  font-size: 1.875rem;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
   line-height: 1.3;
 }
 
-.prose h3 {
-  @apply text-2xl font-bold text-blue-900 mt-8 mb-4;
+.prose :where(h3):not(:where([class~="not-prose"] *)) {
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
   line-height: 1.4;
 }
 
-.prose h4 {
-  @apply text-xl font-semibold text-gray-800 mt-6 mb-3;
+.prose :where(h4):not(:where([class~="not-prose"] *)) {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.prose p {
-  @apply mb-6 leading-relaxed;
-  font-size: 17px;
+.prose :where(p):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
   line-height: 1.8;
 }
 
-.prose ul, .prose ol {
-  @apply mb-8 ml-0 space-y-3;
+.prose :where(ul):not(:where([class~="not-prose"] *)),
+.prose :where(ol):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: 2rem;
   padding-left: 1.5rem;
 }
 
-.prose li {
-  @apply leading-relaxed pl-2;
-  font-size: 17px;
-  line-height: 1.8;
+.prose :where(li):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.75;
 }
 
-.prose ul > li {
-  @apply relative;
-  list-style-type: none;
+.prose :where(ul > li):not(:where([class~="not-prose"] *)) {
+  position: relative;
+  padding-left: 0.5rem;
 }
 
-.prose ul > li::before {
-  content: "●";
-  @apply absolute text-blue-600 font-bold text-xl;
-  left: -1.5rem;
-  top: 0;
+.prose :where(ul > li)::marker {
+  color: #2563eb;
+  font-size: 1.25rem;
 }
 
-.prose ol {
-  @apply list-decimal;
-  counter-reset: item;
+.prose :where(ol > li)::marker {
+  color: #2563eb;
+  font-weight: 700;
 }
 
-.prose ol > li {
-  @apply relative;
-  list-style-type: none;
-  counter-increment: item;
+.prose :where(strong):not(:where([class~="not-prose"] *)) {
+  color: #111827;
+  font-weight: 700;
+  background-color: #fef3c7;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
 }
 
-.prose ol > li::before {
-  content: counter(item) ".";
-  @apply absolute text-blue-600 font-bold;
-  left: -1.5rem;
-  top: 0;
+.prose :where(em):not(:where([class~="not-prose"] *)) {
+  color: #374151;
+  font-style: italic;
 }
 
-.prose strong {
-  @apply font-bold text-gray-900 bg-yellow-100 px-1.5 py-0.5 rounded;
+.prose :where(a):not(:where([class~="not-prose"] *)) {
+  color: #2563eb;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
-.prose em {
-  @apply italic text-gray-700;
+.prose :where(a):not(:where([class~="not-prose"] *)):hover {
+  color: #1e40af;
 }
 
-.prose a {
-  @apply text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-4 transition-colors font-medium;
+.prose :where(code):not(:where([class~="not-prose"] *)) {
+  color: #be185d;
+  background-color: #fdf2f8;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  border: 1px solid #fbcfe8;
 }
 
-.prose code {
-  @apply bg-pink-50 px-2.5 py-1 rounded-md text-sm font-mono text-pink-700 border border-pink-200;
-  font-size: 15px;
+.prose :where(pre):not(:where([class~="not-prose"] *)) {
+  background-color: #111827;
+  color: #f3f4f6;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.prose pre {
-  @apply bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto mb-8 shadow-lg;
-  font-size: 15px;
+.prose :where(pre code):not(:where([class~="not-prose"] *)) {
+  background-color: transparent;
+  color: #f3f4f6;
+  padding: 0;
+  border: none;
+  font-size: 0.9375rem;
 }
 
-.prose pre code {
-  @apply bg-transparent text-gray-100 p-0 border-0;
-}
-
-.prose blockquote {
-  @apply border-l-4 border-blue-500 bg-blue-50 pl-6 pr-6 py-5 italic text-gray-800 my-8 rounded-r-xl shadow-sm;
-  font-size: 18px;
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+  border-left: 4px solid #3b82f6;
+  background-color: #eff6ff;
+  padding: 1.25rem 1.5rem;
+  font-style: italic;
+  color: #1f2937;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  border-radius: 0 0.75rem 0.75rem 0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  font-size: 1.125rem;
   line-height: 1.7;
 }
 
-.prose hr {
-  @apply my-12 border-t-2 border-gray-300;
+.prose :where(hr):not(:where([class~="not-prose"] *)) {
+  border-color: #d1d5db;
+  border-top-width: 2px;
+  margin-top: 3rem;
+  margin-bottom: 3rem;
 }
 
-.prose table {
-  @apply w-full my-8 border-collapse shadow-md rounded-lg overflow-hidden;
+.prose :where(table):not(:where([class~="not-prose"] *)) {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  border-collapse: collapse;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
-.prose th {
-  @apply bg-blue-600 text-white font-bold text-left p-4 border border-blue-700;
-  font-size: 16px;
+.prose :where(th):not(:where([class~="not-prose"] *)) {
+  background-color: #2563eb;
+  color: white;
+  font-weight: 700;
+  text-align: left;
+  padding: 1rem;
+  border: 1px solid #1d4ed8;
 }
 
-.prose td {
-  @apply p-4 border border-gray-300 bg-white;
-  font-size: 16px;
+.prose :where(td):not(:where([class~="not-prose"] *)) {
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  background-color: white;
 }
 
-.prose img {
-  @apply rounded-xl shadow-lg my-8 w-full;
+.prose :where(img):not(:where([class~="not-prose"] *)) {
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin-top: 0;
+  margin-bottom: 2rem;
+  width: 100%;
 }
 
 /* Nested lists */
-.prose ul ul,
-.prose ol ul,
-.prose ul ol,
-.prose ol ol {
-  @apply mt-3 mb-3;
+.prose :where(ul ul):not(:where([class~="not-prose"] *)),
+.prose :where(ol ul):not(:where([class~="not-prose"] *)),
+.prose :where(ul ol):not(:where([class~="not-prose"] *)),
+.prose :where(ol ol):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Smooth scroll */
