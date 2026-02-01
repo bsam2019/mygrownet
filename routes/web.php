@@ -349,6 +349,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/badges', [App\Http\Controllers\PointsController::class, 'badges'])->name('badges');
     });
 
+    // Learning System Routes (LGR Activity)
+    Route::prefix('learning')->name('learning.')->group(function () {
+        Route::get('/', [App\Http\Controllers\LearningController::class, 'index'])->name('index');
+        Route::get('/{slug}', [App\Http\Controllers\LearningController::class, 'show'])->name('show');
+        Route::post('/{moduleId}/start', [App\Http\Controllers\LearningController::class, 'start'])->name('start');
+        Route::post('/{moduleId}/complete', [App\Http\Controllers\LearningController::class, 'complete'])->name('complete');
+    });
+
+    // Events System Routes (LGR Activity)
+    Route::prefix('events')->name('events.')->group(function () {
+        Route::get('/', [App\Http\Controllers\EventController::class, 'index'])->name('index');
+        Route::get('/{slug}', [App\Http\Controllers\EventController::class, 'show'])->name('show');
+        Route::post('/{eventId}/register', [App\Http\Controllers\EventController::class, 'register'])->name('register');
+        Route::post('/{eventId}/check-in', [App\Http\Controllers\EventController::class, 'checkIn'])->name('check-in');
+        Route::post('/{eventId}/check-out', [App\Http\Controllers\EventController::class, 'checkOut'])->name('check-out');
+    });
+
     // Admin Payment Approval Routes
     Route::middleware(['admin'])->prefix('admin/payments')->name('admin.payments.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\PaymentApprovalController::class, 'index'])->name('index');
