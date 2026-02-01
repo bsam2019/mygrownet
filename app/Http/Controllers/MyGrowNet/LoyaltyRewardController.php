@@ -23,9 +23,17 @@ class LoyaltyRewardController extends Controller
         $qualification = $this->qualificationService->checkQualification($userId);
         $cycleStats = $this->cycleService->getCycleStats($userId);
         
+        // Get available LGR packages
+        $packages = \App\Models\LgrPackage::getActive();
+        
+        // Get user's current package if they have one
+        $userPackage = auth()->user()->lgrPackage ?? null;
+        
         return Inertia::render('MyGrowNet/LoyaltyReward/Dashboard', [
             'qualification' => $qualification,
             'cycle' => $cycleStats,
+            'packages' => $packages,
+            'userPackage' => $userPackage,
             'user' => [
                 'loyalty_points' => auth()->user()->loyalty_points,
                 'bonus_balance' => auth()->user()->bonus_balance,
