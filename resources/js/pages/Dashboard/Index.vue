@@ -43,6 +43,7 @@ interface Props {
     accountType?: string;
     isAdmin?: boolean;
     isManager?: boolean;
+    hasActiveGrowNetPackage?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -55,6 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
     modules: () => [],
     isAdmin: false,
     isManager: false,
+    hasActiveGrowNetPackage: false,
 });
 
 // Filter primary modules
@@ -241,6 +243,53 @@ const handleModuleClick = (module: Module) => {
                                     Free
                                 </span>
                             </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions for LGR -->
+                    <div v-if="hasActiveGrowNetPackage || isAdmin" class="mt-6">
+                        <div class="flex items-center gap-2 mb-4">
+                            <SparklesIcon class="w-5 h-5 text-purple-600" aria-hidden="true" />
+                            <h2 class="text-lg font-bold text-gray-900">Quick Actions</h2>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">Earn LGR Credits</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <!-- Learning Modules -->
+                            <Link
+                                href="/learning"
+                                class="group relative bg-white rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm border border-gray-100"
+                            >
+                                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-500 transition-transform duration-300 group-hover:scale-110">
+                                    <AcademicCapIcon class="w-6 h-6 text-white" aria-hidden="true" />
+                                </div>
+                                
+                                <span class="text-gray-800 text-center font-semibold text-sm">
+                                    Learning
+                                </span>
+
+                                <span class="text-[11px] text-gray-500 text-center leading-tight">
+                                    Complete modules to earn
+                                </span>
+                            </Link>
+
+                            <!-- Live Events -->
+                            <Link
+                                href="/events"
+                                class="group relative bg-white rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm border border-gray-100"
+                            >
+                                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-500 transition-transform duration-300 group-hover:scale-110">
+                                    <UsersIcon class="w-6 h-6 text-white" aria-hidden="true" />
+                                </div>
+                                
+                                <span class="text-gray-800 text-center font-semibold text-sm">
+                                    Events
+                                </span>
+
+                                <span class="text-[11px] text-gray-500 text-center leading-tight">
+                                    Attend events to earn
+                                </span>
+                            </Link>
                         </div>
                     </div>
 

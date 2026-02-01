@@ -24,60 +24,99 @@ class LearningModulesSeeder extends Seeder
                 'is_required' => true,
             ],
             [
+                'title' => 'Financial Literacy Basics',
+                'slug' => 'financial-literacy-basics',
+                'description' => 'Essential financial concepts everyone should know',
+                'content' => $this->getFinancialLiteracyContent(),
+                'content_type' => 'text',
+                'estimated_minutes' => 25,
+                'category' => 'Life Skills',
+                'sort_order' => 2,
+                'is_published' => true,
+                'is_required' => false,
+            ],
+            [
+                'title' => 'Time Management & Productivity',
+                'slug' => 'time-management-productivity',
+                'description' => 'Master your time and boost your productivity',
+                'content' => $this->getTimeManagementContent(),
+                'content_type' => 'text',
+                'estimated_minutes' => 20,
+                'category' => 'Life Skills',
+                'sort_order' => 3,
+                'is_published' => true,
+                'is_required' => false,
+            ],
+            [
+                'title' => 'Effective Communication Skills',
+                'slug' => 'effective-communication-skills',
+                'description' => 'Learn to communicate clearly and confidently',
+                'content' => $this->getCommunicationSkillsContent(),
+                'content_type' => 'text',
+                'estimated_minutes' => 18,
+                'category' => 'Life Skills',
+                'sort_order' => 4,
+                'is_published' => true,
+                'is_required' => false,
+            ],
+            [
+                'title' => 'Goal Setting & Achievement',
+                'slug' => 'goal-setting-achievement',
+                'description' => 'Set and achieve your personal and professional goals',
+                'content' => $this->getGoalSettingContent(),
+                'content_type' => 'text',
+                'estimated_minutes' => 15,
+                'category' => 'Life Skills',
+                'sort_order' => 5,
+                'is_published' => true,
+                'is_required' => false,
+            ],
+            [
                 'title' => 'Understanding the 7-Level System',
                 'slug' => 'understanding-7-level-system',
-                'description' => 'Learn about professional levels from Associate to Ambassador',
+                'description' => 'Learn about professional levels from Associate to Ambassador (GrowNet Members)',
                 'content' => $this->get7LevelContent(),
                 'content_type' => 'text',
                 'estimated_minutes' => 15,
-                'category' => 'Platform Basics',
-                'sort_order' => 2,
+                'category' => 'GrowNet',
+                'sort_order' => 6,
                 'is_published' => true,
-                'is_required' => true,
+                'is_required' => false,
             ],
             [
                 'title' => 'Loyalty Growth Reward (LGR) System',
                 'slug' => 'lgr-system-explained',
-                'description' => 'How to earn daily K30 credits through platform activities',
+                'description' => 'How to earn daily credits through platform activities (GrowNet Members)',
                 'content' => $this->getLGRContent(),
                 'content_type' => 'text',
                 'estimated_minutes' => 12,
-                'category' => 'Rewards',
-                'sort_order' => 3,
+                'category' => 'GrowNet',
+                'sort_order' => 7,
                 'is_published' => true,
                 'is_required' => false,
             ],
             [
                 'title' => 'Building Your Network',
                 'slug' => 'building-your-network',
-                'description' => 'Strategies for growing your team and earning commissions',
+                'description' => 'Strategies for growing your team and earning commissions (GrowNet Members)',
                 'content' => $this->getNetworkBuildingContent(),
                 'content_type' => 'text',
                 'estimated_minutes' => 20,
-                'category' => 'Business Development',
-                'sort_order' => 4,
-                'is_published' => true,
-                'is_required' => false,
-            ],
-            [
-                'title' => 'Financial Literacy Basics',
-                'slug' => 'financial-literacy-basics',
-                'description' => 'Essential financial concepts every member should know',
-                'content' => $this->getFinancialLiteracyContent(),
-                'content_type' => 'text',
-                'estimated_minutes' => 25,
-                'category' => 'Finance',
-                'sort_order' => 5,
+                'category' => 'GrowNet',
+                'sort_order' => 8,
                 'is_published' => true,
                 'is_required' => false,
             ],
         ];
 
         foreach ($modules as $module) {
-            DB::table('learning_modules')->insert(array_merge($module, [
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]));
+            DB::table('learning_modules')->updateOrInsert(
+                ['slug' => $module['slug']], // Match on slug
+                array_merge($module, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+            );
         }
     }
 
@@ -343,6 +382,483 @@ Essential financial concepts every MyGrowNet member should understand.
 - Build multiple income streams
 
 Complete this module to strengthen your financial foundation!
+MARKDOWN;
+    }
+
+    private function getTimeManagementContent(): string
+    {
+        return <<<'MARKDOWN'
+# Time Management & Productivity
+
+Master your time and boost your productivity with proven strategies.
+
+## Understanding Time Management
+
+Time is your most valuable resource. Unlike money, you can't earn more time - you can only use it wisely.
+
+### The Time Management Matrix
+
+**Urgent & Important**: Do immediately
+- Crises and emergencies
+- Pressing deadlines
+- Critical meetings
+
+**Important, Not Urgent**: Schedule and prioritize
+- Planning and strategy
+- Skill development
+- Relationship building
+- Health and wellness
+
+**Urgent, Not Important**: Delegate or minimize
+- Interruptions
+- Some emails and calls
+- Other people's priorities
+
+**Not Urgent, Not Important**: Eliminate
+- Time wasters
+- Excessive social media
+- Busy work
+
+## Productivity Techniques
+
+### The Pomodoro Technique
+1. Choose a task
+2. Work for 25 minutes (1 Pomodoro)
+3. Take a 5-minute break
+4. After 4 Pomodoros, take a 15-30 minute break
+
+### Time Blocking
+- Dedicate specific time blocks to specific activities
+- Protect your focus time
+- Schedule breaks and buffer time
+- Review and adjust weekly
+
+### The 2-Minute Rule
+If a task takes less than 2 minutes, do it immediately rather than adding it to your to-do list.
+
+## Daily Planning
+
+### Morning Routine
+1. Review your goals
+2. Identify top 3 priorities
+3. Schedule focused work time
+4. Prepare for meetings
+
+### Evening Review
+1. Celebrate wins
+2. Note incomplete tasks
+3. Plan tomorrow
+4. Disconnect and rest
+
+## Overcoming Procrastination
+
+### Common Causes
+- Task feels overwhelming
+- Fear of failure
+- Perfectionism
+- Lack of clarity
+
+### Solutions
+- Break tasks into smaller steps
+- Start with just 5 minutes
+- Remove distractions
+- Use accountability partners
+
+## Tools & Systems
+
+### Essential Tools
+- Calendar for time blocking
+- Task manager for to-do lists
+- Note-taking app for ideas
+- Timer for focused work
+
+### MyGrowNet Schedule Feature
+Use the Day Plan feature to:
+- Plan your daily activities
+- Track time spent
+- Build productive habits
+- Earn LGR credits
+
+## Work-Life Balance
+
+### Setting Boundaries
+- Define work hours
+- Protect family time
+- Schedule self-care
+- Learn to say no
+
+### Energy Management
+- Identify your peak hours
+- Schedule important work during peak energy
+- Take regular breaks
+- Maintain healthy habits
+
+Complete this module to take control of your time!
+MARKDOWN;
+    }
+
+    private function getCommunicationSkillsContent(): string
+    {
+        return <<<'MARKDOWN'
+# Effective Communication Skills
+
+Learn to communicate clearly, confidently, and persuasively in all situations.
+
+## The Foundation of Communication
+
+Communication is more than just talking - it's about understanding and being understood.
+
+### The Communication Process
+1. **Sender**: You formulate a message
+2. **Message**: The information you want to convey
+3. **Channel**: How you deliver it (verbal, written, visual)
+4. **Receiver**: The person receiving your message
+5. **Feedback**: Their response
+
+## Verbal Communication
+
+### Speaking Clearly
+- Use simple, direct language
+- Organize your thoughts before speaking
+- Speak at a moderate pace
+- Vary your tone for emphasis
+
+### Active Listening
+- Give full attention
+- Don't interrupt
+- Ask clarifying questions
+- Summarize what you heard
+
+### The Power of Questions
+- **Open questions**: "What do you think about...?"
+- **Closed questions**: "Did you complete...?"
+- **Probing questions**: "Can you tell me more about...?"
+
+## Non-Verbal Communication
+
+### Body Language
+- Maintain appropriate eye contact
+- Use open posture
+- Mirror the other person subtly
+- Be aware of personal space
+
+### Facial Expressions
+- Smile genuinely
+- Show interest and engagement
+- Match expressions to your message
+- Be authentic
+
+## Written Communication
+
+### Email Best Practices
+- Clear subject lines
+- Professional greeting
+- Concise message
+- Specific call-to-action
+- Professional closing
+
+### Business Writing
+- Know your audience
+- Use active voice
+- Be concise and clear
+- Proofread before sending
+
+## Difficult Conversations
+
+### Preparation
+1. Clarify your objective
+2. Consider the other perspective
+3. Choose the right time and place
+4. Plan your opening
+
+### During the Conversation
+- Stay calm and respectful
+- Focus on facts, not emotions
+- Listen actively
+- Seek mutual understanding
+
+### Conflict Resolution
+- Acknowledge emotions
+- Find common ground
+- Focus on solutions
+- Follow up
+
+## Communication in Business
+
+### Networking Conversations
+- Prepare your introduction
+- Ask about others first
+- Share your value proposition
+- Exchange contact information
+- Follow up within 48 hours
+
+### Presenting Your Business
+- Know your audience
+- Start with a hook
+- Use stories and examples
+- Address objections
+- End with clear next steps
+
+## Digital Communication
+
+### Social Media
+- Be professional and authentic
+- Engage with your audience
+- Share valuable content
+- Respond promptly to messages
+
+### Video Calls
+- Test technology beforehand
+- Choose a professional background
+- Look at the camera
+- Mute when not speaking
+
+## Building Relationships
+
+### Trust Building
+- Be consistent and reliable
+- Keep your promises
+- Admit mistakes
+- Show genuine interest
+
+### Empathy
+- Try to understand others' perspectives
+- Validate feelings
+- Show compassion
+- Offer support
+
+## Communication for MyGrowNet
+
+### Sharing the Opportunity
+- Focus on benefits, not features
+- Use testimonials and stories
+- Be honest about expectations
+- Answer questions thoroughly
+
+### Supporting Your Team
+- Regular check-ins
+- Clear instructions
+- Positive reinforcement
+- Constructive feedback
+
+Complete this module to become a confident communicator!
+MARKDOWN;
+    }
+
+    private function getGoalSettingContent(): string
+    {
+        return <<<'MARKDOWN'
+# Goal Setting & Achievement
+
+Set and achieve your personal and professional goals with proven strategies.
+
+## Why Goals Matter
+
+Goals give you direction, motivation, and a way to measure progress. Without goals, you're drifting - with goals, you're navigating.
+
+### Benefits of Goal Setting
+- Provides clarity and focus
+- Increases motivation
+- Helps prioritize actions
+- Builds confidence through achievement
+- Creates accountability
+
+## SMART Goals Framework
+
+Make your goals SMART:
+
+### Specific
+- **Vague**: "I want to earn more money"
+- **Specific**: "I want to earn K5,000 per month from MyGrowNet"
+
+### Measurable
+- Define how you'll track progress
+- Set milestones
+- Use numbers and dates
+
+### Achievable
+- Challenging but realistic
+- Consider your resources
+- Build on past successes
+
+### Relevant
+- Aligns with your values
+- Supports bigger objectives
+- Matters to you personally
+
+### Time-bound
+- Set a deadline
+- Create urgency
+- Enable planning
+
+## Types of Goals
+
+### Short-term Goals (1-3 months)
+- Complete all learning modules
+- Refer 3 new members
+- Attend 2 live events
+
+### Medium-term Goals (3-12 months)
+- Reach Professional level
+- Build a team of 9 active members
+- Earn K10,000 in commissions
+
+### Long-term Goals (1-5 years)
+- Achieve Ambassador level
+- Build a network of 2,000+ members
+- Create multiple income streams
+
+## The Goal-Setting Process
+
+### Step 1: Dream Big
+- What do you really want?
+- Don't limit yourself
+- Consider all areas of life
+
+### Step 2: Choose Your Focus
+- Select 3-5 major goals
+- Ensure they're aligned
+- Balance different life areas
+
+### Step 3: Make Them SMART
+- Apply the SMART framework
+- Write them down
+- Make them visible
+
+### Step 4: Create Action Plans
+- Break goals into steps
+- Assign deadlines
+- Identify resources needed
+
+### Step 5: Take Action
+- Start immediately
+- Build momentum
+- Track progress
+
+### Step 6: Review and Adjust
+- Weekly progress checks
+- Monthly reviews
+- Adjust as needed
+
+## Overcoming Obstacles
+
+### Common Challenges
+- **Lack of clarity**: Refine your goals
+- **Overwhelm**: Break into smaller steps
+- **Distractions**: Protect your focus time
+- **Fear**: Start small, build confidence
+- **Setbacks**: Learn and adjust
+
+### Staying Motivated
+- Visualize success
+- Celebrate small wins
+- Find an accountability partner
+- Review your "why" regularly
+
+## Goal Categories
+
+### Financial Goals
+- Monthly income target
+- Savings goals
+- Debt reduction
+- Investment targets
+
+### Career/Business Goals
+- Skill development
+- Professional level advancement
+- Network growth
+- Business launch
+
+### Personal Development Goals
+- Learning new skills
+- Health and fitness
+- Relationships
+- Hobbies and interests
+
+## MyGrowNet Goal Examples
+
+### Beginner Goals
+- Complete all required learning modules
+- Refer first 3 members
+- Earn first LGR credit
+- Attend first live event
+
+### Intermediate Goals
+- Reach Professional level (9 members)
+- Earn K5,000 in monthly commissions
+- Complete all life skills modules
+- Help 3 team members succeed
+
+### Advanced Goals
+- Achieve Director level (243 members)
+- Earn K20,000+ monthly
+- Mentor 10+ active leaders
+- Participate in profit-sharing
+
+## Tracking Your Progress
+
+### Daily Actions
+- Review your top 3 priorities
+- Complete at least one goal-related task
+- Track activities in Day Plan
+- Reflect on progress
+
+### Weekly Review
+- Assess progress on each goal
+- Celebrate wins
+- Identify obstacles
+- Plan next week's actions
+
+### Monthly Assessment
+- Measure results against targets
+- Adjust strategies if needed
+- Set new milestones
+- Reward yourself
+
+## The Power of Habits
+
+### Building Success Habits
+- Start small
+- Be consistent
+- Stack habits
+- Track streaks
+
+### MyGrowNet Success Habits
+- Daily platform login
+- Complete one learning activity
+- Engage with your team
+- Share valuable content
+- Track your progress
+
+## Accountability Systems
+
+### Self-Accountability
+- Written goals
+- Progress journal
+- Regular reviews
+- Reward system
+
+### External Accountability
+- Share goals with mentor
+- Join accountability group
+- Regular check-ins
+- Public commitments
+
+## Celebrating Success
+
+### Why Celebration Matters
+- Reinforces positive behavior
+- Builds confidence
+- Maintains motivation
+- Creates positive associations
+
+### How to Celebrate
+- Acknowledge the win
+- Share with supporters
+- Reward yourself
+- Reflect on lessons learned
+
+Complete this module and set your first SMART goal today!
 MARKDOWN;
     }
 }

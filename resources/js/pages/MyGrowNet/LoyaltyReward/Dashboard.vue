@@ -1,375 +1,188 @@
 <template>
   <MemberLayout>
-    <template #header>
-      <h2 class="text-xl font-semibold leading-tight text-gray-900">
-        Loyalty Growth Reward
-      </h2>
-    </template>
-
-    <div class="py-12">
-      <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-        <!-- Header Section -->
-        <div class="overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm sm:rounded-lg">
-          <div class="p-6 text-white">
-            <div class="flex items-start justify-between">
-              <div>
-                <h3 class="text-2xl font-bold">Loyalty Growth Reward Program</h3>
-                <p class="mt-2 text-blue-100">
-                  Earn up to K2,100 in Loyalty Credits over 70 days through active participation
-                </p>
-              </div>
-              <Link
-                :href="route('loyalty-reward.policy')"
-                class="flex items-center space-x-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/30 transition"
-              >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Learn More</span>
-              </Link>
-            </div>
-          </div>
+    <div class="py-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">Loyalty Growth Reward (LGR)</h1>
+          <p class="mt-1 text-sm text-gray-600">
+            Earn daily credits by staying active on the platform
+          </p>
         </div>
 
-        <!-- Premium Tier Required Message -->
-        <div v-if="qualification.qualified === false" class="overflow-hidden bg-yellow-50 border border-yellow-200 shadow-sm sm:rounded-lg">
-          <div class="p-6 text-center">
-            <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 class="mt-4 text-lg font-semibold text-gray-900">Premium Tier Required</h3>
-            <p class="mt-2 text-sm text-gray-600">
-              {{ qualification.reason }}
-            </p>
-            <Link
-              :href="route('mygrownet.starter-kit.show')"
-              class="mt-4 inline-flex items-center rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Upgrade to Premium
-            </Link>
+        <!-- Current Package (if user has one) -->
+        <div v-if="userPackage" class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg shadow-lg p-6 mb-6 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Your LGR Package</h2>
+              <p class="text-3xl font-bold mt-2">{{ userPackage.name }}</p>
+              <p class="text-sm text-purple-100 mt-1">K{{ userPackage.daily_lgr_rate }}/day for {{ userPackage.duration_days }} days</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-purple-100">Total Reward</p>
+              <p class="text-3xl font-bold">K{{ userPackage.total_reward }}</p>
+            </div>
           </div>
         </div>
 
         <!-- Qualification Status -->
-        <div v-else-if="!qualification.fully_qualified" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-          <div class="p-6">
-            <h4 class="text-lg font-semibold text-gray-900">Qualification Requirements</h4>
-            <p class="mt-2 text-sm text-gray-600">
-              Complete all requirements below to start your 70-day reward cycle
-            </p>
-
-            <div class="mt-6 space-y-4">
-              <!-- Starter Package -->
-              <div class="flex items-center justify-between rounded-lg border p-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    :class="[
-                      'flex h-10 w-10 items-center justify-center rounded-full',
-                      qualification.starter_package_completed
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-400',
-                    ]"
-                  >
-                    <svg
-                      v-if="qualification.starter_package_completed"
-                      class="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span v-else class="text-lg font-bold">1</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900">Purchase K1,000 Starter Package</p>
-                    <p class="text-sm text-gray-500">Access learning materials and platform tools</p>
-                  </div>
-                </div>
-                <Link
-                  v-if="!qualification.starter_package_completed"
-                  :href="route('mygrownet.starter-kit.show')"
-                  class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                  Get Started
-                </Link>
-              </div>
-
-              <!-- Training -->
-              <div class="flex items-center justify-between rounded-lg border p-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    :class="[
-                      'flex h-10 w-10 items-center justify-center rounded-full',
-                      qualification.training_completed
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-400',
-                    ]"
-                  >
-                    <svg
-                      v-if="qualification.training_completed"
-                      class="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span v-else class="text-lg font-bold">2</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900">Complete Business Fundamentals Training</p>
-                    <p class="text-sm text-gray-500">Essential business knowledge course</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Network -->
-              <div class="flex items-center justify-between rounded-lg border p-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    :class="[
-                      'flex h-10 w-10 items-center justify-center rounded-full',
-                      qualification.network_requirement_met
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-400',
-                    ]"
-                  >
-                    <svg
-                      v-if="qualification.network_requirement_met"
-                      class="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span v-else class="text-lg font-bold">3</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900">Build First-Level Team (3 Members)</p>
-                    <p class="text-sm text-gray-500">
-                      Current: {{ qualification.progress?.network?.current || 0 }} / 3 members
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Activities -->
-              <div class="flex items-center justify-between rounded-lg border p-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    :class="[
-                      'flex h-10 w-10 items-center justify-center rounded-full',
-                      qualification.activity_requirement_met
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-gray-100 text-gray-400',
-                    ]"
-                  >
-                    <svg
-                      v-if="qualification.activity_requirement_met"
-                      class="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span v-else class="text-lg font-bold">4</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-gray-900">Complete 2 Platform Activities</p>
-                    <p class="text-sm text-gray-500">
-                      Current: {{ qualification.progress?.activities?.current || 0 }} / 2 activities
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Qualification Status</h2>
+          
+          <div v-if="qualification.is_qualified" class="space-y-4">
+            <div class="flex items-center gap-3 text-green-600">
+              <CheckCircleIcon class="h-6 w-6" aria-hidden="true" />
+              <span class="font-medium">You are qualified for LGR!</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Active Cycle Dashboard -->
-        <div v-if="qualification.qualified !== false && qualification.fully_qualified && cycle.has_active_cycle" class="space-y-6">
-          <!-- Stats Cards -->
-          <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-              <div class="p-6">
-                <p class="text-sm font-medium text-gray-500">Current Cycle Day</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                  {{ cycle.cycle.active_days }} / 70
-                </p>
+            
+            <div v-if="cycle" class="mt-4">
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-gray-600">Cycle Progress</span>
+                <span class="font-medium text-gray-900">Day {{ cycle.days_completed }}/{{ cycle.total_days }}</span>
               </div>
-            </div>
-
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-              <div class="p-6">
-                <p class="text-sm font-medium text-gray-500">Total Earned</p>
-                <p class="mt-2 text-3xl font-bold text-green-600">
-                  K{{ cycle.cycle.total_earned_lgc.toFixed(2) }}
-                </p>
-              </div>
-            </div>
-
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-              <div class="p-6">
-                <p class="text-sm font-medium text-gray-500">Projected Earnings</p>
-                <p class="mt-2 text-3xl font-bold text-blue-600">
-                  K{{ cycle.cycle.projected_earnings.toFixed(2) }}
-                </p>
-              </div>
-            </div>
-
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-              <div class="p-6">
-                <p class="text-sm font-medium text-gray-500">Days Remaining</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                  {{ cycle.cycle.remaining_days }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Today's Activity -->
-          <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <h4 class="text-lg font-semibold text-gray-900">Today's Activity</h4>
-              <div v-if="cycle.has_activity_today" class="mt-4 rounded-lg bg-green-50 p-4">
-                <div class="flex items-center">
-                  <svg
-                    class="h-6 w-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <p class="ml-3 text-sm font-medium text-green-800">
-                    Activity completed! You earned K30 today.
-                  </p>
-                </div>
-              </div>
-              <div v-else class="mt-4 rounded-lg bg-yellow-50 p-4">
-                <p class="text-sm text-yellow-800">
-                  Complete an activity today to earn K30 in Loyalty Credits
-                </p>
-                <div class="mt-4 space-y-2">
-                  <p class="text-sm font-medium text-gray-900">Quick Activities:</p>
-                  <ul class="list-inside list-disc space-y-1 text-sm text-gray-600">
-                    <li>Complete a learning module</li>
-                    <li>Make a marketplace purchase</li>
-                    <li>Attend a platform event</li>
-                    <li>Engage in community discussions</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center justify-between">
-                <h4 class="text-lg font-semibold text-gray-900">Cycle Progress</h4>
-                <span class="text-sm text-gray-500">
-                  {{ cycle.cycle.completion_rate.toFixed(1) }}% Complete
-                </span>
-              </div>
-              <div class="mt-4 h-4 w-full overflow-hidden rounded-full bg-gray-200">
-                <div
-                  class="h-full bg-blue-600 transition-all duration-500"
-                  :style="{ width: cycle.cycle.completion_rate + '%' }"
+              <div class="bg-gray-200 rounded-full h-3">
+                <div 
+                  class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full h-3 transition-all duration-500"
+                  :style="{ width: `${(cycle.days_completed / cycle.total_days) * 100}%` }"
                 ></div>
               </div>
+              <p class="text-xs text-gray-500 mt-2">
+                K{{ cycle.total_earned }} earned so far
+              </p>
             </div>
           </div>
 
-          <!-- Recent Activities -->
-          <div v-if="cycle.recent_activities.length > 0" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-            <div class="p-6">
-              <h4 class="text-lg font-semibold text-gray-900">Recent Activities</h4>
-              <div class="mt-4 space-y-3">
-                <div
-                  v-for="activity in cycle.recent_activities"
-                  :key="activity.date"
-                  class="flex items-center justify-between rounded-lg border p-3"
+          <div v-else class="space-y-4">
+            <div class="flex items-center gap-3 text-yellow-600">
+              <AlertCircleIcon class="h-6 w-6" aria-hidden="true" />
+              <span class="font-medium">Not yet qualified</span>
+            </div>
+            
+            <div class="text-sm text-gray-600">
+              <p class="mb-2">To qualify for LGR, you need to:</p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Purchase an LGR package</li>
+                <li>Complete daily activities to earn credits</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available Packages -->
+        <div v-if="packages && packages.length > 0" class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Available LGR Packages</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              v-for="pkg in packages"
+              :key="pkg.id"
+              class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border-2"
+              :class="userPackage?.id === pkg.id ? 'border-purple-500' : 'border-transparent'"
+            >
+              <div class="p-6">
+                <!-- Package Name -->
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ pkg.name }}</h3>
+                
+                <!-- Package Amount -->
+                <div class="mb-4">
+                  <p class="text-3xl font-bold text-purple-600">K{{ pkg.package_amount }}</p>
+                  <p class="text-sm text-gray-600">One-time payment</p>
+                </div>
+
+                <!-- Daily Rate -->
+                <div class="mb-4 p-3 bg-purple-50 rounded-lg">
+                  <p class="text-sm text-gray-600">Daily LGR Rate</p>
+                  <p class="text-2xl font-bold text-purple-700">K{{ pkg.daily_lgr_rate }}</p>
+                  <p class="text-xs text-gray-500">for {{ pkg.duration_days }} days</p>
+                </div>
+
+                <!-- Total Reward -->
+                <div class="mb-4 p-3 bg-green-50 rounded-lg">
+                  <p class="text-sm text-gray-600">Total Reward</p>
+                  <p class="text-2xl font-bold text-green-700">K{{ pkg.total_reward }}</p>
+                  <p class="text-xs text-gray-500">{{ getRoiPercentage(pkg) }}% ROI</p>
+                </div>
+
+                <!-- Features -->
+                <div v-if="pkg.features && pkg.features.length > 0" class="mb-4">
+                  <ul class="space-y-1">
+                    <li v-for="(feature, index) in pkg.features" :key="index" class="flex items-start gap-2 text-sm text-gray-600">
+                      <CheckIcon class="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <span>{{ feature }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Action Button -->
+                <button
+                  v-if="userPackage?.id !== pkg.id"
+                  class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  @click="selectPackage(pkg)"
                 >
-                  <div>
-                    <p class="text-sm font-medium text-gray-900">{{ activity.description }}</p>
-                    <p class="text-xs text-gray-500">{{ activity.date }}</p>
-                  </div>
-                  <span class="text-sm font-semibold text-green-600">
-                    +K{{ activity.lgc_earned }}
-                  </span>
+                  Select Package
+                </button>
+                <div v-else class="w-full bg-green-100 text-green-800 py-2 rounded-lg text-center font-medium">
+                  Current Package
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Start Cycle Button -->
-        <div v-if="qualification.qualified !== false && qualification.fully_qualified && !cycle.has_active_cycle" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-          <div class="p-6 text-center">
-            <h4 class="text-lg font-semibold text-gray-900">You're Qualified!</h4>
-            <p class="mt-2 text-sm text-gray-600">
-              Start your 70-day Loyalty Growth Reward cycle now
-            </p>
-            <form @submit.prevent="startCycle" class="mt-6">
-              <button
-                type="submit"
-                :disabled="processing"
-                class="rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {{ processing ? 'Starting...' : 'Start My Cycle' }}
-              </button>
-            </form>
-          </div>
-        </div>
+        <!-- Daily Activities -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Earn Daily LGR Credits</h2>
+          
+          <p class="text-sm text-gray-600 mb-4">
+            Complete at least ONE activity each day to earn your LGR credits:
+          </p>
 
-        <!-- Wallet Balance -->
-        <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-          <div class="p-6">
-            <h4 class="text-lg font-semibold text-gray-900">Loyalty Credits Balance</h4>
-            <p class="mt-2 text-3xl font-bold text-blue-600">
-              K{{ Number(user.loyalty_points || 0).toFixed(2) }}
-            </p>
-            <p class="mt-2 text-sm text-gray-600">
-              Use for platform purchases, venture investments, or convert up to 40% to cash
-            </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
-              :href="route('loyalty-reward.policy')"
-              class="mt-3 inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+              :href="route('learning.index')"
+              class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
             >
-              <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              View LGR Policy
+              <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <BookOpenIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Complete Learning Module</p>
+                <p class="text-xs text-gray-500">Earn credits by learning</p>
+              </div>
             </Link>
+
+            <Link
+              :href="route('events.index')"
+              class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
+            >
+              <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <CalendarIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Attend Live Event</p>
+                <p class="text-xs text-gray-500">Check in to events</p>
+              </div>
+            </Link>
+
+            <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <ShoppingBagIcon class="h-5 w-5 text-green-600" aria-hidden="true" />
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Make Marketplace Purchase</p>
+                <p class="text-xs text-gray-500">Buy from marketplace</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div class="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <UsersIcon class="h-5 w-5 text-yellow-600" aria-hidden="true" />
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Refer New Member</p>
+                <p class="text-xs text-gray-500">Invite someone to join</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -378,29 +191,58 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { router, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import { Link } from '@inertiajs/vue3';
+import MemberLayout from '@/Layouts/MemberLayout.vue';
+import { 
+  CheckCircleIcon, 
+  AlertCircleIcon, 
+  CheckIcon,
+  BookOpenIcon,
+  CalendarIcon,
+  ShoppingBagIcon,
+  UsersIcon
+} from 'lucide-vue-next';
+
+interface Package {
+  id: number;
+  name: string;
+  package_amount: number;
+  daily_lgr_rate: number;
+  duration_days: number;
+  total_reward: number;
+  features: string[];
+}
+
+interface Qualification {
+  is_qualified: boolean;
+}
+
+interface Cycle {
+  days_completed: number;
+  total_days: number;
+  total_earned: number;
+}
 
 interface Props {
-  qualification: any;
-  cycle: any;
-  user: any;
+  qualification: Qualification;
+  cycle: Cycle | null;
+  packages: Package[];
+  userPackage: Package | null;
+  user: {
+    loyalty_points: number;
+    bonus_balance: number;
+  };
 }
 
 const props = defineProps<Props>();
-const processing = ref(false);
 
-const startCycle = () => {
-  processing.value = true;
-  router.post(
-    route('mygrownet.loyalty-reward.start-cycle'),
-    {},
-    {
-      onFinish: () => {
-        processing.value = false;
-      },
-    }
-  );
+const getRoiPercentage = (pkg: Package): string => {
+  const roi = (pkg.total_reward / pkg.package_amount) * 100;
+  return roi.toFixed(0);
+};
+
+const selectPackage = (pkg: Package) => {
+  // TODO: Implement package purchase flow
+  alert(`Package selection coming soon! You selected: ${pkg.name}`);
 };
 </script>
