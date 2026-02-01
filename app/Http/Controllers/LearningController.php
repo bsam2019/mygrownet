@@ -13,7 +13,7 @@ class LearningController extends Controller
     ) {}
 
     /**
-     * Display learning modules list
+     * Display learning modules dashboard (unified view)
      */
     public function index(Request $request)
     {
@@ -24,7 +24,7 @@ class LearningController extends Controller
         $progress = $this->learningService->getUserProgress(auth()->id());
         $completions = $this->learningService->getUserCompletions(auth()->id());
 
-        return Inertia::render('Learning/Index', [
+        return Inertia::render('Learning/Dashboard', [
             'modules' => $modules,
             'categories' => $categories,
             'progress' => $progress,
@@ -34,7 +34,7 @@ class LearningController extends Controller
     }
 
     /**
-     * Display a single learning module
+     * Display a single learning module (loads in unified dashboard)
      */
     public function show(string $slug)
     {
@@ -44,14 +44,19 @@ class LearningController extends Controller
             abort(404, 'Learning module not found');
         }
 
-        $isCompleted = $this->learningService->hasUserCompletedModule(
-            auth()->id(),
-            $module->id
-        );
+        // Get all modules for sidebar
+        $modules = $this->learningService->getPublishedModules(null);
+        $categories = $this->learningService->getCategories();
+        $progress = $this->learningService->getUserProgress(auth()->id());
+        $completions = $this->learningService->getUserCompletions(auth()->id());
 
-        return Inertia::render('Learning/Show', [
-            'module' => $module,
-            'isCompleted' => $isCompleted,
+        return Inertia::render('Learning/Dashboard', [
+            'modules' => $modules,
+            'categories' => $categories,
+            'progress' => $progress,
+            'completions' => $completions,
+            'selectedCategory' => null,
+            'initialModuleSlug' => $slug,
         ]);
     }
 
