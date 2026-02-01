@@ -587,6 +587,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/pool', [App\Http\Controllers\Admin\LgrAdminController::class, 'pool'])->name('pool');
         Route::get('/activities', [App\Http\Controllers\Admin\LgrAdminController::class, 'activities'])->name('activities');
         
+        // Package Management Routes
+        Route::get('/packages', [App\Http\Controllers\Admin\LgrPackageController::class, 'index'])->name('packages.index');
+        Route::post('/packages', [App\Http\Controllers\Admin\LgrPackageController::class, 'store'])->name('packages.store');
+        Route::put('/packages/{package}', [App\Http\Controllers\Admin\LgrPackageController::class, 'update'])->name('packages.update');
+        Route::delete('/packages/{package}', [App\Http\Controllers\Admin\LgrPackageController::class, 'destroy'])->name('packages.destroy');
+        Route::post('/packages/{package}/toggle-active', [App\Http\Controllers\Admin\LgrPackageController::class, 'toggleActive'])->name('packages.toggle-active');
+        Route::post('/packages/reorder', [App\Http\Controllers\Admin\LgrPackageController::class, 'reorder'])->name('packages.reorder');
+        
         // Manual Award Routes
         Route::get('/awards', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'index'])->name('awards.index');
         Route::get('/awards/create', [App\Http\Controllers\Admin\LgrManualAwardController::class, 'create'])->name('awards.create');
