@@ -18,6 +18,7 @@ class OrderService
         private EscrowService $escrowService,
         private ProductService $productService,
         private SellerService $sellerService,
+        private \App\Services\LgrActivityTrackingService $lgrTrackingService,
     ) {}
 
     public function createOrder(int $buyerId, array $cartItems, array $deliveryData): MarketplaceOrder
@@ -109,6 +110,13 @@ class OrderService
             // Create escrow hold
             $this->escrowService->holdFunds($order);
 
+            // CRITICAL: Record LGR activity for buyer
+            $this->lgrTrackingService->recordMarketplacePurchase(
+                $order->buyer_id,
+                $order->id,
+                $order->total
+            );
+
             return $order->fresh();
         });
     }
@@ -166,6 +174,13 @@ class OrderService
 
             // Update seller stats
             $this->sellerService->incrementOrderCount($order->seller_id);
+
+            // CRITICAL: Record LGR activity for seller
+            $this->lgrTrackingService->recordMarketplaceSale(
+                $order->seller_id,
+                $order->id,
+                $order->total
+            );
 
             return $order->fresh();
         });

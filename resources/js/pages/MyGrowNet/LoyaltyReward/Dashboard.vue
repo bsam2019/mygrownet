@@ -114,13 +114,13 @@
                 </div>
 
                 <!-- Action Button -->
-                <button
+                <Link
                   v-if="userPackage?.id !== pkg.id"
-                  class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  @click="selectPackage(pkg)"
+                  :href="route('mygrownet.loyalty-reward.packages.show', pkg.id)"
+                  class="block w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-center"
                 >
-                  Select Package
-                </button>
+                  {{ userPackage ? 'Upgrade' : 'Select Package' }}
+                </Link>
                 <div v-else class="w-full bg-green-100 text-green-800 py-2 rounded-lg text-center font-medium">
                   Current Package
                 </div>
@@ -239,10 +239,5 @@ const props = defineProps<Props>();
 const getRoiPercentage = (pkg: Package): string => {
   const roi = (pkg.total_reward / pkg.package_amount) * 100;
   return roi.toFixed(0);
-};
-
-const selectPackage = (pkg: Package) => {
-  // TODO: Implement package purchase flow
-  alert(`Package selection coming soon! You selected: ${pkg.name}`);
 };
 </script>

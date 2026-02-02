@@ -225,5 +225,63 @@ class LgrActivityTrackingService
             ]);
         }
     }
+
+    /**
+     * Record referral registration activity
+     */
+    public function recordReferralRegistration(int $userId, int $referredUserId, string $referredUserName): void
+    {
+        try {
+            $this->cycleService->recordActivity(
+                $userId,
+                'referral_registration',
+                "Referred new member: {$referredUserName}",
+                [
+                    'referred_user_id' => $referredUserId,
+                    'referred_user_name' => $referredUserName,
+                ]
+            );
+            
+            Log::info('LGR referral registration activity recorded', [
+                'user_id' => $userId,
+                'referred_user_id' => $referredUserId,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record LGR referral activity: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'referred_user_id' => $referredUserId,
+            ]);
+        }
+    }
+
+    /**
+     * Record social sharing activity (minimum 5 shares per day)
+     */
+    public function recordSocialSharing(int $userId, int $shareCount): void
+    {
+        try {
+            // Only record if user has shared at least 5 links today
+            if ($shareCount < 5) {
+                return;
+            }
+
+            $this->cycleService->recordActivity(
+                $userId,
+                'social_sharing',
+                "Shared {$shareCount} links on social media",
+                ['share_count' => $shareCount]
+            );
+            
+            Log::info('LGR social sharing activity recorded', [
+                'user_id' => $userId,
+                'share_count' => $shareCount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record LGR social sharing activity: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'share_count' => $shareCount,
+            ]);
+        }
+    }
 }
 

@@ -16,12 +16,16 @@ class LearningCompletionModel extends Model
         'started_at',
         'completed_at',
         'time_spent_seconds',
+        'current_page',
+        'last_accessed_at',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'last_accessed_at' => 'datetime',
         'time_spent_seconds' => 'integer',
+        'current_page' => 'integer',
     ];
 
     public function user(): BelongsTo

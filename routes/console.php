@@ -34,9 +34,9 @@ Schedule::command('lgr:process-daily-payouts')
     ->dailyAt('00:30')
     ->description('Process daily LGR payouts for active cycles');
 
-Schedule::command('lgr:complete-cycles')
+Schedule::command('lgr:complete-expired-cycles')
     ->dailyAt('01:00')
-    ->description('Complete LGR cycles that have reached their end date');
+    ->description('Complete expired LGR cycles');
 
 Schedule::command('lgr:monitor-pool')
     ->dailyAt('06:00')

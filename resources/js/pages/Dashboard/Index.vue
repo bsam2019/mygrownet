@@ -17,7 +17,8 @@ import {
     ChevronRightIcon,
     GlobeAltIcon,
     WrenchScrewdriverIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    ShareIcon
 } from '@heroicons/vue/24/solid';
 
 interface Module {
@@ -288,6 +289,24 @@ const handleModuleClick = (module: Module) => {
 
                                 <span class="text-[11px] text-gray-500 text-center leading-tight">
                                     Attend events to earn
+                                </span>
+                            </Link>
+
+                            <!-- Promotional Cards -->
+                            <Link
+                                href="/promotional-cards"
+                                class="group relative bg-white rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm border border-gray-100"
+                            >
+                                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-pink-500 transition-transform duration-300 group-hover:scale-110">
+                                    <ShareIcon class="w-6 h-6 text-white" aria-hidden="true" />
+                                </div>
+                                
+                                <span class="text-gray-800 text-center font-semibold text-sm">
+                                    Share & Earn
+                                </span>
+
+                                <span class="text-[11px] text-gray-500 text-center leading-tight">
+                                    Share 5 cards to earn
                                 </span>
                             </Link>
                         </div>

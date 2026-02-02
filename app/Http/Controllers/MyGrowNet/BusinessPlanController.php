@@ -16,7 +16,8 @@ class BusinessPlanController extends Controller
 {
     public function __construct(
         private AIGenerationService $aiService,
-        private ExportService $exportService
+        private ExportService $exportService,
+        private \App\Services\LgrActivityTrackingService $lgrTrackingService,
     ) {}
 
     public function index(Request $request)
@@ -133,6 +134,9 @@ class BusinessPlanController extends Controller
             'status' => 'completed',
             'completed_at' => now(),
         ]);
+
+        // CRITICAL: Record LGR activity
+        $this->lgrTrackingService->recordBusinessPlanCompletion($user->id);
 
         return redirect()
             ->route('mygrownet.tools.business-plan.view', $plan->id)

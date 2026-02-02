@@ -186,6 +186,25 @@
             </div>
           </div>
 
+          <!-- Resume Indicator -->
+          <div v-else-if="moduleProgress && moduleProgress.current_page > 0" class="mb-6">
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <Clock class="w-6 h-6 text-blue-600" aria-hidden="true" />
+                <div>
+                  <p class="font-semibold text-blue-900">Resuming from Page {{ moduleProgress.current_page + 1 }}</p>
+                  <p class="text-sm text-blue-700">Last accessed {{ formatDate(moduleProgress.last_accessed_at) }}</p>
+                </div>
+              </div>
+              <button
+                @click="resetProgress"
+                class="px-4 py-2 text-sm bg-white text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+              >
+                Start Over
+              </button>
+            </div>
+          </div>
+
           <!-- Page Progress Indicator -->
           <div class="mb-6">
             <div class="flex items-center justify-between mb-2">
@@ -313,12 +332,20 @@ interface Progress {
   completion_percentage: number;
 }
 
+interface ModuleProgress {
+  current_page: number;
+  is_completed: boolean;
+  last_accessed_at: string | null;
+  time_spent_seconds: number | null;
+}
+
 interface Props {
   modules: Module[];
   categories: string[];
   progress: Progress;
   completions: Completion[];
   initialModuleSlug?: string;
+  moduleProgress?: ModuleProgress | null;
 }
 
 const props = defineProps<Props>();
@@ -331,6 +358,7 @@ const startTime = ref(Date.now());
 const timeSpent = ref(0);
 const currentPage = ref(0);
 let intervalId: number | null = null;
+let progressSaveTimeout: number | null = null;
 
 const visibleCategories = computed(() => {
   if (selectedCategory.value) {
@@ -383,20 +411,81 @@ const getModulesByCategory = (category: string) => {
   return props.modules.filter(m => m.category === category);
 };
 
-const selectModule = (module: Module) => {
+const selectModule = async (module: Module) => {
   selectedModule.value = module;
   currentPage.value = 0;
   startTime.value = Date.now();
   timeSpent.value = 0;
   
-  // Update URL without page reload
-  window.history.pushState({}, '', `/learning/${module.slug}`);
+  // Fetch progress for this specific module
+  try {
+    const response = await fetch(route('learning.progress.get', module.id), {
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.current_page > 0) {
+        currentPage.value = data.current_page;
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load progress:', error);
+  }
+  
+  // Save that this module was accessed (even at page 0)
+  // This ensures it will be auto-loaded next time
+  saveProgress(0);
+  
+  // Don't change URL - keep it as /learning
+};
+
+const saveProgress = (page: number) => {
+  if (!selectedModule.value) return;
+  
+  console.log('saveProgress called:', { moduleId: selectedModule.value.id, page });
+  
+  // Debounce progress saving (wait 1 second after last page change)
+  if (progressSaveTimeout) {
+    clearTimeout(progressSaveTimeout);
+  }
+  
+  progressSaveTimeout = window.setTimeout(() => {
+    if (!selectedModule.value) return;
+    
+    console.log('Saving progress to server:', { moduleId: selectedModule.value.id, page });
+    
+    // Use fetch for silent background save (not Inertia)
+    fetch(route('learning.progress.update', selectedModule.value.id), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ current_page: page }),
+    })
+    .then(response => {
+      console.log('Progress saved successfully:', response.status);
+      return response.json();
+    })
+    .then(data => {
+      console.log('Server response:', data);
+    })
+    .catch(error => {
+      console.error('Failed to save progress:', error);
+    });
+  }, 1000);
 };
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value - 1) {
     currentPage.value++;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    saveProgress(currentPage.value);
   }
 };
 
@@ -404,6 +493,26 @@ const previousPage = () => {
   if (currentPage.value > 0) {
     currentPage.value--;
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    saveProgress(currentPage.value);
+  }
+};
+
+const resetProgress = () => {
+  if (!selectedModule.value) return;
+  
+  if (confirm('Are you sure you want to start this module from the beginning?')) {
+    router.post(
+      route('learning.progress.reset', selectedModule.value.id),
+      {},
+      {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          currentPage.value = 0;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      }
+    );
   }
 };
 
@@ -434,6 +543,24 @@ const getCategoryStyle = (category: string | null) => {
   return 'bg-blue-100 text-blue-700';
 };
 
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return 'recently';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  return date.toLocaleDateString();
+};
+
 // Timer for time spent
 watch(selectedModule, (newModule) => {
   if (intervalId) {
@@ -448,17 +575,39 @@ watch(selectedModule, (newModule) => {
 });
 
 onMounted(() => {
+  // Debug: Log what we received
+  console.log('Initial module slug:', props.initialModuleSlug);
+  console.log('Module progress:', props.moduleProgress);
+  console.log('All modules:', props.modules.map(m => m.slug));
+  
+  // Auto-load the last accessed module if provided
   if (props.initialModuleSlug) {
     const module = props.modules.find(m => m.slug === props.initialModuleSlug);
+    console.log('Found module:', module);
+    
     if (module) {
       selectedModule.value = module;
+      
+      // Load saved progress if available
+      if (props.moduleProgress && props.moduleProgress.current_page > 0) {
+        currentPage.value = props.moduleProgress.current_page;
+        console.log('Loaded progress - page:', currentPage.value);
+      } else {
+        currentPage.value = 0;
+        console.log('No progress - starting at page 0');
+      }
     }
+  } else {
+    console.log('No initial module slug provided');
   }
 });
 
 onUnmounted(() => {
   if (intervalId) {
     clearInterval(intervalId);
+  }
+  if (progressSaveTimeout) {
+    clearTimeout(progressSaveTimeout);
   }
 });
 </script>

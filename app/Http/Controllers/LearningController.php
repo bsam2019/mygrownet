@@ -24,12 +24,30 @@ class LearningController extends Controller
         $progress = $this->learningService->getUserProgress(auth()->id());
         $completions = $this->learningService->getUserCompletions(auth()->id());
 
+        // Get the last accessed module to auto-resume
+        $lastAccessedModule = $this->learningService->getLastAccessedModule(auth()->id());
+        $moduleProgress = null;
+        
+        // Fallback: If no in-progress module, get the first incomplete module
+        if (!$lastAccessedModule) {
+            $completedIds = $completions->pluck('learning_module_id')->toArray();
+            $lastAccessedModule = $modules->first(function ($module) use ($completedIds) {
+                return !in_array($module->id, $completedIds);
+            });
+        }
+        
+        if ($lastAccessedModule) {
+            $moduleProgress = $this->learningService->getModuleProgress(auth()->id(), $lastAccessedModule->id);
+        }
+
         return Inertia::render('Learning/Dashboard', [
             'modules' => $modules,
             'categories' => $categories,
             'progress' => $progress,
             'completions' => $completions,
             'selectedCategory' => $category,
+            'initialModuleSlug' => $lastAccessedModule?->slug,
+            'moduleProgress' => $moduleProgress,
         ]);
     }
 
@@ -49,6 +67,9 @@ class LearningController extends Controller
         $categories = $this->learningService->getCategories();
         $progress = $this->learningService->getUserProgress(auth()->id());
         $completions = $this->learningService->getUserCompletions(auth()->id());
+        
+        // Get module progress (current page)
+        $moduleProgress = $this->learningService->getModuleProgress(auth()->id(), $module->id);
 
         return Inertia::render('Learning/Dashboard', [
             'modules' => $modules,
@@ -57,6 +78,7 @@ class LearningController extends Controller
             'completions' => $completions,
             'selectedCategory' => null,
             'initialModuleSlug' => $slug,
+            'moduleProgress' => $moduleProgress,
         ]);
     }
 
@@ -72,6 +94,21 @@ class LearningController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to start module: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get progress for a specific module
+     */
+    public function getProgress(int $moduleId)
+    {
+        $progress = $this->learningService->getModuleProgress(auth()->id(), $moduleId);
+        
+        return response()->json($progress ?? [
+            'current_page' => 0,
+            'is_completed' => false,
+            'last_accessed_at' => null,
+            'time_spent_seconds' => null,
+        ]);
     }
 
     /**
@@ -97,6 +134,42 @@ class LearningController extends Controller
             return back()->with('info', 'Module already completed');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to complete module: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update user's progress (current page) in a module
+     */
+    public function updateProgress(Request $request, int $moduleId)
+    {
+        $request->validate([
+            'current_page' => 'required|integer|min:0',
+        ]);
+
+        try {
+            $this->learningService->updateProgress(
+                auth()->id(),
+                $moduleId,
+                $request->input('current_page')
+            );
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Reset progress for a module (start over)
+     */
+    public function resetProgress(Request $request, int $moduleId)
+    {
+        try {
+            $this->learningService->resetProgress(auth()->id(), $moduleId);
+
+            return back()->with('success', 'Progress reset. Starting from the beginning.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to reset progress: ' . $e->getMessage());
         }
     }
 }

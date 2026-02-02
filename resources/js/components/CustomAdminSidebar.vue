@@ -79,9 +79,11 @@ const userManagementNavItems: NavItem[] = [
 const lgrNavItems: NavItem[] = [
     { title: 'Overview', href: safeRoute('admin.lgr.index'), icon: LayoutGrid },
     { title: 'Manual Awards', href: safeRoute('admin.lgr.awards.index'), icon: Star },
+    { title: 'Activity Report', href: safeRoute('admin.lgr.activity-report'), icon: Activity },
     { title: 'Cycles', href: safeRoute('admin.lgr.cycles'), icon: Activity },
     { title: 'Qualifications', href: safeRoute('admin.lgr.qualifications'), icon: Target },
     { title: 'Pool Management', href: safeRoute('admin.lgr.pool'), icon: DollarSign },
+    { title: 'Promotional Cards', href: safeRoute('admin.promotional-cards.index'), icon: MessageSquare },
     { title: 'Settings', href: safeRoute('admin.lgr.settings'), icon: Shield }, // Temporarily using Shield icon
 ];
 

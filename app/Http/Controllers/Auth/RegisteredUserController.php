@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\StarterKitService;
 use App\Services\DefaultSponsorService;
+use App\Services\LgrActivityTrackingService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +51,11 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, DefaultSponsorService $defaultSponsorService): RedirectResponse
+    public function store(
+        Request $request, 
+        DefaultSponsorService $defaultSponsorService,
+        LgrActivityTrackingService $lgrTrackingService
+    ): RedirectResponse
     {
         // Normalize phone number BEFORE validation
         $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
@@ -118,6 +123,15 @@ class RegisteredUserController extends Controller
             // Note: Points are ONLY awarded when user purchases starter kit
             // See StarterKitService::awardRegistrationBonus() for correct implementation
             // Registration alone does NOT award points
+
+            // CRITICAL: Record LGR activity for referrer (if exists)
+            if ($originalReferrerId) {
+                $lgrTrackingService->recordReferralRegistration(
+                    $originalReferrerId,
+                    $user->id,
+                    $user->name
+                );
+            }
 
             Auth::login($user);
 

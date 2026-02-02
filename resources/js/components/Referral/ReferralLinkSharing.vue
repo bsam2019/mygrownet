@@ -217,6 +217,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
 import { router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { 
     RefreshCwIcon, 
     CopyIcon, 
@@ -306,6 +307,9 @@ const copyLink = async () => {
     try {
         await navigator.clipboard.writeText(displayLink.value);
         showToastMessage('Referral link copied to clipboard!');
+        
+        // Track copy action for LGR activity
+        recordSocialShare('copy_link');
     } catch (err) {
         console.error('Failed to copy link:', err);
         showToastMessage('Failed to copy link. Please try again.');
@@ -373,6 +377,21 @@ const shareOnPlatform = (platform: string) => {
     const url = urls[platform as keyof typeof urls];
     if (url) {
         window.open(url, '_blank', 'width=600,height=400');
+        
+        // Track social share for LGR activity
+        recordSocialShare(platform);
+    }
+};
+
+const recordSocialShare = async (platform: string) => {
+    try {
+        await axios.post('/social-shares/record', {
+            share_type: 'referral_link',
+            platform: platform,
+            shared_url: displayLink.value,
+        });
+    } catch (error) {
+        console.error('Failed to record social share:', error);
     }
 };
 

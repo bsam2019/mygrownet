@@ -470,4 +470,21 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::delete('/{employee}/revoke-all', [\App\Http\Controllers\Admin\DelegationController::class, 'revokeAll'])->name('revoke-all');
     });
 
+    // Promotional Cards Management (for LGR social sharing activity)
+    Route::prefix('promotional-cards')->name('promotional-cards.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'store'])->name('store');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'toggleActive'])->name('toggle-active');
+        Route::get('/{id}/statistics', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'statistics'])->name('statistics');
+        Route::post('/reorder', [\App\Http\Controllers\Admin\PromotionalCardAdminController::class, 'reorder'])->name('reorder');
+    });
+
+    // LGR Activity Report
+    Route::prefix('lgr')->name('lgr.')->group(function () {
+        Route::get('/activity-report', [\App\Http\Controllers\Admin\LgrActivityReportController::class, 'index'])->name('activity-report');
+        Route::get('/activity-report/user/{userId}', [\App\Http\Controllers\Admin\LgrActivityReportController::class, 'userDetails'])->name('activity-report.user-details');
+    });
+
 });

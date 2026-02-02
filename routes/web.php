@@ -352,9 +352,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Learning System Routes (LGR Activity)
     Route::prefix('learning')->name('learning.')->group(function () {
         Route::get('/', [App\Http\Controllers\LearningController::class, 'index'])->name('index');
-        Route::get('/{slug}', [App\Http\Controllers\LearningController::class, 'show'])->name('show');
+        Route::get('/{moduleId}/progress', [App\Http\Controllers\LearningController::class, 'getProgress'])->name('progress.get');
         Route::post('/{moduleId}/start', [App\Http\Controllers\LearningController::class, 'start'])->name('start');
         Route::post('/{moduleId}/complete', [App\Http\Controllers\LearningController::class, 'complete'])->name('complete');
+        Route::post('/{moduleId}/progress', [App\Http\Controllers\LearningController::class, 'updateProgress'])->name('progress.update');
+        Route::post('/{moduleId}/reset', [App\Http\Controllers\LearningController::class, 'resetProgress'])->name('progress.reset');
     });
 
     // Events System Routes (LGR Activity)
@@ -1061,6 +1063,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/activities', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'activities'])->name('activities');
             Route::post('/start-cycle', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'startCycle'])->name('start-cycle');
             Route::post('/record-activity', [App\Http\Controllers\MyGrowNet\LoyaltyRewardController::class, 'recordActivity'])->name('record-activity');
+            
+            // Package Management
+            Route::get('/packages', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'index'])->name('packages');
+            Route::get('/packages/{package}', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'show'])->name('packages.show');
+            Route::post('/packages/{package}/purchase', [App\Http\Controllers\MyGrowNet\LgrPackageController::class, 'purchase'])->name('packages.purchase');
         });
         
         // Analytics Routes
@@ -1308,6 +1315,20 @@ Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->grou
     
     // Transaction history
     Route::get('/history', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'history'])->name('history');
+});
+
+// Social Share Tracking Routes (for LGR activity tracking)
+Route::middleware(['auth', 'verified'])->prefix('social-shares')->name('social-shares.')->group(function () {
+    Route::post('/record', [App\Http\Controllers\SocialShareController::class, 'recordShare'])->name('record');
+    Route::get('/stats', [App\Http\Controllers\SocialShareController::class, 'getStats'])->name('stats');
+    Route::get('/recent', [App\Http\Controllers\SocialShareController::class, 'getRecentShares'])->name('recent');
+});
+
+// Promotional Cards Routes (for LGR activity - social sharing)
+Route::middleware(['auth', 'verified'])->prefix('promotional-cards')->name('promotional-cards.')->group(function () {
+    Route::get('/', [App\Http\Controllers\PromotionalCardController::class, 'index'])->name('index');
+    Route::get('/{slug}', [App\Http\Controllers\PromotionalCardController::class, 'show'])->name('show');
+    Route::post('/{cardId}/share', [App\Http\Controllers\PromotionalCardController::class, 'recordShare'])->name('share');
 });
 
 require __DIR__.'/admin.php';
