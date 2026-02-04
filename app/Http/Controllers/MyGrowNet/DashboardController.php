@@ -430,18 +430,18 @@ class DashboardController extends Controller
         
         // Get LGR packages for mobile
         $lgrPackages = \App\Models\LgrPackage::where('is_active', true)
-            ->orderBy('cost')
+            ->orderBy('package_amount')
             ->get()
             ->map(function ($package) {
                 return [
                     'id' => $package->id,
                     'name' => $package->name,
                     'description' => $package->description,
-                    'cost' => (float) $package->cost,
+                    'cost' => (float) $package->package_amount,
                     'daily_lgr_rate' => (float) $package->daily_lgr_rate,
                     'duration_days' => $package->duration_days,
                     'total_reward' => (float) $package->total_reward,
-                    'is_popular' => (bool) $package->is_popular,
+                    'is_popular' => (bool) ($package->sort_order === 2), // Middle package is popular
                 ];
             })
             ->toArray();
@@ -457,11 +457,11 @@ class DashboardController extends Controller
                     'id' => $package->id,
                     'name' => $package->name,
                     'description' => $package->description,
-                    'cost' => (float) $package->cost,
+                    'cost' => (float) $package->package_amount,
                     'daily_lgr_rate' => (float) $package->daily_lgr_rate,
                     'duration_days' => $package->duration_days,
                     'total_reward' => (float) $package->total_reward,
-                    'is_popular' => (bool) $package->is_popular,
+                    'is_popular' => (bool) ($package->sort_order === 2),
                 ];
             }
         }
