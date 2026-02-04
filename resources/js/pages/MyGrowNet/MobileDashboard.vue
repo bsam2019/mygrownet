@@ -1300,6 +1300,8 @@
               @edit-profile="showEditProfileModal = true"
               @change-password="showChangePasswordModal = true"
               @verification="showComingSoon('Verification')"
+              @lgr-packages="showLgrPackagesModal = true"
+              @my-earnings="router.visit(route('mygrownet.earnings'))"
               @live-support="openLiveChat"
               @messages="navigateToMessages"
               @support-tickets="showSupportModal = true"
@@ -1653,6 +1655,14 @@
       @error="handleToastError"
     />
 
+    <!-- LGR Packages Modal -->
+    <LgrPackagesModal
+      :show="showLgrPackagesModal"
+      :packages="props.lgrPackages || []"
+      :user-package="props.userLgrPackage"
+      @close="showLgrPackagesModal = false"
+    />
+
     <!-- Live Chat Support Widget (hidden button on mobile, triggered from More tab) -->
     <UnifiedLiveChatWidget
       ref="liveChatWidgetRef"
@@ -1700,6 +1710,7 @@ import InstallPrompt from '@/components/Mobile/InstallPrompt.vue';
 import MoreTabContent from '@/components/Mobile/MoreTabContent.vue';
 import ChangePasswordModal from '@/components/Mobile/ChangePasswordModal.vue';
 import PresentationModal from '@/components/Mobile/PresentationModal.vue';
+import LgrPackagesModal from '@/components/Mobile/LgrPackagesModal.vue';
 import MiniSparkline from '@/components/Mobile/MiniSparkline.vue';
 import EarningsTrendChart from '@/components/Mobile/EarningsTrendChart.vue';
 import MemberFilters from '@/components/Mobile/MemberFilters.vue';
@@ -1775,6 +1786,8 @@ const props = withDefaults(defineProps<{
   existingBusinessPlan?: any;
   networkGrowth?: any[];
   earningsTrend?: any[];
+  lgrPackages?: any[];
+  userLgrPackage?: any;
 }>(), {
   stats: () => ({ total_earnings: 0, this_month_earnings: 0, total_deposits: 0, total_withdrawals: 0 }),
   referralStats: () => ({ levels: [] }),
@@ -1786,7 +1799,9 @@ const props = withDefaults(defineProps<{
   announcements: () => [],
   messagingData: () => ({ unread_count: 0 }),
   networkGrowth: () => [],
-  earningsTrend: () => []
+  earningsTrend: () => [],
+  lgrPackages: () => [],
+  userLgrPackage: null,
 });
 
 // Check if admin is impersonating
@@ -2004,6 +2019,7 @@ const showBusinessPlanListModal = ref(false);
 const showROICalculatorModal = ref(false);
 const showChangePasswordModal = ref(false);
 const showPresentationModal = ref(false);
+const showLgrPackagesModal = ref(false);
 
 // Live Chat Widget ref
 const liveChatWidgetRef = ref<any>(null);

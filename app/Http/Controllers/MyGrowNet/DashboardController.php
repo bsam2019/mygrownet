@@ -428,6 +428,45 @@ class DashboardController extends Controller
             'createdAt' => $ticket->createdAt()->format('Y-m-d H:i:s'),
         ], $tickets);
         
+        // Get LGR packages for mobile
+        $lgrPackages = \App\Models\LgrPackage::where('is_active', true)
+            ->orderBy('cost')
+            ->get()
+            ->map(function ($package) {
+                return [
+                    'id' => $package->id,
+                    'name' => $package->name,
+                    'description' => $package->description,
+                    'cost' => (float) $package->cost,
+                    'daily_lgr_rate' => (float) $package->daily_lgr_rate,
+                    'duration_days' => $package->duration_days,
+                    'total_reward' => (float) $package->total_reward,
+                    'is_popular' => (bool) $package->is_popular,
+                ];
+            })
+            ->toArray();
+        
+        $data['lgrPackages'] = $lgrPackages;
+        
+        // Get user's current LGR package
+        $userLgrPackage = null;
+        if ($user->lgr_package_id) {
+            $package = \App\Models\LgrPackage::find($user->lgr_package_id);
+            if ($package) {
+                $userLgrPackage = [
+                    'id' => $package->id,
+                    'name' => $package->name,
+                    'description' => $package->description,
+                    'cost' => (float) $package->cost,
+                    'daily_lgr_rate' => (float) $package->daily_lgr_rate,
+                    'duration_days' => $package->duration_days,
+                    'total_reward' => (float) $package->total_reward,
+                    'is_popular' => (bool) $package->is_popular,
+                ];
+            }
+        }
+        $data['userLgrPackage'] = $userLgrPackage;
+        
         // DEBUG: Add a flag to identify mobile dashboard
         $data['isMobileDashboard'] = true;
         $data['debugInfo'] = [

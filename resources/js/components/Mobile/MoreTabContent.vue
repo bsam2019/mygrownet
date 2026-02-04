@@ -36,6 +36,30 @@
       </div>
     </div>
 
+    <!-- Rewards & Earnings Section -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <GiftIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
+          Rewards & Earnings
+        </h3>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <MenuButton
+          label="LGR Packages"
+          :icon="SparklesIcon"
+          subtitle="View & upgrade packages"
+          @click="$emit('lgr-packages')"
+        />
+        <MenuButton
+          label="My Earnings"
+          :icon="CurrencyDollarIcon"
+          subtitle="Track your income"
+          @click="$emit('my-earnings')"
+        />
+      </div>
+    </div>
+
     <!-- Support & Help Section -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
@@ -187,6 +211,9 @@ import {
   ArrowRightOnRectangleIcon,
   PresentationChartBarIcon,
   ChevronRightIcon,
+  GiftIcon,
+  SparklesIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/vue/24/outline';
 
 import CompactProfileCard from './CompactProfileCard.vue';
@@ -205,6 +232,8 @@ defineEmits<{
   'edit-profile': [];
   'change-password': [];
   'verification': [];
+  'lgr-packages': [];
+  'my-earnings': [];
   'live-support': [];
   'messages': [];
   'support-tickets': [];
