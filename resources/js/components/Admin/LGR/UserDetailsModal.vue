@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue';
-import { XMarkIcon } from 'lucide-vue-next';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 
 interface User {

@@ -228,6 +228,11 @@ class User extends Authenticatable
         'lifeplus_onboarded',
         'fcm_token',
         'lifeplus_notifications_enabled',
+        // Premium template access (tier-based)
+        'premium_template_tier',
+        'premium_access_granted_at',
+        'premium_access_granted_by',
+        'premium_access_notes',
     ];
 
     protected $hidden = [
@@ -1399,6 +1404,38 @@ class User extends Authenticatable
         return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel::class, 'recipient_id');
     }
 
+    // Premium Template Access relationship
+    public function premiumAccessGrantedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'premium_access_granted_by');
+    }
+    
+    /**
+     * Check if user has premium template access (either through subscription or admin grant)
+     * 
+     * @param string|null $minimumTier The minimum tier required (starter, business, agency)
+     * @return bool
+     */
+    public function hasPremiumTemplateAccess(?string $minimumTier = 'starter'): bool
+    {
+        // Check if user has admin-granted premium access
+        if ($this->premium_template_tier) {
+            // If no minimum tier specified, any tier grants access
+            if (!$minimumTier) {
+                return true;
+            }
+            
+            // Define tier hierarchy
+            $tierHierarchy = ['starter' => 1, 'business' => 2, 'agency' => 3];
+            $userTierLevel = $tierHierarchy[$this->premium_template_tier] ?? 0;
+            $requiredTierLevel = $tierHierarchy[$minimumTier] ?? 0;
+            
+            return $userTierLevel >= $requiredTierLevel;
+        }
+        
+        return false;
+    }
+
     // Venture Builder relationships
     public function ventureInvestments(): HasMany
     {
@@ -2113,5 +2150,33 @@ class User extends Authenticatable
         // Fallback: return referrer if no spot found (shouldn't happen in normal operation)
         \Log::warning("Matrix placement: No available spot found in tree, falling back to referrer {$referrerId}");
         return $referrerId;
+    }
+
+    // ==========================================
+    // CMS (Company Management System) Relationships
+    // ==========================================
+
+    /**
+     * Get user's CMS user profile (if they have access to CMS)
+     */
+    public function cmsUser(): HasOne
+    {
+        return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::class);
+    }
+
+    /**
+     * Check if user has CMS access
+     */
+    public function hasCmsAccess(): bool
+    {
+        return $this->cmsUser()->exists();
+    }
+
+    /**
+     * Get user's CMS company (if they have CMS access)
+     */
+    public function cmsCompany()
+    {
+        return $this->cmsUser?->company;
     }
 }

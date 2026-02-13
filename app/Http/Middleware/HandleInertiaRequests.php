@@ -129,6 +129,29 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        // Get recent notifications for CMS users - CACHED for 60 seconds
+        $notifications = null;
+        if ($user && $request->is('cms*')) {
+            $notifications = cache()->remember("cms_notifications_{$user->id}", 60, function () use ($user) {
+                return $user->notifications()
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get()
+                    ->map(function ($notification) {
+                        return [
+                            'id' => $notification->id,
+                            'title' => $notification->data['title'] ?? 'Notification',
+                            'message' => $notification->data['message'] ?? '',
+                            'type' => $notification->data['type'] ?? 'system',
+                            'read_at' => $notification->read_at?->toISOString(),
+                            'created_at' => $notification->created_at->toISOString(),
+                            'data' => $notification->data,
+                        ];
+                    })
+                    ->toArray();
+            });
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -155,6 +178,7 @@ class HandleInertiaRequests extends Middleware
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'supportStats' => $supportStats,
             'employee' => $employee,
+            'notifications' => $notifications,
             // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
             'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
             // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes

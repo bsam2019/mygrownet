@@ -55,6 +55,48 @@
                     </div>
                 </div>
 
+                <!-- Family Wellness Check-Ins -->
+                <div v-if="recentFamilies.length > 0" class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-900">Family Wellness</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Link
+                            v-for="family in recentFamilies"
+                            :key="family.id"
+                            :href="route('ubumi.families.check-ins.dashboard', family.slug)"
+                            class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 group"
+                        >
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 group-hover:text-green-600 transition-colors">
+                                            {{ family.name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-600">
+                                            {{ family.member_count }} {{ family.member_count === 1 ? 'member' : 'members' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-green-700 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                View Wellness Dashboard
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+
                 <!-- Recent Families -->
                 <div v-if="recentFamilies.length > 0" class="mb-8">
                     <div class="flex items-center justify-between mb-4">
@@ -89,7 +131,7 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <Link
                         :href="route('ubumi.families.create')"
                         class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all group"
@@ -123,28 +165,90 @@
                             </div>
                         </div>
                     </Link>
+
+                    <Link
+                        v-if="recentFamilies.length > 0"
+                        :href="route('ubumi.families.check-ins.dashboard', recentFamilies[0].slug)"
+                        class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all group"
+                    >
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold mb-1">Health Check-Ins</h3>
+                                <p class="text-sm opacity-90">Monitor family wellness</p>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
 
                 <!-- Empty State -->
-                <div v-if="recentFamilies.length === 0" class="bg-white rounded-2xl shadow-lg p-12 text-center">
-                    <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mb-4">
-                        <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                <div v-if="recentFamilies.length === 0" class="space-y-6">
+                    <!-- Main Empty State -->
+                    <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
+                        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mb-4">
+                            <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Start Your Family Tree</h3>
+                        <p class="text-gray-600 mb-6">
+                            Create your first family to begin documenting your lineage and staying connected with loved ones.
+                        </p>
+                        <Link
+                            :href="route('ubumi.families.create')"
+                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Your First Family
+                        </Link>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Start Your Family Tree</h3>
-                    <p class="text-gray-600 mb-6">
-                        Create your first family to begin documenting your lineage and staying connected with loved ones.
-                    </p>
-                    <Link
-                        :href="route('ubumi.families.create')"
-                        class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
-                    >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Create Your First Family
-                    </Link>
+
+                    <!-- Health Check-In Feature Info -->
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl shadow-lg p-8">
+                        <div class="flex items-start gap-4">
+                            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Health Check-In Feature</h3>
+                                <p class="text-gray-700 mb-4">
+                                    Once you create a family and add members, you'll be able to:
+                                </p>
+                                <ul class="space-y-2 text-gray-700 mb-4">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-2xl">😊</span>
+                                        <span><strong>Check in on family members</strong> - Simple wellness updates with 3 status options</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-2xl">🔔</span>
+                                        <span><strong>Receive alerts</strong> - Get notified when someone needs help or isn't feeling well</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-2xl">📊</span>
+                                        <span><strong>Monitor wellness</strong> - View family-wide wellness dashboard with check-in history</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-2xl">💚</span>
+                                        <span><strong>Stay connected</strong> - Keep track of your loved ones' wellbeing across distances</span>
+                                    </li>
+                                </ul>
+                                <div class="bg-white/50 rounded-xl p-4 border border-green-200">
+                                    <p class="text-sm text-gray-600 italic">
+                                        <strong>Note:</strong> Ubumi is a family communication tool, not a medical system. 
+                                        It helps families stay informed about each other's wellbeing.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

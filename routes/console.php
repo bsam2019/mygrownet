@@ -24,6 +24,19 @@ Schedule::command('points:check-advancements')
     ->dailyAt('10:00')
     ->description('Check for level advancements');
 
+// CMS Scheduled Tasks
+Schedule::command('cms:generate-recurring-invoices')
+    ->dailyAt('06:00')
+    ->description('Generate invoices from recurring templates');
+
+Schedule::command('cms:send-payment-reminders')
+    ->dailyAt('08:00')
+    ->description('Send payment reminder emails');
+
+Schedule::command('cms:send-scheduled-reports')
+    ->hourly()
+    ->description('Send scheduled reports');
+
 // Subscription Management
 Schedule::command('subscriptions:check-expiring')
     ->dailyAt('08:00')
@@ -103,6 +116,20 @@ Schedule::command('lifeplus:habit-reminders')
 Schedule::command('delegations:expire')
     ->dailyAt('00:15')
     ->description('Expire delegations that have passed their expiration date');
+
+// ========================================
+// CMS Scheduled Tasks
+// ========================================
+
+// Send payment reminders and overdue notices - runs daily at 8 AM
+Schedule::command('cms:send-payment-reminders')
+    ->dailyAt('08:00')
+    ->description('Send automated payment reminders and overdue notices');
+
+// Send scheduled reports - runs every hour to check for due reports
+Schedule::command('cms:send-scheduled-reports')
+    ->hourly()
+    ->description('Send scheduled CMS reports via email');
 
 // ========================================
 // GrowNet Market Scheduled Tasks

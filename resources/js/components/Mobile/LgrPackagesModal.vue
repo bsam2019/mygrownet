@@ -30,12 +30,12 @@
         <!-- Header -->
         <div class="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <div>
-            <h3 class="text-lg font-bold text-gray-900">LGR Packages</h3>
-            <p class="text-xs text-gray-600 mt-0.5">Choose your loyalty reward package</p>
+            <h3 class="text-lg font-bold text-gray-900">Starter Kit Packages</h3>
+            <p class="text-xs text-gray-600 mt-0.5">Choose your membership package</p>
           </div>
           <button
             @click="emit('close')"
-            aria-label="Close LGR packages modal"
+            aria-label="Close starter kit packages modal"
             class="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <XMarkIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
@@ -80,9 +80,9 @@
                 <SparklesIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
               </div>
               <div>
-                <h4 class="font-semibold text-gray-900 mb-1">Get Started with LGR</h4>
+                <h4 class="font-semibold text-gray-900 mb-1">Get Your Starter Kit</h4>
                 <p class="text-sm text-gray-600">
-                  Purchase a package to start earning daily loyalty rewards. The more you engage, the more you earn!
+                  Purchase a starter kit to unlock learning resources, shop credit, and earning opportunities. Each package includes daily LGR bonus credits!
                 </p>
               </div>
             </div>
@@ -166,24 +166,24 @@
           <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <h5 class="font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <InformationCircleIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
-              How LGR Works
+              What's Included
             </h5>
             <ul class="space-y-2 text-sm text-gray-700">
               <li class="flex items-start gap-2">
                 <span class="text-blue-600 mt-0.5">•</span>
-                <span>Earn daily LGR credits automatically</span>
+                <span>Learning resources (e-books, videos, guides)</span>
               </li>
               <li class="flex items-start gap-2">
                 <span class="text-blue-600 mt-0.5">•</span>
-                <span>Complete activities to boost your earnings</span>
+                <span>Shop credit for marketplace purchases</span>
               </li>
               <li class="flex items-start gap-2">
                 <span class="text-blue-600 mt-0.5">•</span>
-                <span>Transfer LGR to your wallet anytime</span>
+                <span>Daily LGR bonus credits (loyalty rewards)</span>
               </li>
               <li class="flex items-start gap-2">
                 <span class="text-blue-600 mt-0.5">•</span>
-                <span>Higher packages = better daily rates</span>
+                <span>Referral commission eligibility</span>
               </li>
             </ul>
           </div>

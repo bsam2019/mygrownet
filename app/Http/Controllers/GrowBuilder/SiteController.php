@@ -311,9 +311,12 @@ class SiteController extends Controller
         if (!empty($validated['site_template_id'])) {
             $template = \App\Models\GrowBuilder\SiteTemplate::find($validated['site_template_id']);
             
-            if ($template && $template->is_premium && $currentTier === 'free') {
+            // Check if user has premium access (either through subscription OR admin grant)
+            $hasPremiumAccess = $currentTier !== 'free' || $request->user()->hasPremiumTemplateAccess();
+            
+            if ($template && $template->is_premium && !$hasPremiumAccess) {
                 return back()->withErrors([
-                    'site_template_id' => 'This premium template requires a GrowBuilder subscription. Please upgrade to access premium templates.'
+                    'site_template_id' => 'This premium template requires a GrowBuilder subscription or admin-granted premium access. Please upgrade to access premium templates.'
                 ]);
             }
         }

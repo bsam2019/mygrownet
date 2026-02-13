@@ -146,6 +146,15 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     // Starter Kit Management
     Route::get('/starter-kits', [\App\Http\Controllers\Admin\StarterKitController::class, 'index'])->name('starter-kits.index');
 
+    // Premium Template Access Management
+    Route::prefix('premium-access')->name('premium-access.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PremiumAccessController::class, 'index'])->name('index');
+        Route::post('/{user}/grant', [\App\Http\Controllers\Admin\PremiumAccessController::class, 'grant'])->name('grant');
+        Route::post('/{user}/revoke', [\App\Http\Controllers\Admin\PremiumAccessController::class, 'revoke'])->name('revoke');
+        Route::post('/bulk-grant', [\App\Http\Controllers\Admin\PremiumAccessController::class, 'bulkGrant'])->name('bulk-grant');
+        Route::post('/bulk-revoke', [\App\Http\Controllers\Admin\PremiumAccessController::class, 'bulkRevoke'])->name('bulk-revoke');
+    });
+
     // Reward System Management
     
     // Matrix Management

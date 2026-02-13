@@ -130,6 +130,12 @@ class ModuleAccessService
             return 'none';
         }
 
+        // Special case: GrowBuilder admin-granted premium access
+        if ($moduleId->value() === 'growbuilder' && !empty($user->premium_template_tier)) {
+            // User has admin-granted premium access, return their tier
+            return $user->premium_template_tier;
+        }
+
         // Check for active subscription first
         $subscription = $this->subscriptionRepository->findByUserAndModule($user->id, $moduleId);
         

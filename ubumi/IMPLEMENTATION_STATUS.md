@@ -295,6 +295,13 @@ routes/
 - [x] Alert management interface
 - [x] Member list with latest check-in status
 
+**Module Integration:**
+- [x] Ubumi module registered in ModuleSeeder
+- [x] Accessible from MyGrowNet modules page
+- [x] Icon: 👨‍👩‍👧‍👦 (family emoji)
+- [x] Category: Personal
+- [x] Status: Active
+
 ### 📝 Implementation Notes
 
 **SMS Integration:**
@@ -319,6 +326,104 @@ routes/
 - [ ] Check-in statistics and trends
 - [ ] Configurable reminder schedules per person
 - [ ] SMS gateway integration (Africa's Talking/Twilio)
+
+---
+
+## How to Use the Check-In System
+
+### For Family Members
+
+**1. Access Ubumi:**
+- From MyGrowNet dashboard, go to Modules
+- Click on "Ubumi" (👨‍👩‍👧‍👦 icon)
+- Or visit directly: `/ubumi`
+
+**2. Create Your Family:**
+- Click "Create New Family" on the dashboard
+- Enter family name (e.g., "Smith Family")
+- You become the family admin
+
+**3. Add Family Members:**
+- Click "Add Person" in your family
+- Enter name, photo (optional), date of birth or approximate age
+- Select gender and add relationships
+- Save the person
+
+**4. Check-In on Family Members:**
+- Go to any family member's profile page
+- Click the "Check-In" button
+- Select status:
+  - 😊 **I am well** - Everything is fine
+  - 😐 **I am not feeling well** - Minor concerns
+  - 🆘 **I need assistance** - Urgent help needed
+- Add optional note for context
+- Submit check-in
+
+**5. View Check-In History:**
+- On person's profile, click "View Check-In History"
+- See timeline of all check-ins
+- Color-coded by status (green/amber/red)
+
+**6. Monitor Family Wellness:**
+- Go to "Family Check-Ins Dashboard"
+- See summary of all family members
+- View active alerts
+- See who checked in recently
+- Acknowledge alerts when addressed
+
+### For Family Admins
+
+**Alert Management:**
+- Receive email notifications when someone reports "unwell" or "need assistance"
+- View active alerts on family dashboard
+- Acknowledge alerts after taking action
+- Monitor missed check-ins (if scheduled)
+
+**Caregiver Assignment:**
+- Designate specific caregivers for vulnerable members
+- Caregivers receive alerts for their assigned persons
+- Multiple caregivers can be assigned per person
+
+**Check-In Settings:**
+- Configure check-in frequency expectations
+- Set up missed check-in thresholds
+- Enable/disable SMS notifications (when configured)
+
+### Mobile Experience
+
+**Mobile-First Design:**
+- Bottom navigation for easy access
+- Touch-friendly buttons and cards
+- Slide-up modals for check-ins
+- Optimized for low-data usage
+
+**Quick Actions:**
+- Tap person's profile to check in
+- Swipe to view check-in history
+- One-tap alert acknowledgement
+
+### Notification Flow
+
+**When "Unwell" is Selected:**
+1. Check-in recorded in database
+2. Alert created with "unwell" status
+3. Email sent to family admin
+4. Email sent to designated caregivers (if any)
+5. Alert appears on family dashboard
+
+**When "Need Assistance" is Selected:**
+1. Check-in recorded with urgent flag
+2. High-priority alert created
+3. Immediate email notifications sent
+4. Alert prominently displayed on dashboard
+5. Requires acknowledgement from admin
+
+**Missed Check-Ins:**
+1. Scheduled command checks for missed check-ins
+2. If person hasn't checked in within threshold
+3. Alert created for family admin
+4. Notification sent to caregivers
+5. Appears on family dashboard
 
 ---
 
@@ -577,6 +682,14 @@ The codebase is structured for easy extraction to a separate project:
 - Resolved UbumiServiceProvider binding issues
 - Fixed double footer issue in UbumiLayout
 - All Phase 1 features stable and working
+
+### February 4, 2026 - Dashboard Enhancement
+- **Added Family Wellness section to Ubumi dashboard**
+- Created dedicated wellness check-in cards for each family
+- Added "Health Check-Ins" quick action button
+- Improved navigation to family wellness dashboards
+- Enhanced visibility of check-in features
+- Updated `resources/js/pages/Ubumi/Index.vue`
 
 ### January 23, 2026 - Slug-Based URLs Implementation
 - **Implemented human-readable URLs throughout Ubumi:**

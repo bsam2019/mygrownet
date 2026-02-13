@@ -165,6 +165,11 @@ const props = defineProps<{
 const showCreateWizard = ref(false);
 const showAIGenerator = ref(false);
 
+// Check if user has premium access (not on free tier)
+const hasGrowBuilderSubscription = computed(() => {
+    return props.subscription?.tier !== 'free';
+});
+
 const openCreateWizard = () => {
     showCreateWizard.value = true;
 };
@@ -837,6 +842,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
             :show="showCreateWizard"
             :site-templates="siteTemplates || []"
             :industries="industries || []"
+            :has-grow-builder-subscription="hasGrowBuilderSubscription"
             @close="closeCreateWizard"
         />
         

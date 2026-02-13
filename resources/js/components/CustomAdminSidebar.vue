@@ -18,6 +18,7 @@ import {
     Target, 
     DollarSign, 
     Shield, 
+    ShieldCheck as ShieldCheckIcon,
     Key, 
     CreditCard,
     ChevronDown,
@@ -132,6 +133,7 @@ const growBuilderNavItems: NavItem[] = [
     { title: 'Deleted Sites', href: safeRoute('admin.growbuilder.deleted'), icon: Trash2 },
     { title: 'Storage', href: safeRoute('admin.growbuilder.storage'), icon: HardDriveIcon },
     { title: 'Analytics', href: safeRoute('admin.growbuilder.analytics'), icon: ChartBarIcon },
+    { title: 'Premium Access', href: safeRoute('admin.premium-access.index'), icon: ShieldCheckIcon },
 ];
 
 const marketplaceNavItems: NavItem[] = [

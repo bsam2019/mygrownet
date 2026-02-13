@@ -1301,7 +1301,7 @@
               @change-password="showChangePasswordModal = true"
               @verification="showComingSoon('Verification')"
               @lgr-packages="showLgrPackagesModal = true"
-              @my-earnings="router.visit(route('mygrownet.earnings.index'))"
+              @my-earnings="handleTabChange('wallet')"
               @live-support="openLiveChat"
               @messages="navigateToMessages"
               @support-tickets="showSupportModal = true"

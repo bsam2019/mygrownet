@@ -46,7 +46,7 @@
       </div>
       <div class="divide-y divide-gray-100">
         <MenuButton
-          label="LGR Packages"
+          label="Starter Kits"
           :icon="SparklesIcon"
           subtitle="View & upgrade packages"
           @click="$emit('lgr-packages')"
