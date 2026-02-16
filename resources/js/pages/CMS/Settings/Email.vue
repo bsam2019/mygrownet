@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import FormInput from '@/components/CMS/FormInput.vue'
 import FormSelect from '@/components/CMS/FormSelect.vue'
 import { CheckCircleIcon, XCircleIcon, EnvelopeIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

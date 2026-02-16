@@ -3,10 +3,10 @@ import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { ChartBarIcon, BanknotesIcon, DocumentTextIcon, BriefcaseIcon, CalculatorIcon, BookOpenIcon, ReceiptPercentIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon, ScaleIcon, ArrowTrendingUpIcon } from '@heroicons/vue/24/outline';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

@@ -1,28 +1,71 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import FormInput from '@/components/CMS/FormInput.vue'
 import FormSelect from '@/components/CMS/FormSelect.vue'
 import FormSection from '@/components/CMS/FormSection.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
+interface Props {
+  departments: Array<{ id: number; name: string }>
+}
+
+const props = defineProps<Props>()
+
 const form = useForm({
-  name: '',
+  // Basic Info
+  first_name: '',
+  last_name: '',
+  middle_name: '',
   phone: '',
   email: '',
-  id_number: '',
-  worker_type: 'casual',
+  
+  // Personal Details
+  date_of_birth: '',
+  gender: '',
+  nationality: 'Zambian',
+  address: '',
+  city: '',
+  province: '',
+  
+  // Emergency Contact
+  emergency_contact_name: '',
+  emergency_contact_phone: '',
+  emergency_contact_relationship: '',
+  
+  // Employment Details
+  job_title: '',
+  department_id: null,
+  hire_date: '',
+  employment_type: 'permanent',
+  employment_status: 'active',
+  contract_start_date: '',
+  contract_end_date: '',
+  probation_end_date: '',
+  
+  // Compensation
+  worker_type: 'permanent',
   hourly_rate: 0,
   daily_rate: 0,
   commission_rate: 0,
+  monthly_salary: 0,
+  salary_currency: 'ZMW',
+  
+  // Tax & Benefits
+  tax_number: '',
+  napsa_number: '',
+  nhima_number: '',
+  
+  // Payment Method
   payment_method: 'mobile_money',
   mobile_money_number: '',
   bank_name: '',
   bank_account_number: '',
+  
   notes: '',
 })
 
@@ -30,6 +73,20 @@ const workerTypes = [
   { value: 'casual', label: 'Casual' },
   { value: 'contract', label: 'Contract' },
   { value: 'permanent', label: 'Permanent' },
+]
+
+const employmentTypes = [
+  { value: 'full_time', label: 'Full Time' },
+  { value: 'part_time', label: 'Part Time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'temporary', label: 'Temporary' },
+  { value: 'intern', label: 'Intern' },
+]
+
+const genderOptions = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
 ]
 
 const paymentMethods = [
@@ -67,15 +124,49 @@ const submit = () => {
             description="Basic details about the worker"
             :divider="false"
           >
-            <div class="sm:col-span-2">
-              <FormInput
-                v-model="form.name"
-                label="Full Name"
-                placeholder="Enter worker's full name"
-                required
-                :error="form.errors.name"
-              />
-            </div>
+            <FormInput
+              v-model="form.first_name"
+              label="First Name"
+              placeholder="Enter first name"
+              required
+              :error="form.errors.first_name"
+            />
+
+            <FormInput
+              v-model="form.last_name"
+              label="Last Name"
+              placeholder="Enter last name"
+              required
+              :error="form.errors.last_name"
+            />
+
+            <FormInput
+              v-model="form.middle_name"
+              label="Middle Name"
+              placeholder="Enter middle name (optional)"
+              :error="form.errors.middle_name"
+            />
+
+            <FormInput
+              v-model="form.date_of_birth"
+              label="Date of Birth"
+              type="date"
+              :error="form.errors.date_of_birth"
+            />
+
+            <FormSelect
+              v-model="form.gender"
+              label="Gender"
+              :options="genderOptions"
+              :error="form.errors.gender"
+            />
+
+            <FormInput
+              v-model="form.nationality"
+              label="Nationality"
+              placeholder="e.g., Zambian"
+              :error="form.errors.nationality"
+            />
 
             <FormInput
               v-model="form.phone"
@@ -92,16 +183,58 @@ const submit = () => {
               type="email"
               placeholder="worker@example.com"
               :error="form.errors.email"
-              help-text="Optional - for sending notifications"
             />
 
             <div class="sm:col-span-2">
               <FormInput
-                v-model="form.id_number"
-                label="ID/NRC Number"
-                placeholder="123456/78/9"
-                :error="form.errors.id_number"
-                help-text="National Registration Card or ID number"
+                v-model="form.address"
+                label="Address"
+                placeholder="Street address"
+                :error="form.errors.address"
+              />
+            </div>
+
+            <FormInput
+              v-model="form.city"
+              label="City"
+              placeholder="e.g., Lusaka"
+              :error="form.errors.city"
+            />
+
+            <FormInput
+              v-model="form.province"
+              label="Province"
+              placeholder="e.g., Lusaka Province"
+              :error="form.errors.province"
+            />
+          </FormSection>
+
+          <!-- Emergency Contact -->
+          <FormSection
+            title="Emergency Contact"
+            description="Person to contact in case of emergency"
+          >
+            <FormInput
+              v-model="form.emergency_contact_name"
+              label="Contact Name"
+              placeholder="Full name"
+              :error="form.errors.emergency_contact_name"
+            />
+
+            <FormInput
+              v-model="form.emergency_contact_phone"
+              label="Contact Phone"
+              type="tel"
+              placeholder="+260 XXX XXX XXX"
+              :error="form.errors.emergency_contact_phone"
+            />
+
+            <div class="sm:col-span-2">
+              <FormInput
+                v-model="form.emergency_contact_relationship"
+                label="Relationship"
+                placeholder="e.g., Spouse, Parent, Sibling"
+                :error="form.errors.emergency_contact_relationship"
               />
             </div>
           </FormSection>
@@ -109,14 +242,92 @@ const submit = () => {
           <!-- Employment Details -->
           <FormSection
             title="Employment Details"
-            description="Worker type and compensation rates"
+            description="Job position and employment terms"
           >
+            <FormInput
+              v-model="form.job_title"
+              label="Job Title"
+              placeholder="e.g., Construction Worker"
+              required
+              :error="form.errors.job_title"
+            />
+
+            <FormSelect
+              v-model="form.department_id"
+              label="Department"
+              :options="departments.map(d => ({ value: d.id, label: d.name }))"
+              :error="form.errors.department_id"
+            />
+
+            <FormInput
+              v-model="form.hire_date"
+              label="Hire Date"
+              type="date"
+              required
+              :error="form.errors.hire_date"
+            />
+
+            <FormSelect
+              v-model="form.employment_type"
+              label="Employment Type"
+              :options="employmentTypes"
+              required
+              :error="form.errors.employment_type"
+            />
+
+            <FormInput
+              v-model="form.contract_start_date"
+              label="Contract Start Date"
+              type="date"
+              :error="form.errors.contract_start_date"
+              help-text="For contract workers"
+            />
+
+            <FormInput
+              v-model="form.contract_end_date"
+              label="Contract End Date"
+              type="date"
+              :error="form.errors.contract_end_date"
+              help-text="For contract workers"
+            />
+
+            <FormInput
+              v-model="form.probation_end_date"
+              label="Probation End Date"
+              type="date"
+              :error="form.errors.probation_end_date"
+              help-text="For new permanent employees"
+            />
+
             <FormSelect
               v-model="form.worker_type"
-              label="Worker Type"
+              label="Worker Type (Legacy)"
               :options="workerTypes"
-              required
               :error="form.errors.worker_type"
+              help-text="For payroll compatibility"
+            />
+          </FormSection>
+
+          <!-- Compensation -->
+          <FormSection
+            title="Compensation"
+            description="Salary and payment rates"
+          >
+            <FormInput
+              v-model.number="form.monthly_salary"
+              label="Monthly Salary (K)"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              :error="form.errors.monthly_salary"
+            />
+
+            <FormInput
+              v-model="form.salary_currency"
+              label="Currency"
+              placeholder="ZMW"
+              :error="form.errors.salary_currency"
             />
 
             <FormInput
@@ -127,7 +338,7 @@ const submit = () => {
               min="0"
               placeholder="0.00"
               :error="form.errors.hourly_rate"
-              help-text="Leave as 0 if not applicable"
+              help-text="For hourly workers"
             />
 
             <FormInput
@@ -138,20 +349,51 @@ const submit = () => {
               min="0"
               placeholder="0.00"
               :error="form.errors.daily_rate"
-              help-text="Leave as 0 if not applicable"
+              help-text="For daily workers"
+            />
+
+            <div class="sm:col-span-2">
+              <FormInput
+                v-model.number="form.commission_rate"
+                label="Commission Rate (%)"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="0.00"
+                :error="form.errors.commission_rate"
+                help-text="Percentage for commission-based work"
+              />
+            </div>
+          </FormSection>
+
+          <!-- Tax & Benefits -->
+          <FormSection
+            title="Tax & Benefits"
+            description="Tax identification and social security numbers"
+          >
+            <FormInput
+              v-model="form.tax_number"
+              label="TPIN (Tax Number)"
+              placeholder="Enter TPIN"
+              :error="form.errors.tax_number"
             />
 
             <FormInput
-              v-model.number="form.commission_rate"
-              label="Commission Rate (%)"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              placeholder="0.00"
-              :error="form.errors.commission_rate"
-              help-text="Percentage for commission-based work"
+              v-model="form.napsa_number"
+              label="NAPSA Number"
+              placeholder="Enter NAPSA number"
+              :error="form.errors.napsa_number"
             />
+
+            <div class="sm:col-span-2">
+              <FormInput
+                v-model="form.nhima_number"
+                label="NHIMA Number"
+                placeholder="Enter NHIMA number"
+                :error="form.errors.nhima_number"
+              />
+            </div>
           </FormSection>
 
           <!-- Payment Information -->

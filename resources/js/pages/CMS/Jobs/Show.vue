@@ -235,12 +235,12 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { DocumentIcon, PaperClipIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import AttachmentUploadModal from '@/components/CMS/AttachmentUploadModal.vue'
 import JobStatusHistory from '@/components/CMS/JobStatusHistory.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

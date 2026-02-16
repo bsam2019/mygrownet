@@ -152,6 +152,49 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        // Get CMS company and user data - CACHED for 5 minutes
+        $company = null;
+        $cmsUser = null;
+        if ($user && $request->is('cms*')) {
+            $cmsUser = cache()->remember("cms_user_{$user->id}", 300, function () use ($user) {
+                $cmsUserRecord = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)
+                    ->with('role')
+                    ->first();
+                
+                if (!$cmsUserRecord) {
+                    return null;
+                }
+
+                return [
+                    'id' => $cmsUserRecord->id,
+                    'company_id' => $cmsUserRecord->company_id,
+                    'role' => $cmsUserRecord->role ? [
+                        'id' => $cmsUserRecord->role->id,
+                        'name' => $cmsUserRecord->role->name,
+                        'slug' => $cmsUserRecord->role->slug,
+                    ] : null,
+                ];
+            });
+
+            if ($cmsUser && $cmsUser['company_id']) {
+                $company = cache()->remember("cms_company_{$cmsUser['company_id']}", 300, function () use ($cmsUser) {
+                    $companyRecord = \App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::find($cmsUser['company_id']);
+                    
+                    if (!$companyRecord) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $companyRecord->id,
+                        'name' => $companyRecord->name,
+                        'email' => $companyRecord->email,
+                        'phone' => $companyRecord->phone,
+                        'logo_url' => $companyRecord->logo_url,
+                    ];
+                });
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -179,6 +222,8 @@ class HandleInertiaRequests extends Middleware
             'supportStats' => $supportStats,
             'employee' => $employee,
             'notifications' => $notifications,
+            'company' => $company,
+            'cmsUser' => $cmsUser,
             // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
             'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
             // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes

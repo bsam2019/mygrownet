@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew page-title="Currency Settings">
+  <CMSLayout page-title="Currency Settings">
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div>
@@ -292,7 +292,7 @@
         </Dialog>
       </TransitionRoot>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
@@ -300,7 +300,7 @@ import { ref, reactive } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { Dialog, DialogPanel, TransitionRoot, TransitionChild } from '@headlessui/vue';
 import { PlusIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import axios from 'axios';
 
 interface Props {

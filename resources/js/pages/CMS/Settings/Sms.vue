@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -98,7 +98,7 @@ const testConnection = async () => {
 <template>
     <Head title="SMS Settings - CMS" />
 
-    <CMSLayoutNew>
+    <CMSLayout>
         <div class="p-6">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">SMS Settings</h1>
@@ -235,5 +235,5 @@ const testConnection = async () => {
                 </a>
             </div>
         </div>
-    </CMSLayoutNew>
+    </CMSLayout>
 </template>

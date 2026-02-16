@@ -1,0 +1,223 @@
+<template>
+  <CMSLayout title="Allowance Types">
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">Allowance Types</h1>
+          <p class="mt-1 text-sm text-gray-500">Manage allowance types for payroll</p>
+        </div>
+        <button
+          @click="showCreateModal = true"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Add Allowance Type
+        </button>
+      </div>
+
+      <!-- Allowance Types List -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Default Amount</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Taxable</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="allowance in allowanceTypes" :key="allowance.id">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {{ allowance.allowance_name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ allowance.allowance_code }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ allowance.calculation_type }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                K{{ allowance.default_amount?.toFixed(2) || '0.00' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span v-if="allowance.is_taxable" class="text-green-600">Yes</span>
+                <span v-else class="text-gray-400">No</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  :class="[
+                    'px-2 py-1 text-xs rounded-full',
+                    allowance.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800',
+                  ]"
+                >
+                  {{ allowance.is_active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  @click="editAllowance(allowance)"
+                  class="text-blue-600 hover:text-blue-900"
+                >
+                  Edit
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Create/Edit Modal -->
+      <div
+        v-if="showCreateModal || editingAllowance"
+        class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 max-w-md w-full">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">
+            {{ editingAllowance ? 'Edit' : 'Create' }} Allowance Type
+          </h3>
+          <form @submit.prevent="submitForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                v-model="form.allowance_name"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div v-if="!editingAllowance">
+              <label class="block text-sm font-medium text-gray-700">Code</label>
+              <input
+                v-model="form.allowance_code"
+                type="text"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Calculation Type</label>
+              <select
+                v-model="form.calculation_type"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="fixed">Fixed Amount</option>
+                <option value="percentage_of_basic">Percentage of Basic</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Default Amount</label>
+              <input
+                v-model.number="form.default_amount"
+                type="number"
+                step="0.01"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div class="flex items-center">
+              <input
+                v-model="form.is_taxable"
+                type="checkbox"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">Taxable</label>
+            </div>
+            <div class="flex items-center">
+              <input
+                v-model="form.is_pensionable"
+                type="checkbox"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">Pensionable</label>
+            </div>
+            <div v-if="editingAllowance" class="flex items-center">
+              <input
+                v-model="form.is_active"
+                type="checkbox"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">Active</label>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                @click="closeModal"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
+              >
+                {{ editingAllowance ? 'Update' : 'Create' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </CMSLayout>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
+
+const props = defineProps<{
+  allowanceTypes: any[];
+}>();
+
+const showCreateModal = ref(false);
+const editingAllowance = ref<any>(null);
+const form = ref({
+  allowance_name: '',
+  allowance_code: '',
+  calculation_type: 'fixed',
+  default_amount: 0,
+  is_taxable: true,
+  is_pensionable: false,
+  is_active: true,
+});
+
+function editAllowance(allowance: any) {
+  editingAllowance.value = allowance;
+  form.value = { ...allowance };
+}
+
+function closeModal() {
+  showCreateModal.value = false;
+  editingAllowance.value = null;
+  form.value = {
+    allowance_name: '',
+    allowance_code: '',
+    calculation_type: 'fixed',
+    default_amount: 0,
+    is_taxable: true,
+    is_pensionable: false,
+    is_active: true,
+  };
+}
+
+function submitForm() {
+  if (editingAllowance.value) {
+    router.put(
+      route('cms.payroll.configuration.allowance-types.update', editingAllowance.value.id),
+      form.value,
+      { onSuccess: closeModal }
+    );
+  } else {
+    router.post(route('cms.payroll.configuration.allowance-types.store'), form.value, {
+      onSuccess: closeModal,
+    });
+  }
+}
+</script>

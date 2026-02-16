@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { PaperAirplaneIcon, CheckIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface QuotationItem {

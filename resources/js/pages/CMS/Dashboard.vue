@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { Link } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import {
   BriefcaseIcon,
   UsersIcon,
@@ -14,7 +14,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {
@@ -55,7 +55,7 @@ const getStatusClass = (status: string) => {
 </script>
 
 <template>
-  <div class="px-4 sm:px-6 lg:px-8 py-8">
+  <div>
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
       <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">

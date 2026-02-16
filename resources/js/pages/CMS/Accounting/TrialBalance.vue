@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew>
+  <CMSLayout>
     <div class="p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -91,12 +91,12 @@
         </table>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 interface Account {

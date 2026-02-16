@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import { ClockIcon, PlayIcon, StopIcon, PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -49,7 +49,7 @@ function formatDuration(minutes: number) {
 </script>
 
 <template>
-  <CMSLayoutNew title="Time Tracking">
+  <CMSLayout title="Time Tracking">
     <div class="space-y-6">
       <!-- Running Timer Alert -->
       <div v-if="runningTimer" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -174,5 +174,5 @@ function formatDuration(minutes: number) {
         </table>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>

@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew>
+  <CMSLayout>
     <div class="p-6 max-w-3xl mx-auto">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Create Account</h1>
@@ -119,12 +119,12 @@
         </div>
       </form>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 
 interface Props {
   accountTypes: Array<{ value: string; label: string }>

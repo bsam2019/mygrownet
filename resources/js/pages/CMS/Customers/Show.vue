@@ -284,12 +284,12 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { DocumentIcon, PaperClipIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import DocumentUploadModal from '@/components/CMS/DocumentUploadModal.vue'
 import CustomerContactsModal from '@/components/CMS/CustomerContactsModal.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

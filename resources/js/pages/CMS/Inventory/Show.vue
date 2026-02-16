@@ -2,11 +2,11 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { PencilIcon, ExclamationTriangleIcon, ClockIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import StockMovementModal from '@/components/CMS/StockMovementModal.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

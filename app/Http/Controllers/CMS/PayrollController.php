@@ -26,13 +26,17 @@ class PayrollController extends Controller
 
         $workers = WorkerModel::forCompany($companyId)
             ->when($request->search, fn($q, $search) => 
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('worker_number', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
+                $q->where(function($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('first_name', 'like', "%{$search}%")
+                          ->orWhere('last_name', 'like', "%{$search}%")
+                          ->orWhere('worker_number', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%");
+                })
             )
             ->when($request->worker_type, fn($q) => $q->where('worker_type', $request->worker_type))
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->with('createdBy.user')
+            ->when($request->status, fn($q) => $q->where('employment_status', $request->status))
+            ->with(['createdBy.user', 'department'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -44,35 +48,82 @@ class PayrollController extends Controller
 
     public function workersCreate(): Response
     {
-        return Inertia::render('CMS/Workers/Create');
+        $companyId = auth()->user()->cmsUser->company_id;
+        
+        $departments = \App\Infrastructure\Persistence\Eloquent\CMS\DepartmentModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'department_name as name']);
+
+        return Inertia::render('CMS/Workers/Create', [
+            'departments' => $departments,
+        ]);
     }
 
     public function workersStore(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            // Basic Info
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
-            'id_number' => 'nullable|string|max:50',
+            
+            // Personal Details
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'nationality' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'province' => 'nullable|string|max:100',
+            
+            // Emergency Contact
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:100',
+            
+            // Employment Details
+            'job_title' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:cms_departments,id',
+            'hire_date' => 'nullable|date',
+            'employment_type' => 'nullable|in:full_time,part_time,contract,temporary,intern',
+            'employment_status' => 'nullable|in:active,on_leave,suspended,terminated',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date|after:contract_start_date',
+            'probation_end_date' => 'nullable|date',
+            
+            // Compensation
             'worker_type' => 'required|in:casual,contract,permanent',
             'hourly_rate' => 'nullable|numeric|min:0',
             'daily_rate' => 'nullable|numeric|min:0',
             'commission_rate' => 'nullable|numeric|min:0|max:100',
+            'monthly_salary' => 'nullable|numeric|min:0',
+            'salary_currency' => 'nullable|string|max:3',
+            
+            // Tax & Benefits
+            'tax_number' => 'nullable|string|max:50',
+            'napsa_number' => 'nullable|string|max:50',
+            'nhima_number' => 'nullable|string|max:50',
+            
+            // Payment Method
             'payment_method' => 'required|in:cash,mobile_money,bank_transfer',
             'mobile_money_number' => 'nullable|string|max:20',
             'bank_name' => 'nullable|string|max:255',
             'bank_account_number' => 'nullable|string|max:50',
+            
             'notes' => 'nullable|string',
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
         $userId = $request->user()->cmsUser->id;
 
-        $worker = $this->payrollService->createWorker([
-            ...$validated,
-            'company_id' => $companyId,
-            'created_by' => $userId,
-        ]);
+        // Combine first and last name for legacy 'name' field
+        $validated['name'] = trim($validated['first_name'] . ' ' . $validated['last_name']);
+        $validated['company_id'] = $companyId;
+        $validated['created_by'] = $userId;
+        $validated['employment_status'] = $validated['employment_status'] ?? 'active';
+
+        $worker = $this->payrollService->createWorker($validated);
 
         return redirect()
             ->route('cms.payroll.workers.show', $worker->id)

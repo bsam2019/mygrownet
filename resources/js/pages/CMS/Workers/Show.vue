@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {
@@ -165,11 +165,19 @@ const getStatusClass = (status: string) => {
       <div class="space-y-6">
         <!-- Worker Details -->
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-sm font-semibold text-gray-900 mb-4">Worker Details</h3>
+          <h3 class="text-sm font-semibold text-gray-900 mb-4">Personal Information</h3>
           <div class="space-y-3">
             <div>
-              <label class="text-sm font-medium text-gray-500">Type</label>
-              <p class="text-gray-900 capitalize">{{ worker.worker_type }}</p>
+              <label class="text-sm font-medium text-gray-500">Full Name</label>
+              <p class="text-gray-900">{{ worker.first_name }} {{ worker.middle_name }} {{ worker.last_name }}</p>
+            </div>
+            <div v-if="worker.date_of_birth">
+              <label class="text-sm font-medium text-gray-500">Date of Birth</label>
+              <p class="text-gray-900">{{ formatDate(worker.date_of_birth) }}</p>
+            </div>
+            <div v-if="worker.gender">
+              <label class="text-sm font-medium text-gray-500">Gender</label>
+              <p class="text-gray-900 capitalize">{{ worker.gender }}</p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-500">Phone</label>
@@ -179,17 +187,74 @@ const getStatusClass = (status: string) => {
               <label class="text-sm font-medium text-gray-500">Email</label>
               <p class="text-gray-900">{{ worker.email }}</p>
             </div>
-            <div v-if="worker.id_number">
-              <label class="text-sm font-medium text-gray-500">ID Number</label>
-              <p class="text-gray-900">{{ worker.id_number }}</p>
+            <div v-if="worker.address">
+              <label class="text-sm font-medium text-gray-500">Address</label>
+              <p class="text-gray-900">{{ worker.address }}</p>
+              <p v-if="worker.city || worker.province" class="text-sm text-gray-600">
+                {{ worker.city }}{{ worker.city && worker.province ? ', ' : '' }}{{ worker.province }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Details -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4">Employment Details</h3>
+          <div class="space-y-3">
+            <div v-if="worker.job_title">
+              <label class="text-sm font-medium text-gray-500">Job Title</label>
+              <p class="text-gray-900">{{ worker.job_title }}</p>
+            </div>
+            <div v-if="worker.department">
+              <label class="text-sm font-medium text-gray-500">Department</label>
+              <p class="text-gray-900">{{ worker.department.department_name }}</p>
+            </div>
+            <div v-if="worker.hire_date">
+              <label class="text-sm font-medium text-gray-500">Hire Date</label>
+              <p class="text-gray-900">{{ formatDate(worker.hire_date) }}</p>
+            </div>
+            <div v-if="worker.employment_type">
+              <label class="text-sm font-medium text-gray-500">Employment Type</label>
+              <p class="text-gray-900 capitalize">{{ worker.employment_type.replace('_', ' ') }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">Worker Type</label>
+              <p class="text-gray-900 capitalize">{{ worker.worker_type }}</p>
+            </div>
+            <div v-if="worker.employment_status">
+              <label class="text-sm font-medium text-gray-500">Status</label>
+              <p class="text-gray-900 capitalize">{{ worker.employment_status }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div v-if="worker.emergency_contact_name" class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Name</label>
+              <p class="text-gray-900">{{ worker.emergency_contact_name }}</p>
+            </div>
+            <div v-if="worker.emergency_contact_phone">
+              <label class="text-sm font-medium text-gray-500">Phone</label>
+              <p class="text-gray-900">{{ worker.emergency_contact_phone }}</p>
+            </div>
+            <div v-if="worker.emergency_contact_relationship">
+              <label class="text-sm font-medium text-gray-500">Relationship</label>
+              <p class="text-gray-900">{{ worker.emergency_contact_relationship }}</p>
             </div>
           </div>
         </div>
 
         <!-- Rates -->
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-sm font-semibold text-gray-900 mb-4">Rates</h3>
+          <h3 class="text-sm font-semibold text-gray-900 mb-4">Compensation</h3>
           <div class="space-y-3">
+            <div v-if="worker.monthly_salary">
+              <label class="text-sm font-medium text-gray-500">Monthly Salary</label>
+              <p class="text-gray-900 font-semibold">{{ worker.salary_currency || 'K' }}{{ formatNumber(worker.monthly_salary) }}</p>
+            </div>
             <div v-if="worker.hourly_rate">
               <label class="text-sm font-medium text-gray-500">Hourly Rate</label>
               <p class="text-gray-900 font-semibold">K{{ formatNumber(worker.hourly_rate) }}</p>
@@ -201,6 +266,25 @@ const getStatusClass = (status: string) => {
             <div v-if="worker.commission_rate">
               <label class="text-sm font-medium text-gray-500">Commission Rate</label>
               <p class="text-gray-900 font-semibold">{{ worker.commission_rate }}%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tax & Benefits -->
+        <div v-if="worker.tax_number || worker.napsa_number || worker.nhima_number" class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-sm font-semibold text-gray-900 mb-4">Tax & Benefits</h3>
+          <div class="space-y-3">
+            <div v-if="worker.tax_number">
+              <label class="text-sm font-medium text-gray-500">TPIN</label>
+              <p class="text-gray-900">{{ worker.tax_number }}</p>
+            </div>
+            <div v-if="worker.napsa_number">
+              <label class="text-sm font-medium text-gray-500">NAPSA Number</label>
+              <p class="text-gray-900">{{ worker.napsa_number }}</p>
+            </div>
+            <div v-if="worker.nhima_number">
+              <label class="text-sm font-medium text-gray-500">NHIMA Number</label>
+              <p class="text-gray-900">{{ worker.nhima_number }}</p>
             </div>
           </div>
         </div>

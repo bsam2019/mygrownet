@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { ChartBarIcon, ClockIcon, CheckCircleIcon, TruckIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

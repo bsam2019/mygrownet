@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import FormSection from '@/components/CMS/FormSection.vue';
 import FormInput from '@/components/CMS/FormInput.vue';
 import FormSelect from '@/components/CMS/FormSelect.vue';
@@ -233,7 +233,7 @@ const tabs = [
 <template>
     <Head title="Settings" />
 
-    <CMSLayoutNew>
+    <CMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
             <div class="mb-8">
@@ -1031,5 +1031,5 @@ const tabs = [
                 </FormSection>
             </div>
         </div>
-    </CMSLayoutNew>
+    </CMSLayout>
 </template>

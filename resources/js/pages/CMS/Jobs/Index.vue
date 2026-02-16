@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 sm:px-6 lg:px-8 py-8">
+  <div>
     <!-- Page Header -->
     <div class="mb-6 flex items-center justify-between">
       <div>
@@ -193,7 +193,7 @@
 <script setup lang="ts">
 import { ref, inject } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import {
   BriefcaseIcon,
   ChevronRightIcon,
@@ -201,7 +201,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {

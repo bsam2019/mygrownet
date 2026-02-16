@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import { 
     CheckCircleIcon, 
     XCircleIcon, 
@@ -54,7 +54,7 @@ const reject = (id: number) => {
 <template>
     <Head title="Approvals" />
 
-    <CMSLayoutNew>
+    <CMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
             <div class="mb-8">
@@ -170,5 +170,5 @@ const reject = (id: number) => {
                 </div>
             </div>
         </div>
-    </CMSLayoutNew>
+    </CMSLayout>
 </template>

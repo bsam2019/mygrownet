@@ -26,9 +26,58 @@ class InvoiceController extends Controller
         private readonly EmailService $emailService
     ) {}
 
+    /**
+     * Get the company ID for the authenticated CMS user
+     */
+    private function getCompanyId(Request $request): ?int
+    {
+        $user = $request->user();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        
+        return $cmsUser?->company_id;
+    }
+
+    /**
+     * Get CMS user or fail with redirect
+     */
+    private function getCmsUserOrFail(Request $request)
+    {
+        $user = $request->user();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        
+        if (!$cmsUser || !$cmsUser->company_id) {
+            abort(403, 'You must be associated with a company.');
+        }
+        
+        return $cmsUser;
+    }
+
     public function index(Request $request): Response
     {
-        $cmsUser = $request->user()->cmsUser;
+        $user = $request->user();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        
+        if (!$cmsUser || !$cmsUser->company_id) {
+            return Inertia::render('CMS/Invoices/Index', [
+                'invoices' => ['data' => [], 'links' => [], 'meta' => []],
+                'summary' => [
+                    'total_invoices' => 0,
+                    'draft_count' => 0,
+                    'sent_count' => 0,
+                    'partial_count' => 0,
+                    'paid_count' => 0,
+                    'total_value' => 0,
+                    'total_paid' => 0,
+                    'total_outstanding' => 0,
+                ],
+                'filters' => [
+                    'status' => 'all',
+                    'search' => '',
+                ],
+                'statuses' => InvoiceStatus::all(),
+            ])->with('error', 'You must be associated with a company to view invoices.');
+        }
+        
         $companyId = $cmsUser->company_id;
 
         $query = InvoiceModel::where('company_id', $companyId)
@@ -68,7 +117,13 @@ class InvoiceController extends Controller
 
     public function create(Request $request): Response
     {
-        $cmsUser = $request->user()->cmsUser;
+        $user = $request->user();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        
+        if (!$cmsUser || !$cmsUser->company_id) {
+            return redirect()->route('cms.invoices.index')->with('error', 'You must be associated with a company.');
+        }
+        
         $companyId = $cmsUser->company_id;
 
         $customers = CustomerModel::where('company_id', $companyId)
@@ -93,7 +148,7 @@ class InvoiceController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->createInvoice(
@@ -117,7 +172,7 @@ class InvoiceController extends Controller
 
     public function show(Request $request, int $id): Response
     {
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'payments.allocations'])
@@ -131,7 +186,7 @@ class InvoiceController extends Controller
 
     public function edit(Request $request, int $id): Response
     {
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
         $companyId = $cmsUser->company_id;
 
         $invoice = InvoiceModel::where('company_id', $companyId)
@@ -167,7 +222,7 @@ class InvoiceController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->updateInvoice(
@@ -190,7 +245,7 @@ class InvoiceController extends Controller
 
     public function send(Request $request, int $id): RedirectResponse
     {
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->sendInvoice($id, $cmsUser->id);
@@ -266,7 +321,7 @@ class InvoiceController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         try {
             $this->invoiceService->cancelInvoice($id, $validated['reason'], $cmsUser->id);
@@ -283,7 +338,7 @@ class InvoiceController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         try {
             $this->invoiceService->voidInvoice($id, $validated['reason'], $cmsUser->id);
@@ -296,7 +351,7 @@ class InvoiceController extends Controller
 
     public function downloadPdf(Request $request, int $id)
     {
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])
@@ -307,7 +362,7 @@ class InvoiceController extends Controller
 
     public function previewPdf(Request $request, int $id)
     {
-        $cmsUser = $request->user()->cmsUser;
+        $cmsUser = $this->getCmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])

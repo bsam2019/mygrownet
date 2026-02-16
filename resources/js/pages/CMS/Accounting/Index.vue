@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew>
+  <CMSLayout>
     <div class="p-6">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
@@ -119,13 +119,13 @@
         </div>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 import { PlusIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 interface Account {

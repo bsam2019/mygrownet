@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew title="Security Settings">
+  <CMSLayout title="Security Settings">
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Header -->
       <div class="bg-white rounded-lg shadow-sm p-6">
@@ -156,13 +156,13 @@
         </button>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 const props = defineProps<{
   settings: {

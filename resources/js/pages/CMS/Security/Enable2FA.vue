@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew title="Enable Two-Factor Authentication">
+  <CMSLayout title="Enable Two-Factor Authentication">
     <div class="max-w-2xl mx-auto">
       <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-2xl font-semibold text-gray-900 mb-4">
@@ -94,13 +94,13 @@
         </div>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 const props = defineProps<{
   secret: string;

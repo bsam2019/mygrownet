@@ -2,10 +2,10 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { PlusIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Customer {

@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew title="Suspicious Activity">
+  <CMSLayout title="Suspicious Activity">
     <div class="space-y-6">
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -224,13 +224,13 @@
         </div>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 const props = defineProps<{
   activities: any;

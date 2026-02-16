@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew page-title="Recurring Invoices">
+  <CMSLayout page-title="Recurring Invoices">
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -166,7 +166,7 @@
         </div>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
@@ -174,7 +174,7 @@ import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { PlusIcon, DocumentTextIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 interface Props {
   recurringInvoices: any[];

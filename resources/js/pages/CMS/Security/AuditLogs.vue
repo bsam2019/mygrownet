@@ -1,5 +1,5 @@
 <template>
-  <CMSLayoutNew title="Security Audit Logs">
+  <CMSLayout title="Security Audit Logs">
     <div class="space-y-6">
       <!-- Header with Filters -->
       <div class="bg-white rounded-lg shadow-sm p-6">
@@ -117,13 +117,13 @@
         </div>
       </div>
     </div>
-  </CMSLayoutNew>
+  </CMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 const props = defineProps<{
   logs: any;

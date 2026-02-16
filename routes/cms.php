@@ -201,6 +201,31 @@ Route::prefix('cms')
                 Route::get('/create', [\App\Http\Controllers\CMS\PayrollController::class, 'workersCreate'])->name('create');
                 Route::post('/', [\App\Http\Controllers\CMS\PayrollController::class, 'workersStore'])->name('store');
                 Route::get('/{worker}', [\App\Http\Controllers\CMS\PayrollController::class, 'workersShow'])->name('show');
+                
+                // Worker Allowances
+                Route::get('/{worker}/allowances', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'workerAllowancesIndex'])->name('allowances.index');
+                Route::post('/{worker}/allowances', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'storeWorkerAllowance'])->name('allowances.store');
+                Route::put('/{worker}/allowances/{allowance}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'updateWorkerAllowance'])->name('allowances.update');
+                Route::delete('/{worker}/allowances/{allowance}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'deleteWorkerAllowance'])->name('allowances.delete');
+                
+                // Worker Deductions
+                Route::get('/{worker}/deductions', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'workerDeductionsIndex'])->name('deductions.index');
+                Route::post('/{worker}/deductions', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'storeWorkerDeduction'])->name('deductions.store');
+                Route::put('/{worker}/deductions/{deduction}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'updateWorkerDeduction'])->name('deductions.update');
+                Route::delete('/{worker}/deductions/{deduction}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'deleteWorkerDeduction'])->name('deductions.delete');
+            });
+
+            // Payroll Configuration
+            Route::prefix('configuration')->name('configuration.')->group(function () {
+                // Allowance Types
+                Route::get('/allowance-types', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'allowanceTypesIndex'])->name('allowance-types.index');
+                Route::post('/allowance-types', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'storeAllowanceType'])->name('allowance-types.store');
+                Route::put('/allowance-types/{allowanceType}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'updateAllowanceType'])->name('allowance-types.update');
+                
+                // Deduction Types
+                Route::get('/deduction-types', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'deductionTypesIndex'])->name('deduction-types.index');
+                Route::post('/deduction-types', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'storeDeductionType'])->name('deduction-types.store');
+                Route::put('/deduction-types/{deductionType}', [\App\Http\Controllers\CMS\PayrollConfigurationController::class, 'updateDeductionType'])->name('deduction-types.update');
             });
 
             // Attendance
@@ -218,6 +243,50 @@ Route::prefix('cms')
             Route::get('/{payrollRun}', [\App\Http\Controllers\CMS\PayrollController::class, 'payrollShow'])->name('show');
             Route::post('/{payrollRun}/approve', [\App\Http\Controllers\CMS\PayrollController::class, 'payrollApprove'])->name('approve');
             Route::post('/{payrollRun}/mark-paid', [\App\Http\Controllers\CMS\PayrollController::class, 'payrollMarkPaid'])->name('mark-paid');
+        });
+
+        // HRMS - Departments & Branches
+        Route::prefix('departments')->name('departments.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\DepartmentController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\DepartmentController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\DepartmentController::class, 'store'])->name('store');
+            Route::get('/{department}/edit', [\App\Http\Controllers\CMS\DepartmentController::class, 'edit'])->name('edit');
+            Route::put('/{department}', [\App\Http\Controllers\CMS\DepartmentController::class, 'update'])->name('update');
+            Route::delete('/{department}', [\App\Http\Controllers\CMS\DepartmentController::class, 'destroy'])->name('destroy');
+        });
+
+        // HRMS - Leave Management
+        Route::prefix('leave')->name('leave.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\LeaveController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\LeaveController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\LeaveController::class, 'store'])->name('store');
+            Route::get('/{leave}', [\App\Http\Controllers\CMS\LeaveController::class, 'show'])->name('show');
+            Route::post('/{leave}/approve', [\App\Http\Controllers\CMS\LeaveController::class, 'approve'])->name('approve');
+            Route::post('/{leave}/reject', [\App\Http\Controllers\CMS\LeaveController::class, 'reject'])->name('reject');
+            Route::get('/balance/view', [\App\Http\Controllers\CMS\LeaveController::class, 'balance'])->name('balance');
+        });
+
+        // HRMS - Shift Management
+        Route::resource('shifts', \App\Http\Controllers\CMS\ShiftController::class);
+        Route::post('/shifts/{shift}/assign', [\App\Http\Controllers\CMS\ShiftController::class, 'assign'])->name('shifts.assign');
+
+        // HRMS - Attendance
+        Route::prefix('attendance')->name('attendance.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\AttendanceController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\AttendanceController::class, 'store'])->name('store');
+            Route::post('/clock-in', [\App\Http\Controllers\CMS\AttendanceController::class, 'clockIn'])->name('clock-in');
+            Route::post('/{record}/clock-out', [\App\Http\Controllers\CMS\AttendanceController::class, 'clockOut'])->name('clock-out');
+            Route::get('/summary', [\App\Http\Controllers\CMS\AttendanceController::class, 'summary'])->name('summary');
+            Route::get('/calendar', [\App\Http\Controllers\CMS\AttendanceController::class, 'calendar'])->name('calendar');
+        });
+
+        // HRMS - Overtime
+        Route::prefix('overtime')->name('overtime.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\OvertimeController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\OvertimeController::class, 'store'])->name('store');
+            Route::post('/{record}/approve', [\App\Http\Controllers\CMS\OvertimeController::class, 'approve'])->name('approve');
+            Route::post('/{record}/reject', [\App\Http\Controllers\CMS\OvertimeController::class, 'reject'])->name('reject');
+            Route::get('/summary', [\App\Http\Controllers\CMS\OvertimeController::class, 'summary'])->name('summary');
         });
 
         // Time Tracking
@@ -366,5 +435,95 @@ Route::prefix('cms')
             Route::get('/{id}', [\App\Http\Controllers\CMS\AccountingController::class, 'show'])->name('show');
             Route::put('/{id}', [\App\Http\Controllers\CMS\AccountingController::class, 'update'])->name('update');
             Route::delete('/{id}', [\App\Http\Controllers\CMS\AccountingController::class, 'destroy'])->name('destroy');
+        });
+
+        // HRMS - Recruitment
+        Route::prefix('recruitment')->name('recruitment.')->group(function () {
+            // Job Postings
+            Route::get('/job-postings', [\App\Http\Controllers\CMS\RecruitmentController::class, 'jobPostingsIndex'])->name('job-postings.index');
+            Route::get('/job-postings/create', [\App\Http\Controllers\CMS\RecruitmentController::class, 'jobPostingsCreate'])->name('job-postings.create');
+            Route::post('/job-postings', [\App\Http\Controllers\CMS\RecruitmentController::class, 'jobPostingsStore'])->name('job-postings.store');
+            
+            // Applications
+            Route::get('/job-postings/{jobPostingId}/applications', [\App\Http\Controllers\CMS\RecruitmentController::class, 'applicationsIndex'])->name('applications.index');
+            Route::put('/applications/{applicationId}/status', [\App\Http\Controllers\CMS\RecruitmentController::class, 'applicationsUpdateStatus'])->name('applications.update-status');
+            
+            // Interviews
+            Route::get('/interviews', [\App\Http\Controllers\CMS\RecruitmentController::class, 'interviewsIndex'])->name('interviews.index');
+            Route::post('/interviews', [\App\Http\Controllers\CMS\RecruitmentController::class, 'interviewsStore'])->name('interviews.store');
+            Route::post('/interviews/{interviewId}/evaluations', [\App\Http\Controllers\CMS\RecruitmentController::class, 'evaluationsStore'])->name('evaluations.store');
+        });
+
+        // HRMS - Onboarding
+        Route::prefix('hrms-onboarding')->name('hrms-onboarding.')->group(function () {
+            // Templates
+            Route::get('/templates', [\App\Http\Controllers\CMS\OnboardingController::class, 'templatesIndex'])->name('templates.index');
+            Route::post('/templates', [\App\Http\Controllers\CMS\OnboardingController::class, 'templatesStore'])->name('templates.store');
+            Route::post('/templates/{templateId}/tasks', [\App\Http\Controllers\CMS\OnboardingController::class, 'tasksStore'])->name('tasks.store');
+            
+            // Employee Onboarding
+            Route::get('/employee', [\App\Http\Controllers\CMS\OnboardingController::class, 'employeeOnboardingIndex'])->name('employee.index');
+            Route::post('/employee', [\App\Http\Controllers\CMS\OnboardingController::class, 'employeeOnboardingStore'])->name('employee.store');
+            Route::get('/employee/{workerId}', [\App\Http\Controllers\CMS\OnboardingController::class, 'employeeOnboardingShow'])->name('employee.show');
+            Route::post('/task-progress/{taskProgressId}/complete', [\App\Http\Controllers\CMS\OnboardingController::class, 'taskProgressComplete'])->name('task-progress.complete');
+        });
+
+        // HRMS - Performance Management
+        Route::prefix('performance')->name('performance.')->group(function () {
+            // Performance Cycles
+            Route::get('/cycles', [\App\Http\Controllers\CMS\PerformanceController::class, 'cyclesIndex'])->name('cycles.index');
+            Route::post('/cycles', [\App\Http\Controllers\CMS\PerformanceController::class, 'cyclesStore'])->name('cycles.store');
+            Route::post('/cycles/{cycleId}/activate', [\App\Http\Controllers\CMS\PerformanceController::class, 'cyclesActivate'])->name('cycles.activate');
+            
+            // Performance Reviews
+            Route::get('/reviews', [\App\Http\Controllers\CMS\PerformanceController::class, 'reviewsIndex'])->name('reviews.index');
+            Route::get('/reviews/create', [\App\Http\Controllers\CMS\PerformanceController::class, 'reviewsCreate'])->name('reviews.create');
+            Route::post('/reviews', [\App\Http\Controllers\CMS\PerformanceController::class, 'reviewsStore'])->name('reviews.store');
+            Route::get('/reviews/{reviewId}', [\App\Http\Controllers\CMS\PerformanceController::class, 'reviewsShow'])->name('reviews.show');
+            Route::post('/reviews/{reviewId}/submit', [\App\Http\Controllers\CMS\PerformanceController::class, 'reviewsSubmit'])->name('reviews.submit');
+            
+            // Goals
+            Route::get('/goals', [\App\Http\Controllers\CMS\PerformanceController::class, 'goalsIndex'])->name('goals.index');
+            Route::post('/goals', [\App\Http\Controllers\CMS\PerformanceController::class, 'goalsStore'])->name('goals.store');
+            Route::post('/goals/{goalId}/progress', [\App\Http\Controllers\CMS\PerformanceController::class, 'goalsUpdateProgress'])->name('goals.update-progress');
+            
+            // Performance Improvement Plans
+            Route::get('/pips', [\App\Http\Controllers\CMS\PerformanceController::class, 'pipsIndex'])->name('pips.index');
+            Route::post('/pips', [\App\Http\Controllers\CMS\PerformanceController::class, 'pipsStore'])->name('pips.store');
+            Route::post('/pips/milestones/{milestoneId}/complete', [\App\Http\Controllers\CMS\PerformanceController::class, 'pipsMilestoneComplete'])->name('pips.milestone-complete');
+            Route::post('/pips/{pipId}/close', [\App\Http\Controllers\CMS\PerformanceController::class, 'pipsClose'])->name('pips.close');
+        });
+
+        // Training & Development (Phase 6)
+        Route::prefix('training')->name('training.')->group(function () {
+            // Training Programs
+            Route::get('/programs', [\App\Http\Controllers\CMS\TrainingController::class, 'programs'])->name('programs');
+            Route::post('/programs', [\App\Http\Controllers\CMS\TrainingController::class, 'createProgram'])->name('programs.create');
+            
+            // Training Sessions
+            Route::get('/sessions', [\App\Http\Controllers\CMS\TrainingController::class, 'sessions'])->name('sessions');
+            
+            // Skills Catalog
+            Route::get('/skills', [\App\Http\Controllers\CMS\TrainingController::class, 'skills'])->name('skills');
+            
+            // Certifications
+            Route::get('/certifications', [\App\Http\Controllers\CMS\TrainingController::class, 'certifications'])->name('certifications');
+        });
+
+        // Employee Self-Service Portal (Phase 8)
+        Route::prefix('employee')->name('employee.')->group(function () {
+            Route::get('/dashboard', [\App\Http\Controllers\CMS\EmployeePortalController::class, 'dashboard'])->name('dashboard');
+            Route::get('/profile', [\App\Http\Controllers\CMS\EmployeePortalController::class, 'profile'])->name('profile');
+            Route::get('/documents', [\App\Http\Controllers\CMS\EmployeePortalController::class, 'documents'])->name('documents');
+            Route::post('/documents/request', [\App\Http\Controllers\CMS\EmployeePortalController::class, 'requestDocument'])->name('documents.request');
+            Route::post('/feedback', [\App\Http\Controllers\CMS\EmployeePortalController::class, 'submitFeedback'])->name('feedback.submit');
+        });
+
+        // HR Reports & Analytics (Phase 9)
+        Route::prefix('hr-reports')->name('hr-reports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\HRReportsController::class, 'index'])->name('index');
+            Route::post('/generate', [\App\Http\Controllers\CMS\HRReportsController::class, 'generate'])->name('generate');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\HRReportsController::class, 'show'])->name('show');
+            Route::delete('/{id}', [\App\Http\Controllers\CMS\HRReportsController::class, 'destroy'])->name('destroy');
         });
     });

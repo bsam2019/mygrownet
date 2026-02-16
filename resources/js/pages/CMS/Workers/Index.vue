@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { MagnifyingGlassIcon, PlusIcon, FunnelIcon } from '@heroicons/vue/24/outline'
-import CMSLayoutNew from '@/Layouts/CMSLayoutNew.vue'
+import CMSLayout from '@/Layouts/CMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayoutNew
+  layout: CMSLayout
 })
 
 interface Props {
@@ -150,13 +150,13 @@ const formatNumber = (value: number) => {
               Worker
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Job Title / Department
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Type
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Contact
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Rates
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -170,9 +170,18 @@ const formatNumber = (value: number) => {
           <tr v-for="worker in workers.data" :key="worker.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap">
               <div>
-                <div class="text-sm font-medium text-gray-900">{{ worker.name }}</div>
+                <div class="text-sm font-medium text-gray-900">
+                  {{ worker.first_name || worker.name }} {{ worker.last_name || '' }}
+                </div>
                 <div class="text-sm text-gray-500">{{ worker.worker_number }}</div>
               </div>
+            </td>
+            <td class="px-6 py-4">
+              <div v-if="worker.job_title || worker.department" class="text-sm">
+                <div v-if="worker.job_title" class="font-medium text-gray-900">{{ worker.job_title }}</div>
+                <div v-if="worker.department" class="text-gray-500">{{ worker.department.department_name }}</div>
+              </div>
+              <div v-else class="text-sm text-gray-400">-</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span
@@ -186,21 +195,10 @@ const formatNumber = (value: number) => {
               <div v-if="worker.email" class="text-sm text-gray-500">{{ worker.email }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div v-if="worker.hourly_rate" class="text-sm text-gray-900">
-                K{{ formatNumber(worker.hourly_rate) }}/hr
-              </div>
-              <div v-if="worker.daily_rate" class="text-sm text-gray-900">
-                K{{ formatNumber(worker.daily_rate) }}/day
-              </div>
-              <div v-if="worker.commission_rate" class="text-sm text-gray-500">
-                {{ worker.commission_rate }}% commission
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
               <span
-                :class="['px-2 py-1 text-xs font-medium rounded-full', getStatusClass(worker.status)]"
+                :class="['px-2 py-1 text-xs font-medium rounded-full', getStatusClass(worker.employment_status || worker.status)]"
               >
-                {{ worker.status.toUpperCase() }}
+                {{ (worker.employment_status || worker.status).toUpperCase() }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
