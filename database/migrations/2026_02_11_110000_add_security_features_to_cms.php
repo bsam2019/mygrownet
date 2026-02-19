@@ -40,67 +40,75 @@ return new class extends Migration
         });
 
         // Password history table (references users table)
-        Schema::create('cms_password_history', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('password');
-            $table->timestamp('created_at');
+        if (!Schema::hasTable('cms_password_history')) {
+            Schema::create('cms_password_history', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                $table->string('password');
+                $table->timestamp('created_at');
 
-            $table->index(['user_id', 'created_at']);
-        });
+                $table->index(['user_id', 'created_at']);
+            });
+        }
 
         // Login attempts tracking (references users table)
-        Schema::create('cms_login_attempts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->string('email');
-            $table->string('ip_address');
-            $table->string('user_agent')->nullable();
-            $table->boolean('successful')->default(false);
-            $table->string('failure_reason')->nullable();
-            $table->timestamp('attempted_at');
+        if (!Schema::hasTable('cms_login_attempts')) {
+            Schema::create('cms_login_attempts', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+                $table->string('email');
+                $table->string('ip_address');
+                $table->string('user_agent')->nullable();
+                $table->boolean('successful')->default(false);
+                $table->string('failure_reason')->nullable();
+                $table->timestamp('attempted_at');
 
-            $table->index(['email', 'attempted_at']);
-            $table->index(['ip_address', 'attempted_at']);
-            $table->index(['user_id', 'attempted_at']);
-        });
+                $table->index(['email', 'attempted_at']);
+                $table->index(['ip_address', 'attempted_at']);
+                $table->index(['user_id', 'attempted_at']);
+            });
+        }
 
         // Security audit log
-        Schema::create('cms_security_audit_log', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->string('event_type');
-            $table->string('ip_address');
-            $table->string('user_agent')->nullable();
-            $table->text('description');
-            $table->json('metadata')->nullable();
-            $table->enum('severity', ['info', 'warning', 'critical'])->default('info');
-            $table->timestamp('created_at');
+        if (!Schema::hasTable('cms_security_audit_log')) {
+            Schema::create('cms_security_audit_log', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+                $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                $table->string('event_type');
+                $table->string('ip_address');
+                $table->string('user_agent')->nullable();
+                $table->text('description');
+                $table->json('metadata')->nullable();
+                $table->enum('severity', ['info', 'warning', 'critical'])->default('info');
+                $table->timestamp('created_at');
 
-            $table->index(['company_id', 'created_at']);
-            $table->index(['user_id', 'created_at']);
-            $table->index(['event_type', 'created_at']);
-            $table->index(['severity', 'created_at']);
-        });
+                $table->index(['company_id', 'created_at']);
+                $table->index(['user_id', 'created_at']);
+                $table->index(['event_type', 'created_at']);
+                $table->index(['severity', 'created_at']);
+            });
+        }
 
         // Suspicious activity alerts
-        Schema::create('cms_suspicious_activities', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->string('activity_type');
-            $table->string('ip_address');
-            $table->text('description');
-            $table->json('details')->nullable();
-            $table->enum('status', ['pending', 'reviewed', 'resolved', 'false_positive'])->default('pending');
-            $table->timestamp('detected_at');
-            $table->timestamp('reviewed_at')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('users')->onDelete('set null');
+        if (!Schema::hasTable('cms_suspicious_activities')) {
+            Schema::create('cms_suspicious_activities', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
+                $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                $table->string('activity_type');
+                $table->string('ip_address');
+                $table->text('description');
+                $table->json('details')->nullable();
+                $table->enum('status', ['pending', 'reviewed', 'resolved', 'false_positive'])->default('pending');
+                $table->timestamp('detected_at');
+                $table->timestamp('reviewed_at')->nullable();
+                $table->foreignId('reviewed_by')->nullable()->constrained('users')->onDelete('set null');
 
-            $table->index(['company_id', 'status', 'detected_at']);
-            $table->index(['user_id', 'detected_at']);
-        });
+                $table->index(['company_id', 'status', 'detected_at']);
+                $table->index(['user_id', 'detected_at']);
+            });
+        }
 
         // Add security settings to companies
         Schema::table('cms_companies', function (Blueprint $table) {
