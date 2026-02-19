@@ -8,19 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('cms_expense_categories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->string('name', 100);
-            $table->text('description')->nullable();
-            $table->boolean('requires_approval')->default(false);
-            $table->decimal('approval_limit', 15, 2)->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-
-            $table->unique(['company_id', 'name'], 'unique_category_name');
-            $table->index(['company_id', 'is_active']);
-        });
+        if (!Schema::hasTable('cms_expense_categories')) {
+            Schema::create('cms_expense_categories', function (Blueprint $table) {
+                        $table->id();
+                        $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                        $table->string('name', 100);
+                        $table->text('description')->nullable();
+                        $table->boolean('requires_approval')->default(false);
+                        $table->decimal('approval_limit', 15, 2)->nullable();
+                        $table->boolean('is_active')->default(true);
+                        $table->timestamps();
+            
+                        $table->unique(['company_id', 'name'], 'unique_category_name');
+                        $table->index(['company_id', 'is_active']);
+                    });
+        }
     }
 
     public function down(): void

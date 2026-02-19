@@ -22,58 +22,64 @@ return new class extends Migration
         });
 
         // Email logs
-        Schema::create('cms_email_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->enum('email_type', ['invoice', 'payment', 'reminder', 'overdue', 'receipt', 'quotation', 'other']);
-            $table->string('recipient_email');
-            $table->string('recipient_name')->nullable();
-            $table->string('subject', 500);
-            $table->enum('reference_type', ['invoice', 'payment', 'quotation', 'job'])->nullable();
-            $table->unsignedBigInteger('reference_id')->nullable();
-            $table->enum('status', ['queued', 'sent', 'failed', 'bounced'])->default('queued');
-            $table->enum('provider', ['platform', 'custom']);
-            $table->timestamp('sent_at')->nullable();
-            $table->timestamp('opened_at')->nullable();
-            $table->timestamp('clicked_at')->nullable();
-            $table->timestamp('bounced_at')->nullable();
-            $table->text('error_message')->nullable();
-            $table->json('metadata')->nullable();
-            $table->timestamps();
-
-            $table->index(['company_id', 'email_type']);
-            $table->index(['status', 'created_at']);
-            $table->index(['reference_type', 'reference_id']);
-        });
+        if (!Schema::hasTable('cms_email_logs')) {
+            Schema::create('cms_email_logs', function (Blueprint $table) {
+                        $table->id();
+                        $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                        $table->enum('email_type', ['invoice', 'payment', 'reminder', 'overdue', 'receipt', 'quotation', 'other']);
+                        $table->string('recipient_email');
+                        $table->string('recipient_name')->nullable();
+                        $table->string('subject', 500);
+                        $table->enum('reference_type', ['invoice', 'payment', 'quotation', 'job'])->nullable();
+                        $table->unsignedBigInteger('reference_id')->nullable();
+                        $table->enum('status', ['queued', 'sent', 'failed', 'bounced'])->default('queued');
+                        $table->enum('provider', ['platform', 'custom']);
+                        $table->timestamp('sent_at')->nullable();
+                        $table->timestamp('opened_at')->nullable();
+                        $table->timestamp('clicked_at')->nullable();
+                        $table->timestamp('bounced_at')->nullable();
+                        $table->text('error_message')->nullable();
+                        $table->json('metadata')->nullable();
+                        $table->timestamps();
+            
+                        $table->index(['company_id', 'email_type']);
+                        $table->index(['status', 'created_at']);
+                        $table->index(['reference_type', 'reference_id']);
+                    });
+        }
 
         // Email templates
-        Schema::create('cms_email_templates', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->enum('template_type', ['invoice_sent', 'payment_received', 'payment_reminder', 'overdue_notice', 'receipt', 'quotation_sent']);
-            $table->string('subject', 500);
-            $table->text('body_html');
-            $table->text('body_text')->nullable();
-            $table->json('variables')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-
-            $table->unique(['company_id', 'template_type']);
-            $table->index(['company_id', 'is_active']);
-        });
+        if (!Schema::hasTable('cms_email_templates')) {
+            Schema::create('cms_email_templates', function (Blueprint $table) {
+                        $table->id();
+                        $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                        $table->enum('template_type', ['invoice_sent', 'payment_received', 'payment_reminder', 'overdue_notice', 'receipt', 'quotation_sent']);
+                        $table->string('subject', 500);
+                        $table->text('body_html');
+                        $table->text('body_text')->nullable();
+                        $table->json('variables')->nullable();
+                        $table->boolean('is_active')->default(true);
+                        $table->timestamps();
+            
+                        $table->unique(['company_id', 'template_type']);
+                        $table->index(['company_id', 'is_active']);
+                    });
+        }
 
         // Unsubscribes
-        Schema::create('cms_email_unsubscribes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->string('email_address');
-            $table->enum('unsubscribe_type', ['all', 'marketing', 'reminders'])->default('all');
-            $table->text('reason')->nullable();
-            $table->timestamp('unsubscribed_at')->useCurrent();
-
-            $table->unique(['company_id', 'email_address']);
-            $table->index('company_id');
-        });
+        if (!Schema::hasTable('cms_email_unsubscribes')) {
+            Schema::create('cms_email_unsubscribes', function (Blueprint $table) {
+                        $table->id();
+                        $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                        $table->string('email_address');
+                        $table->enum('unsubscribe_type', ['all', 'marketing', 'reminders'])->default('all');
+                        $table->text('reason')->nullable();
+                        $table->timestamp('unsubscribed_at')->useCurrent();
+            
+                        $table->unique(['company_id', 'email_address']);
+                        $table->index('company_id');
+                    });
+        }
     }
 
     public function down(): void

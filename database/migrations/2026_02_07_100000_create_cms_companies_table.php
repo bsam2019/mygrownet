@@ -11,27 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_companies', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('industry_type', 100)->nullable();
-            $table->string('business_registration_number', 100)->nullable();
-            $table->string('tax_number', 100)->nullable();
-            $table->text('address')->nullable();
-            $table->string('city', 100)->nullable();
-            $table->string('country', 100)->default('Zambia');
-            $table->string('phone', 50)->nullable();
-            $table->string('email')->nullable();
-            $table->string('website')->nullable();
-            $table->string('logo_path')->nullable();
-            $table->text('invoice_footer')->nullable();
-            $table->enum('status', ['active', 'suspended'])->default('active');
-            $table->json('settings')->nullable();
-            $table->timestamps();
-
-            $table->index('status');
-            $table->index('industry_type');
-        });
+        if (!Schema::hasTable('cms_companies')) {
+            Schema::create('cms_companies', function (Blueprint $table) {
+                        $table->id();
+                        $table->string('name');
+                        $table->string('industry_type', 100)->nullable();
+                        $table->string('business_registration_number', 100)->nullable();
+                        $table->string('tax_number', 100)->nullable();
+                        $table->text('address')->nullable();
+                        $table->string('city', 100)->nullable();
+                        $table->string('country', 100)->default('Zambia');
+                        $table->string('phone', 50)->nullable();
+                        $table->string('email')->nullable();
+                        $table->string('website')->nullable();
+                        $table->string('logo_path')->nullable();
+                        $table->text('invoice_footer')->nullable();
+                        $table->enum('status', ['active', 'suspended'])->default('active');
+                        $table->json('settings')->nullable();
+                        $table->timestamps();
+            
+                        $table->index('status');
+                        $table->index('industry_type');
+                    });
+        }
     }
 
     /**

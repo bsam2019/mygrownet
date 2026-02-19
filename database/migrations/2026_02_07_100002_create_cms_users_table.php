@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_users', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('role_id')->constrained('cms_roles');
-            $table->string('employee_number', 50)->nullable();
-            $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
-            $table->timestamp('last_login_at')->nullable();
-            $table->timestamps();
-
-            $table->unique(['user_id', 'company_id'], 'unique_user_company');
-            $table->index(['company_id', 'status'], 'idx_company_status');
-        });
+        if (!Schema::hasTable('cms_users')) {
+            Schema::create('cms_users', function (Blueprint $table) {
+                        $table->id();
+                        $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
+                        $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+                        $table->foreignId('role_id')->constrained('cms_roles');
+                        $table->string('employee_number', 50)->nullable();
+                        $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
+                        $table->timestamp('last_login_at')->nullable();
+                        $table->timestamps();
+            
+                        $table->unique(['user_id', 'company_id'], 'unique_user_company');
+                        $table->index(['company_id', 'status'], 'idx_company_status');
+                    });
+        }
     }
 
     /**
