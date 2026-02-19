@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('promotional_cards', function (Blueprint $table) {
+        if (!Schema::hasTable('promotional_cards')) {
+            Schema::create('promotional_cards', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->string('slug')->unique();
@@ -43,7 +44,8 @@ return new class extends Migration
         });
 
         // Track individual user shares
-        Schema::create('promotional_card_shares', function (Blueprint $table) {
+        if (!Schema::hasTable('promotional_card_shares')) {
+            Schema::create('promotional_card_shares', function (Blueprint $table) {
             $table->id();
             $table->foreignId('promotional_card_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

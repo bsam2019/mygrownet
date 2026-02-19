@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('social_shares', function (Blueprint $table) {
+        if (!Schema::hasTable('social_shares')) {
+            Schema::create('social_shares', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('share_type'); // 'referral_link', 'content', 'platform_link'
