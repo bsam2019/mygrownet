@@ -263,30 +263,40 @@
         return page.props.auth?.user;
       });
 
+      // Check if module is enabled
+      const isModuleEnabled = (moduleKey) => {
+        const modules = page.props.modules || {};
+        return modules[moduleKey]?.is_enabled ?? false;
+      };
+
       // Simplified navigation - with Services dropdown
-      const navigationItems = [
-        { name: 'Home', route: 'welcome' },
-        { name: 'About', route: 'about' },
-        { name: 'Our Apps', route: 'apps.index' },
-        { 
-          name: 'Services', 
-          dropdown: [
-            { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services' },
-            { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites' },
-            { name: 'Quick Invoice', url: '/quick-invoice', description: 'Create invoices & receipts' },
-            { name: 'Training', route: 'training', description: 'Learn new skills' },
-            { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses' },
-            { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business' },
-          ]
-        },
-        { name: 'Rewards & Loyalty', route: 'loyalty-reward.index' },
-        { name: 'Referral Program', route: 'referral-program' },
-        { name: 'Contact', route: 'contact' },
-      ];
+      const navigationItems = computed(() => {
+        const items = [
+          { name: 'Home', route: 'welcome' },
+          { name: 'About', route: 'about' },
+          { name: 'Our Apps', route: 'apps.index' },
+          { 
+            name: 'Services', 
+            dropdown: [
+              { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services', moduleKey: 'growmarket' },
+              { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites', moduleKey: 'growbuilder' },
+              { name: 'Quick Invoice', url: '/quick-invoice', description: 'Create invoices & receipts', moduleKey: 'cms' },
+              { name: 'Training', route: 'training', description: 'Learn new skills', moduleKey: 'library' },
+              { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses', moduleKey: 'venture_builder' },
+              { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business', moduleKey: 'grownet' },
+            ].filter(item => !item.moduleKey || isModuleEnabled(item.moduleKey))
+          },
+          { name: 'Rewards & Loyalty', route: 'loyalty-reward.index' },
+          { name: 'Referral Program', route: 'referral-program' },
+          { name: 'Contact', route: 'contact' },
+        ];
+        
+        return items;
+      });
 
       // Filter out routes that Ziggy doesn't expose (but keep items with direct URLs)
       const filteredNavigationItems = computed(() => {
-        return navigationItems.map(item => {
+        return navigationItems.value.map(item => {
           if (item.dropdown) {
             // Filter dropdown items - keep items with url OR valid route
             const filteredDropdown = item.dropdown.filter(subItem => {

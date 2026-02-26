@@ -12,7 +12,8 @@ use Inertia\Inertia;
 */
 
 // Public Venture Routes (No authentication required)
-Route::prefix('ventures')->name('ventures.')->group(function () {
+// Protected by module:venture_builder middleware
+Route::middleware(['module:venture_builder'])->prefix('ventures')->name('ventures.')->group(function () {
     // Information pages
     Route::get('/about', fn() => Inertia::render('Ventures/About'))->name('about');
     Route::get('/policy', fn() => Inertia::render('Ventures/Policy'))->name('policy');
@@ -23,7 +24,7 @@ Route::prefix('ventures')->name('ventures.')->group(function () {
 });
 
 // Member Routes (MyGrowNet) - Requires authentication
-Route::middleware(['auth', 'verified'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
+Route::middleware(['auth', 'verified', 'module:venture_builder'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
     
     // Investment
     Route::get('/ventures/{venture}/invest', [VentureController::class, 'showInvestForm'])->name('ventures.invest');
@@ -42,7 +43,7 @@ Route::middleware(['auth', 'verified'])->prefix('mygrownet')->name('mygrownet.')
 });
 
 // Admin Routes
-Route::middleware(['auth', 'admin'])->prefix('admin/ventures')->name('admin.ventures.')->group(function () {
+Route::middleware(['auth', 'admin', 'module:venture_builder'])->prefix('admin/ventures')->name('admin.ventures.')->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [VentureAdminController::class, 'dashboard'])->name('dashboard');

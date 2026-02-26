@@ -38,7 +38,7 @@ class VentureController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(12);
 
-        return Inertia::render('MyGrowNet/Ventures/Index', [
+        return Inertia::render('GrowNet/Ventures/Index', [
             'ventures' => $ventures,
             'filters' => $request->only(['category', 'search']),
         ]);
@@ -71,7 +71,7 @@ class VentureController extends Controller
                 ->first();
         }
 
-        return Inertia::render('MyGrowNet/Ventures/Show', [
+        return Inertia::render('GrowNet/Ventures/Show', [
             'venture' => $venture,
             'userInvestment' => $userInvestment,
             'fundingProgress' => $venture->getFundingProgressPercentage(),
@@ -91,7 +91,7 @@ class VentureController extends Controller
 
         $venture->load('category');
 
-        return Inertia::render('MyGrowNet/Ventures/Invest', [
+        return Inertia::render('GrowNet/Ventures/Invest', [
             'venture' => $venture,
             'walletBalance' => auth()->user()->wallet_balance ?? 0,
             'fundingProgress' => ($venture->total_raised / $venture->funding_target) * 100,
@@ -273,7 +273,7 @@ class VentureController extends Controller
             ->where('type', 'venture_investment')
             ->first();
 
-        return Inertia::render('MyGrowNet/Ventures/InvestmentSuccess', [
+        return Inertia::render('GrowNet/Ventures/InvestmentSuccess', [
             'investment' => $investment,
             'receipt' => $receipt,
         ]);
@@ -289,7 +289,7 @@ class VentureController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return Inertia::render('MyGrowNet/Ventures/MyInvestments', [
+        return Inertia::render('GrowNet/Ventures/MyInvestments', [
             'investments' => $investments,
         ]);
     }
@@ -314,7 +314,7 @@ class VentureController extends Controller
             }
         ]);
 
-        return Inertia::render('MyGrowNet/Ventures/InvestmentDetails', [
+        return Inertia::render('GrowNet/Ventures/InvestmentDetails', [
             'investment' => $investment,
         ]);
     }
@@ -334,7 +334,7 @@ class VentureController extends Controller
         $totalInvested = $investments->sum('amount');
         $activeVentures = $investments->where('venture.status', 'active')->count();
         
-        return Inertia::render('MyGrowNet/Ventures/Portfolio', [
+        return Inertia::render('GrowNet/Ventures/Portfolio', [
             'investments' => $investments,
             'totalInvested' => $totalInvested,
             'activeVentures' => $activeVentures,
@@ -353,7 +353,7 @@ class VentureController extends Controller
             }
         ]);
 
-        return Inertia::render('MyGrowNet/Ventures/Dividends', [
+        return Inertia::render('GrowNet/Ventures/Dividends', [
             'dividends' => $dividends,
         ]);
     }

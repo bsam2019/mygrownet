@@ -200,10 +200,10 @@ The admin sidebar has been migrated from Radix Vue to the same custom implementa
 ### Changes Made
 
 **Created:**
-- `resources/js/components/CustomAdminSidebar.vue` - Custom admin sidebar (no Radix dependencies)
+- `resources/js/components/AdminSidebar.vue` - Custom admin sidebar (no Radix dependencies)
 
 **Modified:**
-- `resources/js/layouts/admin/AppSidebarLayout.vue` - Updated to use CustomAdminSidebar
+- `resources/js/layouts/admin/AppSidebarLayout.vue` - Updated to use AdminSidebar
 
 **Old Components (No Longer Used):**
 - `resources/js/components/AdminSidebar.vue` - Old Radix Vue implementation

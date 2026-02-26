@@ -44,7 +44,7 @@
 ### Sidebar Navigation Fixes
 - Fixed route naming (added `admin.` prefix to 20 routes)
 - Added auto-expand for Employees submenu
-- Files: routes/admin.php, CustomAdminSidebar.vue
+- Files: routes/admin.php, AdminSidebar.vue
 - Status: ✅ Deployed
 
 ### Idempotency Protection

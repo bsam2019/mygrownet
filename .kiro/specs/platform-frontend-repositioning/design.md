@@ -25,7 +25,7 @@ The redesign follows these architectural principles:
 - `resources/js/Pages/Welcome.vue` - Homepage
 - `resources/js/Pages/About.vue` - About Us page
 - `resources/js/Pages/MyGrowNet/Dashboard.vue` - Member dashboard
-- `resources/js/Pages/MyGrowNet/MobileDashboard.vue` - Mobile dashboard
+- `resources/js/Pages/MyGrowNet/GrowNet.vue` - GrowNet dashboard
 - `resources/js/components/custom/*` - Homepage sections
 
 **Navigation Components**
@@ -113,7 +113,7 @@ The redesign follows these architectural principles:
 
 **Files**: 
 - `resources/js/Pages/MyGrowNet/Dashboard.vue`
-- `resources/js/Pages/MyGrowNet/MobileDashboard.vue`
+- `resources/js/Pages/MyGrowNet/GrowNet.vue`
 
 **Current Emphasis**:
 - Commission Levels (prominent, top section)

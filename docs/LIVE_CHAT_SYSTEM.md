@@ -487,8 +487,8 @@ public function __construct(
 />
 ```
 
-#### CustomAdminSidebar
-**File:** `resources/js/components/CustomAdminSidebar.vue`
+#### AdminSidebar
+**File:** `resources/js/components/AdminSidebar.vue`
 
 **Communication Section:**
 - Messages

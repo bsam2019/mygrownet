@@ -3,350 +3,283 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Module Definitions
+    | Module Activation Configuration
     |--------------------------------------------------------------------------
     |
-    | Define all available modules in the MyGrowNet platform.
-    | Each module can be core (free) or subscription-based.
+    | Control which modules are active in the application. Set to false to
+    | hide a module from all users (including navigation, routes, etc.)
     |
     */
 
-    'core' => [
-        'name' => 'MyGrowNet Core',
-        'slug' => 'core',
-        'category' => 'core',
-        'description' => 'Core MLM platform features including dashboard, network, and earnings',
-        'icon' => 'home',
-        'color' => 'blue',
-        'account_types' => ['member'],
-        'price' => 0,
-        'requires_subscription' => false,
-        'routes' => [
-            'integrated' => '/dashboard',
-        ],
-        'pwa' => [
-            'enabled' => false,
-        ],
-        'features' => [
-            'offline' => false,
-            'dataSync' => false,
-            'notifications' => true,
-        ],
-    ],
-
-    'sme-accounting' => [
-        'name' => 'SME Accounting',
-        'slug' => 'accounting',
-        'category' => 'sme',
-        'description' => 'Complete accounting solution for small and medium enterprises',
-        'icon' => 'calculator',
-        'color' => 'purple',
-        'thumbnail' => '/images/modules/accounting.png',
-        'account_types' => ['business'],
-        'subscription_tiers' => [
-            'basic' => [
-                'name' => 'Basic',
-                'price' => 100,
-                'billing_cycle' => 'monthly',
-                'user_limit' => 3,
-                'storage_limit_mb' => 1000,
-                'features' => [
-                    'invoicing' => true,
-                    'expenses' => true,
-                    'reports' => 'basic',
-                    'multi_currency' => false,
-                ],
-            ],
-            'pro' => [
-                'name' => 'Professional',
-                'price' => 200,
-                'billing_cycle' => 'monthly',
-                'user_limit' => 10,
-                'storage_limit_mb' => 5000,
-                'features' => [
-                    'invoicing' => true,
-                    'expenses' => true,
-                    'reports' => 'advanced',
-                    'multi_currency' => true,
-                    'inventory' => true,
-                ],
-            ],
-            'enterprise' => [
-                'name' => 'Enterprise',
-                'price' => 500,
-                'billing_cycle' => 'monthly',
-                'user_limit' => null, // unlimited
-                'storage_limit_mb' => 20000,
-                'features' => [
-                    'invoicing' => true,
-                    'expenses' => true,
-                    'reports' => 'advanced',
-                    'multi_currency' => true,
-                    'inventory' => true,
-                    'api_access' => true,
-                    'custom_integrations' => true,
-                ],
-            ],
-        ],
-        'routes' => [
-            'integrated' => '/modules/accounting',
-            'standalone' => '/apps/accounting',
-        ],
-        'pwa' => [
+    'modules' => [
+        // Core Platform
+        'dashboard' => [
             'enabled' => true,
-            'installable' => true,
-            'offline_capable' => true,
+            'name' => 'Dashboard',
+            'description' => 'Main dashboard and overview',
+            'icon' => 'HomeIcon',
+            'always_enabled' => true, // Cannot be disabled
+            'nav_group' => 'main',
         ],
-        'features' => [
-            'offline' => true,
-            'dataSync' => true,
-            'notifications' => true,
-            'multiUser' => true,
-        ],
-    ],
 
-    'personal-finance' => [
-        'name' => 'Personal Finance Tracker',
-        'slug' => 'finance',
-        'category' => 'personal',
-        'description' => 'Track your personal income, expenses, and savings goals',
-        'icon' => 'wallet',
-        'color' => 'green',
-        'thumbnail' => '/images/modules/finance.png',
-        'account_types' => ['member'],
-        'subscription_tiers' => [
-            'free' => [
-                'name' => 'Free',
-                'price' => 0,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'expense_tracking' => true,
-                    'budget_planning' => 'basic',
-                    'reports' => 'basic',
-                ],
-            ],
-            'premium' => [
-                'name' => 'Premium',
-                'price' => 50,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'expense_tracking' => true,
-                    'budget_planning' => 'advanced',
-                    'reports' => 'advanced',
-                    'goal_tracking' => true,
-                    'investment_tracking' => true,
-                ],
-            ],
-        ],
-        'routes' => [
-            'integrated' => '/modules/finance',
-            'standalone' => '/apps/finance',
-        ],
-        'pwa' => [
+        // MyGrowNet Features
+        'grownet' => [
             'enabled' => true,
-            'installable' => true,
-            'offline_capable' => true,
+            'name' => 'GrowNet',
+            'description' => '7-level professional network with commissions',
+            'icon' => 'UsersIcon',
+            'route' => 'grownet.dashboard',
+            'nav_group' => 'main',
         ],
-        'features' => [
-            'offline' => true,
-            'dataSync' => true,
-            'notifications' => true,
-        ],
-    ],
 
-    'mygrow-save' => [
-        'name' => 'MyGrow Save',
-        'slug' => 'mygrow-save',
-        'category' => 'personal',
-        'description' => 'Digital wallet for savings, transactions, and financial goals',
-        'icon' => 'wallet',
-        'color' => 'emerald',
-        'thumbnail' => '/images/modules/mygrow-save.png',
-        'account_types' => ['member', 'business'],
-        'subscription_tiers' => [
-            'free' => [
-                'name' => 'Free',
-                'price' => 0,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'basic_wallet' => true,
-                    'transactions' => 10,
-                    'savings_goals' => false,
-                ],
-            ],
-            'premium' => [
-                'name' => 'Premium',
-                'price' => 25,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'unlimited_transactions' => true,
-                    'savings_goals' => true,
-                    'analytics' => true,
-                    'auto_save' => true,
-                ],
-            ],
-        ],
-        'routes' => [
-            'integrated' => '/wallet',
-            'standalone' => '/apps/wallet',
-        ],
-        'pwa' => [
+        'growbuilder' => [
             'enabled' => true,
-            'installable' => true,
-            'offline_capable' => true,
+            'name' => 'GrowBuilder',
+            'description' => 'Website builder for members',
+            'icon' => 'GlobeAltIcon',
+            'route' => 'growbuilder.dashboard',
+            'nav_group' => 'main',
         ],
-        'features' => [
-            'offline' => true,
-            'dataSync' => true,
-            'notifications' => true,
-        ],
-    ],
 
-    'wedding-planner' => [
-        'name' => 'Wedding Planner',
-        'slug' => 'wedding-planner',
-        'category' => 'personal',
-        'description' => 'Plan your perfect wedding with budgets, vendors, and checklists',
-        'icon' => 'heart',
-        'color' => 'pink',
-        'thumbnail' => '/images/modules/wedding.png',
-        'account_types' => ['member'],
-        'subscription_tiers' => [
-            'basic' => [
-                'name' => 'Basic',
-                'price' => 75,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'checklist' => true,
-                    'budget' => true,
-                    'vendors' => 10,
-                ],
-            ],
-            'premium' => [
-                'name' => 'Premium',
-                'price' => 150,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'checklist' => true,
-                    'budget' => true,
-                    'vendors' => 'unlimited',
-                    'guest_management' => true,
-                    'seating_chart' => true,
-                ],
-            ],
+        'venture_builder' => [
+            'enabled' => false, // DISABLED - Not ready for production
+            'name' => 'Venture Builder',
+            'description' => 'Co-invest in vetted business projects',
+            'icon' => 'BriefcaseIcon',
+            'route' => 'ventures.index',
+            'nav_group' => 'main',
+            'public_routes' => ['ventures.about', 'ventures.policy', 'ventures.index', 'ventures.show'],
         ],
-        'routes' => [
-            'integrated' => '/modules/wedding',
-            'standalone' => '/apps/wedding',
-        ],
-        'pwa' => [
-            'enabled' => true,
-            'installable' => true,
-            'offline_capable' => true,
-        ],
-        'features' => [
-            'offline' => true,
-            'dataSync' => true,
-            'notifications' => true,
-        ],
-    ],
 
-    'lifeplus' => [
-        'name' => 'Life+',
-        'slug' => 'lifeplus',
-        'category' => 'personal',
-        'description' => 'Personal development, wellness, and lifestyle improvement tools',
-        'icon' => 'heart',
-        'color' => 'rose',
-        'thumbnail' => '/images/modules/lifeplus.png',
-        'account_types' => ['member'],
-        'subscription_tiers' => [
-            'free' => [
-                'name' => 'Free',
-                'price' => 0,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'basic_content' => true,
-                    'daily_tips' => true,
-                    'community_access' => false,
-                ],
-            ],
-            'premium' => [
-                'name' => 'Premium',
-                'price' => 49,
-                'billing_cycle' => 'monthly',
-                'features' => [
-                    'all_content' => true,
-                    'daily_tips' => true,
-                    'community_access' => true,
-                    'coaching_sessions' => true,
-                    'exclusive_workshops' => true,
-                ],
-            ],
-        ],
-        'routes' => [
-            'integrated' => '/lifeplus',
-            'standalone' => '/apps/lifeplus',
-        ],
-        'pwa' => [
+        // Business Tools
+        'cms' => [
             'enabled' => true,
-            'installable' => true,
-            'offline_capable' => true,
+            'name' => 'Company Management',
+            'description' => 'Invoicing, inventory, and business management',
+            'icon' => 'BuildingOfficeIcon',
+            'route' => 'cms.dashboard',
+            'nav_group' => 'business',
         ],
-        'features' => [
-            'offline' => true,
-            'dataSync' => true,
-            'notifications' => true,
+
+        'bizboost' => [
+            'enabled' => true,
+            'name' => 'BizBoost',
+            'description' => 'Business management & marketing',
+            'icon' => 'SparklesIcon',
+            'route' => 'bizboost.dashboard',
+            'nav_group' => 'business',
+        ],
+
+        'growbiz' => [
+            'enabled' => true,
+            'name' => 'GrowBiz',
+            'description' => 'Team & employee management',
+            'icon' => 'ClipboardDocumentCheckIcon',
+            'route' => 'growbiz.dashboard',
+            'nav_group' => 'business',
+        ],
+
+        'growfinance' => [
+            'enabled' => true,
+            'name' => 'GrowFinance',
+            'description' => 'Accounting & financial management',
+            'icon' => 'BanknotesIcon',
+            'route' => 'growfinance.dashboard',
+            'nav_group' => 'business',
+        ],
+
+        'inventory' => [
+            'enabled' => true,
+            'name' => 'Inventory Management',
+            'description' => 'Inventory management',
+            'icon' => 'CubeIcon',
+            'route' => 'inventory.dashboard',
+            'nav_group' => 'business',
+        ],
+
+        'pos' => [
+            'enabled' => true,
+            'name' => 'Point of Sale',
+            'description' => 'Point of sale system',
+            'icon' => 'BuildingStorefrontIcon',
+            'route' => 'pos.dashboard',
+            'nav_group' => 'business',
+        ],
+
+        'growmarket' => [
+            'enabled' => true,
+            'name' => 'GrowMarket',
+            'description' => 'Marketplace for buying and selling',
+            'icon' => 'ShoppingBagIcon',
+            'route' => 'marketplace.index',
+            'nav_group' => 'business',
+        ],
+
+        'bgf' => [
+            'enabled' => true,
+            'name' => 'Business Growth Fund',
+            'description' => 'Business funding and loans',
+            'icon' => 'BriefcaseIcon',
+            'route' => 'bgf.index',
+            'nav_group' => 'financial',
+        ],
+
+        // Learning & Development
+        'library' => [
+            'enabled' => true,
+            'name' => 'Library',
+            'description' => 'Educational resources and courses',
+            'icon' => 'BookOpenIcon',
+            'route' => 'library.index',
+            'nav_group' => 'learning',
+        ],
+
+        'workshops' => [
+            'enabled' => true,
+            'name' => 'Workshops',
+            'description' => 'Skills training and events',
+            'icon' => 'AcademicCapIcon',
+            'route' => 'workshops.index',
+            'nav_group' => 'learning',
+        ],
+
+        // Communication
+        'messaging' => [
+            'enabled' => true,
+            'name' => 'Messaging',
+            'description' => 'Internal messaging system',
+            'icon' => 'ChatBubbleLeftRightIcon',
+            'route' => 'messages.index',
+            'nav_group' => 'communication',
+        ],
+
+        'announcements' => [
+            'enabled' => true,
+            'name' => 'Announcements',
+            'description' => 'Platform announcements and news',
+            'icon' => 'MegaphoneIcon',
+            'route' => 'announcements.index',
+            'nav_group' => 'communication',
+        ],
+
+        // Financial
+        'wallet' => [
+            'enabled' => true,
+            'name' => 'MyGrow Wallet',
+            'description' => 'Digital wallet for platform transactions',
+            'icon' => 'WalletIcon',
+            'route' => 'wallet.index',
+            'nav_group' => 'financial',
+        ],
+
+        'profit_sharing' => [
+            'enabled' => true,
+            'name' => 'Profit Sharing',
+            'description' => 'Quarterly profit distributions',
+            'icon' => 'CurrencyDollarIcon',
+            'route' => 'profit-sharing.index',
+            'nav_group' => 'financial',
+        ],
+
+        // Community
+        'community' => [
+            'enabled' => true,
+            'name' => 'Community',
+            'description' => 'Member community and forums',
+            'icon' => 'UserGroupIcon',
+            'route' => 'community.index',
+            'nav_group' => 'community',
+        ],
+
+        'support' => [
+            'enabled' => true,
+            'name' => 'Support',
+            'description' => 'Help desk and support tickets',
+            'icon' => 'LifebuoyIcon',
+            'route' => 'support.index',
+            'nav_group' => 'community',
+        ],
+
+        // Lifestyle (Optional modules)
+        'lifeplus' => [
+            'enabled' => false, // Can be enabled when ready
+            'name' => 'Life+',
+            'description' => 'Personal development and wellness',
+            'icon' => 'HeartIcon',
+            'route' => 'lifeplus.dashboard',
+            'nav_group' => 'lifestyle',
+        ],
+
+        'ubumi' => [
+            'enabled' => false, // Can be enabled when ready
+            'name' => 'Ubumi',
+            'description' => 'Health and wellness tracking',
+            'icon' => 'SparklesIcon',
+            'route' => 'ubumi.dashboard',
+            'nav_group' => 'lifestyle',
+        ],
+
+        'growbackup' => [
+            'enabled' => true,
+            'name' => 'GrowBackup',
+            'description' => 'Secure cloud storage for your files',
+            'icon' => 'CloudArrowUpIcon',
+            'route' => 'growbackup.dashboard',
+            'nav_group' => 'tools',
         ],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Module Settings
+    | Navigation Groups
     |--------------------------------------------------------------------------
+    |
+    | Define navigation groups for organizing modules in the UI
+    |
     */
 
-    'settings' => [
-        'trial_period_days' => 14,
-        'grace_period_days' => 7,
-        'enable_pwa' => true,
-        'enable_offline_mode' => true,
-        'default_currency' => 'ZMW',
-        'supported_currencies' => ['ZMW', 'USD'],
-        'billing_cycles' => ['monthly', 'quarterly', 'annual'],
-        'annual_discount_percent' => 20,
+    'nav_groups' => [
+        'main' => [
+            'name' => 'Main Features',
+            'order' => 1,
+        ],
+        'business' => [
+            'name' => 'Business Tools',
+            'order' => 2,
+        ],
+        'learning' => [
+            'name' => 'Learning & Development',
+            'order' => 3,
+        ],
+        'financial' => [
+            'name' => 'Financial',
+            'order' => 4,
+        ],
+        'communication' => [
+            'name' => 'Communication',
+            'order' => 5,
+        ],
+        'community' => [
+            'name' => 'Community',
+            'order' => 6,
+        ],
+        'lifestyle' => [
+            'name' => 'Lifestyle',
+            'order' => 7,
+        ],
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Module Categories
+    | Admin Settings
     |--------------------------------------------------------------------------
+    |
+    | Control admin access to module management
+    |
     */
 
-    'categories' => [
-        'core' => [
-            'name' => 'Core Platform',
-            'description' => 'Essential platform features included with membership',
-            'icon' => 'home',
-            'color' => 'blue',
-        ],
-        'personal' => [
-            'name' => 'Personal Finance',
-            'description' => 'Tools for personal financial management',
-            'icon' => 'wallet',
-            'color' => 'green',
-        ],
-        'sme' => [
-            'name' => 'Business & SME',
-            'description' => 'Solutions for small and medium enterprises',
-            'icon' => 'briefcase',
-            'color' => 'purple',
-        ],
-        'enterprise' => [
-            'name' => 'Enterprise Solutions',
-            'description' => 'Advanced tools for larger organizations',
-            'icon' => 'building',
-            'color' => 'indigo',
-        ],
+    'admin' => [
+        'can_toggle_modules' => true, // Allow admins to enable/disable modules
+        'require_super_admin' => true, // Only super admins can toggle modules
     ],
 ];

@@ -29,7 +29,7 @@ class PlaceholderController extends Controller
             'profit-sharing' => 'Quarterly Profit-Sharing',
         ];
 
-        return Inertia::render('MyGrowNet/ComingSoon', [
+        return Inertia::render('GrowNet/ComingSoon', [
             'feature' => $feature,
             'title' => $featureTitles[$feature] ?? 'Feature',
         ]);

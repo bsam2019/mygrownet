@@ -107,7 +107,7 @@ class WalletController extends Controller
         $loanService = app(\App\Domain\Financial\Services\LoanService::class);
         $loanSummary = $loanService->getLoanSummary($user);
         
-        return Inertia::render('MyGrowNet/Wallet', [
+        return Inertia::render('GrowNet/Wallet', [
             'balance' => $balance,
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'loyaltyPoints' => (float) ($user->loyalty_points ?? 0),

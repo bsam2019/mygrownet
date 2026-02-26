@@ -20,6 +20,60 @@ class HomeHubController extends Controller
     ) {}
 
     /**
+     * Filter modules based on enabled configuration
+     */
+    private function filterEnabledModules(array $modules): array
+    {
+        $enabledModules = \App\Services\ModuleService::getEnabledModules();
+        $enabledSlugs = array_keys($enabledModules);
+        
+        // Map module slugs to config keys
+        $slugToConfigKey = [
+            'grownet' => 'grownet',
+            'mygrownet-core' => 'grownet',
+            'mlm-dashboard' => 'grownet',
+            'growbuilder' => 'growbuilder',
+            'bizboost' => 'bizboost',
+            'growfinance' => 'growfinance',
+            'growbiz' => 'growbiz',
+            'cms' => 'cms',
+            'marketplace' => 'growmarket',
+            'shop' => 'growmarket',
+            'learning' => 'library',
+            'education' => 'library',
+            'lifeplus' => 'lifeplus',
+            'health' => 'lifeplus',
+            'wellness' => 'lifeplus',
+            'ubumi' => 'ubumi',
+            'mygrow-save' => 'wallet',
+            'wallet' => 'wallet',
+            'messaging' => 'messaging',
+            'announcements' => 'announcements',
+            'community' => 'community',
+            'support' => 'support',
+            'workshops' => 'workshops',
+            'profit-sharing' => 'profit_sharing',
+            'inventory' => 'inventory',
+            'pos' => 'pos',
+            'bgf' => 'bgf',
+            'business-growth-fund' => 'bgf',
+            'growbackup' => 'growbackup',
+        ];
+        
+        return array_filter($modules, function($module) use ($enabledSlugs, $slugToConfigKey) {
+            $slug = $module['slug'] ?? '';
+            $configKey = $slugToConfigKey[$slug] ?? $slug;
+            
+            // Always show dashboard
+            if ($slug === 'dashboard' || $configKey === 'dashboard') {
+                return true;
+            }
+            
+            return in_array($configKey, $enabledSlugs);
+        });
+    }
+
+    /**
      * Display the Home Hub (module marketplace)
      * Accessible to both authenticated and public users
      */
@@ -36,8 +90,11 @@ class HomeHubController extends Controller
                 return $dto->toArray();
             }, $moduleDTOs);
             
+            // Filter by enabled modules
+            $modules = $this->filterEnabledModules($modules);
+            
             return Inertia::render('HomeHub/Index', [
-                'modules' => $modules,
+                'modules' => array_values($modules), // Re-index array
                 'isPublic' => true,
             ]);
         }
@@ -64,6 +121,9 @@ class HomeHubController extends Controller
             }
             return $arr;
         }, $moduleDTOs);
+        
+        // Filter by enabled modules
+        $modules = $this->filterEnabledModules($modules);
         
         // Get account types for display (existing functionality)
         $accountTypes = array_map(function($typeValue) {
@@ -109,7 +169,7 @@ class HomeHubController extends Controller
                     'color' => $primaryAccountType->color(),
                 ] : null,
             ],
-            'modules' => $modules,
+            'modules' => array_values($modules), // Re-index array after filtering
             'availableModules' => $user->getAllAvailableModules(), // Legacy support
             'isPublic' => false,
             'isAdmin' => $isAdmin,

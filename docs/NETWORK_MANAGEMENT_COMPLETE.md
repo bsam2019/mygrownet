@@ -70,7 +70,7 @@ Complete audit trail of all network changes:
 ### Frontend
 - ✅ `resources/js/Pages/Admin/NetworkManagement/Index.vue`
 - ✅ `resources/js/Pages/Admin/NetworkManagement/NetworkTree.vue`
-- ✅ `resources/js/components/CustomAdminSidebar.vue` (added menu item)
+- ✅ `resources/js/components/AdminSidebar.vue` (added menu item)
 
 ### Documentation
 - ✅ `NETWORK_MANAGEMENT_USER_GUIDE.md` - Complete user guide

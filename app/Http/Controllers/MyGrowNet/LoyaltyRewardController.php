@@ -29,7 +29,7 @@ class LoyaltyRewardController extends Controller
         // Get user's current package if they have one
         $userPackage = auth()->user()->lgrPackage ?? null;
         
-        return Inertia::render('MyGrowNet/LoyaltyReward/Dashboard', [
+        return Inertia::render('GrowNet/LoyaltyReward/Dashboard', [
             'qualification' => $qualification,
             'cycle' => $cycleStats,
             'packages' => $packages,
@@ -85,7 +85,7 @@ class LoyaltyRewardController extends Controller
     {
         $qualification = $this->qualificationService->checkQualification(auth()->id());
         
-        return Inertia::render('MyGrowNet/LoyaltyReward/Qualification', [
+        return Inertia::render('GrowNet/LoyaltyReward/Qualification', [
             'qualification' => $qualification,
         ]);
     }
@@ -95,7 +95,7 @@ class LoyaltyRewardController extends Controller
         $activities = $this->cycleService->getRecentActivities(auth()->id(), 30);
         $cycleStats = $this->cycleService->getCycleStats(auth()->id());
         
-        return Inertia::render('MyGrowNet/LoyaltyReward/Activities', [
+        return Inertia::render('GrowNet/LoyaltyReward/Activities', [
             'activities' => $activities,
             'cycle' => $cycleStats,
         ]);

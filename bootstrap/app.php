@@ -41,6 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/ubumi.php'));
             Route::middleware('web')
                 ->group(base_path('routes/cms.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/venture.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -75,6 +77,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'geopamu.admin' => \App\Http\Middleware\GeopamuAdmin::class,
             // CMS middleware
             'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
+            'module' => \App\Http\Middleware\CheckModuleEnabled::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

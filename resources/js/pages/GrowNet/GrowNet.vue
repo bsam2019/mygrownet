@@ -571,9 +571,11 @@
 
         <!-- Member Filters -->
         <MemberFilters
-          v-model:filter="memberFilter"
-          v-model:sort="memberSort"
-          v-model:search="memberSearch"
+          v-model="memberFilter"
+          :sort="memberSort"
+          :search="memberSearch"
+          @update:sort="memberSort = $event"
+          @update:search="memberSearch = $event"
           :filters="memberFilterOptions"
           :filtered-count="totalFilteredMembers"
           :total-count="networkData?.total_network_size || 0"
@@ -1249,6 +1251,11 @@
         </template>
       </div>
 
+      <!-- BENEFITS CATALOG TAB -->
+      <div v-show="activeTab === 'benefits'" class="space-y-6">
+        <BenefitsCatalog :user-has-starter-kit="user?.has_starter_kit" />
+      </div>
+
     </div>
 
     <!-- MORE TAB - Slide-in Drawer (NEW) -->
@@ -1300,6 +1307,7 @@
               @edit-profile="showEditProfileModal = true"
               @change-password="showChangePasswordModal = true"
               @verification="showComingSoon('Verification')"
+              @my-benefits="navigateToBenefits"
               @lgr-packages="showLgrPackagesModal = true"
               @my-earnings="handleTabChange('wallet')"
               @live-support="openLiveChat"
@@ -1387,6 +1395,7 @@
       :creditExpiry="user?.starter_kit_credit_expiry"
       :purchaseDate="user?.starter_kit_purchased_at"
       :walletBalance="walletBalance"
+      :tiers="starterKitTiers"
       @close="showStarterKitModal = false"
       @success="handleToastSuccess"
       @error="handleToastError"
@@ -1717,6 +1726,7 @@ import MemberFilters from '@/components/Mobile/MemberFilters.vue';
 import TabLoadingSkeleton from '@/components/Mobile/TabLoadingSkeleton.vue';
 import ToolCategory from '@/components/Mobile/ToolCategory.vue';
 import ScrollToTop from '@/components/Mobile/ScrollToTop.vue';
+import BenefitsCatalog from '@/components/Mobile/BenefitsCatalog.vue';
 
 // Mobile-Embedded Tools (without MemberLayout)
 import EarningsCalculatorEmbedded from '@/components/Mobile/Tools/EarningsCalculatorEmbedded.vue';
@@ -1769,7 +1779,7 @@ const props = withDefaults(defineProps<{
   starterKit: any;
   notifications: any[];
   walletBalance: number;
-  isMobileDashboard?: boolean;
+  isMobileDashboard?: boolean; // Legacy flag, kept for compatibility
   verificationLimits?: any;
   remainingDailyLimit?: number;
   pendingWithdrawals?: number;
@@ -1788,6 +1798,7 @@ const props = withDefaults(defineProps<{
   earningsTrend?: any[];
   lgrPackages?: any[];
   userLgrPackage?: any;
+  starterKitTiers?: any;
 }>(), {
   stats: () => ({ total_earnings: 0, this_month_earnings: 0, total_deposits: 0, total_withdrawals: 0 }),
   referralStats: () => ({ levels: [] }),
@@ -1802,6 +1813,12 @@ const props = withDefaults(defineProps<{
   earningsTrend: () => [],
   lgrPackages: () => [],
   userLgrPackage: null,
+  starterKitTiers: () => ({
+    lite: { name: 'Lite', price: 300, shopCredit: 50, lgrDailyRate: 12.50, lpAward: 15 },
+    basic: { name: 'Basic', price: 500, shopCredit: 100, lgrDailyRate: 25.00, lpAward: 25 },
+    growth_plus: { name: 'Growth Plus', price: 1000, shopCredit: 200, lgrDailyRate: 37.50, lpAward: 50 },
+    pro: { name: 'Pro', price: 2000, shopCredit: 400, lgrDailyRate: 62.50, lpAward: 100 },
+  }),
 });
 
 // Check if admin is impersonating
@@ -2623,6 +2640,11 @@ const refreshData = () => {
 const navigateToMessages = () => {
   // Open messages modal instead of navigating
   showMessagesModal.value = true;
+};
+
+const navigateToBenefits = () => {
+  // Navigate to benefits page
+  window.location.href = route('mygrownet.benefits.index');
 };
 
 // Listen for notification clicks to open message modal

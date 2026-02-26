@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             InvestmentMetricSeeder::class,     // Create investment metrics
             InvestmentOpportunitySeeder::class,
             ModuleTierSeeder::class,           // Create module subscription tiers
+            BenefitSeeder::class,              // Create starter kit benefits
         ]);
     }
 }

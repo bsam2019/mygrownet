@@ -97,6 +97,6 @@ class NotificationController extends Controller
      */
     public function center(Request $request)
     {
-        return Inertia::render('MyGrowNet/Notifications');
+        return Inertia::render('GrowNet/Notifications');
     }
 }

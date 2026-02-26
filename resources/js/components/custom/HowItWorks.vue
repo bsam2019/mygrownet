@@ -10,7 +10,7 @@
           Your Growth Path with MyGrowNet
         </h2>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          Three simple steps to access training, business tools, and venture opportunities
+          Three simple steps to learn, grow your business, and access income opportunities
         </p>
       </div>
 
@@ -34,7 +34,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Learn & Develop</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Learn & Develop Skills</h3>
                 <p class="text-gray-600 text-sm">
                   Access training courses, workshops, and mentorship programs to build your skills and knowledge
                 </p>
@@ -56,9 +56,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                   </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Use Business Tools</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Use Business Tools to Grow</h3>
                 <p class="text-gray-600 text-sm">
-                  Leverage GrowFinance, GrowBiz, and BizBoost apps to manage and grow your business operations
+                  Build your website, manage finances, and grow your business with GrowBuilder, GrowFinance, and GrowBiz
                 </p>
               </div>
             </div>
@@ -78,9 +78,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Join Venture Opportunities</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Join Income & Venture Opportunities</h3>
                 <p class="text-gray-600 text-sm">
-                  Participate in venture-building programs and explore business collaboration opportunities
+                  Participate in GrowNet referral program and explore venture-building opportunities
                 </p>
               </div>
             </div>

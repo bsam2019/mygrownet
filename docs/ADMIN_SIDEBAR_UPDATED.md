@@ -21,7 +21,7 @@ Added "Investment Rounds" link to admin sidebar navigation.
    - Added Investment Rounds to financeNavItems
    - Icon: Target
 
-2. **resources/js/components/CustomAdminSidebar.vue**
+2. **resources/js/components/AdminSidebar.vue**
    - Added Investment Rounds to financeNavItems
    - Icon: TrendingUp
 

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (!Schema::hasTable('promotional_cards')) {
             Schema::create('promotional_cards', function (Blueprint $table) {
-            $table->id();
+                $table->id();
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
@@ -38,15 +38,16 @@ return new class extends Migration
             $table->softDeletes();
 
             // Indexes
-            $table->index(['is_active', 'sort_order']);
-            $table->index('category');
-            $table->index('created_at');
-        });
+                $table->index(['is_active', 'sort_order']);
+                $table->index('category');
+                $table->index('created_at');
+            });
+        }
 
         // Track individual user shares
         if (!Schema::hasTable('promotional_card_shares')) {
             Schema::create('promotional_card_shares', function (Blueprint $table) {
-            $table->id();
+                $table->id();
             $table->foreignId('promotional_card_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('platform'); // facebook, whatsapp, twitter, etc.
@@ -54,10 +55,11 @@ return new class extends Migration
             $table->timestamp('shared_at');
             $table->timestamps();
 
-            // Indexes
-            $table->index(['user_id', 'shared_at']);
-            $table->index(['promotional_card_id', 'shared_at']);
-        });
+                // Indexes
+                $table->index(['user_id', 'shared_at']);
+                $table->index(['promotional_card_id', 'shared_at']);
+            });
+        }
     }
 
     /**

@@ -131,12 +131,12 @@
                   >
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <h5 class="text-base font-bold text-gray-900">Lite</h5>
-                        <p class="text-2xl font-bold text-gray-600 mt-1">K300</p>
+                        <h5 class="text-base font-bold text-gray-900">{{ tiers.lite.name }}</h5>
+                        <p class="text-2xl font-bold text-gray-600 mt-1">K{{ tiers.lite.price.toLocaleString() }}</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ Basic content access</li>
-                          <li>✓ Community access</li>
-                          <li>✓ +15 Lifetime Points</li>
+                          <li>✓ {{ tiers.lite.storage_gb }}GB Storage</li>
+                          <li>✓ K{{ tiers.lite.shopCredit }} Shop Credit</li>
+                          <li>✓ +{{ tiers.lite.lpAward }} Lifetime Points</li>
                         </ul>
                       </div>
                       <div
@@ -164,12 +164,12 @@
                   >
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <h5 class="text-base font-bold text-gray-900">Basic</h5>
-                        <p class="text-2xl font-bold text-blue-600 mt-1">K500</p>
+                        <h5 class="text-base font-bold text-gray-900">{{ tiers.basic.name }}</h5>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">K{{ tiers.basic.price.toLocaleString() }}</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ All content access</li>
-                          <li>✓ +25 Lifetime Points</li>
-                          <li>✓ Full platform access</li>
+                          <li>✓ {{ tiers.basic.storage_gb }}GB Storage</li>
+                          <li>✓ K{{ tiers.basic.shopCredit }} Shop Credit</li>
+                          <li>✓ +{{ tiers.basic.lpAward }} Lifetime Points</li>
                         </ul>
                       </div>
                       <div
@@ -202,12 +202,12 @@
                     </div>
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <h5 class="text-base font-bold text-gray-900">Growth Plus</h5>
-                        <p class="text-2xl font-bold text-emerald-600 mt-1">K1,000</p>
+                        <h5 class="text-base font-bold text-gray-900">{{ tiers.growth_plus.name }}</h5>
+                        <p class="text-2xl font-bold text-emerald-600 mt-1">K{{ tiers.growth_plus.price.toLocaleString() }}</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ All content + extras</li>
-                          <li>✓ +50 Lifetime Points</li>
-                          <li>✓ Priority support</li>
+                          <li>✓ {{ tiers.growth_plus.storage_gb }}GB Storage</li>
+                          <li>✓ K{{ tiers.growth_plus.shopCredit }} Shop Credit</li>
+                          <li>✓ +{{ tiers.growth_plus.lpAward }} Lifetime Points</li>
                         </ul>
                       </div>
                       <div
@@ -240,12 +240,12 @@
                     </div>
                     <div class="flex items-start justify-between">
                       <div class="flex-1">
-                        <h5 class="text-base font-bold text-gray-900">Pro</h5>
-                        <p class="text-2xl font-bold text-purple-600 mt-1">K2,000</p>
+                        <h5 class="text-base font-bold text-gray-900">{{ tiers.pro.name }}</h5>
+                        <p class="text-2xl font-bold text-purple-600 mt-1">K{{ tiers.pro.price.toLocaleString() }}</p>
                         <ul class="text-xs text-gray-600 mt-2 space-y-1">
-                          <li>✓ Full library access</li>
-                          <li>✓ +100 Lifetime Points</li>
-                          <li>✓ Premium benefits</li>
+                          <li>✓ {{ tiers.pro.storage_gb }}GB Storage</li>
+                          <li>✓ K{{ tiers.pro.shopCredit }} Shop Credit</li>
+                          <li>✓ +{{ tiers.pro.lpAward }} Lifetime Points</li>
                         </ul>
                       </div>
                       <div
@@ -343,10 +343,25 @@ interface Props {
   creditExpiry?: string;
   purchaseDate?: string;
   walletBalance?: number;
+  tiers?: Record<string, {
+    name: string;
+    price: number;
+    shopCredit: number;
+    storage_gb?: number;
+    earning_potential?: number;
+    lgrDailyRate: number;
+    lpAward: number;
+  }>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   walletBalance: 0,
+  tiers: () => ({
+    lite: { name: 'Lite', price: 300, shopCredit: 50, lgrDailyRate: 12.50, lpAward: 15 },
+    basic: { name: 'Basic', price: 500, shopCredit: 100, lgrDailyRate: 25.00, lpAward: 25 },
+    growth_plus: { name: 'Growth Plus', price: 1000, shopCredit: 200, lgrDailyRate: 37.50, lpAward: 50 },
+    pro: { name: 'Pro', price: 2000, shopCredit: 400, lgrDailyRate: 62.50, lpAward: 100 },
+  }),
 });
 
 const emit = defineEmits(['close', 'success', 'error']);
@@ -357,24 +372,12 @@ const purchasing = ref(false);
 
 // Check if user has sufficient balance
 const hasSufficientBalance = computed(() => {
-  const tierPrices: Record<string, number> = {
-    lite: 300,
-    basic: 500,
-    growth_plus: 1000,
-    pro: 2000
-  };
-  const requiredAmount = tierPrices[selectedTier.value] || 500;
+  const requiredAmount = props.tiers[selectedTier.value]?.price || 500;
   return props.walletBalance >= requiredAmount;
 });
 
 const selectedTierPrice = computed(() => {
-  const tierPrices: Record<string, number> = {
-    lite: 300,
-    basic: 500,
-    growth_plus: 1000,
-    pro: 2000
-  };
-  return tierPrices[selectedTier.value] || 500;
+  return props.tiers[selectedTier.value]?.price || 500;
 });
 
 const handlePurchase = async () => {

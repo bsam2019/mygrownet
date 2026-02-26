@@ -97,7 +97,7 @@ LGR Balance (K300)
 **Frontend:**
 - `resources/js/pages/Admin/LGR/Settings.vue`
 - Updated: `resources/js/pages/MyGrowNet/Wallet.vue` (added transfer modal)
-- Updated: `resources/js/components/CustomAdminSidebar.vue` (added settings link)
+- Updated: `resources/js/components/AdminSidebar.vue` (added settings link)
 
 ### Routes
 

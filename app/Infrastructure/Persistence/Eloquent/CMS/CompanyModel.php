@@ -23,6 +23,10 @@ class CompanyModel extends Model
         'logo_path',
         'invoice_footer',
         'status',
+        'subscription_type',
+        'sponsor_reference',
+        'subscription_notes',
+        'complimentary_until',
         'settings',
         'onboarding_completed',
         'onboarding_progress',
@@ -34,6 +38,7 @@ class CompanyModel extends Model
         'onboarding_completed' => 'boolean',
         'onboarding_progress' => 'array',
         'onboarding_completed_at' => 'datetime',
+        'complimentary_until' => 'datetime',
     ];
 
     public function users(): HasMany
@@ -64,5 +69,66 @@ class CompanyModel extends Model
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';
+    }
+
+    /**
+     * Check if company has valid access (subscription or complimentary)
+     */
+    public function hasValidAccess(): bool
+    {
+        // Company must be active
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        // Check based on subscription type
+        switch ($this->subscription_type) {
+            case 'paid':
+                // For paid subscriptions, you'd check payment status here
+                // For now, just check if active
+                return true;
+
+            case 'sponsored':
+            case 'partner':
+                // Sponsored and partner accounts have access as long as they're active
+                return true;
+
+            case 'complimentary':
+                // Check if complimentary access hasn't expired
+                if ($this->complimentary_until) {
+                    return now()->lte($this->complimentary_until);
+                }
+                // No expiration date means unlimited complimentary access
+                return true;
+
+            default:
+                // Default to paid logic
+                return true;
+        }
+    }
+
+    /**
+     * Check if complimentary access is expiring soon (within 7 days)
+     */
+    public function isComplimentaryExpiringSoon(): bool
+    {
+        if ($this->subscription_type !== 'complimentary' || !$this->complimentary_until) {
+            return false;
+        }
+
+        return now()->diffInDays($this->complimentary_until, false) <= 7 
+            && now()->lte($this->complimentary_until);
+    }
+
+    /**
+     * Get days until complimentary access expires
+     */
+    public function daysUntilComplimentaryExpires(): ?int
+    {
+        if ($this->subscription_type !== 'complimentary' || !$this->complimentary_until) {
+            return null;
+        }
+
+        return now()->diffInDays($this->complimentary_until, false);
     }
 }

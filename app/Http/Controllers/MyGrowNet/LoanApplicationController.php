@@ -47,7 +47,7 @@ class LoanApplicationController extends Controller
         // Calculate eligibility
         $isEligible = $this->checkEligibility($user);
         
-        return Inertia::render('MyGrowNet/LoanApplication', [
+        return Inertia::render('GrowNet/LoanApplication', [
             'hasActiveLoan' => $hasActiveLoan,
             'loanBalance' => $user->loan_balance,
             'loanLimit' => $user->loan_limit,

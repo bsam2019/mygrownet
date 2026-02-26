@@ -18,8 +18,13 @@ const ASSETS_TO_CACHE = [
   '/dashboard',
   '/manifest.json',
   '/logo.png',
+  '/offline.html', // Main offline page
   '/images/icon-192x192.png',
   '/images/icon-512x512.png',
+  // Module-specific offline pages
+  '/bizboost-offline.html',
+  '/growbiz-offline.html',
+  '/growfinance-offline.html',
   // BizBoost routes and assets
   '/bizboost',
   '/bizboost/products',
@@ -30,13 +35,15 @@ const ASSETS_TO_CACHE = [
   '/bizboost/reminders',
   '/bizboost/locations',
   '/bizboost-manifest.json',
-  '/bizboost-offline.html',
 ];
 
-// BizBoost route patterns for offline fallback
-const BIZBOOST_ROUTES = [
-  /^\/bizboost/,
-];
+// Module route patterns for offline fallback
+const MODULE_ROUTES = {
+  bizboost: { pattern: /^\/bizboost/, offline: '/bizboost-offline.html' },
+  growbiz: { pattern: /^\/growbiz/, offline: '/growbiz-offline.html' },
+  growfinance: { pattern: /^\/growfinance/, offline: '/growfinance-offline.html' },
+  // Add other modules as needed
+};
 
 // Page name mapping for cached pages display
 const PAGE_NAMES = {
@@ -234,21 +241,30 @@ self.addEventListener('fetch', (event) => {
             if (cached) {
               return cached;
             }
-            // Check if this is a BizBoost route - serve BizBoost offline page
-            const isBizBoostRoute = BIZBOOST_ROUTES.some(pattern => pattern.test(url.pathname));
-            if (isBizBoostRoute) {
-              return caches.match('/bizboost-offline.html').then((bizboostOffline) => {
-                if (bizboostOffline) {
-                  return bizboostOffline;
-                }
-                // Fallback to main offline page
-                return caches.match('/offline.html');
-              });
+            
+            // Check if this is a module-specific route
+            for (const [moduleName, moduleConfig] of Object.entries(MODULE_ROUTES)) {
+              if (moduleConfig.pattern.test(url.pathname)) {
+                return caches.match(moduleConfig.offline).then((moduleOffline) => {
+                  if (moduleOffline) {
+                    return moduleOffline;
+                  }
+                  // Fallback to main offline page
+                  return caches.match('/offline.html');
+                });
+              }
             }
-            return caches.match('/offline.html').catch(() => {
+            
+            // Default: serve main offline page
+            return caches.match('/offline.html').then((offlinePage) => {
+              if (offlinePage) {
+                return offlinePage;
+              }
+              // Last resort fallback
               return new Response('Offline - Please check your connection', {
                 status: 503,
                 statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/plain' },
               });
             });
           });

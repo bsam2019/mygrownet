@@ -252,7 +252,7 @@ class DashboardController extends Controller
         // Get messaging data
         $messagingData = $this->getMessagingData($user);
 
-        return Inertia::render('MyGrowNet/Dashboard', [
+        return Inertia::render('GrowNet/Dashboard', [
             'user' => $user,
             'subscription' => $currentSubscription,
             'starterKit' => $starterKitInfo,
@@ -467,23 +467,63 @@ class DashboardController extends Controller
         }
         $data['userLgrPackage'] = $userLgrPackage;
         
-        // DEBUG: Add a flag to identify mobile dashboard
-        $data['isMobileDashboard'] = true;
+        // Get starter kit tier data from database
+        $tierConfigs = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig::active()
+            ->ordered()
+            ->get();
+        
+        $tiers = [];
+        foreach ($tierConfigs as $config) {
+            $shopCredit = round($config->price * 0.20, 2);
+            $lgrDailyRate = round($config->price * 0.05, 2);
+            
+            $lpAwards = [
+                'lite' => 15,
+                'basic' => 25,
+                'growth_plus' => 50,
+                'pro' => 100,
+            ];
+            
+            $tiers[$config->tier_key] = [
+                'name' => $config->tier_name,
+                'price' => (float) $config->price,
+                'shopCredit' => $shopCredit,
+                'storage_gb' => $config->storage_gb,
+                'earning_potential' => (float) $config->earning_potential_percentage,
+                'lgrDailyRate' => $lgrDailyRate,
+                'lpAward' => $lpAwards[$config->tier_key] ?? 25,
+            ];
+        }
+        
+        // Fallback to hardcoded values if no tier configs found
+        if (empty($tiers)) {
+            $tiers = [
+                'lite' => ['name' => 'Lite', 'price' => 300, 'shopCredit' => 50, 'lgrDailyRate' => 12.50, 'lpAward' => 15],
+                'basic' => ['name' => 'Basic', 'price' => 500, 'shopCredit' => 100, 'lgrDailyRate' => 25.00, 'lpAward' => 25],
+                'growth_plus' => ['name' => 'Growth Plus', 'price' => 1000, 'shopCredit' => 200, 'lgrDailyRate' => 37.50, 'lpAward' => 50],
+                'pro' => ['name' => 'Pro', 'price' => 2000, 'shopCredit' => 400, 'lgrDailyRate' => 62.50, 'lpAward' => 100],
+            ];
+        }
+        
+        $data['starterKitTiers'] = $tiers;
+        
+        // DEBUG: Add a flag to identify GrowNet dashboard (legacy compatibility)
+        $data['isMobileDashboard'] = true; // Keep for backward compatibility
         $data['debugInfo'] = [
-            'component' => 'MyGrowNet/MobileDashboard',
+            'component' => 'MyGrowNet/GrowNet',
             'timestamp' => now()->toDateTimeString(),
             'user' => $user->name,
             'walletBalance' => $data['walletBalance']
         ];
         
-        \Log::info('Rendering Mobile Dashboard', [
-            'component' => 'MyGrowNet/MobileDashboard',
+        \Log::info('Rendering GrowNet Dashboard', [
+            'component' => 'MyGrowNet/GrowNet',
             'data_keys' => array_keys($data),
             'walletBalance' => $data['walletBalance']
         ]);
         
-        // Render the mobile dashboard component instead
-        return Inertia::render('MyGrowNet/MobileDashboard', $data);
+        // Render the GrowNet dashboard component
+        return Inertia::render('GrowNet/GrowNet', $data);
     }
 
     /**

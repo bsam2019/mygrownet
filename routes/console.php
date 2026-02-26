@@ -131,6 +131,11 @@ Schedule::command('cms:send-scheduled-reports')
     ->hourly()
     ->description('Send scheduled CMS reports via email');
 
+// Check and handle expired complimentary access - runs daily at 1 AM
+Schedule::command('cms:check-expired-complimentary')
+    ->dailyAt('01:00')
+    ->description('Check and suspend expired complimentary CMS access');
+
 // ========================================
 // GrowNet Market Scheduled Tasks
 // ========================================

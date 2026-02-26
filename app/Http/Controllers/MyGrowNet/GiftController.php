@@ -83,7 +83,7 @@ class GiftController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('MyGrowNet/GiftHistory', [
+        return Inertia::render('GrowNet/GiftHistory', [
             'gifts' => $gifts,
         ]);
     }

@@ -3,9 +3,11 @@
 namespace App\Infrastructure\Persistence\Eloquent\StarterKit;
 
 use App\Models\User;
+use App\Infrastructure\Persistence\Eloquent\Benefit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class StarterKitPurchaseModel extends Model
 {
@@ -32,6 +34,16 @@ class StarterKitPurchaseModel extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function benefits(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Benefit::class,
+            'starter_kit_benefits',
+            'starter_kit_id',
+            'benefit_id'
+        )->withPivot('included', 'limit_value');
     }
 
     public static function generateInvoiceNumber(): string

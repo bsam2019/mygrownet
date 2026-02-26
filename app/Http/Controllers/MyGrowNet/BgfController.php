@@ -23,7 +23,7 @@ class BgfController extends Controller
     {
         $user = auth()->user();
 
-        return Inertia::render('MyGrowNet/BGF/Index', [
+        return Inertia::render('GrowNet/BGF/Index', [
             'stats' => [
                 'total_applications' => $user->bgfApplications()->count(),
                 'approved_applications' => $user->bgfApplications()->where('status', 'approved')->count(),
@@ -48,7 +48,7 @@ class BgfController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('MyGrowNet/BGF/Apply', [
+        return Inertia::render('GrowNet/BGF/Apply', [
             'businessTypes' => [
                 'agriculture' => 'Agriculture',
                 'manufacturing' => 'Manufacturing',
@@ -112,7 +112,7 @@ class BgfController extends Controller
 
         $application->load(['user', 'evaluator', 'reviewer', 'evaluations', 'project']);
 
-        return Inertia::render('MyGrowNet/BGF/Show', [
+        return Inertia::render('GrowNet/BGF/Show', [
             'application' => $application,
             'canEdit' => $application->status === 'draft',
             'canSubmit' => $application->status === 'draft',
@@ -152,7 +152,7 @@ class BgfController extends Controller
             ->latest()
             ->paginate(10);
 
-        return Inertia::render('MyGrowNet/BGF/Applications', [
+        return Inertia::render('GrowNet/BGF/Applications', [
             'applications' => $applications,
         ]);
     }
@@ -168,7 +168,7 @@ class BgfController extends Controller
             ->latest()
             ->paginate(10);
 
-        return Inertia::render('MyGrowNet/BGF/Projects', [
+        return Inertia::render('GrowNet/BGF/Projects', [
             'projects' => $projects,
         ]);
     }
@@ -187,7 +187,7 @@ class BgfController extends Controller
             'contract',
         ]);
 
-        return Inertia::render('MyGrowNet/BGF/ProjectDetails', [
+        return Inertia::render('GrowNet/BGF/ProjectDetails', [
             'project' => $project,
         ]);
     }

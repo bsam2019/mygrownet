@@ -49,4 +49,38 @@ Route::middleware(['web', 'auth'])->prefix('payments')->group(function () {
 Route::prefix('webhooks/payments')->group(function () {
     Route::post('/moneyunify', [PaymentWebhookController::class, 'moneyUnify']);
     Route::post('/pawapay', [PaymentWebhookController::class, 'pawapay']);
+    Route::post('/sparco', [PaymentWebhookController::class, 'sparco']);
+});
+
+// Benefits API Routes (using web auth for Inertia compatibility)
+Route::middleware(['web', 'auth'])->prefix('benefits')->group(function () {
+    Route::get('/', [\App\Http\Controllers\BenefitController::class, 'index']);
+    Route::get('/my-benefits', [\App\Http\Controllers\BenefitController::class, 'myBenefits']);
+});
+
+// Storage API Routes (using web auth for Inertia compatibility)
+Route::middleware(['web', 'auth'])->prefix('storage')->group(function () {
+    // Folders
+    Route::get('/folders', [\App\Http\Controllers\Storage\StorageFolderController::class, 'index']);
+    Route::post('/folders', [\App\Http\Controllers\Storage\StorageFolderController::class, 'store']);
+    Route::patch('/folders/{folder}', [\App\Http\Controllers\Storage\StorageFolderController::class, 'update']);
+    Route::post('/folders/{folder}/move', [\App\Http\Controllers\Storage\StorageFolderController::class, 'move']);
+    Route::delete('/folders/{folder}', [\App\Http\Controllers\Storage\StorageFolderController::class, 'destroy']);
+    
+    // Files
+    Route::post('/files/upload-init', [\App\Http\Controllers\Storage\StorageFileController::class, 'uploadInit']);
+    Route::post('/files/upload-complete', [\App\Http\Controllers\Storage\StorageFileController::class, 'uploadComplete']);
+    Route::get('/files/{file}/stream', [\App\Http\Controllers\Storage\StorageFileController::class, 'stream']); // Stream for preview
+    Route::get('/files/{file}/download', [\App\Http\Controllers\Storage\StorageFileController::class, 'forceDownload']); // Force download
+    Route::patch('/files/{file}', [\App\Http\Controllers\Storage\StorageFileController::class, 'update']);
+    Route::post('/files/{file}/move', [\App\Http\Controllers\Storage\StorageFileController::class, 'move']);
+    Route::delete('/files/{file}', [\App\Http\Controllers\Storage\StorageFileController::class, 'destroy']);
+    
+    // File Sharing
+    Route::post('/files/{file}/shares', [\App\Http\Controllers\Storage\FileShareController::class, 'store']);
+    Route::get('/files/{file}/shares', [\App\Http\Controllers\Storage\FileShareController::class, 'index']);
+    Route::delete('/shares/{share}', [\App\Http\Controllers\Storage\FileShareController::class, 'destroy']);
+    
+    // Usage
+    Route::get('/usage', [\App\Http\Controllers\Storage\StorageUsageController::class, 'show']);
 });

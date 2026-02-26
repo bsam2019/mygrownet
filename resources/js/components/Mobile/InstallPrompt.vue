@@ -62,44 +62,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { usePWA } from '@/composables/usePWA';
 
-const { showInstallPrompt, installApp, dismissInstallPrompt, isInstalled, isStandalone } = usePWA();
+const { isInstallable, isInstalled, showInstallPrompt } = usePWA();
 const showPrompt = ref(false);
 
-// Watch for install prompt availability
-watch(showInstallPrompt, (show) => {
-  // Only show if not already installed
-  if (!isInstalled.value && !isStandalone.value) {
-    showPrompt.value = show;
-  } else {
-    showPrompt.value = false;
-  }
-});
-
-// Watch for installation status changes
-watch([isInstalled, isStandalone], ([installed, standalone]) => {
-  if (installed || standalone) {
-    showPrompt.value = false;
-  }
-});
-
 onMounted(() => {
-  // Hide prompt if already installed
-  if (isInstalled.value || isStandalone.value) {
-    showPrompt.value = false;
+  // Show prompt if installable and not already installed
+  if (isInstallable.value && !isInstalled.value) {
+    showPrompt.value = true;
   }
 });
 
 const install = async () => {
-  await installApp();
+  await showInstallPrompt();
   showPrompt.value = false;
 };
 
 const dismiss = () => {
-  dismissInstallPrompt();
   showPrompt.value = false;
+  // Don't show again for this session
+  sessionStorage.setItem('install-prompt-dismissed', 'true');
 };
 </script>
 

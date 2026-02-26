@@ -70,7 +70,12 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 // Service worker registration for PWA functionality
 // Register module-specific service workers for each PWA-enabled module
-if ('serviceWorker' in navigator) {
+// DISABLED IN LOCAL DEVELOPMENT to prevent offline page issues
+const isLocalDevelopment = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname.includes('.local');
+
+if ('serviceWorker' in navigator && !isLocalDevelopment) {
     window.addEventListener('load', () => {
         const path = window.location.pathname;
         let swPath: string | null = null;
@@ -86,6 +91,16 @@ if ('serviceWorker' in navigator) {
         } else if (path.startsWith('/growfinance')) {
             swPath = '/growfinance-sw.js';
             moduleName = 'GrowFinance';
+        } else if (path.startsWith('/marketplace')) {
+            swPath = '/marketplace-sw.js';
+            moduleName = 'Marketplace';
+        } else if (path.startsWith('/cms')) {
+            swPath = '/cms-sw.js';
+            moduleName = 'CMS';
+        } else {
+            // Default: register main service worker for all other routes
+            swPath = '/sw.js';
+            moduleName = 'MyGrowNet';
         }
         
         if (swPath) {
@@ -115,6 +130,17 @@ if ('serviceWorker' in navigator) {
                     console.warn(`[${moduleName} PWA] Service Worker registration failed:`, error);
                 });
         }
+    });
+} else if ('serviceWorker' in navigator && isLocalDevelopment) {
+    // Unregister all service workers in local development
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+            registration.unregister().then((success) => {
+                if (success) {
+                    console.log('[Dev] Service Worker unregistered:', registration.scope);
+                }
+            });
+        });
     });
 }
 

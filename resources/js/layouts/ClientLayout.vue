@@ -28,8 +28,11 @@ import {
 } from '@heroicons/vue/24/outline';
 import { UserCircleIcon as UserCircleIconSolid } from '@heroicons/vue/24/solid';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppLauncher from '@/components/AppLauncher.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
+import ToastContainer from '@/Components/GrowBiz/ToastContainer.vue';
 import { useAppearance } from '@/composables/useAppearance';
+import { useToast } from '@/composables/useToast';
 
 interface Props {
     title?: string;
@@ -63,17 +66,21 @@ const currentUserName = computed(() => {
     return user.value?.name || '';
 });
 
+const { toast } = useToast();
+
 // Watch for flash messages
 watch(() => page.props.flash, (flash: any) => {
     if (flash?.success) {
         flashMessage.value = flash.success;
         flashType.value = 'success';
         showFlash.value = true;
+        toast.success(flash.success);
         setTimeout(() => showFlash.value = false, 5000);
     } else if (flash?.error) {
         flashMessage.value = flash.error;
         flashType.value = 'error';
         showFlash.value = true;
+        toast.error(flash.error);
         setTimeout(() => showFlash.value = false, 5000);
     }
 }, { immediate: true });
@@ -173,23 +180,41 @@ const themes = [
             </div>
         </Transition>
 
-        <!-- Header -->
-        <header class="bg-white shadow-sm sticky top-0 z-40">
+        <!-- Header - Clean NotebookLM Style -->
+        <header class="bg-white border-b border-gray-100 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
-                    <Link href="/dashboard" class="flex items-center gap-2">
-                        <AppLogoIcon class="h-9 w-9" />
+                    <!-- Logo -->
+                    <Link href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <AppLogoIcon class="h-8 w-8" />
+                        <span class="text-xl font-semibold text-gray-900 hidden sm:block">MyGrowNet</span>
                     </Link>
 
-                    <button
-                        @click="showProfileSlider = true"
-                        class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
-                        aria-label="Open profile menu"
-                    >
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <UserCircleIconSolid class="w-6 h-6 text-white" aria-hidden="true" />
-                        </div>
-                    </button>
+                    <!-- Right Side Actions -->
+                    <div class="flex items-center gap-2">
+                        <!-- Settings Link -->
+                        <Link
+                            href="/settings"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <Cog6ToothIcon class="w-5 h-5" aria-hidden="true" />
+                            <span class="hidden sm:inline">Settings</span>
+                        </Link>
+
+                        <!-- App Launcher -->
+                        <AppLauncher :modules="page.props.modules || []" />
+
+                        <!-- Profile Button -->
+                        <button
+                            @click="showProfileSlider = true"
+                            class="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                            aria-label="Open profile menu"
+                        >
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-white">
+                                <UserCircleIconSolid class="w-5 h-5 text-white" aria-hidden="true" />
+                            </div>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -298,5 +323,8 @@ const themes = [
                 class="fixed inset-0 bg-black/50 z-40"
             />
         </Transition>
+
+        <!-- Toast Notifications -->
+        <ToastContainer />
     </div>
 </template>

@@ -16,6 +16,15 @@ class GeopamuCmsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Check if company already exists
+        $company = CompanyModel::where('email', 'info@geopamu.com')->first();
+        
+        if ($company) {
+            $this->command->warn("⚠ Company already exists: {$company->name}");
+            $this->command->info("Skipping seeder to prevent duplicates.");
+            return;
+        }
+
         // Create Geopamu company
         $company = CompanyModel::create([
             'name' => 'Geopamu Investments Limited',

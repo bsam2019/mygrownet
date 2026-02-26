@@ -35,6 +35,15 @@ class EventServiceProvider extends ServiceProvider
         \App\Domain\Payment\Events\PaymentVerified::class => [
             \App\Listeners\ProcessMLMCommissions::class,
         ],
+        
+        // CMS Integration Events
+        \App\Events\CMS\InvoiceCreated::class => [
+            \App\Listeners\CMS\NotifyGrowBuilderOfInvoice::class,
+            \App\Listeners\CMS\NotifyGrowMarketOfInvoice::class,
+        ],
+        \App\Events\CMS\InventoryUpdated::class => [
+            \App\Listeners\CMS\SyncInventoryToGrowMarket::class,
+        ],
     ];
 
     public function boot(): void

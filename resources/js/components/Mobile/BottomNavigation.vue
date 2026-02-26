@@ -43,7 +43,8 @@ import {
   WalletIcon, 
   WrenchScrewdriverIcon,
   UserCircleIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  SparklesIcon
 } from '@heroicons/vue/24/outline';
 
 import { computed } from 'vue';
@@ -63,8 +64,8 @@ const emit = defineEmits(['navigate']);
 const navItems = computed(() => [
   { name: 'Home', tab: 'home', icon: HomeIcon },
   { name: 'Team', tab: 'team', icon: UsersIcon },
+  { name: 'Benefits', tab: 'benefits', icon: SparklesIcon },
   { name: 'Wallet', tab: 'wallet', icon: WalletIcon },
-  { name: 'Tools', tab: 'learn', icon: WrenchScrewdriverIcon },
   { name: 'More', tab: 'more', icon: EllipsisHorizontalIcon },
 ]);
 </script>

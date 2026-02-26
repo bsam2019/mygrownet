@@ -30,6 +30,7 @@ import {
     Wrench as WrenchIcon
 } from 'lucide-vue-next';
 import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline';
+import { useModules } from '@/composables/useModules';
 
 interface Props {
     footerNavItems?: NavItem[];
@@ -40,6 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const page = usePage();
+const { isModuleEnabled } = useModules();
 const isCollapsed = ref(false);
 const isMobile = ref(false);
 const showSubmenu = ref<Record<string, boolean>>({});
@@ -64,34 +66,60 @@ const isMember = computed(() => accountType.value === 'member');
 const isClient = computed(() => accountType.value === 'client');
 const isBusiness = computed(() => accountType.value === 'business');
 
-// Menu structure - Investor-only items (minimal)
-const investorNavItems: NavItem[] = [
-    { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
-    { title: 'My Investments', href: route('mygrownet.ventures.my-investments'), icon: TrendingUpIcon },
-    { title: 'My Wallet', href: route('mygrownet.wallet.index'), icon: BanknoteIcon },
-];
+// Menu structure - Investor-only items (minimal) - computed to filter based on module status
+const investorNavItems = computed(() => {
+    const items: NavItem[] = [
+        { title: 'My Wallet', href: route('mygrownet.wallet.index'), icon: BanknoteIcon },
+    ];
+    
+    // Add Venture items only if module is enabled
+    if (isModuleEnabled('venture_builder')) {
+        items.unshift(
+            { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
+            { title: 'My Investments', href: route('mygrownet.ventures.my-investments'), icon: TrendingUpIcon }
+        );
+    }
+    
+    return items;
+});
 
-// Full member items
-const myBusinessNavItems: NavItem[] = [
-    { title: 'My Business Profile', href: route('mygrownet.membership.show'), icon: BriefcaseIcon },
-    { title: 'Performance Analytics', href: route('mygrownet.analytics.index'), icon: ChartBarIcon },
-    { title: 'Business Tools', href: route('mygrownet.tools.index'), icon: WrenchIcon },
-    { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon },
-    { title: 'Business Growth Fund', href: route('mygrownet.bgf.index'), icon: BriefcaseIcon },
-    { title: 'MyGrow Shop', href: route('shop.index'), icon: ShoppingBagIcon },
-    { title: 'My Starter Kit', href: route('mygrownet.starter-kit.show'), icon: GiftIcon },
-    { title: 'Growth Levels', href: route('mygrownet.levels.index'), icon: TrendingUpIcon },
-    { title: 'My Points (LP & BP)', href: route('points.index'), icon: ChartBarIcon },
-];
+// Full member items - computed to filter based on module status
+const myBusinessNavItems = computed(() => {
+    const items: NavItem[] = [
+        { title: 'My Business Profile', href: route('mygrownet.membership.show'), icon: BriefcaseIcon },
+        { title: 'Performance Analytics', href: route('mygrownet.analytics.index'), icon: ChartBarIcon },
+        { title: 'Business Tools', href: route('mygrownet.tools.index'), icon: WrenchIcon },
+        { title: 'Business Growth Fund', href: route('mygrownet.bgf.index'), icon: BriefcaseIcon },
+        { title: 'MyGrow Shop', href: route('shop.index'), icon: ShoppingBagIcon },
+        { title: 'My Starter Kit', href: route('mygrownet.starter-kit.show'), icon: GiftIcon },
+        { title: 'Growth Levels', href: route('mygrownet.levels.index'), icon: TrendingUpIcon },
+        { title: 'My Points (LP & BP)', href: route('points.index'), icon: ChartBarIcon },
+    ];
+    
+    // Add Venture Marketplace only if module is enabled
+    if (isModuleEnabled('venture_builder')) {
+        items.splice(3, 0, { title: 'Venture Marketplace', href: route('ventures.index'), icon: BriefcaseIcon });
+    }
+    
+    return items;
+});
 
-// Quick access to information pages
-const infoNavItems: NavItem[] = [
-    { title: 'Platform Features', href: route('features'), icon: StarIcon },
-    { title: 'About BGF', href: route('bgf.about'), icon: TrendingUpIcon },
-    { title: 'About Ventures', href: route('ventures.about'), icon: BriefcaseIcon },
-    { title: 'About LGR (Loyalty Reward)', href: route('loyalty-reward.policy'), icon: StarIcon },
-    { title: 'FAQ & Help', href: route('faq'), icon: BookOpenIcon },
-];
+// Quick access to information pages - computed to filter based on module status
+const infoNavItems = computed(() => {
+    const items: NavItem[] = [
+        { title: 'Platform Features', href: route('features'), icon: StarIcon },
+        { title: 'About BGF', href: route('bgf.about'), icon: TrendingUpIcon },
+        { title: 'About LGR (Loyalty Reward)', href: route('loyalty-reward.policy'), icon: StarIcon },
+        { title: 'FAQ & Help', href: route('faq'), icon: BookOpenIcon },
+    ];
+    
+    // Add About Ventures only if module is enabled
+    if (isModuleEnabled('venture_builder')) {
+        items.splice(2, 0, { title: 'About Ventures', href: route('ventures.about'), icon: BriefcaseIcon });
+    }
+    
+    return items;
+});
 
 const networkNavItems: NavItem[] = [
     { title: 'My Team', href: route('my-team.index'), icon: UsersIcon },
@@ -135,6 +163,7 @@ const adminNavItems: NavItem[] = [
     { title: 'Manage Members', href: route('admin.users.index'), icon: UsersIcon },
     { title: 'Subscription Requests', href: route('admin.investments.index'), icon: ChartBarIcon },
     { title: 'Withdrawal Approvals', href: route('admin.withdrawals.index'), icon: BanknoteIcon },
+    { title: 'GrowSuite Companies', href: route('admin.cms-companies.index'), icon: BuildingOfficeIcon },
 ];
 
 const emit = defineEmits<{
@@ -314,7 +343,7 @@ onMounted(() => {
 
                 <!-- Investor Dashboard (Investor-only users) -->
                 <div v-if="isInvestor" class="space-y-1 pt-2">
-                    <Link v-for="item in investorNavItems" :key="item.title"
+                    <Link v-for="item in investorNavItems.value" :key="item.title"
                         :href="item.href"
                         :class="[
                             'flex items-center px-4 py-2 transition-colors duration-200',
@@ -359,7 +388,7 @@ onMounted(() => {
                     </button>
 
                     <div v-if="showSubmenu.myBusiness && !isCollapsed" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in myBusinessNavItems" :key="item.title"
+                        <Link v-for="item in myBusinessNavItems.value" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
@@ -529,7 +558,7 @@ onMounted(() => {
                     </button>
 
                     <div v-if="showSubmenu.info && !isCollapsed" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in infoNavItems" :key="item.title"
+                        <Link v-for="item in infoNavItems.value" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

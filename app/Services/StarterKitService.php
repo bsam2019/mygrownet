@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig;
 use App\Models\StarterKitUnlock;
 use App\Models\MemberAchievement;
 use App\Domain\Financial\Services\TransactionIntegrityService;
@@ -16,7 +17,8 @@ class StarterKitService
 {
     public function __construct(
         private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService,
-        private readonly WalletService $walletService
+        private readonly WalletService $walletService,
+        private readonly StarterKitBenefitService $benefitService
     ) {}
     
     /**
@@ -82,25 +84,37 @@ class StarterKitService
         }
         
         return DB::transaction(function () use ($user, $paymentMethod, $paymentReference, $tier) {
-            // Get price based on tier
-            $prices = [
-                'lite' => self::PRICE_LITE,
-                'basic' => self::PRICE_BASIC,
-                'growth_plus' => self::PRICE_GROWTH_PLUS,
-                'pro' => self::PRICE_PRO,
-                'premium' => self::PRICE_PREMIUM,
-            ];
+            // Get tier configuration from database
+            $tierConfig = StarterKitTierConfig::where('tier_key', $tier)
+                ->where('is_active', true)
+                ->first();
             
-            $shopCredits = [
-                'lite' => self::SHOP_CREDIT_LITE,
-                'basic' => self::SHOP_CREDIT_BASIC,
-                'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
-                'pro' => self::SHOP_CREDIT_PRO,
-                'premium' => self::SHOP_CREDIT_PREMIUM,
-            ];
-            
-            $price = $prices[$tier] ?? self::PRICE_BASIC;
-            $shopCredit = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
+            if (!$tierConfig) {
+                // Fallback to hardcoded values if tier not found
+                Log::warning('Tier config not found, using fallback', ['tier' => $tier]);
+                $prices = [
+                    'lite' => self::PRICE_LITE,
+                    'basic' => self::PRICE_BASIC,
+                    'growth_plus' => self::PRICE_GROWTH_PLUS,
+                    'pro' => self::PRICE_PRO,
+                    'premium' => self::PRICE_PREMIUM,
+                ];
+                
+                $shopCredits = [
+                    'lite' => self::SHOP_CREDIT_LITE,
+                    'basic' => self::SHOP_CREDIT_BASIC,
+                    'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
+                    'pro' => self::SHOP_CREDIT_PRO,
+                    'premium' => self::SHOP_CREDIT_PREMIUM,
+                ];
+                
+                $price = $prices[$tier] ?? self::PRICE_BASIC;
+                $shopCredit = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
+            } else {
+                // Use database configuration
+                $price = $tierConfig->price;
+                $shopCredit = $this->calculateShopCredit($price);
+            }
             
             Log::info('Tier pricing calculated', [
                 'tier' => $tier,
@@ -207,6 +221,17 @@ class StarterKitService
 
             // Add shop credit to wallet
             $this->addShopCredit($user, $tier);
+
+            // Assign benefits to starter kit purchase
+            try {
+                $this->benefitService->assignBenefitsToKit($purchase);
+                Log::info('Benefits assigned to starter kit', ['purchase_id' => $purchase->id]);
+            } catch (\Exception $e) {
+                Log::error('Failed to assign benefits to starter kit', [
+                    'purchase_id' => $purchase->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             // Create progressive unlock schedule
             $this->createUnlockSchedule($user);
@@ -368,19 +393,38 @@ class StarterKitService
     }
 
     /**
+     * Calculate shop credit based on tier price
+     * Shop credit is typically 20% of tier price
+     */
+    protected function calculateShopCredit(float $price): float
+    {
+        return round($price * 0.20, 2);
+    }
+
+    /**
      * Add shop credit to user record.
      */
     protected function addShopCredit(User $user, string $tier = self::TIER_BASIC): void
     {
-        $shopCredits = [
-            'lite' => self::SHOP_CREDIT_LITE,
-            'basic' => self::SHOP_CREDIT_BASIC,
-            'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
-            'pro' => self::SHOP_CREDIT_PRO,
-            'premium' => self::SHOP_CREDIT_PREMIUM,
-        ];
+        // Try to get from database config first
+        $tierConfig = StarterKitTierConfig::where('tier_key', $tier)
+            ->where('is_active', true)
+            ->first();
         
-        $creditAmount = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
+        if ($tierConfig) {
+            $creditAmount = $this->calculateShopCredit($tierConfig->price);
+        } else {
+            // Fallback to hardcoded values
+            $shopCredits = [
+                'lite' => self::SHOP_CREDIT_LITE,
+                'basic' => self::SHOP_CREDIT_BASIC,
+                'growth_plus' => self::SHOP_CREDIT_GROWTH_PLUS,
+                'pro' => self::SHOP_CREDIT_PRO,
+                'premium' => self::SHOP_CREDIT_PREMIUM,
+            ];
+            
+            $creditAmount = $shopCredits[$tier] ?? self::SHOP_CREDIT_BASIC;
+        }
         
         $user->update([
             'starter_kit_shop_credit' => $creditAmount,

@@ -140,7 +140,22 @@ async function networkFirst(request) {
             return cached;
         }
         
-        // Return offline page for navigation requests
+        // Only show offline page in production, not in development
+        // Check if we're in development by looking for localhost or local IP
+        const isDevelopment = location.hostname === 'localhost' || 
+                            location.hostname === '127.0.0.1' ||
+                            location.hostname.startsWith('192.168.') ||
+                            location.hostname.endsWith('.local');
+        
+        // In development, let the error propagate so you see the actual error
+        if (isDevelopment) {
+            return new Response('Network request failed - check if dev server is running', { 
+                status: 503,
+                statusText: 'Service Unavailable'
+            });
+        }
+        
+        // Return offline page for navigation requests in production only
         if (request.mode === 'navigate') {
             return caches.match('/cms/offline');
         }

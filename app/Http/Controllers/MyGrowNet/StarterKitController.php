@@ -6,6 +6,7 @@ use App\Application\StarterKit\UseCases\PurchaseStarterKitUseCase;
 use App\Http\Controllers\Controller;
 use App\Services\StarterKitService;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitPurchaseModel;
+use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig;
 use App\Infrastructure\Persistence\Eloquent\StarterKit\ContentItemModel;
 use App\Models\StarterKitUnlock;
 use App\Models\MemberAchievement;
@@ -19,6 +20,71 @@ class StarterKitController extends Controller
         protected StarterKitService $starterKitService,
         protected PurchaseStarterKitUseCase $purchaseUseCase
     ) {}
+
+    /**
+     * Get tier data from database or fallback to hardcoded values
+     */
+    protected function getTierData(): array
+    {
+        $tierConfigs = StarterKitTierConfig::active()->ordered()->get();
+        
+        if ($tierConfigs->isEmpty()) {
+            // Fallback to hardcoded values
+            return [
+                'lite' => [
+                    'price' => StarterKitService::PRICE_LITE,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
+                    'lgrDailyRate' => 12.50,
+                    'lpAward' => 15,
+                ],
+                'basic' => [
+                    'price' => StarterKitService::PRICE_BASIC,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
+                    'lgrDailyRate' => 25.00,
+                    'lpAward' => 25,
+                ],
+                'growth_plus' => [
+                    'price' => StarterKitService::PRICE_GROWTH_PLUS,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
+                    'lgrDailyRate' => 37.50,
+                    'lpAward' => 50,
+                ],
+                'pro' => [
+                    'price' => StarterKitService::PRICE_PRO,
+                    'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
+                    'lgrDailyRate' => 62.50,
+                    'lpAward' => 100,
+                ],
+            ];
+        }
+        
+        // Build tier data from database
+        $tiers = [];
+        foreach ($tierConfigs as $config) {
+            $shopCredit = round($config->price * 0.20, 2); // 20% of price
+            $lgrDailyRate = round($config->price * 0.05, 2); // 5% of price as daily rate
+            
+            // LP awards based on tier
+            $lpAwards = [
+                'lite' => 15,
+                'basic' => 25,
+                'growth_plus' => 50,
+                'pro' => 100,
+            ];
+            
+            $tiers[$config->tier_key] = [
+                'name' => $config->tier_name,
+                'price' => (float) $config->price,
+                'shopCredit' => $shopCredit,
+                'storage_gb' => $config->storage_gb,
+                'earning_potential' => (float) $config->earning_potential_percentage,
+                'lgrDailyRate' => $lgrDailyRate,
+                'lpAward' => $lpAwards[$config->tier_key] ?? 25,
+            ];
+        }
+        
+        return $tiers;
+    }
 
     /**
      * Display member's starter kit information
@@ -46,7 +112,7 @@ class StarterKitController extends Controller
                     ->get()
                     ->groupBy('category');
                 
-                return Inertia::render('MyGrowNet/StarterKit', [
+                return Inertia::render('GrowNet/StarterKit', [
                     'hasStarterKit' => false,
                     'hasPendingPayment' => true,
                     'pendingPayment' => [
@@ -55,32 +121,7 @@ class StarterKitController extends Controller
                         'payment_reference' => $pendingPayment->payment_reference,
                         'submitted_at' => $pendingPayment->created_at->format('M j, Y H:i'),
                     ],
-                    'tiers' => [
-                        'lite' => [
-                            'price' => StarterKitService::PRICE_LITE,
-                            'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
-                            'lgrDailyRate' => 12.50,
-                            'lpAward' => 15,
-                        ],
-                        'basic' => [
-                            'price' => StarterKitService::PRICE_BASIC,
-                            'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
-                            'lgrDailyRate' => 25.00,
-                            'lpAward' => 25,
-                        ],
-                        'growth_plus' => [
-                            'price' => StarterKitService::PRICE_GROWTH_PLUS,
-                            'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
-                            'lgrDailyRate' => 37.50,
-                            'lpAward' => 50,
-                        ],
-                        'pro' => [
-                            'price' => StarterKitService::PRICE_PRO,
-                            'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
-                            'lgrDailyRate' => 62.50,
-                            'lpAward' => 100,
-                        ],
-                    ],
+                    'tiers' => $this->getTierData(),
                     'contentItems' => $contentItems,
                 ]);
             }
@@ -91,35 +132,10 @@ class StarterKitController extends Controller
                 ->get()
                 ->groupBy('category');
             
-            return Inertia::render('MyGrowNet/StarterKit', [
+            return Inertia::render('GrowNet/StarterKit', [
                 'hasStarterKit' => false,
                 'hasPendingPayment' => false,
-                'tiers' => [
-                    'lite' => [
-                        'price' => StarterKitService::PRICE_LITE,
-                        'shopCredit' => StarterKitService::SHOP_CREDIT_LITE,
-                        'lgrDailyRate' => 12.50,
-                        'lpAward' => 15,
-                    ],
-                    'basic' => [
-                        'price' => StarterKitService::PRICE_BASIC,
-                        'shopCredit' => StarterKitService::SHOP_CREDIT_BASIC,
-                        'lgrDailyRate' => 25.00,
-                        'lpAward' => 25,
-                    ],
-                    'growth_plus' => [
-                        'price' => StarterKitService::PRICE_GROWTH_PLUS,
-                        'shopCredit' => StarterKitService::SHOP_CREDIT_GROWTH_PLUS,
-                        'lgrDailyRate' => 37.50,
-                        'lpAward' => 50,
-                    ],
-                    'pro' => [
-                        'price' => StarterKitService::PRICE_PRO,
-                        'shopCredit' => StarterKitService::SHOP_CREDIT_PRO,
-                        'lgrDailyRate' => 62.50,
-                        'lpAward' => 100,
-                    ],
-                ],
+                'tiers' => $this->getTierData(),
                 'purchaseUrl' => route('mygrownet.starter-kit.purchase'),
                 'contentItems' => $contentItems,
             ]);
@@ -145,7 +161,7 @@ class StarterKitController extends Controller
             ->orderByDesc('earned_at')
             ->get();
         
-        return Inertia::render('MyGrowNet/StarterKit', [
+        return Inertia::render('GrowNet/StarterKit', [
             'hasStarterKit' => true,
             'purchase' => [
                 'invoice_number' => $purchase->invoice_number,
@@ -236,7 +252,7 @@ class StarterKitController extends Controller
             ->get()
             ->groupBy('category');
         
-        return Inertia::render('MyGrowNet/StarterKitPurchase', [
+        return Inertia::render('GrowNet/StarterKitPurchase', [
             'tiers' => [
                 'lite' => [
                     'name' => 'Lite Knowledge Pack',
@@ -368,7 +384,7 @@ class StarterKitController extends Controller
         
         $upgradeCost = StarterKitService::PRICE_PREMIUM - StarterKitService::PRICE_BASIC; // K500
         
-        return Inertia::render('MyGrowNet/StarterKitUpgrade', [
+        return Inertia::render('GrowNet/StarterKitUpgrade', [
             'currentTier' => 'basic',
             'upgradeCost' => $upgradeCost,
             'walletBalance' => $walletBalance,

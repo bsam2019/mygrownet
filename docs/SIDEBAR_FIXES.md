@@ -49,7 +49,7 @@ All 8 employee section links now visible and working:
 ## Files Modified
 
 1. `routes/admin.php` - Updated 20 route names
-2. `resources/js/components/CustomAdminSidebar.vue` - Added auto-expand logic
+2. `resources/js/components/AdminSidebar.vue` - Added auto-expand logic
 
 ## Troubleshooting
 

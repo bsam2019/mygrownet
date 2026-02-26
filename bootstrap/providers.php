@@ -15,6 +15,7 @@ return [
     App\Providers\GrowBizServiceProvider::class,
     App\Providers\GrowBuilderServiceProvider::class,
     App\Providers\StarterKitServiceProvider::class,
+    App\Providers\StorageServiceProvider::class,
     App\Providers\SupportServiceProvider::class,
     App\Providers\TelegramServiceProvider::class,
     App\Providers\WorkshopServiceProvider::class,

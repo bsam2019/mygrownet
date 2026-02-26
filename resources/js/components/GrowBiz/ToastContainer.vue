@@ -15,13 +15,13 @@ const { toasts, remove } = useToast();
     <Teleport to="body">
         <TransitionGroup
             tag="div"
-            class="fixed bottom-24 left-4 right-4 z-50 flex flex-col gap-2 items-center pointer-events-none"
+            class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"
             enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="opacity-0 translate-y-4 scale-95"
-            enter-to-class="opacity-100 translate-y-0 scale-100"
+            enter-from-class="opacity-0 translate-x-4 scale-95"
+            enter-to-class="opacity-100 translate-x-0 scale-100"
             leave-active-class="transition-all duration-200 ease-in"
-            leave-from-class="opacity-100 translate-y-0 scale-100"
-            leave-to-class="opacity-0 translate-y-4 scale-95"
+            leave-from-class="opacity-100 translate-x-0 scale-100"
+            leave-to-class="opacity-0 translate-x-4 scale-95"
             move-class="transition-transform duration-300"
         >
             <div 

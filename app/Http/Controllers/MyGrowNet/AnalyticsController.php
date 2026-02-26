@@ -28,7 +28,7 @@ class AnalyticsController extends Controller
         $growthPotential = $this->predictiveService->calculateGrowthPotential($user);
         $nextMilestone = $this->predictiveService->getNextMilestone($user);
         
-        return Inertia::render('MyGrowNet/Analytics/Dashboard', [
+        return Inertia::render('GrowNet/Analytics/Dashboard', [
             'performance' => $performance,
             'recommendations' => $recommendations,
             'predictions' => $predictions,

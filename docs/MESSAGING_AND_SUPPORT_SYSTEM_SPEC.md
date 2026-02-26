@@ -560,7 +560,7 @@ class TicketAttachment extends Model
 - `app/Http/Controllers/Admin/DashboardController.php` - Added messaging data to admin dashboard
 - `resources/js/Components/Dashboard/MessagingWidget.vue` - Dashboard widget for recent messages
 - `resources/js/components/MyGrowNetSidebar.vue` - Added Messages link with unread count badge (member sidebar)
-- `resources/js/components/CustomAdminSidebar.vue` - Added Communication section with Messages, Broadcast, and Support Tickets (admin sidebar)
+- `resources/js/components/AdminSidebar.vue` - Added Communication section with Messages, Broadcast, and Support Tickets (admin sidebar)
 
 ### ✅ Completed (Support Ticket System) - PWA Compatible
 

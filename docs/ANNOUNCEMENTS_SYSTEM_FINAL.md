@@ -218,7 +218,7 @@ THEN show "Unlock Your Full Potential! Get your Starter Kit..."
 - `routes/web.php` - Added routes
 - `app/Http/Controllers/MyGrowNet/DashboardController.php` - Integrated announcements
 - `resources/js/pages/MyGrowNet/MobileDashboard.vue` - Display announcements
-- `resources/js/components/CustomAdminSidebar.vue` - Added menu link
+- `resources/js/components/AdminSidebar.vue` - Added menu link
 
 ---
 

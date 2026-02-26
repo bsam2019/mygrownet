@@ -24,9 +24,11 @@ import {
   TruckIcon,
   ShieldCheckIcon,
   SparklesIcon,
-  RocketLaunchIcon
+  RocketLaunchIcon,
+  CloudArrowUpIcon
 } from '@heroicons/vue/24/solid';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import AppLauncher from '@/components/AppLauncher.vue';
 import SubscriptionModal from '@/components/HomeHub/SubscriptionModal.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 
@@ -128,6 +130,7 @@ const getModuleDescription = (slug: string): string => {
     'learning': 'Business skills & education',
     'rewards': 'Loyalty points & member benefits',
     'lifeplus': 'Health, wellness & lifestyle companion',
+    'growbackup': 'Secure cloud storage for your files',
   };
   return descriptions[slug] || '';
 };
@@ -142,6 +145,7 @@ const getPublicLandingRoute = (slug: string): string | null => {
     'grownet': '/login', // GrowNet requires login
     'mlm-dashboard': '/login', // MLM Dashboard requires login
     'lifeplus': '/lifeplus/welcome', // LifePlus public landing
+    'growbackup': '/growbackup', // GrowBackup public landing
   };
   return publicRoutes[slug] || null;
 };
@@ -188,6 +192,12 @@ const handleModuleClick = (module: Module) => {
   // LifePlus - Health & Wellness app
   if (module.slug === 'lifeplus') {
     router.visit(module.primary_route || '/lifeplus');
+    return;
+  }
+  
+  // GrowBackup - Cloud Storage
+  if (module.slug === 'growbackup') {
+    router.visit(module.primary_route || '/growbackup/dashboard');
     return;
   }
   
@@ -250,6 +260,8 @@ const getModuleIcon = (slug: string) => {
     'lifeplus': HeartIcon, // LifePlus - Health & Wellness
     'health': HeartIcon,
     'wellness': HeartIcon,
+    'growbackup': CloudArrowUpIcon, // GrowBackup - Cloud Storage
+    'storage': CloudArrowUpIcon,
   };
   return iconMap[slug] || CubeIcon;
 };
@@ -263,79 +275,95 @@ const getModuleIcon = (slug: string) => {
     <ImpersonationBanner v-if="isImpersonating" />
     
     <!-- Header - Logo Left, Settings/Login Right -->
-    <header class="bg-white shadow-sm sticky top-0 z-40">
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-40">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo - Top Left -->
-          <Link href="/" class="flex items-center gap-2">
-            <AppLogoIcon class="h-9 w-9" />
+          <Link href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <AppLogoIcon class="h-8 w-8" />
+            <span class="text-xl font-semibold text-gray-900 hidden sm:block">MyGrowNet</span>
           </Link>
 
           <!-- Authenticated User Menu -->
-          <Menu v-if="isAuthenticated" as="div" class="relative">
-            <MenuButton class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <UserCircleIcon class="w-6 h-6 text-white" />
-              </div>
-            </MenuButton>
+          <div v-if="isAuthenticated" class="flex items-center gap-2">
+            <!-- Settings Link -->
+            <Link
+              href="/settings"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Cog6ToothIcon class="w-5 h-5" aria-hidden="true" />
+              <span class="hidden sm:inline">Settings</span>
+            </Link>
 
-            <MenuItems class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden">
-              <div class="px-4 py-3 border-b border-gray-100">
-                <p class="text-sm font-medium text-gray-900">{{ auth?.user?.name || 'User' }}</p>
-                <p class="text-xs text-gray-500 truncate">{{ auth?.user?.email || '' }}</p>
-              </div>
-              <!-- Role-specific links -->
-              <div v-if="isAdmin || isManager || isEmployee" class="py-1 border-b border-gray-100">
-                <MenuItem v-if="isAdmin" v-slot="{ active }">
-                  <Link
-                    href="/admin/dashboard"
-                    :class="[active ? 'bg-indigo-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700']"
-                  >
-                    <ShieldCheckIcon class="w-5 h-5 text-indigo-500" />
-                    Admin Panel
-                  </Link>
-                </MenuItem>
-                <MenuItem v-if="isManager" v-slot="{ active }">
-                  <Link
-                    href="/manager/dashboard"
-                    :class="[active ? 'bg-purple-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-purple-700']"
-                  >
-                    <UsersIcon class="w-5 h-5 text-purple-500" />
-                    Manager Dashboard
-                  </Link>
-                </MenuItem>
-                <MenuItem v-if="isEmployee" v-slot="{ active }">
-                  <Link
-                    href="/workspace"
-                    :class="[active ? 'bg-emerald-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-700']"
-                  >
-                    <ClipboardDocumentCheckIcon class="w-5 h-5 text-emerald-500" />
-                    Workspace
-                  </Link>
-                </MenuItem>
-              </div>
-              <div class="py-1">
-                <MenuItem v-slot="{ active }">
-                  <Link
-                    href="/settings/profile"
-                    :class="[active ? 'bg-gray-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700']"
-                  >
-                    <Cog6ToothIcon class="w-5 h-5 text-gray-400" />
-                    Settings
-                  </Link>
-                </MenuItem>
-                <MenuItem v-slot="{ active }">
-                  <button
-                    @click="logout"
-                    :class="[active ? 'bg-red-50' : '', 'flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600']"
-                  >
-                    <ArrowRightOnRectangleIcon class="w-5 h-5" />
-                    Logout
-                  </button>
-                </MenuItem>
-              </div>
-            </MenuItems>
-          </Menu>
+            <!-- App Launcher -->
+            <AppLauncher :modules="modules" />
+
+            <!-- Profile Menu -->
+            <Menu as="div" class="relative">
+              <MenuButton class="flex items-center gap-2 p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-white">
+                  <UserCircleIcon class="w-5 h-5 text-white" />
+                </div>
+              </MenuButton>
+
+              <MenuItems class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg ring-1 ring-black/5 focus:outline-none z-50 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <p class="text-sm font-medium text-gray-900">{{ auth?.user?.name || 'User' }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ auth?.user?.email || '' }}</p>
+                </div>
+                <!-- Role-specific links -->
+                <div v-if="isAdmin || isManager || isEmployee" class="py-1 border-b border-gray-100">
+                  <MenuItem v-if="isAdmin" v-slot="{ active }">
+                    <Link
+                      href="/admin/dashboard"
+                      :class="[active ? 'bg-indigo-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700']"
+                    >
+                      <ShieldCheckIcon class="w-5 h-5 text-indigo-500" />
+                      Admin Panel
+                    </Link>
+                  </MenuItem>
+                  <MenuItem v-if="isManager" v-slot="{ active }">
+                    <Link
+                      href="/manager/dashboard"
+                      :class="[active ? 'bg-purple-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-purple-700']"
+                    >
+                      <UsersIcon class="w-5 h-5 text-purple-500" />
+                      Manager Dashboard
+                    </Link>
+                  </MenuItem>
+                  <MenuItem v-if="isEmployee" v-slot="{ active }">
+                    <Link
+                      href="/workspace"
+                      :class="[active ? 'bg-emerald-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-700']"
+                    >
+                      <ClipboardDocumentCheckIcon class="w-5 h-5 text-emerald-500" />
+                      Workspace
+                    </Link>
+                  </MenuItem>
+                </div>
+                <div class="py-1">
+                  <MenuItem v-slot="{ active }">
+                    <Link
+                      href="/settings/profile"
+                      :class="[active ? 'bg-gray-50' : '', 'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700']"
+                    >
+                      <Cog6ToothIcon class="w-5 h-5 text-gray-400" />
+                      Settings
+                    </Link>
+                  </MenuItem>
+                  <MenuItem v-slot="{ active }">
+                    <button
+                      @click="logout"
+                      :class="[active ? 'bg-red-50' : '', 'flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600']"
+                    >
+                      <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                      Logout
+                    </button>
+                  </MenuItem>
+                </div>
+              </MenuItems>
+            </Menu>
+          </div>
 
           <!-- Public User - Login/Register buttons -->
           <div v-else class="flex items-center gap-3">
@@ -459,41 +487,41 @@ const getModuleIcon = (slug: string) => {
             v-for="module in primaryModules"
             :key="module.id"
             @click="handleModuleClick(module)"
-            class="group relative bg-white rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-3 sm:gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-95 shadow-md border border-gray-100"
+            class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-98 border border-blue-100/50"
           >
             <!-- Icon Container with gradient background -->
             <div 
-              class="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
+              class="w-14 h-14 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 shadow-sm"
               :style="{ backgroundColor: module.color || '#3B82F6' }"
             >
               <component 
                 :is="getModuleIcon(module.slug)" 
-                class="w-7 h-7 sm:w-8 sm:h-8 text-white"
+                class="w-7 h-7 text-white"
                 aria-hidden="true"
               />
             </div>
             
             <!-- Module Name -->
-            <span class="text-gray-800 text-center font-semibold text-sm leading-tight">
+            <span class="text-gray-900 text-center font-semibold text-sm leading-tight">
               {{ module.name }}
             </span>
 
             <!-- Module Description -->
-            <span v-if="getModuleDescription(module.slug)" class="text-xs text-gray-500 text-center leading-tight">
+            <span v-if="getModuleDescription(module.slug)" class="text-[11px] text-gray-600 text-center leading-tight">
               {{ getModuleDescription(module.slug) }}
             </span>
 
             <!-- Status Badge -->
             <span 
               v-if="module.status === 'beta'" 
-              class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full"
+              class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold uppercase bg-amber-100 text-amber-700 rounded-full"
             >
               Beta
             </span>
             
             <span 
               v-if="module.status === 'coming_soon'" 
-              class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-600 rounded-full"
+              class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold uppercase bg-gray-100 text-gray-600 rounded-full"
             >
               Soon
             </span>
@@ -501,7 +529,7 @@ const getModuleIcon = (slug: string) => {
             <!-- Access indicator -->
             <span 
               v-if="!module.has_access && module.requires_subscription" 
-              class="absolute bottom-2 right-2 w-2 h-2 bg-orange-400 rounded-full"
+              class="absolute bottom-3 right-3 w-2 h-2 bg-orange-400 rounded-full"
               title="Subscription required"
             />
           </button>
@@ -521,36 +549,36 @@ const getModuleIcon = (slug: string) => {
             v-for="module in additionalModules"
             :key="module.id"
             @click="handleModuleClick(module)"
-            class="group relative bg-white rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center gap-3 sm:gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:scale-95 shadow-md border border-gray-100"
+            class="group relative bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-98 border border-gray-100/50"
           >
             <!-- Icon Container with gradient background -->
             <div 
-              class="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-110"
+              class="w-14 h-14 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 shadow-sm"
               :style="{ backgroundColor: module.color || '#3B82F6' }"
             >
               <component 
                 :is="getModuleIcon(module.slug)" 
-                class="w-7 h-7 sm:w-8 sm:h-8 text-white"
+                class="w-7 h-7 text-white"
                 aria-hidden="true"
               />
             </div>
             
             <!-- Module Name -->
-            <span class="text-gray-800 text-center font-semibold text-sm leading-tight">
+            <span class="text-gray-900 text-center font-semibold text-sm leading-tight">
               {{ module.name }}
             </span>
 
             <!-- Status Badge -->
             <span 
               v-if="module.status === 'beta'" 
-              class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full"
+              class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold uppercase bg-amber-100 text-amber-700 rounded-full"
             >
               Beta
             </span>
             
             <span 
               v-if="module.status === 'coming_soon'" 
-              class="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-gray-100 text-gray-600 rounded-full"
+              class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold uppercase bg-gray-100 text-gray-600 rounded-full"
             >
               Soon
             </span>
@@ -558,7 +586,7 @@ const getModuleIcon = (slug: string) => {
             <!-- Access indicator -->
             <span 
               v-if="!module.has_access && module.requires_subscription" 
-              class="absolute bottom-2 right-2 w-2 h-2 bg-orange-400 rounded-full"
+              class="absolute bottom-3 right-3 w-2 h-2 bg-orange-400 rounded-full"
               title="Subscription required"
             />
           </button>

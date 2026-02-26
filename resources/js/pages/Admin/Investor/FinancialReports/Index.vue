@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <CustomAdminSidebar />
+    <AdminSidebar />
     
     <div class="lg:pl-64">
       <div class="p-6">
@@ -178,7 +178,7 @@
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import CustomAdminSidebar from '@/components/CustomAdminSidebar.vue';
+import AdminSidebar from '@/components/AdminSidebar.vue';
 import { 
   PlusIcon, 
   DocumentTextIcon, 

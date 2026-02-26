@@ -50,7 +50,7 @@ The Live Chat Support System enables real-time communication between employees a
 
 3. **Components**
    - `Employee/LiveChatWidget.vue` - Floating chat widget
-   - `CustomAdminSidebar.vue` - Admin navigation with badge
+   - `AdminSidebar.vue` - Admin navigation with badge
 
 ---
 

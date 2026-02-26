@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CustomAdminSidebar from '@/components/CustomAdminSidebar.vue';
+import AdminSidebar from '@/components/AdminSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import type { BreadcrumbItemType } from '@/types';
 import { ref, onMounted } from 'vue';
@@ -32,7 +32,7 @@ onMounted(() => {
 
 <template>
     <div class="flex min-h-screen w-full">
-        <CustomAdminSidebar @update:collapsed="handleSidebarToggle" />
+        <AdminSidebar @update:collapsed="handleSidebarToggle" />
         <div 
             class="flex-1 flex flex-col transition-all duration-300" 
             :class="isMobile ? 'ml-0' : (sidebarCollapsed ? 'ml-16' : 'ml-64')"

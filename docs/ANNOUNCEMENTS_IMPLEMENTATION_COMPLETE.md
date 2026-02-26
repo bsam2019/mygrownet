@@ -251,7 +251,7 @@ The system is **production-ready** and follows clean architecture principles!
 - `resources/js/pages/MyGrowNet/MobileDashboard.vue` - Added announcement display
 - `app/Infrastructure/Persistence/Eloquent/Announcement/AnnouncementModel.php` - Added is_urgent field and reads relationship
 - `app/Domain/Announcement/ValueObjects/TargetAudience.php` - Fixed to accept flexible targeting
-- `resources/js/components/CustomAdminSidebar.vue` - Added Announcements link to System section
+- `resources/js/components/AdminSidebar.vue` - Added Announcements link to System section
 
 ## Quick Start
 

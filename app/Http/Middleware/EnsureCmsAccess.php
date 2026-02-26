@@ -29,9 +29,18 @@ class EnsureCmsAccess
             abort(403, 'Your CMS access has been suspended. Please contact your administrator.');
         }
 
-        // Check if company is active
-        if (!$user->cmsUser->company->isActive()) {
-            abort(403, 'Your company account is suspended. Please contact support.');
+        // Check if company has valid access (includes subscription check)
+        if (!$user->cmsUser->company->hasValidAccess()) {
+            $company = $user->cmsUser->company;
+            
+            // Provide specific message based on subscription type
+            if ($company->subscription_type === 'complimentary' && $company->complimentary_until) {
+                if (now()->gt($company->complimentary_until)) {
+                    abort(403, 'Your complimentary access has expired. Please contact support to upgrade to a paid subscription.');
+                }
+            }
+            
+            abort(403, 'Your company account access is suspended. Please contact support.');
         }
 
         // Share CMS data with Inertia

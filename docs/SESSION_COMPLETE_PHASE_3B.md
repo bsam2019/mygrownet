@@ -128,7 +128,7 @@ const navItems = [
 
 ### Admin Sidebar
 ```typescript
-// Updated CustomAdminSidebar.vue
+// Updated AdminSidebar.vue
 const userManagementNavItems = [
   { title: 'Users', href: safeRoute('admin.users.index'), icon: Users },
   { title: 'Analytics', href: safeRoute('admin.analytics.index'), icon: Activity }, // NEW

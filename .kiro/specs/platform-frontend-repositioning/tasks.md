@@ -239,8 +239,8 @@
 - [ ] Implement tab structure: Overview, Products, Learning, Community
 - _Requirements: 11_
 
-### 3.2 Refactor Mobile Dashboard
-- [ ] Update `resources/js/Pages/MyGrowNet/MobileDashboard.vue`
+### 3.2 Refactor GrowNet Dashboard
+- [ ] Update `resources/js/Pages/MyGrowNet/GrowNet.vue`
 - [ ] Update quick stats to show: Store Credit, Loyalty Points, Training Progress, Orders
 - [ ] Move "Commission Levels" to collapsible section (collapsed by default)
 - [ ] Move "Team Volume" to collapsible section (collapsed by default)

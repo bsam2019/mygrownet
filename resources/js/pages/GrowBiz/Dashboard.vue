@@ -278,7 +278,6 @@ import GrowBizLayout from '@/Layouts/GrowBizLayout.vue';
 import PullToRefresh from '@/Components/GrowBiz/PullToRefresh.vue';
 import StatusBadge from '@/Components/GrowBiz/StatusBadge.vue';
 import PriorityBadge from '@/Components/GrowBiz/PriorityBadge.vue';
-import PWAWelcomeScreen from '@/components/pwa/PWAWelcomeScreen.vue';
 import { 
     ClipboardDocumentListIcon, 
     ClockIcon, 

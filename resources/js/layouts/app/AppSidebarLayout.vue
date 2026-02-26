@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppSidebar from '@/components/MyGrowNetSidebar.vue';
+import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vue';

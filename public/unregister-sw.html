@@ -1,20 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Unregister Service Worker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unregister Service Workers</title>
     <style>
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             max-width: 600px;
             margin: 50px auto;
             padding: 20px;
             background: #f5f5f5;
         }
-        .card {
+        .container {
             background: white;
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
         }
         button {
             background: #dc2626;
@@ -22,80 +28,208 @@
             border: none;
             padding: 12px 24px;
             border-radius: 6px;
-            cursor: pointer;
             font-size: 16px;
-            margin-top: 20px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
         button:hover {
             background: #b91c1c;
         }
-        .success {
-            color: #059669;
-            margin-top: 20px;
-            font-weight: bold;
+        button.success {
+            background: #059669;
         }
-        .info {
-            background: #dbeafe;
+        button.success:hover {
+            background: #047857;
+        }
+        #status {
+            margin-top: 20px;
             padding: 15px;
             border-radius: 6px;
+            display: none;
+        }
+        #status.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+        #status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+        #status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            display: block;
+        }
+        .log {
             margin-top: 20px;
-            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🔧 Service Worker Manager</h1>
-        <p>This page helps you unregister the service worker to fix caching issues during development.</p>
+    <div class="container">
+        <h1>🔧 Service Worker Cleanup Tool</h1>
+        <p>Use this tool to unregister all service workers and clear caches when experiencing offline page issues in local development.</p>
         
-        <button onclick="unregisterServiceWorker()">Unregister Service Worker</button>
-        
-        <div id="result"></div>
-        
-        <div class="info">
-            <strong>After unregistering:</strong>
-            <ol>
-                <li>Close all browser tabs for this site</li>
-                <li>Clear browser cache (Ctrl+Shift+Delete)</li>
-                <li>Reopen the mobile dashboard</li>
-            </ol>
+        <div style="margin: 20px 0;">
+            <button onclick="unregisterAll()">Unregister All Service Workers</button>
+            <button onclick="clearAllCaches()">Clear All Caches</button>
+            <button onclick="doEverything()" class="success">Do Everything & Reload</button>
         </div>
+        
+        <div id="status"></div>
+        
+        <div class="log" id="log"></div>
     </div>
 
     <script>
-        async function unregisterServiceWorker() {
-            const resultDiv = document.getElementById('result');
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('log');
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function showStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = type;
+        }
+
+        async function unregisterAll() {
+            log('Starting service worker unregistration...');
+            showStatus('Unregistering service workers...', 'info');
             
-            if ('serviceWorker' in navigator) {
-                try {
+            try {
+                if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     
                     if (registrations.length === 0) {
-                        resultDiv.innerHTML = '<p class="success">✅ No service workers found. Already clean!</p>';
+                        log('No service workers found');
+                        showStatus('No service workers to unregister', 'info');
                         return;
                     }
                     
-                    for (let registration of registrations) {
+                    log(`Found ${registrations.length} service worker(s)`);
+                    
+                    for (const registration of registrations) {
+                        const scope = registration.scope;
                         await registration.unregister();
+                        log(`✓ Unregistered: ${scope}`);
                     }
                     
-                    resultDiv.innerHTML = `<p class="success">✅ Successfully unregistered ${registrations.length} service worker(s)!</p>`;
-                    
-                    // Clear caches
-                    const cacheNames = await caches.keys();
-                    for (let cacheName of cacheNames) {
-                        await caches.delete(cacheName);
-                    }
-                    
-                    resultDiv.innerHTML += '<p class="success">✅ Cleared all caches!</p>';
-                    resultDiv.innerHTML += '<p><strong>Now close all tabs and reopen the site.</strong></p>';
-                    
-                } catch (error) {
-                    resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                    showStatus(`Successfully unregistered ${registrations.length} service worker(s)`, 'success');
+                    log('All service workers unregistered successfully');
+                } else {
+                    showStatus('Service workers not supported in this browser', 'error');
+                    log('Service workers not supported');
                 }
-            } else {
-                resultDiv.innerHTML = '<p style="color: orange;">⚠️ Service workers not supported in this browser.</p>';
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                log(`Error unregistering: ${error.message}`);
             }
+        }
+
+        async function clearAllCaches() {
+            log('Starting cache cleanup...');
+            showStatus('Clearing caches...', 'info');
+            
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    
+                    if (cacheNames.length === 0) {
+                        log('No caches found');
+                        showStatus('No caches to clear', 'info');
+                        return;
+                    }
+                    
+                    log(`Found ${cacheNames.length} cache(s)`);
+                    
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        log(`✓ Deleted cache: ${cacheName}`);
+                    }
+                    
+                    showStatus(`Successfully cleared ${cacheNames.length} cache(s)`, 'success');
+                    log('All caches cleared successfully');
+                } else {
+                    showStatus('Cache API not supported in this browser', 'error');
+                    log('Cache API not supported');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                log(`Error clearing caches: ${error.message}`);
+            }
+        }
+
+        async function doEverything() {
+            log('=== STARTING FULL CLEANUP ===');
+            
+            await unregisterAll();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await clearAllCaches();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Clear localStorage and sessionStorage
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                log('✓ Cleared localStorage and sessionStorage');
+            } catch (e) {
+                log(`Warning: Could not clear storage: ${e.message}`);
+            }
+            
+            log('=== CLEANUP COMPLETE ===');
+            showStatus('Cleanup complete! Reloading in 2 seconds...', 'success');
+            
+            setTimeout(() => {
+                log('Reloading page...');
+                window.location.href = '/cms/dashboard';
+            }, 2000);
+        }
+
+        // Log initial state
+        log('Service Worker Cleanup Tool loaded');
+        log(`Current URL: ${window.location.href}`);
+        log(`Hostname: ${window.location.hostname}`);
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                log(`Currently registered service workers: ${regs.length}`);
+                regs.forEach(reg => {
+                    log(`  - ${reg.scope}`);
+                });
+            });
+        }
+        
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                log(`Currently cached: ${names.length} cache(s)`);
+                names.forEach(name => {
+                    log(`  - ${name}`);
+                });
+            });
         }
     </script>
 </body>

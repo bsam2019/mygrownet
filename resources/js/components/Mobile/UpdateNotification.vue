@@ -41,28 +41,28 @@
 import { ref, watch } from 'vue';
 import { usePWA } from '@/composables/usePWA';
 
-const { updateAvailable, applyUpdate: pwaApplyUpdate } = usePWA();
+const { registration } = usePWA();
 const showNotification = ref(false);
 
-// Watch for update availability
-watch(updateAvailable, (available) => {
-  if (available) {
-    showNotification.value = true;
+// Watch for service worker updates
+watch(registration, (reg) => {
+  if (reg) {
+    reg.addEventListener('updatefound', () => {
+      showNotification.value = true;
+    });
   }
-});
+}, { immediate: true });
 
 const applyUpdate = () => {
   showNotification.value = false;
-  pwaApplyUpdate();
+  window.location.reload();
 };
 
 const dismissNotification = () => {
   showNotification.value = false;
-  // Show again after 5 minutes if still available
+  // Show again after 5 minutes
   setTimeout(() => {
-    if (updateAvailable.value) {
-      showNotification.value = true;
-    }
+    showNotification.value = true;
   }, 5 * 60 * 1000);
 };
 </script>

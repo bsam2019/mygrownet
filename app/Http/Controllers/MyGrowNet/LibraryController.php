@@ -74,7 +74,7 @@ class LibraryController extends Controller
             'completed_count' => LibraryResourceAccess::where('user_id', $user->id)->where('completed', true)->distinct('library_resource_id')->count(),
         ];
 
-        return Inertia::render('MyGrowNet/Library', [
+        return Inertia::render('GrowNet/Library', [
             'resources' => $resources,
             'featured' => $featured,
             'recentlyAccessed' => $recentlyAccessed,
@@ -120,7 +120,7 @@ class LibraryController extends Controller
             ->limit(4)
             ->get();
 
-        return Inertia::render('MyGrowNet/LibraryResource', [
+        return Inertia::render('GrowNet/LibraryResource', [
             'resource' => $resource,
             'related' => $related,
         ]);

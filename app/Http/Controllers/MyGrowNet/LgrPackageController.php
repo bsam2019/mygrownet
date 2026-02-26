@@ -23,7 +23,7 @@ class LgrPackageController extends Controller
         $packages = LgrPackage::getActive();
         $currentPackage = $user->lgrPackage;
 
-        return Inertia::render('MyGrowNet/LoyaltyReward/Packages', [
+        return Inertia::render('GrowNet/LoyaltyReward/Packages', [
             'packages' => $packages,
             'currentPackage' => $currentPackage,
             'user' => [
@@ -52,7 +52,7 @@ class LgrPackageController extends Controller
             $upgradeCost = max(0, $package->package_amount - $currentPackage->package_amount);
         }
 
-        return Inertia::render('MyGrowNet/LoyaltyReward/PackageCheckout', [
+        return Inertia::render('GrowNet/LoyaltyReward/PackageCheckout', [
             'package' => $package,
             'currentPackage' => $currentPackage,
             'isUpgrade' => $isUpgrade,

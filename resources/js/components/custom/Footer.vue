@@ -91,13 +91,14 @@
   </template>
 
   <script>
-  import { Link } from '@inertiajs/vue3';
+  import { Link, usePage } from '@inertiajs/vue3';
   import Logo from '../Logo.vue';
   import {
     EnvelopeIcon,
     PhoneIcon,
     MapPinIcon
   } from '@heroicons/vue/24/outline';
+  import { useModules } from '@/composables/useModules';
 
   export default {
     name: 'Footer',
@@ -108,12 +109,16 @@
       PhoneIcon,
       MapPinIcon
     },
+    setup() {
+      const { isModuleEnabled } = useModules();
+      return { isModuleEnabled };
+    },
     data() {
       return {
-        opportunityLinks: [
-          { name: 'Venture Builder', route: 'ventures.about' },
+        allOpportunityLinks: [
+          { name: 'Venture Builder', route: 'ventures.about', module: 'venture_builder' },
           { name: 'Business Growth Fund', route: 'bgf.about' },
-          { name: 'Venture Investments', route: 'ventures.index' },
+          { name: 'Venture Investments', route: 'ventures.index', module: 'venture_builder' },
           { name: 'MyGrow Shop', route: 'marketplace.home' },
          ],
         resourceLinks: [
@@ -158,6 +163,14 @@
     computed: {
       currentYear() {
         return new Date().getFullYear()
+      },
+      opportunityLinks() {
+        return this.allOpportunityLinks.filter(link => {
+          if (link.module) {
+            return this.isModuleEnabled(link.module);
+          }
+          return true;
+        });
       }
     }
   }

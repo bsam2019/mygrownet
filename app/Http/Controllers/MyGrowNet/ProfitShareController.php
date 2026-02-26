@@ -16,7 +16,7 @@ class ProfitShareController extends Controller
     {
         $memberShares = $this->repository->findByUserId(auth()->id());
 
-        return Inertia::render('MyGrowNet/ProfitShares', [
+        return Inertia::render('GrowNet/ProfitShares', [
             'profitShares' => array_map(function ($share) {
                 return [
                     'id' => $share->id(),

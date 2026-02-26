@@ -53,7 +53,7 @@ const goto = (href: string) => router.visit(href);
 const logout = () => router.post('/logout');
 
 // Dashboard preference toggle - now just refreshes the dashboard
-const toggleMobileDashboard = async () => {
+const toggleGrowNetDashboard = async () => {
   try {
     const isCurrentlyMobile = userDashboardPreference.value === 'mobile';
     const newPreference = isCurrentlyMobile ? 'desktop' : 'mobile';
@@ -141,7 +141,7 @@ const toggleMobileDashboard = async () => {
             <button 
               type="button"
               class="w-full"
-              @click.prevent="toggleMobileDashboard"
+              @click.prevent="toggleGrowNetDashboard"
             >
               <SmartphoneIcon class="mr-2 h-4 w-4" />
               <span>Mobile Dashboard</span>

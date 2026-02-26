@@ -77,7 +77,7 @@
 ## 🔗 Integration Points
 
 ### Admin Panel
-- Added to CustomAdminSidebar under "Investor Relations"
+- Added to AdminSidebar under "Investor Relations"
 - Route: `/admin/investor-documents`
 - Full CRUD operations with professional UI
 

@@ -226,6 +226,8 @@ class HandleInertiaRequests extends Middleware
             'cmsUser' => $cmsUser,
             // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
             'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
+            // Module configuration - which features are enabled
+            'modules' => fn () => \App\Services\ModuleService::getEnabledModules(),
             // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes
             'growbiz' => fn () => $request->is('growbiz*') ? $this->getGrowBizData($request, $user) : null,
         ];

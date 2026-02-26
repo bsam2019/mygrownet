@@ -333,6 +333,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('tools.index');
     
+    // Storage page (GrowBackup)
+    Route::get('/my-storage', function () {
+        return Inertia::render('Storage/Index');
+    })->name('storage.index');
+    
+    // GrowBackup Module Routes
+    Route::prefix('growbackup')->name('growbackup.')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('GrowBackup/Welcome');
+        })->name('welcome')->withoutMiddleware(['auth', 'verified']);
+        
+        Route::get('/dashboard', function () {
+            return Inertia::render('GrowBackup/Dashboard');
+        })->name('dashboard');
+        
+        Route::get('/subscription', [App\Http\Controllers\Storage\SubscriptionController::class, 'index'])
+            ->name('subscription');
+        Route::post('/subscription/upgrade', [App\Http\Controllers\Storage\SubscriptionController::class, 'upgrade'])
+            ->name('subscription.upgrade');
+    });
+    
+    // Public file sharing routes (no auth required)
+    Route::prefix('share')->name('share.')->withoutMiddleware(['auth', 'verified'])->group(function () {
+        Route::get('/{token}', [App\Http\Controllers\Storage\FileShareController::class, 'show'])->name('view');
+        Route::post('/{token}/verify', [App\Http\Controllers\Storage\FileShareController::class, 'verifyPassword'])->name('verify');
+        Route::get('/{token}/stream', [App\Http\Controllers\Storage\FileShareController::class, 'stream'])->name('stream');
+        Route::get('/{token}/download', [App\Http\Controllers\Storage\FileShareController::class, 'download'])->name('download');
+    });
+    
     // Redirect old mobile-dashboard route to new dashboard route
     Route::get('/mobile-dashboard', function () {
         return redirect('/dashboard');
@@ -381,6 +410,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('starter-kit-content', App\Http\Controllers\Admin\StarterKitContentController::class);
         Route::post('starter-kit-content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])
             ->name('starter-kit-content.reorder');
+        
+        // Starter Kit Tier Management
+        Route::get('starter-kit-tiers', [App\Http\Controllers\Admin\StarterKitTierAdminController::class, 'index'])
+            ->name('starter-kit-tiers.index');
+        Route::get('starter-kit-tiers/{id}/edit', [App\Http\Controllers\Admin\StarterKitTierAdminController::class, 'edit'])
+            ->name('starter-kit-tiers.edit');
+        Route::put('starter-kit-tiers/{id}', [App\Http\Controllers\Admin\StarterKitTierAdminController::class, 'update'])
+            ->name('starter-kit-tiers.update');
+        Route::post('starter-kit-tiers/{id}/benefits', [App\Http\Controllers\Admin\StarterKitTierAdminController::class, 'updateBenefits'])
+            ->name('starter-kit-tiers.update-benefits');
+        
+        // Benefit Management
+        Route::resource('benefits', App\Http\Controllers\Admin\BenefitAdminController::class);
+        Route::get('benefits/fulfillment', [App\Http\Controllers\Admin\BenefitAdminController::class, 'fulfillment'])
+            ->name('benefits.fulfillment');
+        Route::post('benefits/{purchase}/{benefit}/fulfillment', [App\Http\Controllers\Admin\BenefitAdminController::class, 'updateFulfillment'])
+            ->name('benefits.update-fulfillment');
     });
 
     // Admin Profit Sharing Routes
@@ -571,6 +617,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])->name('content.reorder');
     });
     
+    // Admin GrowBackup Management Routes
+    Route::middleware(['admin'])->prefix('admin/growbackup')->name('admin.growbackup.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'index'])->name('index');
+        Route::get('/plans', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'plans'])->name('plans');
+        Route::put('/plans/{plan}', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'updatePlan'])->name('plans.update');
+        Route::get('/users', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'users'])->name('users');
+        Route::post('/users/{subscription}/award-bonus', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'awardBonusStorage'])->name('users.award-bonus');
+        Route::post('/users/{subscription}/remove-bonus', [App\Http\Controllers\Admin\GrowBackupAdminController::class, 'removeBonusStorage'])->name('users.remove-bonus');
+    });
+    
     // Admin Library Management Routes
     Route::middleware(['admin'])->prefix('admin/library')->name('admin.library.')->group(function () {
         Route::get('/resources', [App\Http\Controllers\Admin\LibraryResourceController::class, 'index'])->name('resources.index');
@@ -624,6 +680,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/recommendations/generate', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'generateRecommendations'])->name('recommendations.generate');
         Route::post('/recommendations/bulk-generate', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'bulkGenerateRecommendations'])->name('recommendations.bulk-generate');
         Route::post('/cache/clear', [App\Http\Controllers\Admin\AnalyticsManagementController::class, 'clearCache'])->name('cache.clear');
+    });
+    
+    // Admin Module Management Routes
+    Route::middleware(['admin'])->prefix('admin/modules')->name('admin.modules.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ModuleController::class, 'index'])->name('index');
+        Route::post('/{module}/toggle', [App\Http\Controllers\Admin\ModuleController::class, 'toggle'])->name('toggle');
+        Route::post('/clear-cache', [App\Http\Controllers\Admin\ModuleController::class, 'clearCache'])->name('clear-cache');
+    });
+    
+    // Admin CMS Companies Management Routes
+    Route::middleware(['admin'])->prefix('admin/cms-companies')->name('admin.cms-companies.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\CmsCompanyController::class, 'index'])->name('index');
+        Route::get('/{company}/edit', [App\Http\Controllers\Admin\CmsCompanyController::class, 'edit'])->name('edit');
+        Route::put('/{company}', [App\Http\Controllers\Admin\CmsCompanyController::class, 'update'])->name('update');
     });
     
     // Admin Email Marketing Routes
@@ -994,6 +1064,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/library', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'index'])->name('library.index');
         Route::get('/library/{resource}', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'show'])->name('library.show');
         Route::post('/library/{resource}/complete', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'markCompleted'])->name('library.complete');
+        
+        // Benefits Routes
+        Route::get('/benefits', fn() => inertia('MyGrowNet/Benefits'))->name('benefits.index');
         
         // Starter Kit Content Routes (NO middleware - check in controller)
         Route::get('/content', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'index'])->name('content.index');

@@ -21,7 +21,7 @@ class ToolsController extends Controller
     {
         $user = $request->user();
         
-        return Inertia::render('MyGrowNet/Tools/Index', [
+        return Inertia::render('GrowNet/Tools/Index', [
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
     }
@@ -73,7 +73,7 @@ class ToolsController extends Controller
             'level_7' => $this->getNetworkCountAtLevel($user, 7),
         ];
         
-        return Inertia::render('MyGrowNet/Tools/EarningsCalculator', [
+        return Inertia::render('GrowNet/Tools/EarningsCalculator', [
             'currentNetwork' => $networkStats,
             'userTier' => $user->starter_kit_tier,
         ]);
@@ -100,7 +100,7 @@ class ToolsController extends Controller
             ->whereMonth('created_at', now()->month)
             ->sum('amount');
         
-        return Inertia::render('MyGrowNet/Tools/GoalTracker', [
+        return Inertia::render('GrowNet/Tools/GoalTracker', [
             'goals' => $goals,
             'currentEarnings' => $currentEarnings,
             'userTier' => $user->starter_kit_tier,
@@ -172,7 +172,7 @@ class ToolsController extends Controller
             'this_month_volume' => $this->getMonthlyNetworkVolume($user),
         ];
         
-        return Inertia::render('MyGrowNet/Tools/NetworkVisualizer', [
+        return Inertia::render('GrowNet/Tools/NetworkVisualizer', [
             'networkTree' => $networkTree,
             'networkStats' => $networkStats,
             'userTier' => $user->starter_kit_tier,
@@ -199,7 +199,7 @@ class ToolsController extends Controller
             ->latest()
             ->first();
         
-        return Inertia::render('MyGrowNet/Tools/BusinessPlanGenerator', [
+        return Inertia::render('GrowNet/Tools/BusinessPlanGenerator', [
             'existingPlan' => $existingPlan,
             'userProfile' => [
                 'name' => $user->name,
@@ -273,7 +273,7 @@ class ToolsController extends Controller
                 ->sum('amount'),
         ];
         
-        return Inertia::render('MyGrowNet/Tools/ROICalculator', [
+        return Inertia::render('GrowNet/Tools/ROICalculator', [
             'investments' => $investments,
             'userTier' => $user->starter_kit_tier,
         ]);

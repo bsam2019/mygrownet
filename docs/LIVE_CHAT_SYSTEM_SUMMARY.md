@@ -393,7 +393,7 @@ Agents (support staff) use the Admin Panel to manage tickets:
 
 ### Files Modified
 
-1. **resources/js/components/CustomAdminSidebar.vue**
+1. **resources/js/components/AdminSidebar.vue**
    - Removed "Employee Tickets" link
    - Renamed "Unified Support" to "Support Center"
 

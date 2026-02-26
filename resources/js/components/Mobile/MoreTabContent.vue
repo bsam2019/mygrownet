@@ -46,6 +46,12 @@
       </div>
       <div class="divide-y divide-gray-100">
         <MenuButton
+          label="My Benefits"
+          :icon="SparklesIcon"
+          subtitle="View available benefits"
+          @click="$emit('my-benefits')"
+        />
+        <MenuButton
           label="Starter Kits"
           :icon="SparklesIcon"
           subtitle="View & upgrade packages"
@@ -232,6 +238,7 @@ defineEmits<{
   'edit-profile': [];
   'change-password': [];
   'verification': [];
+  'my-benefits': [];
   'lgr-packages': [];
   'my-earnings': [];
   'live-support': [];
