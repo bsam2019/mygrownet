@@ -11,7 +11,7 @@
       </div>
       
       <h2 class="text-3xl md:text-4xl font-bold mb-3">
-        Earn 15% on Every Referral
+        Earn {{ referralRate }}% on Every Referral
       </h2>
       <p class="text-blue-200 mb-8">
         Your direct referrals earn you the highest commission
@@ -30,11 +30,11 @@
           
           <!-- Arrow -->
           <div class="flex flex-col items-center">
-            <div class="text-green-400 font-bold text-lg">K37.50</div>
+            <div class="text-green-400 font-bold text-lg">K{{ commissionAmount.toFixed(2) }}</div>
             <svg class="w-12 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-            <div class="text-xs text-blue-200">15% of base</div>
+            <div class="text-xs text-blue-200">{{ referralRate }}% of base</div>
           </div>
           
           <!-- Referral -->
@@ -49,16 +49,16 @@
         <!-- Calculation -->
         <div class="bg-white/10 rounded-xl p-4">
           <div class="flex items-center justify-between text-sm mb-2">
-            <span class="text-blue-200">Starter Kit Purchase (Basic)</span>
-            <span class="font-bold">K500</span>
+            <span class="text-blue-200">Starter Kit Purchase ({{ exampleTier.name }})</span>
+            <span class="font-bold">K{{ exampleTier.price }}</span>
           </div>
           <div class="flex items-center justify-between text-sm mb-2">
-            <span class="text-blue-200">Commission Base (50%)</span>
-            <span class="font-bold">K250</span>
+            <span class="text-blue-200">Commission Base ({{ commissionBase }}%)</span>
+            <span class="font-bold">K{{ baseAmount.toFixed(2) }}</span>
           </div>
           <div class="flex items-center justify-between text-sm mb-2">
-            <span class="text-blue-200">Your Commission (15%)</span>
-            <span class="font-bold text-green-400">K37.50</span>
+            <span class="text-blue-200">Your Commission ({{ referralRate }}%)</span>
+            <span class="font-bold text-green-400">K{{ commissionAmount.toFixed(2) }}</span>
           </div>
           <div class="border-t border-white/20 pt-2 mt-2">
             <div class="flex items-center justify-between">
@@ -71,20 +71,14 @@
       
       <!-- Multiple referrals example -->
       <div class="grid grid-cols-3 gap-3">
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <div class="text-2xl mb-1">3</div>
+        <div 
+          v-for="example in multipleReferrals" 
+          :key="example.count"
+          class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+        >
+          <div class="text-2xl mb-1">{{ example.count }}</div>
           <div class="text-xs text-blue-200 mb-2">Referrals</div>
-          <div class="text-lg font-bold text-green-400">K112.50</div>
-        </div>
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <div class="text-2xl mb-1">10</div>
-          <div class="text-xs text-blue-200 mb-2">Referrals</div>
-          <div class="text-lg font-bold text-green-400">K375</div>
-        </div>
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <div class="text-2xl mb-1">30</div>
-          <div class="text-xs text-blue-200 mb-2">Referrals</div>
-          <div class="text-lg font-bold text-green-400">K1,125</div>
+          <div class="text-lg font-bold text-green-400">K{{ example.amount.toFixed(2) }}</div>
         </div>
       </div>
       
@@ -98,5 +92,32 @@
 </template>
 
 <script setup lang="ts">
-// No props needed
+import { computed } from 'vue';
+import type { ReferralBonus, StarterKitTier } from '@/composables/usePresentationData';
+
+const props = defineProps<{
+  referralBonus?: ReferralBonus;
+  tiers?: StarterKitTier[];
+}>();
+
+// Use Basic tier (K500) as example
+const exampleTier = computed(() => {
+  if (props.tiers && props.tiers.length > 0) {
+    return props.tiers.find(t => t.key === 'basic') || props.tiers[0];
+  }
+  return { name: 'Basic', price: 500 };
+});
+
+const referralRate = computed(() => props.referralBonus?.rate || 15);
+const commissionBase = computed(() => props.referralBonus?.commission_base || 50);
+
+const baseAmount = computed(() => exampleTier.value.price * (commissionBase.value / 100));
+const commissionAmount = computed(() => baseAmount.value * (referralRate.value / 100));
+
+// Calculate examples for multiple referrals
+const multipleReferrals = computed(() => [
+  { count: 3, amount: commissionAmount.value * 3 },
+  { count: 10, amount: commissionAmount.value * 10 },
+  { count: 30, amount: commissionAmount.value * 30 },
+]);
 </script>

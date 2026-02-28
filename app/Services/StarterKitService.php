@@ -17,7 +17,7 @@ class StarterKitService
 {
     public function __construct(
         private readonly \App\Application\Notification\UseCases\SendNotificationUseCase $notificationService,
-        private readonly WalletService $walletService,
+        private readonly \App\Domain\Wallet\Services\UnifiedWalletService $walletService,
         private readonly StarterKitBenefitService $benefitService
     ) {}
     

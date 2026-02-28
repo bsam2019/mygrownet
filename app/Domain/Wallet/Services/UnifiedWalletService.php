@@ -58,15 +58,21 @@ class UnifiedWalletService
                 
                 UNION ALL
                 
-                SELECT 'withdrawals' as type, COALESCE(SUM(amount), 0) as total 
-                FROM withdrawals 
-                WHERE user_id = ? AND status = 'approved'
+                SELECT 'loan_disbursements' as type, COALESCE(SUM(amount), 0) as total 
+                FROM transactions 
+                WHERE user_id = ? AND transaction_type = 'loan_disbursement' AND status = 'completed'
                 
                 UNION ALL
                 
                 SELECT 'withdrawal_tx' as type, COALESCE(SUM(ABS(amount)), 0) as total 
                 FROM transactions 
-                WHERE user_id = ? AND transaction_type = 'withdrawal' AND status = 'completed'
+                WHERE user_id = ? AND transaction_type = 'withdrawal' AND status IN ('completed', 'pending')
+                
+                UNION ALL
+                
+                SELECT 'loan_repayments' as type, COALESCE(SUM(ABS(amount)), 0) as total 
+                FROM transactions 
+                WHERE user_id = ? AND transaction_type = 'loan_repayment' AND status = 'completed'
                 
                 UNION ALL
                 
@@ -79,7 +85,7 @@ class UnifiedWalletService
                 SELECT 'service_expenses' as type, COALESCE(SUM(ABS(amount)), 0) as total 
                 FROM transactions 
                 WHERE user_id = ? AND transaction_type IN ('purchase', 'service_payment', 'starter_kit_purchase', 'subscription_payment') AND status = 'completed'
-            ", [$user->id, $user->id, $user->id, $user->id, $user->id, $user->id]);
+            ", [$user->id, $user->id, $user->id, $user->id, $user->id, $user->id, $user->id]);
             
             // Parse results into associative array
             $totals = [];
@@ -90,8 +96,12 @@ class UnifiedWalletService
             // Calculate deposits
             $deposits = ($totals['deposits_mp'] ?? 0) + ($totals['deposits_tx'] ?? 0);
             
-            // Calculate withdrawals and expenses
-            $withdrawals = ($totals['withdrawals'] ?? 0) + ($totals['withdrawal_tx'] ?? 0);
+            // Calculate loan disbursements (credits)
+            $loanDisbursements = $totals['loan_disbursements'] ?? 0;
+            
+            // Calculate withdrawals and expenses (only from transactions table - single source of truth)
+            $withdrawals = $totals['withdrawal_tx'] ?? 0;
+            $loanRepayments = $totals['loan_repayments'] ?? 0;
             $expenses = ($totals['shop_expenses'] ?? 0) + ($totals['service_expenses'] ?? 0);
             
             // Get earnings (separate queries for conditional tables)
@@ -139,15 +149,17 @@ class UnifiedWalletService
             
             return [
                 'deposits' => $deposits,
+                'loan_disbursements' => $loanDisbursements,
                 'commissions' => $commissions,
                 'profit_shares' => $profitShares,
                 'venture_dividends' => $ventureDividends,
                 'business_revenue' => $businessRevenue,
                 'earnings' => $earnings,
                 'withdrawals' => $withdrawals,
+                'loan_repayments' => $loanRepayments,
                 'expenses' => $expenses,
-                'credits' => $deposits + $earnings,
-                'debits' => $withdrawals + $expenses,
+                'credits' => $deposits + $loanDisbursements + $earnings,
+                'debits' => $withdrawals + $loanRepayments + $expenses,
             ];
         });
     }
@@ -255,11 +267,13 @@ class UnifiedWalletService
             'balance' => max(0, $totals['credits'] - $totals['debits']),
             'credits' => [
                 'deposits' => $totals['deposits'],
+                'loan_disbursements' => $totals['loan_disbursements'],
                 'venture_dividends' => $totals['venture_dividends'],
                 'total' => $totals['credits'],
             ],
             'debits' => [
                 'withdrawals' => $totals['withdrawals'],
+                'loan_repayments' => $totals['loan_repayments'],
                 'expenses' => $totals['expenses'],
                 'total' => $totals['debits'],
             ],

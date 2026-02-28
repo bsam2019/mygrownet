@@ -19,99 +19,80 @@
       
       <!-- Products grid -->
       <div class="grid grid-cols-2 gap-3 mb-6">
-        <!-- MyGrow Learn -->
+        <!-- Cloud Storage -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-10 h-10 bg-blue-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">📚</span>
+              <span class="text-xl">☁️</span>
             </div>
-            <h3 class="font-bold text-sm">MyGrow Learn</h3>
+            <h3 class="font-bold text-sm">Cloud Storage</h3>
           </div>
-          <p class="text-xs text-sky-200">E-books, video courses, audio lessons, and certifications</p>
+          <p class="text-xs text-sky-200">Secure file storage and sharing for your business</p>
         </div>
         
-        <!-- MyGrow Shop -->
+        <!-- Learning Resources -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-10 h-10 bg-green-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">🛒</span>
+              <span class="text-xl">📚</span>
             </div>
-            <h3 class="font-bold text-sm">MyGrow Shop</h3>
+            <h3 class="font-bold text-sm">Learning Resources</h3>
           </div>
-          <p class="text-xs text-sky-200">Digital products, tools, and partner merchandise</p>
+          <p class="text-xs text-sky-200">E-books, courses, and educational materials</p>
         </div>
         
-        <!-- MyGrow Coaching -->
+        <!-- Video Streaming -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-10 h-10 bg-purple-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">🎯</span>
+              <span class="text-xl">🎥</span>
             </div>
-            <h3 class="font-bold text-sm">Coaching</h3>
+            <h3 class="font-bold text-sm">Video Streaming</h3>
           </div>
-          <p class="text-xs text-sky-200">Group sessions, 1-on-1 mentorship, and workshops</p>
+          <p class="text-xs text-sky-200">Training videos, workshops, and webinars</p>
         </div>
         
-        <!-- MyGrow Save -->
-        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-10 h-10 bg-amber-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">💳</span>
-            </div>
-            <h3 class="font-bold text-sm">MyGrow Save</h3>
-          </div>
-          <p class="text-xs text-sky-200">Digital wallet for earnings, purchases, and withdrawals</p>
-        </div>
-        
-        <!-- MyGrow Connect -->
+        <!-- Music & Audio -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-10 h-10 bg-pink-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">🤝</span>
+              <span class="text-xl">🎵</span>
             </div>
-            <h3 class="font-bold text-sm">MyGrow Connect</h3>
+            <h3 class="font-bold text-sm">Music & Audio</h3>
           </div>
-          <p class="text-xs text-sky-200">Service provider directory and business networking</p>
+          <p class="text-xs text-sky-200">Motivational talks, podcasts, and audio content</p>
         </div>
         
-        <!-- Tools -->
+        <!-- Product Marketplace -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-10 h-10 bg-amber-500/30 rounded-lg flex items-center justify-center">
+              <span class="text-xl">🛒</span>
+            </div>
+            <h3 class="font-bold text-sm">Product Marketplace</h3>
+          </div>
+          <p class="text-xs text-sky-200">Digital and physical products for purchase</p>
+        </div>
+        
+        <!-- Mobile Apps -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 text-left">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-10 h-10 bg-cyan-500/30 rounded-lg flex items-center justify-center">
-              <span class="text-xl">🛠️</span>
+              <span class="text-xl">📱</span>
             </div>
-            <h3 class="font-bold text-sm">Business Tools</h3>
+            <h3 class="font-bold text-sm">Mobile Apps</h3>
           </div>
-          <p class="text-xs text-sky-200">Marketing templates, calculators, and planning tools</p>
+          <p class="text-xs text-sky-200">Life-Plus and other productivity applications</p>
         </div>
       </div>
       
-      <!-- Subscription tiers -->
-      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-        <h3 class="font-bold text-sm mb-3">Subscription Tiers (Optional)</h3>
-        <div class="grid grid-cols-4 gap-2 text-xs">
-          <div class="text-center p-2 bg-white/10 rounded-lg">
-            <div class="font-bold">Basic</div>
-            <div class="text-sky-200">K150/mo</div>
-            <div class="text-sky-300">1.0x</div>
-          </div>
-          <div class="text-center p-2 bg-white/10 rounded-lg">
-            <div class="font-bold">Silver</div>
-            <div class="text-sky-200">K300/mo</div>
-            <div class="text-sky-300">1.2x</div>
-          </div>
-          <div class="text-center p-2 bg-white/10 rounded-lg">
-            <div class="font-bold">Gold</div>
-            <div class="text-sky-200">K500/mo</div>
-            <div class="text-sky-300">1.5x</div>
-          </div>
-          <div class="text-center p-2 bg-amber-500/20 rounded-lg border border-amber-400/30">
-            <div class="font-bold text-amber-300">Platinum</div>
-            <div class="text-amber-200">K1,000/mo</div>
-            <div class="text-amber-300">2.0x</div>
-          </div>
-        </div>
-        <p class="text-xs text-sky-200 mt-2">Higher tiers = Higher point multipliers!</p>
+      <!-- Subscription tiers removed - using Starter Kits instead -->
+      <div class="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-400/30">
+        <p class="text-sm">
+          <span class="text-xl mr-2">💡</span>
+          <span class="font-bold">Access through Starter Kits:</span> Choose from Lite (K300), 
+          Basic (K500), Growth Plus (K1000), or Pro (K2000) to unlock platform features!
+        </p>
       </div>
     </div>
   </div>

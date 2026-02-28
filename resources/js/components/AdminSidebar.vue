@@ -78,6 +78,7 @@ const userManagementNavItems: NavItem[] = [
 const growNetNavItems: NavItem[] = [
     { title: 'Starter Kits', href: safeRoute('admin.starter-kit.dashboard'), icon: BookOpen },
     { title: 'Starter Kit Tiers', href: safeRoute('admin.starter-kit-tiers.index'), icon: Settings },
+    { title: 'Content Management', href: safeRoute('admin.content-management.index'), icon: Folder },
     { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
     { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
     { title: 'Network Management', href: safeRoute('admin.network.index'), icon: Activity },

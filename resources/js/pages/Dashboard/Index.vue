@@ -218,6 +218,7 @@ const handleModuleClick = (module: Module) => {
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <!-- Build Your Website -->
                             <Link
+                                v-if="!modules.some(m => m.slug === 'growbuilder' && m.has_access)"
                                 href="/growbuilder"
                                 class="group bg-white rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-indigo-100 hover:border-indigo-300"
                             >
@@ -233,8 +234,9 @@ const handleModuleClick = (module: Module) => {
                                 </div>
                             </Link>
 
-                            <!-- Join GrowNet -->
+                            <!-- Join GrowNet - Only show if not a member -->
                             <Link
+                                v-if="!hasActiveGrowNetPackage"
                                 href="/grownet"
                                 class="group bg-white rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-indigo-100 hover:border-indigo-300"
                             >
@@ -245,6 +247,24 @@ const handleModuleClick = (module: Module) => {
                                     <div class="flex-1 min-w-0">
                                         <h3 class="font-semibold text-gray-900 text-sm mb-1">Join GrowNet</h3>
                                         <p class="text-xs text-gray-600">Earn through referrals</p>
+                                    </div>
+                                    <ArrowRightIcon class="w-4 h-4 text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" aria-hidden="true" />
+                                </div>
+                            </Link>
+                            
+                            <!-- GrowNet Dashboard - Show if already a member -->
+                            <Link
+                                v-if="hasActiveGrowNetPackage"
+                                href="/grownet"
+                                class="group bg-white rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-indigo-100 hover:border-indigo-300"
+                            >
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-500 flex-shrink-0">
+                                        <UserGroupIcon class="w-5 h-5 text-white" aria-hidden="true" />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-gray-900 text-sm mb-1">GrowNet Dashboard</h3>
+                                        <p class="text-xs text-gray-600">View your network & earnings</p>
                                     </div>
                                     <ArrowRightIcon class="w-4 h-4 text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" aria-hidden="true" />
                                 </div>

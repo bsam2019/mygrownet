@@ -48,9 +48,18 @@ class StarterKitContentController extends Controller
      */
     public function create()
     {
+        $tiers = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($tier) => [
+                'key' => $tier->tier_key,
+                'name' => $tier->tier_name,
+                'price' => $tier->price,
+            ]);
+
         return Inertia::render('Admin/StarterKitContent/Form', [
             'categories' => ['training', 'ebook', 'video', 'tool', 'library'],
-            'tiers' => ['all', 'premium'],
+            'tiers' => $tiers,
         ]);
     }
 
@@ -77,10 +86,23 @@ class StarterKitContentController extends Controller
         $filePath = null;
         $fileType = null;
         $fileSize = null;
+        $originalFileName = null;
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filePath = $file->store('starter-kit/' . $validated['category'], 'private');
+            $originalFileName = $file->getClientOriginalName();
+            
+            // Create a safe filename while preserving the original name
+            $timestamp = time();
+            $safeName = $timestamp . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalFileName);
+            
+            // Store with the safe filename
+            $filePath = $file->storeAs(
+                'starter-kit/' . $validated['category'],
+                $safeName,
+                's3'
+            );
+            
             $fileType = $file->getClientOriginalExtension();
             $fileSize = $file->getSize();
         }
@@ -105,6 +127,7 @@ class StarterKitContentController extends Controller
             'is_downloadable' => $validated['is_downloadable'] ?? true,
             'is_active' => $validated['is_active'] ?? true,
             'file_path' => $filePath,
+            'original_filename' => $originalFileName,
             'file_url' => $validated['file_url'] ?? null,
             'file_type' => $fileType,
             'file_size' => $fileSize,
@@ -123,6 +146,15 @@ class StarterKitContentController extends Controller
     public function edit(int $id)
     {
         $content = ContentItemModel::findOrFail($id);
+
+        $tiers = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn($tier) => [
+                'key' => $tier->tier_key,
+                'name' => $tier->tier_name,
+                'price' => $tier->price,
+            ]);
 
         return Inertia::render('Admin/StarterKitContent/Form', [
             'content' => [
@@ -143,7 +175,7 @@ class StarterKitContentController extends Controller
                 'sort_order' => $content->sort_order,
             ],
             'categories' => ['training', 'ebook', 'video', 'tool', 'library'],
-            'tiers' => ['all', 'premium'],
+            'tiers' => $tiers,
         ]);
     }
 
@@ -171,21 +203,34 @@ class StarterKitContentController extends Controller
 
         // Handle file replacement
         if ($request->hasFile('file')) {
-            // Delete old file
-            if ($content->file_path && Storage::exists($content->file_path)) {
-                Storage::delete($content->file_path);
+            // Delete old file from S3
+            if ($content->file_path && Storage::disk('s3')->exists($content->file_path)) {
+                Storage::disk('s3')->delete($content->file_path);
             }
 
             $file = $request->file('file');
-            $validated['file_path'] = $file->store('starter-kit/' . $validated['category'], 'private');
+            $originalFileName = $file->getClientOriginalName();
+            
+            // Create a safe filename while preserving the original name
+            $timestamp = time();
+            $safeName = $timestamp . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $originalFileName);
+            
+            // Store with the safe filename
+            $validated['file_path'] = $file->storeAs(
+                'starter-kit/' . $validated['category'],
+                $safeName,
+                's3'
+            );
+            $validated['original_filename'] = $originalFileName;
             $validated['file_type'] = $file->getClientOriginalExtension();
             $validated['file_size'] = $file->getSize();
         } elseif ($request->input('remove_file')) {
             // Delete file if requested
-            if ($content->file_path && Storage::exists($content->file_path)) {
-                Storage::delete($content->file_path);
+            if ($content->file_path && Storage::disk('s3')->exists($content->file_path)) {
+                Storage::disk('s3')->delete($content->file_path);
             }
             $validated['file_path'] = null;
+            $validated['original_filename'] = null;
             $validated['file_type'] = null;
             $validated['file_size'] = null;
         }
@@ -215,9 +260,9 @@ class StarterKitContentController extends Controller
     {
         $content = ContentItemModel::findOrFail($id);
 
-        // Delete associated files
-        if ($content->file_path && Storage::exists($content->file_path)) {
-            Storage::delete($content->file_path);
+        // Delete associated files from S3
+        if ($content->file_path && Storage::disk('s3')->exists($content->file_path)) {
+            Storage::disk('s3')->delete($content->file_path);
         }
 
         if ($content->thumbnail && Storage::disk('public')->exists($content->thumbnail)) {

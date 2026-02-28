@@ -18,6 +18,7 @@ class ContentItemModel extends Model
         'tier_restriction',
         'unlock_day',
         'file_path',
+        'original_filename',
         'file_url',
         'file_type',
         'file_size',

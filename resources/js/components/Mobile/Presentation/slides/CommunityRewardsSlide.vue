@@ -11,7 +11,7 @@
       </div>
       
       <h2 class="text-3xl md:text-4xl font-bold mb-3">
-        Share in Company Profits!
+        Earn from Company Success!
       </h2>
       <p class="text-emerald-200 mb-6">
         60% of project profits distributed to active members
@@ -19,7 +19,7 @@
       
       <!-- How it works -->
       <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 mb-6">
-        <h3 class="font-bold text-lg mb-4">How Profit Sharing Works</h3>
+        <h3 class="font-bold text-lg mb-4">How Community Rewards Work</h3>
         
         <!-- Visual flow -->
         <div class="flex items-center justify-center gap-2 mb-6 flex-wrap">

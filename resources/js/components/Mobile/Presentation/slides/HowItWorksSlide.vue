@@ -40,12 +40,12 @@
           </div>
           <div class="flex-1">
             <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
-              <span>Learn & Share</span>
+              <span>Use & Share</span>
               <span class="text-2xl">🎓</span>
             </h3>
             <p class="text-emerald-100">
-              Access e-books, video courses, and coaching. Share the opportunity with others 
-              and build your network.
+              Access learning resources, video/music streaming, cloud storage, and mobile apps. 
+              Share the opportunity with others and build your network.
             </p>
           </div>
         </div>

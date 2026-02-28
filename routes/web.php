@@ -233,6 +233,9 @@ Route::prefix('investor')->name('investor.')->group(function () {
     Route::post('/support/{id}/chat', [App\Http\Controllers\Investor\SupportController::class, 'chat'])->name('support.chat');
     Route::post('/support/{id}/rate', [App\Http\Controllers\Investor\SupportController::class, 'rate'])->name('support.rate');
     
+    // Presentation Data API
+    Route::get('/api/presentation/data', [App\Http\Controllers\Api\PresentationDataController::class, 'index'])->name('api.presentation.data');
+    
     Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
 });
 Route::get('/features', fn() => Inertia::render('Features'))->name('features');
@@ -410,6 +413,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('starter-kit-content', App\Http\Controllers\Admin\StarterKitContentController::class);
         Route::post('starter-kit-content/reorder', [App\Http\Controllers\Admin\StarterKitContentController::class, 'reorder'])
             ->name('starter-kit-content.reorder');
+        
+        // Dedicated Content Management Route
+        Route::get('content-management', [App\Http\Controllers\Admin\StarterKitContentController::class, 'index'])
+            ->name('content-management.index');
         
         // Starter Kit Tier Management
         Route::get('starter-kit-tiers', [App\Http\Controllers\Admin\StarterKitTierAdminController::class, 'index'])

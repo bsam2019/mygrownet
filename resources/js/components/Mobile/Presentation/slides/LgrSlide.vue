@@ -33,7 +33,9 @@
             </div>
             <div>
               <div class="font-semibold">Daily LGR Earnings</div>
-              <div class="text-sm text-pink-200">Earn daily rewards based on your tier (K12.50 - K62.50/day)</div>
+              <div class="text-sm text-pink-200">
+                Earn daily rewards based on your tier (K12.50 - K62.50/day)
+              </div>
             </div>
           </div>
           
@@ -62,7 +64,17 @@
       <!-- LGR Rates by Tier -->
       <div class="bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-4 border border-amber-400/30">
         <h3 class="font-bold mb-3">LGR Daily Rates by Tier</h3>
-        <div class="grid grid-cols-2 gap-3 text-sm">
+        <div v-if="hasTiers" class="grid grid-cols-2 gap-3 text-sm">
+          <div 
+            v-for="tier in validTiers" 
+            :key="`tier-${tier.id}`"
+            class="flex items-center gap-2"
+          >
+            <span :class="getTierIconColor(tier.name)">{{ getTierIcon(tier.name) }}</span>
+            <span>{{ tier.name }}: K{{ formatTierRate(tier.lgr_daily_rate) }}/day</span>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-2 gap-3 text-sm">
           <div class="flex items-center gap-2">
             <span class="text-gray-300">📦</span>
             <span>Lite: K12.50/day</span>
@@ -92,5 +104,57 @@
 </template>
 
 <script setup lang="ts">
-// No props needed
+import { computed } from 'vue';
+
+interface Tier {
+  id: number;
+  name: string;
+  price: number;
+  lgr_daily_rate: number;
+}
+
+const props = defineProps<{
+  tiers?: Tier[];
+}>();
+
+// Check if we have valid tiers
+const hasTiers = computed(() => {
+  return props.tiers && Array.isArray(props.tiers) && props.tiers.length > 0;
+});
+
+// Get valid tiers with lgr_daily_rate
+const validTiers = computed(() => {
+  if (!hasTiers.value) return [];
+  return props.tiers!.filter(t => t.lgr_daily_rate !== undefined && t.lgr_daily_rate !== null);
+});
+
+// Format tier rate safely
+const formatTierRate = (rate: number | undefined | null): string => {
+  if (rate === undefined || rate === null || isNaN(rate)) {
+    return '0.00';
+  }
+  return Number(rate).toFixed(2);
+};
+
+// Get tier icon based on name
+const getTierIcon = (name: string): string => {
+  const icons: Record<string, string> = {
+    'Lite': '📦',
+    'Basic': '🎁',
+    'Growth Plus': '🚀',
+    'Pro': '✨',
+  };
+  return icons[name] || '🎁';
+};
+
+// Get tier icon color based on name
+const getTierIconColor = (name: string): string => {
+  const colors: Record<string, string> = {
+    'Lite': 'text-gray-300',
+    'Basic': 'text-blue-400',
+    'Growth Plus': 'text-emerald-400',
+    'Pro': 'text-amber-400',
+  };
+  return colors[name] || 'text-white';
+};
 </script>

@@ -57,7 +57,7 @@
         <!-- Community Rewards -->
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/20 transition-colors">
           <div class="text-3xl mb-2">🌍</div>
-          <h3 class="font-bold text-sm mb-1">Profit Sharing</h3>
+          <h3 class="font-bold text-sm mb-1">Community Rewards</h3>
           <p class="text-xs text-emerald-200">60% of company profits</p>
         </div>
       </div>

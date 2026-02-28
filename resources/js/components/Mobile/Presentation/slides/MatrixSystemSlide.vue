@@ -8,15 +8,15 @@
       <!-- Section badge -->
       <div class="text-center mb-4">
         <div class="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
-          <span class="text-white text-sm font-semibold">🔷 3×3 Matrix System</span>
+          <span class="text-white text-sm font-semibold">🔷 {{ matrixWidth }}×{{ matrixWidth }} Matrix System</span>
         </div>
       </div>
       
       <h2 class="text-2xl md:text-3xl font-bold mb-2 text-center">
-        7 Levels Deep Network
+        {{ matrixDepth }} Levels Deep Network
       </h2>
       <p class="text-purple-200 mb-4 text-center text-sm">
-        Build your team with our powerful forced matrix structure
+        Build your team with our powerful {{ matrixWidth }}×{{ matrixWidth }} forced matrix structure
       </p>
       
       <!-- Matrix Visualization -->
@@ -95,74 +95,41 @@
           <h3 class="font-bold text-sm text-center">Network Capacity by Level</h3>
         </div>
         <div class="divide-y divide-white/10">
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
+          <div 
+            v-for="(level, index) in levelPositions" 
+            :key="level.level"
+            class="flex items-center justify-between px-3 py-2 text-sm"
+            :class="level.level === matrixDepth ? 'bg-amber-500/20' : ''"
+          >
             <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold">1</div>
-              <span>Level 1</span>
+              <div 
+                class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                :class="[
+                  level.level === 1 ? 'bg-blue-500' :
+                  level.level === 2 ? 'bg-indigo-500' :
+                  level.level === 3 ? 'bg-purple-500' :
+                  level.level === 4 ? 'bg-pink-500' :
+                  level.level === 5 ? 'bg-rose-500' :
+                  level.level === 6 ? 'bg-orange-500' :
+                  'bg-gradient-to-br from-amber-400 to-orange-500'
+                ]"
+              >
+                {{ level.level }}
+              </div>
+              <span :class="level.level === matrixDepth ? 'font-semibold' : ''">
+                Level {{ level.level }}
+              </span>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3¹</span>
-              <span class="font-bold text-green-400">3</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">2</div>
-              <span>Level 2</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3²</span>
-              <span class="font-bold text-green-400">9</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-xs font-bold">3</div>
-              <span>Level 3</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3³</span>
-              <span class="font-bold text-green-400">27</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center text-xs font-bold">4</div>
-              <span>Level 4</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3⁴</span>
-              <span class="font-bold text-green-400">81</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center text-xs font-bold">5</div>
-              <span>Level 5</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3⁵</span>
-              <span class="font-bold text-green-400">243</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">6</div>
-              <span>Level 6</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-purple-200 text-xs">3⁶</span>
-              <span class="font-bold text-green-400">729</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between px-3 py-2 text-sm bg-amber-500/20">
-            <div class="flex items-center gap-2">
-              <div class="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-xs font-bold">7</div>
-              <span class="font-semibold">Level 7</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-amber-200 text-xs">3⁷</span>
-              <span class="font-bold text-amber-300">2,187</span>
+              <span :class="level.level === matrixDepth ? 'text-amber-200' : 'text-purple-200'" class="text-xs">
+                {{ matrixWidth }}<sup>{{ level.level }}</sup>
+              </span>
+              <span 
+                class="font-bold"
+                :class="level.level === matrixDepth ? 'text-amber-300' : 'text-green-400'"
+              >
+                {{ level.positions.toLocaleString() }}
+              </span>
             </div>
           </div>
         </div>
@@ -171,7 +138,7 @@
       <!-- Total & Spillover -->
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div class="bg-gradient-to-br from-green-500/30 to-emerald-500/30 rounded-xl p-3 border border-green-400/30 text-center">
-          <div class="text-2xl font-bold text-green-400">3,279</div>
+          <div class="text-2xl font-bold text-green-400">{{ totalCapacity.toLocaleString() }}</div>
           <div class="text-xs text-green-200">Total Network Capacity</div>
         </div>
         <div class="bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-xl p-3 border border-blue-400/30 text-center">
@@ -195,5 +162,27 @@
 </template>
 
 <script setup lang="ts">
-// No props needed
+import { computed } from 'vue';
+import type { MatrixData, CommissionRate } from '@/composables/usePresentationData';
+
+const props = defineProps<{
+  matrix?: MatrixData;
+  commissionRates?: CommissionRate[];
+}>();
+
+const matrixWidth = computed(() => props.matrix?.width || 3);
+const matrixDepth = computed(() => props.matrix?.depth || 7);
+const totalCapacity = computed(() => props.matrix?.total_capacity || 3279);
+
+// Calculate positions per level
+const levelPositions = computed(() => {
+  const positions = [];
+  for (let i = 1; i <= matrixDepth.value; i++) {
+    positions.push({
+      level: i,
+      positions: Math.pow(matrixWidth.value, i),
+    });
+  }
+  return positions;
+});
 </script>

@@ -79,8 +79,11 @@ class DashboardController extends Controller
         $isAdmin = $user->hasRole(['Administrator', 'admin', 'superadmin']);
         $isManager = $user->rank === 'manager' || in_array($user->rank, ['manager', 'regional_manager']);
         
-        // Check if user has active GrowNet package
-        $hasActiveGrowNetPackage = !is_null($user->lgr_package_id);
+        // Check if user has active GrowNet package or is admin or has GrowNet module access
+        $hasGrowNetModule = $modules->contains(function ($module) {
+            return $module['slug'] === 'grownet' && $module['has_access'];
+        });
+        $hasActiveGrowNetPackage = !is_null($user->lgr_package_id) || $isAdmin || $hasGrowNetModule;
         
         return Inertia::render('Dashboard/Index', [
             // Wallet data

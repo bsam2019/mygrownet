@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Wallet;
 
 use App\Http\Controllers\Controller;
-use App\Services\WalletService;
 use App\Domain\Wallet\Services\UnifiedWalletService;
 use App\Domain\Payment\Services\PaymentService;
 use App\Domain\Payment\DTOs\CollectionRequest;
@@ -32,7 +31,6 @@ use Inertia\Inertia;
 class GeneralWalletController extends Controller
 {
     public function __construct(
-        private WalletService $walletService,
         private UnifiedWalletService $unifiedWalletService,
         private PaymentService $paymentService
     ) {}

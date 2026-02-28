@@ -8,7 +8,7 @@ use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel;
 use App\Infrastructure\Persistence\Eloquent\Settings\GiftSettingsModel;
 use App\Models\User;
 use App\Services\StarterKitService;
-use App\Services\WalletService;
+use App\Domain\Wallet\Services\UnifiedWalletService;
 use App\Domain\Announcement\Services\EventBasedAnnouncementService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ class GiftStarterKitUseCase
     public function __construct(
         private GiftService $giftService,
         private StarterKitService $starterKitService,
-        private WalletService $walletService,
+        private UnifiedWalletService $walletService,
         private EventBasedAnnouncementService $announcementService
     ) {}
 
@@ -65,6 +65,9 @@ class GiftStarterKitUseCase
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            
+            // Clear gifter's wallet cache
+            $this->walletService->clearCache($gifter);
 
             // Purchase starter kit for recipient (using 'gift' payment method)
             $purchase = $this->starterKitService->purchaseStarterKit(
