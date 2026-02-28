@@ -18,12 +18,12 @@ export function usePresentationExport() {
         const targetWidth = isMobile ? 1080 : 1920;
         const targetHeight = isMobile ? 1920 : 1080;
         
-        // Get the slide's scroll container
-        const scrollContainer = slideElement.closest('.overflow-y-auto') as HTMLElement;
-        const hasScroll = scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight;
+        // Get the slide's scroll container - check if it exists and has scroll
+        const scrollContainer = slideElement.closest('.overflow-y-auto') as HTMLElement | null;
+        const hasScroll = scrollContainer ? scrollContainer.scrollHeight > scrollContainer.clientHeight : false;
         
         // If slide has scrollable content, we need to capture the full height
-        const fullHeight = hasScroll ? scrollContainer.scrollHeight : slideElement.offsetHeight;
+        const fullHeight = (hasScroll && scrollContainer) ? scrollContainer.scrollHeight : slideElement.offsetHeight;
         const fullWidth = slideElement.offsetWidth;
         
         // Calculate scale to achieve target resolution
@@ -35,8 +35,8 @@ export function usePresentationExport() {
         let originalOverflow = '';
         let originalHeight = '';
         if (hasScroll && scrollContainer) {
-            originalOverflow = scrollContainer.style.overflow;
-            originalHeight = scrollContainer.style.height;
+            originalOverflow = scrollContainer.style.overflow || '';
+            originalHeight = scrollContainer.style.height || '';
             scrollContainer.style.overflow = 'visible';
             scrollContainer.style.height = 'auto';
         }
