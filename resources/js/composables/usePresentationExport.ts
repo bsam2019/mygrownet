@@ -1,5 +1,79 @@
 export function usePresentationExport() {
     
+    /**
+     * Detect if user is on mobile device
+     */
+    const isMobileDevice = () => {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    };
+    
+    /**
+     * Capture a slide element with proper dimensions for mobile or desktop
+     */
+    const captureSlide = async (slideElement: HTMLElement, html2canvas: any) => {
+        const isMobile = isMobileDevice();
+        
+        // For mobile: Use 9:16 portrait ratio (1080x1920) - standard mobile screen
+        // For desktop: Use 16:9 landscape ratio (1920x1080) - standard presentation
+        const targetWidth = isMobile ? 1080 : 1920;
+        const targetHeight = isMobile ? 1920 : 1080;
+        
+        // Get the slide's scroll container
+        const scrollContainer = slideElement.closest('.overflow-y-auto') as HTMLElement;
+        const hasScroll = scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight;
+        
+        // If slide has scrollable content, we need to capture the full height
+        const fullHeight = hasScroll ? scrollContainer.scrollHeight : slideElement.offsetHeight;
+        const fullWidth = slideElement.offsetWidth;
+        
+        // Calculate scale to achieve target resolution
+        const scaleX = targetWidth / fullWidth;
+        const scaleY = targetHeight / fullHeight;
+        const scale = Math.min(scaleX, scaleY, 3); // Cap at 3x for performance
+        
+        // Temporarily remove scroll and expand to full height for capture
+        let originalOverflow = '';
+        let originalHeight = '';
+        if (hasScroll && scrollContainer) {
+            originalOverflow = scrollContainer.style.overflow;
+            originalHeight = scrollContainer.style.height;
+            scrollContainer.style.overflow = 'visible';
+            scrollContainer.style.height = 'auto';
+        }
+        
+        try {
+            // Capture the full slide content
+            const canvas = await html2canvas(slideElement, {
+                scale: scale,
+                useCORS: true,
+                logging: false,
+                allowTaint: true,
+                backgroundColor: null,
+                width: fullWidth,
+                height: fullHeight,
+                windowWidth: fullWidth,
+                windowHeight: fullHeight,
+                scrollY: 0,
+                scrollX: 0,
+            });
+            
+            // Restore scroll properties
+            if (hasScroll && scrollContainer) {
+                scrollContainer.style.overflow = originalOverflow;
+                scrollContainer.style.height = originalHeight;
+            }
+            
+            return canvas;
+        } catch (error) {
+            // Restore on error too
+            if (hasScroll && scrollContainer) {
+                scrollContainer.style.overflow = originalOverflow;
+                scrollContainer.style.height = originalHeight;
+            }
+            throw error;
+        }
+    };
+    
     const generatePowerPoint = async (referralCode: string, onProgress?: (current: number, total: number) => void) => {
         try {
             console.log('Starting PowerPoint generation...');
@@ -12,12 +86,22 @@ export function usePresentationExport() {
             const pptx = new PptxGenJS();
             console.log('PptxGenJS instance created');
             
+            const isMobile = isMobileDevice();
+            
             // Set presentation properties
             pptx.author = 'MyGrowNet';
             pptx.company = 'MyGrowNet';
             pptx.subject = 'GrowNet Platform Presentation';
-            pptx.title = 'Join MyGrowNet - Learn, Earn, Grow';
-            pptx.layout = 'LAYOUT_16x9';
+            pptx.title = 'Join MyGrowNet - Access, Earn, Grow';
+            
+            // Use portrait layout for mobile, landscape for desktop
+            if (isMobile) {
+                pptx.layout = 'LAYOUT_CUSTOM';
+                pptx.defineLayout({ name: 'MOBILE_PORTRAIT', width: 5.625, height: 10 }); // 9:16 ratio in inches
+                pptx.layout = 'MOBILE_PORTRAIT';
+            } else {
+                pptx.layout = 'LAYOUT_16x9';
+            }
             
             // Get all slide elements
             const slideElements = document.querySelectorAll('.h-full.w-full.flex-shrink-0');
@@ -38,28 +122,8 @@ export function usePresentationExport() {
                 
                 const slideElement = slideElements[i] as HTMLElement;
                 
-                // Get the actual dimensions of the slide
-                const rect = slideElement.getBoundingClientRect();
-                
-                // Calculate scale to get high resolution (target 1920x1080)
-                const targetWidth = 1920;
-                const targetHeight = 1080;
-                const scaleX = targetWidth / rect.width;
-                const scaleY = targetHeight / rect.height;
-                const scale = Math.max(scaleX, scaleY, 2); // Use at least 2x, or higher to reach target resolution
-                
-                // Capture the slide with html2canvas-pro (supports OKLCH)
-                const canvas = await html2canvas(slideElement, {
-                    scale: scale,
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    backgroundColor: null,
-                    width: rect.width,
-                    height: rect.height,
-                    windowWidth: rect.width,
-                    windowHeight: rect.height,
-                });
+                // Capture the slide with proper dimensions
+                const canvas = await captureSlide(slideElement, html2canvas);
                 
                 // Convert canvas to base64 image with maximum quality
                 const imgData = canvas.toDataURL('image/png', 1.0);
@@ -75,7 +139,7 @@ export function usePresentationExport() {
                     w: '100%',
                     h: '100%',
                     sizing: {
-                        type: 'cover',
+                        type: 'contain', // Use contain to preserve aspect ratio
                         w: '100%',
                         h: '100%'
                     }
@@ -83,8 +147,9 @@ export function usePresentationExport() {
             }
             
             // Save the presentation
-            console.log('Saving PowerPoint file...');
-            await pptx.writeFile({ fileName: `MyGrowNet_Presentation_${referralCode}.pptx` });
+            const deviceType = isMobile ? 'Mobile' : 'Desktop';
+            console.log(`Saving PowerPoint file for ${deviceType}...`);
+            await pptx.writeFile({ fileName: `MyGrowNet_${deviceType}_${referralCode}.pptx` });
             console.log('PowerPoint file saved successfully');
         } catch (error) {
             console.error('Error in generatePowerPoint:', error);
@@ -92,7 +157,7 @@ export function usePresentationExport() {
         }
     };
     
-    const generatePDF = async (slidesCount: number, onProgress?: (current: number, total: number) => void) => {
+    const generatePDF = async (onProgress?: (current: number, total: number) => void) => {
         try {
             console.log('Starting PDF generation...');
             
@@ -101,13 +166,20 @@ export function usePresentationExport() {
             const html2canvas = (await import('html2canvas-pro')).default;
             console.log('PDF libraries loaded');
             
-            // Create PDF in landscape mode
+            const isMobile = isMobileDevice();
+            
+            // Use portrait for mobile, landscape for desktop
+            const orientation = isMobile ? 'portrait' : 'landscape';
+            const width = isMobile ? 1080 : 1920;
+            const height = isMobile ? 1920 : 1080;
+            
+            // Create PDF
             const pdf = new jsPDF({
-                orientation: 'landscape',
+                orientation: orientation,
                 unit: 'px',
-                format: [1920, 1080]
+                format: [width, height]
             });
-            console.log('PDF instance created');
+            console.log(`PDF instance created (${orientation})`);
             
             // Get all slide elements
             const slideElements = document.querySelectorAll('.h-full.w-full.flex-shrink-0');
@@ -128,44 +200,33 @@ export function usePresentationExport() {
                 
                 const slideElement = slideElements[i] as HTMLElement;
                 
-                // Get the actual dimensions of the slide
-                const rect = slideElement.getBoundingClientRect();
-                
-                // Calculate scale to get high resolution (target 1920x1080)
-                const targetWidth = 1920;
-                const targetHeight = 1080;
-                const scaleX = targetWidth / rect.width;
-                const scaleY = targetHeight / rect.height;
-                const scale = Math.max(scaleX, scaleY, 2); // Use at least 2x, or higher to reach target resolution
-                
-                // Capture the slide with html2canvas-pro (supports OKLCH)
-                const canvas = await html2canvas(slideElement, {
-                    scale: scale,
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    backgroundColor: null,
-                    width: rect.width,
-                    height: rect.height,
-                    windowWidth: rect.width,
-                    windowHeight: rect.height,
-                });
+                // Capture the slide with proper dimensions
+                const canvas = await captureSlide(slideElement, html2canvas);
                 
                 // Convert canvas to image with maximum quality (PNG for better quality)
                 const imgData = canvas.toDataURL('image/png', 1.0);
                 
                 // Add page (except for first slide)
                 if (i > 0) {
-                    pdf.addPage([1920, 1080], 'landscape');
+                    pdf.addPage([width, height], orientation);
                 }
                 
-                // Add image to PDF (using PNG for better quality)
-                pdf.addImage(imgData, 'PNG', 0, 0, 1920, 1080, undefined, 'FAST');
+                // Add image to PDF - fit to page while maintaining aspect ratio
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min(width / imgWidth, height / imgHeight);
+                const scaledWidth = imgWidth * ratio;
+                const scaledHeight = imgHeight * ratio;
+                const x = (width - scaledWidth) / 2;
+                const y = (height - scaledHeight) / 2;
+                
+                pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight, undefined, 'FAST');
             }
             
             // Save the PDF
+            const deviceType = isMobile ? 'Mobile' : 'Desktop';
             console.log('Saving PDF file...');
-            pdf.save(`MyGrowNet_Presentation_${Date.now()}.pdf`);
+            pdf.save(`MyGrowNet_${deviceType}_${Date.now()}.pdf`);
             console.log('PDF file saved successfully');
         } catch (error) {
             console.error('Error in generatePDF:', error);

@@ -444,7 +444,7 @@ const downloadPDF = async () => {
       }
     };
     
-    await generatePDF(slides.value.length, updateProgress);
+    await generatePDF(updateProgress);
     
     close();
     success('PDF downloaded successfully!');
