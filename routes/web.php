@@ -661,6 +661,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/preview', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'preview'])->name('preview');
     });
     
+    // Admin Wallet Health Monitoring
+    Route::middleware(['admin'])->prefix('admin/wallet-health')->name('admin.wallet-health.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\WalletHealthController::class, 'index'])->name('index');
+    });
+    
     // Admin LGR Management Routes
     Route::middleware(['admin'])->prefix('admin/lgr')->name('admin.lgr.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\LgrAdminController::class, 'index'])->name('index');
@@ -1299,6 +1304,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/employee-management-summary', [App\Http\Controllers\Admin\AdminDashboardController::class, 'employeeManagementSummary'])->name('employee-management-summary');
         Route::get('/department-overview', [App\Http\Controllers\Admin\AdminDashboardController::class, 'departmentOverview'])->name('department-overview');
         Route::get('/performance-stats', [App\Http\Controllers\Admin\AdminDashboardController::class, 'performanceStats'])->name('performance-stats');
+        
+        // Wallet Health Monitoring
+        Route::get('/wallet-health/user/{userId}/breakdown', [App\Http\Controllers\Admin\WalletHealthController::class, 'userBreakdown'])->name('wallet-health.user-breakdown');
+        Route::get('/wallet-health/integrity-check', [App\Http\Controllers\Admin\WalletHealthController::class, 'integrityCheck'])->name('wallet-health.integrity-check');
     });
 
     // Enhanced Employee Management Routes

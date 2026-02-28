@@ -8,6 +8,19 @@ use Illuminate\Support\Facades\DB;
 /**
  * Centralized Wallet Service
  * 
+ * @deprecated This service is DEPRECATED and will be removed in a future version.
+ * Use App\Domain\Wallet\Services\UnifiedWalletService instead.
+ * 
+ * REASON FOR DEPRECATION:
+ * - Inconsistent balance calculations
+ * - Missing loan support
+ * - No cache invalidation
+ * - Withdrawal double-counting issues
+ * 
+ * MIGRATION PATH:
+ * Replace: app(WalletService::class)->calculateBalance($user)
+ * With: app(\App\Domain\Wallet\Services\UnifiedWalletService::class)->calculateBalance($user)
+ * 
  * This service handles all wallet balance calculations and operations.
  * The wallet balance is calculated dynamically from multiple sources.
  * 

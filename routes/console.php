@@ -60,6 +60,11 @@ Schedule::command('accounts:monitor')
     ->dailyAt('07:00')
     ->description('Monitor account integrity and alert on issues');
 
+// Wallet Balance Monitoring
+Schedule::command('wallet:monitor --alert')
+    ->dailyAt('02:00')
+    ->description('Monitor wallet balances for negative balances and anomalies');
+
 // ========================================
 // BizBoost Scheduled Tasks
 // ========================================
