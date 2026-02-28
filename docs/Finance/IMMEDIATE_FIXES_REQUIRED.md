@@ -683,9 +683,10 @@ All users with deposits now have correct positive balances:
 ## Monitoring Plan
 
 ### Week 1 (2026-02-28 to 2026-03-07)
-- Daily balance spot checks
-- Monitor error logs for wallet-related issues
-- Track user reports of balance discrepancies
+- ✅ Daily balance spot checks (automated via wallet:monitor command)
+- ✅ Monitor error logs for wallet-related issues
+- ✅ Track user reports of balance discrepancies
+- ✅ Admin dashboard available at /admin/wallet-health
 
 ### Week 2-4
 - Weekly balance audits
@@ -696,3 +697,54 @@ All users with deposits now have correct positive balances:
 - Implement Phase 1 of architecture refactoring
 - Add automated balance verification tests
 - Set up alerts for negative balances
+
+## New Monitoring Tools (Added 2026-02-28)
+
+### Automated Monitoring Command
+```bash
+# Manual check
+php artisan wallet:monitor
+
+# With email alerts
+php artisan wallet:monitor --alert
+
+# Attempt automatic fixes
+php artisan wallet:monitor --fix
+```
+
+**Scheduled:** Runs daily at 2:00 AM automatically
+
+**Features:**
+- Detects negative balances
+- Identifies suspiciously large balances (>K100,000)
+- Checks zero balances with transactions
+- Logs all findings
+- Sends alerts to administrators
+
+### Admin Dashboard
+**URL:** `/admin/wallet-health`
+
+**Features:**
+- System-wide statistics
+- Health score calculation
+- Recent issues list
+- Transaction statistics
+- User balance breakdown
+- Integrity checks
+
+**API Endpoints:**
+- `GET /api/admin/wallet-health/user/{userId}/breakdown` - Detailed user wallet breakdown
+- `GET /api/admin/wallet-health/integrity-check` - Run system integrity checks
+
+### WalletService Deprecation
+The old `WalletService` has been marked as deprecated with clear migration instructions:
+
+```php
+// OLD (deprecated)
+app(WalletService::class)->calculateBalance($user)
+
+// NEW (use this)
+app(\App\Domain\Wallet\Services\UnifiedWalletService::class)->calculateBalance($user)
+```
+
+All new code should use `UnifiedWalletService`. The old service will be removed in a future version.
