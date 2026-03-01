@@ -22,9 +22,9 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     /**
      * Get user's current wallet balance
      * 
-     * Matches UnifiedWalletService calculation exactly:
-     * - Credits: deposits (member_payments + transactions) + commissions + profit shares + LGR awards
-     * - Debits: withdrawals + purchases + subscriptions
+     * IMPORTANT: Uses ONLY transactions table as single source of truth
+     * to avoid double-counting deposits that exist in both member_payments
+     * and transactions tables.
      * 
      * Note: Uses ABS() for withdrawals to handle inconsistent storage
      */
@@ -33,22 +33,12 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         $cacheKey = $this->getCacheKey($user, 'balance');
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
-            // Get deposits from member_payments table (legacy)
-            $depositsMp = DB::table('member_payments')
-                ->where('user_id', $user->id)
-                ->where('payment_type', 'wallet_topup')
-                ->where('status', 'verified')
-                ->sum('amount');
-            
-            // Get deposits from transactions table
-            $depositsTx = DB::table('transactions')
+            // Get deposits from transactions table ONLY (single source of truth)
+            $deposits = DB::table('transactions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
                 ->whereIn('transaction_type', ['deposit', 'wallet_topup'])
                 ->sum('amount');
-            
-            // Total deposits
-            $deposits = $depositsMp + $depositsTx;
             
             // Get commissions from referral_commissions table
             $commissions = DB::table('referral_commissions')
