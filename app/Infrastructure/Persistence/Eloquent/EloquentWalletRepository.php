@@ -21,16 +21,54 @@ class EloquentWalletRepository implements WalletRepositoryInterface
 
     /**
      * Get user's current wallet balance
+     * 
+     * Note: Handles inconsistent withdrawal storage (some positive, some negative)
+     * by using ABS() for debit transaction types to match UnifiedWalletService behavior
      */
     public function getBalance(User $user): Money
     {
         $cacheKey = $this->getCacheKey($user, 'balance');
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
-            $balance = DB::table('transactions')
+            // Get credits (deposits, earnings, etc.)
+            $credits = DB::table('transactions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
+                ->whereIn('transaction_type', [
+                    'wallet_topup',
+                    'deposit',
+                    'commission_earned',
+                    'profit_share',
+                    'lgr_earned',
+                    'lgr_manual_award',
+                    'lgr_transfer_in',
+                    'loan_disbursement',
+                    'shop_credit_allocation',
+                ])
                 ->sum('amount');
+            
+            // Get debits (withdrawals, purchases, etc.) - use ABS to handle inconsistent storage
+            $debits = DB::table('transactions')
+                ->where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->whereIn('transaction_type', [
+                    'withdrawal',
+                    'starter_kit_purchase',
+                    'starter_kit_upgrade',
+                    'shop_purchase',
+                    'shop_credit_usage',
+                    'loan_repayment',
+                    'lgr_transfer_out',
+                    'subscription_payment',
+                    'workshop_payment',
+                    'learning_pack_purchase',
+                    'coaching_payment',
+                    'growbuilder_payment',
+                    'marketplace_purchase',
+                ])
+                ->sum(DB::raw('ABS(amount)'));
+            
+            $balance = $credits - $debits;
             
             return Money::fromKwacha(max(0, $balance));
         });
@@ -38,37 +76,75 @@ class EloquentWalletRepository implements WalletRepositoryInterface
 
     /**
      * Get detailed wallet breakdown
+     * 
+     * Note: Uses ABS() for debit types to handle inconsistent storage
      */
     public function getBreakdown(User $user): array
     {
         $cacheKey = $this->getCacheKey($user, 'breakdown');
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
-            // Get all completed transactions
-            $transactions = DB::table('transactions')
+            // Define credit and debit transaction types
+            $creditTypes = [
+                'wallet_topup',
+                'deposit',
+                'commission_earned',
+                'profit_share',
+                'lgr_earned',
+                'lgr_manual_award',
+                'lgr_transfer_in',
+                'loan_disbursement',
+                'shop_credit_allocation',
+            ];
+            
+            $debitTypes = [
+                'withdrawal',
+                'starter_kit_purchase',
+                'starter_kit_upgrade',
+                'shop_purchase',
+                'shop_credit_usage',
+                'loan_repayment',
+                'lgr_transfer_out',
+                'subscription_payment',
+                'workshop_payment',
+                'learning_pack_purchase',
+                'coaching_payment',
+                'growbuilder_payment',
+                'marketplace_purchase',
+            ];
+            
+            // Get credit transactions
+            $credits = DB::table('transactions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
+                ->whereIn('transaction_type', $creditTypes)
                 ->select('transaction_type', 'transaction_source', 'amount')
                 ->get();
             
-            // Calculate credits
-            $credits = $transactions->where('amount', '>', 0);
             $creditsByType = $credits->groupBy('transaction_type')
                 ->map(fn($group) => Money::fromKwacha($group->sum('amount')))
                 ->toArray();
             
             $creditsBySource = $credits->groupBy('transaction_source')
+                ->filter(fn($group, $key) => !empty($key))
                 ->map(fn($group) => Money::fromKwacha($group->sum('amount')))
                 ->toArray();
             
-            // Calculate debits
-            $debits = $transactions->where('amount', '<', 0);
+            // Get debit transactions - use ABS for amounts
+            $debits = DB::table('transactions')
+                ->where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->whereIn('transaction_type', $debitTypes)
+                ->select('transaction_type', 'transaction_source', DB::raw('ABS(amount) as amount'))
+                ->get();
+            
             $debitsByType = $debits->groupBy('transaction_type')
-                ->map(fn($group) => Money::fromKwacha(abs($group->sum('amount'))))
+                ->map(fn($group) => Money::fromKwacha($group->sum('amount')))
                 ->toArray();
             
             $debitsBySource = $debits->groupBy('transaction_source')
-                ->map(fn($group) => Money::fromKwacha(abs($group->sum('amount'))))
+                ->filter(fn($group, $key) => !empty($key))
+                ->map(fn($group) => Money::fromKwacha($group->sum('amount')))
                 ->toArray();
             
             return [
@@ -79,7 +155,7 @@ class EloquentWalletRepository implements WalletRepositoryInterface
                     'by_source' => $creditsBySource,
                 ],
                 'debits' => [
-                    'total' => Money::fromKwacha(abs($debits->sum('amount'))),
+                    'total' => Money::fromKwacha($debits->sum('amount')),
                     'by_type' => $debitsByType,
                     'by_source' => $debitsBySource,
                 ],
