@@ -89,7 +89,7 @@ class GiftService
 
     private function getWalletBalance(User $user): int
     {
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
         return (int) $walletService->calculateBalance($user);
     }
 }

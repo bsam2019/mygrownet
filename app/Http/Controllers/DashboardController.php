@@ -386,8 +386,8 @@ class DashboardController extends Controller
     
     private function getWalletBalance($user)
     {
-        // Use centralized WalletService for consistent calculation
-        $walletService = app(\App\Services\WalletService::class);
+        // Use UnifiedWalletService for consistent calculation
+        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
         return $walletService->calculateBalance($user);
     }
     
