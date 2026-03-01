@@ -22,32 +22,47 @@ class EloquentWalletRepository implements WalletRepositoryInterface
     /**
      * Get user's current wallet balance
      * 
-     * Note: Handles inconsistent withdrawal storage (some positive, some negative)
-     * by using ABS() for debit transaction types to match UnifiedWalletService behavior
+     * Matches UnifiedWalletService calculation exactly:
+     * - Credits: deposits (wallet_topup + deposit) + commissions + profit shares + LGR awards
+     * - Debits: withdrawals + purchases + subscriptions
+     * 
+     * Note: Uses ABS() for withdrawals to handle inconsistent storage
      */
     public function getBalance(User $user): Money
     {
         $cacheKey = $this->getCacheKey($user, 'balance');
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
-            // Get credits (deposits, earnings, etc.)
-            $credits = DB::table('transactions')
+            // Get deposits from transactions table
+            $deposits = DB::table('transactions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
-                ->whereIn('transaction_type', [
-                    'wallet_topup',
-                    'deposit',
-                    'commission_earned',
-                    'profit_share',
-                    'lgr_earned',
-                    'lgr_manual_award',
-                    'lgr_transfer_in',
-                    'loan_disbursement',
-                    'shop_credit_allocation',
-                ])
+                ->whereIn('transaction_type', ['deposit', 'wallet_topup'])
                 ->sum('amount');
             
-            // Get debits (withdrawals, purchases, etc.) - use ABS to handle inconsistent storage
+            // Get commissions from referral_commissions table
+            $commissions = DB::table('referral_commissions')
+                ->where('referrer_id', $user->id)
+                ->where('status', 'paid')
+                ->sum('amount');
+            
+            // Get profit shares from profit_shares table
+            $profitShares = DB::table('profit_shares')
+                ->where('user_id', $user->id)
+                ->where('status', 'paid')
+                ->sum('amount');
+            
+            // Get LGR manual awards from transactions
+            $lgrAwards = DB::table('transactions')
+                ->where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->where('transaction_type', 'lgr_manual_award')
+                ->sum('amount');
+            
+            // Total credits
+            $credits = $deposits + $commissions + $profitShares + $lgrAwards;
+            
+            // Get debits - use ABS to handle inconsistent storage
             $debits = DB::table('transactions')
                 ->where('user_id', $user->id)
                 ->where('status', 'completed')
@@ -55,16 +70,8 @@ class EloquentWalletRepository implements WalletRepositoryInterface
                     'withdrawal',
                     'starter_kit_purchase',
                     'starter_kit_upgrade',
-                    'shop_purchase',
-                    'shop_credit_usage',
-                    'loan_repayment',
-                    'lgr_transfer_out',
                     'subscription_payment',
-                    'workshop_payment',
-                    'learning_pack_purchase',
-                    'coaching_payment',
-                    'growbuilder_payment',
-                    'marketplace_purchase',
+                    'lgr_transfer_out',
                 ])
                 ->sum(DB::raw('ABS(amount)'));
             
@@ -84,33 +91,19 @@ class EloquentWalletRepository implements WalletRepositoryInterface
         $cacheKey = $this->getCacheKey($user, 'breakdown');
         
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user) {
-            // Define credit and debit transaction types
+            // Define credit and debit transaction types based on actual production data
             $creditTypes = [
-                'wallet_topup',
                 'deposit',
-                'commission_earned',
-                'profit_share',
-                'lgr_earned',
+                'wallet_topup',
                 'lgr_manual_award',
-                'lgr_transfer_in',
-                'loan_disbursement',
-                'shop_credit_allocation',
             ];
             
             $debitTypes = [
                 'withdrawal',
                 'starter_kit_purchase',
                 'starter_kit_upgrade',
-                'shop_purchase',
-                'shop_credit_usage',
-                'loan_repayment',
-                'lgr_transfer_out',
                 'subscription_payment',
-                'workshop_payment',
-                'learning_pack_purchase',
-                'coaching_payment',
-                'growbuilder_payment',
-                'marketplace_purchase',
+                'lgr_transfer_out',
             ];
             
             // Get credit transactions
