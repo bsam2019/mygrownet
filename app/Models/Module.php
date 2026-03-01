@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Module extends Model
 {
+    protected $table = 'financial_modules';
+
     protected $fillable = [
         'code',
         'name',
