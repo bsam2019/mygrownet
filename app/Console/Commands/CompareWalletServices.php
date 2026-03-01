@@ -98,8 +98,9 @@ class CompareWalletServices extends Command
     private function compareAllUsers(WalletComparisonService $service): int
     {
         $userIds = User::whereHas('transactions')->pluck('id')->toArray();
+        $count = count($userIds);
         
-        $this->info("Comparing {count($userIds)} users with wallet activity...");
+        $this->info("Comparing {$count} users with wallet activity...");
         $this->newLine();
 
         return $this->processComparison($userIds, $service);
