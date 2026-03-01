@@ -51,21 +51,29 @@ class WithdrawalApprovalController extends Controller
             DB::beginTransaction();
 
             try {
-                // Update withdrawal status
-                $withdrawal->update([
-                    'status' => 'approved',
-                    'processed_at' => now(),
-                ]);
-                
-                // Update corresponding transaction status
-                DB::table('transactions')
+                // Find the corresponding transaction
+                $transaction = DB::table('transactions')
                     ->where('reference_number', $withdrawal->reference)
                     ->where('user_id', $withdrawal->user_id)
                     ->where('transaction_type', 'withdrawal')
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => now(),
-                    ]);
+                    ->first();
+                
+                // Update withdrawal status and link to transaction
+                $withdrawal->update([
+                    'status' => 'approved',
+                    'processed_at' => now(),
+                    'transaction_id' => $transaction ? $transaction->id : null,
+                ]);
+                
+                // Update corresponding transaction status
+                if ($transaction) {
+                    DB::table('transactions')
+                        ->where('id', $transaction->id)
+                        ->update([
+                            'status' => 'completed',
+                            'updated_at' => now(),
+                        ]);
+                }
                 
                 // Clear wallet cache
                 $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
