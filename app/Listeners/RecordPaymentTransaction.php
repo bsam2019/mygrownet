@@ -63,22 +63,25 @@ class RecordPaymentTransaction
 
             // Create transaction record using TransactionIntegrityService
             // This prevents duplicates and ensures data integrity
-            $transaction = $this->transactionService->recordTransaction(
+            $transaction = $this->transactionService->recordWalletCredit(
                 user: $user,
                 amount: $event->amount,
                 type: $transactionType->value,
                 description: $this->generateDescription($event->paymentType, $event->amount),
-                reference: $reference,
-                status: TransactionStatus::COMPLETED->value,
-                metadata: [
+                reference: $reference
+            );
+
+            // Update transaction with additional metadata
+            $transaction->update([
+                'transaction_source' => $source,
+                'notes' => json_encode([
                     'payment_id' => $event->paymentId,
                     'payment_type' => $event->paymentType,
                     'verified_by' => $event->verifiedBy,
                     'verified_at' => $event->occurredAt->format('Y-m-d H:i:s'),
                     'source' => 'payment_verification',
-                ],
-                source: $source
-            );
+                ]),
+            ]);
 
             // Clear wallet cache to reflect new balance
             Cache::forget("wallet_balance_{$user->id}");

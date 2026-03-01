@@ -119,16 +119,19 @@ class MigratePaymentsToTransactions extends Command
 
         // Create transaction record
         $reference = "payment_{$payment->id}_migrated_" . time();
-        $source = $this->determineTransactionSource($payment->payment_type);
 
-        $this->transactionService->recordTransaction(
+        $transaction = $this->transactionService->recordWalletCredit(
             user: $user,
             amount: $payment->amount,
             type: $transactionType->value,
             description: $this->generateDescription($payment->payment_type, $payment->amount),
-            reference: $reference,
-            status: TransactionStatus::COMPLETED->value,
-            metadata: [
+            reference: $reference
+        );
+
+        // Update transaction with additional metadata
+        $transaction->update([
+            'transaction_source' => $this->determineTransactionSource($payment->payment_type),
+            'notes' => json_encode([
                 'payment_id' => $payment->id,
                 'payment_type' => $payment->payment_type,
                 'payment_reference' => $payment->payment_reference,
@@ -136,10 +139,9 @@ class MigratePaymentsToTransactions extends Command
                 'verified_at' => $payment->verified_at?->format('Y-m-d H:i:s'),
                 'source' => 'historical_migration',
                 'migrated_at' => now()->format('Y-m-d H:i:s'),
-            ],
-            source: $source,
-            createdAt: $payment->created_at // Use original payment date
-        );
+            ]),
+            'created_at' => $payment->created_at, // Use original payment date
+        ]);
 
         // Clear wallet cache for this user
         Cache::forget("wallet_balance_{$user->id}");
