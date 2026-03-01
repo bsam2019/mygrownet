@@ -665,3 +665,96 @@
 **Maintained By:** Development Team  
 **Review Frequency:** Monthly or after major changes  
 **Last Review:** 2026-02-28
+
+
+---
+
+## Financial Data Fragmentation Analysis
+
+**Last Updated:** 2026-03-01  
+**Status:** Critical - Multiple tables causing data inconsistency
+
+### The Problem: Financial Data Scattered Across 8+ Tables
+
+MyGrowNet's financial data is fragmented across multiple tables, causing:
+- Double/triple counting of transactions
+- Inconsistent balance calculations
+- Data integrity issues
+- Difficult auditing and reconciliation
+
+---
+
+### Current Table Structure & Issues
+
+#### 1. DEPOSITS (3 locations) ⚠️ CRITICAL ISSUE
+| Table | Records | Status | Issue |
+|-------|---------|--------|-------|
+| `member_payments` | 23 | Legacy | Still being queried by old service |
+| `transactions` (wallet_topup) | 6 | Active | Some duplicates with member_payments |
+| `transactions` (deposit) | 11 | Active | Extra records created 1-2 min after topup |
+
+**Problem:** Same deposit recorded 2-3 times across tables, causing inflated balances.
+
+#### 2. WITHDRAWALS (2 locations)
+| Table | Records | Status | Issue |
+|-------|---------|--------|-------|
+| `withdrawals` | 5 | Active | Withdrawal requests/approvals |
+| `transactions` (withdrawal) | 56 | Active | Actual withdrawal transactions |
+
+**Problem:** Mismatch between requests (5) and transactions (56) - phantom withdrawals exist.
+
+#### 3. COMMISSIONS (1 location) ✅ OK
+| Table | Records | Status |
+|-------|---------|--------|
+| `referral_commissions` | 15 | Active |
+
+**Status:** Only in referral_commissions table (good).
+
+#### 4. STARTER KITS (2 locations)
+| Table | Records | Status | Issue |
+|-------|---------|--------|-------|
+| `starter_kit_purchases` | 18 | Active | Purchase records |
+| `transactions` (starter_kit_purchase) | 14 | Active | Payment transactions |
+| `transactions` (starter_kit_upgrade) | 3 | Active | Upgrade transactions |
+
+**Problem:** Mismatch - 18 purchases but only 17 transactions (14+3).
+
+---
+
+### Impact of Fragmentation
+
+**Example: User 6 (Mirriam chiluba)**
+- **Old calculation:** K1,544.04 (WRONG - counted deposits 3x)
+- **Correct calculation:** K540.00
+- **Difference:** K1,004.04 overstatement (186% inflation!)
+
+**System-wide Impact:**
+- 14 users affected by duplicate deposits
+- 19 duplicate transactions removed
+- 1 phantom withdrawal found
+- Unknown number of other inconsistencies
+
+---
+
+### Recommended Solution: Single Source of Truth
+
+**Target Architecture:**
+```
+transactions (single source of truth)
+    ↑
+    ├── Deposits (all in transactions only)
+    ├── Withdrawals (linked to withdrawals table for approval workflow)
+    ├── Commissions (linked to referral_commissions for calculation)
+    ├── Purchases (linked to starter_kit_purchases, orders for details)
+    └── All other financial operations
+```
+
+**Migration Plan:**
+1. ✅ **Phase 2 Complete** - New service uses transactions table only
+2. **Phase 3** - Data consolidation:
+   - Stop writing to member_payments
+   - Ensure all operations create transaction records
+   - Link approval tables (withdrawals) to transactions
+3. **Phase 4** - Deprecate legacy tables:
+   - Mark member_payments as read-only
+   - Archive old data
