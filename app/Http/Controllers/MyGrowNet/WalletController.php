@@ -15,8 +15,8 @@ class WalletController extends Controller
         // Reset daily withdrawal limit if needed
         $this->resetDailyWithdrawalIfNeeded($user);
         
-        // Use WalletService for consistent balance calculation
-        $walletService = app(\App\Services\WalletService::class);
+        // Use UnifiedWalletService for consistent balance calculation (Phase 3 migration)
+        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
         $breakdown = $walletService->getWalletBreakdown($user);
         
         $balance = $breakdown['balance'];

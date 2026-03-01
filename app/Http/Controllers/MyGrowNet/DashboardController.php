@@ -36,7 +36,7 @@ class DashboardController extends Controller
     protected MyGrowNetTierAdvancementService $tierAdvancementService;
     protected AssetIncomeTrackingService $assetIncomeTrackingService;
     protected CommunityProjectService $communityProjectService;
-    protected \App\Services\WalletService $walletService;
+    protected \App\Domain\Wallet\Services\UnifiedWalletService $walletService;
     protected \App\Services\EarningsService $earningsService;
     protected GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase;
     protected MessagingService $messagingService;
@@ -47,7 +47,7 @@ class DashboardController extends Controller
         MyGrowNetTierAdvancementService $tierAdvancementService,
         AssetIncomeTrackingService $assetIncomeTrackingService,
         CommunityProjectService $communityProjectService,
-        \App\Services\WalletService $walletService,
+        \App\Domain\Wallet\Services\UnifiedWalletService $walletService,
         \App\Services\EarningsService $earningsService,
         GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase,
         MessagingService $messagingService,
