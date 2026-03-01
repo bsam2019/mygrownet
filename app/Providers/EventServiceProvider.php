@@ -33,6 +33,7 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\AwardDownlineAdvancementPoints::class,
         ],
         \App\Domain\Payment\Events\PaymentVerified::class => [
+            \App\Listeners\RecordPaymentTransaction::class, // CRITICAL: Record transaction for verified payment
             \App\Listeners\ProcessMLMCommissions::class,
         ],
         

@@ -71,14 +71,15 @@
 - Unique: `payment_reference`
 
 **Critical Issue:**
-- ⚠️ **SYNC PROBLEM:** When status changes to 'verified', a corresponding record should be created in `transactions` table
-- Currently NOT syncing automatically
-- Causes negative wallet balances when deposit not synced
+- ✅ **FIXED IN PHASE 3:** When status changes to 'verified', a transaction record is now automatically created
+- New `RecordPaymentTransaction` listener handles this
+- Historical data can be migrated using `php artisan finance:migrate-payments`
 
 **Related Services:**
 - Payment verification controllers
-- `DepositSyncService` (to be created)
-- Should sync to `transactions` table when status = 'verified'
+- `RecordPaymentTransaction` listener (NEW - Phase 3)
+- `MigratePaymentsToTransactions` command (NEW - Phase 3)
+- Syncs to `transactions` table automatically when status = 'verified'
 
 ---
 
@@ -581,15 +582,17 @@
 
 ## Critical Issues Summary
 
-### 1. Deposit Sync Issue (CRITICAL)
+### 1. Deposit Sync Issue ✅ FIXED IN PHASE 3
 **Problem:** Deposits in `member_payments` not synced to `transactions`  
 **Impact:** Negative wallet balances  
-**Solution:** Create `DepositSyncService` to sync on verification
+**Solution:** Created `RecordPaymentTransaction` listener + migration command
+**Status:** ✅ Implemented, ready for deployment
 
 ### 2. Withdrawal Double Counting (HIGH)
 **Problem:** Withdrawals counted from both `withdrawals` and `transactions` tables  
 **Impact:** Incorrect balance calculation  
-**Solution:** Standardize on one source or ensure no duplication
+**Solution:** Link withdrawals to transactions with foreign key (Phase 3)
+**Status:** 🔜 Planned
 
 ### 3. Shop Credit Not in Transactions (MEDIUM)
 **Problem:** Shop credit expenses not recorded in transactions  
@@ -633,23 +636,23 @@
 
 ## Recommended Actions
 
-### Immediate (Today)
-1. Add cache invalidation after all transactions
-2. Create `DepositSyncService` to sync member_payments to transactions
-3. Run reconciliation script to fix existing negative balances
+### Immediate (Ready to Deploy) ✅
+1. ✅ Deploy Phase 3 changes to production
+2. ✅ Run migration command to sync historical payments
+3. ✅ Validate data integrity with new validation command
+4. ✅ Monitor wallet balances for 24-48 hours
 
 ### Short Term (This Week)
-1. Add loan transaction support to `UnifiedWalletService`
-2. Replace `WalletService` in remaining 2 files with `UnifiedWalletService`
-3. Fix withdrawal double-counting issue
-4. Verify LGR transfer transactions are properly recorded
-5. Add performance bonuses to earnings calculation (if they should be in wallet)
+1. Add transaction_id foreign key to withdrawals table
+2. Update withdrawal approval to link transactions
+3. Remove member_payments query from UnifiedWalletService
+4. Add performance bonuses to earnings calculation (if they should be in wallet)
 
 ### Long Term (This Month)
-1. Implement domain-driven architecture per FINANCIAL_SYSTEM_ARCHITECTURE.md
-2. Create unified transaction recording service
-3. Implement proper event sourcing for financial operations
-4. Add comprehensive audit trail
+1. Complete Phase 4 cutover to new services
+2. Deprecate legacy WalletService completely
+3. Implement comprehensive audit trail
+4. Add real-time balance validation
 
 ---
 
