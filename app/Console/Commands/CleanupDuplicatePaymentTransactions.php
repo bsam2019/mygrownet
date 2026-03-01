@@ -31,23 +31,24 @@ class CleanupDuplicatePaymentTransactions extends Command
             $this->newLine();
         }
 
-        // Find duplicate transactions: same user, same amount, same date, different types
+        // Find duplicate transactions: same user, same amount, within 7 days
         $query = "
             SELECT 
                 t1.id as id1,
                 t1.transaction_type as type1,
                 t1.reference_number as ref1,
+                t1.created_at as date1,
                 t2.id as id2,
                 t2.transaction_type as type2,
                 t2.reference_number as ref2,
+                t2.created_at as date2,
                 t1.user_id,
-                t1.amount,
-                DATE(t1.created_at) as date
+                t1.amount
             FROM transactions t1
             INNER JOIN transactions t2 ON 
                 t1.user_id = t2.user_id 
                 AND t1.amount = t2.amount 
-                AND DATE(t1.created_at) = DATE(t2.created_at)
+                AND ABS(DATEDIFF(t1.created_at, t2.created_at)) <= 7
                 AND t1.id < t2.id
             WHERE 
                 t1.transaction_type IN ('deposit', 'wallet_topup')
@@ -140,7 +141,8 @@ class CleanupDuplicatePaymentTransactions extends Command
                 'kept_id' => $keepId,
                 'removed_id' => $removeId,
                 'amount' => $duplicate->amount,
-                'date' => $duplicate->date,
+                'date1' => $duplicate->date1,
+                'date2' => $duplicate->date2,
             ]);
         }
     }
