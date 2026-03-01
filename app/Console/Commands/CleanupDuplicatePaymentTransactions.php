@@ -31,7 +31,8 @@ class CleanupDuplicatePaymentTransactions extends Command
             $this->newLine();
         }
 
-        // Find duplicate transactions: same user, same amount, within 7 days
+        // Find duplicate transactions: same user, same amount, within 180 days (6 months)
+        // This catches duplicates from earlier migrations and recent Phase 3 migration
         $query = "
             SELECT 
                 t1.id as id1,
@@ -48,7 +49,7 @@ class CleanupDuplicatePaymentTransactions extends Command
             INNER JOIN transactions t2 ON 
                 t1.user_id = t2.user_id 
                 AND t1.amount = t2.amount 
-                AND ABS(DATEDIFF(t1.created_at, t2.created_at)) <= 7
+                AND ABS(DATEDIFF(t1.created_at, t2.created_at)) <= 180
                 AND t1.id < t2.id
             WHERE 
                 t1.transaction_type IN ('deposit', 'wallet_topup')
