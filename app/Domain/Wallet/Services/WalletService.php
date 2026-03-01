@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Unified Wallet Service
+ * Wallet Service
  * 
  * Handles wallet operations for ALL account types:
  * - MEMBER: Full earnings (commissions, profit shares) + deposits
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Cache;
  * 
  * PERFORMANCE: Uses caching and optimized queries to reduce DB load
  */
-class UnifiedWalletService
+class WalletService
 {
     /**
      * Cache TTL in seconds (2 minutes for balance data)

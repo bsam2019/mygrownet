@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -16,9 +16,9 @@ use Inertia\Inertia;
  */
 class WalletHealthController extends Controller
 {
-    private UnifiedWalletService $walletService;
+    private WalletService $walletService;
 
-    public function __construct(UnifiedWalletService $walletService)
+    public function __construct(WalletService $walletService)
     {
         $this->walletService = $walletService;
     }

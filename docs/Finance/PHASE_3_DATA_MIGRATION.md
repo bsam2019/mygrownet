@@ -96,12 +96,12 @@ class RecordPaymentTransaction
 
 ### Step 2: Stop Using member_payments for Balance Calculation
 
-**Problem:** `UnifiedWalletService` queries member_payments table causing double-counting.
+**Problem:** `WalletService` queries member_payments table causing double-counting.
 
 **Solution:** Remove member_payments query from wallet service.
 
 **Files to Modify:**
-- `app/Domain/Wallet/Services/UnifiedWalletService.php`
+- `app/Domain/Wallet/Services/WalletService.php`
 
 **Changes:**
 ```php
@@ -235,7 +235,7 @@ php artisan finance:reconcile-balances
 If issues arise:
 
 1. **Disable new listener** - Remove RecordPaymentTransaction from EventServiceProvider
-2. **Revert service changes** - Restore member_payments query in UnifiedWalletService
+2. **Revert service changes** - Restore member_payments query in WalletService
 3. **Clear caches** - Clear all wallet caches
 4. **Notify users** - Inform users of temporary maintenance
 5. **Investigate** - Identify root cause
@@ -287,7 +287,7 @@ Phase 3 is complete when:
 
 ### Modified Files
 - `app/Providers/EventServiceProvider.php`
-- `app/Domain/Wallet/Services/UnifiedWalletService.php`
+- `app/Domain/Wallet/Services/WalletService.php`
 - `app/Http/Controllers/Admin/WithdrawalApprovalController.php`
 - `app/Services/StarterKitService.php`
 

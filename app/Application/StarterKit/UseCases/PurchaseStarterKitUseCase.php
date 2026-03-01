@@ -20,7 +20,7 @@ class PurchaseStarterKitUseCase
     public function __construct(
         private readonly PurchasePolicy $purchasePolicy,
         private readonly StarterKitService $starterKitService, // Keep for now, will refactor later
-        private readonly \App\Domain\Wallet\Services\UnifiedWalletService $walletService
+        private readonly \App\Domain\Wallet\Services\WalletService $walletService
     ) {}
 
     public function execute(

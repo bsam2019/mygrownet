@@ -80,12 +80,12 @@ Reusable modal for topping up wallet balance from any app.
 - `cancel()` - Cancel subscription
 
 ### Module-Specific Controllers
-Each module can have its own subscription controller that uses `UnifiedWalletService`:
+Each module can have its own subscription controller that uses `WalletService`:
 
 ```php
 public function __construct(
     private SubscriptionService $subscriptionService,
-    private UnifiedWalletService $walletService
+    private WalletService $walletService
 ) {}
 
 public function settings(Request $request)

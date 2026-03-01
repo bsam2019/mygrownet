@@ -5,7 +5,7 @@ namespace App\Http\Controllers\LifePlus;
 use App\Http\Controllers\Controller;
 use App\Domain\LifePlus\Services\ProfileService;
 use App\Domain\Module\Services\TierConfigurationService;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -14,7 +14,7 @@ class ProfileController extends Controller
     public function __construct(
         protected ProfileService $profileService,
         protected TierConfigurationService $tierConfigService,
-        protected UnifiedWalletService $walletService
+        protected WalletService $walletService
     ) {}
 
     public function index()

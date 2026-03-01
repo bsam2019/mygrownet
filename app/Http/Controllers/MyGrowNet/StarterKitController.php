@@ -242,8 +242,8 @@ class StarterKitController extends Controller
                 ->with('info', 'You already have the Starter Kit!');
         }
         
-        // Calculate wallet balance using UnifiedWalletService for consistency
-        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        // Calculate wallet balance using WalletService for consistency
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         $walletBalance = $walletService->calculateBalance($user);
         
         // Load content items from database

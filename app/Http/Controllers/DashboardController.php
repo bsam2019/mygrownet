@@ -71,7 +71,7 @@ class DashboardController extends Controller
         $modules = $this->filterEnabledModules($modules);
         
         // Get wallet data
-        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         $walletBreakdown = $walletService->getWalletBreakdown($user);
         $recentTransactions = $walletService->getRecentTransactions($user, 5);
         
@@ -386,8 +386,8 @@ class DashboardController extends Controller
     
     private function getWalletBalance($user)
     {
-        // Use UnifiedWalletService for consistent calculation
-        $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        // Use WalletService for consistent calculation
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         return $walletService->calculateBalance($user);
     }
     

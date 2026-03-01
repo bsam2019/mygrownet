@@ -6,7 +6,7 @@ use App\Domain\Module\Services\ModuleSubscriptionService;
 use App\Domain\Module\ValueObjects\ModuleId;
 use App\Domain\Module\ValueObjects\SubscriptionTier;
 use App\Domain\Module\ValueObjects\Money;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +20,7 @@ class ModuleSubscriptionCheckoutController extends Controller
 {
     public function __construct(
         private readonly ModuleSubscriptionService $subscriptionService,
-        private readonly UnifiedWalletService $walletService
+        private readonly WalletService $walletService
     ) {}
 
     /**

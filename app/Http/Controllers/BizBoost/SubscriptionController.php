@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
 use App\Domain\Module\Services\UsageLimitService;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -19,7 +19,7 @@ class SubscriptionController extends Controller
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
         private UsageLimitService $usageLimitService,
-        private UnifiedWalletService $walletService
+        private WalletService $walletService
     ) {}
 
     /**

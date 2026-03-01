@@ -18,7 +18,7 @@ class TransactionIntegrityService
     
     public function __construct()
     {
-        $this->walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        $this->walletService = app(\App\Domain\Wallet\Services\WalletService::class);
     }
     
     /**
@@ -128,7 +128,7 @@ class TransactionIntegrityService
      */
     public function checkSufficientBalance(User $user, float $amount): bool
     {
-        // Use UnifiedWalletService (primary service)
+        // Use WalletService (primary service)
         $currentBalance = $this->walletService->calculateBalance($user);
         
         return $currentBalance >= $amount;

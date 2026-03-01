@@ -6,7 +6,7 @@ use App\Application\UseCases\Module\GetUserModulesUseCase;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\GrowBiz\SetupController;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use App\Enums\AccountType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +16,7 @@ class HomeHubController extends Controller
 {
     public function __construct(
         private GetUserModulesUseCase $getUserModulesUseCase,
-        private UnifiedWalletService $walletService
+        private WalletService $walletService
     ) {}
 
     /**

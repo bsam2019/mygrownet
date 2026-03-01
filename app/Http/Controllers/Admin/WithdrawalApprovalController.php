@@ -68,7 +68,7 @@ class WithdrawalApprovalController extends Controller
                     ]);
                 
                 // Clear wallet cache
-                $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
                 $walletService->clearCache($withdrawal->user);
 
                 // Log activity
@@ -132,7 +132,7 @@ class WithdrawalApprovalController extends Controller
                     ]);
                 
                 // Clear wallet cache (rejected withdrawals should restore balance)
-                $walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
                 $walletService->clearCache($withdrawal->user);
 
                 // Log activity

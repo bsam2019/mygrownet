@@ -8,7 +8,7 @@ use App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitGiftModel;
 use App\Infrastructure\Persistence\Eloquent\Settings\GiftSettingsModel;
 use App\Models\User;
 use App\Services\StarterKitService;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use App\Domain\Announcement\Services\EventBasedAnnouncementService;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +17,7 @@ class GiftStarterKitUseCase
     public function __construct(
         private GiftService $giftService,
         private StarterKitService $starterKitService,
-        private UnifiedWalletService $walletService,
+        private WalletService $walletService,
         private EventBasedAnnouncementService $announcementService
     ) {}
 

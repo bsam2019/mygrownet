@@ -34,13 +34,13 @@
 
 **Related Services:**
 - `TransactionIntegrityService` - Prevents duplicate transactions
-- `UnifiedWalletService` - PRIMARY service, reads for balance calculation
+- `WalletService` - PRIMARY service, reads for balance calculation
 - `WalletService` - LEGACY service (deprecated, minimal use)
 
 **Critical Notes:**
 - This is the SINGLE SOURCE OF TRUTH for all transactions
 - All debits/credits should be recorded here
-- `UnifiedWalletService` is the primary service used across 95% of the application
+- `WalletService` is the primary service used across 95% of the application
 
 ---
 
@@ -107,11 +107,11 @@
 
 **Critical Issue:**
 - ⚠️ **DOUBLE COUNTING:** Withdrawals counted from BOTH `withdrawals` table AND `transactions` table
-- `UnifiedWalletService` sums both sources
+- `WalletService` sums both sources
 - May cause incorrect balance if withdrawal recorded in both places
 
 **Related Services:**
-- `UnifiedWalletService` - PRIMARY service, reads for balance calculation
+- `WalletService` - PRIMARY service, reads for balance calculation
 - `WalletService` - LEGACY service (deprecated)
 
 ---
@@ -142,7 +142,7 @@
 
 **Related Services:**
 - MLM commission calculation services
-- `UnifiedWalletService` - PRIMARY service, reads for earnings calculation
+- `WalletService` - PRIMARY service, reads for earnings calculation
 
 ---
 
@@ -169,7 +169,7 @@
 - Index: `payout_date`
 
 **Related Services:**
-- `UnifiedWalletService` - PRIMARY service, reads for earnings calculation
+- `WalletService` - PRIMARY service, reads for earnings calculation
 
 ---
 
@@ -217,7 +217,7 @@
 
 **Related Services:**
 - Community rewards distribution service
-- `UnifiedWalletService` - PRIMARY service, reads for earnings calculation
+- `WalletService` - PRIMARY service, reads for earnings calculation
 
 ---
 
@@ -284,11 +284,11 @@
 
 **Critical Issue:**
 - ⚠️ **SHOP CREDIT NOT IN TRANSACTIONS:** Shop credit expenses tracked in orders but NOT in transactions table
-- `UnifiedWalletService` counts shop expenses from orders table separately
+- `WalletService` counts shop expenses from orders table separately
 - Potential inconsistency if shop credit used
 
 **Related Services:**
-- `UnifiedWalletService` - PRIMARY service, reads for expense calculation
+- `WalletService` - PRIMARY service, reads for expense calculation
 
 ---
 
@@ -486,8 +486,8 @@
 - ⚠️ **LOAN TRANSACTIONS:** Loan disbursements and repayments should be recorded in `transactions` table
 - Transaction types: `loan_disbursement`, `loan_repayment`
 - `WalletService` (LEGACY) includes these in balance calculation
-- ⚠️ **ISSUE:** `UnifiedWalletService` (PRIMARY) does NOT currently include loan transactions
-- **ACTION REQUIRED:** Add loan transaction support to `UnifiedWalletService`
+- ⚠️ **ISSUE:** `WalletService` (PRIMARY) does NOT currently include loan transactions
+- **ACTION REQUIRED:** Add loan transaction support to `WalletService`
 
 ---
 
@@ -616,7 +616,7 @@
 **Solution:** Call `clearCache()` after every transaction
 
 ### 7. Dual Wallet Services (LOW - Mostly Resolved)
-**Status:** 95% complete - `UnifiedWalletService` is primary  
+**Status:** 95% complete - `WalletService` is primary  
 **Remaining Work:** 
 - Replace `WalletService` in 2 remaining files:
   - `app/Application/StarterKit/UseCases/GiftStarterKitUseCase.php`
@@ -625,12 +625,12 @@
 - Mark `WalletService` as deprecated
 
 **Current Usage:**
-- ✅ `UnifiedWalletService`: Used in all wallet controllers, dashboards, module subscriptions (95%)
+- ✅ `WalletService`: Used in all wallet controllers, dashboards, module subscriptions (95%)
 - ⚠️ `WalletService`: Only used in 2 files (5%)
 
 **Missing Feature:**
-- ⚠️ `UnifiedWalletService` doesn't include loan transactions (but `WalletService` does)
-- Need to add loan support to `UnifiedWalletService` before full deprecation
+- ⚠️ `WalletService` doesn't include loan transactions (but `WalletService` does)
+- Need to add loan support to `WalletService` before full deprecation
 
 ---
 
@@ -645,7 +645,7 @@
 ### Short Term (This Week)
 1. Add transaction_id foreign key to withdrawals table
 2. Update withdrawal approval to link transactions
-3. Remove member_payments query from UnifiedWalletService
+3. Remove member_payments query from WalletService
 4. Add performance bonuses to earnings calculation (if they should be in wallet)
 
 ### Long Term (This Month)

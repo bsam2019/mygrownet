@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GrowBuilder;
 
 use App\Domain\Module\Services\SubscriptionService;
 use App\Domain\Module\Services\TierConfigurationService;
-use App\Domain\Wallet\Services\UnifiedWalletService;
+use App\Domain\Wallet\Services\WalletService;
 use App\Http\Controllers\Controller;
 use App\Services\GrowBuilder\StorageService;
 use Illuminate\Http\Request;
@@ -18,7 +18,7 @@ class SubscriptionController extends Controller
     public function __construct(
         private SubscriptionService $subscriptionService,
         private TierConfigurationService $tierConfigService,
-        private UnifiedWalletService $walletService,
+        private WalletService $walletService,
         private StorageService $storageService
     ) {}
 

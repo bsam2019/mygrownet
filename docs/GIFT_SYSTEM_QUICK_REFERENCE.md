@@ -167,7 +167,7 @@ $settings = GiftSettingsModel::first();
 var_dump($settings->toArray());
 
 // Check wallet balance
-$walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+$walletService = app(\App\Domain\Wallet\Services\WalletService::class);
 $balance = $walletService->calculateBalance($user);
 echo "Balance: K$balance";
 ```
@@ -222,7 +222,7 @@ $isEligible = $policy->canReceiveGift($gifter, $recipient);
 $hasKit = $recipient->starterKitPurchases()->exists();
 
 // Check wallet balance
-$walletService = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+$walletService = app(\App\Domain\Wallet\Services\WalletService::class);
 $balance = $walletService->calculateBalance($gifter);
 $hasSufficientBalance = $balance >= 500;
 ```

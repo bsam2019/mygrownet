@@ -97,13 +97,13 @@ class DiagnoseWalletBalance extends Command
         
         // Compare with services
         $this->info("\n--- SERVICE COMPARISON ---");
-        $uws = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        $uws = app(\App\Domain\Wallet\Services\WalletService::class);
         $uwsBalance = $uws->calculateBalance($user);
-        $this->info("UnifiedWalletService Balance: K{$uwsBalance}");
+        $this->info("WalletService Balance: K{$uwsBalance}");
         
-        $uws = app(\App\Domain\Wallet\Services\UnifiedWalletService::class);
+        $uws = app(\App\Domain\Wallet\Services\WalletService::class);
         $uwsBalance = $uws->calculateBalance($user);
-        $this->info("UnifiedWalletService Balance: K{$uwsBalance}");
+        $this->info("WalletService Balance: K{$uwsBalance}");
         
         if ($wsBalance != $uwsBalance) {
             $this->error("\n⚠️  MISMATCH DETECTED! Services show different balances!");
