@@ -736,42 +736,48 @@ tests/Integration/
 - Feature flag working correctly
 - Ready for gradual rollout
 
-### Phase 3: Data Migration ✅ DEPLOYED TO PRODUCTION
-**Status:** Deployed - Monitoring in Progress  
-**Deployed:** 2026-03-01
+### Phase 3: Data Migration ✅ DEPLOYED - CLEANUP IN PROGRESS
+**Status:** Deployed - Post-Deployment Fixes Applied  
+**Deployed:** 2026-03-01  
+**Last Updated:** 2026-03-01
 
 **Deployment Results:**
 - ✅ 16 historical payments migrated successfully
 - ✅ 3 payments skipped (already had transactions)
-- ✅ 0 errors during migration
+- ✅ 11 duplicate transactions cleaned up
 - ✅ All verified payments now have transaction records
-- ✅ All starter kit purchases have transaction records
+- ✅ UnifiedWalletService updated to use only transactions table
+
+**Post-Deployment Fixes Applied:**
+1. ✅ Removed member_payments query from UnifiedWalletService
+2. ✅ Created CleanupDuplicatePaymentTransactions command
+3. ✅ Cleaned up 11 duplicate transactions (deposit + wallet_topup pairs)
+4. ✅ Fixed foreign key constraint handling
 
 **Current Status:**
-- New `RecordPaymentTransaction` listener is ACTIVE
-- All future verified payments will create transactions automatically
-- Historical data successfully migrated
+- ✅ New `RecordPaymentTransaction` listener is ACTIVE
+- ✅ All future verified payments create transactions automatically
+- ✅ Historical data successfully migrated
+- ✅ Duplicate transactions removed
+- ✅ Single source of truth: transactions table only
 
-**Validation Results:**
-- ✅ 151 users checked
-- ✅ All verified payments have transactions
-- ✅ All starter kit purchases have transactions
+**Remaining Issues:**
+- ⚠️ 45% wallet service match rate (down from 60%, but not 100% yet)
 - ⚠️ 3 withdrawals without transactions (expected - Phase 4)
-- ⚠️ 2 duplicate transaction groups (need cleanup)
-- ⚠️ 1 user with negative balance (User 212: -K500)
-- ⚠️ 60% wallet service match rate (old service still counting member_payments)
+- ⚠️ 1 user with negative balance (User 212: -K500) - needs investigation
+- ⚠️ Some users still showing K0.00 difference but not matching
 
-**Issues Identified:**
-1. **Old UnifiedWalletService still queries member_payments** - Causing double-counting
-2. **Some payments not migrated** - Need to investigate why
-3. **Withdrawals not linked** - Expected, will be fixed in Phase 4
+**Analysis:**
+The match rate issue is likely due to:
+1. DomainWalletService using different calculation logic than UnifiedWalletService
+2. Some edge cases in transaction types or statuses
+3. Possible caching issues
 
-**Next Steps (Immediate):**
-1. Update UnifiedWalletService to stop querying member_payments
-2. Investigate and fix duplicate transactions
-3. Investigate User 212 negative balance
-4. Re-run migration to catch any missed payments
-5. Validate 100% match rate after fixes
+**Next Steps:**
+1. Investigate why DomainWalletService and UnifiedWalletService still differ
+2. Consider disabling DomainWalletService (FEATURE_DOMAIN_WALLET=false) until 100% match
+3. Fix User 212 negative balance
+4. Proceed to Phase 4 once 100% match achieved
 
 ### Phase 4: Cutover (Week 5)
 1. Switch all controllers to new services
