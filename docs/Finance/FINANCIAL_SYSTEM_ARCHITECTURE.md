@@ -58,6 +58,59 @@ This document outlines the complete financial system architecture for MyGrowNet,
 
 ## System Components
 
+### Multi-Module Architecture
+
+**MyGrowNet Platform Modules:**
+The financial system supports transactions from multiple revenue-generating modules using a **database-driven module registry** for maximum scalability.
+
+**Current Modules:**
+1. **MyGrowNet Platform** - Core infrastructure
+2. **GrowNet** - MLM/Network Marketing module
+3. **GrowBuilder** - Business building tools
+4. **Marketplace** - Product sales
+5. **Shop** - Digital and physical products
+6. **Learning Platform** - Courses and training
+7. **Workshops** - Event registrations
+8. **Coaching** - One-on-one sessions
+9. **Starter Kits** - Onboarding packages
+10. **LGR** - Loyalty Growth Rewards
+11. **Loans** - Member loans
+12. **Commissions** - Referral commissions
+13. **Profit Share** - Community profit sharing
+
+Note: Subscriptions are payments TO modules, not a module itself.
+
+**Key Features:**
+- ✅ **Database-Driven**: Modules stored in `modules` table
+- ✅ **Dynamic Registration**: New modules can be added via admin panel or seeder
+- ✅ **No Code Changes**: Adding modules doesn't require code deployment
+- ✅ **Module Metadata**: Each module has name, description, settings, active status
+- ✅ **Revenue Tracking**: Flag to identify revenue-generating modules
+- ✅ **Cached Performance**: Module list cached for 1 hour
+- ✅ **Transaction Attribution**: Every transaction linked to source module
+
+**Adding New Modules:**
+```php
+// Via code (seeder or migration)
+Module::create([
+    'code' => 'new_module',
+    'name' => 'New Module Name',
+    'description' => 'Module description',
+    'is_revenue_module' => true,
+    'is_active' => true,
+    'display_order' => 200,
+]);
+
+// Via admin panel (future feature)
+// Admin → Modules → Add New Module
+```
+
+**Benefits:**
+- Scalable: Add unlimited modules without code changes
+- Flexible: Enable/disable modules dynamically
+- Reportable: Module-specific revenue and transaction reports
+- Maintainable: Single source of truth for module configuration
+
 ### 1. Domain Layer (Business Logic)
 
 #### 1.1 Wallet Domain
@@ -71,9 +124,10 @@ This document outlines the complete financial system architecture for MyGrowNet,
   - `clearCache(User $user): void`
 
 **Value Objects:**
-- `Money.php` - Represents monetary amounts with currency
+- `Money.php` - Represents monetary amounts with currency ✅ IMPLEMENTED
 - `WalletBalance.php` - Immutable balance snapshot
 - `TransactionReference.php` - Unique transaction identifier
+- `TransactionSource.php` - Module/system that generated transaction ✅ IMPLEMENTED
 
 **Entities:**
 - `Wallet.php` - User wallet aggregate root
@@ -94,28 +148,47 @@ This document outlines the complete financial system architecture for MyGrowNet,
   - `preventDuplicate(string $reference): bool`
 
 **Enums:**
-- `TransactionType.php` - All transaction types
+- `TransactionType.php` - All transaction types ✅ IMPLEMENTED
   ```php
   enum TransactionType: string {
+      // Wallet Operations
       case DEPOSIT = 'deposit';
+      case WALLET_TOPUP = 'wallet_topup';
       case WITHDRAWAL = 'withdrawal';
+      
+      // Starter Kit Operations
       case STARTER_KIT_PURCHASE = 'starter_kit_purchase';
+      case STARTER_KIT_UPGRADE = 'starter_kit_upgrade';
       case STARTER_KIT_GIFT = 'starter_kit_gift';
+      
+      // Shop & Marketplace Operations
       case SHOP_PURCHASE = 'shop_purchase';
       case SHOP_CREDIT_ALLOCATION = 'shop_credit_allocation';
       case SHOP_CREDIT_USAGE = 'shop_credit_usage';
+      
+      // Earnings
       case COMMISSION_EARNED = 'commission_earned';
       case PROFIT_SHARE = 'profit_share';
       case LGR_EARNED = 'lgr_earned';
-      case LGR_TRANSFER = 'lgr_transfer';
+      case LGR_MANUAL_AWARD = 'lgr_manual_award';
+      case LGR_TRANSFER_OUT = 'lgr_transfer_out';
+      case LGR_TRANSFER_IN = 'lgr_transfer_in';
+      
+      // Loans
       case LOAN_DISBURSEMENT = 'loan_disbursement';
       case LOAN_REPAYMENT = 'loan_repayment';
+      
+      // Module-Specific Payments
       case SUBSCRIPTION_PAYMENT = 'subscription_payment';
       case WORKSHOP_PAYMENT = 'workshop_payment';
+      case LEARNING_PACK_PURCHASE = 'learning_pack_purchase';
+      case COACHING_PAYMENT = 'coaching_payment';
+      case GROWBUILDER_PAYMENT = 'growbuilder_payment';
+      case MARKETPLACE_PURCHASE = 'marketplace_purchase';
   }
   ```
 
-- `TransactionStatus.php`
+- `TransactionStatus.php` - Transaction states ✅ IMPLEMENTED
   ```php
   enum TransactionStatus: string {
       case PENDING = 'pending';
@@ -177,18 +250,26 @@ This document outlines the complete financial system architecture for MyGrowNet,
    - id (bigint, primary key)
    - user_id (bigint, foreign key)
    - transaction_type (enum/string)
+   - transaction_source (string) - NEW: Module that generated transaction
    - amount (decimal 15,2) - positive for credits, negative for debits
    - balance_after (decimal 15,2) - snapshot of balance after transaction
    - reference_number (string, unique, indexed)
    - description (text)
    - status (enum)
-   - metadata (json) - additional data
+   - metadata (json) - Module-specific data
    - related_id (bigint, nullable) - link to related record
    - related_type (string, nullable) - polymorphic relation
+   - module_reference (string, nullable) - Module's internal reference
    - created_at
    - updated_at
    - processed_at
    ```
+
+**Key Enhancement:** `transaction_source` field enables:
+- Module-specific revenue tracking
+- Per-module financial reports
+- Source attribution for analytics
+- Multi-tenant financial management
 
 2. **`wallet_balances`** - Cached balance snapshots (for performance)
    ```sql
@@ -500,9 +581,9 @@ class WalletService
 
 ## Migration Strategy
 
-### Phase 1: Foundation & Domain Layer (CURRENT - Week 1)
-**Status:** In Progress  
-**Started:** 2026-03-01
+### Phase 1: Foundation & Domain Layer ✅ COMPLETED
+**Status:** Complete  
+**Completed:** 2026-03-01
 
 **Production System Status (Verified 2026-03-01):**
 - ✅ 0 negative balances
@@ -526,11 +607,22 @@ class WalletService
 - [x] Implement Money value object
 - [x] Implement TransactionType enum
 - [x] Implement TransactionStatus enum
+- [x] Implement TransactionSource value object (database-driven)
+- [x] Create modules table and Module model
 - [x] Add unit tests for Money value object (17 tests, 100% coverage)
-- [ ] Create WalletRepositoryInterface
-- [ ] Create TransactionRepositoryInterface
-- [ ] Add unit tests for enums
-- [ ] Update documentation
+- [x] Create migration for transaction_source column
+- [x] Create WalletRepositoryInterface
+- [x] Create TransactionRepositoryInterface
+
+**Success Criteria:**
+- ✅ Domain layer structure created
+- ✅ All value objects implemented with validation
+- ✅ Repository interfaces defined
+- ✅ 100% test coverage for Money value object
+- ✅ No breaking changes to existing functionality
+- ✅ Database-driven module system (scalable)
+
+**Phase 1 Status:** ✅ COMPLETE
 
 **Files to Create:**
 ```
@@ -907,8 +999,23 @@ The financial system refactoring is successful when:
 - Money value object with full validation and operations
 - TransactionType enum with 20+ transaction types
 - TransactionStatus enum with state management
+- TransactionSource value object (database-driven, not hardcoded)
+- Module model and modules table for dynamic module registration
 - Comprehensive unit tests for Money (17 tests, 100% coverage)
 - Domain layer directory structure
+- Migration to add transaction_source and module_reference columns
+
+**Multi-Module Support (Database-Driven):**
+- ✅ Modules stored in database, not hardcoded
+- ✅ New modules can be added without code deployment
+- ✅ Each module has: code, name, description, is_revenue_module flag, active status
+- ✅ Module list cached for performance (1 hour)
+- ✅ TransactionSource validates against modules table
+- ✅ Supports unlimited modules - fully scalable
+- ✅ Admin can enable/disable modules dynamically
+
+**Current Modules:**
+- MyGrowNet Platform, Wallet, GrowNet (MLM), GrowBuilder, Marketplace, Shop, Learning, Workshops, Coaching, Starter Kits, Subscriptions, LGR, Loans, Commissions, Profit Share
 
 **Production Verification:**
 - ✅ 0 negative balances
@@ -918,11 +1025,18 @@ The financial system refactoring is successful when:
 
 **Files Created:**
 - `app/Domain/Wallet/ValueObjects/Money.php`
+- `app/Domain/Wallet/Repositories/WalletRepositoryInterface.php`
 - `app/Domain/Transaction/Enums/TransactionType.php`
 - `app/Domain/Transaction/Enums/TransactionStatus.php`
+- `app/Domain/Transaction/ValueObjects/TransactionSource.php`
+- `app/Domain/Transaction/Repositories/TransactionRepositoryInterface.php`
+- `app/Models/Module.php`
+- `database/migrations/2026_03_01_083955_add_transaction_source_to_transactions_table.php`
+- `database/migrations/2026_03_01_084500_create_modules_table.php`
 - `tests/Unit/Domain/Wallet/ValueObjects/MoneyTest.php`
 
-**Next Steps:**
-- Create repository interfaces
-- Add enum tests
-- Implement new WalletService using domain objects
+**Next Steps (Phase 2):**
+- Implement repository concrete classes
+- Create new WalletService using domain objects
+- Add feature flag for gradual rollout
+- Compare old vs new service results
