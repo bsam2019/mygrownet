@@ -125,7 +125,10 @@ class CleanupDuplicatePaymentTransactions extends Command
             return;
         }
 
-        // Remove the duplicate
+        // Delete related payment_logs first (foreign key constraint)
+        DB::table('payment_logs')->where('transaction_id', $removeId)->delete();
+
+        // Remove the duplicate transaction
         $removed = Transaction::where('id', $removeId)->delete();
 
         if ($removed) {
