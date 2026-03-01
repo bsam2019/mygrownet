@@ -74,30 +74,38 @@
             >
               <div 
                 v-show="showDownloadMenu"
-                class="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+                class="absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
               >
+                <!-- PDF Option (Recommended for Mobile) -->
                 <button
+                  @click="downloadPDF(); showDownloadMenu = false"
+                  class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                  <div class="flex-1">
+                    <div class="font-medium">PDF</div>
+                    <div v-if="isMobileDevice()" class="text-xs text-green-600">Recommended</div>
+                  </div>
+                </button>
+                
+                <!-- PowerPoint Option (Desktop Only) -->
+                <button
+                  v-if="!isMobileDevice()"
                   @click="downloadPowerPoint(); showDownloadMenu = false"
                   :disabled="isDownloading"
-                  class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border-t border-gray-100"
                 >
-                  <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 text-orange-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
                     <path d="M14 2v6h6"/>
                     <path d="M10 12h4v1h-4v-1zm0 2h4v1h-4v-1zm0 2h4v1h-4v-1z"/>
                   </svg>
                   <span class="font-medium">PowerPoint (.pptx)</span>
                 </button>
-                <button
-                  @click="downloadPDF(); showDownloadMenu = false"
-                  class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 border-t border-gray-100"
-                >
-                  <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                    <path d="M14 2v6h6"/>
-                  </svg>
-                  <span class="font-medium">PDF</span>
-                </button>
+              </div>
               </div>
             </Transition>
           </div>
@@ -246,7 +254,7 @@ const showDownloadMenu = ref(false);
 const { data: presentationData, loading: dataLoading } = usePresentationData();
 
 // Export functionality (Updated: 2026-02-28)
-const { generatePowerPoint, generatePDF } = usePresentationExport();
+const { generatePowerPoint, generatePDF, isMobileDevice } = usePresentationExport();
 const { success, error: showError, loading, close } = useAlert();
 const isDownloading = ref(false);
 

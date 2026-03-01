@@ -8,35 +8,27 @@ export function usePresentationExport() {
     };
     
     /**
-     * Capture a slide element with proper dimensions for mobile or desktop
+     * Capture a slide element with optimized settings for mobile
      */
-    const captureSlide = async (slideElement: HTMLElement, html2canvas: any) => {
-        const isMobile = isMobileDevice();
-        
-        // For mobile: Use 9:16 portrait ratio (1080x1920) - standard mobile screen
-        // For desktop: Use 16:9 landscape ratio (1920x1080) - standard presentation
-        const targetWidth = isMobile ? 1080 : 1920;
-        const targetHeight = isMobile ? 1920 : 1080;
-        
-        // Get the slide's scroll container - check if it exists and has scroll
-        const scrollContainer = slideElement.closest('.overflow-y-auto') as HTMLElement | null;
-        const hasScroll = scrollContainer ? scrollContainer.scrollHeight > scrollContainer.clientHeight : false;
+    const captureSlide = async (slideElement: HTMLElement, html2canvas: any, isMobile: boolean) => {
+        // Get the slide's scroll container
+        const scrollContainer = slideElement.closest('.overflow-y-auto') as HTMLElement;
+        const hasScroll = scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight;
         
         // If slide has scrollable content, we need to capture the full height
-        const fullHeight = (hasScroll && scrollContainer) ? scrollContainer.scrollHeight : slideElement.offsetHeight;
+        const fullHeight = hasScroll ? scrollContainer.scrollHeight : slideElement.offsetHeight;
         const fullWidth = slideElement.offsetWidth;
         
-        // Calculate scale to achieve target resolution
-        const scaleX = targetWidth / fullWidth;
-        const scaleY = targetHeight / fullHeight;
-        const scale = Math.min(scaleX, scaleY, 3); // Cap at 3x for performance
+        // Mobile: Use lower scale to reduce memory usage
+        // Desktop: Use higher scale for better quality
+        const scale = isMobile ? 2 : 3;
         
         // Temporarily remove scroll and expand to full height for capture
         let originalOverflow = '';
         let originalHeight = '';
         if (hasScroll && scrollContainer) {
-            originalOverflow = scrollContainer.style.overflow || '';
-            originalHeight = scrollContainer.style.height || '';
+            originalOverflow = scrollContainer.style.overflow;
+            originalHeight = scrollContainer.style.height;
             scrollContainer.style.overflow = 'visible';
             scrollContainer.style.height = 'auto';
         }
@@ -48,7 +40,7 @@ export function usePresentationExport() {
                 useCORS: true,
                 logging: false,
                 allowTaint: true,
-                backgroundColor: null,
+                backgroundColor: '#ffffff', // White background for better PDF rendering
                 width: fullWidth,
                 height: fullHeight,
                 windowWidth: fullWidth,
@@ -76,6 +68,13 @@ export function usePresentationExport() {
     
     const generatePowerPoint = async (referralCode: string, onProgress?: (current: number, total: number) => void) => {
         try {
+            const isMobile = isMobileDevice();
+            
+            // On mobile, suggest PDF instead
+            if (isMobile) {
+                throw new Error('PowerPoint generation is not recommended on mobile devices. Please use PDF download instead for better performance.');
+            }
+            
             console.log('Starting PowerPoint generation...');
             
             // Dynamic imports - using html2canvas-pro for OKLCH support
@@ -86,22 +85,12 @@ export function usePresentationExport() {
             const pptx = new PptxGenJS();
             console.log('PptxGenJS instance created');
             
-            const isMobile = isMobileDevice();
-            
             // Set presentation properties
             pptx.author = 'MyGrowNet';
             pptx.company = 'MyGrowNet';
             pptx.subject = 'GrowNet Platform Presentation';
             pptx.title = 'Join MyGrowNet - Access, Earn, Grow';
-            
-            // Use portrait layout for mobile, landscape for desktop
-            if (isMobile) {
-                pptx.layout = 'LAYOUT_CUSTOM';
-                pptx.defineLayout({ name: 'MOBILE_PORTRAIT', width: 5.625, height: 10 }); // 9:16 ratio in inches
-                pptx.layout = 'MOBILE_PORTRAIT';
-            } else {
-                pptx.layout = 'LAYOUT_16x9';
-            }
+            pptx.layout = 'LAYOUT_16x9';
             
             // Get all slide elements
             const slideElements = document.querySelectorAll('.h-full.w-full.flex-shrink-0');
@@ -122,8 +111,8 @@ export function usePresentationExport() {
                 
                 const slideElement = slideElements[i] as HTMLElement;
                 
-                // Capture the slide with proper dimensions
-                const canvas = await captureSlide(slideElement, html2canvas);
+                // Capture the slide
+                const canvas = await captureSlide(slideElement, html2canvas, false);
                 
                 // Convert canvas to base64 image with maximum quality
                 const imgData = canvas.toDataURL('image/png', 1.0);
@@ -139,7 +128,7 @@ export function usePresentationExport() {
                     w: '100%',
                     h: '100%',
                     sizing: {
-                        type: 'contain', // Use contain to preserve aspect ratio
+                        type: 'contain',
                         w: '100%',
                         h: '100%'
                     }
@@ -147,9 +136,8 @@ export function usePresentationExport() {
             }
             
             // Save the presentation
-            const deviceType = isMobile ? 'Mobile' : 'Desktop';
-            console.log(`Saving PowerPoint file for ${deviceType}...`);
-            await pptx.writeFile({ fileName: `MyGrowNet_${deviceType}_${referralCode}.pptx` });
+            console.log('Saving PowerPoint file...');
+            await pptx.writeFile({ fileName: `MyGrowNet_Presentation_${referralCode}.pptx` });
             console.log('PowerPoint file saved successfully');
         } catch (error) {
             console.error('Error in generatePowerPoint:', error);
@@ -168,18 +156,20 @@ export function usePresentationExport() {
             
             const isMobile = isMobileDevice();
             
-            // Use portrait for mobile, landscape for desktop
+            // For mobile: Use portrait A4 size (210mm x 297mm = 595px x 842px at 72dpi)
+            // This ensures full-page viewing in PDF readers
+            const pageWidth = isMobile ? 595 : 1920;
+            const pageHeight = isMobile ? 842 : 1080;
             const orientation = isMobile ? 'portrait' : 'landscape';
-            const width = isMobile ? 1080 : 1920;
-            const height = isMobile ? 1920 : 1080;
             
-            // Create PDF
+            // Create PDF with proper page size
             const pdf = new jsPDF({
                 orientation: orientation,
                 unit: 'px',
-                format: [width, height]
+                format: [pageWidth, pageHeight],
+                compress: true, // Enable compression for smaller file size
             });
-            console.log(`PDF instance created (${orientation})`);
+            console.log(`PDF instance created (${orientation}, ${pageWidth}x${pageHeight})`);
             
             // Get all slide elements
             const slideElements = document.querySelectorAll('.h-full.w-full.flex-shrink-0');
@@ -200,27 +190,37 @@ export function usePresentationExport() {
                 
                 const slideElement = slideElements[i] as HTMLElement;
                 
-                // Capture the slide with proper dimensions
-                const canvas = await captureSlide(slideElement, html2canvas);
+                // Capture the slide with mobile optimization
+                const canvas = await captureSlide(slideElement, html2canvas, isMobile);
                 
-                // Convert canvas to image with maximum quality (PNG for better quality)
-                const imgData = canvas.toDataURL('image/png', 1.0);
+                // Convert canvas to image with good quality (JPEG for smaller size on mobile)
+                const imageFormat = isMobile ? 'JPEG' : 'PNG';
+                const imageQuality = isMobile ? 0.92 : 1.0;
+                const imgData = canvas.toDataURL(`image/${imageFormat.toLowerCase()}`, imageQuality);
                 
                 // Add page (except for first slide)
                 if (i > 0) {
-                    pdf.addPage([width, height], orientation);
+                    pdf.addPage([pageWidth, pageHeight], orientation);
                 }
                 
-                // Add image to PDF - fit to page while maintaining aspect ratio
+                // Calculate dimensions to fit the page while maintaining aspect ratio
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
-                const ratio = Math.min(width / imgWidth, height / imgHeight);
+                const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
                 const scaledWidth = imgWidth * ratio;
                 const scaledHeight = imgHeight * ratio;
-                const x = (width - scaledWidth) / 2;
-                const y = (height - scaledHeight) / 2;
                 
-                pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight, undefined, 'FAST');
+                // Center the image on the page
+                const x = (pageWidth - scaledWidth) / 2;
+                const y = (pageHeight - scaledHeight) / 2;
+                
+                // Add image to PDF
+                pdf.addImage(imgData, imageFormat, x, y, scaledWidth, scaledHeight, undefined, 'FAST');
+                
+                // Free memory on mobile after each slide
+                if (isMobile && i < slideElements.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
             }
             
             // Save the PDF
@@ -237,5 +237,6 @@ export function usePresentationExport() {
     return {
         generatePowerPoint,
         generatePDF,
+        isMobileDevice,
     };
 }
