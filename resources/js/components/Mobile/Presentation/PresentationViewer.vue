@@ -87,13 +87,12 @@
                   </svg>
                   <div class="flex-1">
                     <div class="font-medium">PDF</div>
-                    <div v-if="isMobileDevice()" class="text-xs text-green-600">Recommended</div>
+                    <div v-if="isMobileDevice()" class="text-xs text-green-600">✓ Recommended</div>
                   </div>
                 </button>
                 
-                <!-- PowerPoint Option (Desktop Only) -->
+                <!-- PowerPoint Option -->
                 <button
-                  v-if="!isMobileDevice()"
                   @click="downloadPowerPoint(); showDownloadMenu = false"
                   :disabled="isDownloading"
                   class="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border-t border-gray-100"
@@ -103,9 +102,11 @@
                     <path d="M14 2v6h6"/>
                     <path d="M10 12h4v1h-4v-1zm0 2h4v1h-4v-1zm0 2h4v1h-4v-1z"/>
                   </svg>
-                  <span class="font-medium">PowerPoint (.pptx)</span>
+                  <div class="flex-1">
+                    <div class="font-medium">PowerPoint (.pptx)</div>
+                    <div v-if="isMobileDevice()" class="text-xs text-amber-600">May be slow</div>
+                  </div>
                 </button>
-              </div>
               </div>
             </Transition>
           </div>

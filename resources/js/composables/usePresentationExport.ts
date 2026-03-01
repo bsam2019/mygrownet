@@ -70,11 +70,6 @@ export function usePresentationExport() {
         try {
             const isMobile = isMobileDevice();
             
-            // On mobile, suggest PDF instead
-            if (isMobile) {
-                throw new Error('PowerPoint generation is not recommended on mobile devices. Please use PDF download instead for better performance.');
-            }
-            
             console.log('Starting PowerPoint generation...');
             
             // Dynamic imports - using html2canvas-pro for OKLCH support
@@ -112,10 +107,12 @@ export function usePresentationExport() {
                 const slideElement = slideElements[i] as HTMLElement;
                 
                 // Capture the slide
-                const canvas = await captureSlide(slideElement, html2canvas, false);
+                const canvas = await captureSlide(slideElement, html2canvas, isMobile);
                 
-                // Convert canvas to base64 image with maximum quality
-                const imgData = canvas.toDataURL('image/png', 1.0);
+                // Convert canvas to base64 image
+                const imageFormat = isMobile ? 'JPEG' : 'PNG';
+                const imageQuality = isMobile ? 0.85 : 1.0;
+                const imgData = canvas.toDataURL(`image/${imageFormat.toLowerCase()}`, imageQuality);
                 
                 // Add slide to PowerPoint
                 const slide = pptx.addSlide();
@@ -133,11 +130,17 @@ export function usePresentationExport() {
                         h: '100%'
                     }
                 });
+                
+                // Free memory on mobile after each slide
+                if (isMobile && i < slideElements.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
             }
             
             // Save the presentation
+            const deviceType = isMobile ? 'Mobile' : 'Desktop';
             console.log('Saving PowerPoint file...');
-            await pptx.writeFile({ fileName: `MyGrowNet_Presentation_${referralCode}.pptx` });
+            await pptx.writeFile({ fileName: `MyGrowNet_${deviceType}_${referralCode}.pptx` });
             console.log('PowerPoint file saved successfully');
         } catch (error) {
             console.error('Error in generatePowerPoint:', error);
@@ -203,19 +206,25 @@ export function usePresentationExport() {
                     pdf.addPage([pageWidth, pageHeight], orientation);
                 }
                 
-                // Calculate dimensions to fit the page while maintaining aspect ratio
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-                const scaledWidth = imgWidth * ratio;
-                const scaledHeight = imgHeight * ratio;
-                
-                // Center the image on the page
-                const x = (pageWidth - scaledWidth) / 2;
-                const y = (pageHeight - scaledHeight) / 2;
-                
-                // Add image to PDF
-                pdf.addImage(imgData, imageFormat, x, y, scaledWidth, scaledHeight, undefined, 'FAST');
+                // For mobile: Fill entire page (no margins)
+                // For desktop: Maintain aspect ratio with centering
+                if (isMobile) {
+                    // Fill the entire page - stretch to fit
+                    pdf.addImage(imgData, imageFormat, 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+                } else {
+                    // Desktop: Calculate dimensions to fit the page while maintaining aspect ratio
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+                    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+                    const scaledWidth = imgWidth * ratio;
+                    const scaledHeight = imgHeight * ratio;
+                    
+                    // Center the image on the page
+                    const x = (pageWidth - scaledWidth) / 2;
+                    const y = (pageHeight - scaledHeight) / 2;
+                    
+                    pdf.addImage(imgData, imageFormat, x, y, scaledWidth, scaledHeight, undefined, 'FAST');
+                }
                 
                 // Free memory on mobile after each slide
                 if (isMobile && i < slideElements.length - 1) {
