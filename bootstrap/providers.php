@@ -4,6 +4,7 @@ return [
     App\Providers\AppServiceProvider::class,
     App\Providers\EmailMarketingServiceProvider::class,
     App\Providers\EmployeePortalServiceProvider::class,
+    App\Providers\FinancialServiceProvider::class,
     App\Providers\InvestorDomainServiceProvider::class,
     App\Providers\InvestorServiceProvider::class,
     App\Providers\LibraryServiceProvider::class,
