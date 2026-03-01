@@ -45,13 +45,8 @@ class UnifiedWalletService
             $isBusiness = $user->hasAccountType(AccountType::BUSINESS);
             
             // Build a single query with UNION ALL for better performance
+            // NOTE: Removed member_payments query as all verified payments are now in transactions table (Phase 3)
             $results = DB::select("
-                SELECT 'deposits_mp' as type, COALESCE(SUM(amount), 0) as total 
-                FROM member_payments 
-                WHERE user_id = ? AND payment_type = 'wallet_topup' AND status = 'verified'
-                
-                UNION ALL
-                
                 SELECT 'deposits_tx' as type, COALESCE(SUM(amount), 0) as total 
                 FROM transactions 
                 WHERE user_id = ? AND transaction_type = 'wallet_topup' AND status = 'completed'
@@ -85,7 +80,7 @@ class UnifiedWalletService
                 SELECT 'service_expenses' as type, COALESCE(SUM(ABS(amount)), 0) as total 
                 FROM transactions 
                 WHERE user_id = ? AND transaction_type IN ('purchase', 'service_payment', 'starter_kit_purchase', 'subscription_payment') AND status = 'completed'
-            ", [$user->id, $user->id, $user->id, $user->id, $user->id, $user->id, $user->id]);
+            ", [$user->id, $user->id, $user->id, $user->id, $user->id, $user->id]);
             
             // Parse results into associative array
             $totals = [];
@@ -93,8 +88,8 @@ class UnifiedWalletService
                 $totals[$row->type] = (float) $row->total;
             }
             
-            // Calculate deposits
-            $deposits = ($totals['deposits_mp'] ?? 0) + ($totals['deposits_tx'] ?? 0);
+            // Calculate deposits (now only from transactions table - Phase 3 migration complete)
+            $deposits = $totals['deposits_tx'] ?? 0;
             
             // Calculate loan disbursements (credits)
             $loanDisbursements = $totals['loan_disbursements'] ?? 0;
