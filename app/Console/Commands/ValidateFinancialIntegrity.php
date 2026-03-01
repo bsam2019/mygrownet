@@ -180,7 +180,7 @@ class ValidateFinancialIntegrity extends Command
     {
         $this->info('Checking for duplicate transactions...');
 
-        $query = Transaction::select('user_id', 'amount', 'transaction_type', 'created_at')
+        $query = Transaction::select('user_id', 'amount', 'transaction_type', DB::raw('DATE(created_at) as date'))
             ->selectRaw('COUNT(*) as count')
             ->groupBy('user_id', 'amount', 'transaction_type', DB::raw('DATE(created_at)'))
             ->having('count', '>', 1);
@@ -198,7 +198,7 @@ class ValidateFinancialIntegrity extends Command
                 $this->issues[] = [
                     'type' => 'Duplicate Transaction',
                     'user_id' => $dup->user_id,
-                    'details' => "{$dup->count} transactions of type '{$dup->transaction_type}' for K{$dup->amount} on " . $dup->created_at->format('Y-m-d'),
+                    'details' => "{$dup->count} transactions of type '{$dup->transaction_type}' for K{$dup->amount} on {$dup->date}",
                     'severity' => 'MEDIUM',
                 ];
                 $this->issuesFound++;
