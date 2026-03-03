@@ -182,6 +182,18 @@ public function run(): void
 
 ## Production Deployment Steps
 
+### Step 0: Run Migrations (REQUIRED FIRST)
+Before running any seeders, ensure all migrations are run:
+
+```bash
+php artisan migrate --force
+```
+
+**Critical Migrations:**
+- `2025_01_01_000001_create_cms_loans_receivable_table.php` - Loan accounting tables (NEW)
+- All CMS financial tables
+- Transaction table updates
+
 ### Step 1: Run Production Seeder (Recommended)
 The easiest way is to update ProductionSeeder.php and run it:
 
@@ -266,3 +278,87 @@ php artisan tinker
 - `database/migrations/*_add_cms_fields_to_transactions.php` - Transaction table updates
 - `database/seeders/ProductionSeeder.php` - Main production seeder configuration
 
+
+
+## Update: FinancialModulesSeeder (December 2024)
+
+### FinancialModulesSeeder - Correct Business Unit Modules
+**File:** `database/seeders/FinancialModulesSeeder.php`
+**Purpose:** Replaces incorrect modules with true business unit modules only
+**Status:** NEW - Replaces module seeding in migration
+**Priority:** HIGH - Must run to fix module filtering
+
+**Run Command:**
+```bash
+php artisan db:seed --class=FinancialModulesSeeder
+```
+
+**What it does:**
+- Truncates `financial_modules` table
+- Seeds only true business unit modules:
+  - GrowNet (MLM/Network marketing)
+  - GrowBuilder (Business building tools)
+  - GrowFinance (Financial services)
+  - BizBoost (Business acceleration)
+  - GrowMarket (E-commerce marketplace)
+  - Invoice Generator (Invoicing service)
+  - Learning Center (Online courses)
+  - Platform Operations (Infrastructure)
+- Removes features incorrectly marked as modules (Wallet, Commissions, LGR, Loans, etc.)
+
+**Why this is important:**
+- Modules are independent business units with P&L
+- Features like Wallet, Commissions, LGR are NOT modules
+- Module filtering in Budget/P&L dashboards requires correct modules
+- See `docs/Finance/MODULES_VS_FEATURES.md` for detailed explanation
+
+**Migration Note:**
+The migration `2026_03_01_120000_create_financial_modules_table.php` has been updated to NOT seed modules inline. All module seeding should be done via `FinancialModulesSeeder`.
+
+## Updated Production Seeder Configuration
+
+```php
+public function run(): void
+{
+    $this->command->info('🌱 Starting MyGrowNet production seeding...');
+    $this->command->newLine();
+
+    $this->call([
+        // Core System Data (Required)
+        RolesAndPermissionsSeeder::class,   // User roles and permissions (must be first)
+        UserSeeder::class,                  // Admin and staff users
+        
+        // Membership Packages (7 Levels: Associate to Ambassador)
+        PackageSeeder::class,               // Subscription packages with learning materials
+        
+        // Community Projects & Categories
+        CategorySeeder::class,              // Project and investment categories
+        
+        // Achievement & Recognition System
+        MyGrowNetAchievementsSeeder::class, // Milestone achievements and badges
+        
+        // Financial System (UPDATED)
+        MyGrowNetPlatformCompanySeeder::class,    // MyGrowNet Platform company for expense tracking
+        FinancialModulesSeeder::class,            // Business unit modules (UPDATED - replaces ModuleSeeder)
+        MyGrowNetExpenseCategoriesSeeder::class,  // Expense categories for internal tracking
+        
+        // Optional: Educational Content (uncomment if ready)
+        // EducationalContentSeeder::class,  // Learning packs and courses
+        // SampleBudgetSeeder::class,        // Sample budget for testing (TESTING ONLY)
+    ]);
+
+    $this->command->newLine();
+    $this->command->info('✅ Production seeding completed successfully!');
+}
+```
+
+**Key Change:** Replace `ModuleSeeder::class` with `FinancialModulesSeeder::class`
+
+## Changelog
+
+### December 2024
+- Created `FinancialModulesSeeder` to replace incorrect module seeding
+- Updated migration to remove inline module seeding
+- Created `docs/Finance/MODULES_VS_FEATURES.md` reference document
+- Clarified distinction between modules (business units) and features (platform capabilities)
+- Updated module filtering documentation in CMS integration guide

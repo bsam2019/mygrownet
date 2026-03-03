@@ -168,6 +168,25 @@ Schedule::command('quick-invoice:cleanup-temp')
     ->hourly()
     ->description('Clean up temporary Quick Invoice PDF files older than 1 hour');
 
+// ========================================
+// Platform Loans Scheduled Tasks
+// ========================================
+
+// Update loan risk categories - runs daily at midnight
+Schedule::command('loans:update-risk-categories')
+    ->dailyAt('00:00')
+    ->description('Update loan risk categories based on days overdue');
+
+// Send payment reminders - runs daily at 9 AM
+Schedule::command('loans:send-reminders')
+    ->dailyAt('09:00')
+    ->description('Send loan payment reminders to borrowers');
+
+// Alert on defaulted loans - runs daily at 8 AM
+Schedule::command('loans:alert-defaults')
+    ->dailyAt('08:00')
+    ->description('Send alerts for defaulted loans to admins');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

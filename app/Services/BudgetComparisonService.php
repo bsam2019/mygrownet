@@ -64,14 +64,20 @@ class BudgetComparisonService
     /**
      * Get actual expenses from transactions for the period
      */
-    public function getActualExpenses(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function getActualExpenses(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $dates = $this->getPeriodDates($period, $customStartDate, $customEndDate);
         
-        $expenses = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
+        $query = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
             ->whereIn('transaction_type', $this->getExpenseTypes())
-            ->where('status', 'completed')
-            ->select('transaction_type', DB::raw('SUM(amount) as total'))
+            ->where('status', 'completed');
+            
+        // Filter by module if provided
+        if ($moduleId) {
+            $query->where('module_id', $moduleId);
+        }
+        
+        $expenses = $query->select('transaction_type', DB::raw('SUM(amount) as total'))
             ->groupBy('transaction_type')
             ->get();
             
@@ -90,14 +96,20 @@ class BudgetComparisonService
     /**
      * Get actual revenue from transactions for the period
      */
-    public function getActualRevenue(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function getActualRevenue(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $dates = $this->getPeriodDates($period, $customStartDate, $customEndDate);
         
-        $revenue = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
+        $query = Transaction::whereBetween('created_at', [$dates['start'], $dates['end']])
             ->whereIn('transaction_type', $this->getRevenueTypes())
-            ->where('status', 'completed')
-            ->select('transaction_type', DB::raw('SUM(amount) as total'))
+            ->where('status', 'completed');
+            
+        // Filter by module if provided
+        if ($moduleId) {
+            $query->where('module_id', $moduleId);
+        }
+        
+        $revenue = $query->select('transaction_type', DB::raw('SUM(amount) as total'))
             ->groupBy('transaction_type')
             ->get();
             
@@ -116,7 +128,7 @@ class BudgetComparisonService
     /**
      * Compare budget vs actual for the period
      */
-    public function compareActualVsBudget(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function compareActualVsBudget(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $budget = $this->getActiveBudget($period, $customStartDate, $customEndDate);
         
@@ -129,8 +141,8 @@ class BudgetComparisonService
             ];
         }
         
-        $actualExpenses = $this->getActualExpenses($period, $customStartDate, $customEndDate);
-        $actualRevenue = $this->getActualRevenue($period, $customStartDate, $customEndDate);
+        $actualExpenses = $this->getActualExpenses($period, $customStartDate, $customEndDate, $moduleId);
+        $actualRevenue = $this->getActualRevenue($period, $customStartDate, $customEndDate, $moduleId);
         
         // Process budget items
         $comparisons = [];
@@ -199,9 +211,9 @@ class BudgetComparisonService
     /**
      * Get budget performance metrics
      */
-    public function getBudgetPerformanceMetrics(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function getBudgetPerformanceMetrics(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
-        $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate);
+        $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate, $moduleId);
         
         if (!$comparison['has_budget']) {
             return [
@@ -246,7 +258,7 @@ class BudgetComparisonService
     /**
      * Get budget trend data for charts
      */
-    public function getBudgetTrends(string $period = 'month', int $periods = 6, ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function getBudgetTrends(string $period = 'month', int $periods = 6, ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $trends = [];
         $currentDate = Carbon::now();
@@ -255,7 +267,7 @@ class BudgetComparisonService
             $periodDate = $this->getPeriodStartDate($period, $i);
             $periodLabel = $this->getPeriodLabel($period, $periodDate);
             
-            $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate);
+            $comparison = $this->compareActualVsBudget($period, $customStartDate, $customEndDate, $moduleId);
             
             $trends[] = [
                 'period' => $periodLabel,
@@ -403,27 +415,27 @@ class BudgetComparisonService
     private function getRevenueTypes(): array
     {
         return [
-            // Member deposits
-            'wallet_topup',
-            'deposit',
+            // Product sales (actual revenue)
+            'starter_kit_purchase' => 'Starter Kits',
+            'starter_kit_upgrade' => 'Starter Kit Upgrades',
+            'starter_kit_gift' => 'Starter Kit Gifts',
+            'shop_purchase' => 'Shop Sales',
+            'marketplace_purchase' => 'Marketplace Sales',
+            'learning_pack_purchase' => 'Learning Packs',
             
-            // Product sales
-            'starter_kit_purchase',
-            'starter_kit_upgrade',
-            'starter_kit_gift',
-            'shop_purchase',
-            'marketplace_purchase',
-            'learning_pack_purchase',
+            // Service payments (actual revenue)
+            'subscription_payment' => 'Subscriptions',
+            'workshop_payment' => 'Workshops',
+            'coaching_payment' => 'Coaching',
+            'service_payment' => 'Services',
+            'growbuilder_payment' => 'GrowBuilder',
             
-            // Service payments
-            'subscription_payment',
-            'workshop_payment',
-            'coaching_payment',
-            'service_payment',
-            'growbuilder_payment',
+            // Loan repayments (money coming back - revenue)
+            'loan_repayment' => 'Loan Repayments',
             
-            // Loan repayments (money coming back)
-            'loan_repayment',
+            // NOTE: wallet_topup and deposit are NOT included here!
+            // They are liabilities (money owed to users) until spent on products/services
+            // Only when users spend wallet balance on products/services does it become revenue
         ];
     }
     
@@ -450,9 +462,6 @@ class BudgetComparisonService
             'withdrawal' => 'Withdrawals',
             'loan_disbursement' => 'Loan Disbursements',
             'shop_credit_allocation' => 'Shop Credits',
-            
-            // Member deposits (revenue)
-            'wallet_topup', 'deposit' => 'Wallet Top-ups',
             
             // Product sales (revenue)
             'starter_kit_purchase' => 'Starter Kits',

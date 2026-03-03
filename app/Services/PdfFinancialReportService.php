@@ -18,11 +18,12 @@ class PdfFinancialReportService
     public function generateProfitLossReport(
         string $period = 'month',
         ?string $customStartDate = null,
-        ?string $customEndDate = null
+        ?string $customEndDate = null,
+        ?int $moduleId = null
     ) {
-        $statement = $this->plService->getProfitLossStatement($period, $customStartDate, $customEndDate);
-        $commissionEfficiency = $this->plService->getCommissionEfficiency($period, $customStartDate, $customEndDate);
-        $cashFlow = $this->plService->getCashFlowAnalysis($period, $customStartDate, $customEndDate);
+        $statement = $this->plService->getProfitLossStatement($period, $customStartDate, $customEndDate, $moduleId);
+        $commissionEfficiency = $this->plService->getCommissionEfficiency($period, $customStartDate, $customEndDate, $moduleId);
+        $cashFlow = $this->plService->getCashFlowAnalysis($period, $customStartDate, $customEndDate, $moduleId);
         
         $data = [
             'statement' => $statement,
@@ -46,10 +47,11 @@ class PdfFinancialReportService
     public function generateBudgetComparisonReport(
         string $period = 'month',
         ?string $customStartDate = null,
-        ?string $customEndDate = null
+        ?string $customEndDate = null,
+        ?int $moduleId = null
     ) {
-        $comparison = $this->budgetService->compareActualVsBudget($period, $customStartDate, $customEndDate);
-        $metrics = $this->budgetService->getBudgetPerformanceMetrics($period, $customStartDate, $customEndDate);
+        $comparison = $this->budgetService->compareActualVsBudget($period, $customStartDate, $customEndDate, $moduleId);
+        $metrics = $this->budgetService->getBudgetPerformanceMetrics($period, $customStartDate, $customEndDate, $moduleId);
         
         $data = [
             'comparison' => $comparison,

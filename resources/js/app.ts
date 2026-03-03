@@ -91,6 +91,9 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
         } else if (path.startsWith('/growfinance')) {
             swPath = '/growfinance-sw.js';
             moduleName = 'GrowFinance';
+        } else if (path.startsWith('/grownet')) {
+            swPath = '/sw.js';
+            moduleName = 'GrowNet';
         } else if (path.startsWith('/marketplace')) {
             swPath = '/marketplace-sw.js';
             moduleName = 'Marketplace';

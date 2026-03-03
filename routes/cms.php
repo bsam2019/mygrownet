@@ -198,6 +198,17 @@ Route::prefix('cms')
             Route::get('/{asset}/edit', [\App\Http\Controllers\CMS\AssetController::class, 'edit'])->name('edit');
             Route::put('/{asset}', [\App\Http\Controllers\CMS\AssetController::class, 'update'])->name('update');
             Route::post('/{asset}/assign', [\App\Http\Controllers\CMS\AssetController::class, 'assign'])->name('assign');
+        });
+
+        // Loans Receivable (Company-scoped loan management)
+        Route::prefix('loans')->name('loans.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\LoanController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\LoanController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\LoanController::class, 'store'])->name('store');
+            Route::get('/{loan}', [\App\Http\Controllers\CMS\LoanController::class, 'show'])->name('show');
+            Route::get('/{loan}/payment', [\App\Http\Controllers\CMS\LoanController::class, 'paymentForm'])->name('payment');
+            Route::post('/{loan}/payment', [\App\Http\Controllers\CMS\LoanController::class, 'recordPayment'])->name('payment.store');
+            Route::get('/reports/aging', [\App\Http\Controllers\CMS\LoanController::class, 'agingReport'])->name('reports.aging');
             Route::post('/{asset}/schedule-maintenance', [\App\Http\Controllers\CMS\AssetController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
             Route::post('/assignments/{assignment}/return', [\App\Http\Controllers\CMS\AssetController::class, 'returnAsset'])->name('return');
             Route::post('/maintenance/{maintenance}/complete', [\App\Http\Controllers\CMS\AssetController::class, 'completeMaintenance'])->name('maintenance.complete');

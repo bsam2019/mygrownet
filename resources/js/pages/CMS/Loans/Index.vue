@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AdminLayout from '@/Layouts/AdminLayout.vue';
+import CMSLayout from '@/Layouts/CMSLayout.vue';
 import { MagnifyingGlassIcon, PlusIcon, FunnelIcon, DocumentArrowDownIcon } from '@heroicons/vue/24/outline';
 import { ExclamationTriangleIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid';
 
+// Reuse the same types from Admin
 interface Loan {
     id: number;
     loan_number: string;
@@ -82,7 +83,7 @@ const safeSummary = computed(() => ({
 }));
 
 const applyFilters = () => {
-    router.get(route('admin.platform-loans.index'), {
+    router.get(route('cms.loans.index'), {
         search: search.value,
         status: statusFilter.value,
         risk_category: riskFilter.value,
@@ -136,35 +137,34 @@ const formatDate = (date: string | null) => {
         day: 'numeric',
     });
 };
-
 </script>
 
 <template>
-    <Head title="Platform Loans" />
+    <Head title="Loans Receivable" />
 
-    <AdminLayout>
+    <CMSLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
                 <div class="md:flex md:items-center md:justify-between mb-6">
                     <div class="flex-1 min-w-0">
                         <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                            Platform Loans
+                            Loans Receivable
                         </h2>
                         <p class="mt-1 text-sm text-gray-500">
-                            Manage loans given to members
+                            Manage loans given to customers
                         </p>
                     </div>
                     <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
                         <Link
-                            :href="route('admin.platform-loans.reports.aging')"
+                            :href="route('cms.loans.reports.aging')"
                             class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             <DocumentArrowDownIcon class="h-5 w-5 mr-2" aria-hidden="true" />
                             Aging Report
                         </Link>
                         <Link
-                            :href="route('admin.platform-loans.create')"
+                            :href="route('cms.loans.create')"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                         >
                             <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -217,7 +217,7 @@ const formatDate = (date: string | null) => {
                                     <dl>
                                         <dt class="text-sm font-medium text-gray-500 truncate">Outstanding</dt>
                                         <dd class="text-lg font-semibold text-gray-900">
-                                            {{ formatCurrency(safeSummary.total_outstanding) }}
+                                            {{ formatCurrency(summary.total_outstanding) }}
                                         </dd>
                                     </dl>
                                 </div>
@@ -272,7 +272,7 @@ const formatDate = (date: string | null) => {
                                     type="text"
                                     id="search"
                                     class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    placeholder="Search by loan number or member name"
+                                    placeholder="Search by loan number or customer name"
                                     @keyup.enter="applyFilters"
                                 />
                             </div>
@@ -396,14 +396,14 @@ const formatDate = (date: string | null) => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <Link
-                                        :href="route('admin.platform-loans.show', loan.id)"
+                                        :href="route('cms.loans.show', loan.id)"
                                         class="text-blue-600 hover:text-blue-900 mr-3"
                                     >
                                         View
                                     </Link>
                                     <Link
                                         v-if="loan.status === 'active'"
-                                        :href="route('admin.platform-loans.payment', loan.id)"
+                                        :href="route('cms.loans.payment', loan.id)"
                                         class="text-green-600 hover:text-green-900"
                                     >
                                         Record Payment
@@ -418,14 +418,14 @@ const formatDate = (date: string | null) => {
                         <div class="flex-1 flex justify-between sm:hidden">
                             <Link
                                 v-if="loans.current_page > 1"
-                                :href="route('admin.platform-loans.index', { ...filters, page: loans.current_page - 1 })"
+                                :href="route('cms.loans.index', { ...filters, page: loans.current_page - 1 })"
                                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Previous
                             </Link>
                             <Link
                                 v-if="loans.current_page < loans.last_page"
-                                :href="route('admin.platform-loans.index', { ...filters, page: loans.current_page + 1 })"
+                                :href="route('cms.loans.index', { ...filters, page: loans.current_page + 1 })"
                                 class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Next
@@ -448,5 +448,5 @@ const formatDate = (date: string | null) => {
                 </div>
             </div>
         </div>
-    </AdminLayout>
+    </CMSLayout>
 </template>

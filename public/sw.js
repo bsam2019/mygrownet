@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.4';
+const CACHE_VERSION = 'v1.0.5';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -25,6 +25,7 @@ const ASSETS_TO_CACHE = [
   '/bizboost-offline.html',
   '/growbiz-offline.html',
   '/growfinance-offline.html',
+  '/grownet-offline.html',
   // BizBoost routes and assets
   '/bizboost',
   '/bizboost/products',
@@ -35,6 +36,12 @@ const ASSETS_TO_CACHE = [
   '/bizboost/reminders',
   '/bizboost/locations',
   '/bizboost-manifest.json',
+  // GrowNet routes
+  '/grownet',
+  '/grownet/dashboard',
+  '/grownet/network',
+  '/grownet/earnings',
+  '/grownet/team',
 ];
 
 // Module route patterns for offline fallback
@@ -42,6 +49,7 @@ const MODULE_ROUTES = {
   bizboost: { pattern: /^\/bizboost/, offline: '/bizboost-offline.html' },
   growbiz: { pattern: /^\/growbiz/, offline: '/growbiz-offline.html' },
   growfinance: { pattern: /^\/growfinance/, offline: '/growfinance-offline.html' },
+  grownet: { pattern: /^\/grownet/, offline: '/grownet-offline.html' },
   // Add other modules as needed
 };
 
@@ -55,6 +63,11 @@ const PAGE_NAMES = {
   '/bizboost/campaigns': 'Campaigns',
   '/bizboost/reminders': 'Reminders',
   '/bizboost/locations': 'Locations',
+  '/grownet': 'Dashboard',
+  '/grownet/dashboard': 'Dashboard',
+  '/grownet/network': 'My Network',
+  '/grownet/earnings': 'Earnings',
+  '/grownet/team': 'Team',
 };
 
 // Install event - cache essential assets

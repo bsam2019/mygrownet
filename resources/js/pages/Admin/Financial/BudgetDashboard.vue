@@ -14,6 +14,18 @@
                         
                         <!-- Period Selector -->
                         <div class="flex items-center gap-4">
+                            <!-- Module Filter -->
+                            <select
+                                v-model="selectedModuleId"
+                                @change="handleModuleChange"
+                                class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                <option :value="null">All Modules</option>
+                                <option v-for="module in props.modules" :key="module.id" :value="module.id">
+                                    {{ module.name }}
+                                </option>
+                            </select>
+                            
                             <select
                                 v-model="selectedPeriod"
                                 @change="handlePeriodChange"
@@ -303,11 +315,14 @@ interface Props {
     comparison: any;
     metrics: any;
     selectedPeriod: string;
+    modules: Array<{ id: number; code: string; name: string }>;
+    selectedModuleId?: number | null;
 }
 
 const props = defineProps<Props>();
 
 const selectedPeriod = ref(props.selectedPeriod);
+const selectedModuleId = ref(props.selectedModuleId || null);
 const customStartDate = ref('');
 const customEndDate = ref('');
 const loading = ref(false);
@@ -317,7 +332,10 @@ const metrics = ref(props.metrics);
 const loadData = async () => {
     loading.value = true;
     try {
-        let url = route('admin.budget.comparison', { period: selectedPeriod.value });
+        let url = route('admin.budget.comparison', { 
+            period: selectedPeriod.value,
+            module_id: selectedModuleId.value 
+        });
         
         // Add custom dates if custom period is selected
         if (selectedPeriod.value === 'custom' && customStartDate.value && customEndDate.value) {
@@ -333,6 +351,10 @@ const loadData = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+const handleModuleChange = () => {
+    loadData();
 };
 
 const handlePeriodChange = () => {
@@ -352,7 +374,10 @@ const applyCustomPeriod = () => {
 const exportPDF = () => {
     loading.value = true;
     
-    let url = route('admin.budget.export-pdf', { period: selectedPeriod.value });
+    let url = route('admin.budget.export-pdf', { 
+        period: selectedPeriod.value,
+        module_id: selectedModuleId.value 
+    });
     
     if (selectedPeriod.value === 'custom' && customStartDate.value && customEndDate.value) {
         url += `&start_date=${customStartDate.value}&end_date=${customEndDate.value}`;

@@ -420,6 +420,15 @@
             </MenuButton>
             <MenuItems class="absolute bottom-full right-0 mb-2 w-48 origin-bottom-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <div class="py-1">
+                <MenuItem v-if="isAdmin" v-slot="{ active }">
+                  <Link
+                    :href="route('admin.dashboard')"
+                    :class="[active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center gap-2']"
+                  >
+                    <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
+                    Back to Admin Dashboard
+                  </Link>
+                </MenuItem>
                 <MenuItem v-slot="{ active }">
                   <button
                     @click="navigateTo('profile')"
@@ -447,6 +456,15 @@
             </MenuButton>
             <MenuItems class="absolute bottom-full left-0 mb-2 w-48 origin-bottom-left rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <div class="py-1">
+                <MenuItem v-if="isAdmin" v-slot="{ active }">
+                  <Link
+                    :href="route('admin.dashboard')"
+                    :class="[active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center gap-2']"
+                  >
+                    <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
+                    Back to Admin Dashboard
+                  </Link>
+                </MenuItem>
                 <MenuItem v-slot="{ active }">
                   <button
                     @click="navigateTo('profile')"
@@ -586,6 +604,16 @@
                     <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
                   </div>
                   <div class="py-1">
+                    <MenuItem v-if="isAdmin" v-slot="{ active }">
+                      <Link
+                        :href="route('admin.dashboard')"
+                        :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-blue-700 font-medium']"
+                      >
+                        <ArrowLeftIcon class="h-5 w-5 text-blue-500" aria-hidden="true" />
+                        Back to Admin Dashboard
+                      </Link>
+                    </MenuItem>
+                    <div v-if="isAdmin" class="border-t border-gray-200 my-1"></div>
                     <MenuItem v-slot="{ active }">
                       <button
                         @click="navigateTo('profile')"
@@ -783,6 +811,7 @@ import {
   DevicePhoneMobileIcon,
   ShieldCheckIcon,
   DocumentChartBarIcon,
+  ArrowLeftIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
@@ -824,6 +853,12 @@ provide('slideOver', slideOver)
 const company = computed(() => page.props.company)
 const user = computed(() => page.props.auth?.user)
 const cmsUser = computed(() => page.props.cmsUser)
+
+// Check if user is admin (has 'admin' or 'administrator' role)
+const isAdmin = computed(() => {
+  const roles = user.value?.roles || []
+  return roles.includes('admin') || roles.includes('administrator')
+})
 
 // Notifications from backend (no hardcoded data)
 const recentNotifications = ref<Notification[]>(page.props.notifications || [])

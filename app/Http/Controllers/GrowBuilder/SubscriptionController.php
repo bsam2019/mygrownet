@@ -152,6 +152,7 @@ class SubscriptionController extends Controller
                 DB::table('transactions')->insert([
                     'user_id' => $user->id,
                     'transaction_type' => 'subscription_payment',
+                    'transaction_source' => self::MODULE_ID, // Track which module generated this revenue
                     'amount' => -$amount,
                     'status' => 'completed',
                     'reference_number' => 'GB-SUB-' . strtoupper(uniqid()),

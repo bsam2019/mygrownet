@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\LoanManagementController;
+use App\Http\Controllers\Admin\LoanController;
 use App\Http\Controllers\Admin\AdminInvestmentController;
 use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
@@ -68,13 +69,25 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::post('users/{user}/loan-limit', [UserManagementController::class, 'updateLoanLimit'])->name('users.loan-limit');
     Route::resource('users', UserManagementController::class)->names('users');
     
-    // Loan management
+    // Loan management (Legacy - wallet-based loans)
     Route::get('loans', [LoanManagementController::class, 'index'])->name('loans.index');
     Route::post('loans/{user}/issue', [LoanManagementController::class, 'issueLoan'])->name('loans.issue');
     Route::get('loans/{user}/summary', [LoanManagementController::class, 'getLoanSummary'])->name('loans.summary');
     Route::get('loans/members-with-loans', [LoanManagementController::class, 'getMembersWithLoans'])->name('loans.members');
     Route::post('loans/applications/{application}/approve', [LoanManagementController::class, 'approveApplication'])->name('loans.applications.approve');
     Route::post('loans/applications/{application}/reject', [LoanManagementController::class, 'rejectApplication'])->name('loans.applications.reject');
+
+    // Platform Loans (CMS-based accounting system)
+    Route::prefix('platform-loans')->name('platform-loans.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LoanController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\LoanController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\LoanController::class, 'store'])->name('store');
+        Route::get('/{loan}', [\App\Http\Controllers\Admin\LoanController::class, 'show'])->name('show');
+        Route::get('/{loan}/payment', [\App\Http\Controllers\Admin\LoanController::class, 'paymentForm'])->name('payment');
+        Route::post('/{loan}/payment', [\App\Http\Controllers\Admin\LoanController::class, 'recordPayment'])->name('payment.store');
+        Route::get('/reports/aging', [\App\Http\Controllers\Admin\LoanController::class, 'agingReport'])->name('reports.aging');
+        Route::get('/reports/portfolio', [\App\Http\Controllers\Admin\LoanController::class, 'portfolio'])->name('reports.portfolio');
+    });
 
     // User profile management
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -86,6 +99,14 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::get('/reports/investments', [FinancialReportController::class, 'investments'])->name('reports.investments');
     Route::get('/reports/withdrawals', [FinancialReportController::class, 'withdrawals'])->name('reports.withdrawals');
     Route::get('/reports/generate', [FinancialReportController::class, 'generateReport'])->name('reports.generate');
+    
+    // Financial Reports (Balance Sheet, Cash Flow, P&L)
+    Route::prefix('financial-reports')->name('financial-reports.')->group(function () {
+        Route::get('/dashboard', [FinancialReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+        Route::get('/profit-loss', [FinancialReportController::class, 'profitLoss'])->name('profit-loss');
+    });
 
     // Role and Permission management (Legacy - keeping for backward compatibility)
     Route::resource('roles', RoleController::class)->names('roles');

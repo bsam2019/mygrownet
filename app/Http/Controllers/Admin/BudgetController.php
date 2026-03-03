@@ -21,14 +21,23 @@ class BudgetController extends Controller
     public function index(Request $request)
     {
         $period = $request->get('period', 'month');
+        $moduleId = $request->get('module_id');
         
-        $comparison = $this->budgetService->compareActualVsBudget($period);
-        $metrics = $this->budgetService->getBudgetPerformanceMetrics($period);
+        $comparison = $this->budgetService->compareActualVsBudget($period, null, null, $moduleId);
+        $metrics = $this->budgetService->getBudgetPerformanceMetrics($period, null, null, $moduleId);
+        
+        // Get modules list
+        $modules = \App\Infrastructure\Persistence\Eloquent\CMS\FinancialModuleModel::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name'])
+            ->toArray();
         
         return Inertia::render('Admin/Financial/BudgetDashboard', [
             'comparison' => $comparison,
             'metrics' => $metrics,
             'selectedPeriod' => $period,
+            'modules' => $modules,
+            'selectedModuleId' => $moduleId,
         ]);
     }
     
@@ -40,10 +49,11 @@ class BudgetController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         return response()->json([
-            'comparison' => $this->budgetService->compareActualVsBudget($period, $startDate, $endDate),
-            'metrics' => $this->budgetService->getBudgetPerformanceMetrics($period, $startDate, $endDate),
+            'comparison' => $this->budgetService->compareActualVsBudget($period, $startDate, $endDate, $moduleId),
+            'metrics' => $this->budgetService->getBudgetPerformanceMetrics($period, $startDate, $endDate, $moduleId),
         ]);
     }
     
@@ -56,9 +66,10 @@ class BudgetController extends Controller
         $periods = $request->get('periods', 6);
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         return response()->json([
-            'trends' => $this->budgetService->getBudgetTrends($period, $periods, $startDate, $endDate),
+            'trends' => $this->budgetService->getBudgetTrends($period, $periods, $startDate, $endDate, $moduleId),
         ]);
     }
     
@@ -70,9 +81,10 @@ class BudgetController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         return response()->json([
-            'metrics' => $this->budgetService->getBudgetPerformanceMetrics($period, $startDate, $endDate),
+            'metrics' => $this->budgetService->getBudgetPerformanceMetrics($period, $startDate, $endDate, $moduleId),
         ]);
     }
     
@@ -84,9 +96,10 @@ class BudgetController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         try {
-            $pdf = $this->pdfService->generateBudgetComparisonReport($period, $startDate, $endDate);
+            $pdf = $this->pdfService->generateBudgetComparisonReport($period, $startDate, $endDate, $moduleId);
             
             $filename = 'Budget_Comparison_' . $period . '_' . now()->format('Y-m-d') . '.pdf';
             

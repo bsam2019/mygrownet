@@ -1006,6 +1006,166 @@ If needed in the future, consider:
 - **Email Delivery**: Send reports via email
 - **Scheduled Reports**: Automatic report generation and delivery
 
+## Module Filtering Feature
+
+**Last Updated:** December 2024  
+**Status:** ✅ Production Ready
+
+### Overview
+
+Added module filtering capability to both Budget Comparison and Profit & Loss dashboards. Administrators can now filter financial data by specific modules (e.g., GrowNet, GrowBuilder, Shop, etc.) for granular analysis.
+
+### Features
+
+**Budget Dashboard Module Filtering:**
+- Filter budget vs actual comparisons by module
+- View module-specific spending patterns
+- Identify which modules are over/under budget
+- Export module-filtered reports to PDF
+
+**P&L Dashboard Module Filtering:**
+- Filter revenue and expenses by module
+- Analyze profitability per module
+- View module-specific commission efficiency
+- Track cash flow by module
+- Export module-filtered P&L statements to PDF
+
+### Implementation
+
+**Backend Changes:**
+
+1. **BudgetComparisonService** - Added optional `$moduleId` parameter to all methods:
+   - `compareActualVsBudget($period, $startDate, $endDate, $moduleId)`
+   - `getActualExpenses($period, $startDate, $endDate, $moduleId)`
+   - `getActualRevenue($period, $startDate, $endDate, $moduleId)`
+   - `getBudgetPerformanceMetrics($period, $startDate, $endDate, $moduleId)`
+   - `getBudgetTrends($period, $periods, $startDate, $endDate, $moduleId)`
+
+2. **ProfitLossTrackingService** - Already supports `$moduleId` parameter:
+   - `getProfitLossStatement($period, $startDate, $endDate, $moduleId)`
+   - `getCommissionEfficiency($period, $startDate, $endDate, $moduleId)`
+   - `getCashFlowAnalysis($period, $startDate, $endDate, $moduleId)`
+
+3. **Controllers Updated:**
+   - `BudgetController` - Added modules list to index(), all methods accept `module_id`
+   - `ProfitLossController` - Added modules list to index(), all methods accept `module_id`
+
+4. **PDF Generation** - Both services support module filtering:
+   - `generateBudgetComparisonReport($period, $startDate, $endDate, $moduleId)`
+   - `generateProfitLossReport($period, $startDate, $endDate, $moduleId)`
+
+**Frontend Changes:**
+
+1. **Budget Dashboard** (`BudgetDashboard.vue`):
+   - Added module filter dropdown in header
+   - `selectedModuleId` reactive state
+   - `handleModuleChange()` method to reload data
+   - Module ID passed to all API calls and PDF export
+
+2. **P&L Dashboard** (`ProfitLoss.vue`):
+   - Added module filter dropdown in header
+   - `selectedModuleId` reactive state
+   - `handleModuleChange()` method to reload data
+   - Module ID passed to all API calls and PDF export
+
+### Usage
+
+**For Administrators:**
+
+1. Navigate to Admin → Financial → Budget Dashboard or P&L Dashboard
+2. Select "All Modules" to view platform-wide data (default)
+3. Select specific module (e.g., "GrowNet") to view module-specific data
+4. All metrics, charts, and tables update automatically
+5. Click "Export PDF" to download filtered report
+
+**API Endpoints:**
+
+All endpoints accept optional `module_id` query parameter:
+
+```
+# Budget Dashboard
+GET /admin/budget/comparison?period=month&module_id=1
+GET /admin/budget/metrics?period=month&module_id=1
+GET /admin/budget/trends?period=month&module_id=1
+GET /admin/budget/export-pdf?period=month&module_id=1
+
+# P&L Dashboard
+GET /admin/profit-loss/statement?period=month&module_id=1
+GET /admin/profit-loss/commission-efficiency?period=month&module_id=1
+GET /admin/profit-loss/cash-flow?period=month&module_id=1
+GET /admin/profit-loss/export-pdf?period=month&module_id=1
+```
+
+### Data Source
+
+- Module filtering relies on `module_id` column in `transactions` table
+- All financial transactions are tagged with their originating module
+- Module data comes from `financial_modules` table
+- Only active modules appear in filter dropdown
+
+**Important: What is a Module?**
+
+Modules are **independent business units** with their own revenue and expense streams:
+- ✅ **GrowNet** - MLM/Network marketing subscriptions
+- ✅ **GrowBuilder** - Business building tools
+- ✅ **GrowFinance** - Financial services and lending
+- ✅ **BizBoost** - Business acceleration services
+- ✅ **GrowMarket** - E-commerce marketplace
+- ✅ **Invoice Generator** - Invoicing service
+- ✅ **Learning Center** - Online courses and training
+
+**NOT Modules (Platform Features):**
+- ❌ Wallet - Payment feature, not a business unit
+- ❌ Commissions - Payout mechanism, not a business unit
+- ❌ LGR - Loyalty rewards feature
+- ❌ Loans - Financial feature
+- ❌ Profit Sharing - Distribution mechanism
+
+Use `FinancialModulesSeeder` to seed correct modules:
+```bash
+php artisan db:seed --class=FinancialModulesSeeder
+```
+
+### CMS Impact
+
+**Important:** This feature does NOT affect CMS budget functionality:
+- CMS budgets are company-specific (managed in CMS section)
+- Admin dashboards show platform-wide aggregated data
+- Completely separate controllers and services
+- No breaking changes to existing CMS features
+
+### Benefits
+
+1. **Granular Analysis**: View financial performance per module
+2. **Better Decision Making**: Identify profitable vs unprofitable modules
+3. **Resource Allocation**: Allocate budgets based on module performance
+4. **Compliance**: Track module-specific spending for regulatory purposes
+5. **Reporting**: Generate module-specific financial reports
+
+### Technical Notes
+
+**Backward Compatibility:**
+- All `$moduleId` parameters are optional (nullable)
+- When `null`, returns platform-wide data (existing behavior)
+- No breaking changes to existing API calls
+
+**Performance:**
+- Module filtering adds minimal overhead (single WHERE clause)
+- Indexes on `transactions.module_id` ensure fast queries
+- No N+1 query issues
+
+### Files Modified
+
+**Backend:**
+- `app/Services/BudgetComparisonService.php`
+- `app/Services/PdfFinancialReportService.php`
+- `app/Http/Controllers/Admin/BudgetController.php`
+- `app/Http/Controllers/Admin/ProfitLossController.php`
+
+**Frontend:**
+- `resources/js/Pages/Admin/Financial/BudgetDashboard.vue`
+- `resources/js/Pages/Admin/Financial/ProfitLoss.vue`
+
 ### Conclusion
 
 The CMS Financial Integration is **COMPLETE and PRODUCTION READY**. The system provides:
@@ -1020,6 +1180,29 @@ The CMS Financial Integration is **COMPLETE and PRODUCTION READY**. The system p
 No further work is required unless new features are requested.
 
 ## Changelog
+
+### December 2024 - Revenue Recognition Fix
+- **CRITICAL FIX**: Removed wallet deposits from revenue calculation
+- Wallet top-ups and deposits are liabilities (money owed to users), NOT revenue
+- Revenue is only recognized when users spend wallet balance on products/services
+- Updated `ProfitLossTrackingService::getRevenue()` to exclude `WALLET_TOPUP`
+- Updated `BudgetComparisonService::getRevenueTypes()` to exclude deposits
+- This follows proper accrual accounting principles (revenue recognition)
+
+**Accounting Principle:**
+- Deposit received → Liability (deferred revenue)
+- User purchases product → Revenue recognized
+- Example: User deposits K1,000 → Liability K1,000
+- User buys K500 subscription → Revenue K500, Liability K500
+
+### December 2024 - Module Filtering Feature
+- Added module filtering to Budget and P&L dashboards
+- Updated `BudgetComparisonService` with optional `$moduleId` parameter
+- Updated `ProfitLossTrackingService` with module filtering support
+- Added module dropdown filters to frontend dashboards
+- PDF exports now support module filtering
+- No breaking changes - fully backward compatible
+- CMS functionality unaffected
 
 ### March 2, 2026
 - Added PDF export functionality for P&L and Budget dashboards

@@ -12,13 +12,18 @@ class Transaction extends Model
         'investment_id',
         'amount',
         'transaction_type',
+        'transaction_source',  // Module that generated the transaction
+        'module_reference',    // Module's internal reference ID
         'status',
         'payment_method',
         'reference_number',
         'description',
         'processed_at',
         'processed_by',
-        'notes'
+        'notes',
+        'cms_expense_id',      // CMS expense reference
+        'cms_reference_type',  // CMS reference type
+        'cms_reference_id',    // CMS reference ID
     ];
 
     protected $casts = [

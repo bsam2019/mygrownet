@@ -61,6 +61,7 @@ class ModuleSubscriptionCheckoutController extends Controller
             DB::table('transactions')->insert([
                 'user_id' => $user->id,
                 'transaction_type' => 'subscription_payment',
+                'transaction_source' => $validated['module_id'], // Track which module generated this revenue
                 'amount' => -$amount, // Negative for debit
                 'status' => 'completed',
                 'description' => "Subscription: {$validated['module_id']} - {$validated['tier']} tier",
@@ -175,6 +176,7 @@ class ModuleSubscriptionCheckoutController extends Controller
             DB::table('transactions')->insert([
                 'user_id' => $user->id,
                 'transaction_type' => 'subscription_upgrade',
+                'transaction_source' => $validated['module_id'], // Track which module generated this revenue
                 'amount' => -$amount,
                 'status' => 'completed',
                 'description' => "Upgrade: {$validated['module_id']} to {$validated['new_tier']} tier",

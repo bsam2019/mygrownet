@@ -15,6 +15,18 @@
           
           <!-- Period Selector -->
           <div class="flex items-center gap-3">
+            <!-- Module Filter -->
+            <select
+              v-model="selectedModuleId"
+              @change="handleModuleChange"
+              class="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option :value="null">All Modules</option>
+              <option v-for="module in props.modules" :key="module.id" :value="module.id">
+                {{ module.name }}
+              </option>
+            </select>
+            
             <select
               v-model="selectedPeriod"
               @change="handlePeriodChange"
@@ -429,10 +441,15 @@ const props = defineProps({
   initialPeriod: {
     type: String,
     default: 'month'
+  },
+  modules: {
+    type: Array,
+    default: () => []
   }
 });
 
 const selectedPeriod = ref(props.initialPeriod);
+const selectedModuleId = ref(null);
 const customStartDate = ref('');
 const customEndDate = ref('');
 const loading = ref(false);
@@ -450,6 +467,11 @@ const loadData = async () => {
   
   try {
     let url = `/admin/profit-loss/statement?period=${selectedPeriod.value}`;
+    
+    // Add module filter if selected
+    if (selectedModuleId.value) {
+      url += `&module_id=${selectedModuleId.value}`;
+    }
     
     // Add custom dates if custom period is selected
     if (selectedPeriod.value === 'custom' && customStartDate.value && customEndDate.value) {
@@ -477,6 +499,10 @@ const loadData = async () => {
   }
 };
 
+const handleModuleChange = () => {
+  loadData();
+};
+
 const handlePeriodChange = () => {
   if (selectedPeriod.value !== 'custom') {
     loadData();
@@ -499,6 +525,11 @@ const exportPDF = () => {
   loading.value = true;
   
   let url = `/admin/profit-loss/export-pdf?period=${selectedPeriod.value}`;
+  
+  // Add module filter if selected
+  if (selectedModuleId.value) {
+    url += `&module_id=${selectedModuleId.value}`;
+  }
   
   if (selectedPeriod.value === 'custom' && customStartDate.value && customEndDate.value) {
     url += `&start_date=${customStartDate.value}&end_date=${customEndDate.value}`;

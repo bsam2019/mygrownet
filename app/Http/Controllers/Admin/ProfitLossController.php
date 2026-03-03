@@ -30,8 +30,19 @@ class ProfitLossController extends Controller
     {
         $period = $request->get('period', 'month');
         
+        // Get list of modules for filter dropdown
+        $modules = \App\Models\Module::where('is_active', true)
+            ->orderBy('display_order')
+            ->get(['id', 'name', 'code'])
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'name' => $m->name,
+                'code' => $m->code,
+            ]);
+        
         return Inertia::render('Admin/Financial/ProfitLoss', [
             'initialPeriod' => $period,
+            'modules' => $modules,
         ]);
     }
 
@@ -43,9 +54,10 @@ class ProfitLossController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         try {
-            $statement = $this->plService->getProfitLossStatement($period, $startDate, $endDate);
+            $statement = $this->plService->getProfitLossStatement($period, $startDate, $endDate, $moduleId);
 
             return response()->json([
                 'success' => true,
@@ -67,9 +79,10 @@ class ProfitLossController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         try {
-            $efficiency = $this->plService->getCommissionEfficiency($period, $startDate, $endDate);
+            $efficiency = $this->plService->getCommissionEfficiency($period, $startDate, $endDate, $moduleId);
 
             return response()->json([
                 'success' => true,
@@ -91,9 +104,10 @@ class ProfitLossController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         try {
-            $cashFlow = $this->plService->getCashFlowAnalysis($period, $startDate, $endDate);
+            $cashFlow = $this->plService->getCashFlowAnalysis($period, $startDate, $endDate, $moduleId);
 
             return response()->json([
                 'success' => true,
@@ -115,9 +129,10 @@ class ProfitLossController extends Controller
         $period = $request->get('period', 'month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $moduleId = $request->get('module_id');
         
         try {
-            $pdf = $this->pdfService->generateProfitLossReport($period, $startDate, $endDate);
+            $pdf = $this->pdfService->generateProfitLossReport($period, $startDate, $endDate, $moduleId);
             
             $filename = 'PL_Statement_' . $period . '_' . now()->format('Y-m-d') . '.pdf';
             

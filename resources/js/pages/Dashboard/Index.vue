@@ -79,13 +79,15 @@ const shouldShowStartHere = computed(() => {
     // Don't show if user dismissed it
     if (startHereDismissed.value) return false;
     
-    // Always show Start Here section for new users or those without key modules
-    // Show if user doesn't have GrowBuilder OR doesn't have GrowNet
+    // Show Start Here section if there are any actionable items:
+    // 1. User doesn't have GrowBuilder (show "Build Your Website")
+    // 2. User doesn't have GrowNet (show "Join GrowNet")
+    // 3. User has GrowNet (show "GrowNet Dashboard")
     const hasGrowBuilder = props.modules.some(m => m.slug === 'growbuilder' && m.has_access);
     const hasGrowNet = props.hasActiveGrowNetPackage;
     
-    // Show if missing either GrowBuilder or GrowNet
-    return !hasGrowBuilder || !hasGrowNet;
+    // Show if missing GrowBuilder, OR if user has GrowNet (to show dashboard link)
+    return !hasGrowBuilder || hasGrowNet;
 });
 
 // Primary tool detection - GrowBuilder or GrowNet

@@ -22,7 +22,7 @@ class ProfitLossTrackingService
     /**
      * Get comprehensive P&L statement
      */
-    public function getProfitLossStatement(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
+    public function getProfitLossStatement(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null, ?int $moduleId = null): array
     {
         $startDate = $customStartDate ? \Carbon\Carbon::parse($customStartDate) : $this->getPeriodStartDate($period);
         $endDate = $customEndDate ? \Carbon\Carbon::parse($customEndDate) : now();
@@ -33,39 +33,61 @@ class ProfitLossTrackingService
                 'from' => $startDate->toDateString(),
                 'to' => $endDate->toDateString(),
             ],
-            'revenue' => $this->getRevenue($startDate, $endDate),
-            'expenses' => $this->getExpenses($startDate, $endDate),
-            'profitability' => $this->calculateProfitability($startDate, $endDate),
-            'by_module' => $this->getProfitLossByModule($startDate, $endDate),
-            'trends' => $this->getProfitLossTrends($startDate, $endDate),
+            'module_id' => $moduleId,
+            'revenue' => $this->getRevenue($startDate, $endDate, $moduleId),
+            'expenses' => $this->getExpenses($startDate, $endDate, $moduleId),
+            'profitability' => $this->calculateProfitability($startDate, $endDate, $moduleId),
+            'by_module' => $moduleId ? [] : $this->getProfitLossByModule($startDate, $endDate), // Only show module breakdown when not filtering
+            'trends' => $this->getProfitLossTrends($startDate, $endDate, $moduleId),
         ];
     }
 
     /**
      * Get all revenue sources
      */
-    private function getRevenue(Carbon $startDate, Carbon $endDate): array
+    private function getRevenue(Carbon $startDate, Carbon $endDate, ?int $moduleId = null): array
     {
-        // Revenue transaction types
+        // Revenue transaction types (EXCLUDING deposits - they are liabilities)
         $revenueTypes = [
-            TransactionType::WALLET_TOPUP->value,
+            // Product sales - actual revenue
             TransactionType::SUBSCRIPTION_PAYMENT->value,
             TransactionType::STARTER_KIT_PURCHASE->value,
             TransactionType::STARTER_KIT_UPGRADE->value,
             TransactionType::SHOP_PURCHASE->value,
+            TransactionType::MARKETPLACE_PURCHASE->value,
+            TransactionType::LEARNING_PACK_PURCHASE->value,
+            
+            // Service payments - actual revenue
             TransactionType::SERVICE_PAYMENT->value,
             TransactionType::WORKSHOP_PAYMENT->value,
-            TransactionType::LEARNING_PACK_PURCHASE->value,
             TransactionType::COACHING_PAYMENT->value,
             TransactionType::GROWBUILDER_PAYMENT->value,
-            TransactionType::MARKETPLACE_PURCHASE->value,
+            
+            // Interest income from loans - REVENUE (not principal repayment)
+            'interest_income',
+            
+            // NOTE: LOAN_REPAYMENT (principal) is NOT revenue!
+            // Principal repayments reduce the loan asset on balance sheet
+            // Only interest portion is revenue
+            
+            // NOTE: WALLET_TOPUP and DEPOSIT are NOT revenue!
+            // They are liabilities (money owed to users) until spent on products/services
+            
+            // NOTE: LOAN_DISBURSEMENT is NOT an expense!
+            // It's an asset exchange (Cash → Loans Receivable) on balance sheet
         ];
 
-        $breakdown = DB::table('transactions')
+        $query = DB::table('transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
-            ->whereIn('transaction_type', $revenueTypes)
-            ->select(
+            ->whereIn('transaction_type', $revenueTypes);
+        
+        // Apply module filter if provided
+        if ($moduleId) {
+            $query->where('module_id', $moduleId);
+        }
+        
+        $breakdown = $query->select(
                 'transaction_type',
                 DB::raw('SUM(amount) as total'),
                 DB::raw('COUNT(*) as count')
@@ -102,55 +124,77 @@ class ProfitLossTrackingService
     /**
      * Get all expenses
      */
-    private function getExpenses(Carbon $startDate, Carbon $endDate): array
+    private function getExpenses(Carbon $startDate, Carbon $endDate, ?int $moduleId = null): array
     {
         // Commission expenses
-        $commissions = DB::table('referral_commissions')
+        $commissionsQuery = DB::table('referral_commissions')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'paid')
-            ->sum('amount');
+            ->where('status', 'paid');
+        
+        if ($moduleId) {
+            $commissionsQuery->where('module_id', $moduleId);
+        }
+        
+        $commissions = $commissionsQuery->sum('amount');
 
         // Withdrawal expenses
-        $withdrawals = DB::table('transactions')
+        $withdrawalsQuery = DB::table('transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('transaction_type', TransactionType::WITHDRAWAL->value)
-            ->where('status', TransactionStatus::COMPLETED->value)
-            ->sum(DB::raw('ABS(amount)'));
+            ->where('status', TransactionStatus::COMPLETED->value);
+        
+        if ($moduleId) {
+            $withdrawalsQuery->where('module_id', $moduleId);
+        }
+        
+        $withdrawals = $withdrawalsQuery->sum(DB::raw('ABS(amount)'));
 
         // Profit share expenses
-        $profitShares = DB::table('profit_shares')
+        $profitSharesQuery = DB::table('profit_shares')
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'paid')
-            ->sum('amount');
+            ->where('status', 'paid');
+        
+        if ($moduleId) {
+            $profitSharesQuery->where('module_id', $moduleId);
+        }
+        
+        $profitShares = $profitSharesQuery->sum('amount');
 
         // LGR expenses
-        $lgrExpenses = DB::table('transactions')
+        $lgrQuery = DB::table('transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('transaction_type', [
                 TransactionType::LGR_EARNED->value,
                 TransactionType::LGR_MANUAL_AWARD->value,
             ])
-            ->where('status', TransactionStatus::COMPLETED->value)
-            ->sum('amount');
+            ->where('status', TransactionStatus::COMPLETED->value);
+        
+        if ($moduleId) {
+            $lgrQuery->where('module_id', $moduleId);
+        }
+        
+        $lgrExpenses = $lgrQuery->sum('amount');
 
-        // Loan disbursements (money given out)
-        $loanDisbursements = DB::table('transactions')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('transaction_type', TransactionType::LOAN_DISBURSEMENT->value)
-            ->where('status', TransactionStatus::COMPLETED->value)
-            ->sum('amount');
+        // NOTE: Loan disbursements are NOT expenses!
+        // They are balance sheet transactions (Cash → Loans Receivable)
+        // Removed from expense calculation
 
         // Shop credit allocations (free money given)
-        $shopCredits = DB::table('transactions')
+        $shopCreditsQuery = DB::table('transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('transaction_type', TransactionType::SHOP_CREDIT_ALLOCATION->value)
-            ->where('status', TransactionStatus::COMPLETED->value)
-            ->sum('amount');
+            ->where('status', TransactionStatus::COMPLETED->value);
+        
+        if ($moduleId) {
+            $shopCreditsQuery->where('module_id', $moduleId);
+        }
+        
+        $shopCredits = $shopCreditsQuery->sum('amount');
 
         // CMS Platform Expenses (from CMS expense management)
-        $cmsExpenses = $this->getCmsExpenses($startDate, $endDate);
+        $cmsExpenses = $this->getCmsExpenses($startDate, $endDate, $moduleId);
 
-        $totalExpenses = $commissions + $withdrawals + $profitShares + $lgrExpenses + $loanDisbursements + $shopCredits + $cmsExpenses['total'];
+        $totalExpenses = $commissions + $withdrawals + $profitShares + $lgrExpenses + $shopCredits + $cmsExpenses['total'];
 
         $expenseBreakdown = [
             'commissions' => [
@@ -173,11 +217,7 @@ class ProfitLossTrackingService
                 'count' => 0,
                 'label' => 'Loyalty Growth Rewards',
             ],
-            'loan_disbursements' => [
-                'amount' => (float) $loanDisbursements,
-                'count' => 0,
-                'label' => 'Loan Disbursements',
-            ],
+            // NOTE: loan_disbursements removed - they are balance sheet items, not expenses
             'shop_credits' => [
                 'amount' => (float) $shopCredits,
                 'count' => 0,
@@ -208,7 +248,7 @@ class ProfitLossTrackingService
     /**
      * Get CMS platform expenses
      */
-    private function getCmsExpenses(Carbon $startDate, Carbon $endDate): array
+    private function getCmsExpenses(Carbon $startDate, Carbon $endDate, ?int $moduleId = null): array
     {
         $expenseTypes = [
             TransactionType::MARKETING_EXPENSE->value,
@@ -221,11 +261,17 @@ class ProfitLossTrackingService
             TransactionType::GENERAL_EXPENSE->value,
         ];
 
-        $breakdown = DB::table('transactions')
+        $query = DB::table('transactions')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
-            ->whereIn('transaction_type', $expenseTypes)
-            ->select(
+            ->whereIn('transaction_type', $expenseTypes);
+        
+        // Apply module filter if provided
+        if ($moduleId) {
+            $query->where('module_id', $moduleId);
+        }
+        
+        $breakdown = $query->select(
                 'transaction_type',
                 DB::raw('SUM(ABS(amount)) as total'),
                 DB::raw('COUNT(*) as count')
@@ -264,7 +310,7 @@ class ProfitLossTrackingService
     /**
      * Calculate profitability metrics
      */
-    private function calculateProfitability(Carbon $startDate, Carbon $endDate): array
+    private function calculateProfitability(Carbon $startDate, Carbon $endDate, ?int $moduleId = null): array
     {
         $revenue = $this->getRevenue($startDate, $endDate);
         $expenses = $this->getExpenses($startDate, $endDate);
@@ -344,7 +390,7 @@ class ProfitLossTrackingService
     /**
      * Get P&L trends (daily breakdown)
      */
-    private function getProfitLossTrends(Carbon $startDate, Carbon $endDate): array
+    private function getProfitLossTrends(Carbon $startDate, Carbon $endDate, ?int $moduleId = null): array
     {
         $trends = [];
         $currentDate = $startDate->copy();
