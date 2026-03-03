@@ -46,7 +46,31 @@ The following seeders are already configured in `ProductionSeeder.php` and run a
 
 These seeders are required for the financial system features but are NOT yet in ProductionSeeder.php:
 
-### 1. ModuleSeeder ✅ (REQUIRED - Not in ProductionSeeder)
+### 1. MyGrowNetPlatformCompanySeeder ✅ (REQUIRED - Not in ProductionSeeder)
+**File:** `database/seeders/MyGrowNetPlatformCompanySeeder.php`
+**Purpose:** Creates the MyGrowNet Platform company in CMS for internal expense tracking
+**Status:** Newly created, needs to be added to ProductionSeeder
+**Run Command:**
+```bash
+php artisan db:seed --class=MyGrowNetPlatformCompanySeeder
+```
+
+**Creates:**
+- Company: MyGrowNet Platform
+- Industry: Technology
+- Email: admin@mygrownet.com
+- Status: Active
+
+### 2. ModuleSeeder ✅ (REQUIRED - Not in ProductionSeeder)
+**File:** `database/seeders/ModuleSeeder.php`
+**Purpose:** Seeds the 14 financial modules used in transaction categorization
+**Status:** Already exists and complete
+**Run Command:**
+```bash
+php artisan db:seed --class=ModuleSeeder
+```
+
+### 2. ModuleSeeder ✅ (REQUIRED - Not in ProductionSeeder)
 **File:** `database/seeders/ModuleSeeder.php`
 **Purpose:** Seeds the 14 financial modules used in transaction categorization
 **Status:** Already exists and complete
@@ -71,10 +95,20 @@ php artisan db:seed --class=ModuleSeeder
 - ecommerce (E-Commerce)
 - learning-hub (Learning Hub)
 
-### 2. MyGrowNetExpenseCategoriesSeeder ✅ (REQUIRED - Not in ProductionSeeder)
+### 3. MyGrowNetExpenseCategoriesSeeder ✅ (REQUIRED - Not in ProductionSeeder)
 **File:** `database/seeders/MyGrowNetExpenseCategoriesSeeder.php`
 **Purpose:** Seeds expense categories for MyGrowNet Platform internal tracking
 **Status:** Newly created, needs to be added to ProductionSeeder
+**Run Command:**
+```bash
+php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder
+```
+
+### 3. MyGrowNetExpenseCategoriesSeeder ✅ (REQUIRED - Not in ProductionSeeder)
+**File:** `database/seeders/MyGrowNetExpenseCategoriesSeeder.php`
+**Purpose:** Seeds expense categories for MyGrowNet Platform internal tracking
+**Status:** Newly created, needs to be added to ProductionSeeder
+**Dependencies:** Requires MyGrowNetPlatformCompanySeeder to run first
 **Run Command:**
 ```bash
 php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder
@@ -92,7 +126,7 @@ php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder
 9. Staff Welfare
 10. Equipment & Maintenance
 
-### 3. SampleBudgetSeeder ⚠️ (OPTIONAL - For Testing Only)
+### 4. SampleBudgetSeeder ⚠️ (OPTIONAL - For Testing Only)
 **File:** `database/seeders/SampleBudgetSeeder.php`
 **Purpose:** Seeds sample budget for current month for MyGrowNet Platform
 **Status:** Already exists and complete
@@ -132,6 +166,7 @@ public function run(): void
         MyGrowNetAchievementsSeeder::class, // Milestone achievements and badges
         
         // Financial System (NEW)
+        MyGrowNetPlatformCompanySeeder::class, // MyGrowNet Platform company for expense tracking
         ModuleSeeder::class,                // Financial modules for transaction categorization
         MyGrowNetExpenseCategoriesSeeder::class, // Expense categories for internal tracking
         
@@ -147,41 +182,82 @@ public function run(): void
 
 ## Production Deployment Steps
 
-### Step 1: Ensure MyGrowNet Platform Company Exists
+### Step 1: Run Production Seeder (Recommended)
+The easiest way is to update ProductionSeeder.php and run it:
+
 ```bash
-# Check if company exists
+php artisan db:seed --class=ProductionSeeder --force
+```
+
+### Step 2: Or Run Individual Seeders
+If you prefer to run seeders individually:
+
+```bash
+# Step 1: Create MyGrowNet Platform company
+php artisan db:seed --class=MyGrowNetPlatformCompanySeeder --force
+
+# Step 2: Seed financial modules
+php artisan db:seed --class=ModuleSeeder --force
+
+# Step 3: Seed expense categories
+php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder --force
+
+# Optional: Seed sample budget (testing only)
+php artisan db:seed --class=SampleBudgetSeeder --force
+```
+
+### Step 3: Verify Data
+
+After running seeders, verify the data:
+
+```bash
+# Check modules
 php artisan tinker
->>> App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::where('name', 'MyGrowNet Platform')->first();
+>>> App\Models\Module::count();
+# Should return 14
+
+# Check MyGrowNet Platform company
+>>> $company = App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::where('name', 'MyGrowNet Platform')->first();
+>>> $company->id;
+# Should return company ID
+
+# Check expense categories
+>>> App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel::where('company_id', $company->id)->count();
+# Should return 10
+
+# Check budget (if SampleBudgetSeeder was run)
+>>> App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel::where('company_id', $company->id)->count();
+# Should return 1
 ```
 
-If not exists, create it:
-```php
-App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::create([
-    'name' => 'MyGrowNet Platform',
-    'email' => 'admin@mygrownet.com',
-    'phone' => '+260977000000',
-    'address' => 'Lusaka, Zambia',
-    'industry' => 'Technology',
-    'is_active' => true,
-]);
-```
+## Production Checklist
 
-### Step 2: Run Module Seeder
-```bash
-php artisan db:seed --class=ModuleSeeder
-```
+- [ ] Update ProductionSeeder.php to include financial system seeders
+- [ ] Run: `php artisan db:seed --class=ProductionSeeder --force`
+- [ ] Verify all data using verification commands above
+- [ ] Test expense creation in CMS
+- [ ] Test budget management dashboard
+- [ ] Test P&L report generation
+- [ ] Test PDF exports (Presentation, P&L, Budget)
+- [ ] Test admin sidebar active link highlighting
 
-This creates the 14 modules used for transaction categorization in the financial system.
+## Complete Seeder List for Production
 
-### Step 3: Create MyGrowNet Expense Categories Seeder
-Create the seeder file and run it (see implementation below).
+### Core System (Already in ProductionSeeder)
+1. ✅ RolesAndPermissionsSeeder - User roles and permissions
+2. ✅ UserSeeder - Admin and staff users
+3. ✅ PackageSeeder - 7-level subscription packages
+4. ✅ CategorySeeder - Project categories
+5. ✅ MyGrowNetAchievementsSeeder - Achievement system
 
-### Step 4: Run Sample Budget Seeder (Optional)
-```bash
-php artisan db:seed --class=SampleBudgetSeeder
-```
+### Financial System (Need to Add to ProductionSeeder)
+6. ⚠️ MyGrowNetPlatformCompanySeeder - MyGrowNet Platform company
+7. ⚠️ ModuleSeeder - 14 financial modules
+8. ⚠️ MyGrowNetExpenseCategoriesSeeder - 10 expense categories
 
-This is optional for production but useful for testing the budget management system.
+### Optional (Testing/Development Only)
+9. ❌ SampleBudgetSeeder - Sample budget data (DO NOT RUN IN PRODUCTION)
+10. ❌ ExpenseCategoriesSeeder - For other CMS companies (not MyGrowNet Platform)
 
 ## Related Documentation
 
@@ -190,6 +266,3 @@ This is optional for production but useful for testing the budget management sys
 - `database/migrations/*_add_cms_fields_to_transactions.php` - Transaction table updates
 - `database/seeders/ProductionSeeder.php` - Main production seeder configuration
 
-- `docs/Finance/CMS_FINANCIAL_INTEGRATION_ANALYSIS.md` - Complete CMS integration details
-- `database/migrations/*_create_cms_*.php` - CMS table migrations
-- `database/migrations/*_add_cms_fields_to_transactions.php` - Transaction table updates
