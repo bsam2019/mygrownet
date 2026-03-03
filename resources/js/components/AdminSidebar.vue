@@ -259,50 +259,36 @@ const isUrlActive = (urlPattern: string | string[]) => {
     // Extract the base route from the full URL
     const routePath = currentRoute.split('?')[0]; // Remove query params
     
-    // Debug logging
-    console.log('Current URL:', currentRoute);
-    console.log('Route Path:', routePath);
-    console.log('Checking against pattern:', urlPattern);
-    
-    // Normalize URLs by removing trailing slashes
-    const normalizeUrl = (url: string) => url.replace(/\/$/, '');
+    // Normalize URLs by removing trailing slashes and converting to lowercase
+    const normalizeUrl = (url: string) => url.replace(/\/$/, '').toLowerCase();
     const normalizedCurrent = normalizeUrl(routePath);
     
     if (Array.isArray(urlPattern)) {
-        const result = urlPattern.some(pattern => {
+        return urlPattern.some(pattern => {
             const normalizedPattern = normalizeUrl(pattern);
-            console.log('  Checking array pattern:', normalizedPattern, 'against', normalizedCurrent);
             // Exact match
             if (normalizedCurrent === normalizedPattern) {
-                console.log('    ✓ Exact match!');
                 return true;
             }
             // Starts with pattern (for nested routes)
             if (normalizedCurrent.startsWith(normalizedPattern + '/')) {
-                console.log('    ✓ Starts with match!');
                 return true;
             }
             return false;
         });
-        console.log('  Array result:', result);
-        return result;
     }
     
     const normalizedPattern = normalizeUrl(urlPattern);
-    console.log('  Single pattern:', normalizedPattern, 'against', normalizedCurrent);
     
     // Exact match
     if (normalizedCurrent === normalizedPattern) {
-        console.log('    ✓ Exact match!');
         return true;
     }
     // Starts with pattern (for nested routes)
     if (normalizedCurrent.startsWith(normalizedPattern + '/')) {
-        console.log('    ✓ Starts with match!');
         return true;
     }
     
-    console.log('    ✗ No match');
     return false;
 };
 
