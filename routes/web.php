@@ -235,6 +235,7 @@ Route::prefix('investor')->name('investor.')->group(function () {
     
     // Presentation Data API
     Route::get('/api/presentation/data', [App\Http\Controllers\Api\PresentationDataController::class, 'index'])->name('api.presentation.data');
+    Route::get('/api/presentation/export-pdf', [App\Http\Controllers\Investor\PresentationPdfController::class, 'exportPdf'])->name('api.presentation.export-pdf');
     
     Route::post('/logout', [App\Http\Controllers\Investor\InvestorPortalController::class, 'logout'])->name('logout');
 });
