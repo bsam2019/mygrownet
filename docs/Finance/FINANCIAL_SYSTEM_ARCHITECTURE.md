@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-03-01  
 **Status:** Phase 3 Complete - Production Ready ✅  
-**Version:** 3.0 (Legacy Code Removed)
+**Version:** 3.1 (Transaction-Based Reporting Added)
 
 ## Executive Summary
 
@@ -15,9 +15,18 @@ The MyGrowNet financial system has completed a comprehensive 3-phase migration t
 - System verified: 67 users, 0 negative balances, K3,128.60 total
 - Production stable and healthy
 
+**NEW: Transaction-Based Financial Reporting ✅**
+- Created `TransactionBasedFinancialReportingService`
+- Uses transactions table as single source of truth
+- Module-based revenue tracking
+- Real-time financial metrics
+- Compliance monitoring (commission caps, payout timing)
+- Available at `/admin/financial/v2/*` routes
+
 **Key Achievement:**
 - Single source of truth: `transactions` table only
 - Single wallet service: `WalletService` only
+- Transaction-based reporting with module attribution
 - No more double-counting or inconsistent balances
 - Clean, maintainable codebase ready for future development
 
@@ -1031,6 +1040,212 @@ POST   /api/admin/withdrawals/{id}/process
 GET    /api/admin/transactions
 GET    /api/admin/transactions/{id}
 POST   /api/admin/reconcile
+```
+
+### Financial Reporting API (NEW)
+```
+# Transaction-Based Reporting (v2)
+GET    /admin/financial/v2/dashboard
+GET    /admin/financial/v2/overview?period={period}
+GET    /admin/financial/v2/transaction-breakdown?period={period}
+GET    /admin/financial/v2/revenue-by-module?period={period}
+GET    /admin/financial/v2/transaction-trends?period={period}
+GET    /admin/financial/v2/user/{userId}/summary?period={period}
+GET    /admin/financial/v2/compliance-metrics?period={period}
+GET    /admin/financial/v2/withdrawal-statistics?period={period}
+GET    /admin/financial/v2/top-revenue-sources?period={period}&limit={limit}
+POST   /admin/financial/v2/clear-cache
+
+# Legacy Reporting (v1) - To be deprecated
+GET    /admin/financial/dashboard
+GET    /admin/financial/reports
+GET    /admin/financial/sustainability
+GET    /admin/financial/compliance
+```
+
+**Period Options:** `today`, `week`, `month`, `quarter`, `year`
+
+---
+
+## Financial Reporting System
+
+### Overview
+
+The financial reporting system provides comprehensive analytics and insights using the transactions table as the single source of truth. It supports:
+
+- Real-time financial metrics
+- Module-based revenue tracking
+- Transaction type analysis
+- Compliance monitoring
+- User financial summaries
+- Trend analysis
+
+### Key Features
+
+#### 1. Financial Overview
+Provides comprehensive snapshot of financial health:
+- Revenue metrics (total, growth rate, transaction count)
+- Expense metrics (withdrawals, commissions, loan repayments)
+- Commission metrics (earned, paid, pending)
+- Profitability (gross profit, profit margin)
+- Cash flow (inflows, outflows, net cash flow)
+- Growth metrics (revenue growth, user growth, transaction growth)
+- Module performance (revenue by module)
+
+#### 2. Transaction Breakdown
+Analyzes transactions by type and status:
+- Count and total amount per transaction type
+- Breakdown by status (completed, pending, failed)
+- Average transaction amounts
+- Identifies transaction patterns
+
+#### 3. Revenue by Module
+Tracks revenue attribution to source modules:
+- Total revenue per module
+- Transaction count per module
+- Percentage of total revenue
+- Module performance ranking
+
+#### 4. Transaction Trends
+Daily breakdown of financial activity:
+- Revenue per day
+- Expenses per day
+- Net cash flow per day
+- Transaction volume trends
+
+#### 5. Compliance Metrics
+Monitors regulatory compliance:
+- Commission to revenue ratio (target: ≤25%)
+- Payout timing compliance (target: ≤24 hours)
+- Commission cap status
+- Compliance alerts
+
+#### 6. Withdrawal Statistics
+Analyzes withdrawal patterns:
+- Total withdrawal amount
+- Withdrawal count by status
+- Average withdrawal amount
+- Pending vs completed ratio
+
+#### 7. User Financial Summary
+Individual user financial analysis:
+- Total credits and debits
+- Net balance
+- Transaction count
+- Breakdown by transaction type
+
+### Service Architecture
+
+**TransactionBasedFinancialReportingService**
+- Location: `app/Services/TransactionBasedFinancialReportingService.php`
+- Uses: `transactions` table exclusively
+- Caching: 5-minute TTL for performance
+- Methods:
+  - `getFinancialOverview(string $period): array`
+  - `getTransactionBreakdown(string $period): array`
+  - `getRevenueByModule(string $period): array`
+  - `getTransactionTrends(string $period): array`
+  - `getUserFinancialSummary(int $userId, string $period): array`
+  - `getComplianceMetrics(string $period): array`
+  - `getWithdrawalStatistics(string $period): array`
+  - `getTopRevenueSources(string $period, int $limit): array`
+  - `clearCache(): void`
+
+**Controller**
+- Location: `app/Http/Controllers/Admin/TransactionBasedFinancialReportingController.php`
+- Routes: `/admin/financial/v2/*`
+- Middleware: `auth`, `admin`
+
+### Data Sources
+
+All reporting data comes from:
+1. **Primary:** `transactions` table (single source of truth)
+2. **Secondary:** `referral_commissions` table (for commission details)
+3. **Reference:** `financial_modules` table (for module names)
+
+### Performance Optimization
+
+1. **Caching Strategy**
+   - 5-minute cache for overview data
+   - Cache key includes period for granularity
+   - Manual cache clearing available
+
+2. **Query Optimization**
+   - Aggregated queries with GROUP BY
+   - Indexed columns (user_id, transaction_type, status, created_at)
+   - Efficient date range filtering
+
+3. **Module Attribution**
+   - Database-driven module registry
+   - Cached module list (1 hour TTL)
+   - Fast module lookups
+
+### Migration from Legacy Reporting
+
+**Legacy System Issues:**
+- Pulls from multiple fragmented sources
+- Inconsistent data (subscriptions, member_payments, etc.)
+- No module-based tracking
+- Incomplete helper methods
+- Hardcoded placeholder values
+
+**New System Benefits:**
+- Single source of truth (transactions table)
+- Module-based revenue attribution
+- Real-time accurate metrics
+- Complete implementation
+- Scalable architecture
+
+**Migration Plan:**
+1. ✅ Phase 1: Create new service and controller
+2. ✅ Phase 2: Add routes with `/v2` prefix
+3. Phase 3: Update admin UI to use new endpoints
+4. Phase 4: Deprecate legacy reporting
+5. Phase 5: Remove old FinancialReportingService
+
+### Usage Examples
+
+**Get Financial Overview:**
+```php
+$service = app(TransactionBasedFinancialReportingService::class);
+$overview = $service->getFinancialOverview('month');
+
+// Returns:
+// [
+//     'revenue_metrics' => [...],
+//     'expense_metrics' => [...],
+//     'commission_metrics' => [...],
+//     'profitability' => [...],
+//     'cash_flow' => [...],
+//     'growth_metrics' => [...],
+//     'module_performance' => [...]
+// ]
+```
+
+**Get Revenue by Module:**
+```php
+$revenue = $service->getRevenueByModule('quarter');
+
+// Returns:
+// [
+//     ['module_id' => 1, 'module_name' => 'GrowNet', 'revenue' => 15000, ...],
+//     ['module_id' => 2, 'module_name' => 'Shop', 'revenue' => 8500, ...],
+//     ...
+// ]
+```
+
+**Check Compliance:**
+```php
+$compliance = $service->getComplianceMetrics('month');
+
+// Returns:
+// [
+//     'commission_to_revenue_ratio' => 18.5,
+//     'commission_cap_threshold' => 25.0,
+//     'commission_cap_compliant' => true,
+//     'payout_timing_compliance' => 95.2,
+//     ...
+// ]
 ```
 
 ---

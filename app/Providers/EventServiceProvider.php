@@ -38,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         
         // CMS Integration Events
+        \App\Events\CMS\ExpenseApproved::class => [
+            \App\Listeners\SyncApprovedExpenseToTransaction::class, // Sync approved expenses to transactions table
+        ],
         \App\Events\CMS\InvoiceCreated::class => [
             \App\Listeners\CMS\NotifyGrowBuilderOfInvoice::class,
             \App\Listeners\CMS\NotifyGrowMarketOfInvoice::class,

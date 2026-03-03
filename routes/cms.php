@@ -5,6 +5,7 @@ use App\Http\Controllers\CMS\AccountingController;
 use App\Http\Controllers\CMS\CustomerController;
 use App\Http\Controllers\CMS\DashboardController;
 use App\Http\Controllers\CMS\ExpenseController;
+use App\Http\Controllers\CMS\ExpenseCategoryController;
 use App\Http\Controllers\CMS\InventoryController;
 use App\Http\Controllers\CMS\InvoiceController;
 use App\Http\Controllers\CMS\JobController;
@@ -64,7 +65,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
 // Protected CMS Routes
 Route::prefix('cms')
     ->name('cms.')
-    ->middleware(['auth', 'verified', 'cms.access', \App\Http\Middleware\CMS\EnforcePasswordChange::class])
+    ->middleware(['auth', 'verified', 'cms.auto-login', 'cms.access', \App\Http\Middleware\CMS\EnforcePasswordChange::class])
     ->group(function () {
         
         // Dashboard
@@ -151,9 +152,18 @@ Route::prefix('cms')
         // Expenses
         Route::prefix('expenses')->name('expenses.')->group(function () {
             Route::get('/', [ExpenseController::class, 'index'])->name('index');
+            Route::get('/create', [ExpenseController::class, 'create'])->name('create');
             Route::post('/', [ExpenseController::class, 'store'])->name('store');
             Route::post('/{expense}/approve', [ExpenseController::class, 'approve'])->name('approve');
             Route::post('/{expense}/reject', [ExpenseController::class, 'reject'])->name('reject');
+        });
+
+        // Expense Categories
+        Route::prefix('expense-categories')->name('expense-categories.')->group(function () {
+            Route::get('/', [ExpenseCategoryController::class, 'index'])->name('index');
+            Route::post('/', [ExpenseCategoryController::class, 'store'])->name('store');
+            Route::put('/{category}', [ExpenseCategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [ExpenseCategoryController::class, 'destroy'])->name('destroy');
         });
 
         // Quotations

@@ -70,6 +70,26 @@ class ExpenseController extends Controller
         ]);
     }
 
+    public function create(Request $request)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $categories = ExpenseCategoryModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $jobs = JobModel::where('company_id', $companyId)
+            ->whereIn('status', ['in_progress', 'pending'])
+            ->orderBy('job_number', 'desc')
+            ->get(['id', 'job_number', 'description']);
+
+        return Inertia::render('CMS/Expenses/Create', [
+            'categories' => $categories,
+            'jobs' => $jobs,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -100,7 +120,7 @@ class ExpenseController extends Controller
 
         // Notify managers/admins about expense approval
         $managers = CmsUserModel::where('company_id', $companyId)
-            ->whereHas('roles', function ($q) {
+            ->whereHas('role', function ($q) {
                 $q->whereIn('name', ['owner', 'manager']);
             })
             ->with('user')

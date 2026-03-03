@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 
-export type SlideOverType = 'job' | 'customer' | 'invoice' | null
+export type SlideOverType = 'job' | 'customer' | 'invoice' | 'expense' | null
 
 export interface SlideOverConfig {
   title: string
@@ -23,6 +23,11 @@ const slideOverConfigs: Record<Exclude<SlideOverType, null>, SlideOverConfig> = 
     title: 'Create New Invoice',
     subtitle: 'Generate an invoice for a customer',
     size: 'xl',
+  },
+  expense: {
+    title: 'Record Expense',
+    subtitle: 'Track a business expense',
+    size: 'lg',
   },
 }
 

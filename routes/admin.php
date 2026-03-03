@@ -312,6 +312,8 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
     // Financial Reporting and Analytics Routes
     Route::prefix('financial')->name('financial.')->group(function () {
+        // LEGACY: Old reporting system (uses multiple data sources)
+        // TODO: Deprecate after full migration to transaction-based reporting
         Route::get('/dashboard', [App\Http\Controllers\Admin\FinancialReportingController::class, 'index'])->name('dashboard');
         Route::get('/reports', [App\Http\Controllers\Admin\FinancialReportingController::class, 'reports'])->name('reports');
         Route::get('/sustainability', [App\Http\Controllers\Admin\FinancialReportingController::class, 'sustainability'])->name('sustainability');
@@ -334,6 +336,43 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         
         // Export endpoints
         Route::get('/export-report', [App\Http\Controllers\Admin\FinancialReportingController::class, 'exportReport'])->name('export-report');
+    });
+
+    // NEW: Transaction-Based Financial Reporting (uses transactions table as single source of truth)
+    Route::prefix('financial/v2')->name('financial.v2.')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'index'])->name('dashboard');
+        
+        // API endpoints
+        Route::get('/overview', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getOverview'])->name('overview');
+        Route::get('/transaction-breakdown', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getTransactionBreakdown'])->name('transaction-breakdown');
+        Route::get('/revenue-by-module', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getRevenueByModule'])->name('revenue-by-module');
+        Route::get('/transaction-trends', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getTransactionTrends'])->name('transaction-trends');
+        Route::get('/user/{userId}/summary', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getUserSummary'])->name('user-summary');
+        Route::get('/compliance-metrics', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getComplianceMetrics'])->name('compliance-metrics');
+        Route::get('/withdrawal-statistics', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getWithdrawalStatistics'])->name('withdrawal-statistics');
+        Route::get('/top-revenue-sources', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'getTopRevenueSources'])->name('top-revenue-sources');
+        
+        // Cache management
+        Route::post('/clear-cache', [App\Http\Controllers\Admin\TransactionBasedFinancialReportingController::class, 'clearCache'])->name('clear-cache');
+    });
+
+    // Profit & Loss Tracking
+    Route::prefix('profit-loss')->name('profit-loss.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\ProfitLossController::class, 'index'])->name('index');
+        Route::get('/statement', [App\Http\Controllers\Admin\ProfitLossController::class, 'getStatement'])->name('statement');
+        Route::get('/commission-efficiency', [App\Http\Controllers\Admin\ProfitLossController::class, 'getCommissionEfficiency'])->name('commission-efficiency');
+        Route::get('/cash-flow', [App\Http\Controllers\Admin\ProfitLossController::class, 'getCashFlow'])->name('cash-flow');
+        Route::get('/export-pdf', [App\Http\Controllers\Admin\ProfitLossController::class, 'exportPdf'])->name('export-pdf');
+    });
+    
+    // Budget Management (CMS Integration - Phase 2)
+    Route::prefix('budget')->name('budget.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\BudgetController::class, 'index'])->name('index');
+        Route::get('/comparison', [App\Http\Controllers\Admin\BudgetController::class, 'getComparison'])->name('comparison');
+        Route::get('/trends', [App\Http\Controllers\Admin\BudgetController::class, 'getTrends'])->name('trends');
+        Route::get('/metrics', [App\Http\Controllers\Admin\BudgetController::class, 'getMetrics'])->name('metrics');
+        Route::get('/export-pdf', [App\Http\Controllers\Admin\BudgetController::class, 'exportPdf'])->name('export-pdf');
     });
 
     // Job Applications Management Routes

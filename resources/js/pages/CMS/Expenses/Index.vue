@@ -300,7 +300,7 @@ const getStatusColor = (status: string) => {
                             </div>
                         </td>
                     </tr>
-                    <tr v-if="expenses.data.length === 0">
+                    <tr v-if="!expenses.data || expenses.data.length === 0">
                         <td colspan="8" class="px-6 py-12 text-center">
                             <BanknotesIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
                             <p class="mt-2 text-sm text-gray-600">No expenses found</p>
@@ -310,12 +310,12 @@ const getStatusColor = (status: string) => {
             </table>
 
             <!-- Pagination -->
-            <div v-if="expenses.data.length > 0" class="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div v-if="expenses.data && expenses.data.length > 0 && expenses.meta" class="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-700">
-                        Showing {{ expenses.meta.from }} to {{ expenses.meta.to }} of {{ expenses.meta.total }} results
+                        Showing {{ expenses.meta.from || 0 }} to {{ expenses.meta.to || 0 }} of {{ expenses.meta.total || 0 }} results
                     </div>
-                    <div class="flex gap-2">
+                    <div v-if="expenses.links && expenses.links.length > 0" class="flex gap-2">
                         <Link
                             v-for="link in expenses.links"
                             :key="link.label"

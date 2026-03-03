@@ -48,6 +48,14 @@ class EnsureCmsAccess
             \Inertia\Inertia::share([
                 'cmsUser' => fn () => $user->cmsUser->load('role'),
                 'company' => fn () => $user->cmsUser->company,
+                'expenseCategories' => fn () => \App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel::where('company_id', $user->cmsUser->company_id)
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name']),
+                'jobs' => fn () => \App\Infrastructure\Persistence\Eloquent\CMS\JobModel::where('company_id', $user->cmsUser->company_id)
+                    ->whereIn('status', ['in_progress', 'pending'])
+                    ->orderBy('job_number', 'desc')
+                    ->get(['id', 'job_number', 'description']),
             ]);
         }
 

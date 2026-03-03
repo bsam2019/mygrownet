@@ -5,6 +5,7 @@ namespace App\Domain\CMS\Core\Services;
 use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Events\CMS\ExpenseApproved;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -87,6 +88,16 @@ class ExpenseService
                 $expense->fresh()->toArray()
             );
 
+            // Dispatch event for financial integration
+            event(new ExpenseApproved(
+                expenseId: $expense->id,
+                companyId: $expense->company_id,
+                amount: $expense->amount,
+                category: $expense->category->name,
+                description: $expense->description,
+                referenceNumber: $expense->expense_number
+            ));
+
             return $expense->fresh();
         });
     }
@@ -122,14 +133,98 @@ class ExpenseService
 
     public function uploadReceipt($file, int $companyId): array
     {
-        $path = $file->store("cms/{$companyId}/receipts", 'public');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $filename = uniqid() . '_' . time() . '.' . $extension;
+        $path = "cms/{$companyId}/receipts/{$filename}";
+
+        // Optimize images before upload
+        if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+            $optimizedImage = $this->optimizeImage($file);
+            Storage::disk('s3')->put($path, $optimizedImage, 'public');
+        } else {
+            // For PDFs, upload directly
+            Storage::disk('s3')->putFileAs(
+                "cms/{$companyId}/receipts",
+                $file,
+                $filename,
+                'public'
+            );
+        }
 
         return [
-            'path' => $path,
+            'path' => Storage::disk('s3')->url($path),
             'name' => $file->getClientOriginalName(),
             'size' => $file->getSize(),
             'type' => $file->getMimeType(),
         ];
+    }
+
+    private function optimizeImage($file): string
+    {
+        $image = imagecreatefromstring(file_get_contents($file->getRealPath()));
+        
+        if (!$image) {
+            // If image creation fails, return original
+            return file_get_contents($file->getRealPath());
+        }
+
+        // Get original dimensions
+        $originalWidth = imagesx($image);
+        $originalHeight = imagesy($image);
+
+        // Max dimensions for receipts (reduce file size)
+        $maxWidth = 1200;
+        $maxHeight = 1600;
+
+        // Calculate new dimensions maintaining aspect ratio
+        if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
+            $ratio = min($maxWidth / $originalWidth, $maxHeight / $originalHeight);
+            $newWidth = (int)($originalWidth * $ratio);
+            $newHeight = (int)($originalHeight * $ratio);
+        } else {
+            $newWidth = $originalWidth;
+            $newHeight = $originalHeight;
+        }
+
+        // Create new image with optimized dimensions
+        $optimizedImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Preserve transparency for PNG
+        if ($file->getClientOriginalExtension() === 'png') {
+            imagealphablending($optimizedImage, false);
+            imagesavealpha($optimizedImage, true);
+            $transparent = imagecolorallocatealpha($optimizedImage, 255, 255, 255, 127);
+            imagefilledrectangle($optimizedImage, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+
+        // Resample image
+        imagecopyresampled(
+            $optimizedImage,
+            $image,
+            0, 0, 0, 0,
+            $newWidth,
+            $newHeight,
+            $originalWidth,
+            $originalHeight
+        );
+
+        // Output to buffer
+        ob_start();
+        
+        $extension = strtolower($file->getClientOriginalExtension());
+        if ($extension === 'png') {
+            imagepng($optimizedImage, null, 6); // Compression level 6 (0-9)
+        } else {
+            imagejpeg($optimizedImage, null, 75); // 75% quality for JPEG
+        }
+        
+        $imageData = ob_get_clean();
+
+        // Free memory
+        imagedestroy($image);
+        imagedestroy($optimizedImage);
+
+        return $imageData;
     }
 
     private function generateExpenseNumber(int $companyId): string

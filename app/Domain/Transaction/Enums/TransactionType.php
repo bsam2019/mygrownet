@@ -42,6 +42,19 @@ enum TransactionType: string
     case WORKSHOP_PAYMENT = 'workshop_payment';
     case LEARNING_PACK_PURCHASE = 'learning_pack_purchase';
     case COACHING_PAYMENT = 'coaching_payment';
+    case SERVICE_PAYMENT = 'service_payment';
+    case GROWBUILDER_PAYMENT = 'growbuilder_payment';
+    case MARKETPLACE_PURCHASE = 'marketplace_purchase';
+
+    // Platform Expenses (from CMS)
+    case MARKETING_EXPENSE = 'marketing_expense';
+    case OFFICE_EXPENSE = 'office_expense';
+    case TRAVEL_EXPENSE = 'travel_expense';
+    case INFRASTRUCTURE_EXPENSE = 'infrastructure_expense';
+    case LEGAL_EXPENSE = 'legal_expense';
+    case PROFESSIONAL_FEES = 'professional_fees';
+    case UTILITIES_EXPENSE = 'utilities_expense';
+    case GENERAL_EXPENSE = 'general_expense';
 
     /**
      * Check if this is a credit transaction (adds to balance)
@@ -97,6 +110,17 @@ enum TransactionType: string
             self::WORKSHOP_PAYMENT => 'Workshop Payment',
             self::LEARNING_PACK_PURCHASE => 'Learning Pack Purchase',
             self::COACHING_PAYMENT => 'Coaching Payment',
+            self::SERVICE_PAYMENT => 'Service Payment',
+            self::GROWBUILDER_PAYMENT => 'GrowBuilder Payment',
+            self::MARKETPLACE_PURCHASE => 'Marketplace Purchase',
+            self::MARKETING_EXPENSE => 'Marketing Expense',
+            self::OFFICE_EXPENSE => 'Office Expense',
+            self::TRAVEL_EXPENSE => 'Travel Expense',
+            self::INFRASTRUCTURE_EXPENSE => 'Infrastructure Expense',
+            self::LEGAL_EXPENSE => 'Legal Expense',
+            self::PROFESSIONAL_FEES => 'Professional Fees',
+            self::UTILITIES_EXPENSE => 'Utilities Expense',
+            self::GENERAL_EXPENSE => 'General Expense',
         };
     }
 
@@ -118,7 +142,13 @@ enum TransactionType: string
             self::LOAN_DISBURSEMENT => 'banknotes',
             self::LOAN_REPAYMENT => 'arrow-path',
             self::SUBSCRIPTION_PAYMENT, self::WORKSHOP_PAYMENT, 
-            self::LEARNING_PACK_PURCHASE, self::COACHING_PAYMENT => 'academic-cap',
+            self::LEARNING_PACK_PURCHASE, self::COACHING_PAYMENT,
+            self::SERVICE_PAYMENT, self::GROWBUILDER_PAYMENT,
+            self::MARKETPLACE_PURCHASE => 'academic-cap',
+            self::MARKETING_EXPENSE, self::OFFICE_EXPENSE,
+            self::TRAVEL_EXPENSE, self::INFRASTRUCTURE_EXPENSE,
+            self::LEGAL_EXPENSE, self::PROFESSIONAL_FEES,
+            self::UTILITIES_EXPENSE, self::GENERAL_EXPENSE => 'receipt-percent',
         };
     }
 
@@ -138,7 +168,13 @@ enum TransactionType: string
             self::SHOP_PURCHASE, self::SHOP_CREDIT_USAGE,
             self::LGR_TRANSFER_OUT, self::LOAN_REPAYMENT,
             self::SUBSCRIPTION_PAYMENT, self::WORKSHOP_PAYMENT,
-            self::LEARNING_PACK_PURCHASE, self::COACHING_PAYMENT => 'red',
+            self::LEARNING_PACK_PURCHASE, self::COACHING_PAYMENT,
+            self::SERVICE_PAYMENT, self::GROWBUILDER_PAYMENT,
+            self::MARKETPLACE_PURCHASE,
+            self::MARKETING_EXPENSE, self::OFFICE_EXPENSE,
+            self::TRAVEL_EXPENSE, self::INFRASTRUCTURE_EXPENSE,
+            self::LEGAL_EXPENSE, self::PROFESSIONAL_FEES,
+            self::UTILITIES_EXPENSE, self::GENERAL_EXPENSE => 'red',
             
             self::STARTER_KIT_GIFT, self::SHOP_CREDIT_ALLOCATION => 'blue',
         };

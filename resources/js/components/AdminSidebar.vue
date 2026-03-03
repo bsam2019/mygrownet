@@ -40,7 +40,10 @@ import {
     Package,
     AlertTriangle,
     MessageSquare,
-    Cloud
+    Cloud,
+    PieChart as ChartPieIcon,
+    PlusCircle as PlusCircleIcon,
+    ReceiptText as ReceiptRefundIcon
 } from 'lucide-vue-next';
 import { useModules } from '@/composables/useModules';
 
@@ -82,6 +85,7 @@ const growNetNavItems: NavItem[] = [
     { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
     { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
     { title: 'Network Management', href: safeRoute('admin.network.index'), icon: Activity },
+    { title: 'Commission Settings', href: safeRoute('admin.commission-settings.index'), icon: Settings },
     { title: 'Points Management', href: '/admin/points', icon: Target },
 ];
 
@@ -97,9 +101,28 @@ const lgrNavItems: NavItem[] = [
 ];
 
 const financeNavItems: NavItem[] = [
+    { title: 'Financial Reports', href: safeRoute('admin.financial.v2.dashboard'), icon: ChartBarIcon },
+    { title: 'Profit & Loss', href: safeRoute('admin.profit-loss.index'), icon: TrendingUp },
+    { title: 'Budget Management', href: safeRoute('admin.budget.index'), icon: ChartPieIcon, badge: 'CMS' },
+    
+    // CMS Expense Management Integration
+    { 
+        title: 'Record Expense', 
+        href: safeRoute('cms.expenses.index'), 
+        icon: PlusCircleIcon,
+        badge: 'CMS',
+        external: true
+    },
+    { 
+        title: 'Manage Expenses', 
+        href: safeRoute('cms.expenses.index'), 
+        icon: ReceiptRefundIcon,
+        badge: 'CMS',
+        external: true
+    },
+    
     { title: 'Payment Approvals', href: safeRoute('admin.payments.index'), icon: DollarSign },
     { title: 'Receipts', href: safeRoute('admin.receipts.index'), icon: FileText },
-    { title: 'Commission Settings', href: safeRoute('admin.commission-settings.index'), icon: Settings },
     { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
@@ -230,11 +253,57 @@ const checkMobile = () => {
 };
 
 const isUrlActive = (urlPattern: string | string[]) => {
-    const currentUrl = page.url;
+    const currentRoute = page.url;
+    if (!currentRoute) return false;
+    
+    // Extract the base route from the full URL
+    const routePath = currentRoute.split('?')[0]; // Remove query params
+    
+    // Debug logging
+    console.log('Current URL:', currentRoute);
+    console.log('Route Path:', routePath);
+    console.log('Checking against pattern:', urlPattern);
+    
+    // Normalize URLs by removing trailing slashes
+    const normalizeUrl = (url: string) => url.replace(/\/$/, '');
+    const normalizedCurrent = normalizeUrl(routePath);
+    
     if (Array.isArray(urlPattern)) {
-        return urlPattern.some(pattern => currentUrl === pattern || currentUrl.startsWith(pattern + '/'));
+        const result = urlPattern.some(pattern => {
+            const normalizedPattern = normalizeUrl(pattern);
+            console.log('  Checking array pattern:', normalizedPattern, 'against', normalizedCurrent);
+            // Exact match
+            if (normalizedCurrent === normalizedPattern) {
+                console.log('    ✓ Exact match!');
+                return true;
+            }
+            // Starts with pattern (for nested routes)
+            if (normalizedCurrent.startsWith(normalizedPattern + '/')) {
+                console.log('    ✓ Starts with match!');
+                return true;
+            }
+            return false;
+        });
+        console.log('  Array result:', result);
+        return result;
     }
-    return currentUrl === urlPattern || currentUrl.startsWith(urlPattern + '/');
+    
+    const normalizedPattern = normalizeUrl(urlPattern);
+    console.log('  Single pattern:', normalizedPattern, 'against', normalizedCurrent);
+    
+    // Exact match
+    if (normalizedCurrent === normalizedPattern) {
+        console.log('    ✓ Exact match!');
+        return true;
+    }
+    // Starts with pattern (for nested routes)
+    if (normalizedCurrent.startsWith(normalizedPattern + '/')) {
+        console.log('    ✓ Starts with match!');
+        return true;
+    }
+    
+    console.log('    ✗ No match');
+    return false;
 };
 
 const showItemTooltip = (event: MouseEvent, text: string) => {
@@ -272,8 +341,36 @@ onMounted(() => {
         }
     }
     
-    // Auto-expand Employees submenu if on organizational structure pages
+    // Auto-expand submenus based on current URL
     const currentUrl = page.url;
+    
+    // User Management
+    if (currentUrl.includes('/admin/users') || 
+        currentUrl.includes('/admin/analytics') || 
+        currentUrl.includes('/admin/subscriptions') ||
+        currentUrl.includes('/admin/packages') ||
+        currentUrl.includes('/admin/library')) {
+        showSubmenu.value.userManagement = true;
+    }
+    
+    // GrowNet
+    if (currentUrl.includes('/admin/starter-kit') || 
+        currentUrl.includes('/admin/content-management') || 
+        currentUrl.includes('/admin/referrals') ||
+        currentUrl.includes('/admin/matrix') ||
+        currentUrl.includes('/admin/network') ||
+        currentUrl.includes('/admin/commission-settings') ||
+        currentUrl.includes('/admin/points')) {
+        showSubmenu.value.growNet = true;
+    }
+    
+    // LGR
+    if (currentUrl.includes('/admin/lgr') || 
+        currentUrl.includes('/admin/promotional-cards')) {
+        showSubmenu.value.lgr = true;
+    }
+    
+    // Employees
     if (currentUrl.includes('/admin/organization') || 
         currentUrl.includes('/admin/employees') || 
         currentUrl.includes('/admin/departments') || 
@@ -282,6 +379,39 @@ onMounted(() => {
         currentUrl.includes('/admin/commissions') ||
         currentUrl.includes('/admin/tasks')) {
         showSubmenu.value.employees = true;
+    }
+    
+    // Finance
+    if (currentUrl.includes('/admin/withdrawals') || 
+        currentUrl.includes('/admin/profit-loss') || 
+        currentUrl.includes('/admin/budget') ||
+        currentUrl.includes('/admin/financial')) {
+        showSubmenu.value.finance = true;
+    }
+    
+    // Marketplace
+    if (currentUrl.includes('/admin/marketplace') || 
+        currentUrl.includes('/admin/shop')) {
+        showSubmenu.value.marketplace = true;
+    }
+    
+    // Communication
+    if (currentUrl.includes('/admin/announcements') || 
+        currentUrl.includes('/admin/notifications') || 
+        currentUrl.includes('/admin/email-campaigns') ||
+        currentUrl.includes('/admin/support-tickets') ||
+        currentUrl.includes('/admin/live-chat')) {
+        showSubmenu.value.communication = true;
+    }
+    
+    // Settings
+    if (currentUrl.includes('/admin/settings') || 
+        currentUrl.includes('/admin/roles') || 
+        currentUrl.includes('/admin/permissions') ||
+        currentUrl.includes('/admin/role-management') ||
+        currentUrl.includes('/admin/system-logs') ||
+        currentUrl.includes('/admin/backup')) {
+        showSubmenu.value.settings = true;
     }
 });
 </script>
@@ -341,7 +471,7 @@ onMounted(() => {
         </Transition>
 
         <!-- Navigation Links -->
-        <div class="py-4 overflow-y-auto flex-grow">
+        <div class="py-4 overflow-y-auto flex-grow custom-scrollbar">
             <nav>
                 <!-- User Management Section -->
                 <div class="pt-2">
@@ -850,5 +980,57 @@ onMounted(() => {
 .tooltip-leave-to {
     opacity: 0;
     transform: translateX(5px) translateY(-50%);
+}
+
+/* Custom Scrollbar Styling - Professional & Elegant */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.7);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background: rgba(75, 85, 99, 0.9);
+}
+
+/* Dark mode scrollbar */
+.dark .custom-scrollbar {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.7);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background: rgba(156, 163, 175, 0.9);
+}
+
+/* Smooth scrolling */
+.custom-scrollbar {
+    scroll-behavior: smooth;
 }
 </style>

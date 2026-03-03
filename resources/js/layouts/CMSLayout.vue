@@ -655,6 +655,14 @@
         @cancel="slideOver.close()"
         @success="handleFormSuccess"
       />
+      
+      <ExpenseForm
+        v-else-if="slideOver.currentType.value === 'expense'"
+        :categories="props.expenseCategories || []"
+        :jobs="props.jobs || []"
+        @cancel="slideOver.close()"
+        @success="handleFormSuccess"
+      />
     </SlideOver>
 
     <!-- Mobile Sidebar (same as before) -->
@@ -780,6 +788,7 @@ import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
 import CustomerForm from '@/components/CMS/Forms/CustomerForm.vue'
 import InvoiceForm from '@/components/CMS/Forms/InvoiceForm.vue'
+import ExpenseForm from '@/components/CMS/Forms/ExpenseForm.vue'
 import NavItem from '@/components/CMS/NavItem.vue'
 import PwaInstallPrompt from '@/components/CMS/PwaInstallPrompt.vue'
 import { useCMSSlideOver } from '@/composables/useCMSSlideOver'
@@ -797,6 +806,8 @@ interface Notification {
 interface Props {
   pageTitle?: string
   customers?: any[]
+  expenseCategories?: any[]
+  jobs?: any[]
 }
 
 const props = defineProps<Props>()

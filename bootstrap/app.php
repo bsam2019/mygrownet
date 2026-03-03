@@ -77,6 +77,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'geopamu.admin' => \App\Http\Middleware\GeopamuAdmin::class,
             // CMS middleware
             'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
+            'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
         ]);
 
