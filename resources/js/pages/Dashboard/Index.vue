@@ -83,11 +83,24 @@ const shouldShowStartHere = computed(() => {
     // 1. User doesn't have GrowBuilder (show "Build Your Website")
     // 2. User doesn't have GrowNet (show "Join GrowNet")
     // 3. User has GrowNet (show "GrowNet Dashboard")
+    // 4. User has incomplete profile
     const hasGrowBuilder = props.modules.some(m => m.slug === 'growbuilder' && m.has_access);
     const hasGrowNet = props.hasActiveGrowNetPackage;
+    const hasIncompleteProfile = isProfileIncomplete.value;
     
-    // Show if missing GrowBuilder, OR if user has GrowNet (to show dashboard link)
-    return !hasGrowBuilder || hasGrowNet;
+    // Show if missing GrowBuilder, OR if user has GrowNet (to show dashboard link), OR has incomplete profile
+    return !hasGrowBuilder || hasGrowNet || hasIncompleteProfile;
+});
+
+// Check if user profile is incomplete (missing critical information)
+const isProfileIncomplete = computed(() => {
+    if (!props.user) return false;
+    
+    // Only check for phone number - it's critical for mobile money withdrawals
+    // Name and email are required during registration, so they're always present
+    const missingPhone = !props.user.phone || props.user.phone.trim() === '';
+    
+    return missingPhone;
 });
 
 // Primary tool detection - GrowBuilder or GrowNet
@@ -272,18 +285,19 @@ const handleModuleClick = (module: Module) => {
                                 </div>
                             </Link>
 
-                            <!-- Complete Account Setup -->
+                            <!-- Complete Account Setup (only if profile incomplete) -->
                             <Link
-                                href="/profile"
+                                v-if="isProfileIncomplete"
+                                :href="route('profile.edit')"
                                 class="group bg-white rounded-xl p-4 hover:shadow-md transition-all duration-300 border border-indigo-100 hover:border-indigo-300"
                             >
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-500 flex-shrink-0">
+                                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-amber-500 flex-shrink-0">
                                         <CheckCircleIcon class="w-5 h-5 text-white" aria-hidden="true" />
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="font-semibold text-gray-900 text-sm mb-1">Complete Setup</h3>
-                                        <p class="text-xs text-gray-600">Finish your profile</p>
+                                        <h3 class="font-semibold text-gray-900 text-sm mb-1">Add Phone Number</h3>
+                                        <p class="text-xs text-gray-600">Required for mobile money withdrawals</p>
                                     </div>
                                     <ArrowRightIcon class="w-4 h-4 text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" aria-hidden="true" />
                                 </div>

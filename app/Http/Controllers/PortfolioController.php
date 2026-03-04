@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use Illuminate\Http\Request;
-use App\Models\Investment;
+// VBIF removed - Investment model deleted
 use App\Models\User;
 
 class PortfolioController extends Controller

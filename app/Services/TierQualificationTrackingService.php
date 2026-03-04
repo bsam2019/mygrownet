@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\InvestmentTier;
+use App\Models\ProfessionalLevel;
 use App\Models\TeamVolume;
 use App\Models\TierQualification;
 use Illuminate\Support\Collection;
@@ -120,7 +120,7 @@ class TierQualificationTrackingService
     /**
      * Get users with permanent tier status
      */
-    public function getUsersWithPermanentStatus(?InvestmentTier $tier = null): Collection
+    public function getUsersWithPermanentStatus(?ProfessionalLevel $tier = null): Collection
     {
         $query = TierQualification::permanentStatus()
             ->with(['user', 'tier']);
@@ -135,7 +135,7 @@ class TierQualificationTrackingService
     /**
      * Get qualification statistics for a tier
      */
-    public function getTierQualificationStats(InvestmentTier $tier, Carbon $month): array
+    public function getTierQualificationStats(ProfessionalLevel $tier, Carbon $month): array
     {
         $qualifications = TierQualification::forTier($tier->id)
             ->forMonth($month)
@@ -168,7 +168,7 @@ class TierQualificationTrackingService
     /**
      * Get users at risk of losing tier status
      */
-    public function getUsersAtRisk(InvestmentTier $tier, int $gracePeriodMonths = 2): Collection
+    public function getUsersAtRisk(ProfessionalLevel $tier, int $gracePeriodMonths = 2): Collection
     {
         $currentMonth = now()->startOfMonth();
         $riskThreshold = $currentMonth->copy()->subMonths($gracePeriodMonths);
@@ -191,7 +191,7 @@ class TierQualificationTrackingService
     /**
      * Get qualification trends for a tier
      */
-    public function getQualificationTrends(InvestmentTier $tier, int $months = 6): array
+    public function getQualificationTrends(ProfessionalLevel $tier, int $months = 6): array
     {
         $trends = [];
         $currentMonth = now()->startOfMonth();

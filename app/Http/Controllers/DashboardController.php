@@ -4,17 +4,14 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Services\DashboardService;
-use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\InvestmentCategory;
 use App\Models\InvestmentOpportunity;
-use App\Models\InvestmentTier;
 use App\Models\ActivityLog;
 use App\Models\ReferralCommission;
 use App\Models\ProfitShare;
 use App\Models\WithdrawalRequest;
 use App\Domain\Financial\Services\WithdrawalPolicyService;
-use App\Domain\Investment\Services\InvestmentTierService;
 use App\Domain\Reward\Services\ReferralMatrixService;
 use App\Infrastructure\Persistence\Repositories\EloquentReferralRepository;
 use Illuminate\Http\Request;
@@ -28,20 +25,17 @@ class DashboardController extends Controller
 {
     protected $dashboardService;
     protected $withdrawalPolicyService;
-    protected $investmentTierService;
     protected $referralMatrixService;
     protected $referralRepository;
 
     public function __construct(
         DashboardService $dashboardService,
         WithdrawalPolicyService $withdrawalPolicyService,
-        InvestmentTierService $investmentTierService,
         ReferralMatrixService $referralMatrixService,
         EloquentReferralRepository $referralRepository
     ) {
         $this->dashboardService = $dashboardService;
         $this->withdrawalPolicyService = $withdrawalPolicyService;
-        $this->investmentTierService = $investmentTierService;
         $this->referralMatrixService = $referralMatrixService;
         $this->referralRepository = $referralRepository;
     }
@@ -650,16 +644,16 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        $eligibility = $user->checkTierUpgradeEligibility();
-        $recommendations = $this->investmentTierService->getTierUpgradeRecommendations($user);
+        // VBIF removed - use membership tier logic
+        $eligibility = $user->checkMyGrowNetTierUpgradeEligibility();
         
         return response()->json([
             'success' => true,
             'data' => [
                 'eligibility' => $eligibility,
-                'recommendations' => $recommendations,
-                'tier_comparison' => $this->getTierComparisonData($user),
-                'upgrade_benefits' => $this->calculateUpgradeBenefits($user)
+                'recommendations' => [],
+                'tier_comparison' => [],
+                'upgrade_benefits' => []
             ]
         ]);
     }

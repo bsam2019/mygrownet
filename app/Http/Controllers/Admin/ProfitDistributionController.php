@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProfitDistribution;
-use App\Models\Investment;
+// VBIF removed - Investment model deleted
 use App\Models\User;
 use App\Domain\Financial\Services\ProfitDistributionService;
 use App\Console\Commands\AnnualProfitDistributionCommand;

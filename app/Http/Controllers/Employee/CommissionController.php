@@ -14,7 +14,7 @@ use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Infrastructure\Persistence\Eloquent\EmployeeCommissionModel;
 use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
-use App\Models\Investment;
+// VBIF removed - Investment model deleted
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;

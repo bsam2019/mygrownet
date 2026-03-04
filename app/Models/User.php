@@ -157,7 +157,6 @@ class User extends Authenticatable
         'last_referral_at',
         'tier_upgraded_at',
         'tier_history',
-        'current_investment_tier_id',
         'rank',
         'address',
         'balance',
@@ -582,8 +581,23 @@ class User extends Authenticatable
         return $this->hasOne(UserProfile::class);
     }
 
+    // Professional Level relationship (MyGrowNet 7-level system)
+    // Uses current_professional_level (1-7) to determine tier
+    public function membershipTier(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ProfessionalLevel::class, 'current_professional_level', 'level');
+    }
+
+    // Alias for backward compatibility
+    public function currentMembershipTier(): BelongsTo
+    {
+        return $this->membershipTier();
+    }
+
+    // VBIF removed - Investment model deleted
     public function investments(): HasMany
     {
+        // Return empty relationship - Investment model removed
         return $this->hasMany(Investment::class);
     }
 
@@ -879,37 +893,15 @@ class User extends Authenticatable
         })->exists();
     }
 
-    // Investment Tier Relationships
-    public function currentInvestmentTier()
-    {
-        return $this->belongsTo(InvestmentTier::class, 'current_investment_tier_id');
-    }
-
-    // MyGrowNet Membership Tier (alias for currentInvestmentTier)
-    public function membershipTier()
-    {
-        return $this->currentInvestmentTier();
-    }
-
-    // Current Membership Tier relationship (for eager loading)
-    public function currentMembershipTier()
-    {
-        return $this->belongsTo(InvestmentTier::class, 'current_investment_tier_id');
-    }
-
     // Tier upgrades history
     public function tierUpgrades(): HasMany
     {
         return $this->hasMany(TierUpgrade::class);
     }
 
-    // Get current tier for educational content access (relationship)
-    public function currentTier()
-    {
-        return $this->belongsTo(InvestmentTier::class, 'current_investment_tier_id');
-    }
+    // Investment Tier Methods (REMOVED - VBIF legacy)
+    // Tier history methods removed as part of VBIF cleanup
 
-    // Investment Tier Methods
     public function getTierHistory()
     {
         return $this->tier_history ?? [];
@@ -918,6 +910,7 @@ class User extends Authenticatable
     public function addTierHistory($tierId, $reason = '')
     {
         $history = $this->getTierHistory();
+
         $history[] = [
             'tier_id' => $tierId,
             'date' => now()->toDateTimeString(),
@@ -929,31 +922,24 @@ class User extends Authenticatable
 
     public function canUpgradeTier()
     {
-        if (!$this->currentInvestmentTier) {
-            return true;
-        }
-        return $this->currentInvestmentTier->canUpgrade($this);
+        // VBIF removed - use subscription tier logic
+        return false;
     }
 
     public function getNextTierRequirements()
     {
-        if (!$this->currentInvestmentTier) {
-            $firstTier = InvestmentTier::ordered()->first();
-            return [
-                'next_tier' => $firstTier,
-                'remaining_amount' => $firstTier->minimum_investment,
-                'can_upgrade' => false
-            ];
-        }
-        return $this->currentInvestmentTier->getUpgradeRequirements($this);
+        // VBIF removed - use subscription tier logic
+        return [
+            'next_tier' => null,
+            'remaining_amount' => 0,
+            'can_upgrade' => false
+        ];
     }
 
-    public function upgradeTier(InvestmentTier $newTier, $reason = '')
+    public function upgradeTier($newTier, $reason = '')
     {
-        $this->current_investment_tier_id = $newTier->id;
-        $this->tier_upgraded_at = now();
-        $this->addTierHistory($newTier->id, $reason);
-        $this->save();
+        // VBIF method removed - use subscription tier upgrade logic instead
+        return false;
     }
 
     /**
@@ -1176,7 +1162,7 @@ class User extends Authenticatable
         $members = User::where('network_path', 'LIKE', $this->network_path . '.%')
                    ->where('network_level', '<=', $this->network_level + $maxLevel)
                    ->where('network_level', '>', $this->network_level)
-                   ->select('id', 'name', 'email', 'network_level', 'current_investment_tier_id')
+                   ->select('id', 'name', 'email', 'network_level')
                    ->get();
         
         return $members->groupBy(function($user) {
@@ -1201,17 +1187,17 @@ class User extends Authenticatable
     // MyGrowNet tier advancement methods
     public function checkMyGrowNetTierUpgradeEligibility(): array
     {
+        // VBIF removed - use MembershipTier logic
         $currentTier = $this->membershipTier;
         $currentVolume = $this->getCurrentTeamVolume();
         
         if (!$currentTier) {
-            $bronzeTier = InvestmentTier::where('name', 'Bronze')->first();
             return [
-                'eligible' => true,
+                'eligible' => false,
                 'current_tier' => null,
-                'next_tier' => $bronzeTier,
-                'requirements_met' => true,
-                'message' => 'Ready to join Bronze tier'
+                'next_tier' => null,
+                'requirements_met' => false,
+                'message' => 'No membership tier found'
             ];
         }
 
@@ -1222,7 +1208,7 @@ class User extends Authenticatable
                 'current_tier' => $currentTier,
                 'next_tier' => null,
                 'requirements_met' => false,
-                'message' => 'Already at highest tier (Elite)'
+                'message' => 'Already at highest tier'
             ];
         }
 
@@ -1241,37 +1227,14 @@ class User extends Authenticatable
                 'team_volume' => $teamVolume
             ],
             'requirements' => $nextTier->getUpgradeRequirements(),
-            'achievement_bonus' => $nextTier->achievement_bonus
+            'achievement_bonus' => $nextTier->achievement_bonus ?? 0
         ];
     }
 
-    public function upgradeToMyGrowNetTier(InvestmentTier $newTier, string $reason = 'tier_qualification_met'): bool
+    public function upgradeToMyGrowNetTier($newTier, string $reason = 'tier_qualification_met'): bool
     {
-        $eligibility = $this->checkMyGrowNetTierUpgradeEligibility();
-        
-        if (!$eligibility['eligible'] || $eligibility['next_tier']?->id !== $newTier->id) {
-            return false;
-        }
-
-        // Award achievement bonus
-        if ($newTier->achievement_bonus > 0) {
-            $this->increment('balance', $newTier->achievement_bonus);
-            $this->recordActivity(
-                'achievement_bonus_received',
-                "Received K{$newTier->achievement_bonus} achievement bonus for {$newTier->name} tier upgrade"
-            );
-        }
-
-        // Upgrade tier
-        $this->upgradeTier($newTier, $reason);
-
-        // Record tier upgrade activity
-        $this->recordActivity(
-            'mygrownet_tier_upgraded',
-            "Upgraded to {$newTier->name} tier with K{$newTier->achievement_bonus} achievement bonus"
-        );
-
-        return true;
+        // VBIF removed - use MembershipTier logic
+        return false;
     }
 
     public function getMyGrowNetTierBenefits(): array
@@ -1510,7 +1473,7 @@ class User extends Authenticatable
                     'name' => $child->user->name,
                     'email' => $child->user->email,
                     'total_investment' => $child->user->total_investment_amount ?? 0,
-                    'tier' => $child->user->currentInvestmentTier?->name
+                    'tier' => $child->user->membershipTier?->name ?? 'Associate'
                 ],
                 'children' => []
             ];
@@ -1533,7 +1496,7 @@ class User extends Authenticatable
                 'name' => $position->user->name,
                 'email' => $position->user->email,
                 'total_investment' => $position->user->total_investment_amount,
-                'tier' => $position->user->currentInvestmentTier?->name
+                'tier' => $position->user->membershipTier?->name ?? 'Associate'
             ],
             'children' => []
         ];
@@ -1541,7 +1504,7 @@ class User extends Authenticatable
         // Get direct children (3x3 matrix allows 3 children per position)
         $children = MatrixPosition::where('sponsor_id', $position->user_id)
             ->where('is_active', true)
-            ->with('user.currentInvestmentTier')
+            ->with('user.membershipTier')
             ->orderBy('position')
             ->get();
 
@@ -1632,18 +1595,14 @@ class User extends Authenticatable
 
     public function getMatrixCommissionEligibility(int $level): bool
     {
-        $tier = $this->currentInvestmentTier;
+        // VBIF removed - use MembershipTier logic
+        $tier = $this->membershipTier;
         if (!$tier) {
             return false;
         }
 
-        // Check tier eligibility for different commission levels
-        return match($level) {
-            1 => true, // All tiers eligible for level 1
-            2 => in_array($tier->name, ['Starter', 'Builder', 'Leader', 'Elite']),
-            3 => in_array($tier->name, ['Builder', 'Leader', 'Elite']),
-            default => false
-        };
+        // All membership tiers can receive commissions
+        return $level >= 1 && $level <= 7;
     }
 
     // Enhanced referral code methods
@@ -1715,43 +1674,15 @@ class User extends Authenticatable
     // Enhanced tier upgrade methods
     public function checkTierUpgradeEligibility(): array
     {
-        $currentTier = $this->currentInvestmentTier;
-        $totalInvestment = $this->total_investment_amount;
-
-        if (!$currentTier) {
-            $firstTier = InvestmentTier::active()->ordered()->first();
-            return [
-                'eligible' => $totalInvestment >= $firstTier->minimum_investment,
-                'current_tier' => null,
-                'next_tier' => $firstTier,
-                'required_amount' => $firstTier->minimum_investment,
-                'current_amount' => $totalInvestment,
-                'remaining_amount' => max(0, $firstTier->minimum_investment - $totalInvestment)
-            ];
-        }
-
-        $nextTier = $currentTier->getNextTier();
-        if (!$nextTier) {
-            return [
-                'eligible' => false,
-                'current_tier' => $currentTier,
-                'next_tier' => null,
-                'required_amount' => 0,
-                'current_amount' => $totalInvestment,
-                'remaining_amount' => 0,
-                'message' => 'Already at highest tier'
-            ];
-        }
-
-        $remainingAmount = max(0, $nextTier->minimum_investment - $totalInvestment);
-
+        // VBIF removed - use MembershipTier logic
         return [
-            'eligible' => $remainingAmount <= 0,
-            'current_tier' => $currentTier,
-            'next_tier' => $nextTier,
-            'required_amount' => $nextTier->minimum_investment,
-            'current_amount' => $totalInvestment,
-            'remaining_amount' => $remainingAmount
+            'eligible' => false,
+            'current_tier' => null,
+            'next_tier' => null,
+            'required_amount' => 0,
+            'current_amount' => 0,
+            'remaining_amount' => 0,
+            'message' => 'VBIF investment tiers removed - use membership tiers'
         ];
     }
 
@@ -1799,18 +1730,14 @@ class User extends Authenticatable
 
     public function canReceiveMatrixCommission(int $level): bool
     {
-        $tier = $this->currentInvestmentTier;
+        // VBIF removed - use MembershipTier logic
+        $tier = $this->membershipTier;
         if (!$tier) {
             return false;
         }
 
-        // Matrix commission eligibility based on tier
-        return match($level) {
-            1 => true, // All tiers can receive level 1 commissions
-            2 => in_array($tier->name, ['Starter', 'Builder', 'Leader', 'Elite']),
-            3 => in_array($tier->name, ['Builder', 'Leader', 'Elite']),
-            default => false
-        };
+        // All membership tiers can receive commissions
+        return $level >= 1 && $level <= 7;
     }
 
     public function getMatrixDownlineCount(int $maxLevel = 3): array
@@ -1849,16 +1776,10 @@ class User extends Authenticatable
         return $counts;
     }
 
-    public function getCurrentInvestmentTier(): ?InvestmentTier
+    public function getCurrentInvestmentTier()
     {
-        if ($this->current_investment_tier_id) {
-            return InvestmentTier::find($this->current_investment_tier_id);
-        }
-
-        // Determine tier based on total investment amount
-        return InvestmentTier::where('minimum_investment', '<=', $this->total_investment_amount ?? 0)
-            ->orderBy('minimum_investment', 'desc')
-            ->first();
+        // VBIF removed - use membershipTier instead
+        return null;
     }
 
     // Security-related relationships

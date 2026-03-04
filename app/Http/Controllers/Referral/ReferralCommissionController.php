@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Referral;
 
 use App\Http\Controllers\Controller;
 use App\Models\ReferralCommission;
-use App\Models\Investment;
+// VBIF removed - Investment model deleted
 use App\Models\User;
 use App\Services\ReferralService;
 use Illuminate\Http\Request;

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Investment;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
@@ -214,21 +213,11 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'investment_id' => 'required|exists:investments,id',
-            'amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|string'
-        ]);
-
-        $investment = Investment::findOrFail($validated['investment_id']);
-
-        $transaction = $this->transactionService->createInvestmentTransaction(
-            auth()->user(),
-            $investment,
-            $validated
-        );
-
-        return redirect()->back()->with('success', 'Transaction initiated successfully');
+        // VBIF removed - Investment model no longer exists
+        // This endpoint is deprecated
+        return response()->json([
+            'error' => 'This endpoint is no longer available. Please use the new transaction system.'
+        ], 410); // 410 Gone
     }
 
     public function withdraw(Request $request)
