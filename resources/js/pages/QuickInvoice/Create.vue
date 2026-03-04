@@ -6,6 +6,7 @@ import {
     DocumentArrowDownIcon, EnvelopeIcon, ChatBubbleLeftIcon,
     XMarkIcon, CheckCircleIcon, PencilIcon, BookmarkIcon, DocumentTextIcon
 } from '@heroicons/vue/24/outline';
+import { useAutoSave } from '@/composables/useAutoSave';
 // Use global axios with CSRF token configured
 const axios = (window as any).axios || require('axios').default;
 
@@ -107,6 +108,8 @@ const logoPreview = ref<string | null>(null);
 const signaturePreview = ref<string | null>(null);
 const errors = ref<Record<string, string>>({});
 const successMessage = ref('');
+const showRestorePrompt = ref(false);
+const lastSaveTime = ref<Date | null>(null);
 
 const selectedTemplate = ref(props.initialTemplate || 'classic');
 const primaryColor = ref('#2563eb');
@@ -132,6 +135,80 @@ const notes = ref('');
 const terms = ref('');
 const items = ref<LineItem[]>([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0, useAreaCalc: false, length: 0, width: 0 }]);
 
+// Auto-save setup
+const autoSave = useAutoSave({
+    key: `invoice_${props.documentType}_${isEditing.value ? props.editDocument?.id : 'new'}`,
+    data: () => ({
+        selectedTemplate: selectedTemplate.value,
+        primaryColor: primaryColor.value,
+        businessName: businessName.value,
+        businessAddress: businessAddress.value,
+        businessPhone: businessPhone.value,
+        businessEmail: businessEmail.value,
+        businessTaxNumber: businessTaxNumber.value,
+        preparedByName: preparedByName.value,
+        clientName: clientName.value,
+        clientAddress: clientAddress.value,
+        clientPhone: clientPhone.value,
+        clientEmail: clientEmail.value,
+        documentNumber: documentNumber.value,
+        issueDate: issueDate.value,
+        dueDate: dueDate.value,
+        currency: currency.value,
+        taxRate: taxRate.value,
+        discountRate: discountRate.value,
+        notes: notes.value,
+        terms: terms.value,
+        items: items.value,
+    }),
+    onRestore: (savedData) => {
+        // Only show restore prompt if not editing and not loading from saved profile
+        if (!isEditing.value && !props.savedProfile) {
+            showRestorePrompt.value = true;
+            lastSaveTime.value = autoSave.getLastSaveTime();
+        }
+    },
+    debounceMs: 3000, // Save every 3 seconds after changes stop
+    exclude: ['businessLogo', 'signature'] // Don't auto-save uploaded files
+});
+
+const restoreSavedData = () => {
+    const savedData = autoSave.restoreData();
+    if (savedData) {
+        selectedTemplate.value = savedData.selectedTemplate || selectedTemplate.value;
+        primaryColor.value = savedData.primaryColor || primaryColor.value;
+        businessName.value = savedData.businessName || '';
+        businessAddress.value = savedData.businessAddress || '';
+        businessPhone.value = savedData.businessPhone || '';
+        businessEmail.value = savedData.businessEmail || '';
+        businessTaxNumber.value = savedData.businessTaxNumber || '';
+        preparedByName.value = savedData.preparedByName || '';
+        clientName.value = savedData.clientName || '';
+        clientAddress.value = savedData.clientAddress || '';
+        clientPhone.value = savedData.clientPhone || '';
+        clientEmail.value = savedData.clientEmail || '';
+        documentNumber.value = savedData.documentNumber || '';
+        issueDate.value = savedData.issueDate || issueDate.value;
+        dueDate.value = savedData.dueDate || '';
+        currency.value = savedData.currency || currency.value;
+        taxRate.value = savedData.taxRate || 0;
+        discountRate.value = savedData.discountRate || 0;
+        notes.value = savedData.notes || '';
+        terms.value = savedData.terms || '';
+        if (savedData.items && savedData.items.length > 0) {
+            items.value = savedData.items;
+        }
+        showRestorePrompt.value = false;
+        successMessage.value = 'Draft restored successfully!';
+        setTimeout(() => successMessage.value = '', 3000);
+    }
+};
+
+const discardSavedData = () => {
+    autoSave.clearSavedData();
+    showRestorePrompt.value = false;
+};
+
 onMounted(() => { 
     if (props.editDocument) {
         loadEditDocument(props.editDocument);
@@ -142,6 +219,9 @@ onMounted(() => {
         // Show setup wizard for logged-in users without a saved profile
         showSetupWizard.value = true;
     }
+    
+    // Setup auto-save watcher
+    autoSave.setupAutoSave();
 });
 
 const loadEditDocument = (doc: EditDocument) => {
@@ -335,6 +415,9 @@ const generateDocument = async () => {
         
         const response = await axios.post(route('quick-invoice.generate'), payload);
         shareData.value = response.data.share; showShareModal.value = true; successMessage.value = isEditing.value ? 'Document updated!' : 'Document generated!';
+        
+        // Clear auto-saved data on successful generation
+        autoSave.clearSavedData();
     } catch (error: any) {
         if (error.response?.data?.errors) {
             for (const [key, messages] of Object.entries(error.response.data.errors)) {
@@ -437,7 +520,15 @@ const skipSetupWizard = () => {
                             <ArrowLeftIcon class="w-5 h-5 text-gray-600" aria-hidden="true" />
                         </Link>
                         <div>
-                            <h1 class="text-xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
+                                <span class="text-xs text-gray-400 flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                    </svg>
+                                    Auto-saving
+                                </span>
+                            </div>
                             <p class="text-sm text-gray-500">{{ isEditing ? 'Update the details below' : 'Fill in the details below' }}</p>
                         </div>
                     </div>
@@ -449,6 +540,32 @@ const skipSetupWizard = () => {
         </header>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Restore Draft Prompt -->
+            <div v-if="showRestorePrompt" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-blue-900">Draft Found</h3>
+                        <p class="text-sm text-blue-700 mt-1">
+                            We found an unsaved draft from {{ lastSaveTime ? new Date(lastSaveTime).toLocaleString() : 'earlier' }}. 
+                            Would you like to restore it?
+                        </p>
+                        <div class="flex gap-3 mt-3">
+                            <button @click="restoreSavedData" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                                Restore Draft
+                            </button>
+                            <button @click="discardSavedData" class="px-4 py-2 bg-white text-blue-600 text-sm font-medium rounded-lg border border-blue-300 hover:bg-blue-50">
+                                Start Fresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <div v-if="successMessage" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
                 <p class="text-green-700 flex items-center gap-2"><CheckCircleIcon class="w-5 h-5" aria-hidden="true" />{{ successMessage }}</p>
             </div>
