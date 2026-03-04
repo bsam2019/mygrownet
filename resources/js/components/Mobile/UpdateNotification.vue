@@ -39,32 +39,66 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { usePWA } from '@/composables/usePWA';
 
 const { registration } = usePWA();
 const showNotification = ref(false);
+const waitingWorker = ref<ServiceWorker | null>(null);
 
 // Watch for service worker updates
 watch(registration, (reg) => {
   if (reg) {
-    reg.addEventListener('updatefound', () => {
+    // Check if there's already a waiting worker
+    if (reg.waiting) {
+      waitingWorker.value = reg.waiting;
       showNotification.value = true;
+    }
+
+    // Listen for new updates
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New service worker is waiting
+            waitingWorker.value = newWorker;
+            showNotification.value = true;
+          }
+        });
+      }
     });
   }
 }, { immediate: true });
 
+// Listen for controller change (when new SW takes over)
+onMounted(() => {
+  let refreshing = false;
+  
+  navigator.serviceWorker?.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+});
+
 const applyUpdate = () => {
   showNotification.value = false;
-  window.location.reload();
+  
+  if (waitingWorker.value) {
+    // Tell the waiting service worker to skip waiting and activate
+    waitingWorker.value.postMessage({ type: 'SKIP_WAITING' });
+  } else {
+    // Fallback: just reload
+    window.location.reload();
+  }
 };
 
 const dismissNotification = () => {
   showNotification.value = false;
-  // Show again after 5 minutes
-  setTimeout(() => {
-    showNotification.value = true;
-  }, 5 * 60 * 1000);
+  // Don't show again automatically - user dismissed it
+  // They can manually refresh if they want to update later
 };
 </script>
 

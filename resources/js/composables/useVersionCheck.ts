@@ -1,6 +1,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 const APP_VERSION_KEY = 'app_version';
+const UPDATE_DISMISSED_KEY = 'update_dismissed_version';
 const CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes
 
 export function useVersionCheck() {
@@ -21,9 +22,10 @@ export function useVersionCheck() {
 
             // Get stored version
             const storedVersion = localStorage.getItem(APP_VERSION_KEY);
+            const dismissedVersion = localStorage.getItem(UPDATE_DISMISSED_KEY);
 
             if (!storedVersion) {
-                // First time - store current version
+                // First time - store current version and don't show notification
                 localStorage.setItem(APP_VERSION_KEY, metaVersion);
                 currentVersion.value = metaVersion;
                 console.log(`[Version Check] Initial version stored: ${metaVersion}`);
@@ -34,6 +36,15 @@ export function useVersionCheck() {
 
             // Check if version has changed
             if (storedVersion !== metaVersion) {
+                // Don't show if user already dismissed this version
+                if (dismissedVersion === metaVersion) {
+                    console.log(`[Version Check] Update dismissed by user: ${metaVersion}`);
+                    // Update stored version silently
+                    localStorage.setItem(APP_VERSION_KEY, metaVersion);
+                    hasUpdate.value = false;
+                    return;
+                }
+                
                 // Only show notification if not already showing
                 if (!hasUpdate.value) {
                     hasUpdate.value = true;
@@ -49,33 +60,47 @@ export function useVersionCheck() {
         }
     };
 
-    const applyUpdate = () => {
+    const applyUpdate = async () => {
         if (newVersion.value) {
             // Update localStorage first
             localStorage.setItem(APP_VERSION_KEY, newVersion.value);
+            // Clear dismissed flag since user is updating
+            localStorage.removeItem(UPDATE_DISMISSED_KEY);
             
             // Hide notification immediately
             hasUpdate.value = false;
             
-            // Clear all caches
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
-                }).then(() => {
-                    // Reload after caches are cleared
-                    window.location.reload();
-                });
-            } else {
-                // Reload immediately if no cache API
-                window.location.reload();
+            console.log(`[Version Check] Applying update to: ${newVersion.value}`);
+            
+            try {
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('[Version Check] All caches cleared');
+                }
+                
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('[Version Check] All service workers unregistered');
+                }
+            } catch (error) {
+                console.error('[Version Check] Error clearing caches:', error);
             }
+            
+            // Force hard reload (bypass cache)
+            window.location.reload();
         }
     };
 
     const dismissUpdate = () => {
-        // User dismissed - update localStorage to prevent showing again
+        // User dismissed - store this version as dismissed
         if (newVersion.value) {
+            localStorage.setItem(UPDATE_DISMISSED_KEY, newVersion.value);
             localStorage.setItem(APP_VERSION_KEY, newVersion.value);
+            console.log(`[Version Check] Update dismissed: ${newVersion.value}`);
         }
         hasUpdate.value = false;
     };
