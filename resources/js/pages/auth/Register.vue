@@ -15,6 +15,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const referralCode = urlParams.get('ref') || '';
 
 const showPassword = ref(false);
+const contactInput = ref('');
 
 const form = useForm({
     name: '',
@@ -23,6 +24,26 @@ const form = useForm({
     password: '',
     referral_code: referralCode,
 });
+
+// Auto-detect if input is email or phone
+const handleContactInput = (event: Event) => {
+    const value = (event.target as HTMLInputElement).value.trim();
+    contactInput.value = value;
+    
+    // Clear both fields first
+    form.email = '';
+    form.phone = '';
+    
+    if (!value) return;
+    
+    // Check if it's an email (contains @)
+    if (value.includes('@')) {
+        form.email = value;
+    } else {
+        // Assume it's a phone number
+        form.phone = value;
+    }
+};
 
 const submit = () => {
     form.post(route('register'), {
@@ -64,29 +85,17 @@ const submit = () => {
             </div>
 
             <div>
-                <Label for="email">Email <span class="text-gray-400 text-xs">(or phone below)</span></Label>
+                <Label for="contact">Email or Phone</Label>
                 <Input
-                    id="email"
-                    type="email"
-                    autocomplete="email"
-                    v-model="form.email"
-                    placeholder="you@example.com"
+                    id="contact"
+                    type="text"
+                    v-model="contactInput"
+                    @input="handleContactInput"
+                    placeholder="you@example.com or 0977123456"
+                    autocomplete="username"
                     class="mt-1"
                 />
-                <InputError :message="form.errors.email" class="mt-1" />
-            </div>
-
-            <div>
-                <Label for="phone">Phone <span class="text-gray-400 text-xs">(or email above)</span></Label>
-                <Input
-                    id="phone"
-                    type="tel"
-                    autocomplete="tel"
-                    v-model="form.phone"
-                    placeholder="0977123456"
-                    class="mt-1"
-                />
-                <InputError :message="form.errors.phone" class="mt-1" />
+                <InputError :message="form.errors.email || form.errors.phone" class="mt-1" />
             </div>
 
             <div v-if="referralCode">
