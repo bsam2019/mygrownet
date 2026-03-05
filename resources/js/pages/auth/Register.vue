@@ -6,27 +6,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle, AlertCircle } from 'lucide-vue-next';
+import { LoaderCircle } from 'lucide-vue-next';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator.vue';
-import { Transition } from 'vue';
+import { ref } from 'vue';
 
 // Get referral code from URL query parameter
 const urlParams = new URLSearchParams(window.location.search);
 const referralCode = urlParams.get('ref') || '';
+
+const showPassword = ref(false);
 
 const form = useForm({
     name: '',
     email: '',
     phone: '',
     password: '',
-    password_confirmation: '',
     referral_code: referralCode,
 });
 
 const submit = () => {
     form.post(route('register'), {
         onFinish: () => {
-            form.reset('password', 'password_confirmation');
+            form.reset('password');
         },
         onError: () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -36,155 +37,112 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="Create an account" description="Enter your details below to create your account">
+    <AuthBase title="Create account" description="Join MyGrowNet today">
         <Head title="Register" />
 
-        <!-- Error Alert -->
-        <Transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="opacity-0 transform scale-95"
-            enter-to-class="opacity-100 transform scale-100"
-            leave-active-class="transition ease-in duration-150"
-            leave-from-class="opacity-100 transform scale-100"
-            leave-to-class="opacity-0 transform scale-95"
-        >
-            <div v-if="form.hasErrors" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg shadow-sm">
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                            <AlertCircle class="h-5 w-5 text-red-600" />
-                        </div>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-sm font-semibold text-red-900 mb-2">Unable to create account</h3>
-                        <ul class="space-y-1">
-                            <li v-for="(error, field) in form.errors" :key="field" class="text-sm text-red-700 flex items-start gap-2">
-                                <span class="text-red-500 mt-0.5">•</span>
-                                <span>{{ error }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <!-- Error Message -->
+        <div v-if="form.hasErrors" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm font-medium text-red-800 mb-1">Please fix the following:</p>
+            <ul class="text-sm text-red-700 space-y-0.5 ml-4">
+                <li v-for="(error, field) in form.errors" :key="field">{{ error }}</li>
+            </ul>
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-4">
+            <div>
+                <Label for="name">Full Name</Label>
+                <Input
+                    id="name"
+                    type="text"
+                    autofocus
+                    autocomplete="name"
+                    v-model="form.name"
+                    placeholder="John Doe"
+                    class="mt-1"
+                />
+                <InputError :message="form.errors.name" class="mt-1" />
             </div>
-        </Transition>
 
-        <form @submit.prevent="submit" class="flex flex-col gap-6">
-            <div class="grid gap-6">
-                <div class="grid gap-2">
-                    <Label for="name">Full Name</Label>
-                    <Input
-                        id="name"
-                        type="text"
-                        autofocus
-                        autocomplete="name"
-                        v-model="form.name"
-                        placeholder="Enter your full name"
-                    />
-                    <InputError :message="form.errors.name" />
-                </div>
+            <div>
+                <Label for="email">Email <span class="text-gray-400 text-xs">(or phone below)</span></Label>
+                <Input
+                    id="email"
+                    type="email"
+                    autocomplete="email"
+                    v-model="form.email"
+                    placeholder="you@example.com"
+                    class="mt-1"
+                />
+                <InputError :message="form.errors.email" class="mt-1" />
+            </div>
 
-                <div class="grid gap-2">
-                    <Label for="email">
-                        Email Address 
-                        <span class="text-gray-400 font-normal">(Optional if phone provided)</span>
-                    </Label>
-                    <Input
-                        id="email"
-                        type="email"
-                        autocomplete="email"
-                        v-model="form.email"
-                        placeholder="you@example.com"
-                    />
-                    <InputError :message="form.errors.email" />
-                </div>
+            <div>
+                <Label for="phone">Phone <span class="text-gray-400 text-xs">(or email above)</span></Label>
+                <Input
+                    id="phone"
+                    type="tel"
+                    autocomplete="tel"
+                    v-model="form.phone"
+                    placeholder="0977123456"
+                    class="mt-1"
+                />
+                <InputError :message="form.errors.phone" class="mt-1" />
+            </div>
 
-                <div class="grid gap-2">
-                    <Label for="phone">
-                        Phone Number 
-                        <span class="text-gray-400 font-normal">(Optional if email provided)</span>
-                    </Label>
-                    <Input
-                        id="phone"
-                        type="tel"
-                        autocomplete="tel"
-                        v-model="form.phone"
-                        placeholder="0977123456 or +260977123456"
-                    />
-                    <p class="text-xs text-gray-500 mt-1">
-                        Enter your Zambian phone number (e.g., 0977123456)
-                    </p>
-                    <InputError :message="form.errors.phone" />
-                </div>
+            <div v-if="referralCode">
+                <Label for="referral_code">Referral Code</Label>
+                <Input
+                    id="referral_code"
+                    type="text"
+                    v-model="form.referral_code"
+                    placeholder="Referral code"
+                    class="mt-1"
+                    readonly
+                />
+                <p class="text-xs text-green-600 mt-1">✓ Referral code applied</p>
+            </div>
 
-                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-xs text-blue-700">
-                        <strong>Note:</strong> You must provide at least one - either email or phone number (or both).
-                    </p>
-                </div>
-
-                <div class="grid gap-2">
-                    <Label for="referral_code">
-                        Referral Code 
-                        <span class="text-gray-400 font-normal">(Optional)</span>
-                    </Label>
-                    <Input
-                        id="referral_code"
-                        type="text"
-                        v-model="form.referral_code"
-                        placeholder="Enter referral code if you have one"
-                    />
-                    <p v-if="referralCode" class="text-xs text-green-600 flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        Referral code applied from invitation link
-                    </p>
-                    <p v-else class="text-xs text-gray-500 mt-1">
-                        If someone referred you, enter their code here
-                    </p>
-                    <InputError :message="form.errors.referral_code" />
-                </div>
-
-                <div class="grid gap-2">
-                    <Label for="password">Password</Label>
+            <div>
+                <Label for="password">Password</Label>
+                <div class="relative mt-1">
                     <Input
                         id="password"
-                        type="password"
+                        :type="showPassword ? 'text' : 'password'"
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Create a secure password"
+                        class="pr-10"
                     />
-                    <PasswordStrengthIndicator :password="form.password" />
-                    <InputError :message="form.errors.password" />
+                    <button
+                        type="button"
+                        @click="showPassword = !showPassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                        <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                    </button>
                 </div>
-
-                <div class="grid gap-2">
-                    <Label for="password_confirmation">Confirm Password</Label>
-                    <Input
-                        id="password_confirmation"
-                        type="password"
-                        autocomplete="new-password"
-                        v-model="form.password_confirmation"
-                        placeholder="Confirm your password"
-                    />
-                    <InputError :message="form.errors.password_confirmation" />
-                </div>
-
-                <Button
-                    type="submit"
-                    class="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 py-6"
-                    :disabled="form.processing"
-                >
-                    <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
-                    Create your account
-                </Button>
+                <PasswordStrengthIndicator :password="form.password" class="mt-2" />
+                <InputError :message="form.errors.password" class="mt-1" />
             </div>
 
-            <div class="text-center text-gray-600">
+            <Button
+                type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-5"
+                :disabled="form.processing"
+            >
+                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
+                Create account
+            </Button>
+
+            <div class="text-center text-sm text-gray-600 pt-2">
                 Already have an account?
-                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium ml-1">
-                    Sign in instead
-                </TextLink>
+                <TextLink :href="route('login')" class="text-blue-600 hover:text-blue-700 font-medium">Sign in</TextLink>
             </div>
         </form>
     </AuthBase>
