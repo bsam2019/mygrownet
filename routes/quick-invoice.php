@@ -40,5 +40,12 @@ Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('/save-profile', [QuickInvoiceController::class, 'saveProfile'])->name('save-profile');
         Route::get('/profile', [QuickInvoiceController::class, 'getProfile'])->name('profile');
+        
+        // Attachment library routes
+        Route::get('/attachment-library', [QuickInvoiceController::class, 'getAttachmentLibrary'])->name('attachment-library');
+        Route::get('/attachment-library/{id}/download', [QuickInvoiceController::class, 'downloadLibraryAttachment'])->name('attachment-library.download');
+        Route::post('/attachment-library', [QuickInvoiceController::class, 'saveToLibrary'])->name('attachment-library.save');
+        Route::put('/attachment-library/{id}', [QuickInvoiceController::class, 'updateLibraryAttachment'])->name('attachment-library.update');
+        Route::delete('/attachment-library/{id}', [QuickInvoiceController::class, 'deleteFromLibrary'])->name('attachment-library.delete');
     });
 });

@@ -97,6 +97,7 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
             'colors' => $data['colors'],
             'signature' => $data['signature'],
             'prepared_by' => $data['prepared_by'] ?? null,
+            'attachments' => $data['attachments'] ?? [],
         ]);
         
         $model->save();
@@ -200,7 +201,8 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
             template: $model->template ? TemplateStyle::tryFrom($model->template) : null,
             colors: $model->colors ? ThemeColors::fromArray($model->colors) : null,
             signature: $model->signature,
-            preparedBy: $model->prepared_by
+            preparedBy: $model->prepared_by,
+            attachments: $model->attachments ?? []
         );
     }
 }

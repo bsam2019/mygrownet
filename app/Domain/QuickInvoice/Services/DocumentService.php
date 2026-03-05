@@ -239,6 +239,20 @@ class DocumentService
         if (!empty($data['prepared_by'])) {
             $document->setPreparedBy($data['prepared_by']);
         }
+        
+        // Attachments
+        if (!empty($data['attachments'])) {
+            \Log::info('Setting attachments on document', [
+                'attachment_count' => count($data['attachments']),
+                'attachments' => $data['attachments'],
+            ]);
+            $document->setAttachments($data['attachments']);
+        } else {
+            \Log::info('No attachments in data', [
+                'has_attachments_key' => isset($data['attachments']),
+                'attachments_value' => $data['attachments'] ?? 'NOT SET',
+            ]);
+        }
     }
 
     /**

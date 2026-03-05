@@ -11,6 +11,17 @@ class CreateDocumentRequest extends FormRequest
         return true; // Allow guest access
     }
 
+    protected function prepareForValidation()
+    {
+        // If data is sent as FormData with JSON payload
+        if ($this->has('data')) {
+            $data = json_decode($this->input('data'), true);
+            if (is_array($data)) {
+                $this->merge($data);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -62,6 +73,10 @@ class CreateDocumentRequest extends FormRequest
             'colors.accent' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
             'signature' => 'nullable|string|max:500',
             'prepared_by' => 'nullable|string|max:255',
+            
+            // Attachments
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
         ];
     }
 

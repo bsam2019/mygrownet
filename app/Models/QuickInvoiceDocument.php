@@ -43,6 +43,7 @@ class QuickInvoiceDocument extends Model
         'colors',
         'signature',
         'prepared_by',
+        'attachments',
     ];
 
     protected $casts = [
@@ -55,6 +56,7 @@ class QuickInvoiceDocument extends Model
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'colors' => 'array',
+        'attachments' => 'array',
     ];
 
     public function user(): BelongsTo

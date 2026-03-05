@@ -20,6 +20,8 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0",
         "predis/predis": "^3.3",
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.6",
         "spatie/laravel-permission": "^6.21",
         "tightenco/ziggy": "^2.6"
     },

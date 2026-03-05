@@ -5,6 +5,7 @@
         <p class="text-xs text-gray-500 mb-1">{{ label }}</p>
         <p class="text-xl font-bold text-gray-900">{{ value }}</p>
         <p v-if="subtitle" class="text-xs text-gray-500 mt-1">{{ subtitle }}</p>
+        <TrendIndicator v-if="trend" :trend="trend" />
       </div>
       <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" :class="iconBgClass">
         <component :is="icon" class="h-5 w-5" :class="iconColorClass" />
@@ -14,6 +15,14 @@
 </template>
 
 <script setup lang="ts">
+import TrendIndicator from './TrendIndicator.vue';
+
+interface Trend {
+  direction: 'up' | 'down' | 'neutral';
+  value: string;
+  period: string;
+}
+
 defineProps<{
   label: string;
   value: string | number;
@@ -21,5 +30,6 @@ defineProps<{
   icon: any;
   iconBgClass?: string;
   iconColorClass?: string;
+  trend?: Trend;
 }>();
 </script>

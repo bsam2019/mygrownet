@@ -179,6 +179,7 @@
             :icon="CurrencyDollarIcon"
             iconBgClass="bg-gradient-to-br from-green-50 to-emerald-50"
             iconColorClass="text-green-600"
+            :trend="statTrends.totalEarnings"
             class="hover:shadow-lg transition-shadow duration-300"
           />
           <StatCard
@@ -187,6 +188,7 @@
             :icon="UsersIcon"
             iconBgClass="bg-gradient-to-br from-blue-50 to-cyan-50"
             iconColorClass="text-blue-600"
+            :trend="statTrends.teamSize"
             class="hover:shadow-lg transition-shadow duration-300"
           />
           <StatCard
@@ -196,6 +198,7 @@
             :icon="ChartBarIcon"
             iconBgClass="bg-gradient-to-br from-purple-50 to-pink-50"
             iconColorClass="text-purple-600"
+            :trend="statTrends.thisMonth"
             class="hover:shadow-lg transition-shadow duration-300"
           />
           <StatCard
@@ -364,9 +367,16 @@
           :model-value="!collapsedSections.commissionLevels"
           @update:model-value="collapsedSections.commissionLevels = !$event"
           title="Commission Levels"
-          subtitle="7-level earnings breakdown"
+          :subtitle="commissionLevelsSubtitle"
           :icon="BanknotesIcon"
         >
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-medium text-gray-700">7-Level Breakdown</h4>
+            <HelpTooltip
+              title="How It Works"
+              description="You earn commissions from 7 levels deep in your network. Level 1 = your direct referrals, Level 2 = their referrals, and so on. Each level has different commission rates."
+            />
+          </div>
           <div class="space-y-2 mt-3">
             <div
               v-for="level in displayLevels"
@@ -400,9 +410,16 @@
           :model-value="!collapsedSections.teamVolume"
           @update:model-value="collapsedSections.teamVolume = !$event"
           title="Team Volume"
-          :subtitle="`K${formatCurrency(teamVolumeData.current_month.team_volume || 0)} this month`"
+          :subtitle="teamVolumeSubtitle"
           :icon="ChartBarIcon"
         >
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-medium text-gray-700">Monthly Performance</h4>
+            <HelpTooltip
+              title="Team Volume"
+              description="Combined subscription value of your entire network this month. Personal volume is your own subscriptions, while team volume includes everyone in your network."
+            />
+          </div>
           <div class="space-y-3 mt-3">
             <div class="flex justify-between items-center py-2">
               <span class="text-sm text-gray-600">Personal</span>
@@ -425,9 +442,16 @@
           :model-value="!collapsedSections.assets"
           @update:model-value="collapsedSections.assets = !$event"
           title="My Assets"
-          :subtitle="`${assetData?.summary?.total_assets || 0} assets`"
+          :subtitle="assetsSubtitle"
           :icon="BuildingOffice2Icon"
         >
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-medium text-gray-700">Physical Rewards</h4>
+            <HelpTooltip
+              title="Asset Rewards"
+              description="Earn physical assets like laptops, phones, and more by building your team and maintaining monthly qualification. Assets generate ongoing value for your business."
+            />
+          </div>
           <div class="space-y-2 mt-3">
             <div
               v-for="asset in assetData.assets.slice(0, 3)"
@@ -1693,6 +1717,8 @@ import UnifiedLiveChatWidget from '@/components/Support/UnifiedLiveChatWidget.vu
 import StatCard from '@/components/Mobile/StatCard.vue';
 import QuickActionCard from '@/components/Mobile/QuickActionCard.vue';
 import CollapsibleSection from '@/components/Mobile/CollapsibleSection.vue';
+import HelpTooltip from '@/components/Mobile/HelpTooltip.vue';
+import EmptyState from '@/components/Mobile/EmptyState.vue';
 import BottomNavigation from '@/components/Mobile/BottomNavigation.vue';
 import DepositModal from '@/components/Mobile/DepositModal.vue';
 import WithdrawalModal from '@/components/Mobile/WithdrawalModal.vue';
@@ -2563,6 +2589,75 @@ const loadTabData = async (tab: string) => {
     tabLoading.value = false;
   }
 };
+
+// Stat trends - calculate from historical data
+const statTrends = computed(() => {
+  const trends: Record<string, any> = {};
+  
+  // Total Earnings Trend
+  if (props.earningsTrend && props.earningsTrend.length >= 2) {
+    const current = props.earningsTrend[props.earningsTrend.length - 1]?.amount || 0;
+    const previous = props.earningsTrend[props.earningsTrend.length - 2]?.amount || 0;
+    
+    if (previous > 0) {
+      const change = ((current - previous) / previous) * 100;
+      trends.totalEarnings = {
+        direction: change > 0 ? 'up' : change < 0 ? 'down' : 'neutral',
+        value: `${Math.abs(change).toFixed(1)}%`,
+        period: 'vs last month'
+      };
+    }
+  }
+  
+  // Team Size Trend
+  if (props.networkGrowth && props.networkGrowth.length >= 2) {
+    const current = props.networkGrowth[props.networkGrowth.length - 1]?.count || 0;
+    const previous = props.networkGrowth[props.networkGrowth.length - 2]?.count || 0;
+    const change = current - previous;
+    
+    if (change !== 0) {
+      trends.teamSize = {
+        direction: change > 0 ? 'up' : 'down',
+        value: `+${Math.abs(change)}`,
+        period: 'this month'
+      };
+    }
+  }
+  
+  // This Month Earnings Trend (requires backend support for last_month_earnings)
+  const thisMonth = props.stats?.this_month_earnings || 0;
+  const lastMonth = props.stats?.last_month_earnings || 0;
+  
+  if (lastMonth > 0) {
+    const change = ((thisMonth - lastMonth) / lastMonth) * 100;
+    trends.thisMonth = {
+      direction: change > 0 ? 'up' : change < 0 ? 'down' : 'neutral',
+      value: `${Math.abs(change).toFixed(1)}%`,
+      period: 'vs last month'
+    };
+  }
+  
+  return trends;
+});
+
+// Commission levels with preview data
+const commissionLevelsSubtitle = computed(() => {
+  const total = displayLevels.value.reduce((sum, level) => sum + level.total_earnings, 0);
+  return `K${formatCurrency(total)} total earned`;
+});
+
+// Team volume with preview data  
+const teamVolumeSubtitle = computed(() => {
+  if (!props.teamVolumeData?.current_month) return '';
+  return `K${formatCurrency(props.teamVolumeData.current_month.team_volume || 0)} this month`;
+});
+
+// Assets with preview data
+const assetsSubtitle = computed(() => {
+  const count = props.assetData?.summary?.total_assets || 0;
+  const income = props.assetData?.summary?.total_income_generated || 0;
+  return `${count} assets • K${formatCurrency(income)} earned`;
+});
 
 const formatCurrency = (value: number | undefined | null) => {
   if (value === undefined || value === null || isNaN(value)) {

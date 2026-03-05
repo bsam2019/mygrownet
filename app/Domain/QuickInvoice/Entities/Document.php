@@ -44,6 +44,9 @@ class Document
     private ThemeColors $colors;
     private ?string $signature;
     private ?string $preparedBy;
+    
+    // Attachments
+    private array $attachments;
 
     // Calculated values
     private Money $subtotal;
@@ -58,6 +61,7 @@ class Document
         $this->discountRate = 0;
         $this->notes = null;
         $this->terms = null;
+        $this->attachments = [];
         $this->status = 'draft';
         $this->template = TemplateStyle::CLASSIC;
         $this->colors = ThemeColors::default();
@@ -124,7 +128,8 @@ class Document
         ?TemplateStyle $template = null,
         ?ThemeColors $colors = null,
         ?string $signature = null,
-        ?string $preparedBy = null
+        ?string $preparedBy = null,
+        array $attachments = []
     ): self {
         $document = new self();
         $document->id = $id;
@@ -147,6 +152,7 @@ class Document
         $document->colors = $colors ?? ThemeColors::default();
         $document->signature = $signature;
         $document->preparedBy = $preparedBy;
+        $document->attachments = $attachments;
         $document->createdAt = $createdAt;
         $document->updatedAt = $updatedAt;
         $document->recalculate();
@@ -272,6 +278,9 @@ class Document
     public function preparedBy(): ?string { return $this->preparedBy; }
     
     public function setPreparedBy(?string $preparedBy): void { $this->preparedBy = $preparedBy; $this->touch(); }
+    
+    public function attachments(): array { return $this->attachments; }
+    public function setAttachments(array $attachments): void { $this->attachments = $attachments; $this->touch(); }
 
     public function toArray(): array
     {
@@ -301,6 +310,7 @@ class Document
             'colors' => $this->colors->toArray(),
             'signature' => $this->signature,
             'prepared_by' => $this->preparedBy,
+            'attachments' => $this->attachments,
             'created_at' => $this->createdAt->toIso8601String(),
             'updated_at' => $this->updatedAt->toIso8601String(),
         ];

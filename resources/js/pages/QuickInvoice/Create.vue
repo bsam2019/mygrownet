@@ -30,11 +30,28 @@ interface SavedProfile {
     email: string | null; 
     logo: string | null; 
     signature: string | null; 
+    prepared_by: string | null;
     tax_number: string | null;
     default_tax_rate: number | null;
     default_discount_rate: number | null;
     default_notes: string | null;
     default_terms: string | null;
+    // Numbering settings
+    invoice_prefix: string | null;
+    invoice_next_number: number | null;
+    invoice_number_padding: number | null;
+    quotation_prefix: string | null;
+    quotation_next_number: number | null;
+    quotation_number_padding: number | null;
+    receipt_prefix: string | null;
+    receipt_next_number: number | null;
+    receipt_number_padding: number | null;
+    delivery_note_prefix: string | null;
+    delivery_note_next_number: number | null;
+    delivery_note_number_padding: number | null;
+    // Template preferences
+    default_template: string | null;
+    default_color: string | null;
 }
 
 interface EditDocument {
@@ -102,6 +119,7 @@ const isSavingProfile = ref(false);
 const showShareModal = ref(false);
 const showSetupWizard = ref(false);
 const showEditProfile = ref(false);
+const activeProfileTab = ref<'business' | 'defaults' | 'numbering' | 'library'>('business');
 const shareData = ref<any>(null);
 const hasSavedProfile = ref(false);
 const logoPreview = ref<string | null>(null);
@@ -113,6 +131,21 @@ const lastSaveTime = ref<Date | null>(null);
 
 const selectedTemplate = ref(props.initialTemplate || 'classic');
 const primaryColor = ref('#2563eb');
+
+// Numbering settings
+const invoicePrefix = ref('INV');
+const invoiceNextNumber = ref(1);
+const invoiceNumberPadding = ref(4);
+const quotationPrefix = ref('QUO');
+const quotationNextNumber = ref(1);
+const quotationNumberPadding = ref(4);
+const receiptPrefix = ref('REC');
+const receiptNextNumber = ref(1);
+const receiptNumberPadding = ref(4);
+const deliveryNotePrefix = ref('DN');
+const deliveryNoteNextNumber = ref(1);
+const deliveryNoteNumberPadding = ref(4);
+
 const businessName = ref('');
 const businessAddress = ref('');
 const businessPhone = ref('');
@@ -134,6 +167,21 @@ const discountRate = ref(0);
 const notes = ref('');
 const terms = ref('');
 const items = ref<LineItem[]>([{ id: crypto.randomUUID(), description: '', quantity: 1, unit: '', unit_price: 0, useAreaCalc: false, length: 0, width: 0 }]);
+
+// Attachments
+const attachments = ref<File[]>([]);
+const attachmentInput = ref<HTMLInputElement | null>(null);
+const libraryUploadInput = ref<HTMLInputElement | null>(null);
+const attachmentLibrary = ref<any[]>([]);
+const selectedLibraryAttachments = ref<Set<number>>(new Set());
+const libraryAttachmentIds = ref<number[]>([]); // Track which attachments are from library
+const showAttachmentLibrary = ref(false);
+const isLoadingLibrary = ref(false);
+const isSavingToLibrary = ref(false);
+const showSaveToLibraryModal = ref(false);
+const attachmentToSave = ref<{ file: File; index: number } | null>(null);
+const saveToLibraryName = ref('');
+const saveToLibraryDescription = ref('');
 
 // Auto-save setup
 const autoSave = useAutoSave({
@@ -222,6 +270,11 @@ onMounted(() => {
     
     // Setup auto-save watcher
     autoSave.setupAutoSave();
+    
+    // Load attachment library for authenticated users
+    if (isAuthenticated.value) {
+        loadAttachmentLibrary();
+    }
 });
 
 const loadEditDocument = (doc: EditDocument) => {
@@ -286,15 +339,37 @@ const loadSavedProfile = (profile: SavedProfile) => {
     businessTaxNumber.value = profile.tax_number || '';
     if (profile.logo) { businessLogo.value = profile.logo; logoPreview.value = profile.logo; }
     if (profile.signature) { signature.value = profile.signature; signaturePreview.value = profile.signature; }
+    if (profile.prepared_by) { preparedByName.value = profile.prepared_by; }
     // Load default settings
     if (profile.default_tax_rate) { taxRate.value = profile.default_tax_rate; }
     if (profile.default_discount_rate) { discountRate.value = profile.default_discount_rate; }
     if (profile.default_notes) { notes.value = profile.default_notes; }
     if (profile.default_terms) { terms.value = profile.default_terms; }
+    // Load template and color preferences
+    if (profile.default_template) { selectedTemplate.value = profile.default_template; }
+    if (profile.default_color) { primaryColor.value = profile.default_color; }
+    // Load numbering settings
+    if (profile.invoice_prefix) { invoicePrefix.value = profile.invoice_prefix; }
+    if (profile.invoice_next_number) { invoiceNextNumber.value = profile.invoice_next_number; }
+    if (profile.invoice_number_padding) { invoiceNumberPadding.value = profile.invoice_number_padding; }
+    if (profile.quotation_prefix) { quotationPrefix.value = profile.quotation_prefix; }
+    if (profile.quotation_next_number) { quotationNextNumber.value = profile.quotation_next_number; }
+    if (profile.quotation_number_padding) { quotationNumberPadding.value = profile.quotation_number_padding; }
+    if (profile.receipt_prefix) { receiptPrefix.value = profile.receipt_prefix; }
+    if (profile.receipt_next_number) { receiptNextNumber.value = profile.receipt_next_number; }
+    if (profile.receipt_number_padding) { receiptNumberPadding.value = profile.receipt_number_padding; }
+    if (profile.delivery_note_prefix) { deliveryNotePrefix.value = profile.delivery_note_prefix; }
+    if (profile.delivery_note_next_number) { deliveryNoteNextNumber.value = profile.delivery_note_next_number; }
+    if (profile.delivery_note_number_padding) { deliveryNoteNumberPadding.value = profile.delivery_note_number_padding; }
 };
 
 const openEditProfile = () => {
     showEditProfile.value = true;
+    activeProfileTab.value = 'business'; // Reset to business tab
+    // Load library when opening profile modal
+    if (isAuthenticated.value) {
+        loadAttachmentLibrary();
+    }
 };
 
 const currencySymbol = computed(() => props.currencies.find(c => c.code === currency.value)?.symbol || 'K');
@@ -375,6 +450,232 @@ const handleSignatureUpload = async (event: Event) => {
 };
 const removeSignature = () => { signaturePreview.value = null; signature.value = null; };
 
+const handleAttachmentUpload = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (!target.files?.length) return;
+    
+    const files = Array.from(target.files);
+    
+    // Validate files
+    const validFiles = files.filter(file => {
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            errors.value.attachments = `${file.name} is too large (max 5MB)`;
+            return false;
+        }
+        
+        // Check file type
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            errors.value.attachments = `${file.name} is not a valid file type`;
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Check total count (max 5 files)
+    if (attachments.value.length + validFiles.length > 5) {
+        errors.value.attachments = 'Maximum 5 attachments allowed';
+        return;
+    }
+    
+    attachments.value.push(...validFiles);
+    errors.value.attachments = '';
+    
+    // Clear input
+    if (target) target.value = '';
+};
+
+const removeAttachment = (index: number) => {
+    attachments.value.splice(index, 1);
+};
+
+// Attachment Library Functions
+const loadAttachmentLibrary = async () => {
+    if (!isAuthenticated.value) return;
+    
+    isLoadingLibrary.value = true;
+    try {
+        const response = await axios.get(route('quick-invoice.attachment-library'));
+        if (response.data.success) {
+            attachmentLibrary.value = response.data.attachments;
+        }
+    } catch (error: any) {
+        console.error('Failed to load attachment library:', error);
+    } finally {
+        isLoadingLibrary.value = false;
+    }
+};
+
+const toggleLibraryAttachment = (attachmentId: number) => {
+    if (selectedLibraryAttachments.value.has(attachmentId)) {
+        selectedLibraryAttachments.value.delete(attachmentId);
+    } else {
+        selectedLibraryAttachments.value.add(attachmentId);
+    }
+};
+
+const addSelectedLibraryAttachments = async () => {
+    if (selectedLibraryAttachments.value.size === 0) return;
+    
+    // Check if adding these would exceed the limit
+    if (attachments.value.length + selectedLibraryAttachments.value.size > 5) {
+        errors.value.attachments = 'Maximum 5 attachments allowed';
+        return;
+    }
+    
+    // Get selected attachments from library
+    const selected = attachmentLibrary.value.filter(att => 
+        selectedLibraryAttachments.value.has(att.id)
+    );
+    
+    // Add library attachment IDs to track them
+    selected.forEach(att => {
+        libraryAttachmentIds.value.push(att.id);
+        
+        // Create a placeholder File object for display purposes only
+        // This won't be uploaded - we'll send the library ID instead
+        const blob = new Blob([], { type: att.type });
+        const file = new File([blob], att.original_filename, { type: att.type });
+        
+        // Add a custom property to mark it as from library
+        (file as any).isLibraryAttachment = true;
+        (file as any).libraryId = att.id;
+        (file as any).size = att.size; // Use actual size from library
+        
+        attachments.value.push(file);
+    });
+    
+    // Clear selection and close library
+    selectedLibraryAttachments.value.clear();
+    showAttachmentLibrary.value = false;
+    errors.value.attachments = '';
+};
+
+const openSaveToLibraryModal = (file: File, index: number) => {
+    attachmentToSave.value = { file, index };
+    saveToLibraryName.value = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+    saveToLibraryDescription.value = '';
+    showSaveToLibraryModal.value = true;
+};
+
+const saveAttachmentToLibrary = async () => {
+    if (!attachmentToSave.value || !isAuthenticated.value) return;
+    
+    isSavingToLibrary.value = true;
+    errors.value.library = '';
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', attachmentToSave.value.file);
+        formData.append('name', saveToLibraryName.value);
+        formData.append('description', saveToLibraryDescription.value);
+        
+        const response = await axios.post(
+            route('quick-invoice.attachment-library.save'),
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        
+        if (response.data.success) {
+            // Add to library list
+            attachmentLibrary.value.push(response.data.attachment);
+            
+            // Close modal
+            showSaveToLibraryModal.value = false;
+            attachmentToSave.value = null;
+            
+            successMessage.value = 'Attachment saved to library!';
+            setTimeout(() => successMessage.value = '', 3000);
+        }
+    } catch (error: any) {
+        errors.value.library = error.response?.data?.message || 'Failed to save to library';
+    } finally {
+        isSavingToLibrary.value = false;
+    }
+};
+
+const deleteFromLibrary = async (attachmentId: number) => {
+    if (!confirm('Remove this attachment from your library?')) return;
+    
+    try {
+        const response = await axios.delete(
+            route('quick-invoice.attachment-library.delete', attachmentId)
+        );
+        
+        if (response.data.success) {
+            attachmentLibrary.value = attachmentLibrary.value.filter(att => att.id !== attachmentId);
+            selectedLibraryAttachments.value.delete(attachmentId);
+            
+            successMessage.value = 'Attachment removed from library';
+            setTimeout(() => successMessage.value = '', 3000);
+        }
+    } catch (error: any) {
+        errors.value.library = error.response?.data?.message || 'Failed to delete attachment';
+    }
+};
+
+const handleLibraryUpload = async (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (!target.files?.length) return;
+    
+    const file = target.files[0];
+    
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+        errors.value.library = `${file.name} is too large (max 5MB)`;
+        return;
+    }
+    
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+        errors.value.library = `${file.name} is not a valid file type`;
+        return;
+    }
+    
+    // Open save modal with the file
+    saveToLibraryName.value = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+    saveToLibraryDescription.value = '';
+    
+    // Save directly to library
+    isSavingToLibrary.value = true;
+    errors.value.library = '';
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('name', saveToLibraryName.value);
+        formData.append('description', saveToLibraryDescription.value);
+        
+        const response = await axios.post(
+            route('quick-invoice.attachment-library.save'),
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        
+        if (response.data.success) {
+            // Add to library list
+            attachmentLibrary.value.push(response.data.attachment);
+            
+            successMessage.value = 'File uploaded to library!';
+            setTimeout(() => successMessage.value = '', 3000);
+        }
+    } catch (error: any) {
+        errors.value.library = error.response?.data?.message || 'Failed to upload to library';
+    } finally {
+        isSavingToLibrary.value = false;
+        // Clear input
+        if (target) target.value = '';
+    }
+};
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
 const validateForm = (): boolean => {
     errors.value = {};
     if (!businessName.value.trim()) errors.value.business_name = 'Business name is required';
@@ -413,11 +714,43 @@ const generateDocument = async () => {
             payload.document_id = props.editDocument.id;
         }
         
-        const response = await axios.post(route('quick-invoice.generate'), payload);
+        // Separate uploaded files from library attachments
+        const uploadedFiles = attachments.value.filter(file => !(file as any).isLibraryAttachment);
+        const libraryIds = attachments.value
+            .filter(file => (file as any).isLibraryAttachment)
+            .map(file => (file as any).libraryId);
+        
+        // If there are attachments, use FormData
+        let requestData: any;
+        let headers: Record<string, string> = {};
+        
+        if (uploadedFiles.length > 0 || libraryIds.length > 0) {
+            const formData = new FormData();
+            formData.append('data', JSON.stringify(payload));
+            
+            // Add only uploaded files (not library references)
+            uploadedFiles.forEach((file, index) => {
+                formData.append(`attachments[${index}]`, file);
+            });
+            
+            // Add library attachment IDs
+            if (libraryIds.length > 0) {
+                formData.append('library_attachments', JSON.stringify(libraryIds));
+            }
+            
+            requestData = formData;
+            headers['Content-Type'] = 'multipart/form-data';
+        } else {
+            requestData = payload;
+        }
+        
+        const response = await axios.post(route('quick-invoice.generate'), requestData, { headers });
         shareData.value = response.data.share; showShareModal.value = true; successMessage.value = isEditing.value ? 'Document updated!' : 'Document generated!';
         
-        // Clear auto-saved data on successful generation
+        // Clear auto-saved data and attachments on successful generation
         autoSave.clearSavedData();
+        attachments.value = [];
+        libraryAttachmentIds.value = [];
     } catch (error: any) {
         if (error.response?.data?.errors) {
             for (const [key, messages] of Object.entries(error.response.data.errors)) {
@@ -482,9 +815,26 @@ const saveBusinessProfile = async () => {
     try {
         const response = await axios.post(route('quick-invoice.save-profile'), {
             name: businessName.value, address: businessAddress.value, phone: businessPhone.value,
-            email: businessEmail.value, logo: businessLogo.value, signature: signature.value, tax_number: businessTaxNumber.value,
+            email: businessEmail.value, logo: businessLogo.value, signature: signature.value, 
+            prepared_by: preparedByName.value, tax_number: businessTaxNumber.value,
             default_tax_rate: taxRate.value, default_discount_rate: discountRate.value,
             default_notes: notes.value, default_terms: terms.value,
+            // Numbering settings
+            invoice_prefix: invoicePrefix.value,
+            invoice_next_number: invoiceNextNumber.value,
+            invoice_number_padding: invoiceNumberPadding.value,
+            quotation_prefix: quotationPrefix.value,
+            quotation_next_number: quotationNextNumber.value,
+            quotation_number_padding: quotationNumberPadding.value,
+            receipt_prefix: receiptPrefix.value,
+            receipt_next_number: receiptNextNumber.value,
+            receipt_number_padding: receiptNumberPadding.value,
+            delivery_note_prefix: deliveryNotePrefix.value,
+            delivery_note_next_number: deliveryNoteNextNumber.value,
+            delivery_note_number_padding: deliveryNoteNumberPadding.value,
+            // Template preferences
+            default_template: selectedTemplate.value,
+            default_color: primaryColor.value,
         });
         if (response.data.success) {
             successMessage.value = 'Business profile saved!'; 
@@ -575,104 +925,6 @@ const skipSetupWizard = () => {
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Template & Color -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Style & Template</h2>
-                        
-                        <!-- Template Selection with Previews -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Choose Template</label>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                <button
-                                    v-for="(preview, key) in templatePreviews"
-                                    :key="key"
-                                    @click="selectedTemplate = key"
-                                    type="button"
-                                    class="relative p-3 rounded-lg border-2 transition-all text-left"
-                                    :class="selectedTemplate === key ? `${preview.style} bg-gray-50` : 'border-gray-200 hover:border-gray-300'"
-                                >
-                                    <!-- Mini Preview -->
-                                    <div class="aspect-[3/4] mb-2 rounded border bg-white overflow-hidden">
-                                        <div v-if="key === 'classic'" class="h-full flex flex-col">
-                                            <div class="h-1.5 bg-blue-600"></div>
-                                            <div class="flex-1 p-1.5">
-                                                <div class="h-1 w-8 bg-gray-300 mb-1"></div>
-                                                <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
-                                                <div class="space-y-0.5">
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-else-if="key === 'modern'" class="h-full flex flex-col">
-                                            <div class="h-4 bg-gradient-to-r from-indigo-600 to-blue-600"></div>
-                                            <div class="flex-1 p-1.5">
-                                                <div class="h-1 w-6 bg-indigo-200 rounded-full mb-2"></div>
-                                                <div class="space-y-0.5">
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-else-if="key === 'minimal'" class="h-full flex flex-col p-1.5">
-                                            <div class="h-1 w-8 bg-gray-400 mb-1"></div>
-                                            <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
-                                            <div class="flex-1 border-t pt-1">
-                                                <div class="space-y-0.5">
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-else-if="key === 'professional'" class="h-full flex">
-                                            <div class="w-1.5 bg-slate-700"></div>
-                                            <div class="flex-1 p-1.5">
-                                                <div class="h-1 w-8 bg-gray-300 mb-1"></div>
-                                                <div class="h-0.5 w-6 bg-gray-200 mb-2"></div>
-                                                <div class="space-y-0.5">
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-else-if="key === 'bold'" class="h-full flex flex-col">
-                                            <div class="h-5 bg-orange-500 flex items-center justify-center">
-                                                <div class="h-1 w-4 bg-white/50 rounded"></div>
-                                            </div>
-                                            <div class="flex-1 p-1.5">
-                                                <div class="space-y-0.5">
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                    <div class="h-0.5 bg-gray-100"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="text-xs font-medium text-gray-900">{{ preview.name }}</div>
-                                    <div class="text-[10px] text-gray-500 leading-tight hidden sm:block">{{ preview.description }}</div>
-                                    <!-- Selected indicator -->
-                                    <div v-if="selectedTemplate === key" class="absolute top-1 right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
-                                        <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
-                            <div class="flex items-center gap-3">
-                                <input v-model="primaryColor" type="color" class="w-12 h-10 rounded border border-gray-300 cursor-pointer" />
-                                <input v-model="primaryColor" type="text" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-                                <!-- Quick color presets -->
-                                <div class="flex gap-1">
-                                    <button type="button" @click="primaryColor = '#2563eb'" class="w-6 h-6 rounded bg-blue-600 border-2" :class="primaryColor === '#2563eb' ? 'border-gray-900' : 'border-transparent'" aria-label="Blue"></button>
-                                    <button type="button" @click="primaryColor = '#059669'" class="w-6 h-6 rounded bg-emerald-600 border-2" :class="primaryColor === '#059669' ? 'border-gray-900' : 'border-transparent'" aria-label="Green"></button>
-                                    <button type="button" @click="primaryColor = '#7c3aed'" class="w-6 h-6 rounded bg-violet-600 border-2" :class="primaryColor === '#7c3aed' ? 'border-gray-900' : 'border-transparent'" aria-label="Purple"></button>
-                                    <button type="button" @click="primaryColor = '#dc2626'" class="w-6 h-6 rounded bg-red-600 border-2" :class="primaryColor === '#dc2626' ? 'border-gray-900' : 'border-transparent'" aria-label="Red"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Business Info -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <div class="flex items-center justify-between mb-4">
@@ -681,66 +933,77 @@ const skipSetupWizard = () => {
                                 <button v-if="isAuthenticated && hasSavedProfile" @click="openEditProfile" class="text-sm text-gray-600 hover:text-gray-700 flex items-center gap-1">
                                     <PencilIcon class="w-4 h-4" aria-hidden="true" />Edit Profile
                                 </button>
-                                <button v-if="isAuthenticated" @click="saveBusinessProfile" :disabled="isSavingProfile" class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1">
+                                <button v-if="isAuthenticated && !hasSavedProfile" @click="saveBusinessProfile" :disabled="isSavingProfile" class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1">
                                     <BookmarkIcon class="w-4 h-4" aria-hidden="true" />{{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
                                 </button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
-                                <div class="flex items-center gap-3">
-                                    <div v-if="logoPreview" class="relative">
-                                        <img :src="logoPreview" alt="Logo" class="h-14 w-auto object-contain border rounded" />
-                                        <button @click="removeLogo" class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full" aria-label="Remove logo"><XMarkIcon class="w-3 h-3" aria-hidden="true" /></button>
-                                    </div>
-                                    <label v-else class="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 text-sm">
-                                        <PhotoIcon class="w-5 h-5 text-gray-400" aria-hidden="true" /><span class="text-gray-600">Upload</span>
-                                        <input type="file" accept="image/*" @change="handleLogoUpload" class="hidden" />
-                                    </label>
-                                </div>
-                                <p v-if="errors.logo" class="mt-1 text-sm text-red-600">{{ errors.logo }}</p>
+                        
+                        <!-- Saved Profile Summary (for authenticated users with profile) -->
+                        <div v-if="isAuthenticated && hasSavedProfile" class="space-y-4">
+                            <!-- Logo Preview -->
+                            <div v-if="logoPreview" class="pb-4 border-b border-gray-200">
+                                <img :src="logoPreview" alt="Business Logo" class="h-16 w-auto object-contain" />
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Signature</label>
-                                <div class="flex items-center gap-3">
-                                    <div v-if="signaturePreview" class="relative">
-                                        <img :src="signaturePreview" alt="Signature" class="h-14 w-auto object-contain border rounded" />
-                                        <button @click="removeSignature" class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full" aria-label="Remove signature"><XMarkIcon class="w-3 h-3" aria-hidden="true" /></button>
+                            
+                            <!-- Business Summary Card -->
+                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900">{{ businessName }}</h3>
+                                        <p v-if="businessAddress" class="text-sm text-gray-600 mt-1">{{ businessAddress }}</p>
+                                        <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600">
+                                            <span v-if="businessPhone">{{ businessPhone }}</span>
+                                            <span v-if="businessEmail">{{ businessEmail }}</span>
+                                            <span v-if="businessTaxNumber">TPIN: {{ businessTaxNumber }}</span>
+                                        </div>
                                     </div>
-                                    <label v-else class="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 text-sm">
-                                        <PencilIcon class="w-5 h-5 text-gray-400" aria-hidden="true" /><span class="text-gray-600">Upload</span>
-                                        <input type="file" accept="image/*" @change="handleSignatureUpload" class="hidden" />
-                                    </label>
+                                    <button @click="openEditProfile" class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 flex-shrink-0 ml-4">
+                                        <PencilIcon class="w-4 h-4" aria-hidden="true" />
+                                        Edit
+                                    </button>
                                 </div>
-                                <p v-if="errors.signature" class="mt-1 text-sm text-red-600">{{ errors.signature }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Prepared By</label>
-                                <input v-model="preparedByName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Your name" />
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                                <input v-model="businessName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" :class="errors.business_name ? 'border-red-500' : 'border-gray-300'" placeholder="Your Company Name" />
-                                <p v-if="errors.business_name" class="mt-1 text-sm text-red-600">{{ errors.business_name }}</p>
+                        
+                        <!-- Full Form (for guests or users without profile) -->
+                        <div v-else>
+                            <!-- Setup prompt for authenticated users without profile -->
+                            <div v-if="isAuthenticated && !hasSavedProfile" class="mb-6 pb-6 border-b border-gray-200">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-blue-800">
+                                            Fill in your business details below and click "Save Profile" to reuse them for future documents.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                <textarea v-model="businessAddress" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Street, City, Country"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                                <input v-model="businessPhone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="+260 97X XXX XXX" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input v-model="businessEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="info@company.com" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tax Number (TPIN)</label>
-                                <input v-model="businessTaxNumber" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="1234567890" />
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                                    <input v-model="businessName" type="text" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" :class="errors.business_name ? 'border-red-500' : 'border-gray-300'" placeholder="Your Company Name" />
+                                    <p v-if="errors.business_name" class="mt-1 text-sm text-red-600">{{ errors.business_name }}</p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <textarea v-model="businessAddress" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Street, City, Country"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                    <input v-model="businessPhone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="+260 97X XXX XXX" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input v-model="businessEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="info@company.com" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tax Number (TPIN)</label>
+                                    <input v-model="businessTaxNumber" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="1234567890" />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -951,6 +1214,94 @@ const skipSetupWizard = () => {
                             </div>
                         </div>
                     </div>
+
+                    <!-- Attachments -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <DocumentTextIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                <h2 class="text-lg font-semibold text-gray-900">Attachments</h2>
+                            </div>
+                            <span class="text-xs text-gray-500">Optional</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Attach supporting documents (specs, photos, etc.) to be included in the final PDF.</p>
+
+                        <!-- Upload Area -->
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors mb-4">
+                            <input
+                                type="file"
+                                ref="attachmentInput"
+                                @change="handleAttachmentUpload"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                multiple
+                                class="hidden"
+                            />
+                            <div class="flex items-center justify-center gap-3">
+                                <button
+                                    type="button"
+                                    @click="$refs.attachmentInput?.click()"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                    <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                                    Upload New
+                                </button>
+                                <button
+                                    v-if="isAuthenticated && attachmentLibrary.length > 0"
+                                    type="button"
+                                    @click="showAttachmentLibrary = true"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors"
+                                >
+                                    <BookmarkIcon class="h-5 w-5" aria-hidden="true" />
+                                    From Library ({{ attachmentLibrary.length }})
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                PDF, JPG, PNG (max 5MB each, up to 5 files)
+                            </p>
+                        </div>
+
+                        <!-- Error Message -->
+                        <p v-if="errors.attachments" class="mb-3 text-sm text-red-600">{{ errors.attachments }}</p>
+
+                        <!-- Attachment List -->
+                        <div v-if="attachments.length > 0" class="space-y-2">
+                            <div
+                                v-for="(attachment, index) in attachments"
+                                :key="index"
+                                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="flex-shrink-0">
+                                        <DocumentTextIcon v-if="attachment.type === 'application/pdf'" class="h-5 w-5 text-red-500" aria-hidden="true" />
+                                        <PhotoIcon v-else class="h-5 w-5 text-blue-500" aria-hidden="true" />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.name }}</p>
+                                        <p class="text-xs text-gray-500">{{ formatFileSize(attachment.size) }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        v-if="isAuthenticated"
+                                        type="button"
+                                        @click="openSaveToLibraryModal(attachment, index)"
+                                        class="flex-shrink-0 p-1.5 text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                                        title="Save to library"
+                                    >
+                                        <BookmarkIcon class="h-4 w-4" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="removeAttachment(index)"
+                                        class="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                        aria-label="Remove attachment"
+                                    >
+                                        <TrashIcon class="h-4 w-4" aria-hidden="true" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Summary Sidebar -->
@@ -1139,7 +1490,40 @@ const skipSetupWizard = () => {
                         <p class="text-gray-500 mt-1">Update your saved business details</p>
                     </div>
 
-                    <div class="space-y-4">
+                    <!-- Tabs -->
+                    <div class="flex border-b mb-6">
+                        <button
+                            @click="activeProfileTab = 'business'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+                            :class="activeProfileTab === 'business' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Business Info
+                        </button>
+                        <button
+                            @click="activeProfileTab = 'defaults'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+                            :class="activeProfileTab === 'defaults' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Default Settings
+                        </button>
+                        <button
+                            @click="activeProfileTab = 'numbering'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+                            :class="activeProfileTab === 'numbering' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Numbering
+                        </button>
+                        <button
+                            @click="activeProfileTab = 'library'"
+                            class="flex-1 py-3 text-sm font-medium border-b-2 transition-colors"
+                            :class="activeProfileTab === 'library' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Library
+                        </button>
+                    </div>
+
+                    <!-- Business Info Tab -->
+                    <div v-show="activeProfileTab === 'business'" class="space-y-4">
                         <!-- Logo Upload -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Business Logo</label>
@@ -1184,27 +1568,10 @@ const skipSetupWizard = () => {
                             <input v-model="businessTaxNumber" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
                         </div>
 
-                        <!-- Default Settings Section -->
-                        <div class="border-t pt-4 mt-4">
-                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Default Invoice Settings</h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Tax Rate (%)</label>
-                                    <input v-model.number="taxRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="16" />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Discount (%)</label>
-                                    <input v-model.number="discountRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0" />
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Notes</label>
-                                <textarea v-model="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Thank you for your business!"></textarea>
-                            </div>
-                            <div class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Terms & Conditions</label>
-                                <textarea v-model="terms" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Payment due within 30 days"></textarea>
-                            </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Prepared By</label>
+                            <input v-model="preparedByName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Your name" />
+                            <p class="mt-1 text-xs text-gray-400">This name will appear on all your documents</p>
                         </div>
 
                         <!-- Signature Upload -->
@@ -1227,15 +1594,363 @@ const skipSetupWizard = () => {
                         </div>
                     </div>
 
+                    <!-- Default Settings Tab -->
+                    <div v-show="activeProfileTab === 'defaults'" class="space-y-4">
+                        <div class="text-sm text-gray-600 mb-4">
+                            Set default values that will be pre-filled when creating new documents.
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Tax Rate (%)</label>
+                                <input v-model.number="taxRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="16" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Default Discount (%)</label>
+                                <input v-model.number="discountRate" type="number" min="0" max="100" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default Notes</label>
+                            <textarea v-model="notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Thank you for your business!"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default Terms & Conditions</label>
+                            <textarea v-model="terms" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Payment due within 30 days"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Numbering Settings Tab -->
+                    <div v-show="activeProfileTab === 'numbering'" class="space-y-4">
+                        <div class="text-sm text-gray-600 mb-4">
+                            Configure automatic document numbering for each document type. The system will auto-generate sequential numbers.
+                        </div>
+
+                        <!-- Invoice Numbering -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Invoice Numbering</h4>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Prefix</label>
+                                    <input v-model="invoicePrefix" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="INV" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Next Number</label>
+                                    <input v-model.number="invoiceNextNumber" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Padding</label>
+                                    <input v-model.number="invoiceNumberPadding" type="number" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Preview: {{ invoicePrefix }}-{{ String(invoiceNextNumber).padStart(invoiceNumberPadding, '0') }}</p>
+                        </div>
+
+                        <!-- Quotation Numbering -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Quotation Numbering</h4>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Prefix</label>
+                                    <input v-model="quotationPrefix" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="QUO" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Next Number</label>
+                                    <input v-model.number="quotationNextNumber" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Padding</label>
+                                    <input v-model.number="quotationNumberPadding" type="number" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Preview: {{ quotationPrefix }}-{{ String(quotationNextNumber).padStart(quotationNumberPadding, '0') }}</p>
+                        </div>
+
+                        <!-- Receipt Numbering -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Receipt Numbering</h4>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Prefix</label>
+                                    <input v-model="receiptPrefix" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="REC" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Next Number</label>
+                                    <input v-model.number="receiptNextNumber" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Padding</label>
+                                    <input v-model.number="receiptNumberPadding" type="number" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Preview: {{ receiptPrefix }}-{{ String(receiptNextNumber).padStart(receiptNumberPadding, '0') }}</p>
+                        </div>
+
+                        <!-- Delivery Note Numbering -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Delivery Note Numbering</h4>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Prefix</label>
+                                    <input v-model="deliveryNotePrefix" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="DN" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Next Number</label>
+                                    <input v-model.number="deliveryNoteNextNumber" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Padding</label>
+                                    <input v-model.number="deliveryNoteNumberPadding" type="number" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Preview: {{ deliveryNotePrefix }}-{{ String(deliveryNoteNextNumber).padStart(deliveryNoteNumberPadding, '0') }}</p>
+                        </div>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p class="text-xs text-blue-800">
+                                <strong>Note:</strong> The system will automatically increment the "Next Number" each time you generate a document. You can manually adjust it if needed.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Attachment Library Tab -->
+                    <div v-show="activeProfileTab === 'library'" class="space-y-4">
+                        <div class="text-sm text-gray-600 mb-4">
+                            Manage your reusable attachments. Save frequently-used files here to quickly add them to any document.
+                        </div>
+
+                        <!-- Upload to Library -->
+                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
+                            <input
+                                type="file"
+                                ref="libraryUploadInput"
+                                @change="handleLibraryUpload"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                class="hidden"
+                            />
+                            <div class="text-center">
+                                <button
+                                    type="button"
+                                    @click="$refs.libraryUploadInput?.click()"
+                                    :disabled="isSavingToLibrary"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                >
+                                    <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                                    {{ isSavingToLibrary ? 'Uploading...' : 'Upload to Library' }}
+                                </button>
+                                <p class="text-xs text-purple-700 mt-2">
+                                    PDF, JPG, PNG • Max 5MB per file
+                                </p>
+                            </div>
+                        </div>
+
+                        <p v-if="errors.library" class="text-sm text-red-600">{{ errors.library }}</p>
+
+                        <!-- Library Files List -->
+                        <div v-if="isLoadingLibrary" class="text-center py-8 text-gray-500">
+                            Loading your library...
+                        </div>
+                        <div v-else-if="attachmentLibrary.length === 0" class="text-center py-8 text-gray-500">
+                            <DocumentTextIcon class="w-12 h-12 mx-auto mb-2 text-gray-400" aria-hidden="true" />
+                            <p>No saved attachments yet</p>
+                            <p class="text-xs mt-1">Upload files to reuse them across multiple documents</p>
+                        </div>
+                        <div v-else class="space-y-2 max-h-96 overflow-y-auto">
+                            <div
+                                v-for="attachment in attachmentLibrary"
+                                :key="attachment.id"
+                                class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                            >
+                                <!-- File Icon -->
+                                <div class="flex-shrink-0">
+                                    <div v-if="attachment.is_pdf" class="w-10 h-10 bg-red-100 rounded flex items-center justify-center">
+                                        <DocumentTextIcon class="w-6 h-6 text-red-600" aria-hidden="true" />
+                                    </div>
+                                    <div v-else class="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
+                                        <PhotoIcon class="w-6 h-6 text-blue-600" aria-hidden="true" />
+                                    </div>
+                                </div>
+
+                                <!-- File Info -->
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.name }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ attachment.formatted_size }}
+                                        <span v-if="attachment.description" class="ml-2">• {{ attachment.description }}</span>
+                                    </p>
+                                </div>
+
+                                <!-- Actions -->
+                                <button
+                                    @click="deleteFromLibrary(attachment.id)"
+                                    class="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    aria-label="Delete attachment"
+                                >
+                                    <TrashIcon class="w-5 h-5" aria-hidden="true" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-6 flex gap-3">
                         <button @click="showEditProfile = false" :disabled="isSavingProfile" class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50">
-                            Cancel
+                            {{ activeProfileTab === 'library' ? 'Close' : 'Cancel' }}
                         </button>
-                        <button @click="saveBusinessProfile" :disabled="!businessName.trim() || isSavingProfile" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+                        <button
+                            v-if="activeProfileTab !== 'library'"
+                            @click="saveBusinessProfile"
+                            :disabled="!businessName.trim() || isSavingProfile"
+                            class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
                             <BookmarkIcon class="w-5 h-5" aria-hidden="true" />
                             {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attachment Library Modal -->
+        <div v-if="showAttachmentLibrary" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Attachment Library</h3>
+                    <button @click="showAttachmentLibrary = false" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
+                        <XMarkIcon class="w-5 h-5 text-gray-500" aria-hidden="true" />
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6">
+                    <!-- Upload to Library Section -->
+                    <div class="mb-6 border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
+                        <input
+                            type="file"
+                            ref="libraryUploadInput"
+                            @change="handleLibraryUpload"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            class="hidden"
+                        />
+                        <div class="text-center">
+                            <button
+                                type="button"
+                                @click="$refs.libraryUploadInput?.click()"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                                <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                                Upload to Library
+                            </button>
+                            <p class="text-xs text-purple-700 mt-2">
+                                Upload files directly to your library for future use
+                            </p>
+                        </div>
+                    </div>
+
+                    <p v-if="isLoadingLibrary" class="text-center text-gray-500 py-8">Loading...</p>
+                    <p v-else-if="attachmentLibrary.length === 0" class="text-center text-gray-500 py-8">
+                        No saved attachments yet. Upload files to your library for reuse across multiple documents.
+                    </p>
+                    <div v-else class="space-y-2">
+                        <div
+                            v-for="attachment in attachmentLibrary"
+                            :key="attachment.id"
+                            class="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                            :class="selectedLibraryAttachments.has(attachment.id) ? 'border-purple-500 bg-purple-50' : 'border-gray-200'"
+                        >
+                            <input
+                                type="checkbox"
+                                :checked="selectedLibraryAttachments.has(attachment.id)"
+                                @change="toggleLibraryAttachment(attachment.id)"
+                                class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                            />
+                            <div class="flex-shrink-0">
+                                <DocumentTextIcon v-if="attachment.is_pdf" class="h-5 w-5 text-red-500" aria-hidden="true" />
+                                <PhotoIcon v-else class="h-5 w-5 text-blue-500" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">{{ attachment.name }}</p>
+                                <p class="text-xs text-gray-500">{{ attachment.formatted_size }} • {{ attachment.original_filename }}</p>
+                                <p v-if="attachment.description" class="text-xs text-gray-600 mt-1">{{ attachment.description }}</p>
+                            </div>
+                            <button
+                                type="button"
+                                @click="deleteFromLibrary(attachment.id)"
+                                class="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Delete from library"
+                            >
+                                <TrashIcon class="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between gap-3 p-6 border-t bg-gray-50">
+                    <p class="text-sm text-gray-600">
+                        {{ selectedLibraryAttachments.size }} selected
+                    </p>
+                    <div class="flex gap-3">
+                        <button
+                            @click="showAttachmentLibrary = false"
+                            class="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            @click="addSelectedLibraryAttachments"
+                            :disabled="selectedLibraryAttachments.size === 0"
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                        >
+                            Add Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save to Library Modal -->
+        <div v-if="showSaveToLibraryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="flex items-center justify-between p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Save to Library</h3>
+                    <button @click="showSaveToLibraryModal = false" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Close">
+                        <XMarkIcon class="w-5 h-5 text-gray-500" aria-hidden="true" />
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                        <input
+                            v-model="saveToLibraryName"
+                            type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="e.g., Company Certificate"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                        <textarea
+                            v-model="saveToLibraryDescription"
+                            rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="Add a description to help identify this attachment later"
+                        ></textarea>
+                    </div>
+                    <p v-if="errors.library" class="text-sm text-red-600">{{ errors.library }}</p>
+                </div>
+                
+                <div class="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+                    <button
+                        @click="showSaveToLibraryModal = false"
+                        class="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        @click="saveAttachmentToLibrary"
+                        :disabled="!saveToLibraryName.trim() || isSavingToLibrary"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    >
+                        {{ isSavingToLibrary ? 'Saving...' : 'Save to Library' }}
+                    </button>
                 </div>
             </div>
         </div>
