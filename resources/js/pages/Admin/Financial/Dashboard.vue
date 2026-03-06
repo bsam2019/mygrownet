@@ -21,7 +21,31 @@
             <option value="month">This Month</option>
             <option value="quarter">This Quarter</option>
             <option value="year">This Year</option>
+            <option value="custom">Custom Period...</option>
           </select>
+          
+          <!-- Custom Period Inputs -->
+          <div v-if="selectedPeriod === 'custom'" class="flex items-center gap-2">
+            <input
+              v-model="customStartDate"
+              type="date"
+              class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              placeholder="Start date"
+            />
+            <span class="text-gray-500">to</span>
+            <input
+              v-model="customEndDate"
+              type="date"
+              class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              placeholder="End date"
+            />
+            <button
+              @click="applyCustomPeriod"
+              class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            >
+              Apply
+            </button>
+          </div>
           
           <!-- Refresh Button -->
           <button 
@@ -369,6 +393,8 @@ interface Props {
 const props = defineProps<Props>()
 
 const selectedPeriod = ref(props.period)
+const customStartDate = ref('')
+const customEndDate = ref('')
 const loading = ref(false)
 const updatingCap = ref(false)
 
@@ -380,9 +406,34 @@ const formatNumber = (value: number): string => {
 }
 
 const updatePeriod = () => {
+  if (selectedPeriod.value === 'custom') {
+    // Don't reload yet, wait for user to select dates and click Apply
+    return
+  }
+  
   loading.value = true
   router.get(route('admin.financial.dashboard'), 
     { period: selectedPeriod.value },
+    { 
+      preserveState: true,
+      onFinish: () => loading.value = false
+    }
+  )
+}
+
+const applyCustomPeriod = () => {
+  if (!customStartDate.value || !customEndDate.value) {
+    alert('Please select both start and end dates')
+    return
+  }
+  
+  loading.value = true
+  router.get(route('admin.financial.dashboard'), 
+    { 
+      period: 'custom',
+      start_date: customStartDate.value,
+      end_date: customEndDate.value
+    },
     { 
       preserveState: true,
       onFinish: () => loading.value = false
