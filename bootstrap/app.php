@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
+            // CMS subdomain routes - MUST be loaded FIRST for domain matching
+            Route::middleware('web')
+                ->group(base_path('routes/cms-subdomain.php'));
+            
             // GrowBuilder subdomain routes - MUST be loaded FIRST for domain matching
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));
