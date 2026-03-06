@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\FinancialReportingService;
+use App\Services\TransactionBasedFinancialReportingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +12,8 @@ use Illuminate\Http\JsonResponse;
 class FinancialReportingController extends Controller
 {
     public function __construct(
-        protected FinancialReportingService $financialReportingService
+        protected FinancialReportingService $financialReportingService,
+        protected TransactionBasedFinancialReportingService $transactionBasedService
     ) {
         $this->middleware(['auth', 'admin']);
     }
@@ -23,12 +25,15 @@ class FinancialReportingController extends Controller
     {
         $period = $request->get('period', 'month');
         
+        // Use transaction-based service for accurate revenue metrics
+        $overview = $this->transactionBasedService->getFinancialOverview($period);
+        
         return Inertia::render('Admin/Financial/Dashboard', [
-            'overview' => $this->financialReportingService->getFinancialOverview($period),
+            'overview' => $overview,
             'complianceMetrics' => $this->financialReportingService->getComplianceMetrics(),
             'sustainabilityMetrics' => $this->financialReportingService->getSustainabilityMetrics(),
             'commissionCapTracking' => $this->financialReportingService->getCommissionCapTracking(),
-            'revenueAnalysis' => $this->financialReportingService->getRevenueAnalysis($period),
+            'revenueAnalysis' => $overview['revenue_metrics'], // Use transaction-based revenue
             'period' => $period
         ]);
     }
@@ -319,7 +324,9 @@ class FinancialReportingController extends Controller
         $breakdown_type = $request->get('breakdown_type', 'source');
         
         try {
-            $breakdown = $this->financialReportingService->getRevenueBreakdown($period, $breakdown_type);
+            // Use transaction-based service for accurate revenue breakdown
+            $overview = $this->transactionBasedService->getFinancialOverview($period);
+            $breakdown = $overview['revenue_metrics'];
 
             return response()->json([
                 'success' => true,
