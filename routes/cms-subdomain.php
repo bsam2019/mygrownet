@@ -25,7 +25,7 @@ use Inertia\Inertia;
 | Routes are accessible without the /cms prefix on the subdomain
 */
 
-Route::domain('cms.mygrownet.com')->name('cms.')->group(function () {
+Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
     // Landing Page
     Route::get('/', function () {
         return Inertia::render('CMS/Landing');

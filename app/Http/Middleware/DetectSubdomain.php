@@ -61,7 +61,8 @@ class DetectSubdomain
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-                'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev'
+                'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev',
+                'cms' // CMS subdomain for Company Management System
             ];
             
             if (in_array($subdomain, $reserved)) {
