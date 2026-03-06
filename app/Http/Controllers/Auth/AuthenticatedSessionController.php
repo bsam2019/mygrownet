@@ -64,6 +64,16 @@ class AuthenticatedSessionController extends Controller
         // Determine the appropriate redirect based on user type
         $defaultRoute = $this->getDefaultRouteForUser($user);
 
+        // Get intended URL from session
+        $intendedUrl = $request->session()->get('url.intended');
+        
+        // Validate intended URL - clear it if it's a BizBoost route
+        // (BizBoost routes may not exist or user may not have access)
+        if ($intendedUrl && str_contains($intendedUrl, '/bizboost')) {
+            $request->session()->forget('url.intended');
+            return redirect($defaultRoute);
+        }
+
         return redirect()->intended($defaultRoute);
     }
 

@@ -23,19 +23,38 @@ class TransactionBasedFinancialReportingService
     /**
      * Get comprehensive financial overview
      */
-    public function getFinancialOverview(string $period = 'month'): array
+    public function getFinancialOverview(string $period = 'month', ?string $customStartDate = null, ?string $customEndDate = null): array
     {
-        $startDate = $this->getPeriodStartDate($period);
-        
-        return Cache::remember("financial_overview_{$period}", self::CACHE_TTL, function () use ($startDate) {
+        // For custom period, use provided dates
+        if ($period === 'custom' && $customStartDate && $customEndDate) {
+            $startDate = Carbon::parse($customStartDate)->startOfDay();
+            $endDate = Carbon::parse($customEndDate)->endOfDay();
+            
+            // Don't cache custom periods as they vary
             return [
-                'revenue_metrics' => $this->getRevenueMetrics($startDate),
-                'expense_metrics' => $this->getExpenseMetrics($startDate),
-                'commission_metrics' => $this->getCommissionMetrics($startDate),
-                'profitability' => $this->getProfitabilityMetrics($startDate),
-                'cash_flow' => $this->getCashFlowMetrics($startDate),
-                'growth_metrics' => $this->getGrowthMetrics($startDate),
-                'module_performance' => $this->getModulePerformance($startDate),
+                'revenue_metrics' => $this->getRevenueMetrics($startDate, $endDate),
+                'expense_metrics' => $this->getExpenseMetrics($startDate, $endDate),
+                'commission_metrics' => $this->getCommissionMetrics($startDate, $endDate),
+                'profitability' => $this->getProfitabilityMetrics($startDate, $endDate),
+                'cash_flow' => $this->getCashFlowMetrics($startDate, $endDate),
+                'growth_metrics' => $this->getGrowthMetrics($startDate, $endDate),
+                'module_performance' => $this->getModulePerformance($startDate, $endDate),
+            ];
+        }
+        
+        // For standard periods, use cache
+        $startDate = $this->getPeriodStartDate($period);
+        $endDate = now();
+        
+        return Cache::remember("financial_overview_{$period}", self::CACHE_TTL, function () use ($startDate, $endDate) {
+            return [
+                'revenue_metrics' => $this->getRevenueMetrics($startDate, $endDate),
+                'expense_metrics' => $this->getExpenseMetrics($startDate, $endDate),
+                'commission_metrics' => $this->getCommissionMetrics($startDate, $endDate),
+                'profitability' => $this->getProfitabilityMetrics($startDate, $endDate),
+                'cash_flow' => $this->getCashFlowMetrics($startDate, $endDate),
+                'growth_metrics' => $this->getGrowthMetrics($startDate, $endDate),
+                'module_performance' => $this->getModulePerformance($startDate, $endDate),
             ];
         });
     }
@@ -43,8 +62,10 @@ class TransactionBasedFinancialReportingService
     /**
      * Get revenue metrics from transactions
      */
-    private function getRevenueMetrics(Carbon $startDate): array
+    private function getRevenueMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
+        $endDate = $endDate ?? now();
+        
         $revenueTypes = [
             TransactionType::WALLET_TOPUP->value,
             TransactionType::SUBSCRIPTION_PAYMENT->value,
@@ -56,7 +77,7 @@ class TransactionBasedFinancialReportingService
         // Use ABS() because wallet debits (purchases) are stored as negative amounts
         // but represent revenue (money spent by users on products/services)
         $revenue = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
             ->whereIn('transaction_type', $revenueTypes)
             ->select(
@@ -67,7 +88,8 @@ class TransactionBasedFinancialReportingService
             ->first();
 
         // Get previous period for growth calculation
-        $previousStart = $this->getPreviousPeriodStart($startDate);
+        $periodDays = $startDate->diffInDays($endDate);
+        $previousStart = $startDate->copy()->subDays($periodDays);
         $previousRevenue = DB::table('transactions')
             ->whereBetween('created_at', [$previousStart, $startDate])
             ->where('status', TransactionStatus::COMPLETED->value)
@@ -90,8 +112,10 @@ class TransactionBasedFinancialReportingService
     /**
      * Get expense metrics from transactions
      */
-    private function getExpenseMetrics(Carbon $startDate): array
+    private function getExpenseMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
+        $endDate = $endDate ?? now();
+        
         $expenseTypes = [
             TransactionType::WITHDRAWAL->value,
             TransactionType::COMMISSION_PAYOUT->value,
@@ -100,7 +124,7 @@ class TransactionBasedFinancialReportingService
         ];
 
         $expenses = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
             ->whereIn('transaction_type', $expenseTypes)
             ->select(
@@ -118,11 +142,13 @@ class TransactionBasedFinancialReportingService
     /**
      * Get commission metrics
      */
-    private function getCommissionMetrics(Carbon $startDate): array
+    private function getCommissionMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
+        $endDate = $endDate ?? now();
+        
         // Commissions earned (from referral_commissions table)
         $commissionsEarned = DB::table('referral_commissions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->select(
                 DB::raw('SUM(amount) as total'),
                 DB::raw('SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END) as paid'),
@@ -132,7 +158,7 @@ class TransactionBasedFinancialReportingService
 
         // Commission payouts (from transactions table)
         $commissionPayouts = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('transaction_type', TransactionType::COMMISSION_PAYOUT->value)
             ->where('status', TransactionStatus::COMPLETED->value)
             ->sum('amount');
@@ -150,10 +176,12 @@ class TransactionBasedFinancialReportingService
     /**
      * Get profitability metrics
      */
-    private function getProfitabilityMetrics(Carbon $startDate): array
+    private function getProfitabilityMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
-        $revenue = $this->getRevenueMetrics($startDate)['total_revenue'];
-        $expenses = $this->getExpenseMetrics($startDate)['total_expenses'];
+        $endDate = $endDate ?? now();
+        
+        $revenue = $this->getRevenueMetrics($startDate, $endDate)['total_revenue'];
+        $expenses = $this->getExpenseMetrics($startDate, $endDate)['total_expenses'];
         $profit = $revenue - $expenses;
 
         return [
@@ -167,18 +195,20 @@ class TransactionBasedFinancialReportingService
     /**
      * Get cash flow metrics
      */
-    private function getCashFlowMetrics(Carbon $startDate): array
+    private function getCashFlowMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
+        $endDate = $endDate ?? now();
+        
         // Inflows (credits)
         $inflows = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
             ->where('amount', '>', 0)
             ->sum('amount');
 
         // Outflows (debits)
         $outflows = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', TransactionStatus::COMPLETED->value)
             ->where('amount', '<', 0)
             ->sum('amount');
@@ -196,13 +226,16 @@ class TransactionBasedFinancialReportingService
     /**
      * Get growth metrics
      */
-    private function getGrowthMetrics(Carbon $startDate): array
+    private function getGrowthMetrics(Carbon $startDate, ?Carbon $endDate = null): array
     {
-        $currentPeriod = $this->getRevenueMetrics($startDate);
+        $endDate = $endDate ?? now();
+        
+        $currentPeriod = $this->getRevenueMetrics($startDate, $endDate);
         
         // User growth
-        $newUsers = User::where('created_at', '>=', $startDate)->count();
-        $previousStart = $this->getPreviousPeriodStart($startDate);
+        $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->count();
+        $periodDays = $startDate->diffInDays($endDate);
+        $previousStart = $startDate->copy()->subDays($periodDays);
         $previousUsers = User::whereBetween('created_at', [$previousStart, $startDate])->count();
         
         $userGrowthRate = $previousUsers > 0 
@@ -213,28 +246,30 @@ class TransactionBasedFinancialReportingService
             'revenue_growth_rate' => $currentPeriod['growth_rate'],
             'user_growth_rate' => round($userGrowthRate, 2),
             'new_users' => $newUsers,
-            'transaction_growth' => $this->getTransactionGrowthRate($startDate),
+            'transaction_growth' => $this->getTransactionGrowthRate($startDate, $endDate),
         ];
     }
 
     /**
      * Get module performance metrics
      */
-    private function getModulePerformance(Carbon $startDate): array
+    private function getModulePerformance(Carbon $startDate, ?Carbon $endDate = null): array
     {
+        $endDate = $endDate ?? now();
+        
         $modules = Module::all();
         $performance = [];
 
         foreach ($modules as $module) {
             $revenue = DB::table('transactions')
-                ->where('created_at', '>=', $startDate)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->where('status', TransactionStatus::COMPLETED->value)
                 ->where('module_id', $module->id)
                 ->where('amount', '>', 0)
                 ->sum('amount');
 
             $transactionCount = DB::table('transactions')
-                ->where('created_at', '>=', $startDate)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->where('module_id', $module->id)
                 ->count();
 
@@ -543,13 +578,16 @@ class TransactionBasedFinancialReportingService
     /**
      * Helper: Get transaction growth rate
      */
-    private function getTransactionGrowthRate(Carbon $startDate): float
+    private function getTransactionGrowthRate(Carbon $startDate, ?Carbon $endDate = null): float
     {
+        $endDate = $endDate ?? now();
+        
         $currentCount = DB::table('transactions')
-            ->where('created_at', '>=', $startDate)
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->count();
 
-        $previousStart = $this->getPreviousPeriodStart($startDate);
+        $periodDays = $startDate->diffInDays($endDate);
+        $previousStart = $startDate->copy()->subDays($periodDays);
         $previousCount = DB::table('transactions')
             ->whereBetween('created_at', [$previousStart, $startDate])
             ->count();

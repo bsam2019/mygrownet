@@ -24,9 +24,11 @@ class FinancialReportingController extends Controller
     public function index(Request $request)
     {
         $period = $request->get('period', 'month');
+        $customStartDate = $request->get('custom_start_date');
+        $customEndDate = $request->get('custom_end_date');
         
         // Use transaction-based service for accurate revenue metrics
-        $overview = $this->transactionBasedService->getFinancialOverview($period);
+        $overview = $this->transactionBasedService->getFinancialOverview($period, $customStartDate, $customEndDate);
         
         return Inertia::render('Admin/Financial/Dashboard', [
             'overview' => $overview,
@@ -34,7 +36,9 @@ class FinancialReportingController extends Controller
             'sustainabilityMetrics' => $this->financialReportingService->getSustainabilityMetrics(),
             'commissionCapTracking' => $this->financialReportingService->getCommissionCapTracking(),
             'revenueAnalysis' => $overview['revenue_metrics'], // Use transaction-based revenue
-            'period' => $period
+            'period' => $period,
+            'customStartDate' => $customStartDate,
+            'customEndDate' => $customEndDate,
         ]);
     }
 
