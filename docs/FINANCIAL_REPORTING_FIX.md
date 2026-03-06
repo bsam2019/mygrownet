@@ -146,7 +146,55 @@ Consider fully migrating to v2 financial reporting system and deprecating legacy
 - `app/Services/TransactionBasedFinancialReportingService.php` - New service (now used for revenue)
 - `routes/admin.php` - Route definitions for both systems
 
+## Custom Period Support
+
+Added ability to select custom date ranges for financial reports.
+
+### Implementation
+
+**Frontend:**
+- Added "Custom Period..." option to period selector dropdown
+- Date inputs appear when custom period is selected
+- Apply button triggers report refresh with custom dates
+- UI shows selected custom date range
+
+**Backend:**
+- Updated `TransactionBasedFinancialReportingService.getFinancialOverview()` to accept optional custom dates
+- Modified all metric methods to accept `endDate` parameter
+- Custom periods use `whereBetween()` instead of `where('created_at', '>=', $startDate)`
+- Custom periods are not cached (vary by user selection)
+- Standard periods (week, month, quarter, year) remain cached
+
+**Files Modified:**
+- `app/Services/TransactionBasedFinancialReportingService.php` - Added custom date support
+- `app/Http/Controllers/Admin/FinancialReportingController.php` - Pass custom dates to service
+- `resources/js/pages/Admin/Financial/Dashboard.vue` - Custom period UI
+
+### Usage
+
+1. Navigate to Financial Reports Dashboard
+2. Click period dropdown
+3. Select "Custom Period..."
+4. Enter start and end dates
+5. Click "Apply"
+6. Report refreshes with custom date range
+
 ## Changelog
+
+### March 6, 2026 - Custom Period Support
+- Added custom date range selector to Financial Reports dashboard
+- Updated TransactionBasedFinancialReportingService to support custom periods
+- All metric methods now accept optional endDate parameter
+- Controller passes custom_start_date and custom_end_date to service
+- Custom periods calculate growth rates based on period length
+- Deployed to production
+
+### March 6, 2026 - BizBoost Redirect Fix
+- Fixed users being redirected to non-existing BizBoost routes after login
+- Added validation in AuthenticatedSessionController to block BizBoost redirects
+- Clears BizBoost URLs from session to prevent 404 errors
+- Users now redirect to appropriate default route instead
+- Deployed to production
 
 ### March 6, 2026 - Second Fix
 - Fixed revenue showing K0.00 even with starter kit purchases

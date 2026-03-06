@@ -130,7 +130,52 @@ The simplified forms maintain full validation and error handling while reducing 
 ### Issue: Referral code not showing
 **Solution:** Referral code only shows if `?ref=CODE` is in the URL. This is intentional to reduce clutter for non-referred users.
 
+## BizBoost Redirect Fix
+
+Fixed issue where users were being redirected to non-existing BizBoost routes after login, resulting in 404 errors.
+
+### Problem
+
+When users visited BizBoost pages or clicked links with `?redirect=/bizboost` before logging in, the intended URL was stored in session. After logout and subsequent login, they would be redirected to BizBoost routes that may not exist or they don't have access to.
+
+### Solution
+
+Added validation in `AuthenticatedSessionController.store()` to:
+- Check if intended URL contains '/bizboost'
+- Clear BizBoost URLs from session
+- Redirect to appropriate default route instead
+
+**File Modified:**
+- `app/Http/Controllers/Auth/AuthenticatedSessionController.php`
+
+```php
+// Get intended URL from session
+$intendedUrl = $request->session()->get('url.intended');
+
+// Validate intended URL - clear it if it's a BizBoost route
+if ($intendedUrl && str_contains($intendedUrl, '/bizboost')) {
+    $request->session()->forget('url.intended');
+    return redirect($defaultRoute);
+}
+
+return redirect()->intended($defaultRoute);
+```
+
+### Impact
+
+- ✅ Users no longer redirected to non-existing BizBoost routes
+- ✅ No more 404 errors after login
+- ✅ Users redirect to appropriate default route based on account type
+- ✅ Improved login experience
+
 ## Changelog
+
+### March 6, 2026 - BizBoost Redirect Fix
+- Fixed users being redirected to non-existing BizBoost routes after login
+- Added validation to block BizBoost redirects in AuthenticatedSessionController
+- Clears BizBoost URLs from session to prevent 404 errors
+- Users now redirect to appropriate default route instead
+- Deployed to production
 
 ### March 5, 2026
 - Fixed header covering issue with sticky positioning
