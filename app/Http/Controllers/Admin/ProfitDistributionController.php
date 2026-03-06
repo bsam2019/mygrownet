@@ -280,7 +280,7 @@ class ProfitDistributionController extends Controller
                     'type' => 'quarterly',
                     'period' => date('Y') . '-Q' . $q,
                     'due_date' => date('Y') . '-' . ($q * 3) . '-' . date('t', mktime(0, 0, 0, $q * 3, 1, date('Y'))),
-                    'estimated_recipients' => Investment::where('status', 'active')->distinct('user_id')->count(),
+                    'estimated_recipients' => User::where('status', 'active')->count(),
                     'status' => $q < $currentQuarter ? 'overdue' : 'upcoming'
                 ];
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\BudgetComparisonService;
 use App\Services\PdfFinancialReportService;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,7 +28,7 @@ class BudgetController extends Controller
         $metrics = $this->budgetService->getBudgetPerformanceMetrics($period, null, null, $moduleId);
         
         // Get modules list
-        $modules = \App\Infrastructure\Persistence\Eloquent\CMS\FinancialModuleModel::where('is_active', true)
+        $modules = Module::where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'code', 'name'])
             ->toArray();
