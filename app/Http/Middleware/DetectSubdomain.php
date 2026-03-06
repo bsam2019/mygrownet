@@ -57,7 +57,8 @@ class DetectSubdomain
                 return $this->handleWowthemSubdomain($request);
             }
             
-            // Skip other reserved subdomains
+            // Skip other reserved subdomains - these have explicit domain routes
+            // that should be matched instead of being treated as GrowBuilder sites
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
