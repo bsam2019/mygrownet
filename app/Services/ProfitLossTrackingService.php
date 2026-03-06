@@ -87,9 +87,11 @@ class ProfitLossTrackingService
             $query->where('module_id', $moduleId);
         }
         
+        // Use ABS() because wallet debits are stored as negative amounts
+        // but represent revenue (money spent by users on products/services)
         $breakdown = $query->select(
                 'transaction_type',
-                DB::raw('SUM(amount) as total'),
+                DB::raw('SUM(ABS(amount)) as total'),
                 DB::raw('COUNT(*) as count')
             )
             ->groupBy('transaction_type')

@@ -53,14 +53,16 @@ class TransactionBasedFinancialReportingService
             TransactionType::SERVICE_PAYMENT->value,
         ];
 
+        // Use ABS() because wallet debits (purchases) are stored as negative amounts
+        // but represent revenue (money spent by users on products/services)
         $revenue = DB::table('transactions')
             ->where('created_at', '>=', $startDate)
             ->where('status', TransactionStatus::COMPLETED->value)
             ->whereIn('transaction_type', $revenueTypes)
             ->select(
-                DB::raw('SUM(amount) as total'),
+                DB::raw('SUM(ABS(amount)) as total'),
                 DB::raw('COUNT(*) as count'),
-                DB::raw('AVG(amount) as average')
+                DB::raw('AVG(ABS(amount)) as average')
             )
             ->first();
 
@@ -70,7 +72,7 @@ class TransactionBasedFinancialReportingService
             ->whereBetween('created_at', [$previousStart, $startDate])
             ->where('status', TransactionStatus::COMPLETED->value)
             ->whereIn('transaction_type', $revenueTypes)
-            ->sum('amount');
+            ->sum(DB::raw('ABS(amount)'));
 
         $growthRate = $previousRevenue > 0 
             ? (($revenue->total - $previousRevenue) / $previousRevenue) * 100 
