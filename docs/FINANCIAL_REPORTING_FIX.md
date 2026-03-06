@@ -9,15 +9,17 @@ Fixed critical issue where financial reports were not including all revenue sour
 
 ## Problem
 
-The legacy `FinancialReportingController` was using `FinancialReportingService` which only queried the `subscriptions` table for revenue calculation. This meant:
+The legacy `FinancialReportingController` was using `FinancialReportingService` which only queried the `subscriptions` table for revenue calculation. Additionally, revenue calculations weren't using ABS() for wallet debits, causing negative revenue.
 
+**Issues:**
 - ❌ Wallet deposits/top-ups were not counted
 - ❌ Starter kit purchases were not counted  
 - ❌ Platform module purchases were not counted
 - ❌ Service payments were not counted
+- ❌ Wallet debits stored as negative amounts (-500.00) resulted in negative revenue
 - ✅ Only subscription payments were counted
 
-This resulted in severely underreported revenue figures in financial reports.
+This resulted in severely underreported revenue figures (showing K0.00) in financial reports.
 
 ## Root Cause
 
@@ -37,15 +39,25 @@ The controller was using the legacy service, causing incomplete reports.
 
 ## Solution
 
-Updated `FinancialReportingController` to use the transaction-based service for revenue calculations:
+Updated financial reporting services to properly calculate revenue:
 
 ### Changes Made
 
-**File:** `app/Http/Controllers/Admin/FinancialReportingController.php`
+**Files Modified:**
+1. `app/Http/Controllers/Admin/FinancialReportingController.php`
+2. `app/Services/ProfitLossTrackingService.php`
+3. `app/Services/TransactionBasedFinancialReportingService.php`
 
-1. Injected `TransactionBasedFinancialReportingService` into constructor
-2. Updated `index()` method to use transaction-based service for overview
-3. Updated `getRevenueBreakdown()` to use transaction-based service
+**Fix 1: Use Transaction-Based Service**
+- Injected `TransactionBasedFinancialReportingService` into controller
+- Updated `index()` method to use transaction-based service for overview
+- Updated `getRevenueBreakdown()` to use transaction-based service
+
+**Fix 2: Handle Negative Wallet Debits**
+- Added `ABS()` to revenue calculations in both services
+- Wallet debits (purchases) are stored as negative amounts
+- Using ABS() converts -500.00 to 500.00 for revenue calculation
+- Applied to both `ProfitLossTrackingService` and `TransactionBasedFinancialReportingService`
 
 ### Revenue Types Now Included
 
@@ -76,29 +88,21 @@ private function getTotalRevenue(?Carbon $startDate = null): float
 ### After (Correct)
 
 ```php
-private function getRevenueMetrics(Carbon $startDate): array
-{
-    $revenueTypes = [
-        TransactionType::WALLET_TOPUP->value,
-        TransactionType::SUBSCRIPTION_PAYMENT->value,
-        TransactionType::PURCHASE->value,
-        TransactionType::STARTER_KIT_PURCHASE->value,
-        TransactionType::SERVICE_PAYMENT->value,
-    ];
+// Use ABS() because wallet debits are stored as negative amounts
+// but represent revenue (money spent by users on products/services)
+$breakdown = $query->select(
+        'transaction_type',
+        DB::raw('SUM(ABS(amount)) as total'),
+        DB::raw('COUNT(*) as count')
+    )
+    ->groupBy('transaction_type')
+    ->get();
+```
 
-    $revenue = DB::table('transactions')
-        ->where('created_at', '>=', $startDate)
-        ->where('status', TransactionStatus::COMPLETED->value)
-        ->whereIn('transaction_type', $revenueTypes)
-        ->select(
-            DB::raw('SUM(amount) as total'),
-            DB::raw('COUNT(*) as count'),
-            DB::raw('AVG(amount) as average')
-        )
-        ->first();
-    
-    // ... additional calculations
-}
+**Example Transaction:**
+```
+amount: -500.00 (wallet debit)
+ABS(amount): 500.00 (revenue)
 ```
 
 ## Impact
@@ -144,7 +148,14 @@ Consider fully migrating to v2 financial reporting system and deprecating legacy
 
 ## Changelog
 
-### March 6, 2026
+### March 6, 2026 - Second Fix
+- Fixed revenue showing K0.00 even with starter kit purchases
+- Root cause: Wallet debits stored as negative amounts (-500.00)
+- Revenue calculations were summing negative amounts
+- Added ABS() to revenue queries in both services
+- Now properly calculates revenue from wallet-paid purchases
+
+### March 6, 2026 - Initial Fix
 - Fixed revenue tracking to include all transaction types
 - Injected TransactionBasedFinancialReportingService into controller
 - Updated index() and getRevenueBreakdown() methods
