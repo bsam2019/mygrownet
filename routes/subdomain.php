@@ -15,14 +15,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | These routes handle actual subdomain requests like mysite.mygrownet.com
 |
-| NOTE: The wildcard {subdomain} is restricted to NOT match reserved subdomains
-| like 'cms', 'api', 'admin', etc. This is done via the 'where' clause.
+| NOTE: The wildcard {subdomain} matches all subdomains EXCEPT those handled
+| by the DetectSubdomain middleware (cms, geopamu, wowthem, and reserved).
+| The middleware runs first and handles those specifically.
 */
 
-Route::domain('{subdomain}.mygrownet.com')
-    ->middleware('subdomain.check')
-    ->where('subdomain', '^(?!cms$|api$|admin$|mail$|ftp$|smtp$|pop$|imap$|webmail$|cpanel$|whm$|ns1$|ns2$|mx$|email$|growbuilder$|app$|dashboard$|portal$|staging$|dev$).*')
-    ->group(function () {
+Route::domain('{subdomain}.mygrownet.com')->middleware('subdomain.check')->group(function () {
     // Sitemap and robots.txt
     Route::get('/sitemap.xml', [RenderController::class, 'sitemap'])->name('subdomain.sitemap');
     Route::get('/robots.txt', [RenderController::class, 'robots'])->name('subdomain.robots');
