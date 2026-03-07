@@ -154,7 +154,7 @@ const darkMode = ref(false);
 
 // Onboarding Tutorial
 const showOnboarding = ref(false);
-const ONBOARDING_KEY = 'growbuilder_onboarding_completed';
+const ONBOARDING_KEY = computed(() => `growbuilder_onboarding_completed_${props.site.id}`);
 
 // AI Usage tracking (local reactive copy of prop)
 const aiUsage = ref<AIUsage | undefined>(props.aiUsage);
@@ -1842,8 +1842,8 @@ onMounted(() => {
     // Attach drag-to-upload to the canvas area
     dragUpload.attachGlobal();
     
-    // Check if onboarding should be shown (first-time users)
-    const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY);
+    // Check if onboarding should be shown (first-time users for this specific site)
+    const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY.value);
     if (!onboardingCompleted) {
         // Small delay to let the editor render first
         setTimeout(() => {
@@ -1859,7 +1859,7 @@ const closeOnboarding = () => {
 
 const completeOnboarding = () => {
     showOnboarding.value = false;
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    localStorage.setItem(ONBOARDING_KEY.value, 'true');
     toast.success('Tutorial complete! Start building your site.');
 };
 
