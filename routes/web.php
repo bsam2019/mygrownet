@@ -15,7 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 // InvestmentTierController removed - using Venture Builder
-use App\Http\Controllers\Admin\AdminInvestmentController;
+// use App\Http\Controllers\Admin\AdminInvestmentController; // REMOVED - VBIF deprecated
 use App\Http\Controllers\Manager\ManagerDashboardController;
 use App\Http\Controllers\EarningsProjectionController;
 use App\Http\Controllers\ComplianceController;

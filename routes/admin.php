@@ -10,7 +10,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\LoanManagementController;
 use App\Http\Controllers\Admin\LoanController;
-use App\Http\Controllers\Admin\AdminInvestmentController;
+// use App\Http\Controllers\Admin\AdminInvestmentController; // REMOVED - VBIF deprecated
 use App\Http\Controllers\Admin\FinancialReportController;
 use App\Http\Controllers\Api\InvestmentMetricsController;
 use App\Http\Controllers\Admin\WithdrawalApprovalController;
@@ -36,19 +36,19 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::get('/investments/metrics/{period}', [InvestmentMetricsController::class, 'getMetrics'])->name('investments.metrics.period');
     Route::get('/api/metrics', [InvestmentMetricsController::class, 'getMetrics'])->name('api.metrics');
 
-    // Investment management
-    Route::get('/investments', [AdminInvestmentController::class, 'index'])->name('investments.index');
-    Route::get('/investments/{investment}', [AdminInvestmentController::class, 'show'])->name('investments.show');
-    Route::patch('/investments/{investment}/approve', [AdminInvestmentController::class, 'approve'])->name('investments.approve');
-    Route::patch('/investments/{investment}/reject', [AdminInvestmentController::class, 'reject'])->name('investments.reject');
+    // Investment management - COMMENTED OUT - VBIF deprecated, controller removed
+    // Route::get('/investments', [AdminInvestmentController::class, 'index'])->name('investments.index');
+    // Route::get('/investments/{investment}', [AdminInvestmentController::class, 'show'])->name('investments.show');
+    // Route::patch('/investments/{investment}/approve', [AdminInvestmentController::class, 'approve'])->name('investments.approve');
+    // Route::patch('/investments/{investment}/reject', [AdminInvestmentController::class, 'reject'])->name('investments.reject');
 
-    // Bulk Investment Actions
-    Route::post('investments/bulk/approve', [AdminInvestmentController::class, 'bulkApprove'])->name('investments.bulk.approve');
-    Route::post('investments/bulk/reject', [AdminInvestmentController::class, 'bulkReject'])->name('investments.bulk.reject');
-    Route::get('investments/bulk/export', [AdminInvestmentController::class, 'bulkExport'])->name('investments.bulk.export');
+    // Bulk Investment Actions - COMMENTED OUT - VBIF deprecated
+    // Route::post('investments/bulk/approve', [AdminInvestmentController::class, 'bulkApprove'])->name('investments.bulk.approve');
+    // Route::post('investments/bulk/reject', [AdminInvestmentController::class, 'bulkReject'])->name('investments.bulk.reject');
+    // Route::get('investments/bulk/export', [AdminInvestmentController::class, 'bulkExport'])->name('investments.bulk.export');
 
-    // Investment reports
-    Route::get('investments/reports', [AdminInvestmentController::class, 'reports'])->name('investments.reports');
+    // Investment reports - COMMENTED OUT - VBIF deprecated
+    // Route::get('investments/reports', [AdminInvestmentController::class, 'reports'])->name('investments.reports');
 
     // Investment categories
     Route::resource('categories', InvestmentCategoriesController::class)

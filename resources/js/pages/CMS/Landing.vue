@@ -265,7 +265,6 @@
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import { computed } from 'vue'
 import {
   BuildingOfficeIcon,
   BriefcaseIcon,
@@ -278,15 +277,6 @@ import {
   BanknotesIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/vue/24/outline'
-
-// Detect if we're on the CMS subdomain
-const isSubdomain = computed(() => {
-  return window.location.hostname === 'cms.mygrownet.com'
-})
-
-// Use appropriate route names based on environment
-const loginRoute = computed(() => isSubdomain.value ? 'cms.subdomain.login' : 'cms.login')
-const registerRoute = computed(() => isSubdomain.value ? 'cms.subdomain.register' : 'cms.register')
 
 const features = [
   {
