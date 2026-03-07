@@ -124,10 +124,9 @@ class DetectSubdomain
         
         // Landing page - let route file handle it (it will pass routePrefix)
         if ($path === '/') {
-            // Set a flag so the route knows it's from subdomain
-            $request->attributes->set('is_cms_subdomain', true);
-            // Continue to route file which will handle the response
-            return app()->make('router')->dispatch($request);
+            // Don't handle in middleware, let it pass through to route file
+            // The route file will properly render with routePrefix prop
+            return $next($request);
         }
         
         // Login routes
