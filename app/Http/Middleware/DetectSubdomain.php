@@ -57,13 +57,12 @@ class DetectSubdomain
                 return $this->handleWowthemSubdomain($request);
             }
             
-            // Skip other reserved subdomains - these have explicit domain routes
-            // that should be matched instead of being treated as GrowBuilder sites
+            // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
                 'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev',
-                'cms' // CMS subdomain - has explicit domain routes in routes/cms-subdomain.php
+                'cms' // CMS subdomain - excluded from DetectSubdomain middleware in bootstrap
             ];
             
             if (in_array($subdomain, $reserved)) {
