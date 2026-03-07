@@ -118,7 +118,7 @@ class DetectSubdomain
     /**
      * Handle CMS subdomain requests
      */
-    private function handleCmsSubdomain(Request $request, Closure $next): Response
+    private function handleCmsSubdomain(Request $request): Response
     {
         $path = $request->path();
         
@@ -127,9 +127,252 @@ class DetectSubdomain
             return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
         }
         
-        // For all other routes, let Laravel's routing handle them
-        // The routes are defined in routes/cms-subdomain.php which is loaded first
-        return $next($request);
+        // Login routes
+        if ($path === 'login' && $request->method() === 'GET') {
+            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $result = $controller->showLogin();
+            return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+        }
+        
+        if ($path === 'login' && $request->method() === 'POST') {
+            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            return $controller->login($request);
+        }
+        
+        // Register routes
+        if ($path === 'register' && $request->method() === 'GET') {
+            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $result = $controller->showRegister();
+            return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+        }
+        
+        if ($path === 'register' && $request->method() === 'POST') {
+            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            return $controller->register($request);
+        }
+        
+        // Logout
+        if ($path === 'logout' && $request->method() === 'POST') {
+            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            return $controller->logout($request);
+        }
+        
+        // Dashboard (requires auth)
+        if ($path === 'dashboard') {
+            $controller = app()->make(\App\Http\Controllers\CMS\DashboardController::class);
+            $result = $controller->index();
+            return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+        }
+        
+        // Jobs routes
+        if (str_starts_with($path, 'jobs')) {
+            return $this->handleCmsJobs($request, $path);
+        }
+        
+        // Customers routes
+        if (str_starts_with($path, 'customers')) {
+            return $this->handleCmsCustomers($request, $path);
+        }
+        
+        // Invoices routes
+        if (str_starts_with($path, 'invoices')) {
+            return $this->handleCmsInvoices($request, $path);
+        }
+        
+        // Payments routes
+        if (str_starts_with($path, 'payments')) {
+            return $this->handleCmsPayments($request, $path);
+        }
+        
+        // Quotations routes
+        if (str_starts_with($path, 'quotations')) {
+            return $this->handleCmsQuotations($request, $path);
+        }
+        
+        // Inventory routes
+        if (str_starts_with($path, 'inventory')) {
+            return $this->handleCmsInventory($request, $path);
+        }
+        
+        // Expenses routes
+        if (str_starts_with($path, 'expenses')) {
+            return $this->handleCmsExpenses($request, $path);
+        }
+        
+        // Reports
+        if ($path === 'reports') {
+            $controller = app()->make(\App\Http\Controllers\CMS\ReportController::class);
+            $result = $controller->index();
+            return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+        }
+        
+        // Budgets routes
+        if (str_starts_with($path, 'budgets')) {
+            return $this->handleCmsBudgets($request, $path);
+        }
+        
+        // Settings
+        if (str_starts_with($path, 'settings')) {
+            $controller = app()->make(\App\Http\Controllers\CMS\SettingsController::class);
+            $result = $controller->index();
+            return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+        }
+        
+        // Fallback to landing page
+        return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
+    }
+    
+    /**
+     * Handle CMS Jobs routes
+     */
+    private function handleCmsJobs(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\JobController::class);
+        
+        $result = match(true) {
+            $path === 'jobs' => $controller->index(),
+            $path === 'jobs/create' => $controller->create(),
+            $path === 'jobs' && $request->method() === 'POST' => $controller->store($request),
+            preg_match('#^jobs/([^/]+)$#', $path, $matches) => $controller->show($matches[1]),
+            preg_match('#^jobs/([^/]+)/assign$#', $path, $matches) && $request->method() === 'POST' => $controller->assign($request, $matches[1]),
+            preg_match('#^jobs/([^/]+)/complete$#', $path, $matches) && $request->method() === 'POST' => $controller->complete($request, $matches[1]),
+            preg_match('#^jobs/([^/]+)/attachments$#', $path, $matches) && $request->method() === 'POST' => $controller->uploadAttachment($request, $matches[1]),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Customers routes
+     */
+    private function handleCmsCustomers(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\CustomerController::class);
+        
+        $result = match(true) {
+            $path === 'customers' => $controller->index(),
+            $path === 'customers/create' => $controller->create(),
+            $path === 'customers' && $request->method() === 'POST' => $controller->store($request),
+            preg_match('#^customers/([^/]+)$#', $path, $matches) && $request->method() === 'GET' => $controller->show($matches[1]),
+            preg_match('#^customers/([^/]+)/edit$#', $path, $matches) => $controller->edit($matches[1]),
+            preg_match('#^customers/([^/]+)$#', $path, $matches) && $request->method() === 'PUT' => $controller->update($request, $matches[1]),
+            preg_match('#^customers/([^/]+)$#', $path, $matches) && $request->method() === 'DELETE' => $controller->destroy($matches[1]),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Invoices routes
+     */
+    private function handleCmsInvoices(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\InvoiceController::class);
+        
+        $result = match(true) {
+            $path === 'invoices' => $controller->index(),
+            $path === 'invoices/create' => $controller->create(),
+            $path === 'invoices' && $request->method() === 'POST' => $controller->store($request),
+            preg_match('#^invoices/([^/]+)$#', $path, $matches) && $request->method() === 'GET' => $controller->show($matches[1]),
+            preg_match('#^invoices/([^/]+)/edit$#', $path, $matches) => $controller->edit($matches[1]),
+            preg_match('#^invoices/([^/]+)$#', $path, $matches) && $request->method() === 'PUT' => $controller->update($request, $matches[1]),
+            preg_match('#^invoices/([^/]+)/send$#', $path, $matches) && $request->method() === 'POST' => $controller->send($request, $matches[1]),
+            preg_match('#^invoices/([^/]+)/pdf$#', $path, $matches) => $controller->downloadPdf($matches[1]),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Payments routes
+     */
+    private function handleCmsPayments(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\PaymentController::class);
+        
+        $result = match(true) {
+            $path === 'payments' => $controller->index(),
+            $path === 'payments/create' => $controller->create(),
+            $path === 'payments' && $request->method() === 'POST' => $controller->store($request),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Quotations routes
+     */
+    private function handleCmsQuotations(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\QuotationController::class);
+        
+        $result = match(true) {
+            $path === 'quotations' => $controller->index(),
+            $path === 'quotations/create' => $controller->create(),
+            $path === 'quotations' && $request->method() === 'POST' => $controller->store($request),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Inventory routes
+     */
+    private function handleCmsInventory(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\InventoryController::class);
+        
+        $result = match(true) {
+            $path === 'inventory' => $controller->index(),
+            $path === 'inventory/create' => $controller->create(),
+            $path === 'inventory' && $request->method() === 'POST' => $controller->store($request),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Expenses routes
+     */
+    private function handleCmsExpenses(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\ExpenseController::class);
+        
+        $result = match(true) {
+            $path === 'expenses' => $controller->index(),
+            $path === 'expenses/create' => $controller->create(),
+            $path === 'expenses' && $request->method() === 'POST' => $controller->store($request),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
+    }
+    
+    /**
+     * Handle CMS Budgets routes
+     */
+    private function handleCmsBudgets(Request $request, string $path): Response
+    {
+        $controller = app()->make(\App\Http\Controllers\CMS\BudgetController::class);
+        
+        $result = match(true) {
+            $path === 'budgets' => $controller->index(),
+            $path === 'budgets/create' => $controller->create(),
+            $path === 'budgets' && $request->method() === 'POST' => $controller->store($request),
+            preg_match('#^budgets/([^/]+)$#', $path, $matches) && $request->method() === 'GET' => $controller->show($matches[1]),
+            preg_match('#^budgets/([^/]+)/edit$#', $path, $matches) => $controller->edit($matches[1]),
+            preg_match('#^budgets/([^/]+)$#', $path, $matches) && $request->method() === 'PUT' => $controller->update($request, $matches[1]),
+            preg_match('#^budgets/([^/]+)$#', $path, $matches) && $request->method() === 'DELETE' => $controller->destroy($matches[1]),
+            default => abort(404)
+        };
+        
+        return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
     }
     
     /**
