@@ -22,7 +22,8 @@ class RenderController extends Controller
 
     public function render(Request $request, string $subdomain, ?string $slug = null)
     {
-        \Log::info("RenderController::render called - subdomain: {$subdomain}, slug: " . ($slug ?? 'null'));
+        \Log::info("RenderController::render called - subdomain: {$subdomain}, slug: " . ($slug ?? 'null') . ", slug type: " . gettype($slug) . ", slug length: " . strlen($slug ?? ''));
+        \Log::info("RenderController::render - slug bytes: " . bin2hex($slug ?? ''));
         
         try {
             $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
@@ -32,8 +33,11 @@ class RenderController extends Controller
         }
 
         if (!$site || !$site->isPublished()) {
+            \Log::error("RenderController: Site not found or not published");
             abort(404);
         }
+
+        \Log::info("RenderController: Site found - ID: " . $site->getId()->value() . ", Name: " . $site->getName());
 
         // Handle checkout page
         if ($slug === 'checkout') {
@@ -42,15 +46,19 @@ class RenderController extends Controller
 
         // Get page
         if ($slug) {
-            \Log::info("RenderController: Looking for page with slug: {$slug}");
+            \Log::info("RenderController: Looking for page with slug: '{$slug}'");
             $page = $this->pageRepository->findBySiteIdAndSlug($site->getId(), $slug);
             \Log::info("RenderController: Page found: " . ($page ? 'yes (ID: ' . $page->getId()->value() . ')' : 'no'));
             if ($page) {
                 \Log::info("RenderController: Page published: " . ($page->isPublished() ? 'yes' : 'no'));
             } else {
                 \Log::error("RenderController: Page with slug '{$slug}' not found for site ID: " . $site->getId()->value());
+                // Try to find all pages for debugging
+                $allPages = $this->pageRepository->findPublishedBySiteId($site->getId());
+                \Log::error("RenderController: Available slugs: " . implode(', ', array_map(fn($p) => $p->getSlug(), $allPages)));
             }
         } else {
+            \Log::info("RenderController: No slug provided, looking for homepage");
             $page = $this->pageRepository->findHomepage($site->getId());
         }
 

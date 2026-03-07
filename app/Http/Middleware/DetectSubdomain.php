@@ -540,6 +540,8 @@ class DetectSubdomain
     private function renderSite(Request $request, object $site, string $baseUrl, bool $isCustomDomain): Response
     {
         \Log::info("DetectSubdomain::renderSite - baseUrl: {$baseUrl}, isCustomDomain: " . ($isCustomDomain ? 'yes' : 'no') . ", path: " . $request->path());
+        \Log::info("DetectSubdomain::renderSite - request URI: " . $request->getRequestUri());
+        \Log::info("DetectSubdomain::renderSite - path info: " . $request->getPathInfo());
         
         // Set the asset URL for Vite assets
         URL::forceRootUrl($baseUrl);
@@ -552,7 +554,11 @@ class DetectSubdomain
         $path = $request->path();
         $path = $path === '/' ? '' : $path;
         
-        \Log::info("DetectSubdomain::renderSite - calling RenderController with subdomain: " . $site->getSubdomain()->value() . ", path: " . ($path ?: 'null'));
+        // Remove leading slash if present
+        $path = ltrim($path, '/');
+        
+        \Log::info("DetectSubdomain::renderSite - cleaned path: '{$path}'");
+        \Log::info("DetectSubdomain::renderSite - calling RenderController with subdomain: " . $site->getSubdomain()->value() . ", slug: " . ($path ?: 'null'));
         
         // Dispatch to the subdomain render controller
         $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
