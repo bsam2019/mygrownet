@@ -122,9 +122,12 @@ class DetectSubdomain
     {
         $path = $request->path();
         
-        // Landing page
+        // Landing page - let route file handle it (it will pass routePrefix)
         if ($path === '/') {
-            return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
+            // Set a flag so the route knows it's from subdomain
+            $request->attributes->set('is_cms_subdomain', true);
+            // Continue to route file which will handle the response
+            return app()->make('router')->dispatch($request);
         }
         
         // Login routes
@@ -218,8 +221,10 @@ class DetectSubdomain
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
-        // Fallback to landing page
-        return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
+        // Fallback to landing page - pass route prefix for subdomain
+        return \Inertia\Inertia::render('CMS/Landing', [
+            'routePrefix' => 'cms.subdomain'
+        ])->toResponse($request);
     }
     
     /**
