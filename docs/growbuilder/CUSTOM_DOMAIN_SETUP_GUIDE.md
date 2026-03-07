@@ -1,6 +1,6 @@
 # GrowBuilder Custom Domain Setup Guide
 
-**Last Updated:** January 30, 2026  
+**Last Updated:** March 7, 2026  
 **Status:** Production Ready
 
 ## Overview
@@ -137,6 +137,16 @@ Add a **CNAME Record**:
 7. Click **Save**
 
 ## Troubleshooting
+
+### Issue: Site redirects to `.mygrownet.com` subdomain
+**Cause:** Application was hardcoding subdomain URLs instead of using the configured app URL
+
+**Solution:**
+This has been fixed in the latest deployment (March 7, 2026). The system now properly uses the custom domain without redirecting. If you still experience this issue:
+1. Clear your browser cache
+2. Try accessing in incognito/private mode
+3. Wait a few minutes for the deployment to fully propagate
+4. Contact support if issue persists
 
 ### Issue: "Domain not found" or "DNS not configured"
 **Cause:** DNS records not set up correctly or not propagated yet
@@ -371,6 +381,11 @@ Expected: 138.197.187.134 (MyGrowNet server)
 **Critical:** Cloudflare proxy MUST be disabled for custom domains to work with GrowBuilder.
 
 ## Changelog
+
+### March 7, 2026
+- Fixed custom domain redirect issue where sites were redirecting to `.mygrownet.com` subdomain
+- Updated RenderController and ManifestController to use `config('app.url')` instead of hardcoded subdomain URLs
+- Custom domains now properly display without redirecting to subdomain
 
 ### January 30, 2026
 - Created comprehensive custom domain setup guide
