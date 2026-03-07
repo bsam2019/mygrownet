@@ -111,7 +111,7 @@ class RenderController extends Controller
                 'theme' => $site->getTheme()?->toArray() ?? [],
                 'logo' => $site->getLogo(),
                 'favicon' => $site->getFavicon(),
-                'url' => "https://{$subdomain}.mygrownet.com",
+                'url' => config('app.url'),
             ],
             'page' => [
                 'id' => $pageModel->id,
@@ -203,7 +203,7 @@ class RenderController extends Controller
             abort(404);
         }
 
-        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        $baseUrl = config('app.url');
         $pages = $this->pageRepository->findPublishedBySiteId($site->getId());
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -272,7 +272,7 @@ class RenderController extends Controller
             abort(404);
         }
 
-        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        $baseUrl = config('app.url');
         
         // If site is not published, disallow all
         if (!$site->isPublished()) {

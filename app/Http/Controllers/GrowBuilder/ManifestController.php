@@ -28,7 +28,7 @@ class ManifestController extends Controller
             abort(404);
         }
 
-        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        $baseUrl = config('app.url');
         $theme = $site->getTheme()?->toArray() ?? [];
         $themeColor = $theme['primaryColor'] ?? '#2563eb';
         $backgroundColor = $theme['backgroundColor'] ?? '#ffffff';
