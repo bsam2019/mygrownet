@@ -15,13 +15,13 @@
           </div>
           <div class="flex items-center gap-2 sm:gap-3">
             <Link
-              :href="route('cms.subdomain.login')"
+              :href="route(loginRoute)"
               class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 transition whitespace-nowrap"
             >
               Sign In
             </Link>
             <Link
-              :href="route('cms.subdomain.register')"
+              :href="route(registerRoute)"
               class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs sm:text-sm font-medium whitespace-nowrap"
             >
               Get Started
@@ -66,7 +66,7 @@
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <Link
-              :href="route('cms.subdomain.register')"
+              :href="route(registerRoute)"
               class="group px-8 py-3.5 bg-white text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-300 text-base font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105 flex items-center justify-center gap-2"
             >
               Start Free Trial
@@ -183,7 +183,7 @@
               </li>
             </ul>
             <Link
-              :href="route('cms.subdomain.register')"
+              :href="route(registerRoute)"
               :class="[
                 'block w-full py-3 rounded-lg text-center font-semibold transition',
                 plan.featured
@@ -208,7 +208,7 @@
           Join hundreds of businesses already using GrowSuite
         </p>
         <Link
-          :href="route('cms.subdomain.register')"
+          :href="route(registerRoute)"
           class="inline-block px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition text-lg font-semibold shadow-lg"
         >
           Start Your Free Trial
@@ -265,6 +265,7 @@
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import {
   BuildingOfficeIcon,
   BriefcaseIcon,
@@ -277,6 +278,15 @@ import {
   BanknotesIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/vue/24/outline'
+
+// Receive route prefix from backend
+const props = defineProps<{
+  routePrefix: string
+}>()
+
+// Generate route names based on prefix from backend
+const loginRoute = computed(() => `${props.routePrefix}.login`)
+const registerRoute = computed(() => `${props.routePrefix}.register`)
 
 const features = [
   {

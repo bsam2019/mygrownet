@@ -34,7 +34,8 @@ To support dynamic route generation with the `route()` helper:
 
 - **Local Development**: Uses `cms.*` route names (e.g., `cms.login`) with `/cms` prefix
 - **Production Subdomain**: Uses `cms.subdomain.*` route names (e.g., `cms.subdomain.login`) without prefix
-- **Landing Page**: Detects hostname and uses appropriate route names dynamically
+- **Backend-Driven**: Backend detects hostname and passes appropriate `routePrefix` prop to frontend
+- **Frontend**: Uses computed properties based on `routePrefix` prop from backend
 
 ### Key Changes
 
@@ -44,13 +45,19 @@ To support dynamic route generation with the `route()` helper:
 - All routes are matched and dispatched directly to controllers without relying on Laravel's route files
 
 **bootstrap/app.php:**
-- Restored loading of `routes/cms-subdomain.php` for route name generation
+- Loads both `routes/cms-subdomain.php` and `routes/cms.php` for route name generation
 - Routes provide names for `route()` helper but actual routing is handled by middleware
 
+**routes/cms-subdomain.php & routes/cms.php:**
+- Both route files pass `routePrefix` prop to views
+- `cms-subdomain.php` passes `'cms.subdomain'` prefix
+- `cms.php` passes `'cms'` prefix
+
 **Landing.vue:**
-- Added hostname detection to use correct route names
-- Uses `cms.subdomain.*` routes on production, `cms.*` routes locally
-- No hardcoded URLs, all routes are dynamic
+- Receives `routePrefix` prop from backend
+- Uses computed properties (`loginRoute`, `registerRoute`) based on prop
+- No hostname detection in frontend, no hardcoded URLs
+- All routes are dynamic and backend-driven
 
 ### Benefits
 
@@ -93,13 +100,18 @@ To test the fix:
 ## Files Modified
 
 - `app/Http/Middleware/DetectSubdomain.php` - Added complete CMS handling
-- `bootstrap/app.php` - Restored cms-subdomain.php route loading for route names
-- `resources/js/pages/CMS/Landing.vue` - Added dynamic route name selection based on hostname
+- `bootstrap/app.php` - Loads both cms-subdomain.php and cms.php route files
+- `routes/cms-subdomain.php` - Passes `routePrefix: 'cms.subdomain'` to views
+- `routes/cms.php` - Passes `routePrefix: 'cms'` to views
+- `resources/js/pages/CMS/Landing.vue` - Uses backend-provided `routePrefix` prop for dynamic routes
 
 ## Changelog
 
 ### March 7, 2026
 - Fixed CMS subdomain routing by handling all routes in middleware
-- Added dynamic route name selection for local vs production environments
+- Implemented backend-driven route prefix solution
+- Backend passes `routePrefix` prop to frontend based on actual domain
+- Frontend uses computed properties for dynamic route generation
+- No hostname detection in Vue components, all logic in backend
 - Deployed to production successfully
 - All CMS routes now work correctly without `/cms` prefix on subdomain
