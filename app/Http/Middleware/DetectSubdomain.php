@@ -59,7 +59,7 @@ class DetectSubdomain
             
             // Handle CMS subdomain - dispatch directly to controller
             if ($subdomain === 'cms') {
-                return $this->handleCmsSubdomain($request);
+                return $this->handleCmsSubdomain($request, $next);
             }
             
             // Skip other reserved subdomains
@@ -118,7 +118,7 @@ class DetectSubdomain
     /**
      * Handle CMS subdomain requests
      */
-    private function handleCmsSubdomain(Request $request): Response
+    private function handleCmsSubdomain(Request $request, Closure $next): Response
     {
         $path = $request->path();
         
