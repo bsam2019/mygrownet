@@ -12,14 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            // CMS subdomain routes - loaded FIRST without DetectSubdomain middleware
-            // This ensures cms.mygrownet.com routes are matched before the middleware runs
-            Route::middleware(['web'])
-                ->withoutMiddleware([\App\Http\Middleware\DetectSubdomain::class])
+            // CMS subdomain routes - specific domain (cms.mygrownet.com)
+            // Loaded FIRST so it matches before wildcard
+            Route::middleware('web')
                 ->group(base_path('routes/cms-subdomain.php'));
             
             // GrowBuilder subdomain routes - wildcard domain ({subdomain}.mygrownet.com)
-            // Loaded after CMS routes, includes DetectSubdomain middleware
+            // Loaded AFTER CMS routes
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));
             Route::middleware('web')
