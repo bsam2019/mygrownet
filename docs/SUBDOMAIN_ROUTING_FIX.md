@@ -14,69 +14,91 @@ The issue was caused by route loading order in Laravel:
 1. `routes/subdomain.php` uses a wildcard domain pattern: `Route::domain('{subdomain}.mygrownet.com')`
 2. This wildcard was matching ALL subdomains, including specific ones like `cms.mygrownet.com`
 3. Laravel matches routes in the order they're loaded in `bootstrap/app.php`
-4. The wildcard route was being loaded BEFORE specific domain routes, so it matched first
+4. The wildcard route was being loaded and matching before specific domain routes could be evaluated
 
 ## Solution
 
-### 1. Route Loading Order
-Changed `bootstrap/app.php` to load specific domain routes BEFORE wildcard routes:
+### Final Implementation: Middleware Handler (Like Geopamu)
+
+After trying route ordering (which didn't work due to middleware execution timing), we implemented the same pattern used by the working `geopamu.mygrownet.com` subdomain:
+
+**Handle CMS subdomain directly in `DetectSubdomain` middleware:**
 
 ```php
-// BEFORE (broken):
-Route::middleware('web')->group(base_path('routes/cms-subdomain.php'));
-Route::middleware('web')->group(base_path('routes/subdomain.php'));
+// In DetectSubdomain::handle()
+if ($subdomain === 'cms') {
+    return $this->handleCmsSubdomain($request);
+}
 
-// AFTER (fixed):
-// Specific domain routes MUST be loaded BEFORE wildcard subdomain routes
-Route::middleware('web')->group(base_path('routes/cms-subdomain.php'));  // cms.mygrownet.com
-Route::middleware('web')->group(base_path('routes/subdomain.php'));      // {subdomain}.mygrownet.com
+// Handler method
+private function handleCmsSubdomain(Request $request): Response
+{
+    $path = $request->path();
+    
+    // Landing page
+    if ($path === '/') {
+        return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
+    }
+    
+    // Auth routes
+    $authController = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+    
+    $result = match(true) {
+        $path === 'login' && $request->isMethod('GET') => $authController->showLogin(),
+        $path === 'login' && $request->isMethod('POST') => $authController->login($request),
+        $path === 'register' && $request->isMethod('GET') => $authController->showRegister(),
+        $path === 'register' && $request->isMethod('POST') => $authController->register($request),
+        $path === 'logout' && $request->isMethod('POST') => $authController->logout($request),
+        default => \Inertia\Inertia::render('CMS/Landing')
+    };
+    
+    // Handle Inertia Response properly
+    if ($result instanceof \Inertia\Response) {
+        return $result->toResponse($request);
+    }
+    
+    return $result instanceof Response ? $result : response($result);
+}
 ```
 
-### 2. Route Name Prefix
-Changed CMS subdomain route names to avoid conflicts:
+### Why This Works
 
-```php
-// routes/cms-subdomain.php
-Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
-    // Routes here create names like: cms.subdomain.landing, cms.subdomain.login, etc.
-});
-```
+1. **Middleware runs before route matching** - The `DetectSubdomain` middleware intercepts the request before Laravel tries to match routes
+2. **Direct controller dispatch** - We dispatch directly to controllers/Inertia pages, bypassing the route matching entirely
+3. **Proven pattern** - This is exactly how `geopamu.mygrownet.com` works successfully
 
-### 3. Reserved Subdomains List
-Added `cms` to the reserved subdomains list in `DetectSubdomain` middleware as a safety measure:
+### Previous Attempts (Didn't Work)
 
-```php
-$reserved = [
-    'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
-    'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-    'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev',
-    'cms' // CMS subdomain for Company Management System
-];
-```
+1. **Route Loading Order** - Tried loading specific domain routes before wildcard routes in `bootstrap/app.php`
+   - Problem: Middleware runs before route matching, so order doesn't matter
+   
+2. **Route Name Prefixes** - Changed CMS subdomain route names to `cms.subdomain.*`
+   - Problem: Routes were never being matched due to middleware interception
 
 ## Implementation
 
 ### Files Modified
 
-1. **bootstrap/app.php**
-   - Reordered route loading to prioritize specific domains
-   - Added comments explaining the importance of order
+1. **app/Http/Middleware/DetectSubdomain.php**
+   - Added `handleCmsSubdomain()` method
+   - Added CMS subdomain check in `handle()` method
+   - Routes requests directly to controllers/Inertia pages
 
-2. **routes/cms-subdomain.php**
-   - Changed route name prefix from `cms.` to `cms.subdomain.`
-   - Prevents conflicts with main CMS routes
+2. **routes/cms-subdomain.php** (kept for reference, not actively used)
+   - Contains route definitions but not used due to middleware handling
 
-3. **app/Http/Middleware/DetectSubdomain.php**
-   - Added `cms` to reserved subdomains list
-   - Ensures middleware skips CMS subdomain
+3. **bootstrap/app.php** (route order changes kept but not critical)
+   - Specific domain routes loaded before wildcard routes
 
 ### Testing
 
 After deployment:
-- ✅ cms.mygrownet.com should load CMS landing page
-- ✅ GrowBuilder sites (e.g., mysite.mygrownet.com) should work correctly
-- ✅ Main site (mygrownet.com) should work normally
-- ✅ Other specific subdomains (geopamu, wowthem) should work
+- ✅ cms.mygrownet.com loads CMS landing page
+- ✅ cms.mygrownet.com/login loads CMS login page
+- ✅ cms.mygrownet.com/register loads CMS register page
+- ✅ GrowBuilder sites (e.g., mysite.mygrownet.com) work correctly
+- ✅ Main site (mygrownet.com) works normally
+- ✅ Other specific subdomains (geopamu, wowthem) work
 
 ## Impact
 
@@ -87,23 +109,29 @@ This fix resolves:
 
 ## Key Learnings
 
-1. **Route Order Matters**: In Laravel, routes are matched in the order they're loaded
-2. **Specific Before Wildcard**: Always load specific domain routes before wildcard patterns
-3. **Route Names**: Use unique prefixes for subdomain routes to avoid conflicts
-4. **Middleware Timing**: Middleware runs before route matching, so can't rely on route detection there
+1. **Middleware Timing**: Middleware runs BEFORE route matching, so route order doesn't help
+2. **Direct Dispatch Pattern**: For specific subdomains, handle them directly in middleware like geopamu
+3. **Route::domain() Limitations**: Wildcard domain routes will always match first in middleware context
+4. **Follow Working Patterns**: When something works (geopamu), copy that pattern exactly
 
 ## Future Considerations
 
 When adding new specific subdomains:
-1. Create a dedicated route file (e.g., `routes/newsubdomain-subdomain.php`)
-2. Load it in `bootstrap/app.php` BEFORE `routes/subdomain.php`
-3. Use a unique route name prefix (e.g., `newsubdomain.subdomain.`)
-4. Add the subdomain to reserved list in `DetectSubdomain` middleware
+1. Add subdomain check in `DetectSubdomain::handle()` method
+2. Create a handler method (e.g., `handleNewSubdomain()`)
+3. Dispatch directly to controllers/Inertia pages
+4. Follow the geopamu/cms pattern exactly
+5. Add the subdomain to reserved list as safety measure
 
 ## Changelog
 
-### March 7, 2026
-- Fixed subdomain routing bug
+### March 7, 2026 - Final Fix
+- Implemented CMS subdomain handler in DetectSubdomain middleware
+- Added handleCmsSubdomain() method following geopamu pattern
+- CMS subdomain now working in production
+
+### March 7, 2026 - Initial Attempts
+- Fixed subdomain routing bug (route order approach - didn't work)
 - Implemented CMS subdomain (cms.mygrownet.com)
 - Reordered route loading in bootstrap/app.php
 - Changed CMS subdomain route name prefix
