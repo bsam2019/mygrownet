@@ -13,14 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             // CMS subdomain routes - specific domain (cms.mygrownet.com)
-            // Loaded FIRST so it matches before wildcard
+            // Loaded FIRST so it matches before any wildcard routes
             Route::middleware('web')
                 ->group(base_path('routes/cms-subdomain.php'));
             
-            // GrowBuilder subdomain routes - wildcard domain ({subdomain}.mygrownet.com)
-            // Loaded AFTER CMS routes
-            Route::middleware('web')
-                ->group(base_path('routes/subdomain.php'));
+            // GrowBuilder subdomain routes - NO LONGER LOADED
+            // All GrowBuilder subdomain handling is now in DetectSubdomain middleware
+            // This prevents wildcard routes from matching reserved subdomains like 'cms'
+            // Route::middleware('web')
+            //     ->group(base_path('routes/subdomain.php'));
             Route::middleware('web')
                 ->group(base_path('routes/employee-portal.php'));
             Route::middleware('web')

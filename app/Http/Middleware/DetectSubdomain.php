@@ -57,12 +57,16 @@ class DetectSubdomain
                 return $this->handleWowthemSubdomain($request);
             }
             
+            // Handle CMS subdomain - dispatch directly to controller
+            if ($subdomain === 'cms') {
+                return $this->handleCmsSubdomain($request);
+            }
+            
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-                'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev',
-                'cms' // CMS subdomain - excluded from DetectSubdomain middleware in bootstrap
+                'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev'
             ];
             
             if (in_array($subdomain, $reserved)) {
@@ -108,6 +112,23 @@ class DetectSubdomain
             }
         }
 
+        return $next($request);
+    }
+    
+    /**
+     * Handle CMS subdomain requests
+     */
+    private function handleCmsSubdomain(Request $request, Closure $next): Response
+    {
+        $path = $request->path();
+        
+        // Landing page
+        if ($path === '/') {
+            return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
+        }
+        
+        // For all other routes, let Laravel's routing handle them
+        // The routes are defined in routes/cms-subdomain.php which is loaded first
         return $next($request);
     }
     
