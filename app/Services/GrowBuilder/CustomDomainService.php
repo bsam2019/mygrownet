@@ -232,6 +232,9 @@ class CustomDomainService
     {
         $rootPath = base_path('public');
         
+        // Detect PHP-FPM version
+        $phpVersion = $this->detectPhpVersion();
+        
         return <<<NGINX
 server {
     listen 80;
@@ -252,7 +255,7 @@ server {
     
     # PHP-FPM
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php{$phpVersion}-fpm.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
@@ -271,6 +274,24 @@ server {
     }
 }
 NGINX;
+    }
+
+    /**
+     * Detect installed PHP version
+     */
+    private function detectPhpVersion(): string
+    {
+        try {
+            $result = Process::run('php -v');
+            if (preg_match('/PHP (\d+\.\d+)/', $result->output(), $matches)) {
+                return $matches[1];
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to detect PHP version: ' . $e->getMessage());
+        }
+        
+        // Default to 8.2 if detection fails
+        return '8.2';
     }
 
     /**
