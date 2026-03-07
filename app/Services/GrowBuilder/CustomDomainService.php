@@ -185,8 +185,8 @@ class CustomDomainService
         $enabledPath = "/etc/nginx/sites-enabled/{$domain}";
 
         try {
-            // Write config file
-            $result = Process::run("sudo tee {$configPath} > /dev/null", input: $config);
+            // Write config file using echo and tee
+            $result = Process::run("echo " . escapeshellarg($config) . " | sudo tee {$configPath} > /dev/null");
             
             if (!$result->successful()) {
                 throw new \Exception('Failed to create nginx config: ' . $result->errorOutput());
