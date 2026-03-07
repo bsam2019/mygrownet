@@ -47,11 +47,6 @@ class DetectSubdomain
                 return $next($request);
             }
             
-            // Handle CMS subdomain - dispatch directly to controller
-            if ($subdomain === 'cms') {
-                return $this->handleCmsSubdomain($request);
-            }
-            
             // Handle geopamu subdomain - dispatch directly to controller
             if ($subdomain === 'geopamu') {
                 return $this->handleGeopamuSubdomain($request);
@@ -68,7 +63,7 @@ class DetectSubdomain
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
                 'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev',
-                'cms' // CMS subdomain for Company Management System
+                'cms' // CMS subdomain - has explicit domain routes in routes/cms-subdomain.php
             ];
             
             if (in_array($subdomain, $reserved)) {
@@ -115,38 +110,6 @@ class DetectSubdomain
         }
 
         return $next($request);
-    }
-    
-    /**
-     * Handle CMS subdomain requests
-     */
-    private function handleCmsSubdomain(Request $request): Response
-    {
-        $path = $request->path();
-        
-        // Landing page
-        if ($path === '/') {
-            return \Inertia\Inertia::render('CMS/Landing')->toResponse($request);
-        }
-        
-        // Auth routes
-        $authController = app()->make(\App\Http\Controllers\CMS\AuthController::class);
-        
-        $result = match(true) {
-            $path === 'login' && $request->isMethod('GET') => $authController->showLogin(),
-            $path === 'login' && $request->isMethod('POST') => $authController->login($request),
-            $path === 'register' && $request->isMethod('GET') => $authController->showRegister(),
-            $path === 'register' && $request->isMethod('POST') => $authController->register($request),
-            $path === 'logout' && $request->isMethod('POST') => $authController->logout($request),
-            default => \Inertia\Inertia::render('CMS/Landing') // Fallback to landing
-        };
-        
-        // Handle Inertia Response properly
-        if ($result instanceof \Inertia\Response) {
-            return $result->toResponse($request);
-        }
-        
-        return $result instanceof Response ? $result : response($result);
     }
     
     /**
