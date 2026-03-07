@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
+            // CMS subdomain routes - loaded for route name generation
+            // The actual routing is handled by DetectSubdomain middleware
+            // but we need these routes loaded for route() helper to work
+            Route::middleware('web')
+                ->group(base_path('routes/cms-subdomain.php'));
+            
             // GrowBuilder subdomain routes - NO LONGER LOADED
             // All subdomain handling (including CMS, geopamu, wowthem, and GrowBuilder sites)
             // is now done in DetectSubdomain middleware to prevent route conflicts
