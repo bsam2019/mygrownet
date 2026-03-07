@@ -117,7 +117,7 @@ class MediaController extends Controller
                         'filename' => basename($result['original']['path']),
                         'original_name' => $file->getClientOriginalName(),
                         'path' => $result['original']['path'],
-                        'disk' => 'public',
+                        'disk' => 's3',
                         'mime_type' => $file->getMimeType(),
                         'size' => $result['original']['size'],
                         'width' => $result['original']['width'],
@@ -181,7 +181,8 @@ class MediaController extends Controller
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
         $path = "{$directory}/{$filename}";
 
-        Storage::disk('public')->put($path, file_get_contents($file));
+        // Upload to S3 (DigitalOcean Spaces)
+        Storage::disk('s3')->put($path, file_get_contents($file), 'public');
 
         $width = null;
         $height = null;
@@ -195,7 +196,7 @@ class MediaController extends Controller
 
                 $thumbPath = "{$directory}/thumbs/{$filename}";
                 $thumb = $image->scale(width: 300);
-                Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
+                Storage::disk('s3')->put($thumbPath, $thumb->toJpeg(80), 'public');
                 $variants['thumbnail'] = $thumbPath;
             } catch (\Exception $e) {
                 // Ignore image processing errors
@@ -207,7 +208,7 @@ class MediaController extends Controller
             'filename' => $filename,
             'original_name' => $file->getClientOriginalName(),
             'path' => $path,
-            'disk' => 'public',
+            'disk' => 's3',
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
             'width' => $width,
@@ -330,8 +331,8 @@ class MediaController extends Controller
             $uniqueFilename = Str::uuid() . '-' . $filename;
             $path = "{$directory}/{$uniqueFilename}";
 
-            // Store the image
-            Storage::disk('public')->put($path, $decodedImage);
+            // Store the image on S3
+            Storage::disk('s3')->put($path, $decodedImage, 'public');
 
             // Get image dimensions
             $width = null;
@@ -346,7 +347,7 @@ class MediaController extends Controller
                 // Create thumbnail
                 $thumbPath = "{$directory}/thumbs/{$uniqueFilename}";
                 $thumb = $image->scale(width: 300);
-                Storage::disk('public')->put($thumbPath, $thumb->toJpeg(80));
+                Storage::disk('s3')->put($thumbPath, $thumb->toJpeg(80), 'public');
                 $variants['thumbnail'] = $thumbPath;
             } catch (\Exception $e) {
                 \Log::warning('Failed to process cropped image dimensions', ['error' => $e->getMessage()]);
@@ -358,7 +359,7 @@ class MediaController extends Controller
                 'filename' => $uniqueFilename,
                 'original_name' => $filename,
                 'path' => $path,
-                'disk' => 'public',
+                'disk' => 's3',
                 'mime_type' => 'image/jpeg',
                 'size' => strlen($decodedImage),
                 'width' => $width,
@@ -430,7 +431,17 @@ class MediaController extends Controller
                 }
             }
             
-            // If not local, try to fetch from URL
+            // Check if it's an S3 URL
+            if (!$logoContent && str_contains($logoUrl, config('filesystems.disks.s3.bucket'))) {
+                // Extract path from S3 URL
+                $parsedUrl = parse_url($logoUrl);
+                $path = ltrim($parsedUrl['path'], '/');
+                if (Storage::disk('s3')->exists($path)) {
+                    $logoContent = Storage::disk('s3')->get($path);
+                }
+            }
+            
+            // If not local or S3, try to fetch from URL
             if (!$logoContent) {
                 $logoContent = @file_get_contents($logoUrl);
             }
@@ -460,9 +471,9 @@ class MediaController extends Controller
                 $resized->cover($config['size'], $config['size']);
                 
                 $faviconPath = "{$directory}/favicons/{$config['name']}";
-                Storage::disk('public')->put($faviconPath, $resized->toPng());
+                Storage::disk('s3')->put($faviconPath, $resized->toPng(), 'public');
                 
-                $faviconPaths[$config['name']] = Storage::disk('public')->url($faviconPath);
+                $faviconPaths[$config['name']] = Storage::disk('s3')->url($faviconPath);
                 
                 // Use 32x32 as the main favicon
                 if ($config['size'] === 32) {
@@ -474,7 +485,7 @@ class MediaController extends Controller
             $favicon32 = clone $image;
             $favicon32->cover(32, 32);
             $icoPath = "{$directory}/favicons/favicon.ico";
-            Storage::disk('public')->put($icoPath, $favicon32->toPng());
+            Storage::disk('s3')->put($icoPath, $favicon32->toPng(), 'public');
 
             // Save favicon variants to site settings
             $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);

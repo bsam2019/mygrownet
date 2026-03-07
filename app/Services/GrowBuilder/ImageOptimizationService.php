@@ -67,25 +67,25 @@ class ImageOptimizationService
         
         // Get file sizes for comparison
         $originalSize = $file->getSize();
-        $optimizedSize = Storage::disk('public')->size($optimizedPath);
-        $webpSize = Storage::disk('public')->size($webpPath);
+        $optimizedSize = Storage::disk('s3')->size($optimizedPath);
+        $webpSize = Storage::disk('s3')->size($webpPath);
         
         return [
             'original' => [
                 'path' => $optimizedPath,
-                'url' => Storage::disk('public')->url($optimizedPath),
+                'url' => Storage::disk('s3')->url($optimizedPath),
                 'size' => $optimizedSize,
                 'width' => $image->width(),
                 'height' => $image->height(),
             ],
             'webp' => [
                 'path' => $webpPath,
-                'url' => Storage::disk('public')->url($webpPath),
+                'url' => Storage::disk('s3')->url($webpPath),
                 'size' => $webpSize,
             ],
             'thumbnail' => [
                 'path' => $thumbnailPath,
-                'url' => Storage::disk('public')->url($thumbnailPath),
+                'url' => Storage::disk('s3')->url($thumbnailPath),
             ],
             'savings' => [
                 'original_size' => $originalSize,
@@ -118,7 +118,7 @@ class ImageOptimizationService
             }
         }
         
-        Storage::disk('public')->put($path, (string) $encoded);
+        Storage::disk('s3')->put($path, (string) $encoded, 'public');
         
         return $path;
     }
@@ -130,7 +130,7 @@ class ImageOptimizationService
     {
         $path = "{$directory}/{$baseName}.webp";
         $encoded = $image->toWebp(self::WEBP_QUALITY);
-        Storage::disk('public')->put($path, (string) $encoded);
+        Storage::disk('s3')->put($path, (string) $encoded, 'public');
         
         return $path;
     }
@@ -146,7 +146,7 @@ class ImageOptimizationService
         $thumbnail->cover(self::THUMBNAIL_WIDTH, self::THUMBNAIL_HEIGHT);
         
         $encoded = $thumbnail->toWebp(self::WEBP_QUALITY);
-        Storage::disk('public')->put($path, (string) $encoded);
+        Storage::disk('s3')->put($path, (string) $encoded, 'public');
         
         return $path;
     }
