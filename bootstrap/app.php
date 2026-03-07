@@ -12,11 +12,21 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            // CMS subdomain routes - loaded for route name generation
-            // The actual routing is handled by DetectSubdomain middleware
-            // but we need these routes loaded for route() helper to work
-            Route::middleware('web')
-                ->group(base_path('routes/cms-subdomain.php'));
+            $host = request()->getHost();
+            
+            // CMS subdomain routes - loaded ONLY for cms.mygrownet.com
+            // Provides route names without /cms prefix
+            if ($host === 'cms.mygrownet.com') {
+                Route::middleware('web')
+                    ->group(base_path('routes/cms-subdomain.php'));
+            }
+            
+            // CMS main site routes - loaded for all OTHER domains
+            // Provides route names with /cms prefix for local development
+            if ($host !== 'cms.mygrownet.com') {
+                Route::middleware('web')
+                    ->group(base_path('routes/cms.php'));
+            }
             
             // GrowBuilder subdomain routes - NO LONGER LOADED
             // All subdomain handling (including CMS, geopamu, wowthem, and GrowBuilder sites)
@@ -47,8 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/quick-invoice.php'));
             Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
-            Route::middleware('web')
-                ->group(base_path('routes/cms.php'));
+            // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')
                 ->group(base_path('routes/venture.php'));
         },
