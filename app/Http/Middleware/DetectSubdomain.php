@@ -122,11 +122,11 @@ class DetectSubdomain
     {
         $path = $request->path();
         
-        // Landing page - let route file handle it (it will pass routePrefix)
+        // Landing page - render directly with routePrefix
         if ($path === '/') {
-            // Don't handle in middleware, let it pass through to route file
-            // The route file will properly render with routePrefix prop
-            return $next($request);
+            return \Inertia\Inertia::render('CMS/Landing', [
+                'routePrefix' => 'cms.subdomain'
+            ])->toResponse($request);
         }
         
         // Login routes
