@@ -14,18 +14,18 @@
             </div>
           </div>
           <div class="flex items-center gap-2 sm:gap-3">
-            <Link
-              :href="route(loginRoute)"
+            <a
+              href="/login"
               class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 transition whitespace-nowrap"
             >
               Sign In
-            </Link>
-            <Link
-              :href="route(registerRoute)"
+            </a>
+            <a
+              href="/register"
               class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-xs sm:text-sm font-medium whitespace-nowrap"
             >
               Get Started
-            </Link>
+            </a>
           </div>
         </div>
       </div>
@@ -65,15 +65,15 @@
 
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-            <Link
-              :href="route(registerRoute)"
+            <a
+              href="/register"
               class="group px-8 py-3.5 bg-white text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-300 text-base font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105 flex items-center justify-center gap-2"
             >
               Start Free Trial
               <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </a>
             <a
               href="#features"
               class="px-8 py-3.5 bg-white/5 backdrop-blur-sm text-white rounded-xl hover:bg-white/10 transition-all duration-300 text-base font-semibold border-2 border-white/20 hover:border-white/40"
@@ -182,8 +182,8 @@
                 <span class="text-gray-600">{{ feature }}</span>
               </li>
             </ul>
-            <Link
-              :href="route(registerRoute)"
+            <a
+              href="/register"
               :class="[
                 'block w-full py-3 rounded-lg text-center font-semibold transition',
                 plan.featured
@@ -192,7 +192,7 @@
               ]"
             >
               Get Started
-            </Link>
+            </a>
           </div>
         </div>
       </div>
@@ -207,12 +207,12 @@
         <p class="text-xl text-blue-100 mb-8">
           Join hundreds of businesses already using GrowSuite
         </p>
-        <Link
-          :href="route(registerRoute)"
+        <a
+          href="/register"
           class="inline-block px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-gray-100 transition text-lg font-semibold shadow-lg"
         >
           Start Your Free Trial
-        </Link>
+        </a>
       </div>
     </section>
 
