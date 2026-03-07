@@ -12,21 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            $host = request()->getHost();
+            // Load BOTH CMS route files with different name prefixes
+            // This ensures Ziggy has all routes available regardless of environment
+            Route::middleware('web')
+                ->group(base_path('routes/cms-subdomain.php'));
             
-            // CMS subdomain routes - loaded ONLY for cms.mygrownet.com
-            // Provides route names without /cms prefix
-            if ($host === 'cms.mygrownet.com') {
-                Route::middleware('web')
-                    ->group(base_path('routes/cms-subdomain.php'));
-            }
-            
-            // CMS main site routes - loaded for all OTHER domains
-            // Provides route names with /cms prefix for local development
-            if ($host !== 'cms.mygrownet.com') {
-                Route::middleware('web')
-                    ->group(base_path('routes/cms.php'));
-            }
+            Route::middleware('web')
+                ->group(base_path('routes/cms.php'));
             
             // GrowBuilder subdomain routes - NO LONGER LOADED
             // All subdomain handling (including CMS, geopamu, wowthem, and GrowBuilder sites)

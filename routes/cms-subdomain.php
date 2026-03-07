@@ -28,7 +28,9 @@ use Inertia\Inertia;
 Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
     // Landing Page
     Route::get('/', function () {
-        return Inertia::render('CMS/Landing');
+        return Inertia::render('CMS/Landing', [
+            'routePrefix' => 'cms.subdomain'
+        ]);
     })->name('landing');
 
     // Offline Page (for PWA)

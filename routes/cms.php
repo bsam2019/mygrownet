@@ -30,7 +30,9 @@ use Inertia\Inertia;
 Route::prefix('cms')->name('cms.')->group(function () {
     // Landing Page
     Route::get('/', function () {
-        return Inertia::render('CMS/Landing');
+        return Inertia::render('CMS/Landing', [
+            'routePrefix' => 'cms'
+        ]);
     })->name('landing');
 
     // Offline Page (for PWA)
