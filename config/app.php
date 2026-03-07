@@ -69,6 +69,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'server_ip' => env('SERVER_IP', '138.197.187.134'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

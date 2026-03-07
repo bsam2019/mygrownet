@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GrowBuilder\AIController;
 use App\Http\Controllers\GrowBuilder\CheckoutController;
+use App\Http\Controllers\GrowBuilder\CustomDomainController;
 use App\Http\Controllers\GrowBuilder\EditorController;
 use App\Http\Controllers\GrowBuilder\FormSubmissionController;
 use App\Http\Controllers\GrowBuilder\ManifestController;
@@ -79,6 +80,12 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::put('/sites/{id}/roles/{roleId}', [SiteController::class, 'updateRole'])->name('sites.roles.update');
     Route::delete('/sites/{id}/roles/{roleId}', [SiteController::class, 'deleteRole'])->name('sites.roles.delete');
     Route::get('/sites/{id}/permissions', [SiteController::class, 'permissions'])->name('sites.permissions');
+
+    // Custom Domain Management
+    Route::post('/sites/{id}/domain/verify', [CustomDomainController::class, 'verifyDNS'])->name('sites.domain.verify');
+    Route::post('/sites/{id}/domain/connect', [CustomDomainController::class, 'connect'])->name('sites.domain.connect');
+    Route::delete('/sites/{id}/domain', [CustomDomainController::class, 'disconnect'])->name('sites.domain.disconnect');
+    Route::get('/sites/{id}/domain/status', [CustomDomainController::class, 'status'])->name('sites.domain.status');
 
     // Editor
     Route::get('/editor/{siteId}', [EditorController::class, 'index'])->name('editor');

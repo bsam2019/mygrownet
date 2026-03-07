@@ -1,9 +1,66 @@
 # GrowBuilder Custom Domain Setup Guide
 
 **Last Updated:** March 7, 2026  
-**Status:** Production Ready
+**Status:** In Development (Automated System)
 
-## Overview
+## IMPORTANT: Automated System
+
+As of March 7, 2026, custom domains are being migrated to a fully automated system. Users will be able to connect custom domains directly from the GrowBuilder dashboard without any manual server configuration.
+
+### How the Automated System Works
+
+1. **User enters domain** in GrowBuilder site settings
+2. **System verifies DNS** is pointing to our server (138.197.187.134)
+3. **Nginx config is auto-generated** and deployed
+4. **SSL certificate is auto-requested** from Let's Encrypt
+5. **Domain goes live** - fully automated, no manual intervention needed
+
+### Current Status
+
+- ✅ Backend service created (`CustomDomainService`)
+- ✅ API endpoints created (`CustomDomainController`)
+- ✅ Routes configured
+- ⏳ Frontend UI (in progress)
+- ⏳ Sudo permissions setup (required for nginx/certbot)
+- ⏳ Testing and deployment
+
+## API Endpoints (Automated System)
+
+### Verify DNS Configuration
+```
+POST /growbuilder/sites/{id}/domain/verify
+Body: { "domain": "example.com" }
+```
+
+Returns DNS status and whether domain is pointing to correct IP.
+
+### Connect Custom Domain
+```
+POST /growbuilder/sites/{id}/domain/connect
+Body: { "domain": "example.com" }
+```
+
+Automatically:
+1. Verifies DNS
+2. Creates nginx config
+3. Requests SSL certificate
+4. Enables domain
+
+### Check Domain Status
+```
+GET /growbuilder/sites/{id}/domain/status
+```
+
+Returns current domain configuration status.
+
+### Disconnect Custom Domain
+```
+DELETE /growbuilder/sites/{id}/domain
+```
+
+Removes nginx config and disconnects domain.
+
+## Overview (Current Manual Process)
 
 GrowBuilder allows users on Starter, Business, and Agency plans to connect their own custom domains (e.g., `mybusiness.com`) to their GrowBuilder sites instead of using the default subdomain (`mybusiness.mygrownet.com`).
 
@@ -382,7 +439,19 @@ Expected: 138.197.187.134 (MyGrowNet server)
 
 ## Changelog
 
-### March 7, 2026
+### March 7, 2026 (v2 - Automated System)
+- Created `CustomDomainService` for automated domain management
+- Created `CustomDomainController` with API endpoints
+- Added routes for domain verification, connection, and status checking
+- System now automatically:
+  - Verifies DNS configuration
+  - Creates nginx virtual host
+  - Requests SSL certificate from Let's Encrypt
+  - Enables HTTPS redirect
+- Users can manage domains from GrowBuilder dashboard (no server access needed)
+- **Status**: Backend complete, frontend UI in progress
+
+### March 7, 2026 (v1)
 - Fixed custom domain redirect issue where sites were redirecting to `.mygrownet.com` subdomain
 - Updated RenderController and ManifestController to use `config('app.url')` instead of hardcoded subdomain URLs
 - Custom domains now properly display without redirecting to subdomain
