@@ -9,12 +9,10 @@ use Illuminate\Support\Facades\DB;
 echo "Cleaning up Flames of Hope custom domain setup...\n\n";
 
 // Clear database
-DB::table('grow_builder_sites')
+DB::table('growbuilder_sites')
     ->where('id', 12)
     ->update([
         'custom_domain' => null,
-        'custom_domain_verified' => false,
-        'ssl_enabled' => false,
     ]);
 
 echo "✅ Database cleared\n";
