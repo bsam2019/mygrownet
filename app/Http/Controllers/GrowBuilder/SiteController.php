@@ -816,6 +816,26 @@ class SiteController extends Controller
     }
 
     /**
+     * Mark onboarding as completed for a site
+     */
+    public function completeOnboarding(Request $request, int $id)
+    {
+        $site = $this->siteRepository->findById(SiteId::fromInt($id));
+
+        if (!$site || $site->getUserId() !== $request->user()->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $siteModel = GrowBuilderSite::find($id);
+        $siteModel->update([
+            'onboarding_completed' => true,
+            'onboarding_completed_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Manage site users (for site owner)
      */
     public function users(Request $request, int $id)

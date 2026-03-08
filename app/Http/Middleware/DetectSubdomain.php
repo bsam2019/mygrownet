@@ -24,8 +24,6 @@ class DetectSubdomain
     {
         $host = $request->getHost();
         
-        \Log::info('DetectSubdomain: Host = ' . $host);
-        
         // First, check if this is a custom domain
         $customDomainSite = $this->findSiteByCustomDomain($host);
         if ($customDomainSite) {
@@ -34,7 +32,6 @@ class DetectSubdomain
         
         // Check if this is a subdomain request (including www.subdomain.mygrownet.com)
         if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
-            \Log::info('DetectSubdomain: Matched subdomain = ' . $matches[1]);
             $subdomain = strtolower($matches[1]);
             
             // Skip main domain variations (but not www.subdomain)
@@ -76,7 +73,6 @@ class DetectSubdomain
             // Check if site exists
             try {
                 $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
-                \Log::info('DetectSubdomain: Site found = ' . ($site ? 'yes' : 'no') . ', published = ' . ($site && $site->isPublished() ? 'yes' : 'no'));
                 
                 if ($site) {
                     // Handle manifest.json request
@@ -94,16 +90,12 @@ class DetectSubdomain
                         try {
                             return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
                         } catch (\Exception $renderException) {
-                            \Log::error('DetectSubdomain: Render exception - ' . $renderException->getMessage());
-                            \Log::error('DetectSubdomain: Stack trace - ' . $renderException->getTraceAsString());
                             // Re-throw to show error instead of falling back to main site
                             throw $renderException;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                \Log::error('DetectSubdomain: Exception - ' . $e->getMessage());
-                \Log::error('DetectSubdomain: Stack trace - ' . $e->getTraceAsString());
                 // If it's a render exception, re-throw it
                 if (isset($renderException)) {
                     throw $e;
@@ -539,10 +531,6 @@ class DetectSubdomain
      */
     private function renderSite(Request $request, object $site, string $baseUrl, bool $isCustomDomain): Response
     {
-        \Log::info("DetectSubdomain::renderSite - baseUrl: {$baseUrl}, isCustomDomain: " . ($isCustomDomain ? 'yes' : 'no') . ", path: " . $request->path());
-        \Log::info("DetectSubdomain::renderSite - request URI: " . $request->getRequestUri());
-        \Log::info("DetectSubdomain::renderSite - path info: " . $request->getPathInfo());
-        
         // Set the asset URL for Vite assets
         URL::forceRootUrl($baseUrl);
         config(['app.url' => $baseUrl]);
@@ -556,9 +544,6 @@ class DetectSubdomain
         
         // Remove leading slash if present
         $path = ltrim($path, '/');
-        
-        \Log::info("DetectSubdomain::renderSite - cleaned path: '{$path}'");
-        \Log::info("DetectSubdomain::renderSite - calling RenderController with subdomain: " . $site->getSubdomain()->value() . ", slug: " . ($path ?: 'null'));
         
         // Dispatch to the subdomain render controller
         $result = app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)

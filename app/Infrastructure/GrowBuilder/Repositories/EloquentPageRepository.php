@@ -43,11 +43,6 @@ class EloquentPageRepository implements PageRepositoryInterface
             ->where('is_homepage', true)
             ->first();
         
-        \Log::info("EloquentPageRepository::findHomepage - Site ID: {$siteId->value()}, Found: " . ($model ? 'yes' : 'no'));
-        if ($model) {
-            \Log::info("EloquentPageRepository::findHomepage - Page ID: {$model->id}, Published: " . ($model->is_published ? 'yes' : 'no'));
-        }
-        
         return $model ? $this->toDomainEntity($model) : null;
     }
 

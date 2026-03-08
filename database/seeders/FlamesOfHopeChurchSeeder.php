@@ -221,6 +221,45 @@ class FlamesOfHopeChurchSeeder extends Seeder
             ]],
         ]);
 
+        // School Page
+        SiteTemplatePage::create([
+            'site_template_id' => $template->id,
+            'title' => 'School',
+            'slug' => 'school',
+            'is_homepage' => false,
+            'show_in_nav' => true,
+            'sort_order' => 6,
+            'content' => ['sections' => [
+                ['type' => 'page-header', 'content' => ['title' => 'Flames of Hope School', 'subtitle' => 'Nurturing Young Minds, Building Strong Foundations', 'backgroundImage' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1920&q=80', 'backgroundColor' => '#7c3aed', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 400]],
+                
+                ['type' => 'about', 'content' => ['layout' => 'image-right', 'title' => 'Quality Christian Education', 'description' => 'Flames of Hope School provides excellent education rooted in biblical values. We offer programs from Baby Class through Grade 7, combining academic excellence with character development and spiritual growth. Our dedicated teachers create a nurturing environment where every child can thrive.', 'image' => 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', 'features' => ['Christ-Centered Learning', 'Qualified Teachers', 'Small Class Sizes', 'Safe Environment']], 'style' => ['backgroundColor' => '#ffffff']],
+                
+                ['type' => 'services', 'content' => ['layout' => 'cards-images', 'title' => 'Our Programs', 'subtitle' => 'Education for every stage', 'items' => [
+                    ['title' => 'Baby Class & Preschool', 'description' => 'Ages 2-5 | Early childhood development through play-based learning, Bible stories, and foundational skills', 'icon' => 'users', 'image' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80'],
+                    ['title' => 'Lower Primary (Grades 1-4)', 'description' => 'Ages 6-10 | Building strong foundations in literacy, numeracy, and biblical principles', 'icon' => 'document', 'image' => 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600&q=80'],
+                    ['title' => 'Upper Primary (Grades 5-7)', 'description' => 'Ages 11-13 | Preparing students for secondary education with academic rigor and character development', 'icon' => 'star', 'image' => 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&q=80'],
+                ]], 'style' => ['backgroundColor' => '#f8fafc']],
+                
+                ['type' => 'features', 'content' => ['layout' => 'grid', 'title' => 'Why Choose Our School', 'subtitle' => 'Excellence in education and faith', 'items' => [
+                    ['title' => 'Biblical Foundation', 'description' => 'Daily devotions, Bible study, and Christian values integrated into all subjects'],
+                    ['title' => 'Academic Excellence', 'description' => 'Rigorous curriculum meeting national standards with proven results'],
+                    ['title' => 'Experienced Teachers', 'description' => 'Qualified, passionate educators committed to each child\'s success'],
+                    ['title' => 'Small Classes', 'description' => 'Low student-teacher ratios ensuring personalized attention'],
+                    ['title' => 'Safe Environment', 'description' => 'Secure campus with caring staff and strong discipline policies'],
+                    ['title' => 'Extracurricular Activities', 'description' => 'Sports, music, drama, and clubs for well-rounded development'],
+                ]], 'style' => ['backgroundColor' => '#ffffff']],
+                
+                ['type' => 'stats', 'content' => ['layout' => 'row', 'items' => [
+                    ['value' => '200+', 'label' => 'Students Enrolled'],
+                    ['value' => '15+', 'label' => 'Qualified Teachers'],
+                    ['value' => '95%', 'label' => 'Pass Rate'],
+                    ['value' => '10', 'label' => 'Years of Excellence'],
+                ]], 'style' => ['backgroundColor' => '#7c3aed', 'textColor' => '#ffffff']],
+                
+                ['type' => 'cta', 'content' => ['layout' => 'centered', 'title' => 'Enroll Your Child Today', 'description' => 'Give your child the gift of quality Christian education. Admissions are now open for the upcoming academic year.', 'buttonText' => 'Apply Now', 'buttonLink' => '/contact', 'secondaryButtonText' => 'Schedule a Tour', 'secondaryButtonLink' => '/contact'], 'style' => ['backgroundColor' => '#f59e0b']],
+            ]],
+        ]);
+
         // Contact Page
         SiteTemplatePage::create([
             'site_template_id' => $template->id,
@@ -228,7 +267,7 @@ class FlamesOfHopeChurchSeeder extends Seeder
             'slug' => 'contact',
             'is_homepage' => false,
             'show_in_nav' => true,
-            'sort_order' => 6,
+            'sort_order' => 7,
             'content' => ['sections' => [
                 ['type' => 'page-header', 'content' => ['title' => 'Get In Touch', 'subtitle' => 'We\'d Love to Hear From You', 'backgroundColor' => '#7c3aed', 'textColor' => '#ffffff'], 'style' => ['minHeight' => 300]],
                 ['type' => 'contact', 'content' => ['layout' => 'side-by-side', 'title' => 'Connect With Us', 'description' => 'Have questions? Need prayer? Want to get involved? Fill out the form and we\'ll get back to you within 24 hours.', 'showForm' => true, 'email' => 'info@flamesofhope.org', 'phone' => '+260 97 123 4567', 'address' => 'Plot 456, Church Road, Lusaka, Zambia', 'hours' => 'Office Hours: Mon-Fri 9:00 AM - 5:00 PM'], 'style' => ['backgroundColor' => '#ffffff']],

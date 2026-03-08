@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
     Route::post('/sites/{id}/publish', [SiteController::class, 'publish'])->name('sites.publish');
     Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
+    Route::post('/sites/{id}/complete-onboarding', [SiteController::class, 'completeOnboarding'])->name('sites.complete-onboarding');
 
     // Site Messages (for site owners)
     Route::get('/sites/{id}/messages', [SiteController::class, 'messages'])->name('sites.messages');

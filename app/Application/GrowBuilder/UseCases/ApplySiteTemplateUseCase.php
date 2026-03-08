@@ -101,6 +101,65 @@ class ApplySiteTemplateUseCase
             $settings = $site->settings ?? [];
             $settings['navigation'] = $settings['navigation'] ?? [];
             $settings['navigation']['navItems'] = $navLinks;
+            
+            // Populate footer with better multi-column layout
+            $settings['footer'] = $settings['footer'] ?? [];
+            
+            // Split nav links into multiple columns for better layout
+            // Column 1: About/Info pages
+            $infoLinks = array_filter($navLinks, fn($link) => 
+                in_array(strtolower($link['label']), ['home', 'about', 'contact'])
+            );
+            
+            // Column 2: Services/Programs
+            $serviceLinks = array_filter($navLinks, fn($link) => 
+                in_array(strtolower($link['label']), ['services', 'ministries', 'programs', 'products'])
+            );
+            
+            // Column 3: Other pages
+            $otherLinks = array_filter($navLinks, fn($link) => 
+                !in_array(strtolower($link['label']), ['home', 'about', 'contact', 'services', 'ministries', 'programs', 'products'])
+            );
+            
+            $columns = [];
+            
+            if (!empty($infoLinks)) {
+                $columns[] = [
+                    'id' => 'footer-col-info',
+                    'title' => 'Quick Links',
+                    'links' => array_values($infoLinks),
+                ];
+            }
+            
+            if (!empty($serviceLinks)) {
+                $columns[] = [
+                    'id' => 'footer-col-services',
+                    'title' => 'Our Services',
+                    'links' => array_values($serviceLinks),
+                ];
+            }
+            
+            if (!empty($otherLinks)) {
+                $columns[] = [
+                    'id' => 'footer-col-other',
+                    'title' => 'More',
+                    'links' => array_values($otherLinks),
+                ];
+            }
+            
+            // If we have few links, just use one column
+            if (count($navLinks) <= 4) {
+                $columns = [
+                    [
+                        'id' => 'footer-col-main',
+                        'title' => 'Quick Links',
+                        'links' => $navLinks,
+                    ],
+                ];
+            }
+            
+            $settings['footer']['columns'] = $columns;
+            
             $site->settings = $settings;
             $site->save();
 

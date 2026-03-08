@@ -1842,25 +1842,42 @@ onMounted(() => {
     // Attach drag-to-upload to the canvas area
     dragUpload.attachGlobal();
     
-    // Check if onboarding should be shown (first-time users for this specific site)
-    const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY.value);
-    if (!onboardingCompleted) {
-        // Small delay to let the editor render first
-        setTimeout(() => {
-            showOnboarding.value = true;
-        }, 500);
+    // Check if onboarding should be shown (check database first, fallback to localStorage)
+    if (!props.site.onboarding_completed) {
+        const onboardingCompleted = localStorage.getItem(ONBOARDING_KEY.value);
+        if (!onboardingCompleted) {
+            // Small delay to let the editor render first
+            setTimeout(() => {
+                showOnboarding.value = true;
+            }, 500);
+        }
     }
 });
 
 // Onboarding handlers
 const closeOnboarding = () => {
     showOnboarding.value = false;
+    // Save to database
+    saveOnboardingCompletion();
 };
 
 const completeOnboarding = () => {
     showOnboarding.value = false;
-    localStorage.setItem(ONBOARDING_KEY.value, 'true');
+    // Save to database
+    saveOnboardingCompletion();
     toast.success('Tutorial complete! Start building your site.');
+};
+
+const saveOnboardingCompletion = async () => {
+    // Save to localStorage as backup
+    localStorage.setItem(ONBOARDING_KEY.value, 'true');
+    
+    // Save to database
+    try {
+        await axios.post(route('growbuilder.sites.complete-onboarding', props.site.id));
+    } catch (error) {
+        console.error('Failed to save onboarding completion:', error);
+    }
 };
 
 // Allow restarting the tutorial from help menu
