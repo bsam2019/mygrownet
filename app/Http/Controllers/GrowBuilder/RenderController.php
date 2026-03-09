@@ -22,27 +22,14 @@ class RenderController extends Controller
 
     public function render(Request $request, string $subdomain, ?string $slug = null)
     {
-        // Debug logging
-        file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-            date('Y-m-d H:i:s') . " - RenderController::render - Subdomain: {$subdomain}, Slug: {$slug}\n", 
-            FILE_APPEND
-        );
-        
         try {
             $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
         } catch (\Exception $e) {
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - RenderController: Exception finding site - " . $e->getMessage() . "\n", 
-                FILE_APPEND
-            );
+            \Log::error("RenderController: Exception finding site - " . $e->getMessage());
             abort(404);
         }
 
         if (!$site || !$site->isPublished()) {
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - RenderController: Site not found or not published\n", 
-                FILE_APPEND
-            );
             abort(404);
         }
 
@@ -54,23 +41,11 @@ class RenderController extends Controller
         // Get page
         if ($slug) {
             $page = $this->pageRepository->findBySiteIdAndSlug($site->getId(), $slug);
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - RenderController: Looking for page with slug '{$slug}' - Found: " . ($page ? 'yes' : 'no') . "\n", 
-                FILE_APPEND
-            );
         } else {
             $page = $this->pageRepository->findHomepage($site->getId());
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - RenderController: Looking for homepage - Found: " . ($page ? 'yes' : 'no') . "\n", 
-                FILE_APPEND
-            );
         }
 
         if (!$page || !$page->isPublished()) {
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - RenderController: Page not found or not published - Returning 404\n", 
-                FILE_APPEND
-            );
             abort(404);
         }
 

@@ -23,12 +23,19 @@ ssh sammy@138.197.187.134
 
 ## Recent Work
 
+### Custom Domain 404 Fix (March 9, 2026)
+- **Status:** FIXED ✅
+- **Issue:** Custom domain pages returning 404 for services, ministries, visit, school
+- **Root Cause:** DetectSubdomain middleware wasn't registered in global middleware, so it wasn't running before route matching
+- **Solution:** Added DetectSubdomain to global $middleware array in app/Http/Kernel.php
+- **Test Domain:** flamesofhopechurch.com - ALL pages now working
+- **Site ID:** 15 (Flames of Hope)
+
 ### Custom Domain Setup (March 9, 2026)
 - **Status:** Fixed and deployed
 - **Issue:** Frontend was using wrong route names
 - **Solution:** Updated Settings.vue to use `growbuilder.sites.domain.connect` instead of `growbuilder.custom-domain.connect`
 - **Test Domain:** flamesofhopechurch.com (DNS correctly pointing to 138.197.187.134)
-- **Site ID:** 15 (Flames of Hope)
 
 ### Static Export Feature (March 9, 2026)
 - **Status:** Implemented, not yet tested
@@ -61,14 +68,16 @@ POST /growbuilder/sites/{id}/export
 - Custom domain setup requires sudo permissions (already configured)
 - DNS must point to 138.197.187.134 before connecting domain
 - Static export only works for Business+ tier users
+- DetectSubdomain middleware MUST be in global middleware to intercept custom domain requests before routing
 
 ## Common Issues
 
-### Custom Domain Not Connecting
+### Custom Domain Not Working
 1. Check DNS: `nslookup domain.com` should return 138.197.187.134
-2. Check route names in frontend match backend
+2. Check if DetectSubdomain is in global middleware (app/Http/Kernel.php)
 3. Check sudo permissions: `deployment/setup-sudo-permissions.sh`
 4. Check logs: `tail -100 storage/logs/laravel.log`
+5. Clear caches: `php artisan cache:clear && php artisan route:clear && php artisan config:clear`
 
 ### Assets Not Building
 - Build locally takes 5+ minutes
@@ -77,8 +86,11 @@ POST /growbuilder/sites/{id}/export
 
 ## Testing Commands
 ```bash
-# Test custom domain setup
-ssh sammy@138.197.187.134 "cd /var/www/mygrownet.com && php test-domain-connection.php"
+# Test custom domain pages
+ssh sammy@138.197.187.134 "cd /var/www/mygrownet.com && php test-live-requests.php"
+
+# Test subdomain pages
+ssh sammy@138.197.187.134 "cd /var/www/mygrownet.com && php test-subdomain-requests.php"
 
 # Check DNS
 nslookup flamesofhopechurch.com
@@ -88,6 +100,6 @@ ssh sammy@138.197.187.134 "cd /var/www/mygrownet.com && tail -50 storage/logs/la
 ```
 
 ## Next Steps
-1. Test custom domain connection from frontend
-2. Test static export feature
-3. Document any issues found
+1. Test static export feature
+2. Document any issues found
+3. Clean up test files from repository

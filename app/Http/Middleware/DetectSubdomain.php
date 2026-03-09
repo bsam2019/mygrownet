@@ -23,21 +23,10 @@ class DetectSubdomain
     public function handle(Request $request, Closure $next): Response
     {
         $host = $request->getHost();
-        $path = $request->path();
-        
-        // Debug logging to custom file
-        file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-            date('Y-m-d H:i:s') . " - DetectSubdomain::handle - Host: {$host}, Path: {$path}\n", 
-            FILE_APPEND
-        );
         
         // First, check if this is a custom domain
         $customDomainSite = $this->findSiteByCustomDomain($host);
         if ($customDomainSite) {
-            file_put_contents(storage_path('logs/custom-domain-debug.log'), 
-                date('Y-m-d H:i:s') . " - Custom domain site found: " . $customDomainSite->getId()->value() . "\n", 
-                FILE_APPEND
-            );
             return $this->renderSite($request, $customDomainSite, $host, true);
         }
         
