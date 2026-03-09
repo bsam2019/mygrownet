@@ -139,6 +139,10 @@ const activeLeftTab = ref<'pages' | 'widgets' | 'inspector'>('widgets');
 const showNavSettings = ref(false);
 const showFooterSettings = ref(false);
 
+// Mobile Detection
+const isMobileDevice = ref(false);
+const showMobileWarning = ref(false); // Disabled - editor now works on mobile
+
 // Full-Width Preview Mode
 const isFullPreview = ref(false);
 const isIframePreview = ref(false); // True = iframe (interactive), False = component preview
@@ -442,6 +446,8 @@ const handleRedo = () => {
 // ============================================
 // Watchers
 // ============================================
+// Watchers
+// ============================================
 watch(() => props.currentPage, (newPage) => {
     if (newPage) {
         activePage.value = newPage;
@@ -455,6 +461,17 @@ watch(() => props.pages, () => {
         initializeSiteNavigation();
     }
 }, { deep: true });
+
+// Watch previewMode and update previewWidth accordingly
+watch(previewMode, (newMode) => {
+    if (newMode === 'mobile') {
+        previewWidth.value = 375;
+    } else if (newMode === 'tablet') {
+        previewWidth.value = 768;
+    } else if (newMode === 'desktop') {
+        previewWidth.value = 1024;
+    }
+});
 
 // ============================================
 // Computed
@@ -470,19 +487,8 @@ const selectedSectionType = computed(() => {
 });
 
 const canvasWidth = computed(() => {
-    if (isFullPreview.value) {
-        return `max-w-[${previewWidth.value}px]`;
-    }
-    // Responsive canvas width based on preview mode
-    // When sidebar is collapsed, allow more width
-    if (previewMode.value === 'mobile') {
-        return 'max-w-sm';
-    } else if (previewMode.value === 'tablet') {
-        return 'max-w-2xl';
-    } else {
-        // Desktop mode - use larger width, will be constrained by available space
-        return leftSidebarOpen.value ? 'max-w-5xl' : 'max-w-6xl';
-    }
+    // Always use the previewWidth value for consistent behavior
+    return `max-w-[${previewWidth.value}px]`;
 });
 
 // Canvas zoom transform
@@ -493,7 +499,7 @@ const canvasTransform = computed(() => {
 
 const canvasTransformOrigin = computed(() => 'top center');
 
-const isMobilePreview = computed(() => previewMode.value === 'mobile' || previewWidth.value < 640);
+const isMobilePreview = computed(() => previewWidth.value < 768);
 
 // Mobile preview responsive helpers
 const textSize = computed(() => isMobilePreview.value ? { h1: 'text-2xl', h2: 'text-xl', h3: 'text-lg', p: 'text-sm' } : { h1: 'text-4xl', h2: 'text-3xl', h3: 'text-xl', p: 'text-base' });
@@ -1802,6 +1808,14 @@ const togglePreviewMode = async () => {
 
 const setPreviewBreakpoint = (width: number) => {
     previewWidth.value = width;
+    // Update preview mode based on width
+    if (width <= 375) {
+        previewMode.value = 'mobile';
+    } else if (width <= 768) {
+        previewMode.value = 'tablet';
+    } else {
+        previewMode.value = 'desktop';
+    }
 };
 
 // Computed preview URL
@@ -1838,6 +1852,23 @@ const stopPreviewResize = () => {
 };
 
 onMounted(() => {
+    // Detect mobile device and set preview mode accordingly
+    const checkMobile = () => {
+        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+        const isSmallScreen = window.innerWidth < 768;
+        return isMobile || isSmallScreen;
+    };
+    
+    isMobileDevice.value = checkMobile();
+    
+    // Auto-set preview mode to mobile on mobile devices
+    if (isMobileDevice.value) {
+        previewMode.value = 'mobile';
+        previewWidth.value = 375; // iPhone size
+        leftSidebarOpen.value = false; // Start with sidebar closed on mobile
+    }
+    
     window.addEventListener('keydown', handleKeyboardShortcuts);
     // Attach drag-to-upload to the canvas area
     dragUpload.attachGlobal();
@@ -1896,56 +1927,62 @@ onUnmounted(() => {
 
     <!-- Full Preview Mode Overlay - Fullscreen like Template Preview -->
     <div v-if="isFullPreview" class="fixed inset-0 z-50 bg-gray-900 overflow-hidden">
-        <!-- Fullscreen iframe -->
-        <div class="w-full h-full overflow-hidden preview-frame">
-            <iframe
-                v-if="isIframePreview"
-                :key="iframeKey"
-                :src="site.url"
-                class="w-full h-full border-0"
-                title="Site Preview"
-            ></iframe>
-            
-            <!-- Static Preview (component-based) - scrollable -->
+        <!-- Fullscreen iframe or preview -->
+        <div class="w-full h-full overflow-hidden preview-frame flex items-center justify-center">
+            <!-- Responsive container for iframe/preview -->
             <div 
-                v-else
-                class="w-full h-full overflow-y-auto bg-white"
+                :style="{ width: previewWidth + 'px', maxWidth: '100%' }"
+                class="h-full bg-white transition-all duration-300"
             >
-                <NavigationRenderer
-                    :navigation="siteNavigation"
-                    :siteName="site.name"
-                    :isMobile="previewWidth < 768"
-                    :isEditing="false"
-                />
-                <div v-for="section in sections" :key="section.id">
-                    <SectionRenderer
-                        :section="section"
-                        :isMobile="previewWidth < 640"
-                        :textSize="previewWidth < 640 ? { h1: 'text-2xl', h2: 'text-xl', h3: 'text-lg', p: 'text-sm' } : { h1: 'text-4xl', h2: 'text-3xl', h3: 'text-xl', p: 'text-base' }"
-                        :spacing="previewWidth < 640 ? { section: 'py-10 px-4', gap: 'gap-4' } : { section: 'py-16 px-6', gap: 'gap-6' }"
-                        :gridCols2="previewWidth < 640 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
-                        :gridCols3="previewWidth < 640 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'"
-                        :gridCols4="previewWidth < 640 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'"
-                        :getSectionContentTransform="() => ''"
-                        :getElementTransform="() => ''"
-                        :hasElementOffset="() => false"
-                        :isEditing="() => false"
-                        :editingValue="''"
-                        :startInlineEdit="() => {}"
-                        :saveInlineEdit="() => {}"
-                        :handleInlineKeydown="() => {}"
-                        :startElementDrag="() => {}"
-                        :resetAllElementOffsets="() => {}"
-                        :selectedSectionId="null"
-                        :draggingElement="null"
+                <iframe
+                    v-if="isIframePreview"
+                    :key="iframeKey"
+                    :src="site.url"
+                    class="w-full h-full border-0"
+                    title="Site Preview"
+                ></iframe>
+                
+                <!-- Static Preview (component-based) - scrollable -->
+                <div 
+                    v-else
+                    class="w-full h-full overflow-y-auto bg-white"
+                >
+                    <NavigationRenderer
+                        :navigation="siteNavigation"
+                        :siteName="site.name"
+                        :isMobile="isMobilePreview"
+                        :isEditing="false"
+                    />
+                    <div v-for="section in sections" :key="section.id">
+                        <SectionRenderer
+                            :section="section"
+                            :isMobile="isMobilePreview"
+                            :textSize="textSize"
+                            :spacing="spacing"
+                            :gridCols2="gridCols2"
+                            :gridCols3="gridCols3"
+                            :gridCols4="gridCols4"
+                            :getSectionContentTransform="() => ''"
+                            :getElementTransform="() => ''"
+                            :hasElementOffset="() => false"
+                            :isEditing="() => false"
+                            :editingValue="''"
+                            :startInlineEdit="() => {}"
+                            :saveInlineEdit="() => {}"
+                            :handleInlineKeydown="() => {}"
+                            :startElementDrag="() => {}"
+                            :resetAllElementOffsets="() => {}"
+                            :selectedSectionId="null"
+                            :draggingElement="null"
+                        />
+                    </div>
+                    <FooterRenderer
+                        :footer="siteFooter"
+                        :siteName="site.name"
+                        :logoText="siteNavigation.logoText"
+                        :isEditing="false"
                     />
                 </div>
-                <FooterRenderer
-                    :footer="siteFooter"
-                    :siteName="site.name"
-                    :logoText="siteNavigation.logoText"
-                    :isEditing="false"
-                />
             </div>
         </div>
 
@@ -2072,6 +2109,40 @@ onUnmounted(() => {
         </div>
     </Teleport>
 
+    <!-- Mobile Device Warning Modal -->
+    <Teleport to="body">
+        <div v-if="showMobileWarning" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+                        <DevicePhoneMobileIcon class="w-8 h-8 text-amber-600" aria-hidden="true" />
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 text-center mb-3">Desktop Recommended</h3>
+                <p class="text-gray-600 text-center mb-6">
+                    The GrowBuilder editor works best on desktop devices with a larger screen. For the best editing experience, please use a laptop or desktop computer.
+                </p>
+                <div class="space-y-3">
+                    <button
+                        @click="showMobileWarning = false"
+                        class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Continue Anyway
+                    </button>
+                    <button
+                        @click="router.visit(route('growbuilder.index'))"
+                        class="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 text-center mt-4">
+                    💡 Tip: Your published site is fully mobile-responsive and looks great on all devices!
+                </p>
+            </div>
+        </div>
+    </Teleport>
+
     <div :class="['h-screen flex flex-col overflow-hidden transition-colors duration-200', darkMode ? 'bg-gray-900' : 'bg-gray-100']">
         <!-- Top Toolbar -->
         <EditorToolbar
@@ -2090,6 +2161,8 @@ onUnmounted(() => {
             :darkMode="darkMode"
             :sections="sections"
             @update:darkMode="darkMode = $event"
+            @update:previewMode="previewMode = $event"
+            @update:zoom="canvasZoom = $event"
             @preview="toggleFullPreview"
             @save="savePage"
             @publish="publishSite"
@@ -2103,14 +2176,30 @@ onUnmounted(() => {
         />
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex overflow-hidden">
-            <!-- Left Sidebar - Unified -->
+        <div class="flex-1 flex overflow-hidden relative">
+            <!-- Left Sidebar - Unified (Mobile: Full-width overlay, Desktop: Fixed sidebar) -->
             <aside :class="[
-                'flex flex-col transition-all duration-300 flex-shrink-0 border-r',
-                leftSidebarOpen ? 'w-72' : 'w-0',
-                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                'flex flex-col transition-all duration-300 flex-shrink-0 border-r z-30',
+                // Mobile: Full-width overlay when open, hidden when closed
+                'fixed md:relative inset-y-0 left-0',
+                leftSidebarOpen ? 'w-full md:w-72' : 'w-0',
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+                // Add top offset for mobile to account for toolbar
+                'top-14 md:top-0'
             ]">
                 <div v-if="leftSidebarOpen" class="flex flex-col h-full overflow-hidden">
+                    <!-- Mobile: Close button -->
+                    <div class="md:hidden flex items-center justify-between p-3 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
+                        <h3 :class="['font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Editor Tools</h3>
+                        <button
+                            @click="leftSidebarOpen = false"
+                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                            aria-label="Close sidebar"
+                        >
+                            <XMarkIcon class="w-5 h-5" :class="darkMode ? 'text-gray-400' : 'text-gray-600'" aria-hidden="true" />
+                        </button>
+                    </div>
+                    
                     <!-- Sidebar Tabs - 3 tabs now -->
                     <div :class="['flex border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
                         <button
@@ -2124,7 +2213,7 @@ onUnmounted(() => {
                             ]"
                         >
                             <Squares2X2Icon class="w-4 h-4" aria-hidden="true" />
-                            <span class="hidden sm:inline">Add</span>
+                            <span>Add</span>
                         </button>
                         <button
                             @click="activeLeftTab = 'pages'"
@@ -2137,7 +2226,7 @@ onUnmounted(() => {
                             ]"
                         >
                             <DocumentIcon class="w-4 h-4" aria-hidden="true" />
-                            <span class="hidden sm:inline">Pages</span>
+                            <span>Pages</span>
                         </button>
                         <button
                             @click="activeLeftTab = 'inspector'"
@@ -2150,7 +2239,7 @@ onUnmounted(() => {
                             ]"
                         >
                             <Cog6ToothIcon class="w-4 h-4" aria-hidden="true" />
-                            <span class="hidden sm:inline">Edit</span>
+                            <span>Edit</span>
                             <!-- Indicator dot when something is selected -->
                             <span 
                                 v-if="selectedSection || showNavSettings || showFooterSettings"
@@ -2274,19 +2363,36 @@ onUnmounted(() => {
                 </div>
             </aside>
 
-            <!-- Toggle Left Sidebar -->
+            <!-- Mobile Backdrop Overlay -->
+            <div
+                v-if="leftSidebarOpen"
+                @click="leftSidebarOpen = false"
+                class="fixed inset-0 bg-black/50 z-20 md:hidden top-14"
+            ></div>
+
+            <!-- Toggle Left Sidebar (Hidden on mobile) -->
             <button
                 @click="leftSidebarOpen = !leftSidebarOpen"
-                class="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-gray-50 transition-colors"
+                class="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white border border-gray-200 rounded-r-lg shadow-sm hover:bg-gray-50 transition-colors"
                 :class="leftSidebarOpen ? 'ml-72' : 'ml-0'"
                 aria-label="Toggle sidebar"
             >
                 <ChevronLeftIcon :class="['w-3.5 h-3.5 text-gray-500 transition-transform', leftSidebarOpen ? '' : 'rotate-180']" aria-hidden="true" />
             </button>
 
+            <!-- Mobile Floating Button to Open Sidebar -->
+            <button
+                v-if="!leftSidebarOpen"
+                @click="leftSidebarOpen = true"
+                class="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                aria-label="Open editor tools"
+            >
+                <Squares2X2Icon class="w-6 h-6" aria-hidden="true" />
+            </button>
+
 
             <!-- Canvas Area -->
-            <main :class="['flex-1 overflow-auto p-6 relative', darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']">
+            <main :class="['flex-1 overflow-auto p-2 md:p-6 relative', darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']">
                 <!-- Drag-to-Upload Overlay -->
                 <Transition
                     enter-active-class="transition-opacity duration-200"

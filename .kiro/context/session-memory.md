@@ -23,6 +23,17 @@ ssh sammy@138.197.187.134
 
 ## Recent Work
 
+### Custom Domain Favicon Fix (March 9, 2026)
+- **Status:** FIXED ✅
+- **Issue:** Custom domain showing MyGrowNet favicon instead of site's favicon
+- **Root Cause:** app.blade.php wasn't detecting custom domains, only subdomains
+- **Solution:** Added custom domain detection logic to app.blade.php
+- **Changes:**
+  - Added `$isCustomDomain` check for non-mygrownet.com domains
+  - Updated condition to include custom domains: `if ($isGrowBuilderSite || $isGrowBuilderSubdomain || $isCustomDomain)`
+  - Updated manifest path logic to handle custom domains
+- **Test Domain:** flamesofhopechurch.com - should now show site's favicon
+
 ### Custom Domain 404 Fix (March 9, 2026)
 - **Status:** FIXED ✅
 - **Issue:** Custom domain pages returning 404 for services, ministries, visit, school
