@@ -18,8 +18,13 @@
             $isGrowBuilderSubdomain = preg_match('/^([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches) 
                 && !in_array(strtolower($matches[1] ?? ''), ['www', 'mygrownet', 'api', 'admin', 'mail', 'staging', 'dev']);
             
+            // Detect custom domain (not mygrownet.com and not localhost)
+            $isCustomDomain = !str_contains($host, 'mygrownet.com') 
+                && !str_contains($host, 'localhost') 
+                && !str_contains($host, '127.0.0.1');
+            
             // Module-specific PWA configuration
-            if ($isGrowBuilderSite || $isGrowBuilderSubdomain) {
+            if ($isGrowBuilderSite || $isGrowBuilderSubdomain || $isCustomDomain) {
                 // GrowBuilder sites - no splash screen, use site's own branding
                 // Get site favicon from Inertia page props if available
                 $siteFavicon = $page['props']['site']['favicon'] ?? null;
@@ -30,8 +35,8 @@
                 
                 $themeColor = $siteTheme['primaryColor'] ?? '#2563eb';
                 $appTitle = $siteName;
-                // Use /manifest.json when on subdomain, or /sites/{subdomain}/manifest.json for preview
-                $manifestPath = $isGrowBuilderSubdomain ? '/manifest.json' : ($siteSubdomain ? "/sites/{$siteSubdomain}/manifest.json" : '/manifest.json');
+                // Use /manifest.json when on subdomain or custom domain, or /sites/{subdomain}/manifest.json for preview
+                $manifestPath = ($isGrowBuilderSubdomain || $isCustomDomain) ? '/manifest.json' : ($siteSubdomain ? "/sites/{$siteSubdomain}/manifest.json" : '/manifest.json');
                 // Use site favicon, then logo, then default
                 $faviconPath = $siteFavicon ?: ($siteLogo ?: asset('logo.png'));
                 $iconPath = $faviconPath;
