@@ -14,7 +14,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        // ...existing middleware...
+        \App\Http\Middleware\DetectSubdomain::class,
     ];
 
     /**

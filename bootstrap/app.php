@@ -91,8 +91,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Add Inertia and cache prevention to web middleware group
-        $middleware->web(append: [
+        // CRITICAL: DetectSubdomain must be FIRST to intercept custom domain requests
+        $middleware->web(prepend: [
             \App\Http\Middleware\DetectSubdomain::class,
+        ]);
+        
+        $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\PreventBrowserCaching::class,
             \App\Http\Middleware\RefreshCsrfToken::class,

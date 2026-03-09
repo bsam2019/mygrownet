@@ -1539,3 +1539,51 @@ Route::middleware(['web'])->prefix('wedding-admin')->name('wedding.admin.')->gro
     Route::put('/{slug}/guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'updateGuest'])->name('guests.update');
     Route::delete('/{slug}/guests/{id}', [App\Http\Controllers\Wedding\WeddingAdminController::class, 'deleteGuest'])->name('guests.delete');
 });
+
+
+// Fallback route for GrowBuilder custom domains
+// This catches any unmatched routes and checks if they should be handled by GrowBuilder
+// MUST be the last route defined
+Route::fallback(function (Illuminate\Http\Request $request) {
+    $host = $request->getHost();
+    $path = $request->path();
+    
+    \Log::info('Fallback route hit', [
+        'host' => $host,
+        'path' => $path,
+        'method' => $request->method(),
+    ]);
+    
+    // Only handle if this is a custom domain (not mygrownet.com)
+    if (!str_ends_with($host, 'mygrownet.com')) {
+        // Check if this is a GrowBuilder custom domain
+        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('custom_domain', $host)
+            ->orWhere('custom_domain', 'www.' . $host)
+            ->where('status', 'published')
+            ->first();
+        
+        \Log::info('Custom domain check', [
+            'host' => $host,
+            'site_found' => $site !== null,
+            'site_id' => $site?->id,
+        ]);
+        
+        if ($site) {
+            // This is a GrowBuilder custom domain - render the page
+            $subdomain = $site->subdomain;
+            $path = ltrim($request->path(), '/');
+            
+            \Log::info('Rendering GrowBuilder page via fallback', [
+                'subdomain' => $subdomain,
+                'path' => $path,
+            ]);
+            
+            return app()->make(\App\Http\Controllers\GrowBuilder\RenderController::class)
+                ->render($request, $subdomain, $path ?: null);
+        }
+    }
+    
+    // Not a GrowBuilder custom domain - return 404
+    \Log::info('Fallback returning 404');
+    abort(404);
+});
