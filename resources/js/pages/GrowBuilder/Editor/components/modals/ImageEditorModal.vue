@@ -1,21 +1,6 @@
 <script setup lang="ts">
-/**
- * Image Editor Modal - Rewritten with clean cropping logic
- */
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import {
-    XMarkIcon,
-    ArrowPathIcon,
-    CheckIcon,
-    LockClosedIcon,
-} from '@heroicons/vue/24/outline';
-
-interface CropBox {
-    left: number;   // percentage from left edge
-    top: number;    // percentage from top edge
-    right: number;  // percentage from right edge
-    bottom: number; // percentage from bottom edge
-}
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
+import { XMarkIcon, ArrowPathIcon, CheckIcon, LockClosedIcon } from '@heroicons/vue/24/outline';
 
 interface ImageAdjustments {
     brightness: number;
@@ -36,372 +21,289 @@ const emit = defineEmits<{
     (e: 'save', dataUrl: string): void;
 }>();
 
-// Refs
+// ─── Refs ────────────────────────────────────────────────────────────────────
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const imageRef = ref<HTMLImageElement | null>(null);
-const containerRef = ref<HTMLDivElement | null>(null);
+const imgEl     = ref<HTMLImageElement  | null>(null); // rendered <img> — our coordinate origin
 
-// State
-const isLoading = ref(true);
+// ─── Image state ─────────────────────────────────────────────────────────────
+const isLoading    = ref(true);
+const naturalW     = ref(0);
+const naturalH     = ref(0);
+const loadedImg    = ref<HTMLImageElement | null>(null);
+
+// ─── Crop state  (display pixels, relative to imgEl) ─────────────────────────
+const crop = ref({ x: 0, y: 0, w: 0, h: 0 });
+
+// ─── Drag state ───────────────────────────────────────────────────────────────
+type Handle = 'move' | 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
+const dragging   = ref(false);
+const dragHandle = ref<Handle>('move');
+// Everything we need for the drag captured at mousedown — nothing changes mid-drag
+const dragStart  = ref({ mx: 0, my: 0, x: 0, y: 0, w: 0, h: 0, imgW: 0, imgH: 0 });
+
+// ─── UI state ─────────────────────────────────────────────────────────────────
 const activeTab = ref<'crop' | 'adjust' | 'export'>('crop');
-const imageNaturalWidth = ref(0);
-const imageNaturalHeight = ref(0);
-
-// Crop box using edges (easier to reason about)
-// Values are percentages: 0 = edge of image, 100 = opposite edge
-const cropBox = ref<CropBox>({ left: 0, top: 0, right: 0, bottom: 0 });
-
-// Interaction state
-const interactionMode = ref<'none' | 'drag' | 'resize'>('none');
-const activeHandle = ref<string | null>(null);
-const startMouse = ref({ x: 0, y: 0 });
-const startCrop = ref<CropBox>({ left: 0, top: 0, right: 0, bottom: 0 });
-
-// Image adjustments
-const adjustments = ref<ImageAdjustments>({
-    brightness: 100,
-    contrast: 100,
-    saturation: 100,
-    blur: 0,
-});
-
-// Export settings
+const adj = ref<ImageAdjustments>({ brightness: 100, contrast: 100, saturation: 100, blur: 0 });
 const exportQuality = ref(90);
-const exportScale = ref(100);
-const exportFormat = ref<'jpeg' | 'png' | 'webp'>('jpeg');
+const exportScale   = ref(100);
+const exportFormat  = ref<'jpeg' | 'png' | 'webp'>('jpeg');
 
-// Aspect ratio
+// ─── Aspect ratio ─────────────────────────────────────────────────────────────
 const aspectRatios = [
     { label: 'Free', value: null },
-    { label: '1:1', value: 1 },
-    { label: '16:9', value: 16/9 },
-    { label: '4:3', value: 4/3 },
-    { label: '3:2', value: 3/2 },
+    { label: '1:1',  value: 1 },
+    { label: '16:9', value: 16 / 9 },
+    { label: '4:3',  value: 4 / 3 },
+    { label: '3:2',  value: 3 / 2 },
 ];
-const selectedRatio = ref<number | null>(props.aspectRatio || null);
-const isRatioLocked = computed(() => props.forceAspectRatio && props.aspectRatio);
-const forcedRatioLabel = computed(() => {
-    if (!props.aspectRatio) return '';
-    const found = aspectRatios.find(r => r.value === props.aspectRatio);
-    return found ? found.label : `${props.aspectRatio}:1`;
-});
+const selectedRatio = ref<number | null>(props.aspectRatio ?? null);
+const isRatioLocked = computed(() => !!(props.forceAspectRatio && props.aspectRatio));
 
-// Computed: crop area as x, y, width, height percentages
-const cropArea = computed(() => ({
-    x: cropBox.value.left,
-    y: cropBox.value.top,
-    width: 100 - cropBox.value.left - cropBox.value.right,
-    height: 100 - cropBox.value.top - cropBox.value.bottom,
-}));
-
-// Computed: crop in pixels
-const cropPixels = computed(() => ({
-    x: Math.round((cropArea.value.x / 100) * imageNaturalWidth.value),
-    y: Math.round((cropArea.value.y / 100) * imageNaturalHeight.value),
-    width: Math.round((cropArea.value.width / 100) * imageNaturalWidth.value),
-    height: Math.round((cropArea.value.height / 100) * imageNaturalHeight.value),
-}));
-
-const outputDimensions = computed(() => ({
-    width: Math.round(cropPixels.value.width * (exportScale.value / 100)),
-    height: Math.round(cropPixels.value.height * (exportScale.value / 100)),
-}));
-
-const sizeReduction = computed(() => {
-    const original = imageNaturalWidth.value * imageNaturalHeight.value;
-    const output = outputDimensions.value.width * outputDimensions.value.height;
-    if (original === 0) return 0;
-    return Math.round((1 - output / original) * 100);
-});
-
+// ─── Computed ─────────────────────────────────────────────────────────────────
 const filterStyle = computed(() => {
-    const { brightness, contrast, saturation, blur } = adjustments.value;
+    const { brightness, contrast, saturation, blur } = adj.value;
     return `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`;
 });
 
-// Background style for crop overlay
-const cropBackgroundStyle = computed(() => {
-    const { x, y, width, height } = cropArea.value;
-    if (width <= 0 || height <= 0) return {};
+// Crop as CSS percentages of the rendered image (used to position overlays)
+const cropPct = computed(() => {
+    const iw = imgEl.value?.clientWidth  || 1;
+    const ih = imgEl.value?.clientHeight || 1;
     return {
-        backgroundImage: `url(${props.imageUrl})`,
-        backgroundSize: `${(100 / width) * 100}% ${(100 / height) * 100}%`,
-        backgroundPosition: `${-(x / width) * 100}% ${-(y / height) * 100}%`,
-        filter: filterStyle.value,
+        left:   (crop.value.x / iw) * 100,
+        top:    (crop.value.y / ih) * 100,
+        width:  (crop.value.w / iw) * 100,
+        height: (crop.value.h / ih) * 100,
     };
 });
 
-// Load image
+// Background that shows the full-brightness image through the crop window
+const cropBgStyle = computed(() => {
+    const iw = imgEl.value?.clientWidth  || 1;
+    const ih = imgEl.value?.clientHeight || 1;
+    const { x, y } = crop.value;
+    return {
+        backgroundImage:    `url(${props.imageUrl})`,
+        backgroundSize:     `${iw}px ${ih}px`,
+        backgroundPosition: `-${x}px -${y}px`,
+        backgroundRepeat:   'no-repeat',
+        filter:             filterStyle.value,
+    };
+});
+
+const outputDimensions = computed(() => {
+    const iw = imgEl.value?.clientWidth  || 1;
+    const ih = imgEl.value?.clientHeight || 1;
+    return {
+        width:  Math.round(crop.value.w * (naturalW.value / iw) * (exportScale.value / 100)),
+        height: Math.round(crop.value.h * (naturalH.value / ih) * (exportScale.value / 100)),
+    };
+});
+
+const sizeReduction = computed(() => {
+    const orig = naturalW.value * naturalH.value;
+    const out  = outputDimensions.value.width * outputDimensions.value.height;
+    return orig ? Math.round((1 - out / orig) * 100) : 0;
+});
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
 const loadImage = () => {
     isLoading.value = true;
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => {
-        imageNaturalWidth.value = img.naturalWidth;
-        imageNaturalHeight.value = img.naturalHeight;
-        imageRef.value = img;
+    img.onload = async () => {
+        naturalW.value  = img.naturalWidth;
+        naturalH.value  = img.naturalHeight;
+        loadedImg.value = img;
         isLoading.value = false;
+        await nextTick();
         resetCrop();
     };
     img.onerror = () => { isLoading.value = false; };
     img.src = props.imageUrl;
 };
 
-// Apply aspect ratio to current crop
-const applyAspectRatio = (ratio: number | null) => {
-    selectedRatio.value = ratio;
-    if (!ratio || imageNaturalWidth.value === 0) return;
-    
-    const imageRatio = imageNaturalWidth.value / imageNaturalHeight.value;
-    const currentWidth = cropArea.value.width;
-    const currentHeight = cropArea.value.height;
-    
-    // Calculate new dimensions maintaining aspect ratio
-    const targetRatio = ratio / imageRatio;
-    
-    if (currentWidth / currentHeight > targetRatio) {
-        // Too wide, reduce width
-        const newWidth = currentHeight * targetRatio;
-        const diff = currentWidth - newWidth;
-        cropBox.value.right += diff / 2;
-        cropBox.value.left += diff / 2;
+// ─── Crop helpers ─────────────────────────────────────────────────────────────
+const clampCrop = (c: typeof crop.value): typeof crop.value => {
+    const iw  = imgEl.value?.clientWidth  ?? 0;
+    const ih  = imgEl.value?.clientHeight ?? 0;
+    const MIN = 20;
+    let { x, y, w, h } = c;
+    w = Math.max(MIN, Math.min(w, iw));
+    h = Math.max(MIN, Math.min(h, ih));
+    x = Math.max(0, Math.min(x, iw - w));
+    y = Math.max(0, Math.min(y, ih - h));
+    return { x, y, w, h };
+};
+
+const fitRatio = (ratio: number | null, c: typeof crop.value): typeof crop.value => {
+    if (!ratio) return { ...c };
+    const iw = imgEl.value?.clientWidth  || 1;
+    const ih = imgEl.value?.clientHeight || 1;
+    // Convert the desired aspect ratio into display-pixel space
+    const displayRatio = ratio * (naturalH.value / naturalW.value) * (iw / ih);
+    let { x, y, w, h } = c;
+    if (w / h > displayRatio) {
+        const nw = h * displayRatio;
+        x += (w - nw) / 2;
+        w  = nw;
     } else {
-        // Too tall, reduce height
-        const newHeight = currentWidth / targetRatio;
-        const diff = currentHeight - newHeight;
-        cropBox.value.bottom += diff / 2;
-        cropBox.value.top += diff / 2;
+        const nh = w / displayRatio;
+        y += (h - nh) / 2;
+        h  = nh;
     }
+    return { x, y, w, h };
 };
 
 const resetCrop = () => {
-    cropBox.value = { left: 0, top: 0, right: 0, bottom: 0 };
-    selectedRatio.value = props.aspectRatio || null;
-    if (selectedRatio.value && imageNaturalWidth.value > 0) {
-        applyAspectRatio(selectedRatio.value);
-    }
+    const iw = imgEl.value?.clientWidth  ?? 0;
+    const ih = imgEl.value?.clientHeight ?? 0;
+    if (!iw || !ih) return;
+    let c = { x: 0, y: 0, w: iw, h: ih };
+    if (selectedRatio.value) c = fitRatio(selectedRatio.value, c) as typeof c;
+    crop.value = clampCrop(c);
+};
+
+const applyAspectRatio = (ratio: number | null) => {
+    selectedRatio.value = ratio;
+    crop.value = clampCrop(fitRatio(ratio, crop.value) as typeof crop.value);
 };
 
 const resetAdjustments = () => {
-    adjustments.value = { brightness: 100, contrast: 100, saturation: 100, blur: 0 };
+    adj.value = { brightness: 100, contrast: 100, saturation: 100, blur: 0 };
 };
 
 const resetAll = () => {
     resetCrop();
     resetAdjustments();
     exportQuality.value = 90;
-    exportScale.value = 100;
+    exportScale.value   = 100;
 };
 
-// Mouse position to percentage
-const getMousePercent = (e: MouseEvent) => {
-    if (!containerRef.value) return { x: 0, y: 0 };
-    const rect = containerRef.value.getBoundingClientRect();
-    return {
-        x: ((e.clientX - rect.left) / rect.width) * 100,
-        y: ((e.clientY - rect.top) / rect.height) * 100,
-    };
-};
-
-// Start dragging the crop box
-const startDrag = (e: MouseEvent) => {
-    e.preventDefault();
-    console.log('Start drag'); // Debug
-    interactionMode.value = 'drag';
-    startMouse.value = getMousePercent(e);
-    startCrop.value = { ...cropBox.value };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-};
-
-// Start resizing from a handle
-const startResize = (e: MouseEvent, handle: string) => {
+// ─── Mouse handlers ───────────────────────────────────────────────────────────
+const onMouseDown = (e: MouseEvent, handle: Handle) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Start resize:', handle); // Debug
-    interactionMode.value = 'resize';
-    activeHandle.value = handle;
-    startMouse.value = getMousePercent(e);
-    startCrop.value = { ...cropBox.value };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-};
-
-const handleMouseMove = (e: MouseEvent) => {
-    const mouse = getMousePercent(e);
-    const deltaX = mouse.x - startMouse.value.x;
-    const deltaY = mouse.y - startMouse.value.y;
-    
-    if (interactionMode.value === 'drag') {
-        handleDragMove(deltaX, deltaY);
-    } else if (interactionMode.value === 'resize') {
-        handleResizeMove(deltaX, deltaY);
-    }
-};
-
-const handleMouseUp = () => {
-    interactionMode.value = 'none';
-    activeHandle.value = null;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-};
-
-// Handle drag movement - move the entire crop box
-const handleDragMove = (deltaX: number, deltaY: number) => {
-    const { left, top, right, bottom } = startCrop.value;
-    const width = 100 - left - right;
-    const height = 100 - top - bottom;
-    
-    // Calculate new position, clamped to bounds
-    let newLeft = Math.max(0, Math.min(left + deltaX, 100 - width));
-    let newTop = Math.max(0, Math.min(top + deltaY, 100 - height));
-    
-    cropBox.value = {
-        left: newLeft,
-        top: newTop,
-        right: 100 - newLeft - width,
-        bottom: 100 - newTop - height,
+    dragging.value  = true;
+    dragHandle.value = handle;
+    // Snapshot everything we need — none of these values will change during the drag
+    dragStart.value = {
+        mx:   e.clientX,
+        my:   e.clientY,
+        imgW: imgEl.value?.clientWidth  ?? 0,
+        imgH: imgEl.value?.clientHeight ?? 0,
+        ...crop.value,
     };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup',   onMouseUp);
 };
 
-// Handle resize movement - resize from specific handle
-const handleResizeMove = (deltaX: number, deltaY: number) => {
-    const handle = activeHandle.value;
-    if (!handle) return;
-    
-    let { left, top, right, bottom } = startCrop.value;
-    const minSize = 10; // Minimum 10% size
-    
-    // Determine which edges to move based on handle
-    const moveLeft = handle.includes('w');
-    const moveRight = handle.includes('e');
-    const moveTop = handle.includes('n');
-    const moveBottom = handle.includes('s');
-    
-    // Apply deltas to appropriate edges
-    if (moveLeft) {
-        left = Math.max(0, Math.min(startCrop.value.left + deltaX, 100 - right - minSize));
+const onMouseMove = (e: MouseEvent) => {
+    if (!dragging.value) return;
+
+    // Delta in display pixels from where the drag started
+    const dx = e.clientX - dragStart.value.mx;
+    const dy = e.clientY - dragStart.value.my;
+
+    const { x: sx, y: sy, w: sw, h: sh, imgW, imgH } = dragStart.value;
+    const handle = dragHandle.value;
+    const MIN = 20;
+
+    let x = sx, y = sy, w = sw, h = sh;
+
+    if (handle === 'move') {
+        // Just translate — size stays the same
+        x = Math.max(0, Math.min(sx + dx, imgW - sw));
+        y = Math.max(0, Math.min(sy + dy, imgH - sh));
+        crop.value = { x, y, w, h };
+        return;
     }
-    if (moveRight) {
-        right = Math.max(0, Math.min(startCrop.value.right - deltaX, 100 - left - minSize));
+
+    // Resize: each handle moves specific edges
+    if (handle === 'e'  || handle === 'ne' || handle === 'se') w = sw + dx;
+    if (handle === 's'  || handle === 'sw' || handle === 'se') h = sh + dy;
+    if (handle === 'w'  || handle === 'nw' || handle === 'sw') { x = sx + dx; w = sw - dx; }
+    if (handle === 'n'  || handle === 'nw' || handle === 'ne') { y = sy + dy; h = sh - dy; }
+
+    // Clamp size to minimum (and pin the opposite edge)
+    if (w < MIN) {
+        w = MIN;
+        if (handle.includes('w')) x = sx + sw - MIN;
     }
-    if (moveTop) {
-        top = Math.max(0, Math.min(startCrop.value.top + deltaY, 100 - bottom - minSize));
+    if (h < MIN) {
+        h = MIN;
+        if (handle.includes('n')) y = sy + sh - MIN;
     }
-    if (moveBottom) {
-        bottom = Math.max(0, Math.min(startCrop.value.bottom - deltaY, 100 - top - minSize));
-    }
-    
-    // Apply aspect ratio constraint if needed
+
+    // Clamp to image bounds
+    if (x < 0)        { w += x; x = 0; }
+    if (y < 0)        { h += y; y = 0; }
+    if (x + w > imgW) { w = imgW - x; }
+    if (y + h > imgH) { h = imgH - y; }
+
+    let next = { x, y, w, h };
+
+    // Apply aspect ratio during resize
     if (selectedRatio.value) {
-        const result = constrainToAspectRatio(left, top, right, bottom, handle);
-        left = result.left;
-        top = result.top;
-        right = result.right;
-        bottom = result.bottom;
+        next = clampCrop(fitRatio(selectedRatio.value, next) as typeof next);
     }
-    
-    cropBox.value = { left, top, right, bottom };
+
+    crop.value = next;
 };
 
-// Constrain crop box to aspect ratio
-const constrainToAspectRatio = (left: number, top: number, right: number, bottom: number, handle: string) => {
-    if (!selectedRatio.value) return { left, top, right, bottom };
-    
-    const imageRatio = imageNaturalWidth.value / imageNaturalHeight.value;
-    const targetRatio = selectedRatio.value / imageRatio;
-    
-    const width = 100 - left - right;
-    const height = 100 - top - bottom;
-    const currentRatio = width / height;
-    
-    const moveLeft = handle.includes('w');
-    const moveRight = handle.includes('e');
-    const moveTop = handle.includes('n');
-    const moveBottom = handle.includes('s');
-    
-    if (Math.abs(currentRatio - targetRatio) < 0.01) {
-        return { left, top, right, bottom };
-    }
-    
-    // Determine which dimension to adjust based on handle
-    if (moveLeft || moveRight) {
-        // Width changed, adjust height
-        const newHeight = width / targetRatio;
-        const heightDiff = height - newHeight;
-        
-        if (moveTop) {
-            // Anchor bottom, adjust top
-            top = Math.max(0, top + heightDiff);
-        } else {
-            // Anchor top, adjust bottom
-            bottom = Math.max(0, bottom + heightDiff);
-        }
-    } else if (moveTop || moveBottom) {
-        // Height changed, adjust width
-        const newWidth = height * targetRatio;
-        const widthDiff = width - newWidth;
-        
-        if (moveLeft) {
-            // Anchor right, adjust left
-            left = Math.max(0, left + widthDiff);
-        } else {
-            // Anchor left, adjust right
-            right = Math.max(0, right + widthDiff);
-        }
-    }
-    
-    return { left, top, right, bottom };
+const onMouseUp = () => {
+    dragging.value = false;
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup',   onMouseUp);
 };
 
-// Save the cropped image
+// ─── Save ─────────────────────────────────────────────────────────────────────
 const saveCrop = () => {
-    if (!imageRef.value || !canvasRef.value) return;
-    const canvas = canvasRef.value;
-    const ctx = canvas.getContext('2d');
+    if (!loadedImg.value || !canvasRef.value || !imgEl.value) return;
+    const ctx = canvasRef.value.getContext('2d');
     if (!ctx) return;
 
+    const scaleX = naturalW.value / imgEl.value.clientWidth;
+    const scaleY = naturalH.value / imgEl.value.clientHeight;
     const { width, height } = outputDimensions.value;
-    canvas.width = width;
-    canvas.height = height;
 
+    canvasRef.value.width  = width;
+    canvasRef.value.height = height;
     ctx.filter = filterStyle.value;
     ctx.drawImage(
-        imageRef.value,
-        cropPixels.value.x, cropPixels.value.y, cropPixels.value.width, cropPixels.value.height,
-        0, 0, width, height
+        loadedImg.value,
+        crop.value.x * scaleX, crop.value.y * scaleY,
+        crop.value.w * scaleX, crop.value.h * scaleY,
+        0, 0, width, height,
     );
 
-    const mimeType = exportFormat.value === 'png' ? 'image/png' : exportFormat.value === 'webp' ? 'image/webp' : 'image/jpeg';
-    const dataUrl = canvas.toDataURL(mimeType, exportQuality.value / 100);
-    emit('save', dataUrl);
+    const mime    = exportFormat.value === 'png' ? 'image/png' : exportFormat.value === 'webp' ? 'image/webp' : 'image/jpeg';
+    emit('save', canvasRef.value.toDataURL(mime, exportQuality.value / 100));
 };
 
-// Watchers
-watch(() => props.imageUrl, () => { if (props.show && props.imageUrl) loadImage(); });
-watch(() => props.show, (show) => { 
-    if (show && props.imageUrl) { 
-        loadImage(); 
-    } 
-});
-
-// Cleanup
+// ─── Watchers ─────────────────────────────────────────────────────────────────
+watch(() => props.show,     (v) => { if (v) loadImage(); });
+watch(() => props.imageUrl, ()  => { if (props.show) loadImage(); });
 onUnmounted(() => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+    window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup',   onMouseUp);
 });
 </script>
 
 <template>
     <Teleport to="body">
-        <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80" @click="emit('close')">
-            <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden" @click.stop>
+        <div v-if="show"
+             class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80"
+             @click="emit('close')">
+            <div class="bg-gray-900 rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden"
+                 @click.stop>
+
                 <!-- Header -->
                 <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
                     <div class="flex items-center gap-4">
                         <h2 class="text-sm font-medium text-white">Edit Image</h2>
                         <div class="flex items-center gap-1 text-xs text-gray-400">
-                            <span>{{ imageNaturalWidth }}×{{ imageNaturalHeight }}</span>
+                            <span>{{ naturalW }}×{{ naturalH }}</span>
                             <span class="text-gray-600">→</span>
                             <span class="text-blue-400">{{ outputDimensions.width }}×{{ outputDimensions.height }}</span>
                             <span v-if="sizeReduction > 0" class="text-green-400 ml-1">(-{{ sizeReduction }}%)</span>
@@ -409,169 +311,181 @@ onUnmounted(() => {
                     </div>
                     <div class="flex items-center gap-2">
                         <button @click="resetAll" class="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700 rounded">
-                            <ArrowPathIcon class="w-4 h-4 inline mr-1" aria-hidden="true" />Reset
+                            <ArrowPathIcon class="w-4 h-4 inline mr-1" />Reset
                         </button>
-                        <button @click="emit('close')" class="p-1 hover:bg-gray-700 rounded" aria-label="Close">
-                            <XMarkIcon class="w-5 h-5 text-gray-400" aria-hidden="true" />
+                        <button @click="emit('close')" class="p-1 hover:bg-gray-700 rounded">
+                            <XMarkIcon class="w-5 h-5 text-gray-400" />
                         </button>
                     </div>
                 </div>
 
-                <!-- Main Content -->
+                <!-- Main -->
                 <div class="flex-1 flex overflow-hidden">
-                    <!-- Image Canvas Area -->
+
+                    <!-- Image area -->
                     <div class="flex-1 flex items-center justify-center p-4 bg-gray-950 overflow-hidden">
                         <div v-if="isLoading" class="flex items-center justify-center">
-                            <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+                            <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
                         </div>
-                        <div v-else ref="containerRef" class="relative max-w-full max-h-full select-none" style="display: inline-block;">
-                            <!-- Base Image (dimmed) -->
-                            <img
-                                :src="imageUrl"
-                                class="max-w-full max-h-[calc(90vh-120px)] block pointer-events-none"
-                                :style="{ filter: filterStyle, opacity: 0.3 }"
-                                alt="Original"
-                                draggable="false"
-                            />
-                            
-                            <!-- Crop Overlay Box -->
-                            <div
-                                class="absolute border-2 border-blue-500 shadow-lg cursor-move"
-                                :style="{
-                                    left: cropArea.x + '%',
-                                    top: cropArea.y + '%',
-                                    width: cropArea.width + '%',
-                                    height: cropArea.height + '%',
-                                    ...cropBackgroundStyle,
-                                }"
-                                @mousedown="startDrag"
-                            >
-                                <!-- Rule of thirds grid -->
-                                <div class="absolute inset-0 pointer-events-none">
-                                    <div class="absolute left-1/3 top-0 bottom-0 w-px bg-white/30"></div>
-                                    <div class="absolute left-2/3 top-0 bottom-0 w-px bg-white/30"></div>
-                                    <div class="absolute top-1/3 left-0 right-0 h-px bg-white/30"></div>
-                                    <div class="absolute top-2/3 left-0 right-0 h-px bg-white/30"></div>
+
+                        <div v-else class="relative inline-block select-none" style="line-height:0">
+                            <!-- Base image (dimmed). This element IS our coordinate space. -->
+                            <img ref="imgEl"
+                                 :src="imageUrl"
+                                 class="max-w-full max-h-[calc(90vh-120px)] block pointer-events-none"
+                                 :style="{ filter: filterStyle, opacity: 0.35 }"
+                                 draggable="false"
+                                 alt="" />
+
+                            <!-- Dark overlays around crop area -->
+                            <div class="absolute inset-0 pointer-events-none">
+                                <!-- top strip -->
+                                <div class="absolute bg-black/50"
+                                     :style="{ left:0, top:0, right:0, height: cropPct.top+'%' }" />
+                                <!-- bottom strip -->
+                                <div class="absolute bg-black/50"
+                                     :style="{ left:0, bottom:0, right:0, top: (cropPct.top+cropPct.height)+'%' }" />
+                                <!-- left strip -->
+                                <div class="absolute bg-black/50"
+                                     :style="{ top: cropPct.top+'%', height: cropPct.height+'%', left:0, width: cropPct.left+'%' }" />
+                                <!-- right strip -->
+                                <div class="absolute bg-black/50"
+                                     :style="{ top: cropPct.top+'%', height: cropPct.height+'%', left: (cropPct.left+cropPct.width)+'%', right:0 }" />
+                            </div>
+
+                            <!-- Bright crop window + drag to move -->
+                            <div class="absolute border-2 border-blue-400 cursor-move"
+                                 :style="{
+                                     left:   cropPct.left   + '%',
+                                     top:    cropPct.top    + '%',
+                                     width:  cropPct.width  + '%',
+                                     height: cropPct.height + '%',
+                                     ...cropBgStyle,
+                                 }"
+                                 @mousedown="onMouseDown($event, 'move')">
+                                <!-- Rule of thirds -->
+                                <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                                    <div class="absolute left-1/3 top-0 bottom-0 w-px bg-white/25" />
+                                    <div class="absolute left-2/3 top-0 bottom-0 w-px bg-white/25" />
+                                    <div class="absolute top-1/3 left-0 right-0 h-px bg-white/25" />
+                                    <div class="absolute top-2/3 left-0 right-0 h-px bg-white/25" />
                                 </div>
                             </div>
-                            
-                            <!-- Resize Handles - rendered OUTSIDE crop box for better z-index -->
-                            <div class="absolute pointer-events-none" :style="{
-                                left: cropArea.x + '%',
-                                top: cropArea.y + '%',
-                                width: cropArea.width + '%',
-                                height: cropArea.height + '%',
-                            }">
+
+                            <!-- Handles layer (same size/position as crop window but pointer-events pass-through except handles) -->
+                            <div class="absolute pointer-events-none"
+                                 :style="{
+                                     left:   cropPct.left   + '%',
+                                     top:    cropPct.top    + '%',
+                                     width:  cropPct.width  + '%',
+                                     height: cropPct.height + '%',
+                                 }">
                                 <!-- Corner handles -->
-                                <div class="absolute w-6 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-nw-resize pointer-events-auto"
-                                     style="top: -12px; left: -12px;"
-                                     @mousedown.stop.prevent="startResize($event, 'nw')"></div>
-                                <div class="absolute w-6 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-ne-resize pointer-events-auto"
-                                     style="top: -12px; right: -12px;"
-                                     @mousedown.stop.prevent="startResize($event, 'ne')"></div>
-                                <div class="absolute w-6 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-sw-resize pointer-events-auto"
-                                     style="bottom: -12px; left: -12px;"
-                                     @mousedown.stop.prevent="startResize($event, 'sw')"></div>
-                                <div class="absolute w-6 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-se-resize pointer-events-auto"
-                                     style="bottom: -12px; right: -12px;"
-                                     @mousedown.stop.prevent="startResize($event, 'se')"></div>
-                                
+                                <div class="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-nw-resize"
+                                     style="top:-8px;left:-8px" @mousedown.stop.prevent="onMouseDown($event,'nw')" />
+                                <div class="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-ne-resize"
+                                     style="top:-8px;right:-8px" @mousedown.stop.prevent="onMouseDown($event,'ne')" />
+                                <div class="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-sw-resize"
+                                     style="bottom:-8px;left:-8px" @mousedown.stop.prevent="onMouseDown($event,'sw')" />
+                                <div class="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-se-resize"
+                                     style="bottom:-8px;right:-8px" @mousedown.stop.prevent="onMouseDown($event,'se')" />
+
                                 <!-- Edge handles -->
-                                <div class="absolute w-10 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-n-resize pointer-events-auto"
-                                     style="top: -12px; left: 50%; transform: translateX(-50%);"
-                                     @mousedown.stop.prevent="startResize($event, 'n')"></div>
-                                <div class="absolute w-10 h-6 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-s-resize pointer-events-auto"
-                                     style="bottom: -12px; left: 50%; transform: translateX(-50%);"
-                                     @mousedown.stop.prevent="startResize($event, 's')"></div>
-                                <div class="absolute w-6 h-10 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-w-resize pointer-events-auto"
-                                     style="left: -12px; top: 50%; transform: translateY(-50%);"
-                                     @mousedown.stop.prevent="startResize($event, 'w')"></div>
-                                <div class="absolute w-6 h-10 bg-white border-2 border-blue-600 rounded-full shadow-lg cursor-e-resize pointer-events-auto"
-                                     style="right: -12px; top: 50%; transform: translateY(-50%);"
-                                     @mousedown.stop.prevent="startResize($event, 'e')"></div>
+                                <div class="absolute h-3 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-n-resize"
+                                     style="top:-6px;left:50%;transform:translateX(-50%);width:32px" @mousedown.stop.prevent="onMouseDown($event,'n')" />
+                                <div class="absolute h-3 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-s-resize"
+                                     style="bottom:-6px;left:50%;transform:translateX(-50%);width:32px" @mousedown.stop.prevent="onMouseDown($event,'s')" />
+                                <div class="absolute w-3 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-w-resize"
+                                     style="left:-6px;top:50%;transform:translateY(-50%);height:32px" @mousedown.stop.prevent="onMouseDown($event,'w')" />
+                                <div class="absolute w-3 bg-white border-2 border-blue-500 rounded-full shadow pointer-events-auto cursor-e-resize"
+                                     style="right:-6px;top:50%;transform:translateY(-50%);height:32px" @mousedown.stop.prevent="onMouseDown($event,'e')" />
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Sidebar -->
+                    <!-- Sidebar -->
                     <div class="w-64 bg-gray-800 border-l border-gray-700 flex flex-col">
-                        <!-- Tabs -->
                         <div class="flex border-b border-gray-700">
-                            <button @click="activeTab = 'crop'" :class="['flex-1 py-2 text-xs font-medium', activeTab === 'crop' ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50' : 'text-gray-400 hover:text-white']">Crop</button>
-                            <button @click="activeTab = 'adjust'" :class="['flex-1 py-2 text-xs font-medium', activeTab === 'adjust' ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50' : 'text-gray-400 hover:text-white']">Adjust</button>
-                            <button @click="activeTab = 'export'" :class="['flex-1 py-2 text-xs font-medium', activeTab === 'export' ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50' : 'text-gray-400 hover:text-white']">Export</button>
+                            <button v-for="tab in (['crop','adjust','export'] as const)" :key="tab"
+                                    @click="activeTab = tab"
+                                    :class="['flex-1 py-2 text-xs font-medium capitalize',
+                                        activeTab === tab
+                                            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700/50'
+                                            : 'text-gray-400 hover:text-white']">
+                                {{ tab }}
+                            </button>
                         </div>
 
-                        <!-- Tab Content -->
                         <div class="flex-1 overflow-y-auto p-3 space-y-4">
-                            <!-- Crop Tab -->
+
+                            <!-- Crop tab -->
                             <template v-if="activeTab === 'crop'">
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-2">Aspect Ratio</label>
-                                    <div v-if="isRatioLocked" class="mb-3 p-2 bg-blue-900/50 border border-blue-700 rounded-lg">
-                                        <div class="flex items-center gap-2 text-blue-300 text-xs">
-                                            <LockClosedIcon class="w-4 h-4" aria-hidden="true" />
-                                            <span>{{ forcedRatioLabel }} required</span>
-                                        </div>
+                                    <div v-if="isRatioLocked" class="mb-3 p-2 bg-blue-900/50 border border-blue-700 rounded-lg flex items-center gap-2 text-blue-300 text-xs">
+                                        <LockClosedIcon class="w-4 h-4" /> Locked
                                     </div>
                                     <div class="grid grid-cols-3 gap-1">
-                                        <button v-for="r in aspectRatios" :key="r.label" 
-                                            @click="!isRatioLocked && applyAspectRatio(r.value)"
-                                            :disabled="isRatioLocked && r.value !== aspectRatio"
-                                            :class="['px-2 py-1.5 text-xs rounded', 
-                                                selectedRatio === r.value ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
-                                                isRatioLocked && r.value !== aspectRatio ? 'opacity-40 cursor-not-allowed' : '']">
+                                        <button v-for="r in aspectRatios" :key="r.label"
+                                                @click="!isRatioLocked && applyAspectRatio(r.value)"
+                                                :class="['px-2 py-1.5 text-xs rounded',
+                                                    selectedRatio === r.value ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600',
+                                                    isRatioLocked && r.value !== aspectRatio ? 'opacity-40 cursor-not-allowed' : '']">
                                             {{ r.label }}
                                         </button>
                                     </div>
                                 </div>
-                                <button v-if="!isRatioLocked" @click="resetCrop" class="w-full py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
+                                <button v-if="!isRatioLocked" @click="resetCrop"
+                                        class="w-full py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
                                     Reset Crop
                                 </button>
                             </template>
 
-                            <!-- Adjust Tab -->
+                            <!-- Adjust tab -->
                             <template v-if="activeTab === 'adjust'">
                                 <div>
                                     <div class="flex justify-between text-xs mb-1">
                                         <span class="text-gray-400">Brightness</span>
-                                        <span class="text-gray-300">{{ adjustments.brightness }}%</span>
+                                        <span class="text-gray-300">{{ adj.brightness }}%</span>
                                     </div>
-                                    <input type="range" v-model.number="adjustments.brightness" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
+                                    <input type="range" v-model.number="adj.brightness" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-xs mb-1">
                                         <span class="text-gray-400">Contrast</span>
-                                        <span class="text-gray-300">{{ adjustments.contrast }}%</span>
+                                        <span class="text-gray-300">{{ adj.contrast }}%</span>
                                     </div>
-                                    <input type="range" v-model.number="adjustments.contrast" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
+                                    <input type="range" v-model.number="adj.contrast" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-xs mb-1">
                                         <span class="text-gray-400">Saturation</span>
-                                        <span class="text-gray-300">{{ adjustments.saturation }}%</span>
+                                        <span class="text-gray-300">{{ adj.saturation }}%</span>
                                     </div>
-                                    <input type="range" v-model.number="adjustments.saturation" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
+                                    <input type="range" v-model.number="adj.saturation" min="0" max="200" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-xs mb-1">
                                         <span class="text-gray-400">Blur</span>
-                                        <span class="text-gray-300">{{ adjustments.blur }}px</span>
+                                        <span class="text-gray-300">{{ adj.blur }}px</span>
                                     </div>
-                                    <input type="range" v-model.number="adjustments.blur" min="0" max="20" step="0.5" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
+                                    <input type="range" v-model.number="adj.blur" min="0" max="20" step="0.5" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500" />
                                 </div>
-                                <button @click="resetAdjustments" class="w-full py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
+                                <button @click="resetAdjustments"
+                                        class="w-full py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
                                     Reset Adjustments
                                 </button>
                             </template>
 
-                            <!-- Export Tab -->
+                            <!-- Export tab -->
                             <template v-if="activeTab === 'export'">
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-2">Format</label>
                                     <div class="grid grid-cols-3 gap-1">
-                                        <button v-for="fmt in ['jpeg', 'png', 'webp']" :key="fmt" @click="exportFormat = fmt as any"
-                                            :class="['px-2 py-1.5 text-xs rounded uppercase', exportFormat === fmt ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600']">
+                                        <button v-for="fmt in (['jpeg','png','webp'] as const)" :key="fmt"
+                                                @click="exportFormat = fmt"
+                                                :class="['px-2 py-1.5 text-xs rounded uppercase',
+                                                    exportFormat === fmt ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600']">
                                             {{ fmt }}
                                         </button>
                                     </div>
@@ -594,17 +508,16 @@ onUnmounted(() => {
                             </template>
                         </div>
 
-                        <!-- Apply Button -->
                         <div class="p-3 border-t border-gray-700">
-                            <button @click="saveCrop" class="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-                                <CheckIcon class="w-4 h-4" aria-hidden="true" />
-                                Apply Changes
+                            <button @click="saveCrop"
+                                    class="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                                <CheckIcon class="w-4 h-4" /> Apply Changes
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <canvas ref="canvasRef" class="hidden"></canvas>
+                <canvas ref="canvasRef" class="hidden" />
             </div>
         </div>
     </Teleport>

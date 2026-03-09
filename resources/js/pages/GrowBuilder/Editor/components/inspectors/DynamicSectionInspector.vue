@@ -9,6 +9,11 @@ import { getSectionSchema, type SchemaField, type SectionSchema, type ItemsField
 import IconPickerModal from '../modals/IconPickerModal.vue';
 import VideoEmbedModal from '../modals/VideoEmbedModal.vue';
 
+// Inherit attributes like class
+defineOptions({
+    inheritAttrs: false
+});
+
 interface Section {
     id: string;
     type: string;
@@ -198,7 +203,7 @@ const getInfoClasses = (variant?: 'info' | 'warning' | 'success') => {
 </script>
 
 <template>
-    <div class="flex flex-col h-full min-h-0">
+    <div class="flex flex-col h-full min-h-0" :class="$attrs.class">
         <!-- Inspector Tabs -->
         <div class="flex border-b border-gray-200 flex-shrink-0">
             <button @mousedown.prevent @click="emit('update:activeTab', 'content')" :class="['flex-1 py-1.5 text-xs font-medium transition-colors border-b-2', activeTab === 'content' ? 'text-blue-600 border-blue-600' : 'text-gray-500 border-transparent hover:text-gray-700']">Content</button>

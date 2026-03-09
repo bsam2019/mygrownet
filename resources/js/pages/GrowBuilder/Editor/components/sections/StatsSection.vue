@@ -17,7 +17,21 @@ interface StatItem {
 }
 
 interface Props {
-    content: {
+    section?: {
+        content?: {
+            layout?: string;
+            title?: string;
+            subtitle?: string;
+            textAlign?: string;
+            animated?: boolean;
+            items?: StatItem[];
+        };
+        style?: {
+            backgroundColor?: string;
+            accentColor?: string;
+        };
+    };
+    content?: {
         layout?: string;
         title?: string;
         subtitle?: string;
@@ -51,6 +65,10 @@ const props = withDefaults(defineProps<Props>(), {
     }),
 });
 
+// Support both direct props and section object
+const actualContent = computed(() => props.section?.content || props.content);
+const actualStyle = computed(() => props.section?.style || props.style);
+
 const iconMap: Record<string, any> = {
     users: UsersIcon,
     chart: ChartBarIcon,
@@ -65,7 +83,7 @@ const getIcon = (iconName?: string) => {
 };
 
 const layoutClass = computed(() => {
-    switch (props.content.layout) {
+    switch (actualContent.value?.layout) {
         case 'grid':
             return 'grid grid-cols-2 md:grid-cols-4 gap-8';
         case 'centered':
@@ -76,7 +94,7 @@ const layoutClass = computed(() => {
 });
 
 const textAlignClass = computed(() => {
-    switch (props.content.textAlign) {
+    switch (actualContent.value?.textAlign) {
         case 'left':
             return 'text-left';
         case 'right':
@@ -90,34 +108,34 @@ const textAlignClass = computed(() => {
 <template>
     <section 
         class="py-16 px-4"
-        :style="{ backgroundColor: style?.backgroundColor }"
+        :style="{ backgroundColor: actualStyle?.backgroundColor }"
         data-aos="fade-up"
     >
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
-            <div v-if="content.title || content.subtitle" class="mb-12" :class="textAlignClass">
+            <div v-if="actualContent?.title || actualContent?.subtitle" class="mb-12" :class="textAlignClass">
                 <h2 
-                    v-if="content.title" 
+                    v-if="actualContent?.title" 
                     class="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
                     data-aos="fade-up"
                 >
-                    {{ content.title }}
+                    {{ actualContent.title }}
                 </h2>
                 <p 
-                    v-if="content.subtitle" 
+                    v-if="actualContent?.subtitle" 
                     class="text-lg text-gray-600 max-w-2xl"
-                    :class="{ 'mx-auto': content.textAlign === 'center' }"
+                    :class="{ 'mx-auto': actualContent.textAlign === 'center' }"
                     data-aos="fade-up"
                     data-aos-delay="100"
                 >
-                    {{ content.subtitle }}
+                    {{ actualContent.subtitle }}
                 </p>
             </div>
 
             <!-- Stats Grid -->
             <div :class="layoutClass">
                 <div
-                    v-for="(item, index) in content.items"
+                    v-for="(item, index) in actualContent?.items"
                     :key="index"
                     class="text-center"
                     data-aos="fade-up"
@@ -128,8 +146,8 @@ const textAlignClass = computed(() => {
                         v-if="item.icon"
                         class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
                         :style="{ 
-                            backgroundColor: style?.accentColor + '20',
-                            color: style?.accentColor 
+                            backgroundColor: actualStyle?.accentColor + '20',
+                            color: actualStyle?.accentColor 
                         }"
                     >
                         <component :is="getIcon(item.icon)" class="h-8 w-8" aria-hidden="true" />
@@ -139,14 +157,14 @@ const textAlignClass = computed(() => {
                     <div class="flex items-baseline justify-center gap-1 mb-2">
                         <span 
                             class="text-4xl md:text-5xl font-bold"
-                            :style="{ color: style?.accentColor }"
+                            :style="{ color: actualStyle?.accentColor }"
                         >
                             {{ item.number }}
                         </span>
                         <span 
                             v-if="item.suffix"
                             class="text-3xl md:text-4xl font-bold"
-                            :style="{ color: style?.accentColor }"
+                            :style="{ color: actualStyle?.accentColor }"
                         >
                             {{ item.suffix }}
                         </span>
