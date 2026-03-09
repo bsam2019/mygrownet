@@ -183,16 +183,28 @@ window.fetch = function (...args) {
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
+    resolve: (name) => {
+        // Check if this is a GrowBuilder preview/site page
+        const isGrowBuilderSite = name === 'GrowBuilder/Preview/Site';
+        
+        // Store this info for progress bar configuration
+        if (isGrowBuilderSite) {
+            (window as any).__isGrowBuilderSite = true;
+        }
+        
+        return resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
+    },
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)
             .mount(el);
     },
-    progress: {
+    progress: (window as any).__isGrowBuilderSite ? false : {
+        delay: 250,
         color: '#2563eb',
-        showSpinner: true,
+        includeCSS: true,
+        showSpinner: false,
     },
 });
 
