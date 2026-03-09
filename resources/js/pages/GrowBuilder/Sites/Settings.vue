@@ -211,7 +211,7 @@ const connectCustomDomain = async () => {
     
     try {
         const response = await axios.post(
-            route('growbuilder.custom-domain.connect', props.site.id),
+            route('growbuilder.sites.domain.connect', props.site.id),
             { domain: customDomainInput.value }
         );
         
@@ -237,8 +237,8 @@ const disconnectCustomDomain = async () => {
     domainError.value = null;
     
     try {
-        const response = await axios.post(
-            route('growbuilder.custom-domain.disconnect', props.site.id)
+        const response = await axios.delete(
+            route('growbuilder.sites.domain.disconnect', props.site.id)
         );
         
         if (response.data.success) {
