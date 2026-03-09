@@ -61,6 +61,10 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
     Route::post('/sites/{id}/complete-onboarding', [SiteController::class, 'completeOnboarding'])->name('sites.complete-onboarding');
 
+    // Site Export
+    Route::get('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'show'])->name('sites.export');
+    Route::post('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'export'])->name('sites.export.download');
+
     // Site Messages (for site owners)
     Route::get('/sites/{id}/messages', [SiteController::class, 'messages'])->name('sites.messages');
     Route::get('/sites/{id}/messages/{messageId}', [SiteController::class, 'showMessage'])->name('sites.messages.show');

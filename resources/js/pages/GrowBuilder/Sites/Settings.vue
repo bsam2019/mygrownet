@@ -81,13 +81,17 @@ const showDeleteModal = ref(false);
 const deleteConfirmation = ref('');
 const isDeleting = ref(false);
 
+// Custom domain connection
+const customDomainInput = ref(props.site.customDomain || '');
+const connectingDomain = ref(false);
+const domainError = ref<string | null>(null);
+
 // Use site.logo or fallback to settings.navigation.logo
 const initialLogo = props.site.logo || props.site.settings?.navigation?.logo || '';
 
 const form = useForm({
     name: props.site.name,
     subdomain: props.site.subdomain,
-    custom_domain: props.site.customDomain || '',
     description: props.site.description || '',
     logo: initialLogo,
     favicon: props.site.favicon || '',
@@ -196,6 +200,58 @@ const deleteSite = () => {
             isDeleting.value = false;
         },
     });
+};
+
+// Custom Domain Connection
+const connectCustomDomain = async () => {
+    if (!customDomainInput.value) return;
+    
+    connectingDomain.value = true;
+    domainError.value = null;
+    
+    try {
+        const response = await axios.post(
+            route('growbuilder.custom-domain.connect', props.site.id),
+            { domain: customDomainInput.value }
+        );
+        
+        if (response.data.success) {
+            // Reload page to show updated domain
+            router.reload();
+        } else {
+            domainError.value = response.data.message || 'Failed to connect domain';
+        }
+    } catch (error: any) {
+        domainError.value = error.response?.data?.message || 'Failed to connect domain. Please check DNS settings.';
+    } finally {
+        connectingDomain.value = false;
+    }
+};
+
+const disconnectCustomDomain = async () => {
+    if (!confirm('Are you sure you want to remove this custom domain?')) {
+        return;
+    }
+    
+    connectingDomain.value = true;
+    domainError.value = null;
+    
+    try {
+        const response = await axios.post(
+            route('growbuilder.custom-domain.disconnect', props.site.id)
+        );
+        
+        if (response.data.success) {
+            // Reload page to show updated state
+            router.reload();
+        } else {
+            domainError.value = response.data.message || 'Failed to remove domain';
+        }
+    } catch (error: any) {
+        domainError.value = error.response?.data?.message || 'Failed to remove domain';
+    } finally {
+        connectingDomain.value = false;
+    }
 };
 
 const openDeleteModal = () => {
@@ -613,6 +669,16 @@ const adjustColor = (hex: string, amount: number): string => {
                                 Manage Users
                                 <ChevronRightIcon class="h-4 w-4" aria-hidden="true" />
                             </Link>
+                            <Link
+                                :href="route('growbuilder.sites.export', site.id)"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export Site
+                                <ChevronRightIcon class="h-4 w-4" aria-hidden="true" />
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -676,13 +742,44 @@ const adjustColor = (hex: string, amount: number): string => {
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Custom Domain</label>
-                                <input
-                                    v-model="form.custom_domain"
-                                    type="text"
-                                    placeholder="www.yourdomain.com"
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
-                                />
-                                <p class="mt-1 text-xs text-gray-500">Point your domain's CNAME to {{ site.subdomain }}.mygrownet.com</p>
+                                <div class="space-y-2">
+                                    <div class="flex gap-2">
+                                        <input
+                                            v-model="customDomainInput"
+                                            type="text"
+                                            placeholder="yourdomain.com"
+                                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                                            :disabled="connectingDomain"
+                                        />
+                                        <button
+                                            v-if="!site.customDomain"
+                                            type="button"
+                                            @click="connectCustomDomain"
+                                            :disabled="!customDomainInput || connectingDomain"
+                                            class="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                        >
+                                            {{ connectingDomain ? 'Connecting...' : 'Connect' }}
+                                        </button>
+                                        <button
+                                            v-else
+                                            type="button"
+                                            @click="disconnectCustomDomain"
+                                            :disabled="connectingDomain"
+                                            class="px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                        >
+                                            {{ connectingDomain ? 'Removing...' : 'Remove' }}
+                                        </button>
+                                    </div>
+                                    <p v-if="!site.customDomain" class="text-xs text-gray-500">
+                                        Point your domain's A record to 138.197.187.134, then click Connect
+                                    </p>
+                                    <p v-else class="text-xs text-green-600">
+                                        ✓ Connected: {{ site.customDomain }}
+                                    </p>
+                                    <p v-if="domainError" class="text-xs text-red-600">
+                                        {{ domainError }}
+                                    </p>
+                                </div>
                             </div>
 
                             <div>

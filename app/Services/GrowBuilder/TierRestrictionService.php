@@ -145,6 +145,7 @@ class TierRestrictionService
                 'ai_seo' => false,
                 'ai_priority' => false,
                 'white_label' => false,
+                'static_export' => false,
             ],
             'starter' => [
                 'subdomain' => true,
@@ -159,6 +160,7 @@ class TierRestrictionService
                 'ai_seo' => false,
                 'ai_priority' => false,
                 'white_label' => false,
+                'static_export' => false,
             ],
             'business' => [
                 'subdomain' => true,
@@ -175,6 +177,7 @@ class TierRestrictionService
                 'priority_support' => true,
                 'ai_priority' => false,
                 'white_label' => false,
+                'static_export' => true,
             ],
             'agency' => [
                 'subdomain' => true,
@@ -193,6 +196,7 @@ class TierRestrictionService
                 'white_label' => true,
                 'multi_site' => true,
                 'priority_support' => true,
+                'static_export' => true,
             ],
         ];
 
