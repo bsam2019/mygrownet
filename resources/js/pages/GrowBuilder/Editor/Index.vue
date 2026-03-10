@@ -2384,7 +2384,7 @@ onUnmounted(() => {
             <button
                 v-if="!leftSidebarOpen"
                 @click="leftSidebarOpen = true"
-                class="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                class="md:hidden fixed bottom-6 left-6 z-30 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
                 aria-label="Open editor tools"
             >
                 <Squares2X2Icon class="w-6 h-6" aria-hidden="true" />
@@ -2392,7 +2392,7 @@ onUnmounted(() => {
 
 
             <!-- Canvas Area -->
-            <main :class="['flex-1 overflow-auto p-2 md:p-6 relative', darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']">
+            <main :class="['flex-1 overflow-y-auto p-2 md:p-6 relative min-h-0', darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']">
                 <!-- Drag-to-Upload Overlay -->
                 <Transition
                     enter-active-class="transition-opacity duration-200"

@@ -80,7 +80,7 @@ const currentZoom = computed(() => props.zoom || 100);
         ]"
     >
         <!-- Left Section: Back + Site Info -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1 md:flex-none">
             <button
                 @click="emit('back')"
                 :class="[
@@ -98,13 +98,13 @@ const currentZoom = computed(() => props.zoom || 100);
                 />
             </button>
             
-            <div :class="['h-6 w-px', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
+            <div :class="['h-6 w-px hidden md:block', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
             
             <!-- Site Logo + Name -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 md:gap-3 min-w-0">
                 <div 
                     :class="[
-                        'w-9 h-9 rounded-lg flex items-center justify-center shadow-sm overflow-hidden',
+                        'w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0',
                         !siteLogo && 'bg-gradient-to-br from-blue-500 to-indigo-600'
                     ]"
                 >
@@ -114,15 +114,15 @@ const currentZoom = computed(() => props.zoom || 100);
                         :alt="siteName" 
                         class="w-full h-full object-cover"
                     />
-                    <span v-else class="text-white text-sm font-bold">
+                    <span v-else class="text-white text-xs md:text-sm font-bold">
                         {{ siteName.charAt(0).toUpperCase() }}
                     </span>
                 </div>
-                <div>
-                    <h1 :class="['text-sm font-semibold leading-tight', darkMode ? 'text-white' : 'text-gray-900']">
+                <div class="min-w-0 flex-1">
+                    <h1 :class="['text-xs md:text-sm font-semibold leading-tight truncate', darkMode ? 'text-white' : 'text-gray-900']">
                         {{ siteName }}
                     </h1>
-                    <p :class="['text-xs leading-tight', darkMode ? 'text-gray-400' : 'text-gray-500']">
+                    <p :class="['text-xs leading-tight truncate hidden md:block', darkMode ? 'text-gray-400' : 'text-gray-500']">
                         {{ pageTitle || 'No page selected' }}
                     </p>
                 </div>
@@ -130,7 +130,7 @@ const currentZoom = computed(() => props.zoom || 100);
         </div>
 
         <!-- Center Section: Preview Mode + Zoom -->
-        <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-4">
             <!-- Undo/Redo -->
             <div class="flex items-center gap-1">
                 <button
@@ -239,16 +239,17 @@ const currentZoom = computed(() => props.zoom || 100);
         </div>
 
         <!-- Right Section: Actions -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 md:gap-2">
             <!-- Page Speed Indicator -->
             <PageSpeedIndicator 
                 v-if="sections?.length"
                 :sections="sections" 
                 :darkMode="darkMode" 
+                class="hidden md:block"
             />
 
             <!-- Auto-save indicator -->
-            <div v-if="lastSavedText" :class="['flex items-center gap-1.5 text-xs mr-2', darkMode ? 'text-gray-400' : 'text-gray-500']">
+            <div v-if="lastSavedText" :class="['hidden md:flex items-center gap-1.5 text-xs mr-2', darkMode ? 'text-gray-400' : 'text-gray-500']">
                 <CheckCircleIcon class="w-4 h-4 text-green-500" aria-hidden="true" />
                 <span>Saved {{ lastSavedText }}</span>
             </div>
@@ -258,7 +259,7 @@ const currentZoom = computed(() => props.zoom || 100);
                 @click="emit('openAI')"
                 data-tour="ai-button"
                 :class="[
-                    'flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all',
+                    'flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm rounded-lg transition-all',
                     'bg-gradient-to-r from-purple-500 to-indigo-600 text-white',
                     'hover:from-purple-600 hover:to-indigo-700 shadow-sm hover:shadow'
                 ]"
@@ -266,14 +267,14 @@ const currentZoom = computed(() => props.zoom || 100);
                 aria-label="Open AI Assistant"
             >
                 <SparklesIcon class="w-4 h-4" aria-hidden="true" />
-                <span>AI</span>
+                <span class="hidden md:inline">AI</span>
             </button>
 
             <!-- Dark Mode Toggle -->
             <button
                 @click="emit('update:darkMode', !darkMode)"
                 :class="[
-                    'p-2 rounded-lg transition-colors',
+                    'hidden md:block p-2 rounded-lg transition-colors',
                     darkMode 
                         ? 'text-yellow-400 hover:bg-gray-800' 
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
@@ -286,7 +287,7 @@ const currentZoom = computed(() => props.zoom || 100);
             </button>
 
             <!-- Help Menu (Shortcuts + Tutorial) -->
-            <div class="relative group">
+            <div class="relative group hidden md:block">
                 <button
                     :class="[
                         'p-2 rounded-lg transition-colors',
@@ -327,7 +328,7 @@ const currentZoom = computed(() => props.zoom || 100);
                 </div>
             </div>
 
-            <div :class="['h-6 w-px', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
+            <div :class="['h-6 w-px hidden md:block', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
 
             <button
                 @click="emit('preview')"
@@ -340,13 +341,13 @@ const currentZoom = computed(() => props.zoom || 100);
                 title="Preview (Ctrl+P)"
             >
                 <EyeIcon class="w-4 h-4" aria-hidden="true" />
-                <span>Preview</span>
+                <span class="hidden md:inline">Preview</span>
             </button>
 
             <button
                 @click="emit('save')"
                 :disabled="saving"
-                class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-sm hover:shadow"
+                class="flex items-center gap-1.5 px-2 md:px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 transition-all shadow-sm hover:shadow"
                 title="Save (Ctrl+S)"
             >
                 <CloudArrowUpIcon v-if="!saving" class="w-4 h-4" aria-hidden="true" />
@@ -354,7 +355,7 @@ const currentZoom = computed(() => props.zoom || 100);
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>{{ saving ? 'Saving...' : 'Save' }}</span>
+                <span class="hidden md:inline">{{ saving ? 'Saving...' : 'Save' }}</span>
             </button>
 
             <!-- Publish/Unpublish Button -->
@@ -363,7 +364,7 @@ const currentZoom = computed(() => props.zoom || 100);
                     v-if="!isPublished"
                     @click="emit('publish')"
                     :disabled="publishing"
-                    class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-sm hover:shadow"
+                    class="flex items-center gap-1.5 px-2 md:px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-medium rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-sm hover:shadow"
                     title="Publish your site"
                 >
                     <GlobeAltIcon v-if="!publishing" class="w-4 h-4" aria-hidden="true" />
@@ -371,7 +372,7 @@ const currentZoom = computed(() => props.zoom || 100);
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{{ publishing ? 'Publishing...' : 'Publish' }}</span>
+                    <span class="hidden md:inline">{{ publishing ? 'Publishing...' : 'Publish' }}</span>
                 </button>
 
                 <!-- Published State with Dropdown -->
@@ -379,20 +380,21 @@ const currentZoom = computed(() => props.zoom || 100);
                     <a
                         :href="siteUrl"
                         target="_blank"
-                        class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-l-lg hover:bg-emerald-200 transition-colors"
+                        class="flex items-center gap-1.5 px-2 md:px-3 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-l-lg hover:bg-emerald-200 transition-colors"
                         title="View live site"
                     >
                         <CheckCircleIcon class="w-4 h-4" aria-hidden="true" />
-                        <span>Live</span>
+                        <span class="hidden md:inline">Live</span>
                         <ArrowTopRightOnSquareIcon class="w-3.5 h-3.5" aria-hidden="true" />
                     </a>
                     <button
                         @click="emit('unpublish')"
                         :disabled="publishing"
-                        class="px-2 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-r-lg border-l border-emerald-200 hover:bg-red-100 hover:text-red-700 transition-colors"
+                        class="px-1 md:px-2 py-1.5 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-r-lg border-l border-emerald-200 hover:bg-red-100 hover:text-red-700 transition-colors"
                         title="Unpublish site"
                     >
-                        <span class="text-xs">Unpublish</span>
+                        <span class="text-xs hidden md:inline">Unpublish</span>
+                        <span class="text-xs md:hidden">×</span>
                     </button>
                 </div>
             </div>
