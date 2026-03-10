@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilde
     Route::get('/sites/{id}', [SiteController::class, 'show'])->name('sites.show');
     Route::get('/sites/{id}/settings', [SiteController::class, 'settings'])->name('sites.settings');
     Route::get('/sites/{id}/analytics', [SiteController::class, 'analytics'])->name('sites.analytics');
+    Route::get('/sites/{id}/analytics/export', [SiteController::class, 'exportAnalytics'])->name('sites.analytics.export');
     Route::put('/sites/{id}', [SiteController::class, 'update'])->name('sites.update');
     Route::delete('/sites/{id}', [SiteController::class, 'destroy'])->name('sites.destroy');
     Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');

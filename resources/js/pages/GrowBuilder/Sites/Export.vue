@@ -32,20 +32,27 @@ const handleExport = () => {
     exporting.value = true;
     error.value = null;
     
-    router.post(
-        route('growbuilder.sites.export.download', props.site.id),
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                exporting.value = false;
-            },
-            onError: (errors) => {
-                exporting.value = false;
-                error.value = errors.export || 'Failed to export site';
-            },
-        }
-    );
+    // Use native form submission for file download
+    // Inertia.js doesn't handle file downloads properly
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = route('growbuilder.sites.export.download', props.site.id);
+    
+    // Add CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+    
+    // Reset state after a delay (download should have started)
+    setTimeout(() => {
+        exporting.value = false;
+        document.body.removeChild(form);
+    }, 2000);
 };
 
 const goBack = () => {

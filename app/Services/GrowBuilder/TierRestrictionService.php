@@ -111,20 +111,21 @@ class TierRestrictionService
 
     /**
      * Get features for a tier from database or defaults
+     * Merges database features with defaults to ensure all features are present
      */
     private function getTierFeatures(string $tier, ?array $tierConfig): array
     {
-        // Try to get from database config
+        // Start with default features
+        $features = $this->getDefaultFeatures($tier);
+        
+        // Merge with database config if available
         if ($tierConfig && isset($tierConfig['features'])) {
-            $dbFeatures = [];
             foreach ($tierConfig['features'] as $key => $feature) {
-                $dbFeatures[$key] = is_array($feature) ? ($feature['value'] ?? false) : $feature;
+                $features[$key] = is_array($feature) ? ($feature['value'] ?? false) : $feature;
             }
-            return $dbFeatures;
         }
 
-        // Fallback to hardcoded defaults
-        return $this->getDefaultFeatures($tier);
+        return $features;
     }
 
     /**

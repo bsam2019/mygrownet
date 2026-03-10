@@ -146,18 +146,24 @@ class RenderController extends Controller
     private function trackPageView(Request $request, $site, $page): void
     {
         try {
+            $geolocationService = app(\App\Services\GrowBuilder\GeolocationService::class);
+            $realIp = $geolocationService->getRealIpAddress();
+            $country = $geolocationService->getCountryFromIp($realIp);
+            
             GrowBuilderPageView::create([
                 'site_id' => $site->getId()->value(),
                 'page_id' => $page->getId()->value(),
                 'path' => $request->path(),
                 'referrer' => $request->header('referer'),
-                'ip_address' => $request->ip(),
+                'ip_address' => $realIp,
                 'user_agent' => $request->userAgent(),
+                'country' => $country,
                 'device_type' => $this->detectDeviceType($request->userAgent()),
                 'viewed_date' => now()->toDateString(),
             ]);
         } catch (\Exception $e) {
             // Silently fail - don't break page render for analytics
+            \Log::warning('Failed to track page view: ' . $e->getMessage());
         }
     }
 

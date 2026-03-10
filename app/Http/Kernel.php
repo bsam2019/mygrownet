@@ -31,6 +31,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\RefreshCsrfToken::class, // Refresh CSRF token on every request for PWA
+            \App\Http\Middleware\ShareModulesData::class, // Automatically share modules data with all Inertia pages
             // \App\Http\Middleware\DetectFraudulentActivity::class, // DISABLED - potential circular dependency
             // \App\Http\Middleware\PerformanceMonitoring::class, // DISABLED - constructor injection causing early service resolution
         ],
