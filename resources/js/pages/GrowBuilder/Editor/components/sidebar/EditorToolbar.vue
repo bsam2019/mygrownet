@@ -130,9 +130,9 @@ const currentZoom = computed(() => props.zoom || 100);
         </div>
 
         <!-- Center Section: Preview Mode + Zoom -->
-        <div class="hidden md:flex items-center gap-4">
+        <div class="flex items-center gap-2 md:gap-4">
             <!-- Undo/Redo -->
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-0.5 md:gap-1">
                 <button
                     @click="emit('undo')"
                     :disabled="!canUndo"
@@ -162,11 +162,11 @@ const currentZoom = computed(() => props.zoom || 100);
             <div :class="['h-6 w-px', darkMode ? 'bg-gray-700' : 'bg-gray-200']"></div>
 
             <!-- Preview Mode Toggle -->
-            <div data-tour="preview-buttons" :class="['flex items-center rounded-lg p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
+            <div data-tour="preview-buttons" :class="['flex items-center rounded-lg p-0.5 md:p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
                 <button
                     @click="emit('update:previewMode', 'desktop')"
                     :class="[
-                        'p-1.5 rounded-md transition-all',
+                        'p-1 md:p-1.5 rounded-md transition-all',
                         previewMode === 'desktop' 
                             ? (darkMode ? 'bg-gray-700 shadow-sm text-blue-400' : 'bg-white shadow-sm text-blue-600')
                             : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
@@ -174,12 +174,12 @@ const currentZoom = computed(() => props.zoom || 100);
                     aria-label="Desktop preview"
                     title="Desktop view"
                 >
-                    <ComputerDesktopIcon class="w-4 h-4" aria-hidden="true" />
+                    <ComputerDesktopIcon class="w-3.5 h-3.5 md:w-4 md:h-4" aria-hidden="true" />
                 </button>
                 <button
                     @click="emit('update:previewMode', 'tablet')"
                     :class="[
-                        'p-1.5 rounded-md transition-all',
+                        'p-1 md:p-1.5 rounded-md transition-all',
                         previewMode === 'tablet' 
                             ? (darkMode ? 'bg-gray-700 shadow-sm text-blue-400' : 'bg-white shadow-sm text-blue-600')
                             : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
@@ -187,12 +187,12 @@ const currentZoom = computed(() => props.zoom || 100);
                     aria-label="Tablet preview"
                     title="Tablet view"
                 >
-                    <DeviceTabletIcon class="w-4 h-4" aria-hidden="true" />
+                    <DeviceTabletIcon class="w-3.5 h-3.5 md:w-4 md:h-4" aria-hidden="true" />
                 </button>
                 <button
                     @click="emit('update:previewMode', 'mobile')"
                     :class="[
-                        'p-1.5 rounded-md transition-all',
+                        'p-1 md:p-1.5 rounded-md transition-all',
                         previewMode === 'mobile' 
                             ? (darkMode ? 'bg-gray-700 shadow-sm text-blue-400' : 'bg-white shadow-sm text-blue-600')
                             : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
@@ -200,12 +200,12 @@ const currentZoom = computed(() => props.zoom || 100);
                     aria-label="Mobile preview"
                     title="Mobile view"
                 >
-                    <DevicePhoneMobileIcon class="w-4 h-4" aria-hidden="true" />
+                    <DevicePhoneMobileIcon class="w-3.5 h-3.5 md:w-4 md:h-4" aria-hidden="true" />
                 </button>
             </div>
 
             <!-- Zoom Controls -->
-            <div :class="['flex items-center gap-1 rounded-lg p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
+            <div :class="['hidden md:flex items-center gap-1 rounded-lg p-1', darkMode ? 'bg-gray-800' : 'bg-gray-100']">
                 <button
                     @click="emit('update:zoom', Math.max(50, currentZoom - 25))"
                     :disabled="currentZoom <= 50"

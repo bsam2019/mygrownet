@@ -2392,7 +2392,7 @@ onUnmounted(() => {
 
 
             <!-- Canvas Area -->
-            <main :class="['flex-1 overflow-y-auto p-2 md:p-6 relative min-h-0', darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']">
+            <main class="flex-1 overflow-y-auto p-2 md:p-6 relative" :class="[darkMode ? 'canvas-background-dark custom-scrollbar-dark' : 'canvas-background custom-scrollbar']" style="height: calc(100vh - 3.5rem); -webkit-overflow-scrolling: touch;">
                 <!-- Drag-to-Upload Overlay -->
                 <Transition
                     enter-active-class="transition-opacity duration-200"
@@ -2458,10 +2458,13 @@ onUnmounted(() => {
                             item-key="id"
                             ghost-class="opacity-30"
                             drag-class="shadow-2xl"
+                            :delay="isMobileDevice ? 300 : 0"
+                            :delay-on-touch-only="true"
+                            :touch-start-threshold="5"
                             @start="onDragStart"
                             @end="onDragEnd"
                             @change="onWidgetDrop"
-                            :class="['min-h-[300px]', isDragging && sections.length > 0 ? 'bg-blue-50/30' : '']"
+                            :class="['min-h-[calc(100vh-8rem)]', isDragging && sections.length > 0 ? 'bg-blue-50/30' : '']"
                         >
                             <template #item="{ element }">
                                 <div
