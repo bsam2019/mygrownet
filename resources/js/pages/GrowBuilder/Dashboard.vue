@@ -242,25 +242,29 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Header -->
-                <div class="flex items-center justify-between mb-6">
-                    <div>
+                <!-- Header - Compact Layout -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                    <!-- Title Section -->
+                    <div class="flex-shrink-0">
                         <h1 class="text-2xl font-bold text-gray-900">GrowBuilder</h1>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <p class="text-sm text-gray-500">
                             Build beautiful websites for your business
                         </p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    
+                    <!-- Action Buttons - Compact Layout -->
+                    <div class="flex items-center gap-2">
                         <!-- Admin Tier Switcher -->
                         <div v-if="isAdmin && availableTiers" class="relative">
                             <button
                                 @click="showTierDropdown = !showTierDropdown"
-                                class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-amber-100 text-amber-800 font-medium rounded-lg hover:bg-amber-200 transition border border-amber-300"
+                                class="inline-flex items-center gap-1 px-2 py-1.5 text-xs bg-amber-100 text-amber-800 font-medium rounded-lg hover:bg-amber-200 transition border border-amber-300"
                                 :disabled="tierForm.processing"
                             >
-                                <WrenchScrewdriverIcon class="h-4 w-4" aria-hidden="true" />
-                                <span>Test: {{ subscription?.tierName || 'Free' }}</span>
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <WrenchScrewdriverIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                <span class="hidden sm:inline">Test:</span>
+                                <span class="truncate max-w-16 sm:max-w-none">{{ subscription?.tierName || 'Free' }}</span>
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
@@ -296,54 +300,64 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             ></div>
                         </div>
                         
+                        <!-- Plan Link -->
                         <Link
                             :href="route('growbuilder.subscription.index')"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition"
+                            class="inline-flex items-center gap-1 px-2 py-1.5 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition text-xs"
                         >
-                            <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                            <SparklesIcon class="h-3.5 w-3.5" aria-hidden="true" />
                             <span class="hidden sm:inline">{{ subscription?.tierName || 'Free' }} Plan</span>
+                            <span class="sm:hidden">{{ subscription?.tierName || 'Free' }}</span>
                         </Link>
+                        
+                        <!-- AI Express Button -->
                         <button
                             v-if="subscription?.canCreateSite !== false"
                             type="button"
                             @click="openAIGenerator"
                             disabled
-                            class="relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-xl cursor-not-allowed opacity-75"
+                            class="relative inline-flex items-center gap-1 px-2 py-1.5 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-medium rounded-lg cursor-not-allowed opacity-75 text-xs"
                             title="AI Express - Coming Soon"
                         >
-                            <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                            <SparklesIcon class="h-3.5 w-3.5" aria-hidden="true" />
                             <span class="hidden sm:inline">AI Express</span>
                             <span class="sm:hidden">AI</span>
-                            <span class="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
                                 Soon
                             </span>
                         </button>
+                        
+                        <!-- Pro Builder Button -->
                         <button
                             v-if="subscription?.canCreateSite !== false"
                             type="button"
                             @click="openCreateWizard"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition"
+                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm transition text-xs"
                         >
-                            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                            <PlusIcon class="h-3.5 w-3.5" aria-hidden="true" />
                             <span class="hidden sm:inline">Pro Builder</span>
                             <span class="sm:hidden">Create</span>
                         </button>
+                        
+                        <!-- Alternative buttons when at limit -->
                         <template v-else>
                             <Link
                                 v-if="subscription?.tier !== 'agency'"
                                 :href="route('growbuilder.subscription.index')"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 shadow-sm transition"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-sm transition text-xs"
                             >
-                                <ArrowUpCircleIcon class="h-5 w-5" aria-hidden="true" />
-                                Buy Another Site
+                                <ArrowUpCircleIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                <span class="hidden sm:inline">Buy Another Site</span>
+                                <span class="sm:hidden">Buy Site</span>
                             </Link>
                             <span
                                 v-else
-                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-400 text-white font-medium rounded-xl cursor-not-allowed"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-400 text-white font-medium rounded-lg cursor-not-allowed text-xs"
                                 title="You've reached the maximum site limit for Agency plan"
                             >
-                                <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                                Site Limit Reached
+                                <PlusIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                <span class="hidden sm:inline">Site Limit Reached</span>
+                                <span class="sm:hidden">Limit</span>
                             </span>
                         </template>
                     </div>
@@ -440,97 +454,96 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                     </div>
                 </div>
 
-                <!-- Stats Cards -->
-                <div v-if="stats && sites.length > 0" class="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
-                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-blue-100 rounded-lg">
-                                <GlobeAltIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                <!-- Stats Cards - Compact Grid -->
+                <div v-if="stats && sites.length > 0" class="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                    <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-blue-100 rounded-md">
+                                <GlobeAltIcon class="h-4 w-4 text-blue-600" aria-hidden="true" />
                             </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.publishedSites }}</p>
-                                <p class="text-sm text-gray-500">Live Sites</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-green-100 rounded-lg">
-                                <ChartBarIcon class="h-5 w-5 text-green-600" aria-hidden="true" />
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(stats.totalPageViews) }}</p>
-                                <p class="text-sm text-gray-500">Page Views</p>
+                            <div class="min-w-0">
+                                <p class="text-lg font-bold text-gray-900">{{ stats.publishedSites }}</p>
+                                <p class="text-xs text-gray-500 truncate">Live Sites</p>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-purple-100 rounded-lg">
-                                <ShoppingBagIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
+                    <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-green-100 rounded-md">
+                                <ChartBarIcon class="h-4 w-4 text-green-600" aria-hidden="true" />
                             </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(stats.totalOrders) }}</p>
-                                <p class="text-sm text-gray-500">Orders</p>
+                            <div class="min-w-0">
+                                <p class="text-lg font-bold text-gray-900">{{ formatNumber(stats.totalPageViews) }}</p>
+                                <p class="text-xs text-gray-500 truncate">Page Views</p>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-emerald-100 rounded-lg">
-                                <CurrencyDollarIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                    <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-purple-100 rounded-md">
+                                <ShoppingBagIcon class="h-4 w-4 text-purple-600" aria-hidden="true" />
                             </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.totalRevenue) }}</p>
-                                <p class="text-sm text-gray-500">Revenue</p>
+                            <div class="min-w-0">
+                                <p class="text-lg font-bold text-gray-900">{{ formatNumber(stats.totalOrders) }}</p>
+                                <p class="text-xs text-gray-500 truncate">Orders</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-emerald-100 rounded-md">
+                                <CurrencyDollarIcon class="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-lg font-bold text-gray-900">{{ formatCurrency(stats.totalRevenue) }}</p>
+                                <p class="text-xs text-gray-500 truncate">Revenue</p>
                             </div>
                         </div>
                     </div>
                     <!-- Messages Card -->
-                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-amber-100 rounded-lg relative">
-                                <EnvelopeIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                    <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-amber-100 rounded-md relative">
+                                <EnvelopeIcon class="h-4 w-4 text-amber-600" aria-hidden="true" />
                                 <span 
                                     v-if="stats.unreadMessages && stats.unreadMessages > 0"
-                                    class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
+                                    class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center"
                                 >
                                     {{ stats.unreadMessages > 9 ? '9+' : stats.unreadMessages }}
                                 </span>
                             </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900">{{ formatNumber(stats.totalMessages || 0) }}</p>
-                                <p class="text-sm text-gray-500">
+                            <div class="min-w-0">
+                                <p class="text-lg font-bold text-gray-900">{{ formatNumber(stats.totalMessages || 0) }}</p>
+                                <p class="text-xs text-gray-500 truncate">
                                     Messages
-                                    <span v-if="stats.unreadMessages" class="text-amber-600">({{ stats.unreadMessages }} new)</span>
+                                    <span v-if="stats.unreadMessages" class="text-amber-600">({{ stats.unreadMessages }})</span>
                                 </p>
                             </div>
                         </div>
                     </div>
                     <!-- AI Usage Card -->
-                    <div v-if="aiUsage" class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2.5 bg-indigo-100 rounded-lg">
-                                <CpuChipIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                    <div v-if="aiUsage" class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-indigo-100 rounded-md">
+                                <CpuChipIcon class="h-4 w-4 text-indigo-600" aria-hidden="true" />
                             </div>
-                            <div class="flex-1">
+                            <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between">
-                                    <p class="text-2xl font-bold text-gray-900">
+                                    <p class="text-lg font-bold text-gray-900">
                                         {{ aiUsage.is_unlimited ? '∞' : aiUsage.remaining }}
                                     </p>
-                                    <span v-if="aiUsage.has_priority" class="text-xs bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">Priority</span>
+                                    <span v-if="aiUsage.has_priority" class="text-[8px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded-full">Pro</span>
                                 </div>
-                                <p class="text-sm text-gray-500">
-                                    {{ aiUsage.is_unlimited ? 'Unlimited AI' : 'AI Prompts Left' }}
+                                <p class="text-xs text-gray-500 truncate">
+                                    {{ aiUsage.is_unlimited ? 'Unlimited AI' : 'AI Left' }}
                                 </p>
-                                <div v-if="!aiUsage.is_unlimited" class="mt-2">
-                                    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div v-if="!aiUsage.is_unlimited" class="mt-1">
+                                    <div class="h-1 bg-gray-200 rounded-full overflow-hidden">
                                         <div 
                                             class="h-full bg-indigo-500 rounded-full transition-all"
                                             :style="{ width: Math.min(aiUsage.percentage, 100) + '%' }"
                                         ></div>
                                     </div>
-                                    <p class="text-xs text-gray-400 mt-1">{{ aiUsage.used }}/{{ aiUsage.limit }} used</p>
                                 </div>
                             </div>
                         </div>
@@ -779,14 +792,23 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                                 </Link>
                             </div>
 
-                            <!-- Primary Action -->
-                            <Link
-                                :href="route('growbuilder.editor', site.id)"
-                                class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition group/btn"
-                            >
-                                <PencilSquareIcon class="h-4 w-4 group-hover/btn:rotate-12 transition-transform" aria-hidden="true" />
-                                Edit Site
-                            </Link>
+                            <!-- Action Buttons Row -->
+                            <div class="flex gap-2 mb-4">
+                                <Link
+                                    :href="route('growbuilder.editor', site.id)"
+                                    class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                                >
+                                    <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
+                                    Edit
+                                </Link>
+                                <Link
+                                    :href="route('growbuilder.sites.analytics', site.id)"
+                                    class="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition"
+                                >
+                                    <ChartBarIcon class="h-4 w-4" aria-hidden="true" />
+                                    Analytics
+                                </Link>
+                            </div>
 
                             <!-- Health Suggestions -->
                             <div v-if="site.healthSuggestions && site.healthSuggestions.length > 0" class="mt-4 space-y-2">

@@ -92,42 +92,52 @@ const getDeviceIcon = (device: string) => {
                 </div>
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="p-3 bg-blue-100 rounded-xl">
-                                <EyeIcon class="h-6 w-6 text-blue-600" aria-hidden="true" />
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <EyeIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
                             </div>
                             <div :class="[
-                                'flex items-center gap-1 text-sm font-medium',
+                                'flex items-center gap-1 text-xs font-medium',
                                 viewsChange >= 0 ? 'text-green-600' : 'text-red-600'
                             ]">
-                                <component :is="viewsChange >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon" class="h-4 w-4" />
+                                <component :is="viewsChange >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon" class="h-3 w-3" />
                                 {{ Math.abs(viewsChange) }}%
                             </div>
                         </div>
-                        <p class="text-3xl font-bold text-gray-900">{{ formatNumber(totalViews) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Page Views</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ formatNumber(totalViews) }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Page Views</p>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="p-3 bg-green-100 rounded-xl">
-                                <UsersIcon class="h-6 w-6 text-green-600" aria-hidden="true" />
+                    <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <UsersIcon class="h-5 w-5 text-green-600" aria-hidden="true" />
                             </div>
                         </div>
-                        <p class="text-3xl font-bold text-gray-900">{{ formatNumber(totalVisitors) }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Unique Visitors</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ formatNumber(totalVisitors) }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Unique Visitors</p>
                     </div>
 
-                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="p-3 bg-purple-100 rounded-xl">
-                                <ChartBarIcon class="h-6 w-6 text-purple-600" aria-hidden="true" />
+                    <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="p-2 bg-purple-100 rounded-lg">
+                                <ChartBarIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
                             </div>
                         </div>
-                        <p class="text-3xl font-bold text-gray-900">{{ totalVisitors > 0 ? (totalViews / totalVisitors).toFixed(1) : 0 }}</p>
-                        <p class="text-sm text-gray-500 mt-1">Pages per Visit</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ totalVisitors > 0 ? (totalViews / totalVisitors).toFixed(1) : 0 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Pages per Visit</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="p-2 bg-amber-100 rounded-lg">
+                                <GlobeAltIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-900">{{ totalViews > 0 ? ((totalVisitors / totalViews) * 100).toFixed(1) : 0 }}%</p>
+                        <p class="text-xs text-gray-500 mt-1">Bounce Rate</p>
                     </div>
                 </div>
 

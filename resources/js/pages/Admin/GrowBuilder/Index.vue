@@ -76,7 +76,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', 
                 <p class="text-gray-600 dark:text-gray-400 mt-1">Manage all GrowBuilder sites across the platform</p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
                 <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</div>
                     <div class="text-sm text-gray-500">Total Sites</div>
@@ -104,25 +104,28 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', 
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700">
-                <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <div class="flex-1 relative">
                         <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
                         <input v-model="search" type="text" placeholder="Search sites, subdomains, or owners..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             @keyup.enter="applyFilters" />
                     </div>
-                    <select v-model="statusFilter" @change="applyFilters"
-                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <option value="all">All Status</option>
-                        <option value="published">Published</option>
-                        <option value="draft">Draft</option>
-                    </select>
-                    <button @click="applyFilters" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Search</button>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                        <select v-model="statusFilter" @change="applyFilters"
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="all">All Status</option>
+                            <option value="published">Published</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                        <button @click="applyFilters" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Search</button>
+                    </div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <table class="w-full">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[640px]">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Site</th>
@@ -171,6 +174,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-US', 
                         </tr>
                     </tbody>
                 </table>
+                </div>
                 <div v-if="sites.last_page > 1" class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-center gap-2">
                     <Link v-for="link in sites.links" :key="link.label" :href="link.url || '#'" :class="['px-3 py-1 rounded text-sm', link.active ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700', !link.url && 'opacity-50 cursor-not-allowed']" v-html="link.label" />
                 </div>

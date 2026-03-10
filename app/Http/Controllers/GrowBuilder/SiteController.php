@@ -45,6 +45,17 @@ class SiteController extends Controller
         $sites = $this->siteRepository->findByUserId($user->id);
         $siteIds = collect($sites)->map(fn($s) => $s->getId()->value())->toArray();
 
+        // Get modules using the same use case as main dashboard for consistency
+        $getUserModulesUseCase = app(\App\Application\UseCases\Module\GetUserModulesUseCase::class);
+        $moduleDTOs = $getUserModulesUseCase->execute($user);
+        
+        $modules = array_map(function($dto) {
+            return $dto->toArray();
+        }, $moduleDTOs);
+        
+        // Filter modules by enabled status (same as main dashboard)
+        $modules = $this->filterEnabledModules($modules);
+
         // Get page views per site
         $pageViews = GrowBuilderPageView::whereIn('site_id', $siteIds)
             ->select('site_id', DB::raw('COUNT(*) as views'))
@@ -226,7 +237,65 @@ class SiteController extends Controller
             'hasGrowBuilderSubscription' => $currentTier !== 'free',
             // Contact messages for dashboard
             'recentMessages' => $recentMessages,
+            // Modules for consistent app launcher
+            'modules' => $modules,
         ]);
+    }
+
+    /**
+     * Filter modules based on enabled configuration
+     */
+    private function filterEnabledModules(array $modules): array
+    {
+        $enabledModules = \App\Services\ModuleService::getEnabledModules();
+        $enabledSlugs = array_keys($enabledModules);
+        
+        // Map module slugs to config keys
+        $slugToConfigKey = [
+            'grownet' => 'grownet',
+            'mygrownet-core' => 'grownet',
+            'mlm-dashboard' => 'grownet',
+            'growbuilder' => 'growbuilder',
+            'bizboost' => 'bizboost',
+            'growfinance' => 'growfinance',
+            'growbiz' => 'growbiz',
+            'cms' => 'cms',
+            'marketplace' => 'growmarket',
+            'shop' => 'growmarket',
+            'growmarket' => 'growmarket',
+            'learning' => 'library',
+            'education' => 'library',
+            'library' => 'library',
+            'lifeplus' => 'lifeplus',
+            'health' => 'lifeplus',
+            'wellness' => 'lifeplus',
+            'ubumi' => 'ubumi',
+            'mygrow-save' => 'wallet',
+            'wallet' => 'wallet',
+            'messaging' => 'messaging',
+            'announcements' => 'announcements',
+            'community' => 'community',
+            'support' => 'support',
+            'workshops' => 'workshops',
+            'profit-sharing' => 'profit_sharing',
+            'inventory' => 'inventory',
+            'pos' => 'pos',
+            'bgf' => 'bgf',
+            'ventures' => 'venture_builder',
+            'venture-builder' => 'venture_builder',
+        ];
+        
+        return array_values(array_filter($modules, function($module) use ($enabledSlugs, $slugToConfigKey) {
+            $slug = $module['slug'] ?? '';
+            $configKey = $slugToConfigKey[$slug] ?? $slug;
+            
+            // Always show dashboard
+            if ($slug === 'dashboard' || $configKey === 'dashboard') {
+                return true;
+            }
+            
+            return in_array($configKey, $enabledSlugs);
+        }));
     }
 
     public function create(Request $request)
