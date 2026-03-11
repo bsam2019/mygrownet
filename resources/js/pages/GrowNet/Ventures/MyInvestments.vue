@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { BuildingOffice2Icon, ChartBarIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 
 interface Investment {
@@ -77,7 +77,7 @@ const totalShares = props.investments.data.reduce((sum, inv) => sum + inv.shares
 <template>
     <Head title="My Investments" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -237,5 +237,5 @@ const totalShares = props.investments.data.reduce((sum, inv) => sum + inv.shares
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

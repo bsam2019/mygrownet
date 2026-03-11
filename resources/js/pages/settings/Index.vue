@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     UserCircleIcon,
     LockClosedIcon,
@@ -48,7 +48,7 @@ const settingsOptions = [
 </script>
 
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Settings" />
 
         <div class="max-w-4xl mx-auto px-4 py-8">
@@ -184,5 +184,5 @@ const settingsOptions = [
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

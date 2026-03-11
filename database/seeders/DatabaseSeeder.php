@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             InvestmentOpportunitySeeder::class,
             ModuleTierSeeder::class,           // Create module subscription tiers
             BenefitSeeder::class,              // Create starter kit benefits
+            GrowStreamPointSettingsSeeder::class, // GrowStream point configuration
         ]);
     }
 }

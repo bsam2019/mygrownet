@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { PencilIcon, TrashIcon, UsersIcon, XMarkIcon, ShieldCheckIcon } from '@heroicons/vue/24/outline';
 
@@ -89,7 +89,7 @@ const deleteUser = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Users">
+    <AppLayout>
         <Head :title="`Users - ${site.name}`" />
 
         <div class="max-w-5xl mx-auto">
@@ -200,5 +200,5 @@ const deleteUser = () => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

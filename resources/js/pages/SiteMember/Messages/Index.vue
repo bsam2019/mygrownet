@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { EnvelopeIcon, EnvelopeOpenIcon, TrashIcon, EyeIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 
@@ -58,7 +58,7 @@ const deleteMessage = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Messages">
+    <AppLayout>
         <Head :title="`Messages - ${site.name}`" />
 
         <div class="max-w-5xl mx-auto">
@@ -144,5 +144,5 @@ const deleteMessage = () => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

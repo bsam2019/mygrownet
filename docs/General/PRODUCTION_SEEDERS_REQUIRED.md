@@ -126,7 +126,25 @@ php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder
 9. Staff Welfare
 10. Equipment & Maintenance
 
-### 4. SampleBudgetSeeder ⚠️ (OPTIONAL - For Testing Only)
+### 4. GrowStreamPointSettingsSeeder ✅ (REQUIRED - Not in ProductionSeeder)
+**File:** `database/seeders/GrowStreamPointSettingsSeeder.php`
+**Purpose:** Seeds point configuration for GrowStream video platform activities
+**Status:** Newly created, needs to be added to ProductionSeeder
+**Dependencies:** Requires `life_point_settings` and `bonus_point_settings` tables
+**Run Command:**
+```bash
+php artisan db:seed --class=GrowStreamPointSettingsSeeder
+```
+
+**Activities Configured:**
+1. **growstream_video_watch** - Points for starting to watch a video (LP: 2, BP: 5)
+2. **growstream_video_completion** - Points for completing a video (LP: 5, BP: 10)
+3. **growstream_video_share** - Points for sharing a video (LP: 3, BP: 8)
+4. **growstream_subscription** - Points for subscribing to a channel (LP: 10, BP: 20)
+
+**Note:** GrowStream uses the centralized point configuration system. Admins manage point values through Admin → Settings → Bonus Points, not per-video.
+
+### 5. SampleBudgetSeeder ⚠️ (OPTIONAL - For Testing Only)
 **File:** `database/seeders/SampleBudgetSeeder.php`
 **Purpose:** Seeds sample budget for current month for MyGrowNet Platform
 **Status:** Already exists and complete
@@ -169,6 +187,7 @@ public function run(): void
         MyGrowNetPlatformCompanySeeder::class, // MyGrowNet Platform company for expense tracking
         ModuleSeeder::class,                // Financial modules for transaction categorization
         MyGrowNetExpenseCategoriesSeeder::class, // Expense categories for internal tracking
+        GrowStreamPointSettingsSeeder::class, // GrowStream point configuration (LP & BP)
         
         // Optional: Educational Content (uncomment if ready)
         // EducationalContentSeeder::class,  // Learning packs and courses
@@ -213,6 +232,9 @@ php artisan db:seed --class=ModuleSeeder --force
 
 # Step 3: Seed expense categories
 php artisan db:seed --class=MyGrowNetExpenseCategoriesSeeder --force
+
+# Step 4: Seed GrowStream point settings
+php artisan db:seed --class=GrowStreamPointSettingsSeeder --force
 
 # Optional: Seed sample budget (testing only)
 php artisan db:seed --class=SampleBudgetSeeder --force
@@ -266,6 +288,7 @@ php artisan tinker
 6. ⚠️ MyGrowNetPlatformCompanySeeder - MyGrowNet Platform company
 7. ⚠️ ModuleSeeder - 14 financial modules
 8. ⚠️ MyGrowNetExpenseCategoriesSeeder - 10 expense categories
+9. ⚠️ GrowStreamPointSettingsSeeder - GrowStream point configuration
 
 ### Optional (Testing/Development Only)
 9. ❌ SampleBudgetSeeder - Sample budget data (DO NOT RUN IN PRODUCTION)

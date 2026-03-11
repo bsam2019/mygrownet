@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     ShoppingBagIcon,
     DocumentTextIcon,
@@ -139,7 +139,7 @@ const getStatusConfig = (status: string) => {
 <template>
     <Head :title="`Dashboard - ${site.name}`" />
 
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Dashboard">
+    <AppLayout>
         <!-- Header Actions -->
         <template #header-actions>
             <a v-for="action in quickActions" :key="action.name" :href="action.href" :target="action.external ? '_blank' : undefined"
@@ -368,5 +368,5 @@ const getStatusConfig = (status: string) => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

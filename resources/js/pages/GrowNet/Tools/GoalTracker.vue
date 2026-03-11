@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     TargetIcon, 
     TrendingUpIcon, 
@@ -110,7 +110,7 @@ const formatDate = (date: string) => {
 <template>
     <Head title="Goal Tracker" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -326,5 +326,5 @@ const formatDate = (date: string) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

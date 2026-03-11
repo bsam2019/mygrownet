@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { CreditCardIcon, PhoneIcon, BanknoteIcon, WalletIcon } from 'lucide-vue-next';
 
 interface PaymentContext {
@@ -30,7 +30,7 @@ const submit = () => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -247,5 +247,5 @@ const submit = () => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

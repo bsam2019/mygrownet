@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
-import MemberLayout from '@/layouts/MemberLayout.vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { Calendar, MapPin, Users, Award, TrendingUp, Video, CheckCircle, Clock } from 'lucide-vue-next'
 
 interface Workshop {
@@ -83,7 +83,7 @@ const getStatusLabel = (status: string) => {
 
 <template>
   <Head :title="workshop.title" />
-  <MemberLayout>
+  <AppLayout>
     <div class="p-6 max-w-5xl mx-auto">
       <!-- Header Image -->
       <div v-if="workshop.featured_image" class="h-64 rounded-lg overflow-hidden mb-6">
@@ -282,5 +282,5 @@ const getStatusLabel = (status: string) => {
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>

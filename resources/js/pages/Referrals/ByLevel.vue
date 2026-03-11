@@ -1,5 +1,5 @@
 <template>
-    <MemberLayout>
+    <AppLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-sm p-4 md:p-6">
@@ -116,12 +116,12 @@
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
 
 interface Member {

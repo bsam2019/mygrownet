@@ -556,4 +556,35 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/activity-report/user/{userId}', [\App\Http\Controllers\Admin\LgrActivityReportController::class, 'userDetails'])->name('activity-report.user-details');
     });
 
+    // GrowStream Administration
+    Route::prefix('growstream')->name('growstream.')->group(function () {
+        Route::get('/dashboard', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/point-rewards', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'pointRewards'])->name('point-rewards');
+        Route::put('/videos/{video}/point-rewards', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'updatePointRewards'])->name('videos.point-rewards');
+        Route::post('/award-points', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'awardPoints'])->name('award-points');
+        Route::get('/starter-kit-integration', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'starterKitIntegration'])->name('starter-kit-integration');
+        Route::post('/videos/{video}/add-to-starter-kit', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'addToStarterKit'])->name('videos.add-to-starter-kit');
+        Route::delete('/videos/{video}/remove-from-starter-kit', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\GrowStreamAdminController::class, 'removeFromStarterKit'])->name('videos.remove-from-starter-kit');
+    });
+
+    // GrowStream Video & Creator Management
+    Route::prefix('growstream/admin')->name('growstream.admin.')->group(function () {
+        // Videos
+        Route::get('/videos', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'index'])->name('videos');
+        Route::post('/videos', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'store'])->name('videos.store');
+        Route::get('/videos/{video}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'show'])->name('videos.show');
+        Route::put('/videos/{video}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'update'])->name('videos.update');
+        Route::delete('/videos/{video}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'destroy'])->name('videos.destroy');
+        Route::post('/videos/{video}/publish', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'publish'])->name('videos.publish');
+        Route::post('/videos/{video}/unpublish', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'unpublish'])->name('videos.unpublish');
+        Route::post('/videos/bulk-action', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\VideoAdminController::class, 'bulkAction'])->name('videos.bulk-action');
+        
+        // Creators
+        Route::get('/creators', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'index'])->name('creators');
+        Route::get('/creators/{creator}', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'show'])->name('creators.show');
+        Route::post('/creators/{creator}/approve', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'approve'])->name('creators.approve');
+        Route::post('/creators/{creator}/suspend', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'suspend'])->name('creators.suspend');
+        Route::post('/creators/{creator}/activate', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'activate'])->name('creators.activate');
+    });
+
 });

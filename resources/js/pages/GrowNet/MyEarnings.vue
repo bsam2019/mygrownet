@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     StarIcon, 
     GiftIcon, 
@@ -38,7 +38,7 @@ const earningsData = {
 <template>
     <Head title="My Earnings" />
 
-    <MemberLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6">
             <!-- Page Header -->
             <div class="flex items-center justify-between">
@@ -213,5 +213,5 @@ const earningsData = {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

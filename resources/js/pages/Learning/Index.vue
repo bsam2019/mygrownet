@@ -1,5 +1,5 @@
 <template>
-  <MemberLayout>
+  <AppLayout>
     <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       <!-- Hero Section with Gradient -->
       <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white">
@@ -201,13 +201,13 @@
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ClockIcon, 
   StarIcon, 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
     ArrowLeftIcon,
@@ -129,7 +129,7 @@ const formatCurrency = (amount: number) => {
 </script>
 
 <template>
-    <ClientLayout title="Transaction History">
+    <AppLayout title="Transaction History">
         <Head title="Transaction History" />
 
         <div class="py-6 sm:py-8">
@@ -281,5 +281,5 @@ const formatCurrency = (amount: number) => {
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

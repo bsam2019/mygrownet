@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { TrendingUpIcon, UsersIcon, DollarSignIcon, AwardIcon, XIcon, ArrowRightIcon } from 'lucide-vue-next';
 
 interface Props {
@@ -67,7 +67,7 @@ const getHealthScoreColor = (score: number) => {
 <template>
     <Head title="Analytics Dashboard" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -329,5 +329,5 @@ const getHealthScoreColor = (score: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

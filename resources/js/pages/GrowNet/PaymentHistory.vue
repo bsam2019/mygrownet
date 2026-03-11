@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { CheckCircleIcon, ClockIcon, XCircleIcon, PlusIcon } from 'lucide-vue-next';
 
 interface Payment {
@@ -93,7 +93,7 @@ const getPaymentTypeLabel = (type: string) => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -208,5 +208,5 @@ const getPaymentTypeLabel = (type: string) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

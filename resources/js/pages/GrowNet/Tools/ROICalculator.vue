@@ -1,5 +1,5 @@
 <template>
-  <MemberLayout>
+  <AppLayout>
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-6">
@@ -153,12 +153,12 @@
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 interface Props {
   investments: {

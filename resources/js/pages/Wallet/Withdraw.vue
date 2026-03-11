@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
     ArrowLeftIcon,
@@ -132,7 +132,7 @@ const getVerificationBadgeColor = (level: string) => {
 </script>
 
 <template>
-    <ClientLayout title="Withdraw Funds">
+    <AppLayout title="Withdraw Funds">
         <Head title="Withdraw Funds" />
 
         <div class="py-6 sm:py-8">
@@ -417,5 +417,5 @@ const getVerificationBadgeColor = (level: string) => {
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

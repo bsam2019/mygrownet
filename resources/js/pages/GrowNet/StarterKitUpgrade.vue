@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowUpIcon, CheckCircleIcon, AlertCircleIcon, BanknoteIcon, SparklesIcon } from 'lucide-vue-next';
 
 interface Props {
@@ -32,7 +32,7 @@ const formatCurrency = (amount: number) => {
 <template>
     <Head title="Upgrade to Premium" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -165,5 +165,5 @@ const formatCurrency = (amount: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

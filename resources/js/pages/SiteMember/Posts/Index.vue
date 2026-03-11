@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 
@@ -47,7 +47,7 @@ const deletePost = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Posts">
+    <AppLayout>
         <Head :title="`Posts - ${site.name}`" />
 
         <div class="max-w-5xl mx-auto">
@@ -138,5 +138,5 @@ const deletePost = () => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

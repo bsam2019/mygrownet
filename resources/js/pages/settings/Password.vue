@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     LockClosedIcon,
     ShieldCheckIcon,
@@ -46,7 +46,7 @@ const updatePassword = () => {
 </script>
 
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Change Password" />
 
         <div class="max-w-2xl mx-auto px-4 py-8">
@@ -203,5 +203,5 @@ const updatePassword = () => {
                 </ul>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

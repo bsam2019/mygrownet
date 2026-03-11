@@ -1,5 +1,5 @@
 <template>
-    <MemberLayout>
+    <AppLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Investment Opportunities
@@ -86,11 +86,11 @@
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import { CheckIcon, LightBulbIcon } from '@heroicons/vue/24/outline';
 

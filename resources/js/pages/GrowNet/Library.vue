@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { BookOpenIcon, ExternalLinkIcon, ClockIcon, TrendingUpIcon } from 'lucide-vue-next';
 
 interface Resource {
@@ -64,7 +64,7 @@ const getCategoryIcon = (category: string) => {
 <template>
     <Head title="Resource Library" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -171,5 +171,5 @@ const getCategoryIcon = (category: string) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

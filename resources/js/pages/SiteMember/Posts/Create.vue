@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed, watch } from 'vue';
 import { ArrowLeftIcon, PhotoIcon, EyeIcon } from '@heroicons/vue/24/outline';
 
@@ -44,7 +44,7 @@ const submitAndPublish = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Create Post">
+    <AppLayout>
         <Head :title="`Create Post - ${site.name}`" />
 
         <div class="max-w-4xl mx-auto">
@@ -126,5 +126,5 @@ const submitAndPublish = () => {
                 </div>
             </form>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { Cog6ToothIcon, BellIcon, ShieldCheckIcon, PaintBrushIcon } from '@heroicons/vue/24/outline';
 
@@ -45,7 +45,7 @@ const tabs = [
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Settings">
+    <AppLayout>
         <Head :title="`Settings - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -145,5 +145,5 @@ const tabs = [
                 </form>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

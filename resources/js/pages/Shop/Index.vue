@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Navigation from '@/components/custom/Navigation.vue';
 import Footer from '@/components/custom/Footer.vue';
 
@@ -170,7 +170,7 @@ const addToCart = (productId: number) => {
     </div>
 
     <!-- Member View -->
-    <MemberLayout v-else>
+    <AppLayout v-else>
         <div class="py-6 md:py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -259,5 +259,5 @@ const addToCart = (productId: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

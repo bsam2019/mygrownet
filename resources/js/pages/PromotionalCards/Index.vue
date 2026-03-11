@@ -1,5 +1,5 @@
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Share & Earn - Promotional Cards" />
 
         <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8">
@@ -133,13 +133,13 @@
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import SocialShareButtons from '@/components/SocialShareButtons.vue';
 import { ShareIcon, EyeIcon, CheckCircleIcon } from 'lucide-vue-next';
 import axios from 'axios';

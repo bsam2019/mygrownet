@@ -1,7 +1,7 @@
 <template>
     <Head title="Loan Application" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -222,13 +222,13 @@
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 interface Props {
     hasActiveLoan: boolean;

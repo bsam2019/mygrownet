@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowLeftIcon, WalletIcon, CreditCardIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 
 interface Venture {
@@ -60,7 +60,7 @@ const submit = () => {
 <template>
     <Head :title="`Invest in ${venture.title}`" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <!-- Back Button -->
@@ -248,5 +248,5 @@ const submit = () => {
                 </form>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

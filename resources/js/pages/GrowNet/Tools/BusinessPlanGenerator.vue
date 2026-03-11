@@ -1,5 +1,5 @@
 <template>
-  <MemberLayout>
+  <AppLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
@@ -764,13 +764,13 @@
       @close="showPreview = false"
       @download="exportPlan"
     />
-  </MemberLayout>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import AIButton from '@/Components/BusinessPlan/AIButton.vue';
 import ExportCard from '@/Components/BusinessPlan/ExportCard.vue';
 import PreviewModal from '@/Components/BusinessPlan/PreviewModal.vue';

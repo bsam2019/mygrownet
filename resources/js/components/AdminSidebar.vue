@@ -43,7 +43,9 @@ import {
     Cloud,
     PieChart as ChartPieIcon,
     PlusCircle as PlusCircleIcon,
-    ReceiptText as ReceiptRefundIcon
+    ReceiptText as ReceiptRefundIcon,
+    Video as VideoIcon,
+    Play as PlayIcon
 } from 'lucide-vue-next';
 import { useModules } from '@/composables/useModules';
 
@@ -182,6 +184,13 @@ const growBackupNavItems: NavItem[] = [
     { title: 'Dashboard', href: safeRoute('admin.growbackup.index'), icon: LayoutGrid },
     { title: 'Storage Plans', href: safeRoute('admin.growbackup.plans'), icon: Package },
     { title: 'User Management', href: safeRoute('admin.growbackup.users'), icon: Users },
+];
+
+const growStreamNavItems: NavItem[] = [
+    { title: 'Dashboard', href: safeRoute('admin.growstream.dashboard'), icon: LayoutGrid },
+    { title: 'Videos', href: safeRoute('growstream.admin.videos'), icon: VideoIcon },
+    { title: 'Creators', href: safeRoute('growstream.admin.creators'), icon: Users },
+    { title: 'Starter Kit Integration', href: safeRoute('admin.growstream.starter-kit-integration'), icon: BookOpen },
 ];
 
 const reportsNavItems: NavItem[] = [
@@ -348,6 +357,12 @@ onMounted(() => {
         currentUrl.includes('/admin/commission-settings') ||
         currentUrl.includes('/admin/points')) {
         showSubmenu.value.growNet = true;
+    }
+    
+    // GrowStream
+    if (currentUrl.includes('/admin/growstream') || 
+        currentUrl.includes('/growstream/admin')) {
+        showSubmenu.value.growStream = true;
     }
     
     // LGR
@@ -752,6 +767,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.growBackup" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in growBackupNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- GrowStream Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('growStream')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'GrowStream')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <VideoIcon class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">GrowStream</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.growStream }" />
+                    </button>
+
+                    <div v-if="showSubmenu.growStream" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in growStreamNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

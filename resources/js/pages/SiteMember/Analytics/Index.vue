@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { computed, ref } from 'vue';
 import { ChartBarIcon, EyeIcon, UsersIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, GlobeAltIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/vue/24/outline';
 
@@ -47,7 +47,7 @@ const periodLabel = computed(() => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Analytics">
+    <AppLayout>
         <Head :title="`Analytics - ${site.name}`" />
 
         <div class="max-w-6xl mx-auto">
@@ -188,5 +188,5 @@ const periodLabel = computed(() => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

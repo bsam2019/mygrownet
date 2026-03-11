@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
-import MemberLayout from '@/layouts/MemberLayout.vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { Calendar, Award, CheckCircle, Clock, XCircle } from 'lucide-vue-next'
 
 interface Registration {
@@ -64,7 +64,7 @@ const getCategoryLabel = (category: string) => {
 
 <template>
   <Head title="My Workshops" />
-  <MemberLayout>
+  <AppLayout>
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <div>
@@ -184,5 +184,5 @@ const getCategoryLabel = (category: string) => {
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
     ArrowUpIcon, 
@@ -155,7 +155,7 @@ const accountTypeLabel = computed(() => {
 </script>
 
 <template>
-    <ClientLayout title="My Wallet">
+    <AppLayout title="My Wallet">
         <Head title="My Wallet" />
 
         <div class="py-6 sm:py-8">
@@ -483,5 +483,5 @@ const accountTypeLabel = computed(() => {
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

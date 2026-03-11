@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { ArrowLeftIcon, PencilIcon, KeyIcon, TrashIcon, ShieldCheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
@@ -111,7 +111,7 @@ const userInitials = computed(() => props.targetUser.name.split(' ').map(n => n[
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="User Details">
+    <AppLayout>
         <Head :title="`${targetUser.name} - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -299,5 +299,5 @@ const userInitials = computed(() => props.targetUser.name.split(' ').map(n => n[
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

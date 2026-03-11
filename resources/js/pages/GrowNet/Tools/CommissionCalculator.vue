@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { CalculatorIcon, UsersIcon, DollarSignIcon } from 'lucide-vue-next';
 
 interface CommissionRates {
@@ -95,7 +95,7 @@ const formatCurrency = (amount: number) => {
 <template>
     <Head title="Commission Calculator" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -267,5 +267,5 @@ const formatCurrency = (amount: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

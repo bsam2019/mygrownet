@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { UserIcon, KeyIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 
@@ -49,7 +49,7 @@ const memberSince = computed(() => new Date(props.user.created_at).toLocaleDateS
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Profile">
+    <AppLayout>
         <Head :title="`Profile - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -140,5 +140,5 @@ const memberSince = computed(() => new Date(props.user.created_at).toLocaleDateS
                 </form>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

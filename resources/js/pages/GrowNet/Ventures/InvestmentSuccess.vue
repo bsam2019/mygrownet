@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { CheckCircleIcon, DocumentTextIcon, ArrowRightIcon } from '@heroicons/vue/24/outline';
 
 interface Investment {
@@ -52,7 +52,7 @@ const formatDate = (date: string) => {
 <template>
     <Head title="Investment Successful" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <!-- Success Header -->
@@ -173,5 +173,5 @@ const formatDate = (date: string) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

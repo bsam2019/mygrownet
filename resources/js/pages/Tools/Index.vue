@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     DocumentTextIcon,
     WrenchScrewdriverIcon,
@@ -39,7 +39,7 @@ const tools = [
 </script>
 
 <template>
-    <ClientLayout :is-admin="isAdmin" :is-manager="isManager">
+    <AppLayout :is-admin="isAdmin" :is-manager="isManager">
         <Head title="Free Tools" />
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -132,5 +132,5 @@ const tools = [
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

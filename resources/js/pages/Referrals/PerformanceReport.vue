@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     ChartBarIcon, 
     CurrencyDollarIcon, 
@@ -87,7 +87,7 @@ const getLevelColor = (level: number): string => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Performance Report
@@ -339,5 +339,5 @@ const getLevelColor = (level: number): string => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

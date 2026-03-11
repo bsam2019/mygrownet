@@ -1,5 +1,5 @@
 <template>
-  <MemberLayout>
+  <AppLayout>
     <div class="max-w-7xl mx-auto p-4 sm:p-6">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Business Tools</h1>
@@ -67,11 +67,11 @@
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   DocumentTextIcon, 
   PlusIcon,

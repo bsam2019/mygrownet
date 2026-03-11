@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import {
     SunIcon,
@@ -43,7 +43,7 @@ const themes = [
 </script>
 
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Appearance Settings" />
 
         <div class="max-w-2xl mx-auto px-4 py-8">
@@ -129,5 +129,5 @@ const themes = [
                 </p>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

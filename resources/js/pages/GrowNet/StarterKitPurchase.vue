@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ShoppingBagIcon, CheckCircleIcon, AlertCircleIcon, BanknoteIcon } from 'lucide-vue-next';
 
 interface ContentItem {
@@ -113,7 +113,7 @@ const formatCurrency = (amount: number) => {
 <template>
     <Head title="Purchase Starter Kit" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Back Button -->
@@ -533,5 +533,5 @@ const formatCurrency = (amount: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

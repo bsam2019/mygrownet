@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
     CubeIcon,
@@ -195,7 +195,7 @@ const handleModuleClick = (module: Module) => {
 </script>
 
 <template>
-    <ClientLayout :is-admin="isAdmin" :is-manager="isManager">
+    <AppLayout :is-admin="isAdmin" :is-manager="isManager">
         <Head title="Dashboard" />
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -714,5 +714,5 @@ const handleModuleClick = (module: Module) => {
                 </div>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

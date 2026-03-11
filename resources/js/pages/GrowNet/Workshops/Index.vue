@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
-import MemberLayout from '@/layouts/MemberLayout.vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 import { Calendar, MapPin, Users, Award, TrendingUp } from 'lucide-vue-next'
 
 interface Workshop {
@@ -68,7 +68,7 @@ const getFormatLabel = (format: string) => {
 
 <template>
   <Head title="Workshops & Training" />
-  <MemberLayout>
+  <AppLayout>
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <div>
@@ -188,5 +188,5 @@ const getFormatLabel = (format: string) => {
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>

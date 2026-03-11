@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { formatCurrency } from '@/utils/formatting';
 import { useCompensationPlanPPT } from '@/composables/useCompensationPlanPPT';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
@@ -75,7 +75,7 @@ const downloadPresentation = async () => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6 md:py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -987,7 +987,7 @@ const downloadPresentation = async () => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>
 
 

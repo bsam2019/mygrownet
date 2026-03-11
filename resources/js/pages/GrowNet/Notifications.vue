@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { BellIcon, CheckIcon } from 'lucide-vue-next';
 import axios from 'axios';
 
@@ -98,7 +98,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <Head title="Notifications" />
 
         <div class="py-6 sm:py-8">
@@ -196,5 +196,5 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

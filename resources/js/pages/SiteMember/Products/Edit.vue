@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import ImageUploader from '@/components/GrowBuilder/ImageUploader.vue';
 import { ref, computed } from 'vue';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
@@ -62,7 +62,7 @@ const submit = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Edit Product">
+    <AppLayout>
         <Head :title="`Edit ${product.name} - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -221,5 +221,5 @@ const submit = () => {
                 </div>
             </form>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import Navigation from '@/components/custom/Navigation.vue';
 import Footer from '@/components/custom/Footer.vue';
 
@@ -259,7 +259,7 @@ const decrementQuantity = () => {
     </div>
 
     <!-- Member View (same structure) -->
-    <MemberLayout v-else>
+    <AppLayout v-else>
         <div class="py-8 md:py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Same content as guest view but without Navigation/Footer -->
@@ -423,5 +423,5 @@ const decrementQuantity = () => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

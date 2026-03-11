@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { computed } from 'vue';
 import { ArrowLeftIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 
@@ -53,7 +53,7 @@ const getStatusConfig = (status: string) => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Order Details">
+    <AppLayout>
         <Head :title="`Order ${order.order_number} - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -118,5 +118,5 @@ const getStatusConfig = (status: string) => {
                 </dl>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

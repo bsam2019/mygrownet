@@ -1,5 +1,5 @@
 <template>
-    <MemberLayout>
+    <AppLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-sm p-6">
@@ -104,12 +104,12 @@
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 interface Receipt {
     id: number;

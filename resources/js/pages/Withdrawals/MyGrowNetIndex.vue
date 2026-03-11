@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { BanknoteIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from 'lucide-vue-next';
 
 interface Withdrawal {
@@ -83,7 +83,7 @@ const submitWithdrawal = () => {
 <template>
     <Head title="Withdrawals" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -280,5 +280,5 @@ const submitWithdrawal = () => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon, InfoIcon, XIcon } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -203,7 +203,7 @@ const formatCurrency = (amount: number | undefined | null) => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <Head title="My Wallet" />
 
         <div class="py-6 sm:py-8">
@@ -983,5 +983,5 @@ const formatCurrency = (amount: number | undefined | null) => {
         </div>
     </Transition>
 
-    </MemberLayout>
+    </AppLayout>
 </template>

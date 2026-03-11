@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
-import MemberLayout from '@/layouts/MemberLayout.vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 
 interface ProfitShare {
   id: number
@@ -24,7 +24,7 @@ const getStatusColor = (status: string) => {
 
 <template>
   <Head title="My Profit Shares" />
-  <MemberLayout>
+  <AppLayout>
     <div class="p-6">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">My Quarterly Profit Shares</h1>
 
@@ -75,5 +75,5 @@ const getStatusColor = (status: string) => {
         </p>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>

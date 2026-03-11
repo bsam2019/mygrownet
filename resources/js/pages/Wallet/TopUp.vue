@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
     ArrowLeftIcon,
@@ -87,7 +87,7 @@ const goToManualPayment = () => {
 </script>
 
 <template>
-    <ClientLayout title="Top Up Wallet">
+    <AppLayout title="Top Up Wallet">
         <Head title="Top Up Wallet" />
 
         <div class="py-6 sm:py-8">
@@ -353,5 +353,5 @@ const goToManualPayment = () => {
                 </template>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     CurrencyDollarIcon, 
     ChartBarIcon, 
@@ -88,7 +88,7 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
 </script>
 
 <template>
-    <MemberLayout>
+    <AppLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Dashboard
@@ -371,5 +371,5 @@ const getRiskLevelColor = (riskLevel: string | undefined): string => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

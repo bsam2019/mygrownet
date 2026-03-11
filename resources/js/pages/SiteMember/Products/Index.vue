@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon, CubeIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 
@@ -64,7 +64,7 @@ const deleteProduct = () => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Products">
+    <AppLayout>
         <Head :title="`Products - ${site.name}`" />
 
         <div class="max-w-6xl mx-auto">
@@ -179,5 +179,5 @@ const deleteProduct = () => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

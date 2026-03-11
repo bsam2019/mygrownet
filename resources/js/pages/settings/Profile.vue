@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePermissions } from '@/composables/usePermissions';
 import {
     UserCircleIcon,
@@ -38,7 +38,7 @@ const submit = () => {
 </script>
 
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Profile Settings" />
 
         <div class="max-w-2xl mx-auto px-4 py-8">
@@ -215,5 +215,5 @@ const submit = () => {
                 </Link>
             </div>
         </div>
-    </ClientLayout>
+    </AppLayout>
 </template>

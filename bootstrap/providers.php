@@ -22,4 +22,5 @@ return [
     App\Providers\WorkshopServiceProvider::class,
     App\Providers\QuickInvoiceServiceProvider::class,
     App\Providers\UbumiServiceProvider::class,
+    App\Domain\GrowStream\GrowStreamServiceProvider::class,
 ];

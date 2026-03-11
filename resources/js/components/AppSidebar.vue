@@ -27,7 +27,8 @@ import {
     ArrowRightLeftIcon,
     ChevronDownIcon,
     Mail as MailIcon,
-    Wrench as WrenchIcon
+    Wrench as WrenchIcon,
+    Building2 as BuildingOfficeIcon
 } from 'lucide-vue-next';
 import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline';
 import { useModules } from '@/composables/useModules';
@@ -161,7 +162,7 @@ const accountNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     { title: 'Admin Dashboard', href: route('admin.dashboard'), icon: ShieldIcon },
     { title: 'Manage Members', href: route('admin.users.index'), icon: UsersIcon },
-    { title: 'Subscription Requests', href: route('admin.investments.index'), icon: ChartBarIcon },
+    { title: 'Investment Rounds', href: route('admin.investment-rounds.index'), icon: ChartBarIcon },
     { title: 'Withdrawal Approvals', href: route('admin.withdrawals.index'), icon: BanknoteIcon },
     { title: 'GrowSuite Companies', href: route('admin.cms-companies.index'), icon: BuildingOfficeIcon },
 ];

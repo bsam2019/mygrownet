@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { ArrowLeftIcon, EnvelopeIcon, PhoneIcon, ClockIcon, CheckCircleIcon, TrashIcon, ArchiveBoxIcon } from '@heroicons/vue/24/outline';
 
@@ -63,7 +63,7 @@ const userInitials = computed(() => props.message.name.split(' ').map(n => n[0])
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="View Message">
+    <AppLayout>
         <Head :title="`Message from ${message.name} - ${site.name}`" />
 
         <div class="max-w-3xl mx-auto">
@@ -163,5 +163,5 @@ const userInitials = computed(() => props.message.name.split(' ').map(n => n[0])
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

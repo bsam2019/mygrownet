@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import MemberLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { GiftIcon, CheckCircleIcon, StarIcon, CalendarIcon, PackageIcon, ShoppingBagIcon, BookOpenIcon, VideoIcon, AwardIcon } from 'lucide-vue-next';
 
 interface ContentItem {
@@ -117,7 +117,7 @@ const formatCurrency = (amount: number) => {
 <template>
     <Head title="My Starter Kit" />
 
-    <MemberLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -588,5 +588,5 @@ const formatCurrency = (amount: number) => {
                 </div>
             </div>
         </div>
-    </MemberLayout>
+    </AppLayout>
 </template>

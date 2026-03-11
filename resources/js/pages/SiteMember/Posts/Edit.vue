@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import SiteMemberLayout from '@/layouts/SiteMemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, computed } from 'vue';
 import { ArrowLeftIcon, TrashIcon, EyeIcon } from '@heroicons/vue/24/outline';
 
@@ -65,7 +65,7 @@ const canDelete = computed(() => {
 </script>
 
 <template>
-    <SiteMemberLayout :site="site" :settings="settings" :user="user" title="Edit Post">
+    <AppLayout>
         <Head :title="`Edit: ${post.title} - ${site.name}`" />
 
         <div class="max-w-4xl mx-auto">
@@ -177,5 +177,5 @@ const canDelete = computed(() => {
                 </div>
             </div>
         </div>
-    </SiteMemberLayout>
+    </AppLayout>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import ClientLayout from '@/layouts/ClientLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import WalletTopUpModal from '@/components/Shared/WalletTopUpModal.vue';
 import {
     ArrowLeftIcon,
@@ -191,7 +191,7 @@ const getDisplayFeatures = (tier: Tier) => {
 </script>
 
 <template>
-    <ClientLayout>
+    <AppLayout>
         <Head title="Pricing - GrowBuilder" />
 
         <div class="max-w-5xl mx-auto px-4 py-6 pb-24">
@@ -499,5 +499,5 @@ const getDisplayFeatures = (tier: Tier) => {
         </Teleport>
 
         <WalletTopUpModal :show="showTopUpModal" :balance="walletBalance" @close="showTopUpModal = false" @success="onTopUpSuccess" />
-    </ClientLayout>
+    </AppLayout>
 </template>

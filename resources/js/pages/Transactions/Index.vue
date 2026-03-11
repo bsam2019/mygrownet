@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { formatCurrency } from '@/utils/format';

@@ -1,5 +1,5 @@
 now<template>
-  <MemberLayout>
+  <AppLayout>
     <div class="py-6">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -203,12 +203,12 @@ now<template>
         </div>
       </div>
     </div>
-  </MemberLayout>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3';
-import MemberLayout from '@/Layouts/MemberLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowLeftIcon, CheckIcon } from 'lucide-vue-next';
 
 interface Package {
