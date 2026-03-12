@@ -38,11 +38,71 @@ class SiteController extends Controller
             'middleware' => $request->route()?->middleware(),
         ]);
 
-        // Simple response for now since dependencies are commented out
+        $user = $request->user();
+        
+        // Get user's sites
+        $sites = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::byUser($user->id)
+            ->with(['pages', 'media'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get basic stats
+        $stats = [
+            'totalSites' => $sites->count(),
+            'publishedSites' => $sites->where('status', 'published')->count(),
+            'totalPageViews' => 0, // TODO: Calculate from page views
+            'totalOrders' => 0, // TODO: Calculate from orders
+            'totalRevenue' => 0, // TODO: Calculate from orders
+            'totalMessages' => 0, // TODO: Calculate from contact messages
+            'unreadMessages' => 0, // TODO: Calculate unread messages
+        ];
+
+        // Format sites for frontend
+        $sitesData = $sites->map(function ($site) {
+            return [
+                'id' => $site->id,
+                'name' => $site->name,
+                'subdomain' => $site->subdomain,
+                'customDomain' => $site->custom_domain,
+                'description' => $site->description,
+                'status' => $site->status,
+                'url' => $site->url,
+                'logo' => $site->logo,
+                'favicon' => $site->favicon,
+                'isPublished' => $site->isPublished(),
+                'onboardingCompleted' => $site->onboarding_completed,
+                'createdAt' => $site->created_at->diffForHumans(),
+                'updatedAt' => $site->updated_at->diffForHumans(),
+                'publishedAt' => $site->published_at?->diffForHumans(),
+                'storageUsed' => $site->storage_used ?? 0,
+                'storageLimit' => $site->storage_limit ?? 104857600, // 100MB default
+                'storageUsedFormatted' => $site->storage_used_formatted,
+                'storageLimitFormatted' => $site->storage_limit_formatted,
+                'storagePercentage' => $site->storage_percentage,
+                'pageCount' => $site->pages->count(),
+                'mediaCount' => $site->media->count(),
+                'pageViews' => 0, // TODO: Get actual page views
+                'ordersCount' => 0, // TODO: Get actual orders
+                'revenue' => 0, // TODO: Get actual revenue
+                'messagesCount' => 0, // TODO: Get actual messages
+                'unreadMessages' => 0, // TODO: Get unread messages
+            ];
+        });
+
+        // Basic subscription info (simplified for now)
+        $subscription = [
+            'tier' => 'free',
+            'tierName' => 'Free',
+            'sitesLimit' => 3,
+            'sitesUsed' => $sites->count(),
+            'canCreateSite' => $sites->count() < 3,
+            'expiresAt' => null,
+        ];
+
         return Inertia::render('GrowBuilder/Dashboard', [
-            'sites' => [],
-            'stats' => ['totalSites' => 0],
-            'subscription' => ['tier' => 'free'],
+            'sites' => $sitesData,
+            'stats' => $stats,
+            'subscription' => $subscription,
             'modules' => [],
         ]);
     }
