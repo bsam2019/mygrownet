@@ -1542,6 +1542,7 @@ Route::middleware(['web'])->prefix('wedding-admin')->name('wedding.admin.')->gro
 
 // PRODUCTION FIX: Handle /username redirects
 // This catches single-word paths that might be usernames and redirects to dashboard
+// Excludes known module paths using negative lookahead
 Route::get('/{path}', function ($path) {
     // Only handle if it looks like a username (single word, alphanumeric with underscores/dashes)
     if (preg_match('/^[a-zA-Z0-9_-]+$/', $path) && strlen($path) >= 3 && strlen($path) <= 50) {
@@ -1554,7 +1555,7 @@ Route::get('/{path}', function ($path) {
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '[a-zA-Z0-9_-]+');
+})->where('path', '(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory)[a-zA-Z0-9_-]+');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder

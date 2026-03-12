@@ -28,7 +28,22 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->prefix('growbuilder')->name('growbuilder.')->group(function () {
+Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(function () {
+    
+        // DEBUG: Test if any growbuilder routes work
+    Route::get('/debug', function() {
+        \Log::info('DEBUG route hit');
+        return response('DEBUG ROUTE HIT!');
+    });
+    
+    // DEBUG: Simple test route
+    Route::get('/test', function() {
+        return response()->json(['message' => 'GrowBuilder route works!', 'user' => auth()->user()->email]);
+    })->name('test');
+    
+    // DEBUG: Test controller method
+    Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
+    
     // Dashboard
     Route::get('/', [SiteController::class, 'index'])->name('index');
     

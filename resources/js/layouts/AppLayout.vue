@@ -16,10 +16,14 @@ import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 
 interface Props {
     title?: string;
+    isAdmin?: boolean;
+    isManager?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    title: 'MyGrowNet'
+    title: 'MyGrowNet',
+    isAdmin: false,
+    isManager: false
 });
 
 const page = usePage();
