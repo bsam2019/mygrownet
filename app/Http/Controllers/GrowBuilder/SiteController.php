@@ -46,19 +46,32 @@ class SiteController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get basic stats
+        // Get basic stats with actual analytics data
+        $totalPageViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::whereIn('site_id', $sites->pluck('id'))->count();
+        $totalOrders = 0; // TODO: Add when orders model is available
+        $totalRevenue = 0; // TODO: Add when orders model is available
+        $totalMessages = 0; // TODO: Add when contact messages model is available
+        $unreadMessages = 0; // TODO: Add when contact messages model is available
+
         $stats = [
             'totalSites' => $sites->count(),
             'publishedSites' => $sites->where('status', 'published')->count(),
-            'totalPageViews' => 0, // TODO: Calculate from page views
-            'totalOrders' => 0, // TODO: Calculate from orders
-            'totalRevenue' => 0, // TODO: Calculate from orders
-            'totalMessages' => 0, // TODO: Calculate from contact messages
-            'unreadMessages' => 0, // TODO: Calculate unread messages
+            'totalPageViews' => $totalPageViews,
+            'totalOrders' => $totalOrders,
+            'totalRevenue' => $totalRevenue,
+            'totalMessages' => $totalMessages,
+            'unreadMessages' => $unreadMessages,
         ];
 
+        // Get page views per site for individual site stats
+        $pageViewsPerSite = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::whereIn('site_id', $sites->pluck('id'))
+            ->selectRaw('site_id, COUNT(*) as views')
+            ->groupBy('site_id')
+            ->pluck('views', 'site_id')
+            ->toArray();
+
         // Format sites for frontend
-        $sitesData = $sites->map(function ($site) {
+        $sitesData = $sites->map(function ($site) use ($pageViewsPerSite) {
             return [
                 'id' => $site->id,
                 'name' => $site->name,
@@ -81,7 +94,7 @@ class SiteController extends Controller
                 'storagePercentage' => $site->storage_percentage,
                 'pageCount' => $site->pages->count(),
                 'mediaCount' => $site->media->count(),
-                'pageViews' => 0, // TODO: Get actual page views
+                'pageViews' => $pageViewsPerSite[$site->id] ?? 0,
                 'ordersCount' => 0, // TODO: Get actual orders
                 'revenue' => 0, // TODO: Get actual revenue
                 'messagesCount' => 0, // TODO: Get actual messages
@@ -150,7 +163,157 @@ class SiteController extends Controller
 
     public function analytics(Request $request, int $id)
     {
-        return response()->json(['message' => 'Analytics method - under development']);
+        $user = $request->user();
+        
+        // Get the site
+        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('id', $id)
+            ->where('user_id', $user->id)
+            ->with(['pages'])
+            ->firstOrFail();
+
+        // Get period from request (default 30 days)
+        $period = $request->get('period', '30d');
+        $days = match($period) {
+            '7d' => 7,
+            '30d' => 30,
+            '90d' => 90,
+            default => 30,
+        };
+
+        // Get total views and visitors
+        $totalViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->count();
+
+        $totalVisitors = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->distinct('ip_address')
+            ->count();
+
+        // Calculate change from previous period
+        $previousPeriodViews = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days * 2))
+            ->where('viewed_date', '<', now()->subDays($days))
+            ->count();
+
+        $viewsChange = $previousPeriodViews > 0 
+            ? round((($totalViews - $previousPeriodViews) / $previousPeriodViews) * 100, 1)
+            : 0;
+
+        // Get daily stats
+        $dailyStats = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->selectRaw('DATE(viewed_date) as date, COUNT(*) as views, COUNT(DISTINCT ip_address) as visitors')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date,
+                    'views' => (int) $item->views,
+                    'visitors' => (int) $item->visitors,
+                ];
+            });
+
+        // Get device stats
+        $deviceStats = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->selectRaw('COALESCE(device_type, "Unknown") as device, COUNT(*) as count')
+            ->groupBy('device')
+            ->get()
+            ->map(function ($item) use ($totalViews) {
+                return [
+                    'device' => $item->device,
+                    'count' => (int) $item->count,
+                    'percentage' => $totalViews > 0 ? round(($item->count / $totalViews) * 100, 1) : 0,
+                ];
+            });
+
+        // Get top pages
+        $topPages = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->selectRaw('path, COUNT(*) as views')
+            ->groupBy('path')
+            ->orderByDesc('views')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'path' => $item->path,
+                    'views' => (int) $item->views,
+                    'avgTime' => 0, // TODO: Add session tracking
+                    'bounceRate' => 0, // TODO: Add bounce rate calculation
+                ];
+            });
+
+        // Get traffic sources (from referrer data)
+        $trafficSources = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->selectRaw('
+                CASE 
+                    WHEN referrer IS NULL OR referrer = "" THEN "Direct"
+                    WHEN referrer LIKE "%google%" THEN "Google"
+                    WHEN referrer LIKE "%facebook%" THEN "Facebook"
+                    WHEN referrer LIKE "%twitter%" THEN "Twitter"
+                    ELSE "Other"
+                END as source,
+                COUNT(DISTINCT ip_address) as visitors
+            ')
+            ->groupBy('source')
+            ->get()
+            ->map(function ($item) use ($totalVisitors) {
+                $type = match(strtolower($item->source)) {
+                    'direct' => 'direct',
+                    'google' => 'search',
+                    'facebook', 'twitter' => 'social',
+                    default => 'referral',
+                };
+
+                return [
+                    'source' => $item->source,
+                    'visitors' => (int) $item->visitors,
+                    'percentage' => $totalVisitors > 0 ? round(($item->visitors / $totalVisitors) * 100, 1) : 0,
+                    'type' => $type,
+                ];
+            });
+
+        // Get geographic data
+        $geographicData = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPageView::where('site_id', $id)
+            ->where('viewed_date', '>=', now()->subDays($days))
+            ->selectRaw('COALESCE(country, "Unknown") as country, COUNT(DISTINCT ip_address) as visitors')
+            ->groupBy('country')
+            ->orderByDesc('visitors')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) use ($totalVisitors) {
+                return [
+                    'country' => $item->country,
+                    'countryCode' => strtoupper(substr($item->country, 0, 2)), // Simple approximation
+                    'visitors' => (int) $item->visitors,
+                    'percentage' => $totalVisitors > 0 ? round(($item->visitors / $totalVisitors) * 100, 1) : 0,
+                ];
+            });
+
+        return Inertia::render('GrowBuilder/Sites/Analytics', [
+            'site' => [
+                'id' => $site->id,
+                'name' => $site->name,
+                'subdomain' => $site->subdomain,
+            ],
+            'totalViews' => $totalViews,
+            'totalVisitors' => $totalVisitors,
+            'viewsChange' => $viewsChange,
+            'avgSessionDuration' => 0, // TODO: Add session duration tracking
+            'newVisitors' => $totalVisitors, // TODO: Distinguish new vs returning
+            'returningVisitors' => 0, // TODO: Add returning visitor tracking
+            'dailyStats' => $dailyStats,
+            'deviceStats' => $deviceStats,
+            'topPages' => $topPages,
+            'trafficSources' => $trafficSources,
+            'geographicData' => $geographicData,
+            'conversionGoals' => [], // TODO: Add conversion tracking
+            'period' => $period,
+        ]);
     }
 
     public function exportAnalytics(Request $request, int $id)
