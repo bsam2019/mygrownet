@@ -99,6 +99,17 @@ const selectedPeriod = ref(props.period || '30d');
 const showComparison = ref(false);
 const showExportMenu = ref(false);
 
+// Watch for period changes and reload data
+const changePeriod = () => {
+    if (selectedPeriod.value !== props.period) {
+        // Navigate to the same route with new period parameter
+        window.location.href = route('growbuilder.sites.analytics', { 
+            id: props.site.id, 
+            period: selectedPeriod.value 
+        });
+    }
+};
+
 // Close export menu when clicking outside
 const closeExportMenu = (event: Event) => {
     if (!(event.target as Element).closest('.relative')) {
@@ -208,6 +219,7 @@ const avgConversionRate = computed(() => {
                             <!-- Period Selector -->
                             <select 
                                 v-model="selectedPeriod"
+                                @change="changePeriod"
                                 class="px-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="7d">Last 7 days</option>
