@@ -1587,3 +1587,6 @@ Route::fallback(function (Illuminate\Http\Request $request) {
 
 // Quick Invoice Admin Routes
 require __DIR__.'/admin-quick-invoice.php';
+
+// Quick Invoice Routes
+require __DIR__.'/quick-invoice.php';
