@@ -35,6 +35,47 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#1e40af', 'textColor' => '#ffffff'],
                 'aiHints' => 'Create compelling, action-oriented headline. Subtitle expands value proposition. Include clear CTA. Layout options: centered (default), split-right, split-left, video, slideshow.',
+                'imageRequirements' => [
+                    'backgroundImage' => [
+                        'width' => 1920,
+                        'height' => 1080,
+                        'aspectRatio' => 1.78, // 16:9 ratio - better for preserving image content
+                        'minWidth' => 1280,
+                        'maxSize' => 5242880, // 5MB
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Full-width hero background image',
+                    ],
+                    'image' => [
+                        'width' => 800,
+                        'height' => 600,
+                        'aspectRatio' => 1.33,
+                        'minWidth' => 600,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Split layout side image',
+                    ],
+                    'slides' => [
+                        'width' => 1920,
+                        'height' => 1080,
+                        'aspectRatio' => 1.78, // 16:9 ratio for slideshow images too
+                        'minWidth' => 1280,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Slideshow images',
+                    ],
+                ],
+                        'aspectRatio' => 1.33,
+                        'minWidth' => 600,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Split layout side image',
+                    ],
+                    'slides' => [
+                        'width' => 1920,
+                        'height' => 800,
+                        'aspectRatio' => 2.4,
+                        'minWidth' => 1280,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Slideshow images',
+                    ],
+                ],
             ],
 
             'page-header' => [
@@ -47,6 +88,16 @@ class SectionTemplateService
                 'defaults' => ['title' => 'Page Title', 'textPosition' => 'center'],
                 'style' => ['backgroundColor' => '#1e40af', 'textColor' => '#ffffff'],
                 'aiHints' => 'Keep title concise. Subtitle optional but provides context.',
+                'imageRequirements' => [
+                    'backgroundImage' => [
+                        'width' => 1920,
+                        'height' => 600,
+                        'aspectRatio' => 3.2, // 16:5 ratio - better for page headers with content
+                        'minWidth' => 1280,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Page header background image',
+                    ],
+                ],
             ],
 
             'about' => [
@@ -64,6 +115,16 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
                 'aiHints' => 'Write authentic company story. Focus on mission, values, unique selling points. Layout options: image-right (default), image-left, image-top.',
+                'imageRequirements' => [
+                    'image' => [
+                        'width' => 600,
+                        'height' => 400,
+                        'aspectRatio' => 1.5,
+                        'minWidth' => 400,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'About section image',
+                    ],
+                ],
             ],
 
             'services' => [
@@ -88,6 +149,16 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
                 'aiHints' => 'Create 3-6 services with benefit-focused titles. Each needs icon, title, description. Layout options: grid (default), list, cards-images, alternating.',
+                'imageRequirements' => [
+                    'items.image' => [
+                        'width' => 500,
+                        'height' => 400,
+                        'aspectRatio' => 1.25, // 5:4 ratio - better for service cards
+                        'minWidth' => 400,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Service card image',
+                    ],
+                ],
             ],
 
             'features' => [
@@ -131,6 +202,16 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
                 'aiHints' => 'Create realistic testimonials with specific details. Use Zambian names. Include role/company. Layout options: grid (default), carousel, single, photos.',
+                'imageRequirements' => [
+                    'items.image' => [
+                        'width' => 200,
+                        'height' => 200,
+                        'aspectRatio' => 1.0,
+                        'minWidth' => 100,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Customer photo (square)',
+                    ],
+                ],
             ],
 
             'pricing' => [
@@ -214,6 +295,16 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
                 'aiHints' => 'Use realistic Zambian names. Include role and brief bio. Layout options: grid (default), social, compact.',
+                'imageRequirements' => [
+                    'items.image' => [
+                        'width' => 400,
+                        'height' => 400,
+                        'aspectRatio' => 1.0,
+                        'minWidth' => 200,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Team member photo (square)',
+                    ],
+                ],
             ],
 
             'stats' => [
@@ -255,6 +346,16 @@ class SectionTemplateService
                 ],
                 'style' => ['backgroundColor' => '#2563eb', 'textColor' => '#ffffff'],
                 'aiHints' => 'Create urgency with action-oriented language. Clear, compelling CTA. Layout options: banner (default), split, minimal.',
+                'imageRequirements' => [
+                    'image' => [
+                        'width' => 800,
+                        'height' => 600,
+                        'aspectRatio' => 1.33,
+                        'minWidth' => 600,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'CTA split layout image',
+                    ],
+                ],
             ],
 
             'gallery' => [
@@ -268,6 +369,16 @@ class SectionTemplateService
                 'defaults' => ['layout' => 'grid', 'title' => 'Our Gallery', 'columns' => 4, 'images' => []],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
                 'aiHints' => 'Gallery requires user to upload images. AI suggests title only. Layout options: grid (default), masonry, lightbox.',
+                'imageRequirements' => [
+                    'images' => [
+                        'width' => 1000,
+                        'height' => 800,
+                        'aspectRatio' => 1.25,
+                        'minWidth' => 600,
+                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
+                        'description' => 'Gallery image',
+                    ],
+                ],
             ],
 
             'member-cta' => [
@@ -502,5 +613,42 @@ class SectionTemplateService
     {
         $template = self::getTemplate($type);
         return $template['style'] ?? ['backgroundColor' => '#ffffff', 'textColor' => '#111827'];
+    }
+
+    /**
+     * Get image requirements for a specific section type and field
+     */
+    public static function getImageRequirements(string $type, string $field): ?array
+    {
+        $template = self::getTemplate($type);
+        if (!$template || !isset($template['imageRequirements'])) {
+            return null;
+        }
+
+        // Handle nested fields like 'items.image' or 'slides'
+        $requirements = $template['imageRequirements'];
+        
+        // Direct match
+        if (isset($requirements[$field])) {
+            return $requirements[$field];
+        }
+
+        // Check for pattern match (e.g., 'items.0.image' matches 'items.image')
+        foreach ($requirements as $pattern => $req) {
+            if (str_starts_with($field, str_replace('.', '.', $pattern))) {
+                return $req;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get all image requirements for a section type
+     */
+    public static function getAllImageRequirements(string $type): array
+    {
+        $template = self::getTemplate($type);
+        return $template['imageRequirements'] ?? [];
     }
 }

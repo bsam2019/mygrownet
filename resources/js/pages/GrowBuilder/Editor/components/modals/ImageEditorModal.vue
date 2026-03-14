@@ -14,7 +14,31 @@ const props = defineProps<{
     imageUrl: string;
     aspectRatio?: number;
     forceAspectRatio?: boolean;
+    recommendedWidth?: number;
+    recommendedHeight?: number;
 }>();
+
+// Debug: Log props when they change
+watch(() => [props.recommendedWidth, props.recommendedHeight, props.aspectRatio], ([w, h, ratio]) => {
+    console.log('ImageEditorModal props changed:', { 
+        recommendedWidth: w, 
+        recommendedHeight: h, 
+        aspectRatio: ratio,
+        forceAspectRatio: props.forceAspectRatio 
+    });
+}, { immediate: true });
+
+// Set initial aspect ratio from props when modal opens
+watch(() => props.show, (show) => {
+    if (show) {
+        // Set aspect ratio from props if provided
+        if (props.aspectRatio) {
+            selectedRatio.value = props.aspectRatio;
+            console.log('Set initial aspect ratio from props:', props.aspectRatio);
+        }
+        loadImage();
+    }
+}, { immediate: true });
 
 const emit = defineEmits<{
     (e: 'close'): void;
@@ -158,10 +182,76 @@ const fitRatio = (ratio: number | null, c: typeof crop.value): typeof crop.value
 const resetCrop = () => {
     const iw = imgEl.value?.clientWidth  ?? 0;
     const ih = imgEl.value?.clientHeight ?? 0;
-    if (!iw || !ih) return;
+    
+    console.log('resetCrop called:', { iw, ih, hasRecommendations: !!(props.recommendedWidth && props.recommendedHeight) });
+    
+    if (!iw || !ih) {
+        console.log('Image not ready, retrying in 100ms...');
+        setTimeout(resetCrop, 100);
+        return;
+    }
+    
     let c = { x: 0, y: 0, w: iw, h: ih };
-    if (selectedRatio.value) c = fitRatio(selectedRatio.value, c) as typeof c;
+    
+    // If we have recommended dimensions, try to create a crop area that matches them
+    if (props.recommendedWidth && props.recommendedHeight && naturalW.value && naturalH.value) {
+        console.log('Smart crop with recommendations:', {
+            recommended: { w: props.recommendedWidth, h: props.recommendedHeight },
+            natural: { w: naturalW.value, h: naturalH.value },
+            display: { w: iw, h: ih }
+        });
+        
+        // Calculate the scale factor between natural and display size
+        const scaleX = iw / naturalW.value;
+        const scaleY = ih / naturalH.value;
+        
+        // Calculate what the recommended dimensions would be in display pixels
+        const targetW = props.recommendedWidth * scaleX;
+        const targetH = props.recommendedHeight * scaleY;
+        
+        console.log('Target dimensions in display pixels:', { targetW, targetH });
+        
+        // If the target dimensions fit within the image, use them
+        if (targetW <= iw && targetH <= ih) {
+            c.w = targetW;
+            c.h = targetH;
+            // Center the crop area
+            c.x = (iw - targetW) / 2;
+            c.y = (ih - targetH) / 2;
+            console.log('Target fits, using exact dimensions centered');
+        } else {
+            // If recommended dimensions are larger than image, fit to image while maintaining aspect ratio
+            const targetRatio = props.recommendedWidth / props.recommendedHeight;
+            const imageRatio = iw / ih;
+            
+            console.log('Target too large, fitting to image. Ratios:', { targetRatio, imageRatio });
+            
+            if (imageRatio > targetRatio) {
+                // Image is wider - fit to height
+                c.h = ih;
+                c.w = ih * targetRatio;
+                c.x = (iw - c.w) / 2;
+                c.y = 0;
+            } else {
+                // Image is taller - fit to width
+                c.w = iw;
+                c.h = iw / targetRatio;
+                c.x = 0;
+                c.y = (ih - c.h) / 2;
+            }
+        }
+        
+        console.log('Calculated crop before ratio fit:', c);
+    } else {
+        console.log('No recommendations, using full image');
+        // Apply aspect ratio constraint if set and no recommendations
+        if (selectedRatio.value) {
+            c = fitRatio(selectedRatio.value, c) as typeof c;
+        }
+    }
+    
     crop.value = clampCrop(c);
+    console.log('Final crop value:', crop.value);
 };
 
 const applyAspectRatio = (ratio: number | null) => {
@@ -259,13 +349,34 @@ const onMouseUp = () => {
 
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const saveCrop = () => {
-    if (!loadedImg.value || !canvasRef.value || !imgEl.value) return;
+    console.log('ImageEditorModal.saveCrop called');
+    
+    if (!loadedImg.value || !canvasRef.value || !imgEl.value) {
+        console.error('Missing required elements for crop save:', {
+            loadedImg: !!loadedImg.value,
+            canvasRef: !!canvasRef.value,
+            imgEl: !!imgEl.value
+        });
+        return;
+    }
+    
     const ctx = canvasRef.value.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+        console.error('Could not get canvas context');
+        return;
+    }
 
     const scaleX = naturalW.value / imgEl.value.clientWidth;
     const scaleY = naturalH.value / imgEl.value.clientHeight;
     const { width, height } = outputDimensions.value;
+
+    console.log('Canvas crop details:', {
+        crop: crop.value,
+        scale: { scaleX, scaleY },
+        output: { width, height },
+        natural: { w: naturalW.value, h: naturalH.value },
+        display: { w: imgEl.value.clientWidth, h: imgEl.value.clientHeight }
+    });
 
     canvasRef.value.width  = width;
     canvasRef.value.height = height;
@@ -278,11 +389,19 @@ const saveCrop = () => {
     );
 
     const mime    = exportFormat.value === 'png' ? 'image/png' : exportFormat.value === 'webp' ? 'image/webp' : 'image/jpeg';
-    emit('save', canvasRef.value.toDataURL(mime, exportQuality.value / 100));
+    const dataUrl = canvasRef.value.toDataURL(mime, exportQuality.value / 100);
+    
+    console.log('Generated dataUrl:', {
+        mime,
+        quality: exportQuality.value,
+        dataUrlLength: dataUrl.length,
+        dataUrlPreview: dataUrl.substring(0, 100) + '...'
+    });
+    
+    emit('save', dataUrl);
 };
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
-watch(() => props.show,     (v) => { if (v) loadImage(); });
 watch(() => props.imageUrl, ()  => { if (props.show) loadImage(); });
 onUnmounted(() => {
     window.removeEventListener('mousemove', onMouseMove);
@@ -302,6 +421,19 @@ onUnmounted(() => {
                 <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
                     <div class="flex items-center gap-4">
                         <h2 class="text-sm font-medium text-white">Edit Image</h2>
+                        
+                        <!-- Recommended Dimensions Display -->
+                        <div v-if="props.recommendedWidth && props.recommendedHeight" class="flex items-center gap-2 px-3 py-1 bg-blue-900/50 border border-blue-700 rounded-lg">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs text-blue-300">
+                                <span class="font-medium">Recommended:</span>
+                                {{ props.recommendedWidth }} × {{ props.recommendedHeight }}px
+                                <span class="text-blue-400">({{ props.aspectRatio?.toFixed(1) }}:1)</span>
+                            </span>
+                        </div>
+                        
                         <div class="flex items-center gap-1 text-xs text-gray-400">
                             <span>{{ naturalW }}×{{ naturalH }}</span>
                             <span class="text-gray-600">→</span>

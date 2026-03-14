@@ -55,8 +55,13 @@ class MediaController extends Controller
                 'filename' => $item->filename,
                 'originalName' => $item->original_name,
                 'size' => $item->human_size,
+                'sizeBytes' => $item->size,
                 'width' => $item->width,
                 'height' => $item->height,
+                'aspectRatio' => $item->aspect_ratio,
+                'aspectRatioDecimal' => $item->aspect_ratio_decimal,
+                'mimeType' => $item->mime_type,
+                'fileTypeBadge' => $item->file_type_badge,
             ];
         });
 
@@ -149,8 +154,13 @@ class MediaController extends Controller
                             'filename' => $media->filename,
                             'originalName' => $media->original_name,
                             'size' => $media->human_size,
+                            'sizeBytes' => $media->size,
                             'width' => $media->width,
                             'height' => $media->height,
+                            'aspectRatio' => $media->aspect_ratio,
+                            'aspectRatioDecimal' => $media->aspect_ratio_decimal,
+                            'mimeType' => $media->mime_type,
+                            'fileTypeBadge' => $media->file_type_badge,
                         ],
                         'optimization' => [
                             'original_size' => $this->formatBytes($result['savings']['original_size']),
@@ -231,8 +241,13 @@ class MediaController extends Controller
                 'filename' => $media->filename,
                 'originalName' => $media->original_name,
                 'size' => $media->human_size,
+                'sizeBytes' => $media->size,
                 'width' => $media->width,
                 'height' => $media->height,
+                'aspectRatio' => $media->aspect_ratio,
+                'aspectRatioDecimal' => $media->aspect_ratio_decimal,
+                'mimeType' => $media->mime_type,
+                'fileTypeBadge' => $media->file_type_badge,
             ],
         ]);
     }
@@ -382,8 +397,13 @@ class MediaController extends Controller
                     'filename' => $media->filename,
                     'originalName' => $media->original_name,
                     'size' => $media->human_size,
+                    'sizeBytes' => $media->size,
                     'width' => $media->width,
                     'height' => $media->height,
+                    'aspectRatio' => $media->aspect_ratio,
+                    'aspectRatioDecimal' => $media->aspect_ratio_decimal,
+                    'mimeType' => $media->mime_type,
+                    'fileTypeBadge' => $media->file_type_badge,
                 ],
                 'url' => $media->url,
             ]);

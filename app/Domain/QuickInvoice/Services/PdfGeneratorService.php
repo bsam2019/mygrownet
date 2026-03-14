@@ -73,15 +73,202 @@ class PdfGeneratorService
         $template = $this->getTemplateName($document);
         $documentData = $this->prepareDocumentData($document);
         
-        $pdf = Pdf::loadView("pdf.quick-invoice.{$template}", [
-            'document' => $documentData,
-        ]);
+        // Check if this is an advanced template (not one of the 5 old templates)
+        if (!in_array($template, self::TEMPLATES)) {
+            \Log::info('PdfGeneratorService - Detected advanced template', [
+                'template' => $template,
+                'document_id' => $document->id()->value(),
+            ]);
+            
+            try {
+                // Try to load advanced template
+                $advancedTemplate = $this->loadAdvancedTemplate($template);
+                
+                if ($advancedTemplate) {
+                    \Log::info('PdfGeneratorService - Rendering advanced template');
+                    
+                    // Use TemplateRenderService to generate HTML from layout_json
+                    $renderService = app(\App\Domain\QuickInvoice\Services\TemplateRenderService::class);
+                    
+                    $layoutJson = $advancedTemplate['layout_json'];
+                    $fieldConfig = $advancedTemplate['field_config'] ?? $this->getDefaultFieldConfig();
+                    $branding = [
+                        'primary_color' => $documentData['colors']['primary'] ?? $advancedTemplate['primary_color'] ?? '#2563eb',
+                        'secondary_color' => $advancedTemplate['secondary_color'] ?? '#1d4ed8',
+                        'font_family' => $advancedTemplate['font_family'] ?? 'DejaVu Sans, Arial, sans-serif',
+                        'logo_url' => $documentData['business_info']['logo'] ?? null,
+                    ];
+                    
+                    $renderedHtml = $renderService->renderToHtml($layoutJson, $fieldConfig, $documentData, $branding);
+                    
+                    \Log::info('PdfGeneratorService - HTML rendered successfully', [
+                        'html_length' => strlen($renderedHtml),
+                    ]);
+                    
+                    $pdf = Pdf::loadView("pdf.quick-invoice.advanced", [
+                        'document' => $documentData,
+                        'renderedHtml' => $renderedHtml,
+                    ]);
+                    
+                    \Log::info('PdfGeneratorService - PDF created successfully');
+                } else {
+                    // Fallback to classic if advanced template not found
+                    \Log::warning('PdfGeneratorService - Advanced template not found, falling back to classic', [
+                        'template' => $template,
+                    ]);
+                    $pdf = Pdf::loadView("pdf.quick-invoice.classic", [
+                        'document' => $documentData,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('PdfGeneratorService - Error rendering advanced template', [
+                    'template' => $template,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                
+                // Fallback to classic on error
+                $pdf = Pdf::loadView("pdf.quick-invoice.classic", [
+                    'document' => $documentData,
+                ]);
+            }
+        } else {
+            // Use traditional Blade template
+            $pdf = Pdf::loadView("pdf.quick-invoice.{$template}", [
+                'document' => $documentData,
+            ]);
+        }
 
         $pdf->setPaper('A4', 'portrait');
         $pdf->setOption('isRemoteEnabled', true);
         $pdf->setOption('isHtml5ParserEnabled', true);
 
         return $pdf;
+    }
+    
+    /**
+     * Load advanced template from database or system templates
+     */
+    private function loadAdvancedTemplate(string $templateId): ?array
+    {
+        // Check if it's a custom template (format: custom-123)
+        if (str_starts_with($templateId, 'custom-')) {
+            $id = (int) str_replace('custom-', '', $templateId);
+            $customTemplate = \App\Models\QuickInvoice\CustomTemplate::find($id);
+            
+            if ($customTemplate) {
+                return [
+                    'layout_json' => $customTemplate->layout_json,
+                    'field_config' => $customTemplate->field_config,
+                    'primary_color' => $customTemplate->primary_color,
+                    'secondary_color' => $customTemplate->secondary_color,
+                    'font_family' => $customTemplate->font_family,
+                ];
+            }
+        }
+        
+        // Check system advanced templates (from DesignStudioController)
+        $systemTemplates = $this->getSystemAdvancedTemplates();
+        $template = collect($systemTemplates)->firstWhere('id', $templateId);
+        
+        if ($template) {
+            return [
+                'layout_json' => $template['layout_json'],
+                'field_config' => $this->getDefaultFieldConfig(),
+                'primary_color' => $template['primary_color'],
+                'secondary_color' => $template['secondary_color'],
+                'font_family' => $template['font_family'],
+            ];
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get system advanced templates (same as in DesignStudioController)
+     */
+    private function getSystemAdvancedTemplates(): array
+    {
+        // Note: These are DIFFERENT from the old Blade templates
+        // Old templates: classic.blade.php, modern.blade.php, etc.
+        // These are advanced templates with layout_json
+        return [
+            [
+                'id' => 'advanced-classic',
+                'name' => 'Classic Advanced',
+                'primary_color' => '#3b82f6',
+                'secondary_color' => '#1d4ed8',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'header', 'config' => ['showLogo' => true, 'showCompanyInfo' => true]],
+                        ['type' => 'invoice-meta', 'config' => ['showTitle' => true]],
+                        ['type' => 'customer-details', 'config' => ['showAddress' => true]],
+                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'advanced-professional',
+                'name' => 'Professional Modern',
+                'primary_color' => '#0d9488',
+                'secondary_color' => '#134e4a',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'invoice-title-bar', 'config' => ['style' => 'large-title']],
+                        ['type' => 'customer-split', 'config' => []],
+                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
+                        ['type' => 'payment-details', 'config' => []],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'advanced-minimal',
+                'name' => 'Minimal',
+                'primary_color' => '#6366f1',
+                'secondary_color' => '#4f46e5',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'company-header-centered', 'config' => []],
+                        ['type' => 'invoice-meta', 'config' => []],
+                        ['type' => 'customer-details', 'config' => []],
+                        ['type' => 'items-table-minimal', 'config' => []],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+        ];
+    }
+    
+    /**
+     * Get default field configuration
+     */
+    private function getDefaultFieldConfig(): array
+    {
+        return [
+            'invoice_number' => ['enabled' => true, 'required' => true],
+            'invoice_date' => ['enabled' => true, 'required' => true],
+            'due_date' => ['enabled' => true, 'required' => false],
+            'customer_name' => ['enabled' => true, 'required' => true],
+            'customer_address' => ['enabled' => true, 'required' => false],
+            'customer_phone' => ['enabled' => true, 'required' => false],
+            'customer_email' => ['enabled' => true, 'required' => false],
+            'company_name' => ['enabled' => true, 'required' => false],
+            'company_address' => ['enabled' => true, 'required' => false],
+            'company_phone' => ['enabled' => true, 'required' => false],
+            'company_email' => ['enabled' => true, 'required' => false],
+            'items_table' => ['enabled' => true, 'required' => true],
+            'subtotal' => ['enabled' => true, 'required' => false],
+            'tax' => ['enabled' => true, 'required' => false],
+            'discount' => ['enabled' => true, 'required' => false],
+            'total' => ['enabled' => true, 'required' => true],
+            'notes' => ['enabled' => true, 'required' => false],
+            'terms' => ['enabled' => true, 'required' => false],
+        ];
     }
 
     /**
@@ -210,8 +397,17 @@ class PdfGeneratorService
     {
         $template = $document->template()->value;
         
+        \Log::info('PdfGeneratorService - Getting template', [
+            'template_from_document' => $template,
+            'valid_templates' => self::TEMPLATES,
+            'is_valid' => in_array($template, self::TEMPLATES),
+        ]);
+        
         // Fallback to classic if template doesn't exist
         if (!in_array($template, self::TEMPLATES)) {
+            \Log::warning('PdfGeneratorService - Invalid template, falling back to classic', [
+                'invalid_template' => $template,
+            ]);
             return 'classic';
         }
 

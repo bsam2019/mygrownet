@@ -672,15 +672,38 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         class="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300"
                     >
                         <!-- Live Preview Thumbnail -->
-                        <div class="relative h-48 bg-gray-100 overflow-hidden">
-                            <!-- Iframe Preview (scaled down) -->
-                            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-                                <iframe
-                                    :src="route('growbuilder.preview', { subdomain: site.subdomain })"
-                                    class="w-[200%] h-[200%] origin-top-left scale-50 border-0"
-                                    :title="`Preview of ${site.name}`"
-                                    loading="lazy"
-                                ></iframe>
+                        <div class="relative h-48 bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
+                            <!-- Fallback Background Pattern -->
+                            <div class="absolute inset-0 opacity-20">
+                                <svg class="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                                        </pattern>
+                                    </defs>
+                                    <rect width="100" height="100" fill="url(#grid)" />
+                                </svg>
+                            </div>
+                            
+                            <!-- Website Icon -->
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                                    <GlobeAltIcon class="w-8 h-8 text-blue-600" aria-hidden="true" />
+                                </div>
+                            </div>
+                            
+                            <!-- Site Template Preview (Static) -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="w-full h-full bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+                                    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-3">
+                                        <GlobeAltIcon class="w-6 h-6 text-white" aria-hidden="true" />
+                                    </div>
+                                    <h4 class="text-sm font-semibold text-gray-900 mb-1">{{ site.name }}</h4>
+                                    <p class="text-xs text-gray-500 text-center">{{ site.status === 'published' ? 'Live Website' : 'Draft Website' }}</p>
+                                    <div class="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                                        <span>{{ site.subdomain }}.mygrownet.com</span>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Gradient overlay for better text visibility -->

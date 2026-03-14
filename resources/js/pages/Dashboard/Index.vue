@@ -526,8 +526,8 @@ const handleModuleClick = (module: Module) => {
                         
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             <!-- Quick Invoice -->
-                            <a
-                                href="/quick-invoice"
+                            <Link
+                                :href="route('quick-invoice.index')"
                                 class="group relative bg-white rounded-xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm border border-gray-100"
                             >
                                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-amber-500 transition-transform duration-300 group-hover:scale-110">
@@ -545,7 +545,7 @@ const handleModuleClick = (module: Module) => {
                                 <span class="absolute top-2 right-2 px-1.5 py-0.5 text-[9px] font-bold uppercase bg-green-100 text-green-700 rounded">
                                     Free
                                 </span>
-                            </a>
+                            </Link>
                         </div>
                     </div>
 

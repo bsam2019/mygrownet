@@ -11,8 +11,8 @@
         <h2 class="text-lg font-semibold text-gray-800 mb-4">Free Tools</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Quick Invoice Generator -->
-          <a
-            href="/quick-invoice"
+          <Link
+            :href="route('quick-invoice.index')"
             class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all block group"
           >
             <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-amber-200 transition-colors">
@@ -38,7 +38,7 @@
               <span class="text-sm text-amber-600 font-medium group-hover:text-amber-700">Open Tool →</span>
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Free</span>
             </div>
-          </a>
+          </Link>
 
           <!-- Coming Soon Placeholder -->
           <div class="bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center text-center">
@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   DocumentTextIcon, 

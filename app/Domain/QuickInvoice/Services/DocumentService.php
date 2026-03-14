@@ -37,6 +37,12 @@ class DocumentService
         try {
             $type = DocumentType::from($data['document_type']);
             
+            \Log::info('DocumentService - Creating document', [
+                'template_in_data' => $data['template'] ?? 'NOT SET',
+                'colors_in_data' => $data['colors'] ?? 'NOT SET',
+                'document_type' => $data['document_type'],
+            ]);
+            
             $businessInfo = BusinessInfo::create(
                 name: $data['business_name'],
                 address: $data['business_address'] ?? null,
@@ -61,6 +67,11 @@ class DocumentService
             $colors = isset($data['colors']) 
                 ? ThemeColors::fromArray($data['colors']) 
                 : ThemeColors::default();
+            
+            \Log::info('DocumentService - Template and colors resolved', [
+                'template_value' => $template->value,
+                'colors_primary' => $colors->toArray()['primary'] ?? 'NOT SET',
+            ]);
 
             $document = Document::create(
                 type: $type,
@@ -82,6 +93,7 @@ class DocumentService
             Log::info('Document created', [
                 'document_id' => $document->id()->value(),
                 'type' => $type->value,
+                'template' => $document->template()->value,
                 'user_id' => $data['user_id'] ?? null,
             ]);
 

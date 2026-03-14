@@ -1584,3 +1584,6 @@ Route::fallback(function (Illuminate\Http\Request $request) {
     // Not a GrowBuilder custom domain - return 404
     abort(404);
 });
+
+// Quick Invoice Admin Routes
+require __DIR__.'/admin-quick-invoice.php';

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
+import QuickInvoiceLayout from '@/Layouts/QuickInvoiceLayout.vue';
 import { 
     ArrowLeftIcon, PlusIcon, TrashIcon, PhotoIcon,
     DocumentArrowDownIcon, EnvelopeIcon, ChatBubbleLeftIcon,
@@ -258,6 +259,13 @@ const discardSavedData = () => {
 };
 
 onMounted(() => { 
+    // IMPORTANT: Set template from props FIRST, before loading profile
+    // This ensures URL parameters override profile defaults
+    if (props.initialTemplate) {
+        selectedTemplate.value = props.initialTemplate;
+        console.log('Template set from URL parameter:', props.initialTemplate);
+    }
+    
     if (props.editDocument) {
         loadEditDocument(props.editDocument);
     } else if (props.savedProfile) {
@@ -345,9 +353,17 @@ const loadSavedProfile = (profile: SavedProfile) => {
     if (profile.default_discount_rate) { discountRate.value = profile.default_discount_rate; }
     if (profile.default_notes) { notes.value = profile.default_notes; }
     if (profile.default_terms) { terms.value = profile.default_terms; }
-    // Load template and color preferences
-    if (profile.default_template) { selectedTemplate.value = profile.default_template; }
-    if (profile.default_color) { primaryColor.value = profile.default_color; }
+    // Load template and color preferences ONLY if not already set from URL/props
+    // selectedTemplate is set in onMounted BEFORE this function is called
+    if (profile.default_template && selectedTemplate.value === 'classic') { 
+        // Only apply if still at default value
+        selectedTemplate.value = profile.default_template; 
+        console.log('Template set from profile:', profile.default_template);
+    }
+    if (profile.default_color && selectedTemplate.value === profile.default_template) { 
+        // Only apply color if using profile's template
+        primaryColor.value = profile.default_color; 
+    }
     // Load numbering settings
     if (profile.invoice_prefix) { invoicePrefix.value = profile.invoice_prefix; }
     if (profile.invoice_next_number) { invoiceNextNumber.value = profile.invoice_next_number; }
@@ -762,8 +778,11 @@ const generateDocument = async () => {
 
 const downloadPdf = () => { 
     if (shareData.value?.pdf_url) {
+        // Add timestamp to force fresh download (prevent caching)
+        const url = new URL(shareData.value.pdf_url, window.location.origin);
+        url.searchParams.set('t', Date.now().toString());
         // Open in new window - this works better for server-generated PDFs
-        window.open(shareData.value.pdf_url, '_blank');
+        window.open(url.toString(), '_blank');
     }
 };
 
@@ -860,18 +879,16 @@ const skipSetupWizard = () => {
 </script>
 
 <template>
-    <Head :title="`${isEditing ? 'Edit' : 'Create'} ${documentTypeLabels[documentType]}`" />
-    <div class="min-h-screen bg-gray-50">
-        <header class="bg-white shadow-sm sticky top-0 z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <Link :href="isEditing ? route('quick-invoice.history') : route('quick-invoice.index')" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Go back">
-                            <ArrowLeftIcon class="w-5 h-5 text-gray-600" aria-hidden="true" />
-                        </Link>
+    <QuickInvoiceLayout>
+        <Head :title="`${isEditing ? 'Edit' : 'Create'} ${documentTypeLabels[documentType]}`" />
+        <div class="min-h-screen bg-gray-50">
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Page Title with Auto-save indicator -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between">
                         <div>
                             <div class="flex items-center gap-2">
-                                <h1 class="text-xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
+                                <h1 class="text-2xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
                                 <span class="text-xs text-gray-400 flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
@@ -879,17 +896,14 @@ const skipSetupWizard = () => {
                                     Auto-saving
                                 </span>
                             </div>
-                            <p class="text-sm text-gray-500">{{ isEditing ? 'Update the details below' : 'Fill in the details below' }}</p>
+                            <p class="text-sm text-gray-500 mt-1">{{ isEditing ? 'Update the details below' : 'Fill in the details below' }}</p>
                         </div>
+                        <button @click="generateDocument" :disabled="isLoading" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition">
+                            {{ isLoading ? 'Generating...' : (isEditing ? `Update ${documentTypeLabels[documentType]}` : `Generate ${documentTypeLabels[documentType]}`) }}
+                        </button>
                     </div>
-                    <button @click="generateDocument" :disabled="isLoading" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
-                        {{ isLoading ? 'Generating...' : (isEditing ? `Update ${documentTypeLabels[documentType]}` : `Generate ${documentTypeLabels[documentType]}`) }}
-                    </button>
                 </div>
-            </div>
-        </header>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Restore Draft Prompt -->
             <div v-if="showRestorePrompt" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex items-start gap-3">
@@ -1955,4 +1969,5 @@ const skipSetupWizard = () => {
             </div>
         </div>
     </div>
+    </QuickInvoiceLayout>
 </template>

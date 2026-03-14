@@ -12,6 +12,9 @@ use App\Domain\QuickInvoice\ValueObjects\TemplateStyle;
 use App\Http\Requests\QuickInvoice\CreateDocumentRequest;
 use App\Http\Requests\QuickInvoice\SendEmailRequest;
 use App\Http\Requests\QuickInvoice\UploadLogoRequest;
+use App\Models\QuickInvoice\AdminSetting;
+use App\Models\QuickInvoice\UsageTracking;
+use App\Models\QuickInvoice\UserSubscription;
 use App\Models\QuickInvoiceProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +30,12 @@ class QuickInvoiceController extends Controller
         private readonly ShareService $shareService,
         private readonly PdfMergerService $pdfMerger
     ) {}
+
+    public function dashboard(Request $request): Response
+    {
+        $dashboardController = new \App\Http\Controllers\QuickInvoice\DashboardController();
+        return $dashboardController->index($request);
+    }
 
     public function index(): Response
     {
@@ -47,14 +56,102 @@ class QuickInvoiceController extends Controller
             }
         }
 
+        $templateParam = $request->query('template', 'classic');
+        $advancedTemplate = null;
+        
+        // Only check for advanced templates if it's NOT one of the old template names
+        $oldTemplates = ['classic', 'modern', 'minimal', 'professional', 'bold'];
+        
+        if (!in_array($templateParam, $oldTemplates)) {
+            // Check if it's a new advanced template (system or custom)
+            if (str_starts_with($templateParam, 'custom-')) {
+                // Custom template
+                $id = (int) str_replace('custom-', '', $templateParam);
+                $customTemplate = \App\Models\QuickInvoice\CustomTemplate::find($id);
+                if ($customTemplate) {
+                    $advancedTemplate = [
+                        'id' => 'custom-' . $customTemplate->id,
+                        'name' => $customTemplate->name,
+                        'layout_json' => $customTemplate->layout_json,
+                        'primary_color' => $customTemplate->primary_color,
+                        'secondary_color' => $customTemplate->secondary_color,
+                        'font_family' => $customTemplate->font_family,
+                        'logo_url' => $customTemplate->logo_url,
+                    ];
+                }
+            } else {
+                // System advanced template (from Design Studio)
+                $systemTemplates = $this->getSystemAdvancedTemplates();
+                $template = collect($systemTemplates)->firstWhere('id', $templateParam);
+                if ($template) {
+                    $advancedTemplate = $template;
+                }
+            }
+        }
+
         return Inertia::render('QuickInvoice/Create', [
             'documentType' => $request->query('type', 'invoice'),
-            'initialTemplate' => $request->query('template', 'classic'),
+            'initialTemplate' => $templateParam,
             'currencies' => $this->getCurrencies(),
             'templates' => TemplateStyle::all(),
             'savedProfile' => $savedProfile,
             'editDocument' => null,
+            'advancedTemplate' => $advancedTemplate,
         ]);
+    }
+    
+    private function getSystemAdvancedTemplates(): array
+    {
+        return [
+            [
+                'id' => 'classic',
+                'name' => 'Classic',
+                'primary_color' => '#3b82f6',
+                'secondary_color' => '#1d4ed8',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'header', 'config' => ['showLogo' => true, 'showCompanyInfo' => true]],
+                        ['type' => 'invoice-meta', 'config' => ['showTitle' => true]],
+                        ['type' => 'customer-details', 'config' => ['showAddress' => true]],
+                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'professional',
+                'name' => 'Professional Modern',
+                'primary_color' => '#0d9488',
+                'secondary_color' => '#134e4a',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'invoice-title-bar', 'config' => ['style' => 'large-title']],
+                        ['type' => 'customer-split', 'config' => []],
+                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
+                        ['type' => 'payment-details', 'config' => []],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+            [
+                'id' => 'minimal',
+                'name' => 'Minimal',
+                'primary_color' => '#6366f1',
+                'secondary_color' => '#4f46e5',
+                'font_family' => 'Inter, sans-serif',
+                'layout_json' => [
+                    'blocks' => [
+                        ['type' => 'company-header-centered', 'config' => []],
+                        ['type' => 'invoice-meta', 'config' => []],
+                        ['type' => 'customer-details', 'config' => []],
+                        ['type' => 'items-table-minimal', 'config' => []],
+                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
+                    ],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -100,6 +197,25 @@ class QuickInvoiceController extends Controller
         $data = $request->validated();
         $data['session_id'] = session()->getId();
         $data['user_id'] = auth()->id();
+
+        // Check usage limits if enabled
+        if (AdminSetting::isUsageLimitsEnabled() && auth()->check()) {
+            $subscription = UserSubscription::getOrCreateFreeSubscription(auth()->id());
+            
+            if (!$subscription->canCreateDocument()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You have reached your monthly document limit. Please upgrade your subscription to create more documents.',
+                    'limit_reached' => true,
+                    'subscription' => [
+                        'tier_name' => $subscription->tier->name,
+                        'documents_per_month' => $subscription->tier->documents_per_month,
+                        'remaining_documents' => $subscription->getRemainingDocuments(),
+                        'usage_percentage' => $subscription->getUsagePercentage(),
+                    ],
+                ], 429);
+            }
+        }
 
         \Log::info('QuickInvoice generate request', [
             'prepared_by' => $data['prepared_by'] ?? 'NOT SET',
@@ -243,6 +359,23 @@ class QuickInvoiceController extends Controller
         $document = $this->documentService->createDocument($data);
         $this->documentService->saveDocument($document);
 
+        // Track usage
+        UsageTracking::track(
+            documentType: $data['document_type'],
+            template: $data['template'] ?? 'classic',
+            userId: auth()->id(),
+            sessionId: session()->getId(),
+            integrationSource: 'standalone'
+        );
+
+        // Increment user's subscription usage if authenticated
+        if (auth()->check()) {
+            $subscription = UserSubscription::getCurrentSubscription(auth()->id());
+            if ($subscription) {
+                $subscription->incrementUsage();
+            }
+        }
+
         // Generate share data with download URL (PDF generated on-demand when accessed)
         $shareData = $this->shareService->generateShareData($document);
 
@@ -285,9 +418,19 @@ class QuickInvoiceController extends Controller
         // Increase execution time for PDF generation
         set_time_limit(120);
         
+        // Add cache-busting headers
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Cache-Control: post-check=0, pre-check=0', false);
+        header('Pragma: no-cache');
+        
         try {
             // For Quick Invoice, allow public download access via UUID
             $document = $this->documentService->findDocument($id);
+            
+            \Log::info('PdfGeneratorService - Generating PDF for download', [
+                'document_id' => $id,
+                'template' => $document->template()->value,
+            ]);
             
             // Generate main PDF
             $mainPdf = $this->pdfGenerator->output($document);
@@ -394,9 +537,19 @@ class QuickInvoiceController extends Controller
         // Increase execution time for PDF generation
         set_time_limit(120);
         
+        // Add cache-busting headers
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Cache-Control: post-check=0, pre-check=0', false);
+        header('Pragma: no-cache');
+        
         try {
             // For Quick Invoice, allow public view access via UUID
             $document = $this->documentService->findDocument($id);
+            
+            \Log::info('PdfGeneratorService - Generating PDF for view', [
+                'document_id' => $id,
+                'template' => $document->template()->value,
+            ]);
             
             // Generate main PDF
             $mainPdf = $this->pdfGenerator->output($document);

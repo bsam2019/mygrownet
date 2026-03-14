@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\QuickInvoiceController;
+use App\Http\Controllers\QuickInvoice\DashboardController;
+use App\Http\Controllers\QuickInvoice\DesignStudioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,8 +16,22 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
-    // Public pages
-    Route::get('/', [QuickInvoiceController::class, 'index'])->name('index');
+    // Main entry point - Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('index');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard'); // Alias for backward compatibility
+    
+    // Design Studio - Pro tier and above
+    Route::middleware('auth')->group(function () {
+        Route::get('/design-studio', [DesignStudioController::class, 'index'])->name('design-studio');
+        Route::get('/design-studio/create', [DesignStudioController::class, 'create'])->name('design-studio.create');
+        Route::post('/design-studio/store', [DesignStudioController::class, 'store'])->name('design-studio.store');
+        Route::get('/design-studio/{customTemplate}/edit', [DesignStudioController::class, 'edit'])->name('design-studio.edit');
+        Route::post('/design-studio/{customTemplate}/update', [DesignStudioController::class, 'update'])->name('design-studio.update');
+        Route::delete('/design-studio/{customTemplate}', [DesignStudioController::class, 'destroy'])->name('design-studio.destroy');
+        Route::post('/design-studio/{customTemplate}/duplicate', [DesignStudioController::class, 'duplicate'])->name('design-studio.duplicate');
+    });
+    
+    // Document management pages
     Route::get('/create', [QuickInvoiceController::class, 'create'])->name('create');
     Route::get('/edit/{id}', [QuickInvoiceController::class, 'edit'])->name('edit');
     Route::get('/history', [QuickInvoiceController::class, 'history'])->name('history');

@@ -26,7 +26,7 @@ const tools = [
         description: 'Create professional invoices, quotations, receipts & delivery notes instantly.',
         icon: DocumentTextIcon,
         color: 'bg-amber-500',
-        href: '/quick-invoice',
+        href: route('quick-invoice.index'),
         badge: 'Free',
         features: [
             '5 professional templates',

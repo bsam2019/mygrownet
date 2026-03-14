@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import QuickInvoiceLayout from '@/Layouts/QuickInvoiceLayout.vue';
 import { ArrowLeftIcon, DocumentTextIcon, TrashIcon, ArrowDownTrayIcon, PencilSquareIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 import { ref } from 'vue';
@@ -49,24 +50,16 @@ const downloadPdf = (id: string) => {
 </script>
 
 <template>
-    <Head title="Document History" />
-    
-    <div class="min-h-screen bg-gray-50">
-        <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div class="flex items-center gap-4">
-                    <Link :href="route('quick-invoice.index')" class="p-2 hover:bg-gray-100 rounded-lg" aria-label="Go back">
-                        <ArrowLeftIcon class="w-5 h-5 text-gray-600" aria-hidden="true" />
-                    </Link>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-900">Document History</h1>
-                        <p class="text-sm text-gray-500">Your recently created documents</p>
-                    </div>
+    <QuickInvoiceLayout>
+        <Head title="Document History" />
+        
+        <div class="min-h-screen bg-gray-50">
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Page Title -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">Document History</h1>
+                    <p class="text-sm text-gray-500 mt-1">Your recently created documents</p>
                 </div>
-            </div>
-        </header>
-
-        <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div v-if="documents.length === 0" class="text-center py-12">
                 <DocumentTextIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" aria-hidden="true" />
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No documents yet</h3>
@@ -106,4 +99,5 @@ const downloadPdf = (id: string) => {
             </div>
         </main>
     </div>
+    </QuickInvoiceLayout>
 </template>

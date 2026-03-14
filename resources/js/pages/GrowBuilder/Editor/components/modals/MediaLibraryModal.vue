@@ -2,7 +2,7 @@
 /**
  * Enhanced Media Library Modal
  * Tabs: My Media, Stock Photos
- * Features: Upload, Crop, Delete, Stock photo search
+ * Features: Upload, Crop, Delete, Stock photo search, Image metadata display
  */
 import { ref, computed } from 'vue';
 import {
@@ -14,15 +14,13 @@ import {
     MagnifyingGlassIcon,
     ArrowDownTrayIcon,
     GlobeAltIcon,
+    CheckCircleIcon,
+    ExclamationTriangleIcon,
+    XCircleIcon,
 } from '@heroicons/vue/24/outline';
 import ImageEditorModal from './ImageEditorModal.vue';
-
-interface MediaItem {
-    id: number | string;
-    url: string;
-    thumbnailUrl?: string;
-    originalName: string;
-}
+import type { MediaItem, ImageRequirements } from '@/types/growbuilder';
+import { calculateCompatibilityScore, getCompatibilityLevel, getCompatibilityBadge } from '../../config/sectionImageRequirements';
 
 interface StockPhoto {
     id: string;
@@ -39,6 +37,9 @@ const props = defineProps<{
     allowCrop?: boolean;
     aspectRatio?: number;
     forceAspectRatio?: boolean;
+    imageRequirements?: ImageRequirements | null;
+    sectionType?: string | null;
+    fieldName?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -68,6 +69,13 @@ const stockPhotoForEdit = ref<StockPhoto | null>(null);
 
 // Handle media selection
 const handleMediaClick = (media: MediaItem) => {
+    console.log('handleMediaClick called', {
+        allowCrop: props.allowCrop,
+        imageRequirements: props.imageRequirements,
+        sectionType: props.sectionType,
+        fieldName: props.fieldName
+    });
+    
     if (props.allowCrop) {
         selectedMediaForEdit.value = media;
         showImageEditor.value = true;
@@ -82,9 +90,17 @@ const handleDirectSelect = (media: MediaItem, e: Event) => {
 };
 
 const handleCropSave = (dataUrl: string) => {
+    console.log('MediaLibraryModal.handleCropSave called:', {
+        dataUrl: dataUrl.substring(0, 50) + '...',
+        selectedMediaForEdit: selectedMediaForEdit.value?.id,
+        stockPhotoForEdit: stockPhotoForEdit.value?.id
+    });
+    
     if (selectedMediaForEdit.value) {
+        console.log('Emitting selectCropped for regular media');
         emit('selectCropped', dataUrl, selectedMediaForEdit.value);
     } else if (stockPhotoForEdit.value) {
+        console.log('Emitting selectCropped for stock photo');
         // For stock photos, emit as cropped with attribution
         emit('selectCropped', dataUrl, {
             id: stockPhotoForEdit.value.id,
@@ -169,6 +185,24 @@ const selectCategory = (cat: string) => {
     stockSearchQuery.value = cat;
     searchStockPhotos(cat);
 };
+
+// Computed: Media with compatibility scores
+const mediaWithScores = computed(() => {
+    if (!props.imageRequirements) {
+        return props.mediaLibrary.map(media => ({ ...media, compatibilityScore: 100, compatibilityLevel: 'good' }));
+    }
+    
+    return props.mediaLibrary.map(media => {
+        if (!media.width || !media.height) {
+            return { ...media, compatibilityScore: 50, compatibilityLevel: 'poor' };
+        }
+        
+        const score = calculateCompatibilityScore(media.width, media.height, props.imageRequirements!);
+        const level = getCompatibilityLevel(score);
+        
+        return { ...media, compatibilityScore: score, compatibilityLevel: level };
+    }).sort((a, b) => b.compatibilityScore - a.compatibilityScore); // Sort by best match first
+});
 </script>
 
 <template>
@@ -233,20 +267,93 @@ const selectCategory = (cat: string) => {
                         <p v-if="uploadError" class="mt-2 text-sm text-red-600">{{ uploadError }}</p>
                     </div>
 
+                    <!-- Image Requirements Panel -->
+                    <div v-if="imageRequirements" class="px-4 py-3 bg-blue-50 border-b border-blue-100">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <PhotoIcon class="w-5 h-5 text-blue-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-semibold text-blue-900 mb-1">
+                                    {{ sectionType ? sectionType.charAt(0).toUpperCase() + sectionType.slice(1) : 'Image' }} Requirements
+                                </h4>
+                                <div class="text-xs text-blue-700 space-y-0.5">
+                                    <p class="font-medium">
+                                        Recommended: {{ imageRequirements.width }} × {{ imageRequirements.height }}px
+                                        <span class="text-blue-600">({{ imageRequirements.aspectRatio.toFixed(1) }}:1)</span>
+                                    </p>
+                                    <p v-if="imageRequirements.minWidth" class="text-blue-600">
+                                        Minimum width: {{ imageRequirements.minWidth }}px
+                                    </p>
+                                    <p v-if="imageRequirements.description" class="text-blue-600 italic">
+                                        {{ imageRequirements.description }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Media Grid -->
                     <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                         <div v-if="mediaLibrary.length > 0" class="grid grid-cols-4 md:grid-cols-5 gap-3">
                             <div
-                                v-for="media in mediaLibrary"
+                                v-for="media in mediaWithScores"
                                 :key="media.id"
                                 class="group relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors cursor-pointer bg-gray-100"
                                 @click="handleMediaClick(media)"
                             >
                                 <img :src="media.thumbnailUrl || media.url" :alt="media.originalName" class="w-full h-full object-cover" loading="lazy" />
                                 
+                                <!-- Image Info Overlay (always visible on hover) -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <!-- Top badges -->
+                                    <div class="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
+                                        <div class="flex gap-1">
+                                            <!-- File type badge -->
+                                            <span 
+                                                v-if="media.fileTypeBadge"
+                                                :class="[
+                                                    'px-2 py-0.5 rounded text-[10px] font-semibold shadow-sm',
+                                                    media.fileTypeBadge.bg,
+                                                    media.fileTypeBadge.text
+                                                ]"
+                                            >
+                                                {{ media.fileTypeBadge.label }}
+                                            </span>
+                                            
+                                            <!-- Compatibility badge (if requirements exist) -->
+                                            <span 
+                                                v-if="imageRequirements && media.compatibilityLevel"
+                                                :class="[
+                                                    'px-2 py-0.5 rounded text-[10px] font-semibold shadow-sm',
+                                                    getCompatibilityBadge(media.compatibilityLevel).bg,
+                                                    getCompatibilityBadge(media.compatibilityLevel).text
+                                                ]"
+                                                :title="`Compatibility: ${media.compatibilityScore}%`"
+                                            >
+                                                {{ getCompatibilityBadge(media.compatibilityLevel).icon }}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Aspect ratio badge -->
+                                        <span v-if="media.aspectRatio" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500 text-white shadow-sm">
+                                            {{ media.aspectRatio }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Bottom info -->
+                                    <div class="absolute bottom-0 left-0 right-0 p-2 text-white">
+                                        <p class="text-xs font-medium truncate mb-1">{{ media.originalName }}</p>
+                                        <div class="flex items-center justify-between text-[10px] opacity-90">
+                                            <span v-if="media.width && media.height">{{ media.width }} × {{ media.height }}</span>
+                                            <span v-if="media.size">{{ media.size }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <!-- Overlay -->
                                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                                    <button v-if="allowCrop" class="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100" title="Crop">
+                                    <button v-if="allowCrop" @click.stop="handleMediaClick(media)" class="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100" title="Crop">
                                         <ScissorsIcon class="w-4 h-4 text-gray-700" />
                                     </button>
                                     <button @click="handleDirectSelect(media, $event)" class="p-2 bg-blue-600 rounded-full shadow-lg hover:bg-blue-700" title="Select">
@@ -255,11 +362,6 @@ const selectCategory = (cat: string) => {
                                     <button @click="handleDelete(media, $event)" class="p-2 bg-red-600 rounded-full shadow-lg hover:bg-red-700" title="Delete">
                                         <TrashIcon class="w-4 h-4 text-white" />
                                     </button>
-                                </div>
-                                
-                                <!-- File name -->
-                                <div class="absolute bottom-0 left-0 right-0 p-1 bg-black/60 text-white text-xs truncate opacity-0 group-hover:opacity-100">
-                                    {{ media.originalName }}
                                 </div>
                             </div>
                         </div>
@@ -358,8 +460,10 @@ const selectCategory = (cat: string) => {
     <ImageEditorModal
         :show="showImageEditor"
         :image-url="selectedMediaForEdit?.url || ''"
-        :aspect-ratio="aspectRatio"
-        :force-aspect-ratio="forceAspectRatio"
+        :aspect-ratio="imageRequirements?.aspectRatio || aspectRatio"
+        :force-aspect-ratio="!!imageRequirements || forceAspectRatio"
+        :recommended-width="imageRequirements?.width"
+        :recommended-height="imageRequirements?.height"
         @close="closeImageEditor"
         @save="handleCropSave"
     />

@@ -19,6 +19,8 @@ import { WidgetPalette, PagesList, EditorToolbar } from './components/sidebar';
 // Config
 import { sectionBlocks } from './config/sectionBlocks';
 import { findTemplate } from './config/pageTemplates';
+import { getImageRequirements } from './config/sectionImageRequirements';
+import type { ImageRequirements } from '@/types/growbuilder';
 
 // Types
 import type { Page, Section, Site, NavigationSettings, FooterSettings, NavItem, SectionBlock, NewPageForm } from './types';
@@ -240,6 +242,9 @@ const mediaLibraryTarget = ref<{
     itemIndex?: number;
     target?: 'navigation' | 'footer' | 'section';
 } | null>(null);
+const mediaLibraryRequirements = ref<ImageRequirements | null>(null);
+const mediaLibrarySectionType = ref<string | null>(null);
+const mediaLibraryFieldName = ref<string | null>(null);
 
 // Section Resize State
 const resizingSection = ref<string | null>(null);
@@ -387,6 +392,22 @@ const initializeSections = () => {
 const initializeSiteNavigation = () => {
     if (props.site.settings?.navigation) {
         siteNavigation.value = { ...siteNavigation.value, ...props.site.settings.navigation };
+        
+        // Ensure pageId is set for all nav items by matching with pages
+        if (siteNavigation.value.navItems) {
+            siteNavigation.value.navItems = siteNavigation.value.navItems.map(navItem => {
+                // Try to find the matching page by URL or label
+                const matchingPage = props.pages.find(p => {
+                    const pageUrl = p.isHomepage ? '/' : `/${p.slug}`;
+                    return pageUrl === navItem.url || p.title === navItem.label;
+                });
+                
+                return {
+                    ...navItem,
+                    pageId: matchingPage?.id || navItem.pageId, // Use existing or find from pages
+                };
+            });
+        }
     } else {
         siteNavigation.value.navItems = props.pages
             .filter(p => p.showInNav)
@@ -1038,9 +1059,38 @@ const openPreview = async () => {
     window.open(`${props.site.url}?t=${Date.now()}`, '_blank');
 };
 
-const switchPage = (page: Page) => {
-    if (page.id === activePage.value?.id) return;
-    router.visit(`/growbuilder/editor/${props.site.id}?page=${page.id}`);
+const switchPage = (pageOrId: Page | number) => {
+    console.log('Editor: switchPage called', { pageOrId, type: typeof pageOrId });
+    
+    const targetPage = typeof pageOrId === 'number' 
+        ? props.pages.find(p => p.id === pageOrId)
+        : pageOrId;
+    
+    console.log('Editor: targetPage found', { targetPage, currentPageId: activePage.value?.id });
+        
+    if (!targetPage) {
+        console.error('Editor: Target page not found!', { pageOrId, availablePages: props.pages.map(p => ({ id: p.id, title: p.title })) });
+        return;
+    }
+    
+    if (targetPage.id === activePage.value?.id) {
+        console.log('Editor: Already on this page, skipping');
+        return;
+    }
+    
+    // For navigation within preview, switch page without router navigation
+    if (typeof pageOrId === 'number') {
+        console.log('Editor: Switching page internally', { from: activePage.value?.title, to: targetPage.title });
+        activePage.value = targetPage;
+        initializeSections();
+        selectedSectionId.value = null;
+        console.log('Editor: Page switched successfully', { newSections: sections.value.length });
+        return;
+    }
+    
+    // For sidebar page switching, use router navigation
+    console.log('Editor: Using router navigation');
+    router.visit(`/growbuilder/editor/${props.site.id}?page=${targetPage.id}`);
 };
 
 
@@ -1086,10 +1136,36 @@ const openMediaLibrary = async (
     field?: string,
     itemIndex?: number
 ) => {
+    console.log('openMediaLibrary called:', { target, fieldOrSectionId, field, itemIndex });
+    
     if (target === 'navigation' || target === 'footer') {
         mediaLibraryTarget.value = { target, field: fieldOrSectionId };
+        mediaLibraryRequirements.value = null;
+        mediaLibrarySectionType.value = null;
+        mediaLibraryFieldName.value = null;
     } else {
         mediaLibraryTarget.value = { target: 'section', sectionId: fieldOrSectionId, field: field!, itemIndex };
+        
+        // Look up image requirements for this section type + field
+        const section = sections.value.find(s => s.id === fieldOrSectionId);
+        console.log('Found section:', section);
+        
+        if (section && field) {
+            const requirements = getImageRequirements(section.type, field);
+            console.log('Image requirements lookup:', {
+                sectionType: section.type,
+                field,
+                requirements
+            });
+            
+            mediaLibraryRequirements.value = requirements;
+            mediaLibrarySectionType.value = section.type;
+            mediaLibraryFieldName.value = field;
+        } else {
+            mediaLibraryRequirements.value = null;
+            mediaLibrarySectionType.value = null;
+            mediaLibraryFieldName.value = null;
+        }
     }
     showMediaLibrary.value = true;
     await loadMediaLibrary();
@@ -1161,22 +1237,57 @@ const uploadImage = async (event: Event) => {
 };
 
 const selectMediaImage = (media: any) => {
+    console.log('selectMediaImage called:', { 
+        media: media.id, 
+        target: mediaLibraryTarget.value 
+    });
+    
     if (!mediaLibraryTarget.value) return;
     const { target, sectionId, field, itemIndex } = mediaLibraryTarget.value;
+    
     if (target === 'navigation') {
         siteNavigation.value.logo = media.url;
+        console.log('Applied image to navigation logo');
     } else if (target === 'footer') {
         siteFooter.value.logo = media.url;
+        console.log('Applied image to footer logo');
     } else if (target === 'section' && sectionId) {
         const section = sections.value.find(s => s.id === sectionId);
+        console.log('Found section for regular image:', section?.type, 'field:', field);
+        
         if (section && field) {
-            if (itemIndex !== undefined && section.content.items) {
+            // Handle nested field paths like 'slides.0.backgroundImage'
+            if (field.includes('.')) {
+                const fieldParts = field.split('.');
+                let target = section.content;
+                
+                // Navigate to the parent object
+                for (let i = 0; i < fieldParts.length - 1; i++) {
+                    const part = fieldParts[i];
+                    if (!target[part]) {
+                        if (isNaN(Number(fieldParts[i + 1]))) {
+                            target[part] = {};
+                        } else {
+                            target[part] = [];
+                        }
+                    }
+                    target = target[part];
+                }
+                
+                // Set the final field value
+                const finalField = fieldParts[fieldParts.length - 1];
+                target[finalField] = media.url;
+                console.log('Applied image to nested field:', { sectionId, field, finalField });
+            } else if (itemIndex !== undefined && section.content.items) {
                 section.content.items[itemIndex][field] = media.url;
+                console.log('Applied image to section item:', { sectionId, field, itemIndex });
             } else if (field === 'images' && section.type === 'gallery') {
                 if (!section.content.images) section.content.images = [];
                 section.content.images.push({ id: media.id, url: media.url, alt: media.originalName });
+                console.log('Added image to gallery');
             } else {
                 section.content[field] = media.url;
+                console.log('Applied image to section field:', { sectionId, field, url: media.url });
             }
         }
     }
@@ -1186,6 +1297,12 @@ const selectMediaImage = (media: any) => {
 
 // Handle cropped image selection (data URL from canvas)
 const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
+    console.log('handleCroppedImage called:', { 
+        dataUrl: dataUrl.substring(0, 50) + '...', 
+        originalMedia, 
+        target: mediaLibraryTarget.value 
+    });
+    
     if (!mediaLibraryTarget.value) return;
     
     // For cropped images, we use the data URL directly
@@ -1194,18 +1311,47 @@ const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
     
     if (target === 'navigation') {
         siteNavigation.value.logo = dataUrl;
+        console.log('Applied cropped image to navigation logo');
     } else if (target === 'footer') {
         siteFooter.value.logo = dataUrl;
+        console.log('Applied cropped image to footer logo');
     } else if (target === 'section' && sectionId) {
         const section = sections.value.find(s => s.id === sectionId);
+        console.log('Found section:', section?.type, 'field:', field);
+        
         if (section && field) {
-            if (itemIndex !== undefined && section.content.items) {
+            // Handle nested field paths like 'slides.0.backgroundImage'
+            if (field.includes('.')) {
+                const fieldParts = field.split('.');
+                let target = section.content;
+                
+                // Navigate to the parent object
+                for (let i = 0; i < fieldParts.length - 1; i++) {
+                    const part = fieldParts[i];
+                    if (!target[part]) {
+                        if (isNaN(Number(fieldParts[i + 1]))) {
+                            target[part] = {};
+                        } else {
+                            target[part] = [];
+                        }
+                    }
+                    target = target[part];
+                }
+                
+                // Set the final field value
+                const finalField = fieldParts[fieldParts.length - 1];
+                target[finalField] = dataUrl;
+                console.log('Applied cropped image to nested field:', { sectionId, field, finalField });
+            } else if (itemIndex !== undefined && section.content.items) {
                 section.content.items[itemIndex][field] = dataUrl;
+                console.log('Applied cropped image to section item:', { sectionId, field, itemIndex });
             } else if (field === 'images' && section.type === 'gallery') {
                 if (!section.content.images) section.content.images = [];
                 section.content.images.push({ id: `cropped-${Date.now()}`, url: dataUrl, alt: 'Cropped image' });
+                console.log('Added cropped image to gallery');
             } else {
                 section.content[field] = dataUrl;
+                console.log('Applied cropped image to section field:', { sectionId, field, value: dataUrl.substring(0, 50) + '...' });
             }
         }
     }
@@ -1952,6 +2098,7 @@ onUnmounted(() => {
                         :siteName="site.name"
                         :isMobile="isMobilePreview"
                         :isEditing="false"
+                        @switchPage="switchPage"
                     />
                     <div v-for="section in sections" :key="section.id">
                         <SectionRenderer
@@ -1987,7 +2134,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Floating toolbar at bottom -->
-        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-full shadow-2xl px-3 py-2 flex items-center gap-1">
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-full shadow-2xl px-3 py-2 flex items-center gap-1 z-50">
             <div class="px-3 py-1 border-r border-gray-200">
                 <p class="text-sm font-medium text-gray-900">{{ site.name }}</p>
             </div>
@@ -2039,12 +2186,12 @@ onUnmounted(() => {
         </div>
 
         <!-- Close button top right -->
-        <button @click="exitFullPreview" class="absolute top-4 right-4 p-2.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-full shadow-lg hover:bg-white transition" aria-label="Close preview">
+        <button @click="exitFullPreview" class="absolute top-4 right-4 p-2.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-full shadow-lg hover:bg-white transition z-50" aria-label="Close preview">
             <XMarkIcon class="h-5 w-5" aria-hidden="true" />
         </button>
         
         <!-- Keyboard hint -->
-        <div class="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white/80 text-xs rounded-full">
+        <div class="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white/80 text-xs rounded-full z-50">
             Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded text-xs mx-1">Esc</kbd> to exit
         </div>
     </div>
@@ -2441,6 +2588,7 @@ onUnmounted(() => {
                             :isMobile="isMobilePreview"
                             :isEditing="showNavSettings"
                             @click="handleNavClick"
+                            @switchPage="switchPage"
                         />
 
                         <!-- Drop Zone when empty -->
@@ -2605,6 +2753,9 @@ onUnmounted(() => {
         :uploading="uploadingImage"
         :uploadError="imageUploadError"
         :allowCrop="true"
+        :imageRequirements="mediaLibraryRequirements"
+        :sectionType="mediaLibrarySectionType"
+        :fieldName="mediaLibraryFieldName"
         @close="showMediaLibrary = false"
         @upload="uploadImage"
         @select="selectMediaImage"

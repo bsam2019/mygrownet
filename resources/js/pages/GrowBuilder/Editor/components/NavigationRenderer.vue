@@ -42,18 +42,43 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'click'): void;
+    (e: 'switchPage', pageId: number): void;
 }>();
+
+const handleNavClick = (event: Event, navItem: NavItem) => {
+    // Always prevent default navigation in editor preview
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('NavigationRenderer: handleNavClick called', { 
+        navItem: JSON.parse(JSON.stringify(navItem)), 
+        hasPageId: !!navItem.pageId,
+        pageId: navItem.pageId,
+        label: navItem.label,
+        url: navItem.url
+    });
+    
+    // If it has a pageId, switch to that page in the editor
+    if (navItem.pageId) {
+        console.log('NavigationRenderer: Emitting switchPage event', navItem.pageId);
+        emit('switchPage', navItem.pageId);
+    } else {
+        console.log('NavigationRenderer: No pageId found, cannot switch page. Full navItem:', navItem);
+    }
+    // Otherwise, it's an external link - do nothing in preview mode
+    // (user can use Live preview mode for external links to work)
+};
 </script>
 
 <template>
     <div 
-        class="relative group cursor-pointer"
+        class="relative group"
         :class="[
             isEditing ? 'ring-2 ring-blue-500 ring-inset' : 'hover:ring-1 hover:ring-blue-300 hover:ring-inset',
             navigation.style === 'transparent' ? 'absolute top-0 left-0 right-0 z-10' : '',
             navigation.style === 'floating' ? 'm-3 rounded-xl shadow-lg' : 'border-b border-gray-200'
         ]"
-        @click="emit('click')"
+        @click.self="emit('click')"
     >
         <!-- Nav Edit Indicator -->
         <div v-if="isEditing" class="absolute top-2 right-2 z-10 flex items-center gap-1 bg-white rounded-lg shadow-lg border border-gray-200 p-1">
@@ -128,11 +153,11 @@ const emit = defineEmits<{
                 v-else-if="!navigation.style || navigation.style === 'default' || navigation.style === 'transparent' || navigation.style === 'dark' || navigation.style === 'floating' || navigation.style === 'mega'"
                 class="flex items-center justify-between"
             >
-                <div class="flex items-center gap-2">
-                    <img v-if="navigation.logo" :src="navigation.logo" class="h-8 object-contain" alt="Logo" />
+                <div class="flex items-center gap-2" @click="emit('click')">
+                    <img v-if="navigation.logo" :src="navigation.logo" class="h-8 object-contain cursor-pointer" alt="Logo" />
                     <span 
                         v-else 
-                        class="font-bold text-lg"
+                        class="font-bold text-lg cursor-pointer"
                         :class="{
                             'text-gray-900': !navigation.style || navigation.style === 'default' || navigation.style === 'floating' || navigation.style === 'mega',
                             'text-white': navigation.style === 'transparent' || navigation.style === 'dark'
@@ -143,8 +168,10 @@ const emit = defineEmits<{
                 </div>
                 <div class="flex items-center gap-4">
                     <template v-for="(navItem, idx) in navigation.navItems" :key="navItem.id || idx">
-                        <span 
-                            class="text-sm cursor-pointer"
+                        <a 
+                            href="javascript:void(0)"
+                            @click="handleNavClick($event, navItem)"
+                            class="text-sm transition-colors"
                             :class="{
                                 'text-gray-600 hover:text-blue-600': !navigation.style || navigation.style === 'default' || navigation.style === 'floating' || navigation.style === 'mega',
                                 'text-white/90 hover:text-white': navigation.style === 'transparent' || navigation.style === 'dark'
@@ -152,7 +179,7 @@ const emit = defineEmits<{
                         >
                             {{ navItem.label }}
                             <span v-if="navigation.style === 'mega'" class="text-xs ml-0.5">▼</span>
-                        </span>
+                        </a>
                     </template>
                     <span v-if="navigation.navItems.length === 0" class="text-sm text-gray-400 italic">No nav items</span>
                     
@@ -200,13 +227,19 @@ const emit = defineEmits<{
 
             <!-- Centered Style -->
             <div v-else-if="navigation.style === 'centered'" class="flex flex-col items-center gap-3">
-                <div class="flex items-center gap-2">
-                    <img v-if="navigation.logo" :src="navigation.logo" class="h-10 object-contain" alt="Logo" />
-                    <span v-else class="font-bold text-xl text-gray-900">{{ navigation.logoText || siteName }}</span>
+                <div class="flex items-center gap-2" @click="emit('click')">
+                    <img v-if="navigation.logo" :src="navigation.logo" class="h-10 object-contain cursor-pointer" alt="Logo" />
+                    <span v-else class="font-bold text-xl text-gray-900 cursor-pointer">{{ navigation.logoText || siteName }}</span>
                 </div>
                 <div class="flex items-center gap-6">
                     <template v-for="(navItem, idx) in navigation.navItems" :key="navItem.id || idx">
-                        <span class="text-sm text-gray-600 hover:text-blue-600 cursor-pointer">{{ navItem.label }}</span>
+                        <a 
+                            href="javascript:void(0)" 
+                            @click="handleNavClick($event, navItem)"
+                            class="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                            {{ navItem.label }}
+                        </a>
                     </template>
                     <!-- Auth Buttons -->
                     <template v-if="navigation.showAuthButtons">
@@ -243,7 +276,13 @@ const emit = defineEmits<{
             <div v-else-if="navigation.style === 'split'" class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <template v-for="(navItem, idx) in navigation.navItems.slice(0, Math.ceil(navigation.navItems.length / 2))" :key="navItem.id || idx">
-                        <span class="text-sm text-gray-600 hover:text-blue-600 cursor-pointer">{{ navItem.label }}</span>
+                        <a 
+                            href="javascript:void(0)" 
+                            @click="handleNavClick($event, navItem)"
+                            class="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                            {{ navItem.label }}
+                        </a>
                     </template>
                 </div>
                 <div class="flex items-center gap-2">
@@ -252,7 +291,13 @@ const emit = defineEmits<{
                 </div>
                 <div class="flex items-center gap-4">
                     <template v-for="(navItem, idx) in navigation.navItems.slice(Math.ceil(navigation.navItems.length / 2))" :key="navItem.id || idx">
-                        <span class="text-sm text-gray-600 hover:text-blue-600 cursor-pointer">{{ navItem.label }}</span>
+                        <a 
+                            href="javascript:void(0)" 
+                            @click="handleNavClick($event, navItem)"
+                            class="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                            {{ navItem.label }}
+                        </a>
                     </template>
                     <!-- Auth Buttons -->
                     <template v-if="navigation.showAuthButtons">
@@ -317,9 +362,9 @@ const emit = defineEmits<{
             </div>
         </div>
         
-        <!-- Hover overlay -->
-        <div class="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/5 transition-colors">
-            <span class="opacity-0 group-hover:opacity-100 text-xs bg-blue-600 text-white px-2 py-1 rounded transition-opacity">
+        <!-- Hover overlay - positioned to not block navigation links -->
+        <div class="absolute top-2 left-2 z-10 pointer-events-none">
+            <span class="opacity-0 group-hover:opacity-100 text-xs bg-blue-600 text-white px-2 py-1 rounded transition-opacity shadow-lg">
                 Click to edit navigation
             </span>
         </div>
