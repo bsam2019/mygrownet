@@ -144,6 +144,23 @@ export function getImageRequirements(sectionType: string, field: string): ImageR
         }
     }
     
+    // Special case for array fields like 'slides.0.backgroundImage' matching 'slides'
+    // Check if field starts with any pattern key followed by a dot and number
+    if (field.includes('.')) {
+        const firstPart = field.split('.')[0];
+        if (sectionReqs[firstPart]) {
+            return sectionReqs[firstPart];
+        }
+    }
+    
+    // Fallback: try matching the last part of the field (e.g., 'backgroundImage' in 'slides.0.backgroundImage')
+    if (field.includes('.')) {
+        const fieldEnd = field.split('.').pop();
+        if (fieldEnd && sectionReqs[fieldEnd]) {
+            return sectionReqs[fieldEnd];
+        }
+    }
+    
     return null;
 }
 

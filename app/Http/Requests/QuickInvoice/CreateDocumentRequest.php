@@ -65,7 +65,7 @@ class CreateDocumentRequest extends FormRequest
             'terms' => 'nullable|string|max:1000',
             'save_document' => 'nullable|boolean',
             
-            // Template & Styling
+            // Template & Styling - Only allow the 5 working templates
             'template' => 'nullable|in:classic,modern,minimal,professional,bold',
             'colors' => 'nullable|array',
             'colors.primary' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',

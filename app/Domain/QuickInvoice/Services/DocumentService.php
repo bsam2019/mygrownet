@@ -35,6 +35,12 @@ class DocumentService
     public function createDocument(array $data): Document
     {
         try {
+            \Log::info('DocumentService - START createDocument', [
+                'data_keys' => array_keys($data),
+                'template' => $data['template'] ?? 'NOT SET',
+                'template_type' => gettype($data['template'] ?? null),
+            ]);
+            
             $type = DocumentType::from($data['document_type']);
             
             \Log::info('DocumentService - Creating document', [
@@ -60,16 +66,14 @@ class DocumentService
                 email: $data['client_email'] ?? null
             );
 
-            $template = isset($data['template']) 
-                ? TemplateStyle::from($data['template']) 
-                : TemplateStyle::CLASSIC;
+            $template = $data['template'] ?? 'classic';
 
             $colors = isset($data['colors']) 
                 ? ThemeColors::fromArray($data['colors']) 
                 : ThemeColors::default();
             
             \Log::info('DocumentService - Template and colors resolved', [
-                'template_value' => $template->value,
+                'template_value' => $template,
                 'colors_primary' => $colors->toArray()['primary'] ?? 'NOT SET',
             ]);
 
@@ -93,7 +97,7 @@ class DocumentService
             Log::info('Document created', [
                 'document_id' => $document->id()->value(),
                 'type' => $type->value,
-                'template' => $document->template()->value,
+                'template' => $document->template(),
                 'user_id' => $data['user_id'] ?? null,
             ]);
 
@@ -207,7 +211,17 @@ class DocumentService
      */
     private function applyOptionalFields(Document $document, array $data): void
     {
+        \Log::info('DocumentService - applyOptionalFields START', [
+            'has_document_number' => isset($data['document_number']),
+            'document_number_value' => $data['document_number'] ?? 'NOT SET',
+            'document_number_type' => gettype($data['document_number'] ?? null),
+        ]);
+        
         if (!empty($data['document_number'])) {
+            \Log::info('DocumentService - Setting document number', [
+                'value' => $data['document_number'],
+                'type' => gettype($data['document_number']),
+            ]);
             $document->setDocumentNumber(DocumentNumber::fromString($data['document_number']));
         }
 
@@ -237,7 +251,11 @@ class DocumentService
 
         // Template & Styling
         if (!empty($data['template'])) {
-            $document->setTemplate(TemplateStyle::from($data['template']));
+            \Log::info('DocumentService - Setting template', [
+                'template_value' => $data['template'],
+                'template_type' => gettype($data['template']),
+            ]);
+            $document->setTemplate($data['template']);
         }
 
         if (!empty($data['colors'])) {

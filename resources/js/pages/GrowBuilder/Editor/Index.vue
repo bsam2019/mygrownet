@@ -1124,6 +1124,19 @@ const applyTemplate = async (templateId: string) => {
 const loadMediaLibrary = async () => {
     try {
         const response = await axios.get(`/growbuilder/media/${props.site.id}`);
+        console.log('Media API Response:', response.data);
+        const firstItem = response.data.data?.[0];
+        if (firstItem) {
+            console.log('=== MEDIA ITEM DEBUG ===');
+            console.log('Raw first item:', firstItem);
+            console.log('Has aspectRatio?', 'aspectRatio' in firstItem, firstItem.aspectRatio);
+            console.log('Has aspectRatioDecimal?', 'aspectRatioDecimal' in firstItem, firstItem.aspectRatioDecimal);
+            console.log('Has fileTypeBadge?', 'fileTypeBadge' in firstItem, firstItem.fileTypeBadge);
+            console.log('Has width?', 'width' in firstItem, firstItem.width);
+            console.log('Has height?', 'height' in firstItem, firstItem.height);
+            console.log('All keys:', Object.keys(firstItem));
+            console.log('======================');
+        }
         mediaLibrary.value = response.data.data || [];
     } catch (error) {
         console.error('Failed to load media library:', error);
@@ -1305,60 +1318,105 @@ const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
     
     if (!mediaLibraryTarget.value) return;
     
-    // For cropped images, we use the data URL directly
-    // In production, you'd upload this to the server first
-    const { target, sectionId, field, itemIndex } = mediaLibraryTarget.value;
-    
-    if (target === 'navigation') {
-        siteNavigation.value.logo = dataUrl;
-        console.log('Applied cropped image to navigation logo');
-    } else if (target === 'footer') {
-        siteFooter.value.logo = dataUrl;
-        console.log('Applied cropped image to footer logo');
-    } else if (target === 'section' && sectionId) {
-        const section = sections.value.find(s => s.id === sectionId);
-        console.log('Found section:', section?.type, 'field:', field);
+    try {
+        // Upload the cropped image to the server
+        toast.info('Saving cropped image...');
         
-        if (section && field) {
-            // Handle nested field paths like 'slides.0.backgroundImage'
-            if (field.includes('.')) {
-                const fieldParts = field.split('.');
-                let target = section.content;
+        const response = await axios.post(`/growbuilder/media/${props.site.id}/base64`, {
+            image: dataUrl,
+            filename: `cropped-${originalMedia.originalName || 'image.jpg'}`,
+            source_media_id: originalMedia.id, // Track the source for cleanup
+        });
+        
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to save cropped image');
+        }
+        
+        const savedMedia = response.data.media;
+        const imageUrl = savedMedia.url;
+        
+        // Add to media library
+        mediaLibrary.value.unshift(savedMedia);
+        
+        // Apply the saved image URL to the target
+        const { target, sectionId, field, itemIndex } = mediaLibraryTarget.value;
+        
+        if (target === 'navigation') {
+            siteNavigation.value.logo = imageUrl;
+            console.log('Applied cropped image to navigation logo');
+        } else if (target === 'footer') {
+            siteFooter.value.logo = imageUrl;
+            console.log('Applied cropped image to footer logo');
+        } else if (target === 'section' && sectionId) {
+            const section = sections.value.find(s => s.id === sectionId);
+            console.log('Found section:', section?.type, 'field:', field);
+            
+            if (section && field) {
+                // Get the old image URL to potentially delete it later
+                let oldImageUrl = null;
                 
-                // Navigate to the parent object
-                for (let i = 0; i < fieldParts.length - 1; i++) {
-                    const part = fieldParts[i];
-                    if (!target[part]) {
-                        if (isNaN(Number(fieldParts[i + 1]))) {
-                            target[part] = {};
-                        } else {
-                            target[part] = [];
+                // Handle nested field paths like 'slides.0.backgroundImage'
+                if (field.includes('.')) {
+                    const fieldParts = field.split('.');
+                    let target = section.content;
+                    
+                    // Navigate to the parent object
+                    for (let i = 0; i < fieldParts.length - 1; i++) {
+                        const part = fieldParts[i];
+                        if (!target[part]) {
+                            if (isNaN(Number(fieldParts[i + 1]))) {
+                                target[part] = {};
+                            } else {
+                                target[part] = [];
+                            }
                         }
+                        target = target[part];
                     }
-                    target = target[part];
+                    
+                    // Get old value and set the new one
+                    const finalField = fieldParts[fieldParts.length - 1];
+                    oldImageUrl = target[finalField];
+                    target[finalField] = imageUrl;
+                    console.log('Applied cropped image to nested field:', { sectionId, field, finalField });
+                } else if (itemIndex !== undefined && section.content.items) {
+                    oldImageUrl = section.content.items[itemIndex][field];
+                    section.content.items[itemIndex][field] = imageUrl;
+                    console.log('Applied cropped image to section item:', { sectionId, field, itemIndex });
+                } else if (field === 'images' && section.type === 'gallery') {
+                    if (!section.content.images) section.content.images = [];
+                    section.content.images.push({ id: savedMedia.id, url: imageUrl, alt: savedMedia.originalName });
+                    console.log('Added cropped image to gallery');
+                } else {
+                    oldImageUrl = section.content[field];
+                    section.content[field] = imageUrl;
+                    console.log('Applied cropped image to section field:', { sectionId, field });
                 }
                 
-                // Set the final field value
-                const finalField = fieldParts[fieldParts.length - 1];
-                target[finalField] = dataUrl;
-                console.log('Applied cropped image to nested field:', { sectionId, field, finalField });
-            } else if (itemIndex !== undefined && section.content.items) {
-                section.content.items[itemIndex][field] = dataUrl;
-                console.log('Applied cropped image to section item:', { sectionId, field, itemIndex });
-            } else if (field === 'images' && section.type === 'gallery') {
-                if (!section.content.images) section.content.images = [];
-                section.content.images.push({ id: `cropped-${Date.now()}`, url: dataUrl, alt: 'Cropped image' });
-                console.log('Added cropped image to gallery');
-            } else {
-                section.content[field] = dataUrl;
-                console.log('Applied cropped image to section field:', { sectionId, field, value: dataUrl.substring(0, 50) + '...' });
+                // If there was an old cropped image (starts with our S3 URL), delete it
+                if (oldImageUrl && typeof oldImageUrl === 'string' && oldImageUrl.includes('digitaloceanspaces.com')) {
+                    // Find the media record for the old image
+                    const oldMedia = mediaLibrary.value.find(m => m.url === oldImageUrl);
+                    if (oldMedia && oldMedia.metadata?.source === 'cropped') {
+                        // Delete the old cropped image
+                        try {
+                            await axios.delete(`/growbuilder/media/${props.site.id}/${oldMedia.id}`);
+                            mediaLibrary.value = mediaLibrary.value.filter(m => m.id !== oldMedia.id);
+                            console.log('Deleted old cropped image:', oldMedia.id);
+                        } catch (error) {
+                            console.warn('Failed to delete old cropped image:', error);
+                        }
+                    }
+                }
             }
         }
+        
+        toast.success('Cropped image saved and applied');
+        showMediaLibrary.value = false;
+        mediaLibraryTarget.value = null;
+    } catch (error: any) {
+        console.error('Failed to save cropped image:', error);
+        toast.error(error.response?.data?.message || 'Failed to process image. Please try again or contact support.');
     }
-    
-    toast.success('Cropped image applied');
-    showMediaLibrary.value = false;
-    mediaLibraryTarget.value = null;
 };
 
 // Delete media from library

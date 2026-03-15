@@ -183,7 +183,15 @@ const resetCrop = () => {
     const iw = imgEl.value?.clientWidth  ?? 0;
     const ih = imgEl.value?.clientHeight ?? 0;
     
-    console.log('resetCrop called:', { iw, ih, hasRecommendations: !!(props.recommendedWidth && props.recommendedHeight) });
+    console.log('resetCrop called:', { 
+        iw, 
+        ih, 
+        hasRecommendations: !!(props.recommendedWidth && props.recommendedHeight),
+        recommendedWidth: props.recommendedWidth,
+        recommendedHeight: props.recommendedHeight,
+        naturalW: naturalW.value,
+        naturalH: naturalH.value
+    });
     
     if (!iw || !ih) {
         console.log('Image not ready, retrying in 100ms...');
@@ -241,17 +249,18 @@ const resetCrop = () => {
             }
         }
         
-        console.log('Calculated crop before ratio fit:', c);
+        console.log('Calculated crop before clamp:', c);
     } else {
-        console.log('No recommendations, using full image');
+        console.log('No recommendations or natural dimensions not ready, using full image');
         // Apply aspect ratio constraint if set and no recommendations
         if (selectedRatio.value) {
             c = fitRatio(selectedRatio.value, c) as typeof c;
         }
     }
     
-    crop.value = clampCrop(c);
-    console.log('Final crop value:', crop.value);
+    const finalCrop = clampCrop(c);
+    crop.value = finalCrop;
+    console.log('Final crop value set:', finalCrop);
 };
 
 const applyAspectRatio = (ratio: number | null) => {
@@ -349,34 +358,14 @@ const onMouseUp = () => {
 
 // ─── Save ─────────────────────────────────────────────────────────────────────
 const saveCrop = () => {
-    console.log('ImageEditorModal.saveCrop called');
-    
-    if (!loadedImg.value || !canvasRef.value || !imgEl.value) {
-        console.error('Missing required elements for crop save:', {
-            loadedImg: !!loadedImg.value,
-            canvasRef: !!canvasRef.value,
-            imgEl: !!imgEl.value
-        });
-        return;
-    }
+    if (!loadedImg.value || !canvasRef.value || !imgEl.value) return;
     
     const ctx = canvasRef.value.getContext('2d');
-    if (!ctx) {
-        console.error('Could not get canvas context');
-        return;
-    }
+    if (!ctx) return;
 
     const scaleX = naturalW.value / imgEl.value.clientWidth;
     const scaleY = naturalH.value / imgEl.value.clientHeight;
     const { width, height } = outputDimensions.value;
-
-    console.log('Canvas crop details:', {
-        crop: crop.value,
-        scale: { scaleX, scaleY },
-        output: { width, height },
-        natural: { w: naturalW.value, h: naturalH.value },
-        display: { w: imgEl.value.clientWidth, h: imgEl.value.clientHeight }
-    });
 
     canvasRef.value.width  = width;
     canvasRef.value.height = height;
@@ -390,13 +379,6 @@ const saveCrop = () => {
 
     const mime    = exportFormat.value === 'png' ? 'image/png' : exportFormat.value === 'webp' ? 'image/webp' : 'image/jpeg';
     const dataUrl = canvasRef.value.toDataURL(mime, exportQuality.value / 100);
-    
-    console.log('Generated dataUrl:', {
-        mime,
-        quality: exportQuality.value,
-        dataUrlLength: dataUrl.length,
-        dataUrlPreview: dataUrl.substring(0, 100) + '...'
-    });
     
     emit('save', dataUrl);
 };

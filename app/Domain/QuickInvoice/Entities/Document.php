@@ -40,7 +40,7 @@ class Document
     private Carbon $updatedAt;
 
     // Template & Styling
-    private TemplateStyle $template;
+    private string $template;
     private ThemeColors $colors;
     private ?string $signature;
     private ?string $preparedBy;
@@ -63,7 +63,7 @@ class Document
         $this->terms = null;
         $this->attachments = [];
         $this->status = 'draft';
-        $this->template = TemplateStyle::CLASSIC;
+        $this->template = 'classic';
         $this->colors = ThemeColors::default();
         $this->signature = null;
     }
@@ -78,7 +78,7 @@ class Document
         string $currency = 'ZMW',
         ?int $userId = null,
         ?string $sessionId = null,
-        ?TemplateStyle $template = null,
+        ?string $template = null,
         ?ThemeColors $colors = null
     ): self {
         $document = new self();
@@ -92,7 +92,7 @@ class Document
         $document->currency = $currency;
         $document->issueDate = Carbon::today();
         $document->dueDate = $type->showDueDate() ? Carbon::today()->addDays(30) : null;
-        $document->template = $template ?? TemplateStyle::CLASSIC;
+        $document->template = $template ?? 'classic';
         $document->colors = $colors ?? ThemeColors::default();
         $document->signature = null;
         $document->preparedBy = null;
@@ -125,7 +125,7 @@ class Document
         string $status,
         Carbon $createdAt,
         Carbon $updatedAt,
-        ?TemplateStyle $template = null,
+        ?string $template = null,
         ?ThemeColors $colors = null,
         ?string $signature = null,
         ?string $preparedBy = null,
@@ -148,7 +148,7 @@ class Document
         $document->notes = $notes;
         $document->terms = $terms;
         $document->status = $status;
-        $document->template = $template ?? TemplateStyle::CLASSIC;
+        $document->template = $template ?? 'classic';
         $document->colors = $colors ?? ThemeColors::default();
         $document->signature = $signature;
         $document->preparedBy = $preparedBy;
@@ -217,7 +217,7 @@ class Document
     public function setDocumentNumber(DocumentNumber $number): void { $this->documentNumber = $number; $this->touch(); }
 
     // Template & Styling setters
-    public function setTemplate(TemplateStyle $template): void { $this->template = $template; $this->touch(); }
+    public function setTemplate(string $template): void { $this->template = $template; $this->touch(); }
     public function setColors(ThemeColors $colors): void { $this->colors = $colors; $this->touch(); }
     public function setSignature(?string $signature): void { $this->signature = $signature; $this->touch(); }
 
@@ -272,7 +272,7 @@ class Document
     public function total(): Money { return $this->total; }
     public function createdAt(): Carbon { return $this->createdAt; }
     public function updatedAt(): Carbon { return $this->updatedAt; }
-    public function template(): TemplateStyle { return $this->template; }
+    public function template(): string { return $this->template; }
     public function colors(): ThemeColors { return $this->colors; }
     public function signature(): ?string { return $this->signature; }
     public function preparedBy(): ?string { return $this->preparedBy; }
@@ -306,7 +306,7 @@ class Document
             'notes' => $this->notes,
             'terms' => $this->terms,
             'status' => $this->status,
-            'template' => $this->template->value,
+            'template' => $this->template,
             'colors' => $this->colors->toArray(),
             'signature' => $this->signature,
             'prepared_by' => $this->preparedBy,

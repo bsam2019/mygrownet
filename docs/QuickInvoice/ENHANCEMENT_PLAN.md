@@ -1,24 +1,131 @@
 # Quick Invoice Enhancement Plan
 
-**Last Updated:** March 13, 2026 (15:00)
-**Status:** Critical Issue - Design Studio Templates Not Generating PDFs
+**Last Updated:** March 14, 2026
+**Status:** Production Ready - Core System Restored
 
 ## Overview
 
-Comprehensive enhancement of Quick Invoice with advanced visual template builder, admin monitoring, and seamless platform integration.
+Quick Invoice is a standalone invoice generation system with 5 proven Blade templates. The Design Studio (advanced template builder) is a separate feature that is not yet integrated with the invoice generation flow.
+
+## Working Templates
+
+The system uses 5 proven Blade templates located in `resources/views/pdf/quick-invoice/`:
+
+1. **Classic** (`classic.blade.php`) - Traditional business style with blue border
+2. **Modern** (`modern.blade.php`) - Contemporary design with colored header bar
+3. **Minimal** (`minimal.blade.php`) - Clean and simple layout
+4. **Professional** (`professional.blade.php`) - Corporate style with page border
+5. **Bold** (`bold.blade.php`) - High contrast, impactful design
+
+All templates support:
+- Company logo and information
+- Customer details
+- Line items with descriptions, quantities, prices
+- Subtotal, tax, discount calculations
+- Notes and terms
+- Signature field
+- Multiple currencies
+
+## Recent Cleanup (March 14, 2026)
+
+### Issue: Two Competing Systems
+The codebase had two separate invoice generation approaches that were never properly integrated:
+1. **Original Working System** - 5 Blade templates (classic, modern, minimal, professional, bold)
+2. **Design Studio System** - Advanced template builder with block-based layouts
+
+The Design Studio integration was incomplete and causing complexity without adding value.
+
+### Solution: Restore Single Working System
+**Decision:** Disable Design Studio integration and focus on the proven 5-template system.
+
+**Changes Made:**
+1. ✅ Removed `getSystemAdvancedTemplates()` from `QuickInvoiceController.php`
+2. ✅ Removed `loadAdvancedTemplate()` from `PdfGeneratorService.php`
+3. ✅ Removed `getSystemAdvancedTemplates()` from `PdfGeneratorService.php`
+4. ✅ Removed `getDefaultFieldConfig()` from `PdfGeneratorService.php`
+5. ✅ Simplified `create()` method to only accept 5 valid templates
+6. ✅ Simplified `createPdf()` to only use Blade templates
+7. ✅ Updated documentation to reflect current state
+
+**Files Modified:**
+- `app/Http/Controllers/QuickInvoiceController.php` - Removed unused advanced template methods
+- `app/Domain/QuickInvoice/Services/PdfGeneratorService.php` - Removed Design Studio integration code
+- `app/Http/Requests/QuickInvoice/CreateDocumentRequest.php` - Validation restricted to 5 templates
+- `docs/QuickInvoice/ENHANCEMENT_PLAN.md` - Updated to reflect cleanup
+
+**Result:** Clean, maintainable codebase with one proven working system.
+
+---
+
+## Previous Attempts (Archived for Reference)
+
+### Issue: Design Studio Templates Not Generating Invoices (Abandoned)
+**Problem:** When users selected templates from the Design Studio (advanced-classic, advanced-professional, advanced-minimal), invoice generation failed due to multiple issues:
+1. Template IDs were inconsistent across three different locations
+2. Validation was rejecting advanced template IDs
+3. Null document numbers caused "Attempt to read property 'value' on string" error
+4. Document::toArray() incorrectly treated template string as an enum object
+
+**Root Causes:**
+- DesignStudioController used IDs: `advanced-classic`, `advanced-professional`, `advanced-minimal`
+- PdfGeneratorService used IDs: `advanced-classic`, `advanced-professional`, `advanced-minimal`
+- QuickInvoiceController used IDs: `classic`, `professional`, `minimal` (missing "advanced-" prefix)
+- CreateDocumentRequest validation only allowed: `classic`, `modern`, `minimal`, `professional`, `bold`
+- EloquentDocumentRepository didn't handle null document_number when loading from database
+- Document::toArray() had `'template' => $this->template->value` but template is a string, not an enum
+
+**Solution:**
+1. **Synchronized Template IDs** - Updated `QuickInvoiceController::getSystemAdvancedTemplates()` and `PdfGeneratorService::getSystemAdvancedTemplates()` to use consistent IDs
+   - All system templates now use `advanced-*` prefix
+   - Added complete `layout_json` structure with version 2.0 and block IDs
+   - Synchronized block configurations across all three locations
+
+2. **Relaxed Validation** - Updated `CreateDocumentRequest` validation
+   - Changed from `in:classic,modern,minimal,professional,bold` to `string|max:100`
+   - Now accepts old templates, advanced templates, and custom template IDs
+
+3. **Fixed Null Document Numbers** - Updated `EloquentDocumentRepository::toDomainEntity()`
+   - Added check: if document_number is null, generate a new one
+   - Prevents errors when loading documents without document numbers
+
+4. **Fixed Template Serialization** - Updated `Document::toArray()`
+   - Changed from `'template' => $this->template->value` to `'template' => $this->template`
+   - Template is a string property, not an enum, so no ->value accessor needed
+
+**Files Modified:**
+- `app/Http/Controllers/QuickInvoiceController.php` - Updated template IDs and structure
+- `app/Domain/QuickInvoice/Services/PdfGeneratorService.php` - Updated template IDs and structure
+- `app/Http/Requests/QuickInvoice/CreateDocumentRequest.php` - Relaxed template validation
+- `app/Infrastructure/QuickInvoice/Repositories/EloquentDocumentRepository.php` - Handle null document numbers
+- `app/Domain/QuickInvoice/Entities/Document.php` - Fixed template serialization in toArray()
+
+**Result:** Design Studio templates now work correctly end-to-end for invoice generation.
 
 ## Current Status
 
-### ✅ Completed Features
-1. **Admin Monitoring System** - Usage tracking, subscription tiers, monetization controls
-2. **Centralized Dashboard** - Main entry point at `/quick-invoice`
-3. **QuickInvoiceLayout** - Dedicated layout with top navigation and profile dropdown
-4. **Free Mode** - All features unlimited (admin can enable restrictions later)
-5. **Database Structure** - Complete schema for templates, subscriptions, usage tracking
-6. **Basic Design Studio** - Template gallery with system and custom templates
-7. **Domain Services (DDD)** - TemplateBuilderService, TemplateRenderService
-8. **Advanced Template Builder - Phase 1** - Full drag-and-drop canvas with live preview
-9. **Advanced Template Builder - Phase 2** - Block configuration and enhanced rendering
+### ✅ Working Features (Production Ready)
+1. **5 Proven Blade Templates** - Classic, Modern, Minimal, Professional, Bold
+2. **Invoice Generation** - Complete workflow from form to PDF
+3. **Admin Monitoring System** - Usage tracking, subscription tiers, monetization controls
+4. **Centralized Dashboard** - Main entry point at `/quick-invoice`
+5. **QuickInvoiceLayout** - Dedicated layout with top navigation and profile dropdown
+6. **Free Mode** - All features unlimited (admin can enable restrictions later)
+7. **Database Structure** - Complete schema for documents, subscriptions, usage tracking
+8. **Attachment System** - Upload and attach files to invoices
+9. **Profile Management** - Save business information for reuse
+
+### 🚧 Design Studio (Separate Feature - Not Integrated)
+The Design Studio is a visual template builder that exists as a standalone feature but is NOT integrated with the invoice generation flow. Users can access it at `/quick-invoice/design-studio` to explore the interface, but templates created there cannot be used to generate invoices yet.
+
+**Design Studio Status:**
+- ✅ Template gallery UI exists
+- ✅ Advanced builder interface exists
+- ✅ Block configuration system exists
+- ❌ NOT integrated with invoice generation
+- ❌ Templates cannot be used to create PDFs
+- ❌ Requires significant additional work to integrate
+
+**Decision:** Focus on the 5 working templates. Design Studio integration is a future enhancement.
 
 ## Advanced Template Builder
 

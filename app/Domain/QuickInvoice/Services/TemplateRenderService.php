@@ -274,9 +274,15 @@ class TemplateRenderService
      */
     private function renderGenericBlock(array $block): string
     {
-        return '<div class="block-' . $block['type'] . '" style="padding: 1rem; background: #f9fafb; margin-bottom: 1rem;">' .
-               'Block: ' . $block['type'] .
-               '</div>';
+        $type = $block['type'] ?? 'unknown';
+        
+        \Log::warning('TemplateRenderService - Unknown block type, skipping render', [
+            'type' => $type,
+            'config' => $block['config'] ?? [],
+        ]);
+        
+        // Return empty string to hide unknown blocks from PDF
+        return '<!-- Unsupported block type: ' . htmlspecialchars($type) . ' -->';
     }
     
     /**

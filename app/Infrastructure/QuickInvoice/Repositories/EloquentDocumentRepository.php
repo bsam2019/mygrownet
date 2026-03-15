@@ -151,6 +151,15 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
      */
     private function toDomainEntity(QuickInvoiceDocument $model): Document
     {
+        \Log::info('EloquentDocumentRepository - toDomainEntity START', [
+            'model_id' => $model->id,
+            'document_number' => $model->document_number,
+            'document_number_type' => gettype($model->document_number),
+            'document_type' => $model->document_type,
+            'template' => $model->template,
+            'template_type' => gettype($model->template),
+        ]);
+        
         $businessInfo = BusinessInfo::create(
             name: $model->business_name,
             address: $model->business_address,
@@ -179,12 +188,32 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
             ], $model->currency);
         })->toArray();
 
+        // Generate document number if not set
+        \Log::info('EloquentDocumentRepository - Processing document number', [
+            'has_document_number' => !empty($model->document_number),
+            'document_number_value' => $model->document_number,
+            'will_generate' => empty($model->document_number),
+        ]);
+        
+        $documentNumber = $model->document_number 
+            ? DocumentNumber::fromString($model->document_number)
+            : DocumentNumber::generate(DocumentType::from($model->document_type));
+        
+        \Log::info('EloquentDocumentRepository - Document number created', [
+            'document_number_value' => $documentNumber->value(),
+        ]);
+
+        \Log::info('EloquentDocumentRepository - About to reconstitute', [
+            'template_value' => $model->template ?? 'NULL',
+            'template_type' => gettype($model->template),
+        ]);
+
         return Document::reconstitute(
             id: DocumentId::fromString($model->id),
             userId: $model->user_id,
             sessionId: $model->session_id,
             type: DocumentType::from($model->document_type),
-            documentNumber: DocumentNumber::fromString($model->document_number),
+            documentNumber: $documentNumber,
             businessInfo: $businessInfo,
             clientInfo: $clientInfo,
             issueDate: Carbon::parse($model->issue_date),
@@ -198,7 +227,7 @@ class EloquentDocumentRepository implements DocumentRepositoryInterface
             status: $model->status,
             createdAt: Carbon::parse($model->created_at),
             updatedAt: Carbon::parse($model->updated_at),
-            template: $model->template ? TemplateStyle::tryFrom($model->template) : null,
+            template: $model->template ?? 'classic',
             colors: $model->colors ? ThemeColors::fromArray($model->colors) : null,
             signature: $model->signature,
             preparedBy: $model->prepared_by,

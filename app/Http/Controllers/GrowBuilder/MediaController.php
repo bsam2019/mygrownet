@@ -309,6 +309,7 @@ class MediaController extends Controller
         $request->validate([
             'image' => 'required|string',
             'filename' => 'nullable|string|max:255',
+            'source_media_id' => 'nullable|integer|exists:growbuilder_media,id',
         ]);
 
         $imageData = $request->input('image');
@@ -371,6 +372,7 @@ class MediaController extends Controller
             // Create media record
             $media = GrowBuilderMedia::create([
                 'site_id' => $siteId,
+                'source_media_id' => $request->input('source_media_id'),
                 'filename' => $uniqueFilename,
                 'original_name' => $filename,
                 'path' => $path,
@@ -380,7 +382,10 @@ class MediaController extends Controller
                 'width' => $width,
                 'height' => $height,
                 'variants' => $variants,
-                'metadata' => ['source' => 'cropped'],
+                'metadata' => [
+                    'source' => 'cropped',
+                    'derived_from' => $request->input('source_media_id'),
+                ],
             ]);
 
             // Update storage usage

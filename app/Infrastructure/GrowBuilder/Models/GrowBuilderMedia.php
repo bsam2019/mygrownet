@@ -12,6 +12,7 @@ class GrowBuilderMedia extends Model
 
     protected $fillable = [
         'site_id',
+        'source_media_id',
         'filename',
         'original_name',
         'path',
@@ -42,6 +43,53 @@ class GrowBuilderMedia extends Model
     public function site(): BelongsTo
     {
         return $this->belongsTo(GrowBuilderSite::class, 'site_id');
+    }
+
+    /**
+     * Get the source media (original image this was cropped from)
+     */
+    public function sourceMedia(): BelongsTo
+    {
+        return $this->belongsTo(GrowBuilderMedia::class, 'source_media_id');
+    }
+
+    /**
+     * Get all derived media (cropped versions of this image)
+     */
+    public function derivedMedia()
+    {
+        return $this->hasMany(GrowBuilderMedia::class, 'source_media_id');
+    }
+
+    /**
+     * Boot method to handle cascading deletes
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When a media is deleted, delete all its derived versions and files from storage
+        static::deleting(function ($media) {
+            // Delete the file from storage
+            if (Storage::disk($media->disk)->exists($media->path)) {
+                Storage::disk($media->disk)->delete($media->path);
+            }
+            
+            // Delete variants (webp, thumbnail)
+            if (isset($media->variants['webp']) && Storage::disk($media->disk)->exists($media->variants['webp'])) {
+                Storage::disk($media->disk)->delete($media->variants['webp']);
+            }
+            if (isset($media->variants['thumbnail']) && Storage::disk($media->disk)->exists($media->variants['thumbnail'])) {
+                Storage::disk($media->disk)->delete($media->variants['thumbnail']);
+            }
+
+            // Delete all derived media (cropped versions)
+            // The foreign key cascade will handle the database records
+            // We just need to delete the files
+            $media->derivedMedia()->each(function ($derived) {
+                $derived->delete(); // This will trigger this same deleting event recursively
+            });
+        });
     }
 
     public function getUrlAttribute(): string

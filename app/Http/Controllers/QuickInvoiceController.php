@@ -56,37 +56,13 @@ class QuickInvoiceController extends Controller
             }
         }
 
+        // Only support the 5 original working templates
         $templateParam = $request->query('template', 'classic');
-        $advancedTemplate = null;
+        $validTemplates = ['classic', 'modern', 'minimal', 'professional', 'bold'];
         
-        // Only check for advanced templates if it's NOT one of the old template names
-        $oldTemplates = ['classic', 'modern', 'minimal', 'professional', 'bold'];
-        
-        if (!in_array($templateParam, $oldTemplates)) {
-            // Check if it's a new advanced template (system or custom)
-            if (str_starts_with($templateParam, 'custom-')) {
-                // Custom template
-                $id = (int) str_replace('custom-', '', $templateParam);
-                $customTemplate = \App\Models\QuickInvoice\CustomTemplate::find($id);
-                if ($customTemplate) {
-                    $advancedTemplate = [
-                        'id' => 'custom-' . $customTemplate->id,
-                        'name' => $customTemplate->name,
-                        'layout_json' => $customTemplate->layout_json,
-                        'primary_color' => $customTemplate->primary_color,
-                        'secondary_color' => $customTemplate->secondary_color,
-                        'font_family' => $customTemplate->font_family,
-                        'logo_url' => $customTemplate->logo_url,
-                    ];
-                }
-            } else {
-                // System advanced template (from Design Studio)
-                $systemTemplates = $this->getSystemAdvancedTemplates();
-                $template = collect($systemTemplates)->firstWhere('id', $templateParam);
-                if ($template) {
-                    $advancedTemplate = $template;
-                }
-            }
+        // If invalid template, default to classic
+        if (!in_array($templateParam, $validTemplates)) {
+            $templateParam = 'classic';
         }
 
         return Inertia::render('QuickInvoice/Create', [
@@ -96,63 +72,9 @@ class QuickInvoiceController extends Controller
             'templates' => TemplateStyle::all(),
             'savedProfile' => $savedProfile,
             'editDocument' => null,
-            'advancedTemplate' => $advancedTemplate,
         ]);
     }
     
-    private function getSystemAdvancedTemplates(): array
-    {
-        return [
-            [
-                'id' => 'classic',
-                'name' => 'Classic',
-                'primary_color' => '#3b82f6',
-                'secondary_color' => '#1d4ed8',
-                'font_family' => 'Inter, sans-serif',
-                'layout_json' => [
-                    'blocks' => [
-                        ['type' => 'header', 'config' => ['showLogo' => true, 'showCompanyInfo' => true]],
-                        ['type' => 'invoice-meta', 'config' => ['showTitle' => true]],
-                        ['type' => 'customer-details', 'config' => ['showAddress' => true]],
-                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
-                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
-                    ],
-                ],
-            ],
-            [
-                'id' => 'professional',
-                'name' => 'Professional Modern',
-                'primary_color' => '#0d9488',
-                'secondary_color' => '#134e4a',
-                'font_family' => 'Inter, sans-serif',
-                'layout_json' => [
-                    'blocks' => [
-                        ['type' => 'invoice-title-bar', 'config' => ['style' => 'large-title']],
-                        ['type' => 'customer-split', 'config' => []],
-                        ['type' => 'items-table', 'config' => ['style' => 'striped']],
-                        ['type' => 'payment-details', 'config' => []],
-                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
-                    ],
-                ],
-            ],
-            [
-                'id' => 'minimal',
-                'name' => 'Minimal',
-                'primary_color' => '#6366f1',
-                'secondary_color' => '#4f46e5',
-                'font_family' => 'Inter, sans-serif',
-                'layout_json' => [
-                    'blocks' => [
-                        ['type' => 'company-header-centered', 'config' => []],
-                        ['type' => 'invoice-meta', 'config' => []],
-                        ['type' => 'customer-details', 'config' => []],
-                        ['type' => 'items-table-minimal', 'config' => []],
-                        ['type' => 'totals', 'config' => ['alignment' => 'right']],
-                    ],
-                ],
-            ],
-        ];
-    }
 
     /**
      * Edit an existing document
@@ -176,7 +98,7 @@ class QuickInvoiceController extends Controller
 
             return Inertia::render('QuickInvoice/Create', [
                 'documentType' => $document->type()->value,
-                'initialTemplate' => $document->template()->value,
+                'initialTemplate' => $document->template(),
                 'currencies' => $this->getCurrencies(),
                 'templates' => TemplateStyle::all(),
                 'savedProfile' => $savedProfile,
@@ -194,7 +116,21 @@ class QuickInvoiceController extends Controller
      */
     public function generate(CreateDocumentRequest $request): JsonResponse
     {
+        \Log::info('QuickInvoiceController - generate START', [
+            'has_template' => $request->has('template'),
+            'template_value' => $request->input('template'),
+            'template_type' => gettype($request->input('template')),
+            'all_keys' => array_keys($request->all()),
+        ]);
+        
         $data = $request->validated();
+        
+        \Log::info('QuickInvoiceController - After validation', [
+            'has_template' => isset($data['template']),
+            'template_value' => $data['template'] ?? 'NOT SET',
+            'template_type' => gettype($data['template'] ?? null),
+        ]);
+        
         $data['session_id'] = session()->getId();
         $data['user_id'] = auth()->id();
 
@@ -429,7 +365,7 @@ class QuickInvoiceController extends Controller
             
             \Log::info('PdfGeneratorService - Generating PDF for download', [
                 'document_id' => $id,
-                'template' => $document->template()->value,
+                'template' => $document->template(),
             ]);
             
             // Generate main PDF
@@ -548,7 +484,7 @@ class QuickInvoiceController extends Controller
             
             \Log::info('PdfGeneratorService - Generating PDF for view', [
                 'document_id' => $id,
-                'template' => $document->template()->value,
+                'template' => $document->template(),
             ]);
             
             // Generate main PDF
