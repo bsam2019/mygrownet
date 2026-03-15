@@ -120,6 +120,7 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
     // Media (support both URL patterns)
     Route::get('/media/{siteId}', [MediaController::class, 'index'])->name('media.index');
     Route::post('/media/{siteId}', [MediaController::class, 'store'])->name('media.store');
+    Route::post('/media/{siteId}/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64-alt');
     Route::delete('/media/{siteId}/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
 
     // Media (alternative URL pattern - sites prefix)
