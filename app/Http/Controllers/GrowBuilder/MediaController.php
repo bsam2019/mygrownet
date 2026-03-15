@@ -62,6 +62,8 @@ class MediaController extends Controller
                 'aspectRatioDecimal' => $item->aspect_ratio_decimal,
                 'mimeType' => $item->mime_type,
                 'fileTypeBadge' => $item->file_type_badge,
+                'source_media_id' => $item->source_media_id,
+                'metadata' => $item->metadata,
             ];
         });
 
@@ -409,6 +411,8 @@ class MediaController extends Controller
                     'aspectRatioDecimal' => $media->aspect_ratio_decimal,
                     'mimeType' => $media->mime_type,
                     'fileTypeBadge' => $media->file_type_badge,
+                    'source_media_id' => $media->source_media_id,
+                    'metadata' => $media->metadata,
                 ],
                 'url' => $media->url,
             ]);

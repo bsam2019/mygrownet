@@ -1394,17 +1394,43 @@ const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
                 
                 // If there was an old cropped image (starts with our S3 URL), delete it
                 if (oldImageUrl && typeof oldImageUrl === 'string' && oldImageUrl.includes('digitaloceanspaces.com')) {
+                    console.log('Checking for old cropped image to delete:', oldImageUrl);
+                    
                     // Find the media record for the old image
                     const oldMedia = mediaLibrary.value.find(m => m.url === oldImageUrl);
-                    if (oldMedia && oldMedia.metadata?.source === 'cropped') {
-                        // Delete the old cropped image
-                        try {
-                            await axios.delete(`/growbuilder/media/${props.site.id}/${oldMedia.id}`);
-                            mediaLibrary.value = mediaLibrary.value.filter(m => m.id !== oldMedia.id);
-                            console.log('Deleted old cropped image:', oldMedia.id);
-                        } catch (error) {
-                            console.warn('Failed to delete old cropped image:', error);
+                    console.log('Found old media record:', oldMedia);
+                    
+                    if (oldMedia) {
+                        // Check if it's a cropped image from the same source
+                        const isOldCropped = oldMedia.metadata?.source === 'cropped' || 
+                                           oldMedia.filename?.includes('cropped-') ||
+                                           oldMedia.source_media_id;
+                        
+                        const isSameSource = oldMedia.source_media_id === originalMedia.id;
+                        
+                        console.log('Old image analysis:', {
+                            isOldCropped,
+                            isSameSource,
+                            oldSourceId: oldMedia.source_media_id,
+                            newSourceId: originalMedia.id,
+                            oldFilename: oldMedia.filename
+                        });
+                        
+                        if (isOldCropped && isSameSource) {
+                            // Delete the old cropped image
+                            try {
+                                console.log('Deleting old cropped image:', oldMedia.id);
+                                await axios.delete(`/growbuilder/media/${props.site.id}/${oldMedia.id}`);
+                                mediaLibrary.value = mediaLibrary.value.filter(m => m.id !== oldMedia.id);
+                                console.log('Successfully deleted old cropped image:', oldMedia.id);
+                            } catch (error) {
+                                console.warn('Failed to delete old cropped image:', error);
+                            }
+                        } else {
+                            console.log('Old image not deleted - not a cropped version from same source');
                         }
+                    } else {
+                        console.log('No media record found for old URL');
                     }
                 }
             }
