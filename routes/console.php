@@ -159,6 +159,16 @@ Schedule::command('growbuilder:purge-deleted-sites')
     ->dailyAt('02:00')
     ->description('Permanently delete GrowBuilder sites past their scheduled deletion date');
 
+// Check service renewals and send reminders - runs daily at 8 AM
+Schedule::job(new \App\Jobs\GrowBuilder\CheckServiceRenewals)
+    ->dailyAt('08:00')
+    ->description('Check for upcoming service renewals and send reminders');
+
+// Check overdue invoices and send alerts - runs daily at 9 AM
+Schedule::job(new \App\Jobs\GrowBuilder\CheckOverdueInvoices)
+    ->dailyAt('09:00')
+    ->description('Check for overdue invoices and send alerts to agencies');
+
 // ========================================
 // Quick Invoice Scheduled Tasks
 // ========================================
