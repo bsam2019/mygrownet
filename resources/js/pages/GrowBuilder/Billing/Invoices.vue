@@ -276,7 +276,7 @@ const getPaymentStatusClass = (status: string): string => {
                         </table>
 
                         <!-- Pagination -->
-                        <div v-if="invoices.links" class="px-6 py-4 border-t border-gray-200">
+                        <div v-if="invoices.links && invoices.meta" class="px-6 py-4 border-t border-gray-200">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-gray-700">
                                     Showing {{ invoices.meta.from }} to {{ invoices.meta.to }} of {{ invoices.meta.total }} results
