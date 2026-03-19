@@ -91,7 +91,7 @@ const getPaymentStatusClass = (status: string): string => {
 
 const markAsSent = () => {
     if (confirm('Mark this invoice as sent to the client?')) {
-        router.post(route('growbuilder.invoices.mark-sent', props.invoice.id), {}, {
+        router.post(route('growbuilder.invoices.mark-as-sent', props.invoice.id), {}, {
             preserveScroll: true,
         });
     }

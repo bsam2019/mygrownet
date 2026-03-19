@@ -685,6 +685,17 @@ return [
 ## Changelog
 
 ### 2026-03-19
+- **Numeric Type Casting Fixes Applied**
+  - ✅ Fixed all `.toFixed is not a function` errors in Vue components
+  - ✅ Cast all numeric database values to proper types (float/int) in controllers
+  - ✅ Fixed `InvoiceController@index` - cast total, total_paid, balance to float
+  - ✅ Fixed `InvoiceController@show` - cast all invoice amounts, item amounts, payment amounts to float
+  - ✅ Fixed `ServiceController@index` - cast unit_price, quantity, total_price to proper types
+  - ✅ Fixed `ServiceController@show` - cast invoice totals to float
+  - ✅ Added pagination safety checks in `Invoices.vue` for empty states
+  - ✅ All billing pages now display numeric values correctly
+  - **TYPE CASTING COMPLETE** - All numeric display issues resolved
+
 - **Automated Billing Workflows Implemented**
   - ✅ Created CheckServiceRenewals job for renewal reminders
   - ✅ Created CheckOverdueInvoices job for overdue alerts
