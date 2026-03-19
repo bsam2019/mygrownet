@@ -147,12 +147,12 @@
                             <Link :href="route('admin.email-campaigns.index')" class="block w-full px-4 py-2 text-sm text-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                                 Email Campaigns
                             </Link>
-                            <a href="/admin/workshops" class="block w-full px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <Link :href="route('admin.workshops.index')" class="block w-full px-4 py-2 text-sm text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 Manage Workshops
-                            </a>
-                            <a href="/admin/starter-kits" class="block w-full px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                            </Link>
+                            <Link :href="route('admin.starter-kits.index')" class="block w-full px-4 py-2 text-sm text-center bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
                                 Starter Kits
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

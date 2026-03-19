@@ -2100,4 +2100,123 @@ class User extends Authenticatable
     {
         return $this->cmsUser?->company;
     }
+
+    // ==========================================
+    // Agency Relationships (GrowBuilder)
+    // ==========================================
+
+    /**
+     * Get agencies owned by this user
+     */
+    public function ownedAgencies(): HasMany
+    {
+        return $this->hasMany(Agency::class, 'owner_user_id');
+    }
+
+    /**
+     * Get agencies this user is a member of
+     */
+    public function agencies(): BelongsToMany
+    {
+        return $this->belongsToMany(Agency::class, 'agency_users')
+            ->withPivot('role_id', 'status', 'invited_by', 'joined_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get agency user records
+     */
+    public function agencyMemberships(): HasMany
+    {
+        return $this->hasMany(AgencyUser::class);
+    }
+
+    /**
+     * Get current agency (stored in session or first active agency)
+     */
+    public function getCurrentAgencyAttribute(): ?Agency
+    {
+        // Try to get from session first
+        $agencyId = session('current_agency_id');
+        
+        if ($agencyId) {
+            $agency = $this->agencies()->where('agencies.id', $agencyId)->first();
+            if ($agency) {
+                return $agency;
+            }
+        }
+        
+        // Fallback to first owned agency
+        $ownedAgency = $this->ownedAgencies()->active()->first();
+        if ($ownedAgency) {
+            return $ownedAgency;
+        }
+        
+        // Fallback to first agency membership
+        return $this->agencies()->wherePivot('status', 'active')->first();
+    }
+
+    /**
+     * Get agency role for current agency
+     */
+    public function getAgencyRoleAttribute(): ?AgencyRole
+    {
+        $currentAgency = $this->currentAgency;
+        
+        if (!$currentAgency) {
+            return null;
+        }
+        
+        $agencyUser = $this->agencyMemberships()
+            ->where('agency_id', $currentAgency->id)
+            ->first();
+        
+        return $agencyUser?->role;
+    }
+
+    /**
+     * Get agency user record for current agency
+     */
+    public function getAgencyUserAttribute(): ?AgencyUser
+    {
+        $currentAgency = $this->currentAgency;
+        
+        if (!$currentAgency) {
+            return null;
+        }
+        
+        return $this->agencyMemberships()
+            ->where('agency_id', $currentAgency->id)
+            ->first();
+    }
+
+    /**
+     * Set current agency in session
+     */
+    public function setCurrentAgency(int $agencyId): void
+    {
+        session(['current_agency_id' => $agencyId]);
+    }
+
+    /**
+     * Check if user has permission in current agency
+     */
+    public function hasAgencyPermission(string $permission): bool
+    {
+        return $this->agencyRole?->hasPermission($permission) ?? false;
+    }
+
+    /**
+     * Check if user is owner of current agency
+     */
+    public function isAgencyOwner(): bool
+    {
+        $currentAgency = $this->currentAgency;
+        
+        if (!$currentAgency) {
+            return false;
+        }
+        
+        return $currentAgency->owner_user_id === $this->id;
+    }
 }

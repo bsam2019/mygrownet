@@ -126,6 +126,7 @@ class EditorController extends Controller
             $dto = new SavePageContentDTO(
                 siteId: $siteId,
                 userId: $request->user()->id,
+                user: $request->user(),
                 sections: $validated['sections'] ?? [],
                 pageId: $validated['page_id'] ?? null,
                 title: $validated['title'],
@@ -174,6 +175,7 @@ class EditorController extends Controller
             $dto = new SavePageContentDTO(
                 siteId: $siteId,
                 userId: $request->user()->id,
+                user: $request->user(),
                 sections: $validated['content']['sections'] ?? [],
                 pageId: $pageId,
                 title: $validated['title'],
@@ -222,6 +224,7 @@ class EditorController extends Controller
             $dto = new SavePageContentDTO(
                 siteId: $siteId,
                 userId: $request->user()->id,
+                user: $request->user(),
                 sections: $page->getContent()->getSections(),
                 pageId: $pageId,
                 title: $validated['title'],

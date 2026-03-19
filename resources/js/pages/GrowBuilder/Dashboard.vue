@@ -78,6 +78,12 @@ interface Site {
     messagesCount?: number;
     unreadMessages?: number;
     healthSuggestions?: HealthSuggestion[];
+    client?: {
+        id: number;
+        name: string;
+        company: string | null;
+        type: string;
+    } | null;
 }
 
 interface HealthSuggestion {
@@ -116,6 +122,10 @@ interface Subscription {
     sitesLimit: number;
     sitesUsed: number;
     canCreateSite: boolean;
+    storageLimit: number;
+    pagesLimit: number;
+    productsLimit: number;
+    price: number;
     expiresAt: string | null;
 }
 
@@ -146,6 +156,11 @@ interface TierRestrictions {
 interface AvailableTier {
     key: string;
     name: string;
+    price: number;
+    storageLimit: number;
+    sitesLimit: number;
+    pagesLimit: number;
+    productsLimit: number;
 }
 
 const props = defineProps<{
@@ -159,6 +174,7 @@ const props = defineProps<{
     siteTemplates?: SiteTemplate[];
     industries?: Industry[];
     recentMessages?: RecentMessage[];
+    clients?: any[];
 }>();
 
 // Create site wizard modal
@@ -169,6 +185,20 @@ const showAIGenerator = ref(false);
 const hasGrowBuilderSubscription = computed(() => {
     return props.subscription?.tier !== 'free';
 });
+
+// Helper function to format storage
+const formatStorage = (mb: number) => {
+    if (mb >= 1000) {
+        return `${(mb / 1000).toFixed(0)}GB`;
+    }
+    return `${mb}MB`;
+};
+
+// Helper function to format limits
+const formatLimit = (limit: number) => {
+    if (limit === -1) return 'Unlimited';
+    return limit.toString();
+};
 
 const openCreateWizard = () => {
     showCreateWizard.value = true;
@@ -363,6 +393,50 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                     </div>
                 </div>
 
+                <!-- Navigation Tabs -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8">
+                        <Link 
+                            :href="route('growbuilder.dashboard')"
+                            :class="[
+                                'py-2 px-1 border-b-2 font-medium text-sm',
+                                $page.component === 'GrowBuilder/Dashboard' 
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                        >
+                            <GlobeAltIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                            Sites
+                        </Link>
+                        <Link 
+                            v-if="subscription?.tier === 'agency'"
+                            :href="route('growbuilder.clients.index')"
+                            :class="[
+                                'py-2 px-1 border-b-2 font-medium text-sm',
+                                $page.component?.startsWith('GrowBuilder/Clients') 
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                        >
+                            <UsersIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                            Clients
+                        </Link>
+                        <Link 
+                            v-if="subscription?.tier === 'agency'"
+                            :href="route('growbuilder.agency.dashboard')"
+                            :class="[
+                                'py-2 px-1 border-b-2 font-medium text-sm',
+                                $page.component === 'GrowBuilder/Agency/Dashboard' 
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                        >
+                            <Cog6ToothIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                            Agency
+                        </Link>
+                    </nav>
+                </div>
+
                 <!-- Subscription Banner (when at limit) -->
                 <div v-if="subscription && !subscription.canCreateSite" class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 mb-6 text-white flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -405,50 +479,48 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         </Link>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <!-- Starter Plan -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-medium text-gray-900">Starter</span>
-                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">1 GB Storage</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900 mb-1">K120<span class="text-sm font-normal text-gray-500">/mo</span></p>
-                            <p class="text-xs text-gray-500 mb-3">Perfect for small businesses</p>
-                            <Link 
-                                :href="route('growbuilder.subscription.index') + '?plan=starter'"
-                                class="block w-full text-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                        <!-- Dynamic Tier Plans -->
+                        <div 
+                            v-for="tier in availableTiers?.slice(1, 4)" 
+                            :key="tier.key"
+                            :class="[
+                                'border rounded-lg p-4 hover:shadow-sm transition',
+                                tier.key === 'business' ? 'border-2 border-blue-500 relative' : 'border border-gray-200 hover:border-blue-300'
+                            ]"
+                        >
+                            <span 
+                                v-if="tier.key === 'business'" 
+                                class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full"
                             >
-                                Get Starter
-                            </Link>
-                        </div>
-                        <!-- Business Plan -->
-                        <div class="border-2 border-blue-500 rounded-lg p-4 relative">
-                            <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">Popular</span>
+                                Popular
+                            </span>
                             <div class="flex items-center justify-between mb-2">
-                                <span class="font-medium text-gray-900">Business</span>
-                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">2 GB Storage</span>
+                                <span class="font-medium text-gray-900">{{ tier.name }}</span>
+                                <span 
+                                    :class="[
+                                        'text-xs px-2 py-0.5 rounded-full',
+                                        tier.key === 'agency' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                                    ]"
+                                >
+                                    {{ formatStorage(tier.storageLimit) }} Storage
+                                </span>
                             </div>
-                            <p class="text-2xl font-bold text-gray-900 mb-1">K350<span class="text-sm font-normal text-gray-500">/mo</span></p>
-                            <p class="text-xs text-gray-500 mb-3">E-commerce & more features</p>
+                            <p class="text-2xl font-bold text-gray-900 mb-1">
+                                K{{ tier.price }}<span class="text-sm font-normal text-gray-500">/mo</span>
+                            </p>
+                            <p class="text-xs text-gray-500 mb-3">
+                                {{ tier.key === 'starter' ? 'Perfect for small businesses' : 
+                                   tier.key === 'business' ? 'E-commerce & more features' : 
+                                   'Up to ' + formatLimit(tier.sitesLimit) + ' sites' }}
+                            </p>
                             <Link 
-                                :href="route('growbuilder.subscription.index') + '?plan=business'"
-                                class="block w-full text-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+                                :href="route('growbuilder.subscription.index') + '?plan=' + tier.key"
+                                :class="[
+                                    'block w-full text-center px-3 py-2 text-white text-sm font-medium rounded-lg transition',
+                                    tier.key === 'agency' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'
+                                ]"
                             >
-                                Get Business
-                            </Link>
-                        </div>
-                        <!-- Agency Plan -->
-                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-medium text-gray-900">Agency</span>
-                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">10 GB Total</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900 mb-1">K900<span class="text-sm font-normal text-gray-500">/mo</span></p>
-                            <p class="text-xs text-gray-500 mb-3">Up to 20 sites (500MB each)</p>
-                            <Link 
-                                :href="route('growbuilder.subscription.index') + '?plan=agency'"
-                                class="block w-full text-center px-3 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition"
-                            >
-                                Get Agency
+                                Get {{ tier.name }}
                             </Link>
                         </div>
                     </div>
@@ -772,6 +844,11 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                             <!-- Site Info -->
                             <div class="mb-4">
                                 <h3 class="font-semibold text-gray-900 text-lg truncate">{{ site.name }}</h3>
+                                <!-- Client Name (if assigned) -->
+                                <div v-if="site.client" class="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                                    <UsersIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                    <span class="truncate">{{ site.client.company || site.client.name }}</span>
+                                </div>
                                 <a 
                                     :href="site.url" 
                                     target="_blank"
@@ -887,6 +964,7 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
             :show="showCreateWizard"
             :site-templates="siteTemplates || []"
             :industries="industries || []"
+            :clients="clients || []"
             :has-grow-builder-subscription="hasGrowBuilderSubscription"
             @close="closeCreateWizard"
         />

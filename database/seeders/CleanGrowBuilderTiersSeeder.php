@@ -188,7 +188,7 @@ class CleanGrowBuilderTiersSeeder extends Seeder
                 ['key' => 'websites', 'name' => '1 website', 'value' => true],
                 ['key' => 'subdomain', 'name' => 'Subdomain: username.mygrownet.com', 'value' => true],
                 ['key' => 'templates', 'name' => 'Limited templates', 'value' => true],
-                ['key' => 'storage', 'name' => '500MB storage', 'value' => true],
+
                 ['key' => 'ai_prompts', 'name' => 'AI content (5 prompts/month)', 'value' => true],
                 ['key' => 'custom_domain', 'name' => 'Custom domain', 'value' => false],
                 ['key' => 'payment_integration', 'name' => 'Payment integration', 'value' => false],

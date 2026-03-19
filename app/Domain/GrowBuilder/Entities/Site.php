@@ -16,6 +16,7 @@ class Site
     private function __construct(
         private ?SiteId $id,
         private int $userId,
+        private ?int $clientId,
         private ?int $templateId,
         private string $name,
         private Subdomain $subdomain,
@@ -43,12 +44,14 @@ class Site
         Subdomain $subdomain,
         ?int $templateId = null,
         ?string $description = null,
+        ?int $clientId = null,
     ): self {
         $now = new DateTimeImmutable();
 
         return new self(
             id: null,
             userId: $userId,
+            clientId: $clientId,
             templateId: $templateId,
             name: $name,
             subdomain: $subdomain,
@@ -74,6 +77,7 @@ class Site
     public static function reconstitute(
         SiteId $id,
         int $userId,
+        ?int $clientId,
         ?int $templateId,
         string $name,
         Subdomain $subdomain,
@@ -95,7 +99,7 @@ class Site
         DateTimeImmutable $updatedAt,
     ): self {
         return new self(
-            $id, $userId, $templateId, $name, $subdomain, $customDomain,
+            $id, $userId, $clientId, $templateId, $name, $subdomain, $customDomain,
             $description, $logo, $favicon, $settings, $theme, $socialLinks,
             $contactInfo, $businessHours, $seoSettings, $status, $plan,
             $publishedAt, $planExpiresAt, $createdAt, $updatedAt
@@ -231,6 +235,7 @@ class Site
     // Getters
     public function getId(): ?SiteId { return $this->id; }
     public function getUserId(): int { return $this->userId; }
+    public function getClientId(): ?int { return $this->clientId; }
     public function getTemplateId(): ?int { return $this->templateId; }
     public function getName(): string { return $this->name; }
     public function getSubdomain(): Subdomain { return $this->subdomain; }

@@ -14,24 +14,32 @@ return new class extends Migration
             // Make user_id nullable for investor tickets (they use investor_account_id instead)
             $table->unsignedBigInteger('user_id')->nullable()->change();
             
-            // Add investor_account_id for investor tickets
-            $table->unsignedBigInteger('investor_account_id')->nullable()->after('user_id');
+            // Add investor_account_id for investor tickets (only if it doesn't exist)
+            if (!Schema::hasColumn('support_tickets', 'investor_account_id')) {
+                $table->unsignedBigInteger('investor_account_id')->nullable()->after('user_id');
+                $table->index('investor_account_id');
+            }
             
-            // Add source field to identify where ticket came from
-            $table->string('source', 50)->default('member')->after('category');
-            
-            // Add index for investor tickets
-            $table->index('investor_account_id');
-            $table->index('source');
+            // Add source field to identify where ticket came from (only if it doesn't exist)
+            if (!Schema::hasColumn('support_tickets', 'source')) {
+                $table->string('source', 50)->default('member')->after('category');
+                $table->index('source');
+            }
         });
 
         // Change category from ENUM to VARCHAR to allow more flexibility
-        // First check if it's an ENUM
-        $columnType = DB::select("SHOW COLUMNS FROM support_tickets WHERE Field = 'category'")[0]->Type ?? '';
-        
-        if (str_contains($columnType, 'enum')) {
-            // Change ENUM to VARCHAR
-            DB::statement("ALTER TABLE support_tickets MODIFY COLUMN category VARCHAR(50) NOT NULL DEFAULT 'general'");
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // SQLite doesn't have ENUM types, so no need to change anything
+            // The column is already TEXT/VARCHAR
+        } else {
+            // First check if it's an ENUM for MySQL
+            $columnType = DB::select("SHOW COLUMNS FROM support_tickets WHERE Field = 'category'")[0]->Type ?? '';
+            
+            if (str_contains($columnType, 'enum')) {
+                // Change ENUM to VARCHAR
+                DB::statement("ALTER TABLE support_tickets MODIFY COLUMN category VARCHAR(50) NOT NULL DEFAULT 'general'");
+            }
         }
 
         // Modify ticket_comments table to support investor comments
@@ -39,14 +47,20 @@ return new class extends Migration
             // Make user_id nullable for investor comments
             $table->unsignedBigInteger('user_id')->nullable()->change();
             
-            // Add investor_account_id for investor comments
-            $table->unsignedBigInteger('investor_account_id')->nullable()->after('user_id');
+            // Add investor_account_id for investor comments (only if it doesn't exist)
+            if (!Schema::hasColumn('ticket_comments', 'investor_account_id')) {
+                $table->unsignedBigInteger('investor_account_id')->nullable()->after('user_id');
+            }
             
-            // Add author_type to distinguish between user types
-            $table->string('author_type', 20)->default('user')->after('investor_account_id');
+            // Add author_type to distinguish between user types (only if it doesn't exist)
+            if (!Schema::hasColumn('ticket_comments', 'author_type')) {
+                $table->string('author_type', 20)->default('user')->after('investor_account_id');
+            }
             
-            // Add author_name for display purposes (useful when author is deleted)
-            $table->string('author_name')->nullable()->after('author_type');
+            // Add author_name for display purposes (only if it doesn't exist)
+            if (!Schema::hasColumn('ticket_comments', 'author_name')) {
+                $table->string('author_name')->nullable()->after('author_type');
+            }
         });
     }
 

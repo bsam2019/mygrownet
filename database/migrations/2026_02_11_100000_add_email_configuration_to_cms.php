@@ -10,15 +10,33 @@ return new class extends Migration
     {
         // Add email configuration to companies
         Schema::table('cms_companies', function (Blueprint $table) {
-            $table->enum('email_provider', ['platform', 'custom'])->default('platform')->after('settings');
-            $table->string('email_from_address')->nullable()->after('email_provider');
-            $table->string('email_from_name')->nullable()->after('email_from_address');
-            $table->string('email_reply_to')->nullable()->after('email_from_name');
-            $table->string('smtp_host')->nullable()->after('email_reply_to');
-            $table->integer('smtp_port')->nullable()->after('smtp_host');
-            $table->string('smtp_username')->nullable()->after('smtp_port');
-            $table->text('smtp_password')->nullable()->after('smtp_username'); // Encrypted
-            $table->enum('smtp_encryption', ['tls', 'ssl', 'none'])->default('tls')->after('smtp_password');
+            if (!Schema::hasColumn('cms_companies', 'email_provider')) {
+                $table->enum('email_provider', ['platform', 'custom'])->default('platform')->after('settings');
+            }
+            if (!Schema::hasColumn('cms_companies', 'email_from_address')) {
+                $table->string('email_from_address')->nullable()->after('email_provider');
+            }
+            if (!Schema::hasColumn('cms_companies', 'email_from_name')) {
+                $table->string('email_from_name')->nullable()->after('email_from_address');
+            }
+            if (!Schema::hasColumn('cms_companies', 'email_reply_to')) {
+                $table->string('email_reply_to')->nullable()->after('email_from_name');
+            }
+            if (!Schema::hasColumn('cms_companies', 'smtp_host')) {
+                $table->string('smtp_host')->nullable()->after('email_reply_to');
+            }
+            if (!Schema::hasColumn('cms_companies', 'smtp_port')) {
+                $table->integer('smtp_port')->nullable()->after('smtp_host');
+            }
+            if (!Schema::hasColumn('cms_companies', 'smtp_username')) {
+                $table->string('smtp_username')->nullable()->after('smtp_port');
+            }
+            if (!Schema::hasColumn('cms_companies', 'smtp_password')) {
+                $table->text('smtp_password')->nullable()->after('smtp_username'); // Encrypted
+            }
+            if (!Schema::hasColumn('cms_companies', 'smtp_encryption')) {
+                $table->enum('smtp_encryption', ['tls', 'ssl', 'none'])->default('tls')->after('smtp_password');
+            }
         });
 
         // Email logs

@@ -44,29 +44,92 @@ class StorageService
 
     /**
      * Get storage limit for a tier from configuration (in bytes)
-     * This returns the PER-SITE storage allocation
      * 
-     * - Free/Starter/Business: Full tier storage per site (1 site per subscription)
-     * - Agency: 500MB per site (10GB shared across up to 20 sites)
+     * For single-site tiers (free/starter/business): Returns full tier storage
+     * For multi-site tiers (agency): Returns total pool storage (to be shared)
      */
     public function getStorageLimitForTier(string $tier): int
     {
-        // Try to get from tier configuration
+        // Try to get from tier configuration first
         if ($this->tierConfigService) {
-            $limits = $this->tierConfigService->getTierLimits(self::MODULE_ID, $tier);
+            $limitMB = $this->tierConfigService->getLimit(self::MODULE_ID, $tier, 'storage_mb');
             
-            // For agency, always use 500MB per site regardless of DB config
-            if ($tier === 'agency') {
-                return 524288000; // 500 MB per site
-            }
-            
-            if (isset($limits['storage_mb'])) {
-                return $limits['storage_mb'] * 1024 * 1024; // Convert MB to bytes
+            if ($limitMB !== null && $limitMB > 0) {
+                return $limitMB * 1024 * 1024; // Convert MB to bytes
             }
         }
 
-        // Fallback to hardcoded limits
+        // Fallback to hardcoded limits only if database doesn't have the value
         return self::TIER_LIMITS[$tier] ?? self::TIER_LIMITS['free'];
+    }
+    
+    /**
+     * Get storage limit for a specific site
+     * 
+     * For single-site tiers: Returns full tier allocation
+     * For agency tier: Returns total pool divided by number of sites (or full pool if 1 site)
+     */
+    public function getStorageLimitForUserSite(GrowBuilderSite $site): int
+    {
+        $user = $site->user;
+        if (!$user) {
+            return $this->getStorageLimitForTier('free');
+        }
+        
+        // Get user's subscription tier
+        $subscriptionService = app(\App\Domain\Module\Services\SubscriptionService::class);
+        $tier = $subscriptionService->getUserTier($user, self::MODULE_ID) ?? 'free';
+        
+        // For agency tier, use pooled storage model
+        if ($tier === 'agency') {
+            return $this->getPooledStorageLimitForSite($user, $tier);
+        }
+        
+        // For other tiers, return full tier allocation (1 site per subscription)
+        return $this->getStorageLimitForTier($tier);
+    }
+    
+    /**
+     * Get pooled storage limit for agency tier
+     * Returns the total pool storage (all sites share this)
+     */
+    private function getPooledStorageLimitForSite($user, string $tier): int
+    {
+        // Agency tier uses pooled storage - return total pool
+        // Each site doesn't have individual limit, they share the total
+        return $this->getStorageLimitForTier($tier);
+    }
+    
+    /**
+     * Check if user has available storage in their pool
+     * For agency tier: checks total usage across all sites
+     * For other tiers: checks individual site usage
+     */
+    public function hasAvailableStorageInPool(int $userId, string $tier, int $requiredBytes = 0): array
+    {
+        if ($tier === 'agency') {
+            // Check total usage across all sites
+            $totalUsed = $this->getTotalStorageUsedByUser($userId);
+            $totalLimit = $this->getStorageLimitForTier($tier);
+            $available = $totalLimit - $totalUsed;
+            
+            return [
+                'has_space' => ($totalUsed + $requiredBytes) <= $totalLimit,
+                'available' => max(0, $available),
+                'total_used' => $totalUsed,
+                'total_limit' => $totalLimit,
+                'is_pooled' => true,
+            ];
+        }
+        
+        // For non-agency tiers, storage is per-site
+        return [
+            'has_space' => true, // Each site has its own allocation
+            'available' => $this->getStorageLimitForTier($tier),
+            'total_used' => 0,
+            'total_limit' => $this->getStorageLimitForTier($tier),
+            'is_pooled' => false,
+        ];
     }
 
     /**

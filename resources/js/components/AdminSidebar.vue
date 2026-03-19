@@ -61,9 +61,9 @@ const tooltipText = ref('');
 const tooltipPosition = { x: 0, y: 0 };
 
 // Helper function to safely get route
-const safeRoute = (routeName: string, fallback: string = '#') => {
+const safeRoute = (routeName: string, params?: any, fallback: string = '#') => {
     try {
-        return route(routeName);
+        return params ? route(routeName, params) : route(routeName);
     } catch (error) {
         console.warn(`Route '${routeName}' not found, using fallback`);
         return fallback;
@@ -167,6 +167,7 @@ const growBuilderNavItems: NavItem[] = [
     { title: 'Storage', href: safeRoute('admin.growbuilder.storage'), icon: HardDriveIcon },
     { title: 'Analytics', href: safeRoute('admin.growbuilder.analytics'), icon: ChartBarIcon },
     { title: 'Premium Access', href: safeRoute('admin.premium-access.index'), icon: ShieldCheckIcon },
+    { title: 'Subscription Management', href: safeRoute('admin.module-subscriptions.show', 'growbuilder'), icon: CreditCard },
 ];
 
 const marketplaceNavItems: NavItem[] = [

@@ -12,6 +12,7 @@ final class CreateSiteDTO
         public readonly string $subdomain,
         public readonly ?int $templateId = null,
         public readonly ?string $description = null,
+        public readonly ?int $clientId = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -22,6 +23,7 @@ final class CreateSiteDTO
             subdomain: $data['subdomain'],
             templateId: $data['template_id'] ?? null,
             description: $data['description'] ?? null,
+            clientId: $data['client_id'] ?? null,
         );
     }
 }

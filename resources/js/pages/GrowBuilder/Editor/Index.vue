@@ -394,7 +394,7 @@ const initializeSiteNavigation = () => {
         siteNavigation.value = { ...siteNavigation.value, ...props.site.settings.navigation };
         
         // Ensure pageId is set for all nav items by matching with pages
-        if (siteNavigation.value.navItems) {
+        if (siteNavigation.value.navItems && siteNavigation.value.navItems.length > 0) {
             siteNavigation.value.navItems = siteNavigation.value.navItems.map(navItem => {
                 // Try to find the matching page by URL or label
                 const matchingPage = props.pages.find(p => {
@@ -407,8 +407,22 @@ const initializeSiteNavigation = () => {
                     pageId: matchingPage?.id || navItem.pageId, // Use existing or find from pages
                 };
             });
+        } else {
+            // Navigation settings exist but no navItems - generate from pages
+            siteNavigation.value.navItems = props.pages
+                .filter(p => p.showInNav)
+                .sort((a, b) => a.navOrder - b.navOrder)
+                .map(p => ({
+                    id: `nav-${p.id}`,
+                    label: p.title,
+                    url: p.isHomepage ? '/' : `/${p.slug}`,
+                    pageId: p.id,
+                    isExternal: false,
+                    children: [],
+                }));
         }
     } else {
+        // No navigation settings at all - generate from pages
         siteNavigation.value.navItems = props.pages
             .filter(p => p.showInNav)
             .sort((a, b) => a.navOrder - b.navOrder)
@@ -425,11 +439,35 @@ const initializeSiteNavigation = () => {
 
 const initializeSiteFooter = () => {
     if (props.site.settings?.footer) {
-        siteFooter.value = { ...siteFooter.value, ...props.site.settings.footer };
+        const footerSettings = { ...props.site.settings.footer };
+        
+        console.log('Initializing footer with settings:', footerSettings);
+        
+        // Ensure columns have IDs
+        if (footerSettings.columns && Array.isArray(footerSettings.columns)) {
+            footerSettings.columns = footerSettings.columns.map((column, colIndex) => ({
+                ...column,
+                id: column.id || `footer-col-${colIndex}`,
+                links: column.links?.map((link, linkIndex) => ({
+                    ...link,
+                    id: link.id || `footer-link-${colIndex}-${linkIndex}`,
+                })) || [],
+            }));
+            
+            console.log('Footer columns after processing:', footerSettings.columns);
+        }
+        
+        siteFooter.value = { ...siteFooter.value, ...footerSettings };
+        console.log('Final siteFooter value:', siteFooter.value);
+    } else {
+        console.log('No footer settings found in props.site.settings');
     }
 };
 
 initializeSections();
+console.log('Site settings:', props.site.settings);
+console.log('Site settings navigation:', props.site.settings?.navigation);
+console.log('Site settings footer:', props.site.settings?.footer);
 initializeSiteNavigation();
 initializeSiteFooter();
 

@@ -58,6 +58,7 @@ class EloquentSiteRepository implements SiteRepositoryInterface
     {
         $data = [
             'user_id' => $site->getUserId(),
+            'client_id' => $site->getClientId(),
             'site_template_id' => $site->getTemplateId(),
             'name' => $site->getName(),
             'subdomain' => $site->getSubdomain()->value(),
@@ -102,6 +103,7 @@ class EloquentSiteRepository implements SiteRepositoryInterface
         return Site::reconstitute(
             id: SiteId::fromInt($model->id),
             userId: $model->user_id,
+            clientId: $model->client_id,
             templateId: $model->site_template_id,
             name: $model->name,
             subdomain: Subdomain::fromString($model->subdomain),

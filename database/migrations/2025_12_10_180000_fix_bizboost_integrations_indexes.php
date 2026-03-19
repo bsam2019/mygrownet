@@ -13,7 +13,14 @@ return new class extends Migration
         // The table was created but indexes failed due to long name
         
         // Check if unique index exists
-        $uniqueExists = DB::select("SHOW INDEX FROM bizboost_integrations WHERE Key_name = 'bb_integrations_unique'");
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // For SQLite, check sqlite_master table
+            $uniqueExists = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name = 'bb_integrations_unique'");
+        } else {
+            // For MySQL
+            $uniqueExists = DB::select("SHOW INDEX FROM bizboost_integrations WHERE Key_name = 'bb_integrations_unique'");
+        }
+        
         if (empty($uniqueExists)) {
             Schema::table('bizboost_integrations', function (Blueprint $table) {
                 $table->unique(['business_id', 'provider', 'provider_page_id'], 'bb_integrations_unique');
@@ -21,7 +28,14 @@ return new class extends Migration
         }
         
         // Check if status index exists
-        $statusExists = DB::select("SHOW INDEX FROM bizboost_integrations WHERE Key_name = 'bb_integrations_status_idx'");
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // For SQLite, check sqlite_master table
+            $statusExists = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name = 'bb_integrations_status_idx'");
+        } else {
+            // For MySQL
+            $statusExists = DB::select("SHOW INDEX FROM bizboost_integrations WHERE Key_name = 'bb_integrations_status_idx'");
+        }
+        
         if (empty($statusExists)) {
             Schema::table('bizboost_integrations', function (Blueprint $table) {
                 $table->index(['business_id', 'provider', 'status'], 'bb_integrations_status_idx');

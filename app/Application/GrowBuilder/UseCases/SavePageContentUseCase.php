@@ -11,12 +11,14 @@ use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\PageContent;
 use App\Domain\GrowBuilder\ValueObjects\PageId;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
+use App\Services\GrowBuilder\TierLimitService;
 
 class SavePageContentUseCase
 {
     public function __construct(
         private PageRepositoryInterface $pageRepository,
         private SiteRepositoryInterface $siteRepository,
+        private TierLimitService $tierLimitService,
     ) {}
 
     public function execute(SavePageContentDTO $dto): Page
@@ -50,13 +52,12 @@ class SavePageContentUseCase
                 $page->updateSeo($dto->metaTitle, $dto->metaDescription, $dto->ogImage);
             }
         } else {
-            // Create new page
-            $plan = $site->getPlan();
-            $pageLimit = $plan->getPageLimit();
+            // Create new page - check tier limits from database
+            $pageLimit = $this->tierLimitService->getPageLimit($dto->user);
             $currentCount = $this->pageRepository->countBySiteId($site->getId());
 
             if ($pageLimit > 0 && $currentCount >= $pageLimit) {
-                throw new \DomainException("Page limit reached. Upgrade to add more pages.");
+                throw new \DomainException("Page limit reached. Upgrade your subscription to add more pages.");
             }
 
             $page = Page::create(

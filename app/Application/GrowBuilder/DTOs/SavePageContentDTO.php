@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\GrowBuilder\DTOs;
 
+use App\Models\User;
+
 final class SavePageContentDTO
 {
     public function __construct(
         public readonly int $siteId,
         public readonly int $userId,
+        public readonly User $user,
         public readonly array $sections,
         public readonly ?int $pageId = null,
         public readonly ?string $title = null,
@@ -25,6 +28,7 @@ final class SavePageContentDTO
         return new self(
             siteId: $data['site_id'],
             userId: $data['user_id'],
+            user: $data['user'],
             sections: $data['sections'] ?? [],
             pageId: $data['page_id'] ?? null,
             title: $data['title'] ?? null,

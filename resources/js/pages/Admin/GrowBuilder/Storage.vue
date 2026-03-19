@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { HardDrive, Search, RefreshCw, AlertTriangle, CheckCircle, Edit2, Save, X } from 'lucide-vue-next';
+import { HardDrive, Search, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-vue-next';
 
 interface Site {
     id: number;
@@ -19,6 +19,9 @@ interface Site {
     storage_calculated_at: string | null;
     is_over_limit: boolean;
     is_near_limit: boolean;
+    is_pooled?: boolean;
+    total_user_usage?: number;
+    total_user_usage_formatted?: string;
 }
 
 interface Props {
@@ -40,8 +43,6 @@ interface Props {
 const props = defineProps<Props>();
 const search = ref(props.filters.search || '');
 const storageStatus = ref(props.filters.storage_status || 'all');
-const editingSiteId = ref<number | null>(null);
-const editingLimit = ref<number>(0);
 const isRecalculating = ref(false);
 </script>
 
@@ -147,26 +148,15 @@ const isRecalculating = ref(false);
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">
                                 {{ site.storage_used_formatted }}
+                                <span v-if="site.is_pooled" class="text-xs text-gray-500 block">
+                                    of {{ site.total_user_usage_formatted }} total
+                                </span>
                             </td>
                             <td class="px-4 py-3">
-                                <div v-if="editingSiteId === site.id" class="flex items-center gap-2">
-                                    <input v-model.number="editingLimit" type="number" min="0" step="1048576"
-                                        class="w-32 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                                    <button @click="() => { router.put(route('admin.growbuilder.update-storage-limit', site.id), { storage_limit: editingLimit }, { onSuccess: () => editingSiteId = null }); }"
-                                        class="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded" aria-label="Save">
-                                        <Save class="h-4 w-4" aria-hidden="true" />
-                                    </button>
-                                    <button @click="editingSiteId = null" class="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" aria-label="Cancel">
-                                        <X class="h-4 w-4" aria-hidden="true" />
-                                    </button>
-                                </div>
-                                <div v-else class="flex items-center gap-2">
-                                    <span class="text-sm text-gray-900 dark:text-white">{{ site.storage_limit_formatted }}</span>
-                                    <button @click="() => { editingSiteId = site.id; editingLimit = site.storage_limit; }"
-                                        class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded" aria-label="Edit limit">
-                                        <Edit2 class="h-3 w-3" aria-hidden="true" />
-                                    </button>
-                                </div>
+                                <span class="text-sm text-gray-900 dark:text-white">{{ site.storage_limit_formatted }}</span>
+                                <span v-if="site.is_pooled" class="block text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                    Shared pool
+                                </span>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
@@ -200,15 +190,24 @@ const isRecalculating = ref(false);
                 </div>
             </div>
 
-            <!-- Plan Limits Reference -->
+            <!-- Plan Limits Reference (Read-Only) -->
             <div class="mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <h3 class="font-medium text-gray-900 dark:text-white mb-3">Default Storage Limits by Plan</h3>
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-medium text-gray-900 dark:text-white">Current Storage Limits by Plan</h3>
+                    <Link :href="route('admin.module-subscriptions.show', 'growbuilder')" 
+                        class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                        Edit Limits →
+                    </Link>
+                </div>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div v-for="(limit, plan) in planLimits" :key="plan" class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <div class="text-sm font-medium text-gray-900 dark:text-white capitalize">{{ plan }}</div>
                         <div class="text-lg font-bold text-blue-600">{{ (limit / 1024 / 1024).toFixed(0) }} MB</div>
                     </div>
                 </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    Storage limits are managed through the Subscription Management system. Changes made there will reflect here automatically.
+                </p>
             </div>
         </div>
     </AdminLayout>

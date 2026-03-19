@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -17,8 +18,8 @@ return new class extends Migration
         }
 
         Schema::table('lgr_settings', function (Blueprint $table) {
-            $table->string('group')->default('general')->after('type');
-            $table->string('label')->after('group');
+            $table->string('group')->default('general');
+            $table->string('label')->default('');
         });
 
         // Update existing settings with groups and labels

@@ -20,6 +20,7 @@ return [
             'icon' => 'HomeIcon',
             'always_enabled' => true, // Cannot be disabled
             'nav_group' => 'main',
+            'requires_subscription' => false,
         ],
 
         // MyGrowNet Features
@@ -30,6 +31,7 @@ return [
             'icon' => 'UsersIcon',
             'route' => 'grownet.dashboard',
             'nav_group' => 'main',
+            'requires_subscription' => false, // Free for all members
         ],
 
         'growbuilder' => [
@@ -39,6 +41,9 @@ return [
             'icon' => 'GlobeAltIcon',
             'route' => 'growbuilder.dashboard',
             'nav_group' => 'main',
+            'requires_subscription' => true,
+            'category' => 'business',
+            'color' => 'blue',
         ],
 
         'venture_builder' => [
@@ -59,6 +64,9 @@ return [
             'icon' => 'BuildingOfficeIcon',
             'route' => 'cms.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => true,
+            'category' => 'business',
+            'color' => 'indigo',
         ],
 
         'bizboost' => [
@@ -68,6 +76,9 @@ return [
             'icon' => 'SparklesIcon',
             'route' => 'bizboost.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => true,
+            'category' => 'marketing',
+            'color' => 'orange',
         ],
 
         'growbiz' => [
@@ -77,6 +88,9 @@ return [
             'icon' => 'ClipboardDocumentCheckIcon',
             'route' => 'growbiz.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => true,
+            'category' => 'operations',
+            'color' => 'green',
         ],
 
         'growfinance' => [
@@ -86,6 +100,9 @@ return [
             'icon' => 'BanknotesIcon',
             'route' => 'growfinance.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => true,
+            'category' => 'sme',
+            'color' => 'emerald',
         ],
 
         'inventory' => [
@@ -95,6 +112,7 @@ return [
             'icon' => 'CubeIcon',
             'route' => 'inventory.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => false,
         ],
 
         'pos' => [
@@ -104,6 +122,7 @@ return [
             'icon' => 'BuildingStorefrontIcon',
             'route' => 'pos.dashboard',
             'nav_group' => 'business',
+            'requires_subscription' => false,
         ],
 
         'growmarket' => [
@@ -113,6 +132,7 @@ return [
             'icon' => 'ShoppingBagIcon',
             'route' => 'marketplace.index',
             'nav_group' => 'business',
+            'requires_subscription' => false,
         ],
 
         'bgf' => [
@@ -122,6 +142,7 @@ return [
             'icon' => 'BriefcaseIcon',
             'route' => 'bgf.index',
             'nav_group' => 'financial',
+            'requires_subscription' => false,
         ],
 
         // Learning & Development
@@ -132,6 +153,7 @@ return [
             'icon' => 'BookOpenIcon',
             'route' => 'library.index',
             'nav_group' => 'learning',
+            'requires_subscription' => false,
         ],
 
         'workshops' => [
@@ -141,6 +163,7 @@ return [
             'icon' => 'AcademicCapIcon',
             'route' => 'workshops.index',
             'nav_group' => 'learning',
+            'requires_subscription' => false,
         ],
 
         // Communication
@@ -151,6 +174,7 @@ return [
             'icon' => 'ChatBubbleLeftRightIcon',
             'route' => 'messages.index',
             'nav_group' => 'communication',
+            'requires_subscription' => false,
         ],
 
         'announcements' => [
@@ -160,6 +184,7 @@ return [
             'icon' => 'MegaphoneIcon',
             'route' => 'announcements.index',
             'nav_group' => 'communication',
+            'requires_subscription' => false,
         ],
 
         // Financial
@@ -170,6 +195,7 @@ return [
             'icon' => 'WalletIcon',
             'route' => 'wallet.index',
             'nav_group' => 'financial',
+            'requires_subscription' => false,
         ],
 
         'profit_sharing' => [
@@ -179,6 +205,7 @@ return [
             'icon' => 'CurrencyDollarIcon',
             'route' => 'profit-sharing.index',
             'nav_group' => 'financial',
+            'requires_subscription' => false,
         ],
 
         // Community
@@ -189,6 +216,7 @@ return [
             'icon' => 'UserGroupIcon',
             'route' => 'community.index',
             'nav_group' => 'community',
+            'requires_subscription' => false,
         ],
 
         'support' => [
@@ -198,6 +226,7 @@ return [
             'icon' => 'LifebuoyIcon',
             'route' => 'support.index',
             'nav_group' => 'community',
+            'requires_subscription' => false,
         ],
 
         // Lifestyle (Optional modules)
@@ -208,6 +237,7 @@ return [
             'icon' => 'HeartIcon',
             'route' => 'lifeplus.dashboard',
             'nav_group' => 'lifestyle',
+            'requires_subscription' => false,
         ],
 
         'ubumi' => [
@@ -217,6 +247,7 @@ return [
             'icon' => 'SparklesIcon',
             'route' => 'ubumi.dashboard',
             'nav_group' => 'lifestyle',
+            'requires_subscription' => false,
         ],
 
         'growbackup' => [
@@ -226,6 +257,7 @@ return [
             'icon' => 'CloudArrowUpIcon',
             'route' => 'growbackup.dashboard',
             'nav_group' => 'tools',
+            'requires_subscription' => false,
         ],
     ],
 

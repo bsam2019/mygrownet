@@ -5,7 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
-use App\Models\InvestmentTier;
 use App\Models\ReferralCommission;
 
 return new class extends Migration
@@ -47,8 +46,14 @@ return new class extends Migration
     {
         echo "Mapping existing investment tiers to MyGrowNet membership tiers...\n";
 
-        $existingTiers = InvestmentTier::whereIn('name', array_keys(self::TIER_MAPPING))->get();
-        $myGrowNetTiers = InvestmentTier::whereIn('name', array_values(self::TIER_MAPPING))->get()->keyBy('name');
+        // Check if InvestmentTier model exists (for backward compatibility)
+        if (!class_exists(\App\Models\InvestmentTier::class)) {
+            echo "InvestmentTier model not found - skipping tier mapping (fresh install)\n";
+            return;
+        }
+
+        $existingTiers = \App\Models\InvestmentTier::whereIn('name', array_keys(self::TIER_MAPPING))->get();
+        $myGrowNetTiers = \App\Models\InvestmentTier::whereIn('name', array_values(self::TIER_MAPPING))->get()->keyBy('name');
 
         foreach ($existingTiers as $tier) {
             $newTierName = self::TIER_MAPPING[$tier->name];
@@ -74,7 +79,13 @@ return new class extends Migration
     {
         echo "Migrating user tier assignments...\n";
 
-        $myGrowNetTiers = InvestmentTier::whereIn('name', array_values(self::TIER_MAPPING))
+        // Check if InvestmentTier model exists
+        if (!class_exists(\App\Models\InvestmentTier::class)) {
+            echo "InvestmentTier model not found - skipping user tier migration (fresh install)\n";
+            return;
+        }
+
+        $myGrowNetTiers = \App\Models\InvestmentTier::whereIn('name', array_values(self::TIER_MAPPING))
             ->get()
             ->keyBy('name');
 
@@ -296,8 +307,14 @@ return new class extends Migration
     {
         echo "Restoring VBIF tiers...\n";
 
+        // Check if InvestmentTier model exists
+        if (!class_exists(\App\Models\InvestmentTier::class)) {
+            echo "InvestmentTier model not found - skipping VBIF tier restoration (fresh install)\n";
+            return;
+        }
+
         // Reactivate archived VBIF tiers
-        InvestmentTier::whereIn('name', array_keys(self::TIER_MAPPING))
+        \App\Models\InvestmentTier::whereIn('name', array_keys(self::TIER_MAPPING))
             ->update([
                 'is_active' => true,
                 'is_archived' => false

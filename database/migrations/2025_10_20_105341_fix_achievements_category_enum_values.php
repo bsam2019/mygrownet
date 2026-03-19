@@ -12,6 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // SQLite doesn't support MODIFY COLUMN or ENUM
+            // The column should already exist as TEXT from the original migration
+            // No changes needed for SQLite as it stores enum values as text anyway
+            return;
+        }
+
         // For MySQL, we need to alter the enum by recreating it
         DB::statement("ALTER TABLE achievements MODIFY COLUMN category ENUM(
             'referral',
@@ -36,7 +44,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to original enum values
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // No changes needed for SQLite
+            return;
+        }
+
+        // Revert to original enum values for MySQL
         DB::statement("ALTER TABLE achievements MODIFY COLUMN category ENUM(
             'referral',
             'subscription',

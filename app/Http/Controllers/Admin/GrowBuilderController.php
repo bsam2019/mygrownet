@@ -13,7 +13,8 @@ use Carbon\Carbon;
 class GrowBuilderController extends Controller
 {
     public function __construct(
-        private StorageService $storageService
+        private StorageService $storageService,
+        private \App\Domain\Module\Services\SubscriptionService $subscriptionService
     ) {}
     /**
      * Display all sites (admin view)
@@ -231,7 +232,7 @@ class GrowBuilderController extends Controller
      */
     public function storage(Request $request)
     {
-        $query = GrowBuilderSite::with('user:id,name,email')
+        $query = GrowBuilderSite::with(['user:id,name,email', 'user.roles'])
             ->where('status', '!=', 'deleted');
 
         // Search filter
@@ -247,21 +248,9 @@ class GrowBuilderController extends Controller
             });
         }
 
-        // Filter by storage status
-        if ($request->filled('storage_status')) {
-            switch ($request->storage_status) {
-                case 'over':
-                    $query->whereRaw('storage_used > storage_limit');
-                    break;
-                case 'near':
-                    $query->whereRaw('storage_used >= storage_limit * 0.8')
-                        ->whereRaw('storage_used <= storage_limit');
-                    break;
-                case 'normal':
-                    $query->whereRaw('storage_used < storage_limit * 0.8');
-                    break;
-            }
-        }
+        // Filter by storage status - we'll need to handle this differently since we're calculating limits dynamically
+        // For now, we'll apply the filter after getting the data
+        $storageStatusFilter = $request->get('storage_status');
 
         // Sort by storage
         $sortBy = $request->get('sort', 'storage_used');
@@ -271,27 +260,140 @@ class GrowBuilderController extends Controller
             $query->orderBy($sortBy, $sortDir);
         }
 
+        // Pre-fetch all user subscriptions to avoid N+1 queries
+        $userIds = $query->pluck('user_id')->unique()->toArray();
+        $userTiers = [];
+        
+        $subscriptions = \DB::table('module_subscriptions')
+            ->whereIn('user_id', $userIds)
+            ->where('module_id', 'growbuilder')
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            })
+            ->get()
+            ->keyBy('user_id');
+        
+        foreach ($userIds as $userId) {
+            if (isset($subscriptions[$userId])) {
+                $userTiers[$userId] = $subscriptions[$userId]->subscription_tier;
+            } else {
+                $userTiers[$userId] = 'free';
+            }
+        }
+
         $sites = $query->paginate(20)
-            ->through(fn ($site) => [
-                'id' => $site->id,
-                'name' => $site->name,
-                'subdomain' => $site->subdomain,
-                'status' => $site->status,
-                'plan' => $site->plan,
-                'user' => $site->user,
-                'storage_used' => $site->storage_used,
-                'storage_limit' => $site->storage_limit,
-                'storage_used_formatted' => $site->storage_used_formatted,
-                'storage_limit_formatted' => $site->storage_limit_formatted,
-                'storage_percentage' => $site->storage_percentage,
-                'storage_calculated_at' => $site->storage_calculated_at,
-                'is_over_limit' => $site->isStorageOverLimit(),
-                'is_near_limit' => $site->isStorageNearLimit(),
-            ])
-            ->withQueryString();
+            ->through(function ($site) use ($userTiers) {
+                // Get tier from pre-fetched data
+                $currentTier = $site->user_id && isset($userTiers[$site->user_id]) 
+                    ? $userTiers[$site->user_id] 
+                    : 'free';
+                    
+                $subscriptionStorageLimit = $this->storageService->getStorageLimitForTier($currentTier);
+                
+                // For agency tier, show pooled storage info
+                if ($currentTier === 'agency') {
+                    // Get total usage across all user's sites
+                    $totalUserUsage = \DB::table('growbuilder_sites')
+                        ->where('user_id', $site->user_id)
+                        ->where('status', '!=', 'deleted')
+                        ->sum('storage_used');
+                    
+                    $storagePercentage = $subscriptionStorageLimit > 0 
+                        ? min(100, round(($totalUserUsage / $subscriptionStorageLimit) * 100, 1))
+                        : 0;
+                    
+                    $isOverLimit = $totalUserUsage > $subscriptionStorageLimit;
+                    $isNearLimit = $subscriptionStorageLimit > 0 && $totalUserUsage >= ($subscriptionStorageLimit * 0.8) && $totalUserUsage <= $subscriptionStorageLimit;
+                    
+                    return [
+                        'id' => $site->id,
+                        'name' => $site->name,
+                        'subdomain' => $site->subdomain,
+                        'status' => $site->status,
+                        'plan' => $currentTier,
+                        'user' => $site->user,
+                        'storage_used' => $site->storage_used,
+                        'storage_limit' => $subscriptionStorageLimit,
+                        'storage_used_formatted' => $this->storageService->formatBytes($site->storage_used),
+                        'storage_limit_formatted' => $this->storageService->formatBytes($subscriptionStorageLimit) . ' (pooled)',
+                        'storage_percentage' => $storagePercentage,
+                        'storage_calculated_at' => $site->storage_calculated_at,
+                        'is_over_limit' => $isOverLimit,
+                        'is_near_limit' => $isNearLimit,
+                        'is_pooled' => true,
+                        'total_user_usage' => $totalUserUsage,
+                        'total_user_usage_formatted' => $this->storageService->formatBytes($totalUserUsage),
+                    ];
+                }
+                
+                // For non-agency tiers, show individual site storage
+                $storagePercentage = $subscriptionStorageLimit > 0 
+                    ? min(100, round(($site->storage_used / $subscriptionStorageLimit) * 100, 1))
+                    : 0;
+                
+                $isOverLimit = $site->storage_used > $subscriptionStorageLimit;
+                $isNearLimit = $subscriptionStorageLimit > 0 && $site->storage_used >= ($subscriptionStorageLimit * 0.8) && $site->storage_used <= $subscriptionStorageLimit;
+                
+                return [
+                    'id' => $site->id,
+                    'name' => $site->name,
+                    'subdomain' => $site->subdomain,
+                    'status' => $site->status,
+                    'plan' => $currentTier,
+                    'user' => $site->user,
+                    'storage_used' => $site->storage_used,
+                    'storage_limit' => $subscriptionStorageLimit,
+                    'storage_used_formatted' => $this->storageService->formatBytes($site->storage_used),
+                    'storage_limit_formatted' => $this->storageService->formatBytes($subscriptionStorageLimit),
+                    'storage_percentage' => $storagePercentage,
+                    'storage_calculated_at' => $site->storage_calculated_at,
+                    'is_over_limit' => $isOverLimit,
+                    'is_near_limit' => $isNearLimit,
+                    'is_pooled' => false,
+                ];
+            });
+
+        // Apply storage status filter after calculating limits
+        if ($storageStatusFilter) {
+            $sites->getCollection()->transform(function ($sitesCollection) use ($storageStatusFilter) {
+                return $sitesCollection->filter(function ($site) use ($storageStatusFilter) {
+                    switch ($storageStatusFilter) {
+                        case 'over':
+                            return $site['is_over_limit'];
+                        case 'near':
+                            return $site['is_near_limit'];
+                        case 'normal':
+                            return !$site['is_over_limit'] && !$site['is_near_limit'];
+                        default:
+                            return true;
+                    }
+                });
+            });
+        }
+
+        $sites = $sites->withQueryString();
 
         $storageStats = $this->storageService->getGlobalStorageStats();
-        $planLimits = StorageService::PLAN_LIMITS;
+        
+        // Recalculate total allocated based on subscription tiers using the same pre-fetched data
+        $totalAllocatedFromSubscriptions = 0;
+        foreach ($userTiers as $tier) {
+            $totalAllocatedFromSubscriptions += $this->storageService->getStorageLimitForTier($tier);
+        }
+        
+        // Override the total_allocated with subscription-based calculation
+        $storageStats['total_allocated'] = $totalAllocatedFromSubscriptions;
+        $storageStats['total_allocated_formatted'] = $this->storageService->formatBytes($totalAllocatedFromSubscriptions);
+        
+        $tierLimits = $this->storageService->getAllTierLimits();
+        
+        // Convert to format expected by frontend (plan => bytes)
+        $planLimits = [];
+        foreach ($tierLimits as $tier => $limit) {
+            $planLimits[$tier] = $limit['bytes'];
+        }
 
         return Inertia::render('Admin/GrowBuilder/Storage', [
             'sites' => $sites,
@@ -299,21 +401,6 @@ class GrowBuilderController extends Controller
             'planLimits' => $planLimits,
             'filters' => $request->only(['search', 'storage_status', 'sort', 'dir']),
         ]);
-    }
-
-    /**
-     * Update storage limit for a site
-     */
-    public function updateStorageLimit(Request $request, int $id)
-    {
-        $request->validate([
-            'storage_limit' => 'required|integer|min:0',
-        ]);
-
-        $site = GrowBuilderSite::findOrFail($id);
-        $site->update(['storage_limit' => $request->storage_limit]);
-
-        return back()->with('success', "Storage limit updated for '{$site->name}'.");
     }
 
     /**

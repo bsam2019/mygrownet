@@ -47,12 +47,24 @@ interface Industry {
     icon: string;
 }
 
+interface Client {
+    id: number;
+    client_name: string;
+    company_name: string | null;
+    client_type: string;
+    status: string;
+}
+
 const props = defineProps<{
     show: boolean;
     siteTemplates: SiteTemplate[];
     industries: Industry[];
+    clients?: Client[];
     hasGrowBuilderSubscription?: boolean;
 }>();
+
+// Default to true if not provided (for agency users)
+const hasSubscription = computed(() => props.hasGrowBuilderSubscription ?? true);
 
 const emit = defineEmits<{
     close: [];
@@ -83,17 +95,28 @@ const form = useForm({
     subdomain: '',
     site_template_id: null as number | null,
     description: '',
+    client_id: null as number | null,
 });
 
 // Reset form when modal opens
 watch(() => props.show, (newVal) => {
     if (newVal) {
+        console.log('Modal opened, templates:', props.siteTemplates);
+        console.log('Industries:', props.industries);
+        console.log('Has subscription:', hasSubscription.value);
+        
         currentStep.value = 1;
         selectedSiteTemplate.value = null;
         selectedIndustry.value = 'all';
         searchQuery.value = '';
         showIndustryDropdown.value = false;
         form.reset();
+        
+        // Auto-select client if there's only one (e.g., when opened from client page)
+        if (props.clients && props.clients.length === 1) {
+            form.client_id = props.clients[0].id;
+            console.log('Auto-selected client:', props.clients[0]);
+        }
     }
 });
 
@@ -113,10 +136,12 @@ onUnmounted(() => {
 
 const filteredSiteTemplates = computed(() => {
     let templates = props.siteTemplates;
+    console.log('All templates:', templates);
     
     // Filter by industry
     if (selectedIndustry.value !== 'all') {
         templates = templates.filter(t => t.industry === selectedIndustry.value);
+        console.log('After industry filter:', templates);
     }
     
     // Filter by search query
@@ -127,8 +152,10 @@ const filteredSiteTemplates = computed(() => {
             t.description?.toLowerCase().includes(query) ||
             t.industry?.toLowerCase().includes(query)
         );
+        console.log('After search filter:', templates);
     }
     
+    console.log('Final filtered templates:', templates);
     return templates;
 });
 
@@ -166,10 +193,14 @@ const getIndustryIcon = (industry: string) => {
 };
 
 const selectTemplate = (id: number | null) => {
+    console.log('Selecting template:', id);
+    
     // Check if template is premium and user doesn't have subscription
     if (id !== null) {
         const template = props.siteTemplates.find(t => t.id === id);
-        if (template?.isPremium && !props.hasGrowBuilderSubscription) {
+        console.log('Found template:', template);
+        if (template?.isPremium && !hasSubscription.value) {
+            console.log('Template is premium and user has no subscription, showing upgrade modal');
             // Show upgrade prompt instead of selecting
             showUpgradeModal.value = true;
             return;
@@ -178,6 +209,7 @@ const selectTemplate = (id: number | null) => {
     
     selectedSiteTemplate.value = id;
     form.site_template_id = id;
+    console.log('Template selected, form data:', form.data());
 };
 
 const selectIndustry = (slug: string) => {
@@ -220,9 +252,17 @@ const close = () => {
 };
 
 const submit = () => {
+    console.log('Submitting form with data:', form.data());
     form.post(route('growbuilder.sites.store'), {
-        onSuccess: () => {
+        onSuccess: (page) => {
+            console.log('Site creation successful:', page);
             close();
+        },
+        onError: (errors) => {
+            console.error('Site creation failed with errors:', errors);
+        },
+        onFinish: () => {
+            console.log('Site creation request finished');
         },
     });
 };
@@ -284,9 +324,32 @@ const getPreviewUrl = (templateId: number) => {
                                     v-model="form.name"
                                     type="text"
                                     class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                    placeholder="My Business (UPDATED)"
+                                    placeholder="My Business Website"
                                 />
                                 <p v-if="form.errors.name" class="mt-1.5 text-sm text-red-600">{{ form.errors.name }}</p>
+                            </div>
+
+                            <!-- Client Selection (Agency users only) -->
+                            <div v-if="clients && clients.length > 0">
+                                <label for="client_id" class="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Assign to Client <span class="text-gray-400">(optional)</span>
+                                </label>
+                                <select
+                                    id="client_id"
+                                    v-model="form.client_id"
+                                    class="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                >
+                                    <option :value="null">No client (personal site)</option>
+                                    <option 
+                                        v-for="client in clients" 
+                                        :key="client.id" 
+                                        :value="client.id"
+                                    >
+                                        {{ client.client_name }}{{ client.company_name ? ` (${client.company_name})` : '' }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.client_id" class="mt-1.5 text-sm text-red-600">{{ form.errors.client_id }}</p>
+                                <p v-else class="mt-1.5 text-xs text-gray-500">Select a client to create this site for them</p>
                             </div>
 
                             <div>
@@ -427,7 +490,7 @@ const getPreviewUrl = (templateId: number) => {
                                         selectedSiteTemplate === template.id
                                             ? 'border-blue-500 ring-2 ring-blue-200'
                                             : 'border-gray-200 hover:border-gray-300',
-                                        template.isPremium && !hasGrowBuilderSubscription ? 'cursor-pointer' : 'cursor-pointer'
+                                        template.isPremium && !hasSubscription ? 'cursor-pointer' : 'cursor-pointer'
                                     ]"
                                     @click="selectTemplate(template.id)"
                                 >
@@ -444,7 +507,7 @@ const getPreviewUrl = (templateId: number) => {
 
                                         <!-- Lock overlay for premium templates without subscription -->
                                         <div 
-                                            v-if="template.isPremium && !hasGrowBuilderSubscription"
+                                            v-if="template.isPremium && !hasSubscription"
                                             class="absolute inset-0 bg-black/60 flex items-center justify-center"
                                         >
                                             <div class="text-center">
@@ -457,7 +520,7 @@ const getPreviewUrl = (templateId: number) => {
 
                                         <!-- Hover overlay (only for unlocked templates) -->
                                         <div 
-                                            v-if="!template.isPremium || hasGrowBuilderSubscription"
+                                            v-if="!template.isPremium || hasSubscription"
                                             class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                                         >
                                             <button
@@ -552,6 +615,9 @@ const getPreviewUrl = (templateId: number) => {
                             >
                                 <SparklesIcon v-if="!form.processing" class="h-4 w-4" aria-hidden="true" />
                                 {{ form.processing ? 'Creating...' : 'Create Website' }}
+                                <span v-if="selectedSiteTemplate" class="ml-1 text-xs opacity-75">
+                                    (Template: {{ selectedSiteTemplate }})
+                                </span>
                             </button>
                         </div>
                     </div>

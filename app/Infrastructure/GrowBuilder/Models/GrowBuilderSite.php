@@ -17,10 +17,11 @@ class GrowBuilderSite extends Model
 
     protected $fillable = [
         'user_id',
+        'client_id',
         'marketplace_seller_id',
         'marketplace_enabled',
         'marketplace_linked_at',
-        'template_id',
+        'site_template_id',
         'name',
         'subdomain',
         'custom_domain',
@@ -68,6 +69,11 @@ class GrowBuilderSite extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\AgencyClient::class, 'client_id');
     }
 
     public function siteTemplate(): BelongsTo

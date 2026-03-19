@@ -113,17 +113,21 @@ return new class extends Migration
         
         // Add indexes separately to avoid duplicate index errors
         Schema::table('cms_workers', function (Blueprint $table) {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $indexes = $sm->listTableIndexes('cms_workers');
-            
-            if (!isset($indexes['cms_workers_company_id_employment_status_index'])) {
+            // SQLite compatible index creation - just try to create them
+            try {
                 $table->index(['company_id', 'employment_status']);
+            } catch (Exception $e) {
+                // Index might already exist, ignore
             }
-            if (!isset($indexes['cms_workers_company_id_department_id_index'])) {
+            try {
                 $table->index(['company_id', 'department_id']);
+            } catch (Exception $e) {
+                // Index might already exist, ignore
             }
-            if (!isset($indexes['cms_workers_hire_date_index'])) {
+            try {
                 $table->index(['hire_date']);
+            } catch (Exception $e) {
+                // Index might already exist, ignore
             }
         });
     }

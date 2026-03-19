@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(function () {
     
-        // DEBUG: Test if any growbuilder routes work
+    // DEBUG: Test if any growbuilder routes work
     Route::get('/debug', function() {
         \Log::info('DEBUG route hit');
         return response('DEBUG ROUTE HIT!');
@@ -44,8 +44,34 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
     // DEBUG: Test controller method
     Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
     
-    // Dashboard
-    Route::get('/', [SiteController::class, 'index'])->name('index');
+    // Agency Management
+    Route::prefix('agency')->name('agency.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/create', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'store'])->name('store');
+        Route::post('/switch/{agencyId}', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'switchAgency'])->name('switch');
+    });
+    
+    // Client Management
+    Route::prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'edit'])->name('edit');
+        Route::get('/{id}/analytics', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'analytics'])->name('analytics');
+        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/suspend-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'suspendSites'])->name('suspend-sites');
+        Route::post('/{id}/activate-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'activateSites'])->name('activate-sites');
+    });
+    
+    // Dashboard (main sites dashboard)
+    Route::get('/dashboard', [SiteController::class, 'index'])->name('dashboard');
+    
+    // Dashboard (legacy - redirects to main dashboard)
+    Route::get('/', function() {
+        return redirect()->route('growbuilder.dashboard');
+    })->name('index');
     
     // Admin tier switching (for testing)
     Route::post('/switch-tier', [SiteController::class, 'switchTier'])->name('switch-tier');

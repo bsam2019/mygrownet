@@ -17,6 +17,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // SQLite doesn't support MODIFY COLUMN or ENUM
+            // The column should already exist as TEXT from the original migration
+            // No changes needed for SQLite as it stores enum values as text anyway
+            return;
+        }
+
         // MySQL doesn't support ALTER ENUM directly, so we need to use MODIFY
         DB::statement("
             ALTER TABLE users 
@@ -31,6 +39,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // No changes needed for SQLite
+            return;
+        }
+
         DB::statement("
             ALTER TABLE users 
             MODIFY COLUMN account_type ENUM('member', 'client', 'business') 

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -48,8 +49,10 @@ return new class extends Migration
             }
         });
         
-        // Add comment to table for documentation
-        DB::statement("ALTER TABLE transactions COMMENT = 'Main financial ledger - Single source of truth for all balances'");
+        // Add comment to table for documentation (MySQL only)
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE transactions COMMENT = 'Main financial ledger - Single source of truth for all balances'");
+        }
     }
     
     /**
@@ -57,6 +60,14 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $index): bool
     {
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // For SQLite, we can check the sqlite_master table
+            $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND name = ?", [$index]);
+            return !empty($indexes);
+        }
+        
+        // For MySQL
         $indexes = DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index]);
         return !empty($indexes);
     }

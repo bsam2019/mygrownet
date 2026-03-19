@@ -349,7 +349,7 @@ class ModuleTierSeeder extends Seeder
                     ['key' => 'websites', 'name' => '1 website', 'type' => 'boolean', 'value' => true],
                     ['key' => 'subdomain', 'name' => 'Subdomain: username.mygrownet.com', 'type' => 'boolean', 'value' => true],
                     ['key' => 'templates', 'name' => 'Limited templates', 'type' => 'boolean', 'value' => true],
-                    ['key' => 'storage', 'name' => '500MB storage', 'type' => 'boolean', 'value' => true],
+
                     ['key' => 'custom_domain', 'name' => 'Custom domain', 'type' => 'boolean', 'value' => false],
                     ['key' => 'payment_integration', 'name' => 'Payment integration', 'type' => 'boolean', 'value' => false],
                     ['key' => 'ecommerce', 'name' => 'E-commerce', 'type' => 'boolean', 'value' => false],

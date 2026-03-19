@@ -37,6 +37,7 @@ class CreateSiteUseCase
             subdomain: $subdomain,
             templateId: $dto->templateId,
             description: $dto->description,
+            clientId: $dto->clientId,
         );
 
         // Save site

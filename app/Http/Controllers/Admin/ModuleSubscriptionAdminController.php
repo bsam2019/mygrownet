@@ -35,16 +35,36 @@ class ModuleSubscriptionAdminController extends Controller
      */
     public function show(string $moduleId)
     {
-        $moduleConfig = config("modules.{$moduleId}");
+        $moduleConfig = config("modules.modules.{$moduleId}");
         
         if (!$moduleConfig) {
             abort(404, 'Module not found');
         }
 
         $tiers = ModuleTier::forModule($moduleId)
-            ->with('activeFeatures')
+            ->with(['activeFeatures' => function($query) {
+                $query->orderBy('feature_key');
+            }])
             ->ordered()
-            ->get();
+            ->get()
+            ->map(function($tier) {
+                // Transform features to the expected format
+                $tier->features = $tier->activeFeatures->map(function($feature) {
+                    return [
+                        'id' => $feature->id,
+                        'feature_key' => $feature->feature_key,
+                        'feature_name' => $feature->feature_name,
+                        'feature_type' => $feature->feature_type,
+                        'value_boolean' => $feature->value_boolean,
+                        'value_limit' => $feature->value_limit,
+                        'value_text' => $feature->value_text,
+                        'is_active' => $feature->is_active,
+                    ];
+                })->toArray();
+                
+                unset($tier->activeFeatures); // Remove the relationship to avoid confusion
+                return $tier;
+            });
 
         // If no DB tiers, load from config
         if ($tiers->isEmpty()) {
@@ -79,10 +99,13 @@ class ModuleSubscriptionAdminController extends Controller
             'price_monthly' => 'required|numeric|min:0',
             'price_annual' => 'required|numeric|min:0',
             'user_limit' => 'nullable|integer|min:1',
-            'storage_limit_mb' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'is_default' => 'boolean',
             'sort_order' => 'integer',
+            // Module-specific limits
+            'pages_limit' => 'nullable|integer',
+            'products_limit' => 'nullable|integer',
+            'sites_limit' => 'nullable|integer|min:1',
         ]);
 
         $validated['module_id'] = $moduleId;
@@ -93,6 +116,9 @@ class ModuleSubscriptionAdminController extends Controller
         }
 
         $tier = ModuleTier::create($validated);
+
+        // Create module-specific features if provided
+        $this->createModuleFeatures($tier, $validated, $moduleId);
 
         // Clear tier cache
         $this->tierConfigService->clearCache($moduleId);
@@ -111,10 +137,13 @@ class ModuleSubscriptionAdminController extends Controller
             'price_monthly' => 'required|numeric|min:0',
             'price_annual' => 'required|numeric|min:0',
             'user_limit' => 'nullable|integer|min:1',
-            'storage_limit_mb' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'is_default' => 'boolean',
             'sort_order' => 'integer',
+            // Module-specific limits
+            'pages_limit' => 'nullable|integer',
+            'products_limit' => 'nullable|integer',
+            'sites_limit' => 'nullable|integer|min:1',
         ]);
 
         // If setting as default, unset other defaults
@@ -125,6 +154,9 @@ class ModuleSubscriptionAdminController extends Controller
         }
 
         $tier->update($validated);
+
+        // Update module-specific features
+        $this->updateModuleFeatures($tier, $validated, $moduleId);
 
         return back()->with('success', "Tier '{$tier->name}' updated successfully.");
     }
@@ -401,9 +433,15 @@ class ModuleSubscriptionAdminController extends Controller
     private function getModulesWithStats(): array
     {
         $modules = [];
-        $configModules = config('modules', []);
+        $configModules = config('modules.modules', []);
 
         foreach ($configModules as $moduleId => $moduleConfig) {
+            // Skip modules that don't require subscriptions
+            if (!($moduleConfig['requires_subscription'] ?? false)) {
+                continue;
+            }
+
+            // Skip config-only modules
             if ($moduleId === 'settings' || $moduleId === 'categories') {
                 continue;
             }
@@ -440,7 +478,7 @@ class ModuleSubscriptionAdminController extends Controller
     private function getModulesList(): array
     {
         $modules = [];
-        $configModules = config('modules', []);
+        $configModules = config('modules.modules', []);
 
         foreach ($configModules as $moduleId => $moduleConfig) {
             if ($moduleId === 'settings' || $moduleId === 'categories') {
@@ -546,5 +584,94 @@ class ModuleSubscriptionAdminController extends Controller
         }
 
         return $tiers;
+    }
+
+    /**
+     * Create module-specific features for a tier
+     */
+    private function createModuleFeatures(ModuleTier $tier, array $validated, string $moduleId): void
+    {
+        $moduleFeatures = [];
+
+        // Add module-specific limits based on module type
+        if ($moduleId === 'growbuilder') {
+            if (isset($validated['pages_limit'])) {
+                $moduleFeatures['pages'] = $validated['pages_limit'];
+            }
+            if (isset($validated['products_limit'])) {
+                $moduleFeatures['products'] = $validated['products_limit'];
+            }
+            if (isset($validated['sites_limit'])) {
+                $moduleFeatures['sites'] = $validated['sites_limit'];
+            }
+        }
+
+        // Create features
+        foreach ($moduleFeatures as $featureKey => $featureValue) {
+            ModuleTierFeature::create([
+                'module_tier_id' => $tier->id,
+                'feature_key' => $featureKey,
+                'feature_name' => $this->getFeatureName($featureKey, $featureValue),
+                'feature_type' => 'limit',
+                'value_limit' => $featureValue,
+                'is_active' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Update module-specific features for a tier
+     */
+    private function updateModuleFeatures(ModuleTier $tier, array $validated, string $moduleId): void
+    {
+        if ($moduleId === 'growbuilder') {
+            $moduleFeatures = [
+                'pages' => $validated['pages_limit'] ?? null,
+                'products' => $validated['products_limit'] ?? null,
+                'sites' => $validated['sites_limit'] ?? null,
+            ];
+
+            foreach ($moduleFeatures as $featureKey => $featureValue) {
+                if ($featureValue !== null) {
+                    ModuleTierFeature::updateOrCreate(
+                        [
+                            'module_tier_id' => $tier->id,
+                            'feature_key' => $featureKey,
+                        ],
+                        [
+                            'feature_name' => $this->getFeatureName($featureKey, $featureValue),
+                            'feature_type' => 'limit',
+                            'value_limit' => $featureValue,
+                            'is_active' => true,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Get human-readable feature name
+     */
+    private function getFeatureName(string $key, int $value): string
+    {
+        return match($key) {
+            'pages' => 'Pages',
+            'products' => 'Products',
+            'storage_mb' => 'Storage',
+            'sites' => 'Sites',
+            default => ucfirst($key),
+        };
+    }
+
+    /**
+     * Format storage size
+     */
+    private function formatStorage(int $mb): string
+    {
+        if ($mb >= 1000) {
+            return ($mb / 1000) . 'GB storage';
+        }
+        return $mb . 'MB storage';
     }
 }
