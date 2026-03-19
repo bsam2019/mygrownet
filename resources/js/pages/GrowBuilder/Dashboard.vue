@@ -12,6 +12,7 @@ import {
     ChartBarIcon,
     ShoppingBagIcon,
     CurrencyDollarIcon,
+    DocumentTextIcon,
     UsersIcon,
     ArrowTrendingUpIcon,
     ClockIcon,
@@ -420,6 +421,32 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('en-ZM', 
                         >
                             <UsersIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
                             Clients
+                        </Link>
+                        <Link 
+                            v-if="subscription?.tier === 'agency'"
+                            :href="route('growbuilder.services.index')"
+                            :class="[
+                                'py-2 px-1 border-b-2 font-medium text-sm',
+                                $page.component?.startsWith('GrowBuilder/Billing') && $page.component?.includes('Service')
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                        >
+                            <CurrencyDollarIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                            Services
+                        </Link>
+                        <Link 
+                            v-if="subscription?.tier === 'agency'"
+                            :href="route('growbuilder.invoices.index')"
+                            :class="[
+                                'py-2 px-1 border-b-2 font-medium text-sm',
+                                $page.component?.startsWith('GrowBuilder/Billing') && $page.component?.includes('Invoice')
+                                    ? 'border-blue-500 text-blue-600' 
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ]"
+                        >
+                            <DocumentTextIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                            Invoices
                         </Link>
                         <Link 
                             v-if="subscription?.tier === 'agency'"

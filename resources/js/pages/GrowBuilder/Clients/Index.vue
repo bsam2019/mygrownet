@@ -32,6 +32,20 @@
                         Clients
                     </Link>
                     <Link 
+                        :href="route('growbuilder.services.index')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <CurrencyDollarIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Services
+                    </Link>
+                    <Link 
+                        :href="route('growbuilder.invoices.index')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <DocumentTextIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Invoices
+                    </Link>
+                    <Link 
                         :href="route('growbuilder.agency.dashboard')"
                         class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
                     >
@@ -270,7 +284,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import { PlusIcon, UsersIcon, GlobeAltIcon, CogIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, UsersIcon, GlobeAltIcon, CogIcon, CurrencyDollarIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 import { debounce } from 'lodash';
 
 interface Client {
