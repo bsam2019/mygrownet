@@ -685,6 +685,14 @@ return [
 ## Changelog
 
 ### 2026-03-19
+- **Navigation Tabs Added to Billing Pages**
+  - ✅ Added navigation tabs to Services page
+  - ✅ Added navigation tabs to Invoices page
+  - ✅ Consistent navigation across all GrowBuilder sections: Sites → Clients → Services → Invoices → Agency
+  - ✅ Active tab highlighting for current page
+  - ✅ Users can now easily navigate back from any billing page
+  - **NAVIGATION COMPLETE** - All billing pages now have full navigation
+
 - **Numeric Type Casting Fixes Applied**
   - ✅ Fixed all `.toFixed is not a function` errors in Vue components
   - ✅ Cast all numeric database values to proper types (float/int) in controllers
@@ -693,6 +701,7 @@ return [
   - ✅ Fixed `ServiceController@index` - cast unit_price, quantity, total_price to proper types
   - ✅ Fixed `ServiceController@show` - cast invoice totals to float
   - ✅ Added pagination safety checks in `Invoices.vue` for empty states
+  - ✅ Fixed route name mismatch (mark-sent → mark-as-sent)
   - ✅ All billing pages now display numeric values correctly
   - **TYPE CASTING COMPLETE** - All numeric display issues resolved
 
