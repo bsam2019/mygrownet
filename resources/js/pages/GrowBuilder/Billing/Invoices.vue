@@ -8,6 +8,10 @@ import {
     FunnelIcon,
     DocumentTextIcon,
     ExclamationTriangleIcon,
+    GlobeAltIcon,
+    UsersIcon,
+    CurrencyDollarIcon,
+    Cog6ToothIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Invoice {
@@ -104,6 +108,47 @@ const getPaymentStatusClass = (status: string): string => {
                             <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
                             Create Invoice
                         </Link>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="border-b border-gray-200 mb-6">
+                        <nav class="-mb-px flex space-x-8">
+                            <Link 
+                                :href="route('growbuilder.dashboard')"
+                                class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                            >
+                                <GlobeAltIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                                Sites
+                            </Link>
+                            <Link 
+                                :href="route('growbuilder.clients.index')"
+                                class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                            >
+                                <UsersIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                                Clients
+                            </Link>
+                            <Link 
+                                :href="route('growbuilder.services.index')"
+                                class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                            >
+                                <CurrencyDollarIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                                Services
+                            </Link>
+                            <Link 
+                                :href="route('growbuilder.invoices.index')"
+                                class="py-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm"
+                            >
+                                <DocumentTextIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                                Invoices
+                            </Link>
+                            <Link 
+                                :href="route('growbuilder.agency.dashboard')"
+                                class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                            >
+                                <Cog6ToothIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                                Agency
+                            </Link>
+                        </nav>
                     </div>
 
                     <!-- Stats -->

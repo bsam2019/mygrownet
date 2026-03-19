@@ -14,6 +14,47 @@
                 </Link>
             </div>
 
+            <!-- Navigation Tabs -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="-mb-px flex space-x-8">
+                    <Link 
+                        :href="route('growbuilder.dashboard')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <GlobeAltIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Sites
+                    </Link>
+                    <Link 
+                        :href="route('growbuilder.clients.index')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <UsersIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Clients
+                    </Link>
+                    <Link 
+                        :href="route('growbuilder.services.index')"
+                        class="py-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm"
+                    >
+                        <CurrencyDollarIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Services
+                    </Link>
+                    <Link 
+                        :href="route('growbuilder.invoices.index')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <DocumentTextIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Invoices
+                    </Link>
+                    <Link 
+                        :href="route('growbuilder.agency.dashboard')"
+                        class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm"
+                    >
+                        <Cog6ToothIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
+                        Agency
+                    </Link>
+                </nav>
+            </div>
+
             <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-lg shadow p-6">
@@ -213,7 +254,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import { PlusIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
+import { 
+    PlusIcon, 
+    CurrencyDollarIcon,
+    GlobeAltIcon,
+    UsersIcon,
+    DocumentTextIcon,
+    Cog6ToothIcon,
+} from '@heroicons/vue/24/outline';
 
 interface Service {
     id: number;
