@@ -65,6 +65,31 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
         Route::post('/{id}/activate-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'activateSites'])->name('activate-sites');
     });
     
+    // Service Management
+    Route::prefix('services')->name('services.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Invoice Management
+    Route::prefix('invoices')->name('invoices.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'store'])->name('store');
+        Route::post('/generate-from-services', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'generateFromServices'])->name('generate-from-services');
+        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/mark-as-sent', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'markAsSent'])->name('mark-as-sent');
+        Route::post('/{id}/record-payment', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'recordPayment'])->name('record-payment');
+    });
+    
     // Dashboard (main sites dashboard)
     Route::get('/dashboard', [SiteController::class, 'index'])->name('dashboard');
     
