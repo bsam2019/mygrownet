@@ -685,6 +685,15 @@ return [
 ## Changelog
 
 ### 2026-03-19
+- **Navigation Integration for Billing Features**
+  - ✅ Added Services and Invoices tabs to GrowBuilder Dashboard navigation
+  - ✅ Added Services and Invoices tabs to Clients Index navigation
+  - ✅ Navigation structure now includes: Sites → Clients → Services → Invoices → Agency
+  - ✅ Active state detection for billing pages
+  - ✅ Consistent navigation across all GrowBuilder sections
+  - ✅ Agency users can now easily access billing features from any page
+  - **BILLING FEATURES NOW FULLY ACCESSIBLE** - Complete navigation integration
+
 - **Phase 3 Frontend Implementation Completed**
   - ✅ Created 6 Vue pages for complete billing management:
     - `Services.vue` - Service list with stats dashboard, filters (client, status, type), and pagination

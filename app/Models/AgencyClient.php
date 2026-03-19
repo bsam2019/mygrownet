@@ -106,6 +106,22 @@ class AgencyClient extends Model
     }
 
     /**
+     * Get client services
+     */
+    public function services()
+    {
+        return $this->hasMany(AgencyClientService::class, 'client_id');
+    }
+
+    /**
+     * Get client invoices
+     */
+    public function invoices()
+    {
+        return $this->hasMany(AgencyClientInvoice::class, 'client_id');
+    }
+
+    /**
      * Check if client is active
      */
     public function isActive(): bool
