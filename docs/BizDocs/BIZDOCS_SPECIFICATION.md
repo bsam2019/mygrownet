@@ -26,7 +26,7 @@
 BizDocs is a comprehensive business document management module for MyGrowNet that replaces the current QuickInvoice system. Built using Domain-Driven Design principles, it provides:
 
 - Multi-document type support (invoices, receipts, quotations, delivery notes, etc.)
-- Flexible three-tier template system (system, industry, custom)
+- Flexible two-tier template system (industry templates + custom templates)
 - Professional PDF generation with WhatsApp sharing
 - Print-ready stationery generation for physical document books
 - Foundation for future accounting, inventory, and e-commerce integration
@@ -113,7 +113,8 @@ BizDocs follows DDD principles with four primary bounded contexts:
 
 **Value Objects:**
 - `TemplateStructure` - JSON configuration
-- `TemplateVisibility` - System, Industry, Business
+- `TemplateVisibility` - Industry, Business
+- `IndustryCategory` - General Business, Retail, Education, Healthcare, etc.
 
 **Domain Services:**
 - `TemplateRenderingService` - Render documents from templates
@@ -148,6 +149,8 @@ BizDocs follows DDD principles with four primary bounded contexts:
 | **Line Item** | Individual product/service entry within a document |
 | **Finalize** | Transition document from draft to active status |
 | **Template** | Reusable document layout and styling configuration |
+| **Industry Template** | Pre-built template for specific industry or general use |
+| **Custom Template** | User-created template cloned from industry template or built from scratch |
 | **Stationery** | Print-ready physical document books |
 | **Document Number** | Unique sequential identifier per document type |
 | **Business Profile** | Complete business identity and branding |
@@ -631,9 +634,9 @@ INDEX idx_payment_date (payment_date)
 id                  BIGINT UNSIGNED PRIMARY KEY
 name                VARCHAR(255) NOT NULL
 document_type       ENUM('invoice', 'receipt', 'quotation', 'delivery_note', ...)
-visibility          ENUM('system', 'industry', 'business')
+visibility          ENUM('industry', 'business')
 owner_id            BIGINT UNSIGNED (FK to business_profiles) NULL
-industry_tag        VARCHAR(100) NULL
+industry_category   VARCHAR(100) NULL -- 'general_business', 'retail', 'education', 'healthcare', etc.
 template_structure  JSON NOT NULL
 thumbnail_path      VARCHAR(255) NULL
 is_default          BOOLEAN DEFAULT FALSE
@@ -642,7 +645,7 @@ updated_at          TIMESTAMP
 
 INDEX idx_visibility_type (visibility, document_type)
 INDEX idx_owner (owner_id)
-INDEX idx_industry (industry_tag)
+INDEX idx_industry_category (industry_category)
 ```
 
 #### document_sequences
@@ -739,7 +742,7 @@ documents
   └── has many → document_payments
 
 document_templates
-  └── belongs to → business_profile (if custom)
+  └── belongs to → business_profile (if visibility = 'business')
 ```
 
 
@@ -960,7 +963,7 @@ document_templates
 **Features:**
 - ✓ Invoice, Receipt, Quotation, Delivery Note
 - ✓ Customer database
-- ✓ System and industry templates
+- ✓ Industry templates (including general business templates)
 - ✓ PDF generation
 - ✓ WhatsApp sharing (wa.me)
 - ✓ Document dashboard
@@ -1060,13 +1063,13 @@ php artisan bizdocs:migrate-quickinvoice
 #### 8.1.2 Feature Parity Checklist
 
 Before migration, ensure BizDocs has:
-- [x] Invoice creation
-- [x] Customer management
-- [x] Template system
-- [x] PDF generation
-- [x] WhatsApp sharing
-- [x] Dashboard with filtering
-- [x] Business profile setup
+- [ ] Invoice creation
+- [ ] Customer management
+- [ ] Industry template system
+- [ ] PDF generation
+- [ ] WhatsApp sharing
+- [ ] Dashboard with filtering
+- [ ] Business profile setup
 
 #### 8.1.3 Rollout Strategy
 
@@ -1130,82 +1133,136 @@ If critical issues arise:
 
 ## 9. Template System Details
 
-### 9.1 System Templates (Phase 1)
+### 9.1 Industry Templates (Phase 1)
 
-#### Modern Invoice
+Templates are organized by industry category. Each category contains pre-built templates suitable for that industry.
+
+#### General Business Category
+
+**Professional Invoice**
 - Clean, professional design
 - Blue accent color
 - Logo left, business info right
 - Full-width items table
 - Signature and stamp areas
 
-#### Compact Receipt
+**Simple Receipt**
 - Half-page size
 - Minimal design
 - Essential information only
 - Suitable for thermal printers
 
-#### Professional Quotation
+**Formal Quotation**
 - Formal layout
 - Validity period prominent
 - Terms and conditions section
 - Acceptance signature area
 
-#### Standard Delivery Note
+**Standard Delivery Note**
 - Clear item listing
 - Delivery address prominent
 - Recipient signature area
 - Driver/carrier information
 
-### 9.2 Industry Templates (Phase 1)
+#### Retail & Commerce Category
 
-#### Retail Shop Invoice
+**Retail Shop Invoice**
 - Product-focused layout
 - Barcode/SKU column
 - Cashier name field
 - Payment method section
 
-#### Construction Quotation
+#### Construction & Services Category
+
+**Construction Quotation**
 - Project site field
 - Material and labor breakdown
 - Payment milestone section
 - Validity and terms prominent
 
-#### School Fee Receipt
+#### Education Category
+
+**School Fee Receipt**
 - Student name and number
 - Term/semester field
 - Fee breakdown by category
 - Balance carried forward
 
-#### Pharmacy Invoice
+#### Healthcare Category
+
+**Pharmacy Invoice**
 - Medicine name and dosage
 - Prescription number field
 - Pharmacist name
 - Regulatory compliance text
 
-#### Vehicle Spare Parts Invoice
+#### Automotive Category
+
+**Vehicle Spare Parts Invoice**
 - Part number column
 - Vehicle registration field
 - Warranty information
 - Fitment instructions
 
-#### Transport Delivery Note
+#### Transport & Logistics Category
+
+**Transport Delivery Note**
 - Vehicle registration
 - Driver name and license
 - Route information
 - Delivery time tracking
 
-#### Salon Receipt
+#### Beauty & Personal Care Category
+
+**Salon Receipt**
 - Service description
 - Stylist name
 - Duration field
 - Next appointment reminder
 
-#### Freelancer Invoice
+#### Professional Services Category
+
+**Freelancer Invoice**
 - Hourly rate breakdown
 - Project/task description
 - Time tracking
 - Payment terms
+
+### 9.2 Template Gallery UI
+
+Users can browse templates by industry category:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Choose a Template                                    │
+├─────────────────────────────────────────────────────┤
+│ Filter: [All Categories ▼]  Document: [Invoice ▼]  │
+│                                                      │
+│ General Business                                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │Professional│ │  Simple  │ │  Formal  │           │
+│  │  Invoice  │ │ Receipt  │ │Quotation │           │
+│  └──────────┘ └──────────┘ └──────────┘           │
+│                                                      │
+│ Retail & Commerce                                    │
+│  ┌──────────┐                                       │
+│  │Retail Shop│                                       │
+│  │  Invoice  │                                       │
+│  └──────────┘                                       │
+│                                                      │
+│ Education                                            │
+│  ┌──────────┐                                       │
+│  │School Fee │                                       │
+│  │  Receipt  │                                       │
+│  └──────────┘                                       │
+│                                                      │
+│ My Custom Templates                                  │
+│  ┌──────────┐                                       │
+│  │    +     │                                       │
+│  │  Create  │                                       │
+│  └──────────┘                                       │
+└─────────────────────────────────────────────────────┘
+```
 
 ### 9.3 Template Builder (Phase 2)
 
@@ -1401,6 +1458,16 @@ If critical issues arise:
 ---
 
 ## Changelog
+
+### March 19, 2026
+- **Simplified template system from three-tier to two-tier**
+  - Removed "System Templates" tier
+  - Consolidated all pre-built templates into "Industry Templates"
+  - Added "General Business" category for generic templates
+  - Updated database schema: `visibility` ENUM now only has 'industry' and 'business'
+  - Updated `industry_category` field to categorize templates (general_business, retail, education, healthcare, etc.)
+  - Improved template gallery UI with category-based browsing
+  - Clearer distinction: Industry Templates (read-only) vs Custom Templates (user-created)
 
 ### March 15, 2026
 - Initial specification document created
