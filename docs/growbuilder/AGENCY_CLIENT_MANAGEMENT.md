@@ -685,6 +685,18 @@ return [
 ## Changelog
 
 ### 2026-03-19
+- **Automated Billing Workflows Implemented**
+  - ✅ Created CheckServiceRenewals job for renewal reminders
+  - ✅ Created CheckOverdueInvoices job for overdue alerts
+  - ✅ Created ServiceRenewalReminder notification (email + database)
+  - ✅ Created InvoiceOverdueAlert notification (email + database)
+  - ✅ Scheduled jobs in Laravel scheduler (8AM renewals, 9AM overdue)
+  - ✅ Multi-day reminder system: 30, 15, 7 days before renewal
+  - ✅ Progressive urgency alerts: 1, 7, 14, 30 days overdue
+  - ✅ Automatic status updates for overdue invoices
+  - ✅ Comprehensive logging for monitoring
+  - **AUTOMATED WORKFLOWS COMPLETE** - Billing system now fully hands-off
+
 - **Navigation Integration for Billing Features**
   - ✅ Added Services and Invoices tabs to GrowBuilder Dashboard navigation
   - ✅ Added Services and Invoices tabs to Clients Index navigation
