@@ -133,6 +133,7 @@ class ServiceController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $service->client->agency_id,
             'service_created',
             'service',
             $service->id,
@@ -249,6 +250,7 @@ class ServiceController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $service->client->agency_id,
             'service_updated',
             'service',
             $service->id,

@@ -378,6 +378,7 @@ class ClientController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $client->agency_id,
             'client_sites_suspended',
             'client',
             $client->id,
@@ -404,6 +405,7 @@ class ClientController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $client->agency_id,
             'client_sites_activated',
             'client',
             $client->id,

@@ -163,6 +163,7 @@ class InvoiceController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $invoice->agency_id,
             'invoice_created',
             'invoice',
             $invoice->id,
@@ -334,6 +335,7 @@ class InvoiceController extends Controller
 
         // Log activity
         $this->activityLogger->log(
+            $invoice->agency_id,
             'invoice_updated',
             'invoice',
             $invoice->id,
@@ -353,6 +355,7 @@ class InvoiceController extends Controller
         $invoice->markAsSent();
 
         $this->activityLogger->log(
+            $invoice->agency_id,
             'invoice_sent',
             'invoice',
             $invoice->id,
@@ -387,6 +390,7 @@ class InvoiceController extends Controller
         ]);
 
         $this->activityLogger->log(
+            $invoice->agency_id,
             'payment_recorded',
             'payment',
             $payment->id,
@@ -459,6 +463,7 @@ class InvoiceController extends Controller
         }
 
         $this->activityLogger->log(
+            $invoice->agency_id,
             'invoice_generated',
             'invoice',
             $invoice->id,
