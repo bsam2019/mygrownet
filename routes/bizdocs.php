@@ -63,6 +63,7 @@ Route::middleware(['auth'])->prefix('bizdocs')->name('bizdocs.')->group(function
     // Stationery Generator
     Route::prefix('stationery')->name('stationery.')->group(function () {
         Route::get('/', [StationeryController::class, 'index'])->name('index');
+        Route::post('/preview', [StationeryController::class, 'preview'])->name('preview');
         Route::post('/generate', [StationeryController::class, 'generate'])->name('generate');
     });
 });

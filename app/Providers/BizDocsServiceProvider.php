@@ -80,7 +80,6 @@ class BizDocsServiceProvider extends ServiceProvider
         $this->app->bind(\App\Application\BizDocs\UseCases\GenerateStationeryUseCase::class, function ($app) {
             return new \App\Application\BizDocs\UseCases\GenerateStationeryUseCase(
                 $app->make(BusinessProfileRepositoryInterface::class),
-                $app->make(\App\Domain\BizDocs\TemplateManagement\Repositories\TemplateRepositoryInterface::class),
                 $app->make(\App\Application\BizDocs\Services\StationeryGeneratorService::class)
             );
         });

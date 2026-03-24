@@ -3,7 +3,6 @@
 namespace App\Application\BizDocs\Services;
 
 use App\Domain\BizDocs\BusinessIdentity\Entities\BusinessProfile;
-use App\Domain\BizDocs\TemplateManagement\Entities\DocumentTemplate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 
@@ -11,7 +10,7 @@ class StationeryGeneratorService
 {
     public function generate(
         BusinessProfile $businessProfile,
-        DocumentTemplate $template,
+        $templateModel,
         string $documentType,
         int $quantity,
         int $documentsPerPage,
@@ -36,7 +35,7 @@ class StationeryGeneratorService
         // Prepare data for PDF
         $data = [
             'businessProfile' => $businessProfile,
-            'template' => $template,
+            'template' => $templateModel,
             'documentType' => $documentType,
             'documentNumbers' => $documentNumbers,
             'documentsPerPage' => $documentsPerPage,

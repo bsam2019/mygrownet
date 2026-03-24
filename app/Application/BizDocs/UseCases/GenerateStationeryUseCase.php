@@ -4,14 +4,13 @@ namespace App\Application\BizDocs\UseCases;
 
 use App\Application\BizDocs\DTOs\GenerateStationeryDTO;
 use App\Domain\BizDocs\BusinessIdentity\Repositories\BusinessProfileRepositoryInterface;
-use App\Domain\BizDocs\TemplateManagement\Repositories\TemplateRepositoryInterface;
+use App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel;
 use App\Application\BizDocs\Services\StationeryGeneratorService;
 
 class GenerateStationeryUseCase
 {
     public function __construct(
         private BusinessProfileRepositoryInterface $businessProfileRepository,
-        private TemplateRepositoryInterface $templateRepository,
         private StationeryGeneratorService $stationeryGenerator,
     ) {}
 
@@ -23,9 +22,9 @@ class GenerateStationeryUseCase
             throw new \Exception('Business profile not found');
         }
 
-        // Load template
-        $template = $this->templateRepository->findById($dto->templateId);
-        if (!$template) {
+        // Load template using Eloquent directly
+        $templateModel = DocumentTemplateModel::find($dto->templateId);
+        if (!$templateModel) {
             throw new \Exception('Template not found');
         }
 
@@ -37,7 +36,7 @@ class GenerateStationeryUseCase
         // Generate stationery PDF
         $pdfPath = $this->stationeryGenerator->generate(
             businessProfile: $businessProfile,
-            template: $template,
+            templateModel: $templateModel,
             documentType: $dto->documentType,
             quantity: $dto->quantity,
             documentsPerPage: $dto->documentsPerPage,
