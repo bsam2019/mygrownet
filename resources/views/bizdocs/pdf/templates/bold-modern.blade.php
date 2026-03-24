@@ -104,6 +104,7 @@
                                 {{ $businessProfile->address() }}<br>
                                 {{ $businessProfile->phone() }}
                                 @if($businessProfile->email()) • {{ $businessProfile->email() }}@endif
+                                @if($businessProfile->website())<br>{{ $businessProfile->website() }}@endif
                             </div>
                         </td>
                     </tr></table>
@@ -252,5 +253,11 @@
             Please include invoice number {{ $document->number()->value() }} with your payment.
         </div>
     </div>
+    
+    @if($businessProfile->website())
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; font-size: 12px; color: #6b7280;">
+        Visit us: <span style="color: #2563eb; font-weight: bold;">{{ $businessProfile->website() }}</span>
+    </div>
+    @endif
 </body>
 </html>
