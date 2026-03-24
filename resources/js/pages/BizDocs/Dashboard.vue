@@ -14,6 +14,7 @@ import {
     PencilIcon,
     CheckCircleIcon,
     Cog6ToothIcon,
+    PrinterIcon,
 } from '@heroicons/vue/24/outline';
 import { computed } from 'vue';
 
@@ -97,6 +98,15 @@ const quickActions = [
         iconBg: 'bg-amber-50',
         iconColor: 'text-amber-600',
         border: 'hover:border-amber-300',
+    },
+    {
+        name: 'Print Stationery',
+        description: 'Generate document books',
+        href: '/bizdocs/stationery',
+        icon: PrinterIcon,
+        iconBg: 'bg-purple-50',
+        iconColor: 'text-purple-600',
+        border: 'hover:border-purple-300',
     },
     {
         name: 'Settings',

@@ -4,6 +4,7 @@ use App\Http\Controllers\BizDocs\BusinessProfileController;
 use App\Http\Controllers\BizDocs\CustomerController;
 use App\Http\Controllers\BizDocs\DocumentController;
 use App\Http\Controllers\BizDocs\SettingsController;
+use App\Http\Controllers\BizDocs\StationeryController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('bizdocs')->name('bizdocs.')->group(function () {
@@ -57,5 +58,11 @@ Route::middleware(['auth'])->prefix('bizdocs')->name('bizdocs.')->group(function
         Route::get('/', [SettingsController::class, 'index'])->name('index');
         Route::get('/numbering', [SettingsController::class, 'numbering'])->name('numbering');
         Route::post('/numbering', [SettingsController::class, 'updateNumbering'])->name('numbering.update');
+    });
+
+    // Stationery Generator
+    Route::prefix('stationery')->name('stationery.')->group(function () {
+        Route::get('/', [StationeryController::class, 'index'])->name('index');
+        Route::post('/generate', [StationeryController::class, 'generate'])->name('generate');
     });
 });
