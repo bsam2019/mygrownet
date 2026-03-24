@@ -48,6 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
             Route::middleware('web')
+                ->group(base_path('routes/bizdocs.php'));
+            Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
             // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')

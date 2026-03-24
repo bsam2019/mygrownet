@@ -572,6 +572,45 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // BizDocs - Document Management System - Blue
+            [
+                'id' => 'bizdocs',
+                'name' => 'BizDocs',
+                'slug' => 'bizdocs',
+                'category' => 'sme',
+                'description' => 'Professional document management - create invoices, receipts, quotations, and delivery notes with PDF generation and WhatsApp sharing',
+                'icon' => '📄',
+                'color' => '#3B82F6', // Blue
+                'thumbnail' => null,
+                'account_types' => json_encode(['business', 'member']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/bizdocs/dashboard',
+                    'standalone' => '/bizdocs/dashboard',
+                    'setup' => '/bizdocs/setup',
+                ]),
+                'pwa_config' => json_encode(['enabled' => true, 'installable' => true, 'offline_capable' => false]),
+                'features' => json_encode([
+                    'offline' => false, 
+                    'notifications' => true, 
+                    'requires_setup' => true,
+                    'pdf_generation' => true,
+                    'whatsapp_sharing' => true,
+                    'payment_tracking' => true,
+                ]),
+                'subscription_tiers' => json_encode([
+                    'free' => ['name' => 'Free', 'price' => 0, 'billing_cycle' => 'monthly', 'documents' => 50, 'customers' => 25],
+                    'starter' => ['name' => 'Starter', 'price' => 49, 'billing_cycle' => 'monthly', 'documents' => 500, 'customers' => 100],
+                    'business' => ['name' => 'Business', 'price' => 99, 'billing_cycle' => 'monthly', 'documents' => 'unlimited', 'customers' => 'unlimited', 'custom_templates' => true],
+                    'pro' => ['name' => 'Pro', 'price' => 199, 'billing_cycle' => 'monthly', 'documents' => 'unlimited', 'customers' => 'unlimited', 'custom_templates' => true, 'team_members' => 5, 'api_access' => true],
+                ]),
+                'requires_subscription' => false,
+                'version' => '1.0.0',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
             // LifePlus - Daily Life Companion App - Emerald/Teal
             // FREE for members with active subscriptions, PAID for clients/business users
             // Core starter kit product that justifies MLM membership

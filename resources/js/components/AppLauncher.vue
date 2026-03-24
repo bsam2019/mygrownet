@@ -13,7 +13,8 @@ import {
     HeartIcon,
     CubeIcon,
     BuildingStorefrontIcon,
-    CloudArrowUpIcon
+    CloudArrowUpIcon,
+    DocumentTextIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Module {
@@ -50,6 +51,7 @@ const getModuleIcon = (slug: string) => {
         'growbiz': ClipboardDocumentCheckIcon,
         'growfinance': BanknotesIcon,
         'bizboost': SparklesIcon,
+        'bizdocs': DocumentTextIcon,
         'growmarket': ShoppingCartIcon,
         'growbuilder': GlobeAltIcon,
         'lifeplus': HeartIcon,
