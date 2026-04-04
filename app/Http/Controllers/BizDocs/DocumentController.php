@@ -370,7 +370,13 @@ class DocumentController extends Controller
 
             // Generate PDF using DomPDF
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewPath, $data)
-                ->setPaper('a4', 'portrait');
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                    'enable_php' => true,
+                ]);
 
             $pdfContent = $pdf->output();
 
@@ -574,7 +580,13 @@ class DocumentController extends Controller
 
             // Generate PDF using DomPDF
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('bizdocs.pdf.document', $data)
-                ->setPaper('a4', 'portrait');
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                    'enable_php' => true,
+                ]);
 
             $output = $pdf->output();
             

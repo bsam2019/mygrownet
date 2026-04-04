@@ -15,6 +15,7 @@ class StationeryController extends Controller
     public function __construct(
         private readonly BusinessProfileRepositoryInterface $businessProfileRepository,
         private readonly GenerateStationeryUseCase $generateStationeryUseCase,
+        private readonly \App\Application\BizDocs\Services\FileStorageService $fileStorageService,
     ) {}
 
     public function index(Request $request)
@@ -48,8 +49,10 @@ class StationeryController extends Controller
         $validated = $request->validate([
             'document_type' => 'required|string|in:invoice,receipt,quotation,delivery_note,proforma_invoice,credit_note,debit_note,purchase_order',
             'template_id' => 'required|integer|exists:bizdocs_document_templates,id',
-            'documents_per_page' => 'required|integer|in:1,2,4',
+            'documents_per_page' => 'required|integer|in:1,2,4,6,8,10',
             'starting_number' => 'required|string',
+            'page_size' => 'nullable|string|in:A4,A5,custom',
+            'row_count' => 'nullable|integer|min:1|max:50',
         ]);
 
         $user = $request->user();
@@ -64,28 +67,43 @@ class StationeryController extends Controller
             return back()->withErrors(['error' => 'Template not found']);
         }
 
-        // Generate preview with just 2 sample documents
+        // Generate preview with sample documents based on layout
         $prefix = $this->getDocumentPrefix($validated['document_type']);
         $startNumber = $this->parseDocumentNumber($validated['starting_number']);
         
-        $documentNumbers = [
-            sprintf('%s-%s-%04d', $prefix, date('Y'), $startNumber),
-            sprintf('%s-%s-%04d', $prefix, date('Y'), $startNumber + 1),
-        ];
+        // For preview, generate exactly documents_per_page worth of documents to show the layout
+        $previewQuantity = $validated['documents_per_page'];
+        $documentNumbers = [];
+        for ($i = 0; $i < $previewQuantity; $i++) {
+            $documentNumbers[] = sprintf('%s-%s-%04d', $prefix, date('Y'), $startNumber + $i);
+        }
+
+        // Calculate total pages for preview
+        $totalPages = (int) ceil($previewQuantity / $validated['documents_per_page']);
 
         $data = [
             'businessProfile' => $businessProfile,
             'template' => $templateModel,
             'documentType' => $validated['document_type'],
             'documentNumbers' => $documentNumbers,
-            'documentsPerPage' => $validated['documents_per_page'],
-            'totalPages' => 1,
+            'documentsPerPage' => (int) $validated['documents_per_page'], // Cast to int for strict match
+            'pageSize' => $validated['page_size'] ?? 'A4',
+            'rowCount' => $validated['row_count'] ?? null,
+            'totalPages' => $totalPages,
             'logoPath' => $this->getLogoPath($businessProfile),
             'signaturePath' => $this->getSignaturePath($businessProfile),
             'isPdf' => false, // HTML preview
         ];
 
-        return view('bizdocs.stationery.template', $data);
+        // Select template based on document type
+        $viewPath = $this->getTemplateView($validated['document_type']);
+        
+        // Use simplified template for testing
+        if ($validated['document_type'] === 'receipt') {
+            $viewPath = 'bizdocs.stationery.receipt-simple';
+        }
+        
+        return view($viewPath, $data);
     }
 
     public function generate(Request $request)
@@ -94,8 +112,10 @@ class StationeryController extends Controller
             'document_type' => 'required|string|in:invoice,receipt,quotation,delivery_note,proforma_invoice,credit_note,debit_note,purchase_order',
             'template_id' => 'required|integer|exists:bizdocs_document_templates,id',
             'quantity' => 'required|integer|min:1|max:500',
-            'documents_per_page' => 'required|integer|in:1,2,4',
+            'documents_per_page' => 'required|integer|in:1,2,4,6,8,10',
             'starting_number' => 'required|string',
+            'page_size' => 'nullable|string|in:A4,A5,custom',
+            'row_count' => 'nullable|integer|min:1|max:50',
         ]);
 
         $user = $request->user();
@@ -109,21 +129,36 @@ class StationeryController extends Controller
             $dto = new GenerateStationeryDTO(
                 businessId: $user->id,
                 documentType: $validated['document_type'],
-                templateId: $validated['template_id'],
-                quantity: $validated['quantity'],
-                documentsPerPage: $validated['documents_per_page'],
+                templateId: (int) $validated['template_id'],
+                quantity: (int) $validated['quantity'],
+                documentsPerPage: (int) $validated['documents_per_page'], // Explicit cast for strict match
                 startingNumber: $validated['starting_number'],
+                pageSize: $validated['page_size'] ?? 'A4',
+                rowCount: $validated['row_count'] ? (int) $validated['row_count'] : null,
             );
 
-            $pdfPath = $this->generateStationeryUseCase->execute($dto);
+            $pdfContent = $this->generateStationeryUseCase->execute($dto);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Stationery generated successfully',
-                'download_url' => url("storage/{$pdfPath}"),
-                'pdf_path' => $pdfPath,
-            ]);
+            // Generate filename
+            $filename = sprintf(
+                'stationery_%s_%s_%d_docs.pdf',
+                $validated['document_type'],
+                date('Y-m-d_His'),
+                $validated['quantity']
+            );
+
+            // Return PDF as download without saving
+            return response($pdfContent)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
         } catch (\Exception $e) {
+            \Log::error('Stationery generation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id,
+                'data' => $validated,
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -145,6 +180,16 @@ class StationeryController extends Controller
             default => 'DOC',
         };
     }
+    
+    private function getTemplateView(string $documentType): string
+    {
+        // Use specialized templates for specific document types
+        return match($documentType) {
+            'receipt' => 'bizdocs.stationery.receipt',
+            'invoice', 'quotation', 'proforma_invoice' => 'bizdocs.stationery.template',
+            default => 'bizdocs.stationery.template',
+        };
+    }
 
     private function parseDocumentNumber(string $documentNumber): int
     {
@@ -158,11 +203,13 @@ class StationeryController extends Controller
             return null;
         }
         
-        if (filter_var($businessProfile->logo(), FILTER_VALIDATE_URL)) {
-            return $businessProfile->logo();
+        try {
+            $logoContent = \Storage::disk($this->fileStorageService->getDisk())->get($businessProfile->logo());
+            return 'data:image/png;base64,' . base64_encode($logoContent);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to load logo for stationery', ['error' => $e->getMessage()]);
+            return null;
         }
-        
-        return \Storage::disk('public')->path($businessProfile->logo());
     }
     
     private function getSignaturePath($businessProfile): ?string
@@ -171,10 +218,12 @@ class StationeryController extends Controller
             return null;
         }
         
-        if (filter_var($businessProfile->signatureImage(), FILTER_VALIDATE_URL)) {
-            return $businessProfile->signatureImage();
+        try {
+            $signatureContent = \Storage::disk($this->fileStorageService->getDisk())->get($businessProfile->signatureImage());
+            return 'data:image/png;base64,' . base64_encode($signatureContent);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to load signature for stationery', ['error' => $e->getMessage()]);
+            return null;
         }
-        
-        return \Storage::disk('public')->path($businessProfile->signatureImage());
     }
 }

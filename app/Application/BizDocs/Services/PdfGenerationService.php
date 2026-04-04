@@ -47,6 +47,7 @@ class PdfGenerationService
             'totals' => $totals,
             'logoPath' => $logoPath,
             'signaturePath' => $signaturePath,
+            'isPdf' => true, // Important flag for PDF-compatible CSS
         ];
 
         // Determine which template to use
@@ -112,7 +113,13 @@ class PdfGenerationService
 
         // Generate PDF using DomPDF
         $pdf = Pdf::loadView($viewPath, $data)
-            ->setPaper('a4', 'portrait');
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'DejaVu Sans',
+                'enable_php' => true,
+            ]);
 
         // Create directory if it doesn't exist
         $directory = "documents/{$businessProfile->id()}";
@@ -187,14 +194,21 @@ class PdfGenerationService
             'totals' => $totals,
             'logoPath' => $logoPath,
             'signaturePath' => $signaturePath,
+            'isPdf' => true, // Important flag for PDF-compatible CSS
         ];
 
         \Log::info('Generating PDF with DomPDF');
 
         try {
-            // Generate PDF using DomPDF
+            // Configure DomPDF for better CSS support
             $pdf = Pdf::loadView('bizdocs.pdf.document', $data)
-                ->setPaper('a4', 'portrait');
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                    'enable_php' => true,
+                ]);
 
             $output = $pdf->output();
             

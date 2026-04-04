@@ -29,20 +29,22 @@ class GenerateStationeryUseCase
         }
 
         // Validate documents per page
-        if (!in_array($dto->documentsPerPage, [1, 2, 4])) {
-            throw new \Exception('Documents per page must be 1, 2, or 4');
+        if (!in_array($dto->documentsPerPage, [1, 2, 4, 6, 8, 10])) {
+            throw new \Exception('Documents per page must be 1, 2, 4, 6, 8, or 10');
         }
 
-        // Generate stationery PDF
-        $pdfPath = $this->stationeryGenerator->generate(
+        // Generate stationery PDF and return raw PDF content
+        $pdfContent = $this->stationeryGenerator->generate(
             businessProfile: $businessProfile,
             templateModel: $templateModel,
             documentType: $dto->documentType,
             quantity: $dto->quantity,
             documentsPerPage: $dto->documentsPerPage,
             startingNumber: $dto->startingNumber,
+            pageSize: $dto->pageSize,
+            rowCount: $dto->rowCount,
         );
 
-        return $pdfPath;
+        return $pdfContent;
     }
 }

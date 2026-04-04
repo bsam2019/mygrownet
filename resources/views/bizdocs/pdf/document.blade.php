@@ -24,16 +24,20 @@
             padding-bottom: 20px;
         }
         .header-content {
-            display: table;
             width: 100%;
         }
         .header-left, .header-right {
-            display: table-cell;
-            vertical-align: top;
+            float: left;
             width: 50%;
+            vertical-align: top;
         }
         .header-right {
             text-align: right;
+        }
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
         }
         .company-name {
             font-size: 18pt;
@@ -62,14 +66,13 @@
             text-transform: uppercase;
         }
         .info-grid {
-            display: table;
             width: 100%;
         }
         .info-col {
-            display: table-cell;
-            vertical-align: top;
+            float: left;
             width: 50%;
             padding-right: 20px;
+            vertical-align: top;
         }
         .info-row {
             margin-bottom: 5px;
@@ -132,7 +135,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="header-content">
+            <div class="header-content clearfix">
                 <div class="header-left">
                     @if(isset($logoPath) && $logoPath)
                         <div style="margin-bottom: 10px;">
@@ -158,7 +161,7 @@
 
         <!-- Document Info -->
         <div class="section">
-            <div class="info-grid">
+            <div class="info-grid clearfix">
                 <div class="info-col">
                     <div class="section-title">Bill To</div>
                     <div style="font-weight: bold; margin-bottom: 5px;">{{ $customer->name() }}</div>
@@ -208,7 +211,24 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($document->items() as $item)
+                @php
+                    $items = $document->items();
+                    // Log for debugging
+                    if(function_exists('\Log::info')) {
+                        \Log::info('PDF Items Debug', [
+                            'document_id' => $document->id(),
+                            'items_count' => count($items),
+                            'items_data' => array_map(function($item) {
+                                return [
+                                    'description' => $item->description(),
+                                    'quantity' => $item->quantity(),
+                                    'unit_price' => $item->unitPrice()->amount()
+                                ];
+                            }, $items)
+                        ]);
+                    }
+                @endphp
+                @foreach($items as $index => $item)
                     <tr>
                         <td>{{ $item->description() }}</td>
                         <td class="text-right">{{ number_format($item->quantity(), 2) }}</td>
@@ -217,6 +237,13 @@
                         <td class="text-right">{{ $document->currency() }} {{ number_format($item->calculateLineTotal()->amount() / 100, 2) }}</td>
                     </tr>
                 @endforeach
+                @if(empty($items))
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                            No items found for this document
+                        </td>
+                    </tr>
+                @endif
             </tbody>
         </table>
 
