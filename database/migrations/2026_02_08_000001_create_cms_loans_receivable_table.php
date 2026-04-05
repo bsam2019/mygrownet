@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_loans_receivable', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_loans_receivable')) {
+            Schema::create('cms_loans_receivable', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -53,8 +54,10 @@ return new class extends Migration
             $table->index(['company_id', 'status']);
             $table->index(['status', 'risk_category']);
         });
+        }
 
-        Schema::create('cms_loan_repayments', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_loan_repayments')) {
+            Schema::create('cms_loan_repayments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('loan_id')->constrained('cms_loans_receivable')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -74,8 +77,10 @@ return new class extends Migration
             $table->index('user_id');
             $table->index('payment_date');
         });
+        }
 
-        Schema::create('cms_loan_schedules', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_loan_schedules')) {
+            Schema::create('cms_loan_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('loan_id')->constrained('cms_loans_receivable')->onDelete('cascade');
             $table->integer('installment_number'); // 1, 2, 3, etc.
@@ -93,6 +98,7 @@ return new class extends Migration
             $table->index(['loan_id', 'due_date']);
             $table->index('status');
         });
+        }
     }
 
     /**
