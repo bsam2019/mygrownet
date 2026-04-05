@@ -2,192 +2,151 @@
   <Head>
     <title>{{ ogMeta.title }}</title>
     <meta name="description" :content="ogMeta.description" />
+    <meta property="og:title" :content="ogMeta.title" />
+    <meta property="og:description" :content="ogMeta.description" />
+    <meta property="og:image" :content="ogMeta.image" />
   </Head>
 
-  <div class="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100">
-    <!-- Playful Header with Balloons -->
-    <header class="relative bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500 text-white overflow-hidden">
-      <!-- Floating Balloons Background -->
-      <div class="absolute inset-0 opacity-20">
-        <div class="absolute top-4 left-8 text-6xl animate-bounce">🎈</div>
-        <div class="absolute top-12 right-16 text-5xl animate-bounce" style="animation-delay: 0.2s;">🎉</div>
-        <div class="absolute bottom-8 left-20 text-7xl animate-bounce" style="animation-delay: 0.4s;">🎂</div>
-        <div class="absolute bottom-4 right-12 text-6xl animate-bounce" style="animation-delay: 0.6s;">🎈</div>
-      </div>
-      
-      <div class="max-w-5xl mx-auto px-6 py-16 text-center relative z-10">
-        <div class="text-7xl mb-6 animate-pulse">🎉</div>
-        <h1 class="text-6xl md:text-8xl font-bold mb-4 drop-shadow-lg">
-          {{ celebrationEvent.celebrant_name }}
-        </h1>
-        <p class="text-3xl md:text-4xl mb-6 font-light">is turning {{ celebrationEvent.age }}!</p>
-        <div class="text-7xl mb-4 animate-pulse">🎂</div>
-        <p class="text-xl tracking-wider">
-          {{ formatDate(celebrationEvent.event_date) }}
-        </p>
-      </div>
-      
-      <!-- Confetti Wave -->
-      <div class="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 120" fill="none" class="w-full">
-          <path d="M0 0L60 10C120 20 240 40 360 46.7C480 53 600 47 720 43.3C840 40 960 40 1080 46.7C1200 53 1320 67 1380 73.3L1440 80V120H0V0Z" fill="white"/>
-        </svg>
+  <div class="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white overflow-hidden relative">
+    <!-- Animated Confetti Background -->
+    <div class="fixed inset-0 pointer-events-none">
+      <div class="confetti-piece" style="left: 10%; animation-delay: 0s; background: #FFD700;"></div>
+      <div class="confetti-piece" style="left: 20%; animation-delay: 0.5s; background: #FF69B4;"></div>
+      <div class="confetti-piece" style="left: 30%; animation-delay: 1s; background: #00CED1;"></div>
+      <div class="confetti-piece" style="left: 40%; animation-delay: 1.5s; background: #FF6347;"></div>
+      <div class="confetti-piece" style="left: 50%; animation-delay: 2s; background: #32CD32;"></div>
+      <div class="confetti-piece" style="left: 60%; animation-delay: 2.5s; background: #FFD700;"></div>
+      <div class="confetti-piece" style="left: 70%; animation-delay: 3s; background: #FF69B4;"></div>
+      <div class="confetti-piece" style="left: 80%; animation-delay: 3.5s; background: #00CED1;"></div>
+      <div class="confetti-piece" style="left: 90%; animation-delay: 4s; background: #FF6347;"></div>
+    </div>
+
+    <!-- Festive Hero -->
+    <header class="relative py-20 px-8">
+      <div class="max-w-6xl mx-auto text-center">
+        <!-- Animated Banner -->
+        <div class="mb-8">
+          <div class="inline-block bg-yellow-400 text-purple-900 px-8 py-4 transform rotate-2 hover:rotate-1 transition-transform duration-300">
+            <h1 class="text-2xl font-black tracking-wider">🎉 PARTY TIME! 🎉</h1>
+          </div>
+        </div>
+
+        <!-- Bold Names -->
+        <div class="space-y-6 mb-12">
+          <h2 class="text-6xl md:text-8xl font-black transform -rotate-3 hover:rotate-2 transition-transform duration-300">
+            {{ weddingEvent.groom_name }}
+          </h2>
+          <div class="text-5xl md:text-7xl font-black animate-bounce">
+            💕 + 💕
+          </div>
+          <h3 class="text-6xl md:text-8xl font-black transform rotate-3 hover:rotate-2 transition-transform duration-300">
+            {{ weddingEvent.bride_name }}
+          </h3>
+        </div>
+
+        <!-- Date Badge -->
+        <div class="inline-block bg-white text-purple-600 px-8 py-6 rounded-full transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+          <p class="text-2xl font-black">{{ formatDate(weddingEvent.wedding_date) }}</p>
+          <p class="text-lg font-bold">{{ weddingEvent.venue_name }}</p>
+        </div>
       </div>
     </header>
 
-    <!-- Fun Navigation -->
-    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm shadow-md">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="flex justify-center items-center py-4 gap-4 flex-wrap">
-          <button v-for="tab in navTabs" :key="tab.id"
-             @click="activeTab = tab.id"
-             :class="[
-               'px-6 py-2 rounded-full text-sm font-medium uppercase cursor-pointer transition-all transform hover:scale-105',
-               activeTab === tab.id 
-                 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg' 
-                 : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-             ]">
-            {{ tab.icon }} {{ tab.label }}
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Home Section -->
-    <section v-show="activeTab === 'home'" class="py-16">
-      <div class="max-w-5xl mx-auto px-6">
-        <!-- Hero Image with Fun Border -->
-        <div class="relative mb-16">
-          <div class="absolute -inset-4 bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 rounded-3xl transform rotate-2"></div>
-          <div class="relative bg-white p-3 rounded-3xl shadow-2xl transform -rotate-1">
+    <!-- Dynamic Grid Content -->
+    <section class="relative px-8 py-16">
+      <div class="max-w-7xl mx-auto">
+        <!-- Asymmetrical Grid -->
+        <div class="grid grid-cols-4 gap-6">
+          <!-- Hero Image Block -->
+          <div class="col-span-3 row-span-2 relative group">
+            <div class="absolute -inset-4 bg-yellow-400 rounded-3xl transform rotate-1 group-hover:rotate-0 transition-transform duration-300"></div>
             <img 
-              :src="celebrationEvent.hero_image" 
-              :alt="celebrationEvent.celebrant_name"
-              class="w-full h-[500px] object-cover object-[center_30%] rounded-2xl"
+              :src="weddingEvent.hero_image || '/images/Wedding/main.jpg'" 
+              :alt="`${weddingEvent.bride_name} and ${weddingEvent.groom_name}`"
+              class="w-full h-full object-cover rounded-3xl relative z-10"
             />
+            <!-- Floating Emoji -->
+            <div class="absolute top-4 left-4 text-4xl animate-spin">🎊</div>
+            <div class="absolute bottom-4 right-4 text-4xl animate-bounce">🎈</div>
           </div>
-          <div class="absolute -top-8 -right-8 text-8xl animate-spin-slow">🎈</div>
-          <div class="absolute -bottom-8 -left-8 text-8xl">🎁</div>
-        </div>
 
-        <!-- Countdown with Party Theme -->
-        <div class="bg-gradient-to-r from-purple-200 via-pink-200 to-yellow-200 rounded-3xl p-8 mb-16 shadow-xl border-4 border-white">
-          <div class="text-center mb-6">
-            <span class="text-5xl animate-bounce">🎊</span>
-            <p class="text-3xl font-bold text-purple-900 mt-3">Party Countdown!</p>
+          <!-- Party Details Card -->
+          <div class="col-span-1 row-span-1">
+            <div class="bg-orange-500 rounded-3xl p-6 text-center transform -rotate-2 hover:rotate-0 transition-transform duration-300 h-full">
+              <div class="text-4xl mb-2">📅</div>
+              <h4 class="text-lg font-black mb-2">DATE</h4>
+              <p class="text-sm font-bold">{{ formatDateFull(weddingEvent.wedding_date) }}</p>
+              <p class="text-lg font-black mt-2">{{ weddingEvent.ceremony_time || '6:00 PM' }}</p>
+            </div>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div v-for="unit in countdownUnits" :key="unit.key" class="text-center">
-              <div class="bg-white rounded-2xl p-6 shadow-lg border-4 border-purple-300 transform hover:scale-110 transition-transform">
-                <div class="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  {{ countdown[unit.key] }}
+
+          <!-- Location Card -->
+          <div class="col-span-1 row-span-1">
+            <div class="bg-pink-500 rounded-3xl p-6 text-center transform rotate-2 hover:rotate-0 transition-transform duration-300 h-full">
+              <div class="text-4xl mb-2">📍</div>
+              <h4 class="text-lg font-black mb-2">WHERE</h4>
+              <p class="text-sm font-bold">{{ weddingEvent.venue_name }}</p>
+              <p class="text-xs mt-1">{{ weddingEvent.venue_address }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Party Message -->
+    <section class="relative px-8 py-16">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="bg-yellow-400 text-purple-900 rounded-3xl p-12 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+          <h3 class="text-4xl font-black mb-6">🎉 LET'S CELEBRATE! 🎉</h3>
+          <p class="text-xl font-bold leading-relaxed">
+            Get ready for the party of the year! We're tying the knot and want to celebrate with all our favorite people. 
+            Join us for an evening of love, laughter, and dancing!
+          </p>
+          <div class="mt-8 text-6xl animate-bounce">🥳</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dynamic Gallery Grid -->
+    <section class="relative px-8 py-16">
+      <div class="max-w-6xl mx-auto">
+        <h3 class="text-5xl font-black text-center mb-12 transform -rotate-1">📸 PARTY PHOTOS 📸</h3>
+        
+        <!-- Scattered Grid -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="col-span-2 space-y-4">
+            <div class="relative group transform rotate-1 hover:rotate-0 transition-transform duration-300">
+              <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80" alt="Party 1" class="w-full h-64 object-cover rounded-2xl" />
+              <div class="absolute top-2 right-2 bg-yellow-400 text-purple-900 px-3 py-1 rounded-full text-xs font-black">
+                MAIN EVENT
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="relative group transform -rotate-2 hover:rotate-0 transition-transform duration-300">
+                <img src="https://images.unsplash.com/photo-1519741497674-63548a8048b6?w=600&q=80" alt="Party 2" class="w-full h-40 object-cover rounded-2xl" />
+                <div class="absolute top-2 right-2 bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-black">
+                  DANCE
                 </div>
-                <div class="text-sm tracking-wider uppercase text-purple-700 mt-2 font-semibold">{{ unit.label }}</div>
+              </div>
+              <div class="relative group transform rotate-2 hover:rotate-0 transition-transform duration-300">
+                <img src="https://images.unsplash.com/photo-1522673659358-4054d49d5d0e?w=600&q=80" alt="Party 3" class="w-full h-40 object-cover rounded-2xl" />
+                <div class="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-black">
+                  FUN
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Party Details -->
-        <div class="bg-white rounded-3xl p-10 shadow-xl mb-12 border-4 border-purple-200">
-          <div class="text-center mb-8">
-            <div class="text-6xl mb-4">🎉 🎂 🎉</div>
-            <h2 class="text-4xl font-bold text-purple-900 mb-4">You're Invited!</h2>
-            <p class="text-xl text-gray-700 leading-relaxed max-w-2xl mx-auto">
-              {{ celebrationEvent.invitation_message || `Join us for an unforgettable celebration as ${celebrationEvent.celebrant_name} turns ${celebrationEvent.age}!` }}
-            </p>
-          </div>
-          
-          <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
-              <div class="text-4xl mb-3 text-center">📅</div>
-              <h3 class="text-xl font-bold text-purple-900 mb-2 text-center">When</h3>
-              <p class="text-lg text-gray-700 text-center">{{ formatDateFull(celebrationEvent.event_date) }}</p>
-              <p class="text-purple-600 font-medium text-center mt-1">{{ celebrationEvent.event_time }}</p>
-            </div>
-            
-            <div class="bg-gradient-to-br from-pink-50 to-yellow-50 rounded-2xl p-6 border-2 border-pink-200">
-              <div class="text-4xl mb-3 text-center">📍</div>
-              <h3 class="text-xl font-bold text-pink-900 mb-2 text-center">Where</h3>
-              <p class="text-lg text-gray-700 text-center">{{ celebrationEvent.venue_name }}</p>
-              <p class="text-pink-600 text-sm text-center mt-1">{{ celebrationEvent.venue_address }}</p>
-            </div>
-          </div>
-          
-          <div class="text-center mt-10">
-            <div class="text-5xl mb-4">🎈 🎁 🎈</div>
-            <button 
-              @click="showRSVPModal = true"
-              class="bg-gradient-to-r from-purple-600 via-pink-600 to-yellow-500 text-white px-16 py-5 rounded-full text-xl font-bold uppercase hover:shadow-2xl transform hover:scale-110 transition-all"
-            >
-              🎉 RSVP Now!
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gallery Section -->
-    <section v-show="activeTab === 'gallery'" class="py-16">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-6xl mb-4">📸</div>
-          <h2 class="text-4xl font-bold text-purple-900">Memory Lane</h2>
-        </div>
-        
-        <div v-if="galleryImages.length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-6">
-          <div v-for="(image, index) in galleryImages" :key="index" 
-               class="relative group cursor-pointer transform hover:scale-105 transition-transform">
-            <div class="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity"></div>
-            <div class="relative h-64 rounded-2xl overflow-hidden border-4 border-white shadow-lg">
-              <img :src="image.url" :alt="`Memory ${index + 1}`" class="w-full h-full object-cover" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Details Section -->
-    <section v-show="activeTab === 'details'" class="py-16">
-      <div class="max-w-4xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-6xl mb-4">ℹ️</div>
-          <h2 class="text-4xl font-bold text-purple-900">Party Details</h2>
-        </div>
-        
-        <div class="space-y-6">
-          <div class="bg-white rounded-3xl p-8 shadow-xl border-4 border-purple-200">
-            <div class="flex items-start gap-6">
-              <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-4xl flex-shrink-0">
-                🎵
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold text-purple-900 mb-2">Dress Code</h3>
-                <p class="text-gray-700 text-lg">{{ celebrationEvent.dress_code || 'Come as you are - casual and comfortable!' }}</p>
+          <div class="space-y-4">
+            <div class="relative group transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+              <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80" alt="Party 4" class="w-full h-48 object-cover rounded-2xl" />
+              <div class="absolute top-2 right-2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-black">
+                CELEBRATION
               </div>
             </div>
-          </div>
-          
-          <div class="bg-white rounded-3xl p-8 shadow-xl border-4 border-pink-200">
-            <div class="flex items-start gap-6">
-              <div class="w-20 h-20 bg-gradient-to-br from-pink-400 to-yellow-500 rounded-full flex items-center justify-center text-4xl flex-shrink-0">
-                🍰
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold text-pink-900 mb-2">Food & Drinks</h3>
-                <p class="text-gray-700 text-lg">{{ celebrationEvent.food_info || 'Delicious food and refreshments will be served!' }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div v-if="celebrationEvent.gift_registry" class="bg-white rounded-3xl p-8 shadow-xl border-4 border-yellow-200">
-            <div class="flex items-start gap-6">
-              <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-4xl flex-shrink-0">
-                🎁
-              </div>
-              <div>
-                <h3 class="text-2xl font-bold text-yellow-900 mb-2">Gift Registry</h3>
-                <p class="text-gray-700 text-lg">{{ celebrationEvent.gift_registry }}</p>
+            <div class="relative group transform rotate-2 hover:rotate-0 transition-transform duration-300">
+              <img src="https://images.unsplash.com/photo-1511795409834-04dfd9978b14?w=600&q=80" alt="Party 5" class="w-full h-48 object-cover rounded-2xl" />
+              <div class="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-black">
+                LOVE
               </div>
             </div>
           </div>
@@ -195,46 +154,38 @@
       </div>
     </section>
 
-    <!-- Location Section -->
-    <section v-show="activeTab === 'location'" class="py-16">
-      <div class="max-w-4xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-6xl mb-4">🗺️</div>
-          <h2 class="text-4xl font-bold text-purple-900">Find the Party!</h2>
-        </div>
-        
-        <div class="bg-white rounded-3xl p-8 shadow-xl border-4 border-purple-200 text-center mb-8">
-          <div class="text-5xl mb-4">📍</div>
-          <h3 class="text-2xl font-bold text-purple-900 mb-3">{{ celebrationEvent.venue_name }}</h3>
-          <p class="text-gray-700 text-lg">{{ celebrationEvent.venue_address }}</p>
-        </div>
-        
-        <div class="w-full h-96 rounded-3xl border-4 border-purple-300 shadow-xl overflow-hidden mb-6 relative group cursor-pointer"
-             @click="openGoogleMaps">
-          <div class="absolute inset-0 flex items-center justify-center bg-purple-900/50 group-hover:bg-purple-900/70 transition-colors">
-            <div class="text-center text-white">
-              <div class="text-6xl mb-4">🎈</div>
-              <p class="text-2xl font-bold">Click to view map</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="text-center">
-          <a 
-            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(celebrationEvent.venue_address)}`"
-            target="_blank"
-            class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-12 py-4 rounded-full text-lg font-bold uppercase hover:shadow-2xl transition-all transform hover:scale-105"
+    <!-- Party RSVP -->
+    <section class="relative px-8 py-16">
+      <div class="max-w-md mx-auto text-center">
+        <div class="bg-gradient-to-r from-yellow-400 via-pink-500 to-orange-500 rounded-3xl p-8 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+          <h3 class="text-3xl font-black mb-4">🎉 JOIN THE PARTY! 🎉</h3>
+          <p class="text-lg font-bold mb-6">RSVP by {{ formatDate(weddingEvent.rsvp_deadline) }}</p>
+          
+          <button 
+            @click="showRSVPModal = true"
+            class="w-full bg-white text-purple-600 py-4 rounded-2xl text-xl font-black hover:bg-yellow-300 transition-colors transform hover:scale-105 transition-transform duration-300"
           >
-            🗺️ Get Directions
-          </a>
+            🎊 I'M COMING! 🎊
+          </button>
+          
+          <div class="mt-6 text-4xl animate-bounce">🥳</div>
         </div>
       </div>
     </section>
+
+    <!-- Party Footer -->
+    <footer class="relative py-12 px-8">
+      <div class="text-center">
+        <div class="inline-block bg-yellow-400 text-purple-900 px-8 py-4 rounded-full transform -rotate-2">
+          <p class="text-lg font-black">🎉 {{ formatDate(weddingEvent.wedding_date) }} 🎉</p>
+        </div>
+      </div>
+    </footer>
 
     <!-- RSVP Modal -->
     <RSVPModal 
       :isOpen="showRSVPModal" 
-      :weddingEventId="celebrationEvent.id"
+      :weddingEventId="weddingEvent.id"
       @close="showRSVPModal = false" 
       @submitted="onRSVPSubmitted"
     />
@@ -242,86 +193,76 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import RSVPModal from '@/components/Wedding/RSVPModal.vue'
 
 const props = defineProps({
-  celebrationEvent: Object,
+  weddingEvent: Object,
   template: Object,
   galleryImages: Array,
-  ogMeta: Object,
+  ogMeta: {
+    type: Object,
+    default: () => ({})
+  },
   isPreview: Boolean,
 })
 
-const activeTab = ref('home')
 const showRSVPModal = ref(false)
-const countdown = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-
-const navTabs = [
-  { id: 'home', label: 'Home', icon: '🎉' },
-  { id: 'gallery', label: 'Photos', icon: '📸' },
-  { id: 'details', label: 'Details', icon: 'ℹ️' },
-  { id: 'location', label: 'Location', icon: '📍' },
-]
-
-const countdownUnits = [
-  { key: 'days', label: 'Days' },
-  { key: 'hours', label: 'Hours' },
-  { key: 'minutes', label: 'Minutes' },
-  { key: 'seconds', label: 'Seconds' },
-]
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const formatDateFull = (date) => {
-  return new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-const updateCountdown = () => {
-  const now = new Date().getTime()
-  const eventDate = new Date(props.celebrationEvent.event_date).getTime()
-  const distance = eventDate - now
-
-  if (distance > 0) {
-    countdown.value = {
-      days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-      seconds: Math.floor((distance % (1000 * 60)) / 1000)
-    }
-  }
+  return new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const onRSVPSubmitted = () => {
   showRSVPModal.value = false
 }
-
-const openGoogleMaps = () => {
-  const address = encodeURIComponent(props.celebrationEvent.venue_address)
-  window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank')
-}
-
-let countdownInterval
-onMounted(() => {
-  updateCountdown()
-  countdownInterval = setInterval(updateCountdown, 1000)
-})
-
-onUnmounted(() => {
-  if (countdownInterval) clearInterval(countdownInterval)
-})
 </script>
 
 <style scoped>
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Black+Ops+One&family=Permanent+Marker&display=swap');
+
+.font-black {
+  font-family: 'Black Ops One', cursive;
 }
 
-.animate-spin-slow {
-  animation: spin-slow 20s linear infinite;
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(100vh) rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -229,6 +229,183 @@ class WeddingTemplateSeeder extends Seeder
                     ],
                 ],
             ],
+
+            // NEW PREMIUM TEMPLATES
+            [
+                'name' => 'Minimal',
+                'slug' => 'minimal',
+                'category' => 'wedding',
+                'category_name' => 'Wedding',
+                'category_icon' => '💍',
+                'preview_text' => 'Alex & Jordan',
+                'description' => 'Ultra-minimalist design with vertical sidebar navigation and clean typography. Perfect for modern couples who appreciate simplicity and elegance.',
+                'preview_image' => 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
+                'is_active' => true,
+                'is_premium' => true,
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#1a1a1a',        // Near black
+                        'secondary' => '#4a4a4a',      // Dark gray
+                        'accent' => '#ffffff',         // Pure white
+                        'background' => '#fafafa',     // Off-white
+                    ],
+                    'fonts' => [
+                        'heading' => 'Cormorant Garamond',  // Elegant serif
+                        'body' => 'Karla',                   // Clean sans-serif
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'sidebar',
+                        'navigationStyle' => 'vertical',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'none',
+                        'headerImage' => '/images/Wedding/minimal-hero.jpg',
+                        'borderStyle' => 'minimal',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Magazine',
+                'slug' => 'magazine',
+                'category' => 'wedding',
+                'category_name' => 'Wedding',
+                'category_icon' => '💍',
+                'preview_text' => 'Chris & Taylor',
+                'description' => 'Editorial magazine-style layout with bold typography and striking visuals. Inspired by high-fashion wedding publications.',
+                'preview_image' => 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&q=80',
+                'is_active' => true,
+                'is_premium' => true,
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#000000',        // Pure black
+                        'secondary' => '#e5e5e5',      // Light gray
+                        'accent' => '#d4af37',         // Gold accent
+                        'background' => '#ffffff',     // Pure white
+                    ],
+                    'fonts' => [
+                        'heading' => 'Playfair Display',  // Editorial serif
+                        'body' => 'Lato',                  // Modern sans-serif
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'fullscreen',
+                        'navigationStyle' => 'fixed',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'editorial',
+                        'headerImage' => '/images/Wedding/magazine-hero.jpg',
+                        'borderStyle' => 'bold',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Dark Luxury',
+                'slug' => 'dark-luxury',
+                'category' => 'wedding',
+                'category_name' => 'Wedding',
+                'category_icon' => '💍',
+                'preview_text' => 'Marcus & Isabella',
+                'description' => 'Sophisticated dark theme with luxurious gold accents. Perfect for elegant evening weddings and black-tie affairs.',
+                'preview_image' => 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80',
+                'is_active' => true,
+                'is_premium' => true,
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#1a1a1a',        // Deep charcoal
+                        'secondary' => '#2d2d2d',      // Dark gray
+                        'accent' => '#d4af37',         // Luxe gold
+                        'background' => '#0a0a0a',     // Near black
+                    ],
+                    'fonts' => [
+                        'heading' => 'Cinzel',         // Luxury serif
+                        'body' => 'Montserrat',        // Elegant sans-serif
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'dramatic',
+                        'navigationStyle' => 'floating',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'luxury',
+                        'headerImage' => '/images/Wedding/dark-luxury-hero.jpg',
+                        'borderStyle' => 'ornate-gold',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Flora Classic',
+                'slug' => 'flora-classic',
+                'category' => 'wedding',
+                'category_name' => 'Wedding',
+                'category_icon' => '💍',
+                'preview_text' => 'Robert & Elizabeth',
+                'description' => 'Elegant floral design with ornate frames and classic typography. Perfect for traditional weddings with timeless sophistication.',
+                'preview_image' => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80',
+                'is_active' => true,
+                'is_premium' => false,
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#e11d48',        // Deep rose
+                        'secondary' => '#f43f5e',      // Bright pink
+                        'accent' => '#fef3c7',         // Soft amber
+                        'background' => '#fff7ed',     // Warm cream
+                    ],
+                    'fonts' => [
+                        'heading' => 'Playfair Display',  // Classic serif
+                        'body' => 'Crimson Text',        // Elegant body font
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'floral',
+                        'headerImage' => '/images/Wedding/flora-hero.jpg',
+                        'borderStyle' => 'ornate',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Romantic',
+                'slug' => 'romantic',
+                'category' => 'wedding',
+                'category_name' => 'Wedding',
+                'category_icon' => '💍',
+                'preview_text' => 'Daniel & Sophie',
+                'description' => 'Soft, dreamy design with delicate florals and romantic pastels. Perfect for intimate garden weddings and romantic celebrations.',
+                'preview_image' => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80',
+                'is_active' => true,
+                'is_premium' => false,
+                'settings' => [
+                    'colors' => [
+                        'primary' => '#d4a5a5',        // Dusty rose
+                        'secondary' => '#e8c4c4',      // Blush pink
+                        'accent' => '#f5e6e8',         // Soft pink
+                        'background' => '#fffbf7',     // Warm cream
+                    ],
+                    'fonts' => [
+                        'heading' => 'Dancing Script',  // Romantic script
+                        'body' => 'Lora',               // Elegant serif
+                    ],
+                    'layout' => [
+                        'heroStyle' => 'centered',
+                        'navigationStyle' => 'tabs',
+                        'showCountdown' => true,
+                        'showGallery' => true,
+                    ],
+                    'decorations' => [
+                        'backgroundPattern' => 'floral',
+                        'headerImage' => '/images/Wedding/romantic-hero.jpg',
+                        'borderStyle' => 'delicate',
+                    ],
+                ],
+            ],
         ];
 
         foreach ($templates as $template) {

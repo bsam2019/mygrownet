@@ -7,250 +7,128 @@
     <meta property="og:image" :content="ogMeta.image" />
   </Head>
 
-  <div class="min-h-screen bg-gradient-to-b from-green-50 via-emerald-50 to-green-50">
-    <!-- Nature-Inspired Header -->
-    <header class="relative bg-gradient-to-r from-emerald-700 via-green-600 to-emerald-700 text-white overflow-hidden">
-      <!-- Leaf Pattern Background -->
-      <div class="absolute inset-0 opacity-10">
-        <div class="absolute top-4 left-4 text-6xl">🌿</div>
-        <div class="absolute top-12 right-12 text-4xl">🍃</div>
-        <div class="absolute bottom-8 left-16 text-5xl">🌱</div>
-        <div class="absolute bottom-4 right-8 text-6xl">🌿</div>
+  <div class="min-h-screen bg-white text-black">
+    <!-- Brutalist Hero -->
+    <section class="h-screen flex items-center justify-center relative">
+      <!-- Geometric Background Elements -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-20 left-20 w-32 h-32 border-4 border-black transform rotate-45"></div>
+        <div class="absolute bottom-20 right-20 w-24 h-24 border-2 border-black"></div>
+        <div class="absolute top-1/3 right-1/4 w-16 h-16 bg-black opacity-10"></div>
       </div>
-      
-      <div class="max-w-5xl mx-auto px-6 py-12 text-center relative z-10">
-        <div class="mb-4 text-green-200 text-2xl">🌸</div>
-        <h1 class="text-5xl md:text-7xl mb-2 font-light tracking-wide">
-          {{ weddingEvent.groom_name }}
-        </h1>
-        <div class="text-3xl text-green-300 my-3">&</div>
-        <h1 class="text-5xl md:text-7xl mb-4 font-light tracking-wide">
-          {{ weddingEvent.bride_name }}
-        </h1>
-        <div class="mt-4 text-green-200 text-2xl">🌸</div>
-        <p class="mt-6 text-lg tracking-wider text-green-100">
-          {{ formatDate(weddingEvent.wedding_date) }}
-        </p>
-      </div>
-    </header>
 
-    <!-- Organic Navigation -->
-    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b-2 border-green-200 shadow-sm">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="flex justify-center items-center py-4 gap-6">
-          <a v-for="tab in navTabs" :key="tab.id"
-             @click.prevent="activeTab = tab.id"
-             :class="[
-               'px-4 py-2 rounded-full text-sm tracking-wide uppercase cursor-pointer transition-all',
-               activeTab === tab.id 
-                 ? 'bg-green-600 text-white shadow-md' 
-                 : 'text-green-700 hover:bg-green-100'
-             ]">
-            {{ tab.label }}
-          </a>
+      <!-- Minimal Content -->
+      <div class="text-center space-y-8 z-10">
+        <div class="space-y-4">
+          <h1 class="text-6xl md:text-8xl font-black tracking-tight">
+            {{ weddingEvent.groom_name }}
+          </h1>
+          <div class="text-2xl font-light tracking-widest">&</div>
+          <h2 class="text-6xl md:text-8xl font-black tracking-tight">
+            {{ weddingEvent.bride_name }}
+          </h2>
+        </div>
+        
+        <div class="w-64 h-px bg-black mx-auto"></div>
+        
+        <div class="space-y-2 text-sm font-medium tracking-[0.3em] uppercase">
+          <p>{{ formatDate(weddingEvent.wedding_date) }}</p>
+          <p>{{ weddingEvent.venue_name }}</p>
         </div>
       </div>
-    </nav>
+    </section>
 
-    <!-- Home Section -->
-    <section v-show="activeTab === 'home'" class="py-16">
-      <div class="max-w-5xl mx-auto px-6">
-        <!-- Hero Image with Organic Border -->
-        <div class="relative mb-16">
-          <div class="absolute -inset-3 bg-gradient-to-br from-green-200 to-emerald-200 rounded-3xl transform rotate-1"></div>
-          <div class="relative bg-white p-2 rounded-3xl shadow-xl">
-            <img 
-              :src="weddingEvent.hero_image" 
-              :alt="`${weddingEvent.bride_name} and ${weddingEvent.groom_name}`"
-              class="w-full h-[500px] object-cover object-center rounded-2xl"
-            />
-          </div>
-          <!-- Decorative Leaves -->
-          <div class="absolute -top-6 -left-6 text-6xl">🌿</div>
-          <div class="absolute -bottom-6 -right-6 text-6xl">🍃</div>
+    <!-- Geometric Image Block -->
+    <section class="relative">
+      <div class="grid grid-cols-3 h-96">
+        <div class="col-span-2 bg-black relative overflow-hidden">
+          <img 
+            :src="weddingEvent.hero_image || '/images/Wedding/main.jpg'" 
+            :alt="`${weddingEvent.bride_name} and ${weddingEvent.groom_name}`"
+            class="w-full h-full object-cover opacity-80"
+          />
         </div>
-
-        <!-- Nature-Inspired Countdown -->
-        <div class="bg-gradient-to-r from-green-100 via-emerald-50 to-green-100 rounded-3xl p-8 mb-16 shadow-lg">
-          <div class="text-center mb-6">
-            <span class="text-3xl">🌱</span>
-            <p class="text-2xl text-green-800 mt-2">Growing Together In</p>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div v-for="unit in countdownUnits" :key="unit.key" class="text-center">
-              <div class="bg-white rounded-2xl p-6 shadow-md border-2 border-green-200 hover:border-green-400 transition-colors">
-                <div class="text-4xl font-bold text-green-700">{{ countdown[unit.key] }}</div>
-                <div class="text-sm tracking-wider uppercase text-green-600 mt-2">{{ unit.label }}</div>
-              </div>
-            </div>
+        <div class="bg-white border-l-4 border-black flex items-center justify-center">
+          <div class="text-center space-y-4 p-8">
+            <div class="text-xs font-bold tracking-[0.3em] uppercase">Date</div>
+            <div class="text-lg font-light">{{ formatDateFull(weddingEvent.wedding_date) }}</div>
+            <div class="w-16 h-px bg-black mx-auto"></div>
+            <div class="text-xs font-bold tracking-[0.3em] uppercase">Time</div>
+            <div class="text-lg font-light">{{ weddingEvent.ceremony_time || '6:00 PM' }}</div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <!-- Invitation Text with Botanical Theme -->
-        <div class="text-center max-w-2xl mx-auto mb-12">
-          <div class="mb-6 text-4xl">🌸 🌿 🌸</div>
-          
-          <p class="text-xl text-gray-700 leading-relaxed mb-8">
-            Like two trees growing side by side, our roots have intertwined. Join us as we celebrate our love in the beauty of nature.
-          </p>
-          
-          <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 mb-8">
-            <div class="text-3xl mb-4">🌳</div>
-            <p class="text-2xl text-green-800 mb-3">{{ formatDateFull(weddingEvent.wedding_date) }}</p>
-            <p class="text-green-600 mb-4">{{ weddingEvent.ceremony_time }}</p>
-            <div class="h-px w-24 bg-green-300 mx-auto my-4"></div>
-            <p class="text-xl text-green-700 mb-2">{{ weddingEvent.venue_name }}</p>
-            <p class="text-green-600">{{ weddingEvent.venue_address }}</p>
-            <div class="mt-4 text-2xl">🌿</div>
+    <!-- Negative Space Story -->
+    <section class="py-32 px-16">
+      <div class="max-w-2xl mx-auto">
+        <div class="space-y-16">
+          <!-- Single Statement -->
+          <div class="text-center">
+            <p class="text-2xl font-light leading-relaxed">
+              We invite you to witness the beginning of our forever.
+            </p>
           </div>
-          
-          <div class="mb-8 text-4xl">🌸 🌿 🌸</div>
+
+          <!-- Geometric Divider -->
+          <div class="flex items-center justify-center">
+            <div class="w-24 h-24 border-2 border-black transform rotate-45"></div>
+          </div>
+
+          <!-- Location Info -->
+          <div class="text-center space-y-4">
+            <div class="text-xs font-bold tracking-[0.3em] uppercase">Location</div>
+            <p class="text-lg font-light">{{ weddingEvent.venue_name }}</p>
+            <p class="text-sm text-gray-600">{{ weddingEvent.venue_address }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Brutalist Grid Gallery -->
+    <section class="py-16 px-16">
+      <div class="grid grid-cols-4 gap-4 h-96">
+        <div class="col-span-2 row-span-2 bg-gray-100 relative">
+          <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800&q=80" alt="Gallery 1" class="w-full h-full object-cover" />
+        </div>
+        <div class="bg-black relative">
+          <img src="https://images.unsplash.com/photo-1519741497674-63548a8048b6?w=600&q=80" alt="Gallery 2" class="w-full h-full object-cover opacity-60" />
+        </div>
+        <div class="bg-gray-100 relative">
+          <img src="https://images.unsplash.com/photo-1522673659358-4054d49d5d0e?w=600&q=80" alt="Gallery 3" class="w-full h-full object-cover" />
+        </div>
+        <div class="bg-black relative">
+          <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80" alt="Gallery 4" class="w-full h-full object-cover opacity-40" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Minimal RSVP -->
+    <section class="py-32 px-16">
+      <div class="max-w-md mx-auto text-center">
+        <div class="space-y-8">
+          <div class="space-y-4">
+            <h3 class="text-xs font-bold tracking-[0.3em] uppercase">RSVP</h3>
+            <p class="text-sm text-gray-600">Kindly respond by {{ formatDate(weddingEvent.rsvp_deadline) }}</p>
+          </div>
           
           <button 
             @click="showRSVPModal = true"
-            class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-12 py-4 rounded-full text-lg tracking-wide uppercase hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            class="w-full py-4 bg-black text-white text-sm font-bold tracking-[0.3em] uppercase hover:bg-gray-800 transition-colors"
           >
-            🌱 RSVP Now
+            Confirm Attendance
           </button>
         </div>
       </div>
     </section>
 
-    <!-- Our Story Section -->
-    <section v-show="activeTab === 'story'" class="py-16">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-4xl mb-4">🌸</div>
-          <h2 class="text-4xl text-green-800 mb-2">Growing Together</h2>
-          <div class="text-4xl mt-4">🌿</div>
-        </div>
-        
-        <div class="space-y-12">
-          <!-- How We Met -->
-          <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200">
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <div class="text-3xl mb-4 text-center">🌱</div>
-                <h3 class="text-2xl text-green-800 mb-4 text-center">How We Met</h3>
-                <p class="text-green-700 leading-relaxed">{{ weddingEvent.how_we_met }}</p>
-              </div>
-              <div class="h-64 rounded-2xl border-2 border-green-300 overflow-hidden">
-                <img v-if="weddingEvent.story_image" :src="weddingEvent.story_image" alt="Our story" class="w-full h-full object-cover object-center" />
-              </div>
-            </div>
-          </div>
-          
-          <!-- The Proposal -->
-          <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200">
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-              <div class="order-2 md:order-1 h-64 rounded-2xl border-2 border-green-300 overflow-hidden">
-                <img v-if="galleryImages[0]" :src="galleryImages[0].url" alt="Proposal" class="w-full h-full object-cover object-center" />
-              </div>
-              <div class="order-1 md:order-2">
-                <div class="text-3xl mb-4 text-center">💍</div>
-                <h3 class="text-2xl text-green-800 mb-4 text-center">The Proposal</h3>
-                <p class="text-green-700 leading-relaxed">{{ weddingEvent.proposal_story }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Photo Gallery -->
-          <div v-if="galleryImages.length > 0">
-            <div class="text-center mb-8">
-              <div class="text-4xl mb-4">📸</div>
-              <h3 class="text-2xl text-green-800">Our Journey Together</h3>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div v-for="(image, index) in galleryImages" :key="index" class="h-48 rounded-2xl border-2 border-green-200 overflow-hidden hover:border-green-400 transition-colors">
-                <img :src="image.url" :alt="`Gallery ${index + 1}`" class="w-full h-full object-cover object-center hover:scale-110 transition-transform duration-300" />
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Brutalist Footer -->
+    <footer class="border-t-4 border-black py-8">
+      <div class="text-center">
+        <p class="text-xs font-bold tracking-[0.3em] uppercase">{{ formatDate(weddingEvent.wedding_date) }}</p>
       </div>
-    </section>
-
-    <!-- Program Section -->
-    <section v-show="activeTab === 'program'" class="py-16">
-      <div class="max-w-4xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-4xl mb-4">🌿</div>
-          <h2 class="text-4xl text-green-800 mb-2">Celebration Timeline</h2>
-          <div class="text-4xl mt-4">🌿</div>
-        </div>
-        
-        <div class="space-y-6">
-          <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:shadow-xl transition-shadow">
-            <div class="flex items-center gap-6">
-              <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white text-3xl shadow-lg">
-                🌸
-              </div>
-              <div class="flex-1">
-                <div class="text-sm text-green-600 mb-1">{{ weddingEvent.ceremony_time }}</div>
-                <h3 class="text-2xl text-green-800 mb-2">Ceremony</h3>
-                <p class="text-green-600">{{ weddingEvent.venue_name }}</p>
-                <p class="text-sm text-gray-500">{{ weddingEvent.venue_address }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 hover:shadow-xl transition-shadow">
-            <div class="flex items-center gap-6">
-              <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center text-white text-3xl shadow-lg">
-                🎉
-              </div>
-              <div class="flex-1">
-                <div class="text-sm text-green-600 mb-1">{{ weddingEvent.reception_time }}</div>
-                <h3 class="text-2xl text-green-800 mb-2">Garden Reception</h3>
-                <p class="text-green-600">{{ weddingEvent.reception_venue }}</p>
-                <p class="text-sm text-gray-500">{{ weddingEvent.reception_address }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Location Section -->
-    <section v-show="activeTab === 'location'" class="py-16">
-      <div class="max-w-4xl mx-auto px-6">
-        <div class="text-center mb-12">
-          <div class="text-4xl mb-4">🗺️</div>
-          <h2 class="text-4xl text-green-800 mb-2">Find Us</h2>
-          <div class="text-4xl mt-4">🌿</div>
-        </div>
-        
-        <div class="bg-white rounded-3xl p-8 shadow-lg border-2 border-green-200 text-center mb-8">
-          <div class="text-3xl mb-4">🌳</div>
-          <h3 class="text-2xl text-green-800 mb-3">{{ weddingEvent.venue_name }}</h3>
-          <p class="text-green-600 mb-2">{{ weddingEvent.venue_address }}</p>
-          <div class="mt-4 text-2xl">🌿</div>
-        </div>
-        
-        <div class="w-full h-96 rounded-3xl border-4 border-green-300 shadow-lg overflow-hidden mb-6 relative group cursor-pointer"
-             @click="openGoogleMaps">
-          <div class="absolute inset-0 flex items-center justify-center bg-green-900/50 group-hover:bg-green-900/70 transition-colors">
-            <div class="text-center text-white">
-              <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              <p class="text-lg font-medium">🌿 Click to view map</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="text-center">
-          <a 
-            :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(weddingEvent.venue_address)}`"
-            target="_blank"
-            class="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-10 py-3 rounded-full tracking-wide uppercase hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg"
-          >
-            🌿 Get Directions
-          </a>
-        </div>
-      </div>
-    </section>
+    </footer>
 
     <!-- RSVP Modal -->
     <RSVPModal 
@@ -263,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import RSVPModal from '@/components/Wedding/RSVPModal.vue'
 
@@ -271,67 +149,45 @@ const props = defineProps({
   weddingEvent: Object,
   template: Object,
   galleryImages: Array,
-  ogMeta: Object,
+  ogMeta: {
+    type: Object,
+    default: () => ({})
+  },
   isPreview: Boolean,
 })
 
-const activeTab = ref('home')
 const showRSVPModal = ref(false)
-const countdown = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-
-const navTabs = [
-  { id: 'home', label: 'Home' },
-  { id: 'story', label: 'Our Story' },
-  { id: 'program', label: 'Program' },
-  { id: 'location', label: 'Location' },
-]
-
-const countdownUnits = [
-  { key: 'days', label: 'Days' },
-  { key: 'hours', label: 'Hours' },
-  { key: 'minutes', label: 'Minutes' },
-  { key: 'seconds', label: 'Seconds' },
-]
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const formatDateFull = (date) => {
-  return new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-}
-
-const updateCountdown = () => {
-  const now = new Date().getTime()
-  const weddingDate = new Date(props.weddingEvent.wedding_date).getTime()
-  const distance = weddingDate - now
-
-  if (distance > 0) {
-    countdown.value = {
-      days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-      seconds: Math.floor((distance % (1000 * 60)) / 1000)
-    }
-  }
+  return new Date(date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const onRSVPSubmitted = () => {
   showRSVPModal.value = false
 }
+</script>
 
-const openGoogleMaps = () => {
-  const address = encodeURIComponent(props.weddingEvent.venue_address)
-  window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank')
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&display=swap');
+
+.font-black {
+  font-weight: 900;
 }
 
-let countdownInterval
-onMounted(() => {
-  updateCountdown()
-  countdownInterval = setInterval(updateCountdown, 1000)
-})
-
-onUnmounted(() => {
-  if (countdownInterval) clearInterval(countdownInterval)
-})
-</script>
+.font-light {
+  font-weight: 300;
+}
+</style>
