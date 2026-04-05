@@ -634,7 +634,44 @@ class SiteController extends Controller
 
     public function settings(Request $request, int $id)
     {
-        return response()->json(['message' => 'Settings method - under development']);
+        $user = $request->user();
+
+        // Get the site with relationships
+        $site = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::where('id', $id)
+            ->where('user_id', $user->id)
+            ->with(['pages', 'client'])
+            ->firstOrFail();
+
+        // Prepare site data
+        $siteData = [
+            'id' => $site->id,
+            'name' => $site->name,
+            'subdomain' => $site->slug,
+            'customDomain' => $site->custom_domain,
+            'description' => $site->description,
+            'status' => $site->is_published ? 'published' : 'draft',
+            'plan' => 'free', // TODO: Get actual plan
+            'logo' => $site->logo,
+            'favicon' => $site->favicon,
+            'theme' => $site->theme ?? null,
+            'seoSettings' => [
+                'metaTitle' => $site->seo_title,
+                'metaDescription' => $site->seo_description,
+                'ogImage' => $site->og_image ?? null,
+                'googleAnalyticsId' => $site->google_analytics_id,
+            ],
+            'socialLinks' => $site->social_links ?? null,
+            'contactInfo' => [
+                'phone' => $site->contact_phone,
+                'email' => $site->contact_email,
+                'address' => $site->address,
+            ],
+            'settings' => $site->settings ?? null,
+        ];
+
+        return Inertia::render('GrowBuilder/Sites/Settings', [
+            'site' => $siteData,
+        ]);
     }
 
     public function analytics(Request $request, int $id)
