@@ -8,15 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('bizdocs_user_template_preferences', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('business_id')->constrained('bizdocs_business_profiles')->onDelete('cascade');
-            $table->string('document_type');
-            $table->foreignId('template_id')->constrained('bizdocs_document_templates')->onDelete('cascade');
-            $table->timestamps();
+        if (!Schema::hasTable('bizdocs_user_template_preferences')) {
+            Schema::create('bizdocs_user_template_preferences', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('business_id')->constrained('bizdocs_business_profiles')->onDelete('cascade');
+                $table->string('document_type');
+                $table->foreignId('template_id')->constrained('bizdocs_document_templates')->onDelete('cascade');
+                $table->timestamps();
 
-            $table->unique(['business_id', 'document_type']);
-        });
+                $table->unique(['business_id', 'document_type']);
+            });
+        }
     }
 
     public function down(): void
