@@ -43,6 +43,7 @@
                 justify-content: center;
                 z-index: 9999;
                 transition: opacity 0.5s ease-out;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             }
             
             #app-splash.hidden {
@@ -51,44 +52,45 @@
             }
             
             .splash-logo {
-                width: 160px;
-                height: 160px;
+                width: 120px;
+                height: 120px;
                 background: white;
-                border-radius: 32px;
+                border-radius: 24px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-bottom: 32px;
+                margin-bottom: 24px;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                animation: splash-bounce 1.5s ease-in-out infinite;
-                padding: 24px;
+                animation: splash-bounce 2s ease-in-out infinite;
+                padding: 20px;
             }
             
             .splash-logo img {
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                object-position: center;
             }
             
             .splash-text {
                 color: white;
-                font-size: 32px;
+                font-size: 28px;
                 font-weight: 700;
-                margin-bottom: 16px;
+                margin-bottom: 8px;
                 letter-spacing: -0.5px;
             }
             
             .splash-tagline {
                 color: rgba(255, 255, 255, 0.9);
-                font-size: 16px;
+                font-size: 15px;
                 font-weight: 500;
                 margin-bottom: 48px;
+                text-align: center;
+                max-width: 280px;
             }
             
             .splash-progress-container {
-                width: 240px;
-                height: 4px;
+                width: 200px;
+                height: 3px;
                 background: rgba(255, 255, 255, 0.2);
                 border-radius: 2px;
                 overflow: hidden;
@@ -99,18 +101,18 @@
                 background: white;
                 border-radius: 2px;
                 width: 0%;
-                animation: splash-progress 2s ease-in-out infinite;
+                animation: splash-progress 1.5s ease-in-out infinite;
             }
             
             @keyframes splash-progress {
-                0% { width: 0%; }
-                50% { width: 70%; }
-                100% { width: 100%; }
+                0% { width: 0%; margin-left: 0%; }
+                50% { width: 70%; margin-left: 15%; }
+                100% { width: 100%; margin-left: 0%; }
             }
             
             @keyframes splash-bounce {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-10px); }
+                0%, 100% { transform: translateY(0) scale(1); }
+                50% { transform: translateY(-8px) scale(1.02); }
             }
         </style>
         
