@@ -51,23 +51,24 @@
             }
             
             .splash-logo {
-                width: 120px;
-                height: 120px;
+                width: 160px;
+                height: 160px;
                 background: white;
-                border-radius: 28px;
+                border-radius: 32px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-bottom: 32px;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 animation: splash-bounce 1.5s ease-in-out infinite;
-                padding: 16px;
+                overflow: hidden;
             }
             
             .splash-logo img {
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
+                object-fit: cover;
+                object-position: center;
             }
             
             .splash-text {
@@ -159,7 +160,7 @@
         <!-- Splash Screen -->
         <div id="app-splash">
             <div class="splash-logo">
-                <img src="{{ asset('logo.png') }}" alt="MyGrowNet Logo">
+                <img src="{{ asset('images/icon-maskable-512x512.png') }}" alt="MyGrowNet Logo">
             </div>
             <div class="splash-text">MyGrowNet</div>
             <div class="splash-tagline">Grow Together, Succeed Together</div>

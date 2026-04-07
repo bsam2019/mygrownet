@@ -2,6 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import PWAInstallPrompt from '@/Components/PWAInstallPrompt.vue';
+import PWAInstallButton from '@/Components/PWAInstallButton.vue';
 import { 
     WalletIcon, 
     CubeIcon,
@@ -197,6 +199,9 @@ const handleModuleClick = (module: Module) => {
 <template>
     <AppLayout :is-admin="isAdmin" :is-manager="isManager">
         <Head title="Dashboard" />
+
+        <!-- PWA Install Prompt -->
+        <PWAInstallPrompt />
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col lg:flex-row gap-6">
@@ -672,6 +677,12 @@ const handleModuleClick = (module: Module) => {
                         <!-- Quick Actions -->
                         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Quick Actions</h3>
+                            
+                            <!-- PWA Install Button -->
+                            <div class="mb-3 pb-3 border-b border-gray-100">
+                                <PWAInstallButton />
+                            </div>
+                            
                             <div class="space-y-2">
                                 <Link
                                     href="/wallet"
