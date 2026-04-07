@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('pwa_default_app')->nullable()->after('appearance');
+            $table->string('pwa_default_app')->nullable();
         });
     }
 

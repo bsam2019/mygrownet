@@ -328,7 +328,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Dashboard - Role-based routing (MLM Dashboard)
     Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('pwa.redirect')
+        ->middleware(\App\Http\Middleware\PWARedirect::class)
         ->name('dashboard');
     
     // Tools page
