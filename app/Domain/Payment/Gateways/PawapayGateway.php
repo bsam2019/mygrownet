@@ -14,17 +14,17 @@ use Illuminate\Support\Facades\Log;
 
 class PawapayGateway extends AbstractPaymentGateway
 {
-    private string $apiToken;
-    private string $webhookSecret;
+    private ?string $apiToken;
+    private ?string $webhookSecret;
 
     public function __construct()
     {
-        $this->apiToken = config('services.pawapay.api_token', '');
-        $this->webhookSecret = config('services.pawapay.webhook_secret', '');
+        $this->apiToken = config('services.pawapay.api_token') ?: null;
+        $this->webhookSecret = config('services.pawapay.webhook_secret') ?: null;
         $this->baseUrl = config('services.pawapay.base_url', 'https://api.pawapay.io');
 
         $this->headers = [
-            'Authorization' => 'Bearer ' . $this->apiToken,
+            'Authorization' => 'Bearer ' . ($this->apiToken ?? ''),
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ];
@@ -77,7 +77,7 @@ class PawapayGateway extends AbstractPaymentGateway
     private function getHttpClient(): \Illuminate\Http\Client\PendingRequest
     {
         $client = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiToken,
+            'Authorization' => 'Bearer ' . ($this->apiToken ?? ''),
             'Content-Type' => 'application/json',
         ]);
 
@@ -97,7 +97,7 @@ class PawapayGateway extends AbstractPaymentGateway
     {
         return config('services.pawapay.mock_mode', false) 
             || empty($this->apiToken) 
-            || str_contains($this->apiToken, 'your_');
+            || str_contains($this->apiToken ?? '', 'your_');
     }
 
     public function collect(CollectionRequest $request): CollectionResponse
