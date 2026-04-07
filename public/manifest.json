@@ -85,18 +85,18 @@
       "label": "Dashboard view showing your earnings and network"
     },
     {
-      "src": "/images/screenshots/wallet.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Wallet management and transactions"
-    },
-    {
       "src": "/images/screenshots/network.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Network tree and team overview"
+    },
+    {
+      "src": "/images/screenshots/growbuilder.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "GrowBuilder website management"
     }
   ],
   "shortcuts": [
