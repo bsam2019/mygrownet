@@ -15,8 +15,20 @@ class PWASettingsController extends Controller
     {
         $user = auth()->user();
         
+        // Determine smart default based on user type
+        $smartDefault = null;
+        if ($user->hasRole(['Administrator', 'admin', 'superadmin'])) {
+            $smartDefault = 'admin';
+        } elseif (!is_null($user->lgr_package_id)) {
+            $smartDefault = 'grownet';
+        } else {
+            $smartDefault = 'dashboard';
+        }
+        
         return Inertia::render('settings/PWA', [
             'hasGrowNetPackage' => !is_null($user->lgr_package_id),
+            'isAdmin' => $user->hasRole(['Administrator', 'admin', 'superadmin']),
+            'smartDefault' => $smartDefault,
         ]);
     }
 
@@ -26,16 +38,11 @@ class PWASettingsController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'pwa_default_app' => 'nullable|string|in:grownet,growbuilder,bizboost,growfinance,growbiz,marketplace,wallet',
+            'pwa_default_app' => 'nullable|string|in:grownet,growbuilder,bizboost,growfinance,growbiz,marketplace,wallet,admin,dashboard',
         ]);
 
         $user = auth()->user();
         
-        // Don't allow GrowNet users to change (they're auto-redirected)
-        if (!is_null($user->lgr_package_id)) {
-            return back()->with('error', 'GrowNet members are automatically directed to GrowNet dashboard.');
-        }
-
         $user->pwa_default_app = $request->pwa_default_app;
         $user->save();
 

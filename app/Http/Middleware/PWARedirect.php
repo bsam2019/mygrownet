@@ -35,12 +35,7 @@ class PWARedirect
             return $next($request);
         }
 
-        // Priority 1: Check if user has GrowNet package (auto-redirect to GrowNet)
-        if (!is_null($user->lgr_package_id)) {
-            return redirect('/grownet');
-        }
-
-        // Priority 2: Check user's PWA default app preference
+        // Check if user has set a custom preference
         if ($user->pwa_default_app) {
             $appRoutes = [
                 'grownet' => '/grownet',
@@ -50,6 +45,8 @@ class PWARedirect
                 'growbiz' => '/growbiz',
                 'marketplace' => '/marketplace',
                 'wallet' => '/wallet',
+                'admin' => '/admin/dashboard',
+                'dashboard' => '/dashboard',
             ];
 
             if (isset($appRoutes[$user->pwa_default_app])) {
@@ -57,7 +54,18 @@ class PWARedirect
             }
         }
 
-        // Default: Stay on dashboard
+        // Smart defaults based on user type
+        // Priority 1: Admin users -> Admin dashboard
+        if ($user->hasRole(['Administrator', 'admin', 'superadmin'])) {
+            return redirect('/admin/dashboard');
+        }
+
+        // Priority 2: GrowNet members -> GrowNet dashboard
+        if (!is_null($user->lgr_package_id)) {
+            return redirect('/grownet');
+        }
+
+        // Priority 3: Regular users -> Main dashboard
         return $next($request);
     }
 }

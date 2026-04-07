@@ -6,9 +6,14 @@ const showPrompt = ref(false);
 const deferredPrompt = ref<any>(null);
 
 onMounted(() => {
+    console.log('PWAInstallPrompt mounted');
+    
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        // Already installed as PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    console.log('Is standalone:', isStandalone);
+    
+    if (isStandalone) {
+        console.log('Already installed as PWA, not showing prompt');
         return;
     }
 
@@ -18,39 +23,67 @@ onMounted(() => {
         const dismissedTime = parseInt(dismissed);
         const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
         
+        console.log('Days since dismissed:', daysSinceDismissed);
+        
         // Show again after 7 days
         if (daysSinceDismissed < 7) {
+            console.log('PWA prompt dismissed recently, will show again in', Math.ceil(7 - daysSinceDismissed), 'days');
             return;
+        } else {
+            console.log('Dismissal expired, clearing localStorage');
+            localStorage.removeItem('pwa-install-dismissed');
         }
     }
 
     // Listen for the beforeinstallprompt event
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstall = (e: Event) => {
+        console.log('beforeinstallprompt event fired in PWAInstallPrompt');
         // Prevent the mini-infobar from appearing on mobile
         e.preventDefault();
         // Stash the event so it can be triggered later
         deferredPrompt.value = e;
         // Show our custom install prompt
         showPrompt.value = true;
-    });
+        console.log('Showing custom install prompt');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
     // Listen for successful installation
     window.addEventListener('appinstalled', () => {
+        console.log('PWA installed successfully');
         showPrompt.value = false;
         deferredPrompt.value = null;
+        localStorage.removeItem('pwa-install-dismissed');
     });
+    
+    // Debug: Check if event has already fired
+    setTimeout(() => {
+        if (!deferredPrompt.value) {
+            console.log('beforeinstallprompt has not fired yet. This is normal if:');
+            console.log('1. PWA is already installed');
+            console.log('2. Site is not served over HTTPS');
+            console.log('3. Manifest or service worker has errors');
+            console.log('4. Browser does not support PWA installation');
+        }
+    }, 2000);
 });
 
 const installApp = async () => {
     if (!deferredPrompt.value) {
+        console.error('No deferred prompt available');
         return;
     }
 
+    console.log('Triggering install prompt');
+    
     // Show the install prompt
     deferredPrompt.value.prompt();
 
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.value.userChoice;
+
+    console.log('User choice:', outcome);
 
     if (outcome === 'accepted') {
         console.log('User accepted the install prompt');
@@ -64,6 +97,7 @@ const installApp = async () => {
 };
 
 const dismissPrompt = () => {
+    console.log('User dismissed prompt manually');
     showPrompt.value = false;
     // Remember dismissal for 7 days
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());

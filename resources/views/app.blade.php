@@ -201,7 +201,7 @@
             console.log('Page loading started:', new Date().toISOString());
             console.log('User Agent:', navigator.userAgent);
             
-            // Register Service Worker
+            // Register Service Worker and handle PWA install prompt
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/service-worker.js')
@@ -213,6 +213,13 @@
                         });
                 });
             }
+            
+            // Make sure beforeinstallprompt event can fire
+            console.log('Listening for beforeinstallprompt event...');
+            window.addEventListener('beforeinstallprompt', function(e) {
+                console.log('beforeinstallprompt event captured in app.blade.php');
+                // Don't prevent default here - let Vue components handle it
+            });
             
             // Hide splash screen when Inertia page is loaded
             (function() {

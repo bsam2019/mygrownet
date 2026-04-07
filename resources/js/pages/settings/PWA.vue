@@ -13,10 +13,13 @@ import {
     ClipboardDocumentCheckIcon,
     ShoppingCartIcon,
     WalletIcon,
+    ShieldCheckIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
     hasGrowNetPackage?: boolean;
+    isAdmin?: boolean;
+    smartDefault?: string;
     availableApps?: Array<{
         slug: string;
         name: string;
@@ -27,6 +30,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     hasGrowNetPackage: false,
+    isAdmin: false,
+    smartDefault: 'dashboard',
     availableApps: () => [],
 });
 
@@ -44,6 +49,8 @@ const submit = () => {
 };
 
 const appIcons: Record<string, any> = {
+    'dashboard': GlobeAltIcon,
+    'admin': ShieldCheckIcon,
     'grownet': UsersIcon,
     'growbuilder': GlobeAltIcon,
     'bizboost': SparklesIcon,
@@ -57,50 +64,83 @@ const getAppIcon = (slug: string) => {
     return appIcons[slug] || GlobeAltIcon;
 };
 
-const appOptions = [
-    {
-        slug: null,
-        name: 'Dashboard',
-        description: 'Default dashboard with all apps',
-        icon: 'dashboard'
-    },
-    {
-        slug: 'growbuilder',
-        name: 'GrowBuilder',
-        description: 'Website builder and management',
-        icon: 'growbuilder'
-    },
-    {
-        slug: 'bizboost',
-        name: 'BizBoost',
-        description: 'Business management & marketing',
-        icon: 'bizboost'
-    },
-    {
-        slug: 'growfinance',
-        name: 'GrowFinance',
-        description: 'Accounting & financial management',
-        icon: 'growfinance'
-    },
-    {
-        slug: 'growbiz',
-        name: 'GrowBiz',
-        description: 'Team & employee management',
-        icon: 'growbiz'
-    },
-    {
-        slug: 'marketplace',
-        name: 'GrowMarket',
-        description: 'Shop products & services',
-        icon: 'marketplace'
-    },
-    {
-        slug: 'wallet',
-        name: 'MyGrow Save',
-        description: 'Wallet & transactions',
-        icon: 'wallet'
-    },
-];
+const isSmartDefault = (slug: string | null) => {
+    const normalizedSlug = slug || 'dashboard';
+    return normalizedSlug === props.smartDefault;
+};
+
+const appOptions = computed(() => {
+    const options = [
+        {
+            slug: 'dashboard',
+            name: 'Dashboard',
+            description: 'Main dashboard with all apps',
+            icon: 'dashboard'
+        },
+    ];
+
+    // Add admin option if user is admin
+    if (props.isAdmin) {
+        options.push({
+            slug: 'admin',
+            name: 'Admin Dashboard',
+            description: 'Administrative control panel',
+            icon: 'admin'
+        });
+    }
+
+    // Add GrowNet option if user has package
+    if (props.hasGrowNetPackage) {
+        options.push({
+            slug: 'grownet',
+            name: 'GrowNet',
+            description: 'MLM network & team management',
+            icon: 'grownet'
+        });
+    }
+
+    // Add other apps
+    options.push(
+        {
+            slug: 'growbuilder',
+            name: 'GrowBuilder',
+            description: 'Website builder and management',
+            icon: 'growbuilder'
+        },
+        {
+            slug: 'bizboost',
+            name: 'BizBoost',
+            description: 'Business management & marketing',
+            icon: 'bizboost'
+        },
+        {
+            slug: 'growfinance',
+            name: 'GrowFinance',
+            description: 'Accounting & financial management',
+            icon: 'growfinance'
+        },
+        {
+            slug: 'growbiz',
+            name: 'GrowBiz',
+            description: 'Team & employee management',
+            icon: 'growbiz'
+        },
+        {
+            slug: 'marketplace',
+            name: 'GrowMarket',
+            description: 'Shop products & services',
+            icon: 'marketplace'
+        },
+        {
+            slug: 'wallet',
+            name: 'MyGrow Save',
+            description: 'Wallet & transactions',
+            icon: 'wallet'
+        }
+    );
+
+    return options;
+});
 </script>
 
 <template>
@@ -137,14 +177,26 @@ const appOptions = [
                 </div>
             </Transition>
 
-            <!-- GrowNet Notice -->
-            <div v-if="hasGrowNetPackage" class="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <!-- Smart Default Notice -->
+            <div class="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
                 <div class="flex items-start gap-3">
-                    <UsersIcon class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    <component 
+                        :is="getAppIcon(smartDefault)" 
+                        class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" 
+                        aria-hidden="true" 
+                    />
                     <div>
-                        <p class="text-sm text-blue-800 font-medium">GrowNet Member</p>
+                        <p class="text-sm text-blue-800 font-medium">Smart Default</p>
                         <p class="text-sm text-blue-700 mt-1">
-                            As a GrowNet member, you'll automatically be directed to the GrowNet dashboard when opening the installed app.
+                            <template v-if="smartDefault === 'admin'">
+                                As an admin, your smart default is the Admin Dashboard. You can change this below if needed.
+                            </template>
+                            <template v-else-if="smartDefault === 'grownet'">
+                                As a GrowNet member, your smart default is GrowNet. You can change this below if needed.
+                            </template>
+                            <template v-else>
+                                Your smart default is the main Dashboard. You can change this below if needed.
+                            </template>
                         </p>
                     </div>
                 </div>
@@ -166,7 +218,7 @@ const appOptions = [
                     <div class="space-y-3">
                         <label
                             v-for="app in appOptions"
-                            :key="app.slug || 'dashboard'"
+                            :key="app.slug"
                             class="relative flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all hover:border-indigo-300 hover:bg-indigo-50/50"
                             :class="{
                                 'border-indigo-500 bg-indigo-50': form.pwa_default_app === app.slug,
@@ -177,7 +229,6 @@ const appOptions = [
                                 v-model="form.pwa_default_app"
                                 type="radio"
                                 :value="app.slug"
-                                :disabled="hasGrowNetPackage"
                                 class="sr-only"
                             />
                             
@@ -201,15 +252,23 @@ const appOptions = [
                                 </div>
                                 
                                 <div class="flex-1 min-w-0">
-                                    <p 
-                                        class="font-semibold text-sm"
-                                        :class="{
-                                            'text-indigo-900': form.pwa_default_app === app.slug,
-                                            'text-gray-900': form.pwa_default_app !== app.slug
-                                        }"
-                                    >
-                                        {{ app.name }}
-                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <p 
+                                            class="font-semibold text-sm"
+                                            :class="{
+                                                'text-indigo-900': form.pwa_default_app === app.slug,
+                                                'text-gray-900': form.pwa_default_app !== app.slug
+                                            }"
+                                        >
+                                            {{ app.name }}
+                                        </p>
+                                        <span 
+                                            v-if="isSmartDefault(app.slug)"
+                                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                        >
+                                            Smart Default
+                                        </span>
+                                    </div>
                                     <p 
                                         class="text-xs mt-0.5"
                                         :class="{
@@ -243,7 +302,7 @@ const appOptions = [
                     <div class="mt-6">
                         <button
                             type="submit"
-                            :disabled="form.processing || hasGrowNetPackage"
+                            :disabled="form.processing"
                             class="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ form.processing ? 'Saving...' : 'Save Preference' }}

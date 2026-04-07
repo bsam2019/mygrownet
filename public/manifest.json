@@ -5,7 +5,7 @@
   "description": "Community empowerment and growth platform",
   "lang": "en",
   "dir": "ltr",
-  "start_url": "/dashboard",
+  "start_url": "/dashboard?source=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
