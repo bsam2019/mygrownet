@@ -19,107 +19,138 @@
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color --}}
+        {{-- Inline styles for HTML background + splash screen --}}
         <style>
             html {
                 background-color: oklch(1 0 0);
             }
-
             html.dark {
                 background-color: oklch(0.145 0 0);
             }
-            
-            /* Splash screen for PWA */
+
+            /* ================================================
+               PWA SPLASH SCREEN
+               All rules use !important to survive Tailwind
+               preflight / CSS reset that loads later via Vite
+               ================================================ */
             #app-splash {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-                transition: opacity 0.5s ease-out;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 99999 !important;
+                opacity: 1 !important;
+                transition: opacity 0.5s ease-out !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
             }
-            
-            #app-splash.hidden {
-                opacity: 0;
-                pointer-events: none;
+
+            #app-splash.splash-hiding {
+                opacity: 0 !important;
+                pointer-events: none !important;
             }
-            
-            .splash-logo {
-                width: 120px;
-                height: 120px;
-                background: white;
-                border-radius: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-bottom: 24px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                animation: splash-bounce 2s ease-in-out infinite;
-                padding: 20px;
+
+            #app-splash .splash-logo {
+                width: 120px !important;
+                height: 120px !important;
+                background: white !important;
+                border-radius: 28px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin-bottom: 28px !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+                animation: splashBounce 2.2s ease-in-out infinite !important;
+                overflow: hidden !important;
+                flex-shrink: 0 !important;
             }
-            
-            .splash-logo img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
+
+            #app-splash .splash-logo img {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+                object-fit: contain !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
-            
-            .splash-text {
-                color: white;
-                font-size: 28px;
-                font-weight: 700;
-                margin-bottom: 8px;
-                letter-spacing: -0.5px;
+
+            #app-splash .splash-text {
+                color: #ffffff !important;
+                font-size: 30px !important;
+                font-weight: 700 !important;
+                margin: 0 0 8px 0 !important;
+                padding: 0 !important;
+                letter-spacing: -0.5px !important;
+                line-height: 1.2 !important;
+                text-align: center !important;
             }
-            
-            .splash-tagline {
-                color: rgba(255, 255, 255, 0.9);
-                font-size: 15px;
-                font-weight: 500;
-                margin-bottom: 48px;
-                text-align: center;
-                max-width: 280px;
+
+            #app-splash .splash-tagline {
+                color: rgba(255, 255, 255, 0.85) !important;
+                font-size: 15px !important;
+                font-weight: 500 !important;
+                margin: 0 0 52px 0 !important;
+                padding: 0 16px !important;
+                text-align: center !important;
+                max-width: 280px !important;
+                line-height: 1.5 !important;
             }
-            
-            .splash-progress-container {
-                width: 200px;
-                height: 3px;
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 2px;
-                overflow: hidden;
+
+            #app-splash .splash-progress-container {
+                width: 180px !important;
+                height: 3px !important;
+                background: rgba(255, 255, 255, 0.25) !important;
+                border-radius: 99px !important;
+                overflow: hidden !important;
+                display: block !important;
             }
-            
-            .splash-progress-bar {
-                height: 100%;
-                background: white;
-                border-radius: 2px;
-                width: 0%;
-                animation: splash-progress 1.5s ease-in-out infinite;
+
+            #app-splash .splash-progress-bar {
+                height: 100% !important;
+                background: rgba(255, 255, 255, 0.9) !important;
+                border-radius: 99px !important;
+                width: 0% !important;
+                display: block !important;
+                animation: splashProgress 1.6s ease-in-out infinite !important;
             }
-            
-            @keyframes splash-progress {
-                0% { width: 0%; margin-left: 0%; }
-                50% { width: 70%; margin-left: 15%; }
-                100% { width: 100%; margin-left: 0%; }
+
+            #app-splash .splash-version {
+                position: absolute !important;
+                bottom: 32px !important;
+                color: rgba(255, 255, 255, 0.4) !important;
+                font-size: 12px !important;
+                font-weight: 400 !important;
+                letter-spacing: 0.5px !important;
             }
-            
-            @keyframes splash-bounce {
-                0%, 100% { transform: translateY(0) scale(1); }
-                50% { transform: translateY(-8px) scale(1.02); }
+
+            @keyframes splashProgress {
+                0%   { width: 0%;   margin-left: 0%; }
+                50%  { width: 65%;  margin-left: 17%; }
+                100% { width: 0%;   margin-left: 100%; }
+            }
+
+            @keyframes splashBounce {
+                0%, 100% { transform: translateY(0px) scale(1); }
+                50%       { transform: translateY(-10px) scale(1.03); }
             }
         </style>
-        
+
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="/logo.png">
         <link rel="apple-touch-icon" href="/logo.png">
-        
+
         <!-- PWA Meta Tags -->
         <meta name="theme-color" content="#2563eb">
         <meta name="mobile-web-app-capable" content="yes">
@@ -130,24 +161,21 @@
         <meta name="format-detection" content="telephone=no">
         <meta name="msapplication-TileColor" content="#2563eb">
         <meta name="msapplication-tap-highlight" content="no">
-        
+
         <!-- PWA Manifest -->
         <link rel="manifest" href="/manifest.json">
-        
+
         <!-- Apple Touch Icons -->
         <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-192x192.png">
         <link rel="apple-touch-icon" sizes="152x152" href="/images/icon-152x152.png">
         <link rel="apple-touch-icon" sizes="144x144" href="/images/icon-144x144.png">
         <link rel="apple-touch-icon" sizes="120x120" href="/images/icon-128x128.png">
         <link rel="apple-touch-icon" sizes="114x114" href="/images/icon-128x128.png">
-        <link rel="apple-touch-icon" sizes="76x76" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="72x72" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="60x60" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="57x57" href="/images/icon-72x72.png">
-        
-        <!-- Apple Splash Screens -->
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        
+        <link rel="apple-touch-icon" sizes="76x76"   href="/images/icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="72x72"   href="/images/icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="60x60"   href="/images/icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="57x57"   href="/images/icon-72x72.png">
+
         <!-- Standard Favicon Sizes -->
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-192x192.png">
@@ -162,22 +190,28 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
-        <!-- Splash Screen -->
-        <div id="app-splash">
+
+        {{-- ============================================================
+             SPLASH SCREEN
+             Rendered as first child of <body> so it shows instantly.
+             Tailwind preflight runs later; all styles use !important.
+             ============================================================ --}}
+        <div id="app-splash" aria-hidden="true" role="presentation">
             <div class="splash-logo">
-                <img src="{{ asset('logo.png') }}" alt="MyGrowNet Logo">
+                <img src="{{ asset('logo.png') }}" alt="MyGrowNet">
             </div>
             <div class="splash-text">MyGrowNet</div>
             <div class="splash-tagline">Grow Together, Succeed Together</div>
             <div class="splash-progress-container">
                 <div class="splash-progress-bar"></div>
             </div>
+            <div class="splash-version">v{{ config('app.version', '1.0') }}</div>
         </div>
-        
+
         @inertia
-        
+
         <script>
-            // Mobile error logging
+            // ─── Mobile error logging ───────────────────────────────────────
             window.mobileErrors = [];
             window.addEventListener('error', function(e) {
                 window.mobileErrors.push({
@@ -189,7 +223,6 @@
                 });
                 console.error('Global error:', e.message, e.filename, e.lineno);
             });
-            
             window.addEventListener('unhandledrejection', function(e) {
                 window.mobileErrors.push({
                     message: 'Promise rejection: ' + e.reason,
@@ -197,85 +230,76 @@
                 });
                 console.error('Unhandled promise rejection:', e.reason);
             });
-            
-            // Log page load
+
             console.log('Page loading started:', new Date().toISOString());
             console.log('User Agent:', navigator.userAgent);
-            
-            // Register Service Worker and handle PWA install prompt
+
+            // ─── Service Worker ─────────────────────────────────────────────
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/service-worker.js')
-                        .then(function(registration) {
-                            console.log('ServiceWorker registered:', registration.scope);
-                        })
-                        .catch(function(error) {
-                            console.log('ServiceWorker registration failed:', error);
-                        });
+                        .then(function(reg)  { console.log('SW registered:', reg.scope); })
+                        .catch(function(err) { console.log('SW failed:', err); });
                 });
             }
-            
-            // Make sure beforeinstallprompt event can fire
-            console.log('Listening for beforeinstallprompt event...');
+
+            // ─── PWA install prompt ─────────────────────────────────────────
             window.addEventListener('beforeinstallprompt', function(e) {
-                console.log('beforeinstallprompt event captured in app.blade.php');
-                // Don't prevent default here - let Vue components handle it
+                console.log('beforeinstallprompt captured');
+                // Don't call preventDefault here — let Vue components handle it
             });
-            
-            // Hide splash screen when Inertia page is loaded
+
+            // ─── Splash hide logic ──────────────────────────────────────────
             (function() {
                 var splash = document.getElementById('app-splash');
-                if (!splash) return; // No splash screen for this page
-                
-                var appLoaded = false;
-                var minTimeElapsed = false;
-                
-                // Ensure splash shows for at least 800ms for smooth experience
+                if (!splash) return;
+
+                var appLoaded    = false;
+                var minElapsed   = false;
+                var hideInvoked  = false;
+
+                // Minimum display time so the splash never flickers
+                var MIN_DISPLAY_MS = 900;
+
                 setTimeout(function() {
-                    minTimeElapsed = true;
-                    if (appLoaded) {
-                        hideSplash();
-                    }
-                }, 800);
-                
-                // Listen for Inertia finish event (more reliable than polling)
+                    minElapsed = true;
+                    if (appLoaded) hideSplash();
+                }, MIN_DISPLAY_MS);
+
+                // Primary trigger: Inertia signals the page is ready
                 document.addEventListener('inertia:finish', function() {
                     appLoaded = true;
-                    if (minTimeElapsed) {
-                        hideSplash();
-                    }
+                    if (minElapsed) hideSplash();
                 });
-                
-                // Fallback: also listen for DOMContentLoaded
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Fallback: hide after 3 seconds max
-                    setTimeout(function() {
-                        if (!appLoaded) {
-                            hideSplash();
-                            console.log('Splash hidden by timeout');
-                        }
-                    }, 3000);
+
+                // Secondary fallback: Inertia mounted (fires after Vue mounts)
+                document.addEventListener('inertia:navigate', function() {
+                    appLoaded = true;
+                    if (minElapsed) hideSplash();
                 });
-                
-                function hideSplash() {
-                    if (splash && !splash.classList.contains('hidden')) {
-                        splash.classList.add('hidden');
-                        setTimeout(function() {
-                            if (splash.parentNode) {
-                                splash.remove();
-                                console.log('Splash removed');
-                            }
-                        }, 500);
-                    }
-                }
-                
-                // Emergency fallback: force hide after 5 seconds no matter what
+
+                // Hard fallback: give up after 4 s and show the app anyway
                 setTimeout(function() {
-                    if (splash && splash.parentNode) {
-                        splash.style.display = 'none';
-                        console.log('Splash force-hidden by emergency timeout');
+                    if (!hideInvoked) {
+                        hideSplash();
+                        console.warn('Splash hidden by 4 s hard timeout');
                     }
-                }, 5000);
+                }, 4000);
+
+                function hideSplash() {
+                    if (hideInvoked || !splash) return;
+                    hideInvoked = true;
+
+                    splash.classList.add('splash-hiding');
+
+                    // Remove from DOM after the CSS transition finishes (500 ms)
+                    setTimeout(function() {
+                        if (splash && splash.parentNode) {
+                            splash.parentNode.removeChild(splash);
+                            console.log('Splash removed from DOM');
+                        }
+                    }, 520);
+                }
             })();
         </script>
     </body>
