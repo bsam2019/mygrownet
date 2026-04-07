@@ -17,7 +17,7 @@
         <meta name="msapplication-tap-highlight" content="no">
         
         <!-- PWA Manifest -->
-        <link rel="manifest" href="/growbiz-manifest.json">
+        <link rel="manifest" href="/manifest.json">
         
         <!-- Icons -->
         <link rel="icon" type="image/png" href="/growbiz-assets/icon-192x192.png">

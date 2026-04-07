@@ -141,7 +141,7 @@ const getPeriodText = (tier: PricingTier) => {
         <link rel="apple-touch-icon" sizes="180x180" href="/images/bizboost/icon-192x192.png" />
         
         <!-- PWA -->
-        <link rel="manifest" href="/bizboost-manifest.json" />
+        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#7c3aed" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

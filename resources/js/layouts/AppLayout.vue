@@ -79,9 +79,8 @@ const logout = () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo - Top Left -->
-                    <Link href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <AppLogoIcon class="h-8 w-8" />
-                        <span class="text-xl font-semibold text-gray-900 hidden sm:block">MyGrowNet</span>
+                    <Link href="/" class="flex items-center hover:opacity-80 transition-opacity">
+                        <AppLogoIcon class="h-10 w-10" />
                     </Link>
 
                     <!-- Authenticated User Menu -->

@@ -151,11 +151,44 @@ const formatDuration = (seconds: number) => {
 };
 const formatCurrency = (amount: number) => `K${(amount / 100).toLocaleString('en-ZM', { minimumFractionDigits: 2 })}`;
 
-const maxDailyViews = computed(() => Math.max(...props.dailyStats.map(d => d.views), 1));
+const maxDailyViews = computed(() => {
+    const max = Math.max(...props.dailyStats.map(d => d.views));
+    // Add 20% padding to the top for better visualization
+    return max > 0 ? max * 1.2 : 1;
+});
 
 const getBarHeight = (views: number) => {
-    return (views / maxDailyViews.value) * 100;
+    if (views === 0) return 0;
+    // Ensure minimum visible height for non-zero values
+    const percentage = (views / maxDailyViews.value) * 100;
+    return Math.max(percentage, 2);
 };
+
+// Calculate trend line points using linear regression
+const trendLinePoints = computed(() => {
+    const data = props.dailyStats.map((d, i) => ({ x: i, y: d.views }));
+    const n = data.length;
+    
+    if (n === 0) return { start: 0, end: 0 };
+    
+    // Calculate linear regression
+    const sumX = data.reduce((sum, point) => sum + point.x, 0);
+    const sumY = data.reduce((sum, point) => sum + point.y, 0);
+    const sumXY = data.reduce((sum, point) => sum + point.x * point.y, 0);
+    const sumX2 = data.reduce((sum, point) => sum + point.x * point.x, 0);
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    // Calculate start and end points as percentages
+    const startY = intercept;
+    const endY = slope * (n - 1) + intercept;
+    
+    return {
+        start: (startY / maxDailyViews.value) * 100,
+        end: (endY / maxDailyViews.value) * 100,
+    };
+});
 
 const getDeviceIcon = (device: string) => {
     if (device === 'mobile') return DevicePhoneMobileIcon;
@@ -350,23 +383,67 @@ const avgConversionRate = computed(() => {
 
                 <!-- Views Chart -->
                 <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-8">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Page Views Over Time</h2>
-                    <div class="h-48 flex items-end gap-1">
-                        <div
-                            v-for="(day, index) in dailyStats"
-                            :key="index"
-                            class="flex-1 flex flex-col items-center"
-                        >
-                            <div
-                                class="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600"
-                                :style="{ height: getBarHeight(day.views) + '%', minHeight: day.views > 0 ? '4px' : '0' }"
-                                :title="`${day.date}: ${day.views} views`"
-                            ></div>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold text-gray-900">Page Views Over Time</h2>
+                        <div class="flex items-center gap-4 text-xs">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                                <span class="text-gray-600">Daily Views</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-0.5 bg-emerald-500"></div>
+                                <span class="text-gray-600">Trend</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex justify-between mt-2 text-xs text-gray-400">
-                        <span>{{ dailyStats[0]?.date }}</span>
-                        <span>{{ dailyStats[dailyStats.length - 1]?.date }}</span>
+                    <div class="relative h-48">
+                        <!-- Trend Line -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                            <line
+                                :x1="0"
+                                :y1="`${100 - trendLinePoints.start}%`"
+                                :x2="'100%'"
+                                :y2="`${100 - trendLinePoints.end}%`"
+                                stroke="#10b981"
+                                stroke-width="2"
+                                stroke-dasharray="4 4"
+                                opacity="0.7"
+                            />
+                        </svg>
+                        
+                        <!-- Bars -->
+                        <div class="h-full flex items-end gap-1">
+                            <div
+                                v-for="(day, index) in dailyStats"
+                                :key="index"
+                                class="flex-1 flex flex-col items-center group relative"
+                            >
+                                <!-- Tooltip -->
+                                <div class="absolute bottom-full mb-2 hidden group-hover:block z-10">
+                                    <div class="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
+                                        <div class="font-semibold">{{ new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</div>
+                                        <div class="text-gray-300">{{ formatNumber(day.views) }} views</div>
+                                        <div class="text-gray-300">{{ formatNumber(day.visitors) }} visitors</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bar -->
+                                <div
+                                    class="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all hover:from-blue-600 hover:to-blue-500 cursor-pointer"
+                                    :style="{ 
+                                        height: getBarHeight(day.views) + '%',
+                                        minHeight: day.views > 0 ? '2px' : '0'
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Labels -->
+                    <div class="flex justify-between mt-3 text-xs text-gray-400">
+                        <span>{{ new Date(dailyStats[0]?.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+                        <span>{{ new Date(dailyStats[Math.floor(dailyStats.length / 2)]?.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
+                        <span>{{ new Date(dailyStats[dailyStats.length - 1]?.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }}</span>
                     </div>
                 </div>
 

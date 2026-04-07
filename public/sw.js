@@ -35,7 +35,7 @@ const ASSETS_TO_CACHE = [
   '/bizboost/campaigns',
   '/bizboost/reminders',
   '/bizboost/locations',
-  '/bizboost-manifest.json',
+  '/manifest.json',
   // GrowNet routes
   '/grownet',
   '/grownet/dashboard',
