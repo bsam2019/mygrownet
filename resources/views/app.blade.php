@@ -146,7 +146,6 @@
         <link rel="apple-touch-icon" sizes="57x57" href="/images/icon-72x72.png">
         
         <!-- Apple Splash Screens -->
-        <link rel="apple-touch-startup-image" href="/splash.html" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         
         <!-- Standard Favicon Sizes -->
