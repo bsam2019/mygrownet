@@ -178,6 +178,8 @@ class User extends Authenticatable
         'block_reason',
         'blocked_at',
         'blocked_by',
+        // PWA settings
+        'pwa_default_app',
         // Wallet policy and rewards
         'wallet_policy_accepted',
         'wallet_policy_accepted_at',

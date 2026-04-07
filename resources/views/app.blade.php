@@ -61,13 +61,13 @@
                 margin-bottom: 32px;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 animation: splash-bounce 1.5s ease-in-out infinite;
-                overflow: hidden;
+                padding: 24px;
             }
             
             .splash-logo img {
                 width: 100%;
                 height: 100%;
-                object-fit: cover;
+                object-fit: contain;
                 object-position: center;
             }
             
@@ -143,6 +143,10 @@
         <link rel="apple-touch-icon" sizes="60x60" href="/images/icon-72x72.png">
         <link rel="apple-touch-icon" sizes="57x57" href="/images/icon-72x72.png">
         
+        <!-- Apple Splash Screens -->
+        <link rel="apple-touch-startup-image" href="/splash.html" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        
         <!-- Standard Favicon Sizes -->
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-192x192.png">
@@ -160,7 +164,7 @@
         <!-- Splash Screen -->
         <div id="app-splash">
             <div class="splash-logo">
-                <img src="{{ asset('images/icon-maskable-512x512.png') }}" alt="MyGrowNet Logo">
+                <img src="{{ asset('logo.png') }}" alt="MyGrowNet Logo">
             </div>
             <div class="splash-text">MyGrowNet</div>
             <div class="splash-tagline">Grow Together, Succeed Together</div>

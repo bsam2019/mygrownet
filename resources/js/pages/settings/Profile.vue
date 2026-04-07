@@ -213,6 +213,16 @@ const submit = () => {
                     </svg>
                     <span class="text-sm font-medium text-gray-700">Appearance</span>
                 </Link>
+                <Link
+                    href="/settings/pwa"
+                    class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-center col-span-2"
+                >
+                    <svg class="h-6 w-6 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-700">PWA Settings</span>
+                    <p class="text-xs text-gray-500 mt-1">Configure installed app</p>
+                </Link>
             </div>
         </div>
     </AppLayout>
