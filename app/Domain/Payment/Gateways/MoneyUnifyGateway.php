@@ -26,20 +26,20 @@ use Illuminate\Support\Facades\Log;
  */
 class MoneyUnifyGateway extends AbstractPaymentGateway
 {
-    private string $muid;
+    private ?string $muid;
     private ?MoneyUnifyClient $client = null;
     private bool $mockMode = false;
 
     public function __construct()
     {
         // MoneyUnify uses MUID (MoneyUnify ID) - stored as api_key in config
-        $this->muid = config('services.moneyunify.muid', config('services.moneyunify.api_key', ''));
+        $this->muid = config('services.moneyunify.muid') ?: null;
         $this->baseUrl = config('services.moneyunify.base_url', 'https://api.moneyunify.com/v2');
 
         // Enable mock mode if MUID is not configured or is a placeholder
         $this->mockMode = empty($this->muid) 
-            || str_contains($this->muid, 'your_') 
-            || str_contains($this->muid, '_here');
+            || str_contains($this->muid ?? '', 'your_') 
+            || str_contains($this->muid ?? '', '_here');
 
         $this->headers = [
             'Content-Type' => 'application/json',
@@ -54,7 +54,7 @@ class MoneyUnifyGateway extends AbstractPaymentGateway
     private function getClient(): MoneyUnifyClient
     {
         if ($this->client === null) {
-            $this->client = new MoneyUnifyClient($this->muid);
+            $this->client = new MoneyUnifyClient($this->muid ?? '');
         }
         return $this->client;
     }
