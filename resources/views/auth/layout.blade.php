@@ -265,7 +265,9 @@
 <body>
     <div class="auth-card">
         <div class="auth-header">
-            <div class="auth-logo">🌱</div>
+            <div class="auth-logo">
+                <img src="{{ asset('logo.png') }}" alt="{{ config('app.name') }}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 0.5rem;">
+            </div>
             <h1 class="auth-title">@yield('header-title', config('app.name', 'MyGrowNet'))</h1>
             <p class="auth-subtitle">@yield('header-subtitle')</p>
         </div>

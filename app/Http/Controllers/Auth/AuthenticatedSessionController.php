@@ -83,8 +83,10 @@ class AuthenticatedSessionController extends Controller
      * Redirect logic:
      * - Admin/Administrator role → Admin panel
      * - Active Employee record → Workspace (Employee Portal)
-     * - Member account type → GrowNet dashboard
-     * - Client/Business account type → HomeHub dashboard
+     * - GrowNet members (lgr_package_id set) → GrowNet dashboard
+     * - Non-GrowNet members → HomeHub dashboard (/dashboard)
+     * 
+     * Note: User preferences (pwa_default_app) are handled by PWARedirect middleware
      */
     private function getDefaultRouteForUser($user): string
     {
@@ -106,26 +108,13 @@ class AuthenticatedSessionController extends Controller
             return route('employee.portal.dashboard', absolute: false);
         }
 
-        // Check account type for routing
-        $accountType = $user->getPrimaryAccountType();
-        
-        // Member account type → GrowNet dashboard
-        if ($accountType === \App\Enums\AccountType::MEMBER) {
+        // GrowNet members (users with lgr_package_id) → GrowNet dashboard
+        if (!is_null($user->lgr_package_id)) {
             return route('grownet.dashboard', absolute: false);
         }
-        
-        // Client and Business account types → HomeHub dashboard
-        if ($accountType === \App\Enums\AccountType::CLIENT || 
-            $accountType === \App\Enums\AccountType::BUSINESS) {
-            return route('dashboard', absolute: false);
-        }
-        
-        // Investor account type → Investor portal (if exists) or dashboard
-        if ($accountType === \App\Enums\AccountType::INVESTOR) {
-            return route('dashboard', absolute: false);
-        }
 
-        // Default: go to the app launcher (HomeHub/Dashboard)
+        // Non-GrowNet members → HomeHub dashboard
+        // This includes clients, business accounts, and users without GrowNet membership
         return route('dashboard', absolute: false);
     }
 

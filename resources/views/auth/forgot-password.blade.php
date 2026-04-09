@@ -2,7 +2,7 @@
 
 @section('title', 'Forgot Password')
 @section('header-title', 'Reset Password')
-@section('header-subtitle', 'Enter your email to receive a reset link')
+@section('header-subtitle', 'We\'ll send you a reset link')
 
 @section('content')
     {{-- Success Message --}}
@@ -13,6 +13,13 @@
             </svg>
             <div class="alert-content">
                 <p class="alert-message">{{ session('status') }}</p>
+                <p class="alert-message" style="margin-top: 0.5rem; font-size: 0.8125rem;">
+                    If you don't receive an email within 5 minutes, please contact support:
+                </p>
+                <p style="margin-top: 0.25rem; font-size: 0.8125rem;">
+                    📧 <a href="mailto:support@mygrownet.com" style="color: #065f46; text-decoration: underline;">support@mygrownet.com</a><br>
+                    📱 WhatsApp: <a href="https://wa.me/260779872676" target="_blank" style="color: #065f46; text-decoration: underline;">+260 779 872 676</a>
+                </p>
             </div>
         </div>
     @endif
@@ -30,7 +37,7 @@
     @endif
 
     <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">
-        Forgot your password? No problem. Enter your email address and we'll send you a link to reset it.
+        Enter your email address and we'll send you a link to reset your password.
     </p>
 
     <form method="POST" action="{{ route('password.email') }}" id="forgot-form">
@@ -62,6 +69,18 @@
             </span>
         </button>
     </form>
+
+    {{-- Support Information --}}
+    <div style="margin-top: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+        <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 0.5rem;">
+            <strong style="color: #374151;">Need help?</strong>
+        </p>
+        <p style="font-size: 0.8125rem; color: #6b7280; line-height: 1.6;">
+            If you're unable to reset your password, contact our support team:<br>
+            📧 <a href="mailto:support@mygrownet.com" style="color: #2563eb; text-decoration: none;">support@mygrownet.com</a><br>
+            📱 WhatsApp: <a href="https://wa.me/260779872676" target="_blank" style="color: #2563eb; text-decoration: none;">+260 779 872 676</a>
+        </p>
+    </div>
 @endsection
 
 @section('footer')

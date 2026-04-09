@@ -69,6 +69,6 @@ class Kernel extends HttpKernel
         'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
         'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
         'marketplaceAdmin' => \App\Http\Middleware\MarketplaceAdmin::class,
-        'pwa.redirect' => \App\Http\Middleware\PWARedirect::class,
+        'pwa.redirect' => \App\Http\Middleware\DashboardRedirect::class,
     ];
 }
