@@ -61,32 +61,36 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('growbiz.invitation.pending');
         }
 
-        // Determine the appropriate redirect based on user type
-        $defaultRoute = $this->getDefaultRouteForUser($user);
-
-        // Get intended URL from session
+        // Check if there's an intended URL (e.g., from password reset or deep link)
         $intendedUrl = $request->session()->get('url.intended');
         
         // Validate intended URL - clear it if it's a BizBoost route
         // (BizBoost routes may not exist or user may not have access)
         if ($intendedUrl && str_contains($intendedUrl, '/bizboost')) {
             $request->session()->forget('url.intended');
-            return redirect($defaultRoute);
+            $intendedUrl = null;
         }
 
-        return redirect()->intended($defaultRoute);
+        // If there's a valid intended URL, use it
+        if ($intendedUrl) {
+            return redirect()->intended($this->getDefaultRouteForUser($user));
+        }
+
+        // Otherwise, determine the appropriate redirect based on user preferences and type
+        $defaultRoute = $this->getDefaultRouteForUser($user);
+
+        return redirect($defaultRoute);
     }
 
     /**
-     * Get the default route for a user based on their account type and role.
+     * Get the default route for a user based on their preferences, account type, and role.
      * 
-     * Redirect logic:
-     * - Admin/Administrator role → Admin panel
-     * - Active Employee record → Workspace (Employee Portal)
-     * - GrowNet members (lgr_package_id set) → GrowNet dashboard
-     * - Non-GrowNet members → HomeHub dashboard (/dashboard)
-     * 
-     * Note: User preferences (pwa_default_app) are handled by PWARedirect middleware
+     * Redirect logic (in priority order):
+     * 1. User's custom preference (pwa_default_app setting) - highest priority
+     * 2. Admin/Administrator role → Admin panel
+     * 3. Active Employee record → Workspace (Employee Portal)
+     * 4. GrowNet members (lgr_package_id set) → GrowNet dashboard
+     * 5. Non-GrowNet members → HomeHub dashboard (/dashboard)
      */
     private function getDefaultRouteForUser($user): string
     {
@@ -94,12 +98,32 @@ class AuthenticatedSessionController extends Controller
             return route('dashboard', absolute: false);
         }
 
-        // Admin users go to admin dashboard (check role first)
+        // Priority 1: Check if user has set a custom preference in settings
+        if ($user->pwa_default_app) {
+            $appRoutes = [
+                'grownet' => route('grownet.dashboard', absolute: false),
+                'growbuilder' => route('growbuilder.dashboard', absolute: false),
+                'bizboost' => route('bizboost.dashboard', absolute: false),
+                'growfinance' => route('growfinance.dashboard', absolute: false),
+                'growbiz' => route('growbiz.dashboard', absolute: false),
+                'marketplace' => route('marketplace.index', absolute: false),
+                'wallet' => route('wallet.index', absolute: false),
+                'admin' => route('admin.dashboard', absolute: false),
+                'dashboard' => route('dashboard', absolute: false),
+            ];
+
+            // If user has a valid custom preference, use it
+            if (isset($appRoutes[$user->pwa_default_app])) {
+                return $appRoutes[$user->pwa_default_app];
+            }
+        }
+
+        // Priority 2: Admin users go to admin dashboard (check role)
         if ($user->hasRole('Administrator') || $user->hasRole('admin') || $user->hasRole('superadmin')) {
             return route('admin.dashboard', absolute: false);
         }
 
-        // Check if user has an active employee record → Workspace
+        // Priority 3: Check if user has an active employee record → Workspace
         $hasActiveEmployee = \App\Models\Employee::where('user_id', $user->id)
             ->where('employment_status', 'active')
             ->exists();
@@ -108,12 +132,12 @@ class AuthenticatedSessionController extends Controller
             return route('employee.portal.dashboard', absolute: false);
         }
 
-        // GrowNet members (users with lgr_package_id) → GrowNet dashboard
+        // Priority 4: GrowNet members (users with lgr_package_id) → GrowNet dashboard
         if (!is_null($user->lgr_package_id)) {
             return route('grownet.dashboard', absolute: false);
         }
 
-        // Non-GrowNet members → HomeHub dashboard
+        // Priority 5: Non-GrowNet members → HomeHub dashboard
         // This includes clients, business accounts, and users without GrowNet membership
         return route('dashboard', absolute: false);
     }

@@ -63,9 +63,9 @@ const toggleGrowNetDashboard = async () => {
     await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: newPreference });
     userDashboardPreference.value = newPreference;
     
-    // Redirect to dashboard (single unified dashboard)
+    // Use Inertia router for smooth navigation (no flash screen)
     console.log('Redirecting to dashboard...');
-    window.location.href = '/dashboard';
+    router.visit('/dashboard');
   } catch (error) {
     console.error('Failed to update dashboard preference:', error);
   }
