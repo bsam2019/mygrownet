@@ -106,7 +106,7 @@ class AuthenticatedSessionController extends Controller
                 'bizboost' => route('bizboost.dashboard', absolute: false),
                 'growfinance' => route('growfinance.dashboard', absolute: false),
                 'growbiz' => route('growbiz.dashboard', absolute: false),
-                'marketplace' => route('marketplace.index', absolute: false),
+                'marketplace' => route('marketplace.home', absolute: false),
                 'wallet' => route('wallet.index', absolute: false),
                 'admin' => route('admin.dashboard', absolute: false),
                 'dashboard' => route('dashboard', absolute: false),
