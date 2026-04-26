@@ -90,8 +90,12 @@ class UsageTracking extends Model
     {
         $month = $month ?? now()->format('Y-m');
         
+        // Use database-agnostic date filtering
+        $startOfMonth = $month . '-01 00:00:00';
+        $endOfMonth = date('Y-m-t 23:59:59', strtotime($startOfMonth));
+        
         return self::where('user_id', $userId)
-            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month])
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->count();
     }
 }
