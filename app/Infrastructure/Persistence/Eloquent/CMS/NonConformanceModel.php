@@ -8,35 +8,32 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class DefectModel extends Model
+class NonConformanceModel extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'cms_defects';
+    protected $table = 'cms_non_conformances';
 
     protected $fillable = [
         'company_id',
-        'installation_schedule_id',
-        'job_id',
-        'defect_number',
-        'title',
-        'description',
-        'severity',
-        'location',
-        'reported_by',
+        'ncr_number',
         'reported_date',
+        'job_id',
+        'production_order_id',
+        'inspection_id',
+        'non_conformance_type',
+        'severity',
+        'description',
+        'root_cause',
+        'reported_by',
         'assigned_to',
-        'target_resolution_date',
         'status',
-        'resolved_by',
-        'resolved_date',
-        'resolution_notes',
+        'closed_date',
     ];
 
     protected $casts = [
         'reported_date' => 'date',
-        'target_resolution_date' => 'date',
-        'resolved_date' => 'date',
+        'closed_date' => 'date',
     ];
 
     public function company(): BelongsTo
@@ -44,14 +41,19 @@ class DefectModel extends Model
         return $this->belongsTo(CompanyModel::class, 'company_id');
     }
 
-    public function schedule(): BelongsTo
-    {
-        return $this->belongsTo(InstallationScheduleModel::class, 'installation_schedule_id');
-    }
-
     public function job(): BelongsTo
     {
         return $this->belongsTo(JobModel::class, 'job_id');
+    }
+
+    public function productionOrder(): BelongsTo
+    {
+        return $this->belongsTo(ProductionOrderModel::class, 'production_order_id');
+    }
+
+    public function inspection(): BelongsTo
+    {
+        return $this->belongsTo(QualityInspectionModel::class, 'inspection_id');
     }
 
     public function reportedBy(): BelongsTo
@@ -64,13 +66,8 @@ class DefectModel extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function resolvedBy(): BelongsTo
+    public function correctiveActions(): HasMany
     {
-        return $this->belongsTo(User::class, 'resolved_by');
-    }
-
-    public function photos(): HasMany
-    {
-        return $this->hasMany(DefectPhotoModel::class, 'defect_id');
+        return $this->hasMany(CorrectiveActionModel::class, 'ncr_id');
     }
 }

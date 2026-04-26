@@ -68,4 +68,19 @@ class InstallationScheduleModel extends Model
     {
         return $this->hasMany(SiteVisitModel::class, 'installation_schedule_id');
     }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(InstallationPhotoModel::class, 'installation_schedule_id');
+    }
+
+    public function signoff(): HasMany
+    {
+        return $this->hasMany(CustomerSignoffModel::class, 'installation_schedule_id');
+    }
+
+    public function defects(): HasMany
+    {
+        return $this->hasMany(DefectModel::class, 'installation_schedule_id');
+    }
 }

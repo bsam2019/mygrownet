@@ -5,25 +5,20 @@ namespace App\Infrastructure\Persistence\Eloquent\CMS;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SiteVisitModel extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'cms_site_visits';
 
     protected $fillable = [
-        'company_id',
         'installation_schedule_id',
-        'job_id',
-        'visit_number',
         'visit_date',
+        'visit_type',
         'arrival_time',
         'departure_time',
-        'visit_type',
-        'status',
-        'visited_by',
-        'purpose',
-        'findings',
         'work_performed',
         'issues_encountered',
         'next_steps',
@@ -33,24 +28,9 @@ class SiteVisitModel extends Model
         'visit_date' => 'date',
     ];
 
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(CompanyModel::class, 'company_id');
-    }
-
-    public function installationSchedule(): BelongsTo
+    public function schedule(): BelongsTo
     {
         return $this->belongsTo(InstallationScheduleModel::class, 'installation_schedule_id');
-    }
-
-    public function job(): BelongsTo
-    {
-        return $this->belongsTo(JobModel::class, 'job_id');
-    }
-
-    public function visitedByUser(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\User::class, 'visited_by');
     }
 
     public function photos(): HasMany
@@ -63,13 +43,8 @@ class SiteVisitModel extends Model
         return $this->hasMany(InstallationChecklistResponseModel::class, 'site_visit_id');
     }
 
-    public function signoff(): HasOne
+    public function signoff(): HasMany
     {
-        return $this->hasOne(CustomerSignoffModel::class, 'site_visit_id');
-    }
-
-    public function defects(): HasMany
-    {
-        return $this->hasMany(DefectModel::class, 'site_visit_id');
+        return $this->hasMany(CustomerSignoffModel::class, 'site_visit_id');
     }
 }
