@@ -58,6 +58,7 @@ import { useDragUpload } from './composables/useDragUpload';
 import { useClipboard } from './composables/useClipboard';
 import { useAIContext } from './composables/useAIContext';
 import { useImageOptimization } from './composables/useImageOptimization';
+import { useAIActions } from './composables/useAIActions';
 
 // AI Components
 import AIFloatingButton from './components/ai/AIFloatingButton.vue';
@@ -260,6 +261,26 @@ const toast = useToast();
 const history = useHistory({ maxHistory: 50 });
 const { copySection, cutSection, pasteSection, hasClipboard, clipboardType } = useClipboard();
 const { optimizeImage, optimizeLogo, formatFileSize, isImage, needsOptimization } = useImageOptimization();
+
+// AI Actions - Phase 1 Enhancement
+const {
+    context: aiSessionContext,
+    conversation: aiConversation,
+    loading: aiLoading,
+    error: aiError,
+    pendingActions: aiPendingActions,
+    autoApplyActions,
+    confirmationActions,
+    hasPendingActions,
+    isContextLoaded,
+    loadContext: loadAIContext,
+    updateContext: updateAIContext,
+    sendMessage: sendAIMessage,
+    applyAction: applyAIAction,
+    applyAllActions: applyAllAIActions,
+    dismissAction: dismissAIAction,
+    clearConversation: clearAIConversation,
+} = useAIActions(props.site.id);
 
 // AI Context - provides site/page awareness to AI assistant
 const siteRef = computed(() => props.site);
@@ -531,6 +552,19 @@ watch(previewMode, (newMode) => {
         previewWidth.value = 1024;
     }
 });
+
+// Watch active page and update AI context (Phase 1)
+watch(activePage, (newPage) => {
+    if (newPage && isContextLoaded.value) {
+        updateAIContext('current_page', {
+            id: newPage.id,
+            title: newPage.title,
+            section_count: sections.value.length,
+        }).catch(err => {
+            console.warn('Failed to update AI context:', err);
+        });
+    }
+}, { deep: true });
 
 // ============================================
 // Computed
@@ -2140,6 +2174,11 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeyboardShortcuts);
     // Attach drag-to-upload to the canvas area
     dragUpload.attachGlobal();
+    
+    // Initialize AI session context (Phase 1)
+    loadAIContext().catch(err => {
+        console.warn('Failed to load AI context:', err);
+    });
     
     // Check if onboarding should be shown (check database first, fallback to localStorage)
     if (!props.site.onboarding_completed) {

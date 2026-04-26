@@ -1,6 +1,5 @@
 <template>
-  <CMSLayout title="Attendance Records">
-    <div class="space-y-6">
+  <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
@@ -155,7 +154,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="records.data.length === 0" class="text-center py-12">
+        <div v-if="!records?.data || records.data.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -164,7 +163,6 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
 </template>
 
 <script setup lang="ts">
@@ -173,10 +171,11 @@ import { Link, router } from '@inertiajs/vue3';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
-})
+  layout: CMSLayout,
+});
 
 interface Props {
+  title?: string;
   records: {
     data: any[];
     links?: any[];

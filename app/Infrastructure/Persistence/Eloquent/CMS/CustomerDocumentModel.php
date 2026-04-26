@@ -22,6 +22,8 @@ class CustomerDocumentModel extends Model
         'file_size' => 'integer',
     ];
 
+    protected $appends = ['download_url'];
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(CustomerModel::class, 'customer_id');
@@ -43,5 +45,32 @@ class CustomerDocumentModel extends Model
             return number_format($bytes / 1024, 2) . ' KB';
         }
         return $bytes . ' bytes';
+    }
+
+    /**
+     * Generate presigned download URL for S3 files
+     * Valid for 1 hour
+     */
+    public function getDownloadUrlAttribute(): string
+    {
+        // If file_path starts with /storage/, it's an old local file
+        if (str_starts_with($this->file_path, '/storage/')) {
+            return $this->file_path;
+        }
+
+        // Otherwise, it's an S3 key - generate presigned URL
+        try {
+            return \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl(
+                $this->file_path,
+                now()->addHour()
+            );
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate presigned URL for customer document', [
+                'document_id' => $this->id,
+                's3_key' => $this->file_path,
+                'error' => $e->getMessage(),
+            ]);
+            return '#';
+        }
     }
 }

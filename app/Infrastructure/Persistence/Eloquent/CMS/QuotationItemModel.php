@@ -17,14 +17,17 @@ class QuotationItemModel extends Model
         'tax_rate',
         'discount_rate',
         'line_total',
+        'dimensions',
+        'dimensions_value',
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
-        'unit_price' => 'decimal:2',
-        'tax_rate' => 'decimal:2',
-        'discount_rate' => 'decimal:2',
-        'line_total' => 'decimal:2',
+        'quantity'         => 'decimal:2',
+        'unit_price'       => 'decimal:2',
+        'tax_rate'         => 'decimal:2',
+        'discount_rate'    => 'decimal:2',
+        'line_total'       => 'decimal:2',
+        'dimensions_value' => 'decimal:4',
     ];
 
     public function quotation(): BelongsTo

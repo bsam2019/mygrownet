@@ -30,7 +30,7 @@ export function usePWA() {
         }
 
         try {
-            const reg = await navigator.serviceWorker.register('/cms-sw.js', {
+            const reg = await navigator.serviceWorker.register('/service-worker.js', {
                 scope: '/cms/',
             });
 
@@ -43,11 +43,15 @@ export function usePWA() {
                 if (newWorker) {
                     newWorker.addEventListener('statechange', () => {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // New service worker available
-                            if (confirm('New version available! Reload to update?')) {
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                window.location.reload();
-                            }
+                            // Fire a custom event — the UI layer handles the toast/banner
+                            window.dispatchEvent(new CustomEvent('pwa:update-available', {
+                                detail: {
+                                    apply: () => {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            }));
                         }
                     });
                 }

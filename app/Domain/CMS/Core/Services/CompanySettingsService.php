@@ -85,6 +85,20 @@ class CompanySettingsService
             'send_payment_confirmations' => false,
             'send_payment_reminders' => false,
         ],
+        'document_defaults' => [
+            'quotation' => [
+                'notes' => '',
+                'terms' => '',
+            ],
+            'invoice' => [
+                'notes' => '',
+                'terms' => '',
+            ],
+            'receipt' => [
+                'notes' => '',
+                'terms' => '',
+            ],
+        ],
     ];
 
     public function getSettings(int $companyId): array
@@ -134,6 +148,67 @@ class CompanySettingsService
     public function updateNotificationSettings(int $companyId, array $notificationSettings): CompanyModel
     {
         return $this->updateSettings($companyId, ['notifications' => $notificationSettings]);
+    }
+
+    public function updateDocumentDefaults(int $companyId, array $defaults): CompanyModel
+    {
+        return $this->updateSettings($companyId, ['document_defaults' => $defaults]);
+    }
+
+    public function getDocumentDefaults(int $companyId, string $type = 'quotation'): array
+    {
+        $settings = $this->getSettings($companyId);
+        $defaults = $settings['document_defaults'] ?? self::DEFAULT_SETTINGS['document_defaults'];
+
+        // Support both old flat format and new per-type format
+        if (isset($defaults['notes']) && !isset($defaults[$type])) {
+            return ['notes' => $defaults['notes'] ?? '', 'terms' => $defaults['terms'] ?? ''];
+        }
+
+        return $defaults[$type] ?? ['notes' => '', 'terms' => ''];
+    }
+
+    public function uploadSignature(int $companyId, $file): string
+    {
+        $company = CompanyModel::findOrFail($companyId);
+        $settings = $company->settings ?? [];
+
+        // Delete old signature if exists
+        if (!empty($settings['signature_image'])) {
+            $old = $settings['signature_image'];
+            if (\Storage::disk('s3')->exists($old)) {
+                \Storage::disk('s3')->delete($old);
+            }
+        }
+
+        $uuid     = \Illuminate\Support\Str::uuid();
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientOriginalName());
+        $s3Key    = "cms/companies/{$companyId}/signature/{$uuid}_{$filename}";
+
+        \Storage::disk('s3')->put(
+            $s3Key,
+            file_get_contents($file->getRealPath()),
+            ['ContentType' => $file->getClientMimeType(), 'visibility' => 'public']
+        );
+
+        $settings['signature_image'] = $s3Key;
+        $company->update(['settings' => $settings]);
+
+        return $s3Key;
+    }
+
+    public function deleteSignature(int $companyId): void
+    {
+        $company  = CompanyModel::findOrFail($companyId);
+        $settings = $company->settings ?? [];
+
+        if (!empty($settings['signature_image'])) {
+            if (\Storage::disk('s3')->exists($settings['signature_image'])) {
+                \Storage::disk('s3')->delete($settings['signature_image']);
+            }
+            $settings['signature_image'] = null;
+            $company->update(['settings' => $settings]);
+        }
     }
 
     public function resetToDefaults(int $companyId): CompanyModel
@@ -206,23 +281,57 @@ class CompanySettingsService
         $company = CompanyModel::findOrFail($companyId);
         
         // Delete old logo if exists
-        if ($company->logo_path && \Storage::disk('public')->exists($company->logo_path)) {
-            \Storage::disk('public')->delete($company->logo_path);
+        if ($company->logo_path) {
+            // Check if it's an old local file
+            if (str_starts_with($company->logo_path, 'cms/logos/')) {
+                if (\Storage::disk('public')->exists($company->logo_path)) {
+                    \Storage::disk('public')->delete($company->logo_path);
+                }
+            } else {
+                // It's an S3 key
+                if (\Storage::disk('s3')->exists($company->logo_path)) {
+                    \Storage::disk('s3')->delete($company->logo_path);
+                }
+            }
         }
         
-        // Store new logo
-        $path = $file->store('cms/logos', 'public');
-        $company->update(['logo_path' => $path]);
+        // Generate S3 key
+        $filename = $file->getClientOriginalName();
+        $sanitizedFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($filename));
+        $uuid = \Illuminate\Support\Str::uuid();
+        $s3Key = "cms/companies/{$companyId}/logo/{$uuid}_{$sanitizedFilename}";
         
-        return $path;
+        // Store new logo to S3 (DigitalOcean Spaces)
+        \Storage::disk('s3')->put(
+            $s3Key,
+            file_get_contents($file->getRealPath()),
+            [
+                'ContentType' => $file->getClientMimeType(),
+                'visibility' => 'public',
+            ]
+        );
+        
+        $company->update(['logo_path' => $s3Key]);
+        
+        return $s3Key;
     }
 
     public function deleteLogo(int $companyId): void
     {
         $company = CompanyModel::findOrFail($companyId);
         
-        if ($company->logo_path && \Storage::disk('public')->exists($company->logo_path)) {
-            \Storage::disk('public')->delete($company->logo_path);
+        if ($company->logo_path) {
+            // Check if it's an old local file
+            if (str_starts_with($company->logo_path, 'cms/logos/')) {
+                if (\Storage::disk('public')->exists($company->logo_path)) {
+                    \Storage::disk('public')->delete($company->logo_path);
+                }
+            } else {
+                // It's an S3 key
+                if (\Storage::disk('s3')->exists($company->logo_path)) {
+                    \Storage::disk('s3')->delete($company->logo_path);
+                }
+            }
         }
         
         $company->update(['logo_path' => null]);

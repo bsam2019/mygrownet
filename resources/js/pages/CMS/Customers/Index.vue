@@ -110,10 +110,11 @@
               Showing {{ customers.from }} to {{ customers.to }} of {{ customers.total }} customers
             </div>
             <div class="flex gap-2">
-              <Link
+              <component
+                :is="link.url ? Link : 'span'"
                 v-for="link in customers.links"
                 :key="link.label"
-                :href="link.url"
+                :href="link.url || undefined"
                 :class="[
                   'px-3 py-1 rounded',
                   link.active

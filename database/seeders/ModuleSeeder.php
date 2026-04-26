@@ -611,6 +611,41 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Material Planning - Construction/Aluminium Module - Slate
+            [
+                'id' => 'material-planning',
+                'name' => 'Material Planning',
+                'slug' => 'material-planning',
+                'category' => 'sme',
+                'description' => 'Plan materials for jobs, create purchase orders, track costs and variances. Essential for construction and aluminium fabrication businesses.',
+                'icon' => '📦',
+                'color' => '#64748B', // Slate
+                'thumbnail' => null,
+                'account_types' => json_encode(['business']),
+                'required_roles' => null,
+                'min_user_level' => null,
+                'routes' => json_encode([
+                    'integrated' => '/cms/materials',
+                    'standalone' => '/cms/materials',
+                ]),
+                'pwa_config' => json_encode(['enabled' => false, 'installable' => false, 'offline_capable' => false]),
+                'features' => json_encode([
+                    'material_library' => true,
+                    'job_planning' => true,
+                    'purchase_orders' => true,
+                    'cost_tracking' => true,
+                    'price_history' => true,
+                    'templates' => true,
+                    'variance_analysis' => true,
+                    'auto_enable_with' => ['aluminium_fabrication', 'construction'], // Auto-enable with these industry types
+                ]),
+                'subscription_tiers' => null,
+                'requires_subscription' => false,
+                'version' => '1.0.0',
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
             // LifePlus - Daily Life Companion App - Emerald/Teal
             // FREE for members with active subscriptions, PAID for clients/business users
             // Core starter kit product that justifies MLM membership

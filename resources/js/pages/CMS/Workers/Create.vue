@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import CMSLayout from '@/Layouts/CMSLayout.vue'
 import FormInput from '@/components/CMS/FormInput.vue'
 import FormSelect from '@/components/CMS/FormSelect.vue'
 import FormSection from '@/components/CMS/FormSection.vue'
+import { toast } from '@/utils/bizboost-toast'
 
 defineOptions({
   layout: CMSLayout
@@ -15,6 +17,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const STORAGE_KEY = 'cms_worker_create_draft'
+const lastSaved = ref<Date | null>(null)
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
 
 const form = useForm({
   // Basic Info
@@ -95,8 +101,81 @@ const paymentMethods = [
   { value: 'bank_transfer', label: 'Bank Transfer' },
 ]
 
+// Load saved draft on mount
+onMounted(() => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      const data = JSON.parse(saved)
+      Object.assign(form, data.formData)
+      lastSaved.value = new Date(data.timestamp)
+      toast.info('Draft restored', 'Your previous work has been restored')
+    } catch (e) {
+      console.error('Failed to restore draft:', e)
+    }
+  }
+})
+
+// Auto-save to localStorage with debounce
+watch(
+  () => form.data(),
+  (newData) => {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout)
+    }
+    
+    saveTimeout = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          formData: newData,
+          timestamp: new Date().toISOString()
+        }))
+        lastSaved.value = new Date()
+      } catch (e) {
+        console.error('Failed to save draft:', e)
+      }
+    }, 1000) // Save 1 second after user stops typing
+  },
+  { deep: true }
+)
+
+// Clear timeout on unmount
+onBeforeUnmount(() => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+})
+
 const submit = () => {
-  form.post(route('cms.payroll.workers.store'))
+  form.post(route('cms.payroll.workers.store'), {
+    onSuccess: () => {
+      // Clear draft on successful submission
+      localStorage.removeItem(STORAGE_KEY)
+      toast.success('Worker created', 'The worker has been added successfully')
+    },
+    onError: () => {
+      toast.error('Creation failed', 'Please check the form and try again')
+    }
+  })
+}
+
+const clearDraft = () => {
+  if (confirm('Are you sure you want to clear the saved draft?')) {
+    localStorage.removeItem(STORAGE_KEY)
+    lastSaved.value = null
+    toast.success('Draft cleared', 'Saved data has been removed')
+  }
+}
+
+const formatLastSaved = () => {
+  if (!lastSaved.value) return ''
+  const now = new Date()
+  const diff = Math.floor((now.getTime() - lastSaved.value.getTime()) / 1000)
+  
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
+  return lastSaved.value.toLocaleDateString()
 }
 </script>
 
@@ -112,8 +191,25 @@ const submit = () => {
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
           Back to Workers
         </button>
-        <h1 class="text-2xl font-bold text-gray-900">Add Worker</h1>
-        <p class="mt-1 text-sm text-gray-500">Register a new worker or contractor to your team</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Add Worker</h1>
+            <p class="mt-1 text-sm text-gray-500">Register a new worker or contractor to your team</p>
+          </div>
+          <div v-if="lastSaved" class="flex items-center gap-3">
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Auto-saved {{ formatLastSaved() }}</p>
+              <button
+                @click="clearDraft"
+                type="button"
+                class="text-xs text-red-600 hover:text-red-700 font-medium"
+              >
+                Clear draft
+              </button>
+            </div>
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+        </div>
       </div>
 
       <form @submit.prevent="submit" class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">

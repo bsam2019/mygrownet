@@ -19,7 +19,7 @@ class TrainingController extends Controller
 
     public function programs(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $programs = TrainingProgramModel::where('company_id', $companyId)
             ->with(['creator', 'sessions'])
@@ -62,7 +62,7 @@ class TrainingController extends Controller
         ]);
 
         $program = $this->trainingService->createProgram(
-            $request->user()->company_id,
+            $request->user()->cmsUser->company_id,
             array_merge($validated, ['created_by' => $request->user()->id])
         );
 
@@ -72,7 +72,7 @@ class TrainingController extends Controller
 
     public function sessions(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $sessions = TrainingSessionModel::whereHas('program', function ($query) use ($companyId) {
             $query->where('company_id', $companyId);
@@ -92,7 +92,7 @@ class TrainingController extends Controller
 
     public function skills(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $skills = SkillModel::where('company_id', $companyId)
             ->when($request->search, function ($query, $search) {
@@ -112,7 +112,7 @@ class TrainingController extends Controller
 
     public function certifications(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $certifications = CertificationModel::whereHas('worker', function ($query) use ($companyId) {
             $query->where('company_id', $companyId);

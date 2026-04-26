@@ -138,15 +138,28 @@ class CustomerController extends Controller
         $file = $request->file('file');
         $companyId = $request->user()->cmsUser->company_id;
         
-        // Store file
-        $path = $file->store("cms/companies/{$companyId}/customers/{$customer->id}/documents", 'public');
+        // Generate S3 key following the same pattern as GrowStorage
+        $filename = $file->getClientOriginalName();
+        $sanitizedFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($filename));
+        $uuid = \Illuminate\Support\Str::uuid();
+        $s3Key = "cms/companies/{$companyId}/customers/{$customer->id}/documents/{$uuid}_{$sanitizedFilename}";
+        
+        // Store file to S3 (DigitalOcean Spaces)
+        \Illuminate\Support\Facades\Storage::disk('s3')->put(
+            $s3Key,
+            file_get_contents($file->getRealPath()),
+            [
+                'ContentType' => $file->getClientMimeType(),
+                'visibility' => 'private',
+            ]
+        );
         
         // Create document record
         $customer->documents()->create([
             'company_id' => $companyId,
             'document_type' => $request->document_type,
             'file_name' => $file->getClientOriginalName(),
-            'file_path' => '/storage/' . $path,
+            'file_path' => $s3Key, // Store S3 key instead of public path
             'file_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
             'description' => $request->description,

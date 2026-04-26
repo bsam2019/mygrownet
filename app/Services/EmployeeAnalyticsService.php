@@ -297,9 +297,20 @@ class EmployeeAnalyticsService
 
     private function getAverageTenure(): float
     {
-        return EmployeeModel::where('employment_status', 'active')
-            ->selectRaw('AVG(DATEDIFF(CURDATE(), hire_date) / 365.25) as avg_tenure')
-            ->value('avg_tenure') ?? 0;
+        $employees = EmployeeModel::where('employment_status', 'active')
+            ->whereNotNull('hire_date')
+            ->select('hire_date')
+            ->get();
+
+        if ($employees->isEmpty()) {
+            return 0;
+        }
+
+        $totalYears = $employees->sum(function ($employee) {
+            return Carbon::parse($employee->hire_date)->diffInDays(now()) / 365.25;
+        });
+
+        return round($totalYears / $employees->count(), 1);
     }
 
     private function formatMonthlyCommissionData($monthlyCommissions, int $months): array

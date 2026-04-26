@@ -16,6 +16,7 @@ class DocumentTemplateModel extends Model
         'visibility',
         'owner_id',
         'industry_category',
+        'layout_file',
         'template_structure',
         'thumbnail_path',
         'is_default',

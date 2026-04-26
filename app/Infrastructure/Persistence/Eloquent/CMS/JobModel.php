@@ -14,6 +14,7 @@ class JobModel extends Model
     protected $fillable = [
         'company_id',
         'customer_id',
+        'quotation_id',
         'job_number',
         'job_type',
         'description',
@@ -64,6 +65,11 @@ class JobModel extends Model
         return $this->belongsTo(CustomerModel::class, 'customer_id');
     }
 
+    public function quotation(): BelongsTo
+    {
+        return $this->belongsTo(QuotationModel::class, 'quotation_id');
+    }
+
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(CmsUserModel::class, 'assigned_to');
@@ -92,6 +98,16 @@ class JobModel extends Model
     public function statusHistory(): HasMany
     {
         return $this->hasMany(JobStatusHistoryModel::class, 'job_id')->orderBy('created_at', 'desc');
+    }
+
+    public function materialPlans(): HasMany
+    {
+        return $this->hasMany(JobMaterialPlanModel::class, 'job_id');
+    }
+
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(MaterialPurchaseOrderModel::class, 'job_id');
     }
 
     public function isPending(): bool

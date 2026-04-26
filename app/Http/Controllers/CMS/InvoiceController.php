@@ -132,20 +132,24 @@ class InvoiceController extends Controller
             ->get(['id', 'name', 'email', 'phone', 'outstanding_balance']);
 
         return Inertia::render('CMS/Invoices/Create', [
-            'customers' => $customers,
+            'customers'    => $customers,
+            'defaultNotes' => app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['notes'] ?? '',
+            'defaultTerms' => app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['terms'] ?? '',
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'customer_id' => 'required|exists:cms_customers,id',
-            'due_date' => 'nullable|date|after_or_equal:today',
-            'notes' => 'nullable|string|max:1000',
-            'items' => 'required|array|min:1',
-            'items.*.description' => 'required|string|max:500',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'customer_id'              => 'required|exists:cms_customers,id',
+            'due_date'                 => 'nullable|date|after_or_equal:today',
+            'notes'                    => 'nullable|string|max:1000',
+            'items'                    => 'required|array|min:1',
+            'items.*.description'      => 'required|string|max:500',
+            'items.*.quantity'         => 'required|numeric|min:0.01',
+            'items.*.unit_price'       => 'required|numeric|min:0',
+            'items.*.dimensions'       => 'nullable|string|max:100',
+            'items.*.dimensions_value' => 'nullable|numeric|min:0',
         ]);
 
         $cmsUser = $this->getCmsUserOrFail($request);
@@ -214,12 +218,14 @@ class InvoiceController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $validated = $request->validate([
-            'due_date' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
-            'items' => 'required|array|min:1',
-            'items.*.description' => 'required|string|max:500',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            'due_date'                 => 'nullable|date',
+            'notes'                    => 'nullable|string|max:1000',
+            'items'                    => 'required|array|min:1',
+            'items.*.description'      => 'required|string|max:500',
+            'items.*.quantity'         => 'required|numeric|min:0.01',
+            'items.*.unit_price'       => 'required|numeric|min:0',
+            'items.*.dimensions'       => 'nullable|string|max:100',
+            'items.*.dimensions_value' => 'nullable|numeric|min:0',
         ]);
 
         $cmsUser = $this->getCmsUserOrFail($request);
@@ -357,6 +363,25 @@ class InvoiceController extends Controller
             ->with(['customer', 'items', 'company'])
             ->findOrFail($id);
 
+        // Check if company has BizDocs module enabled
+        if ($invoice->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generateInvoicePdf($invoice);
+                
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="invoice-' . $invoice->invoice_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs invoice PDF generation failed', [
+                    'invoice_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to existing PDF service
+            }
+        }
+
+        // Fallback: Use existing PDF service
         return $this->pdfService->download($invoice);
     }
 
@@ -368,6 +393,25 @@ class InvoiceController extends Controller
             ->with(['customer', 'items', 'company'])
             ->findOrFail($id);
 
+        // Check if company has BizDocs module enabled
+        if ($invoice->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generateInvoicePdf($invoice);
+                
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'inline; filename="invoice-' . $invoice->invoice_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs invoice PDF preview failed', [
+                    'invoice_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to existing PDF service
+            }
+        }
+
+        // Fallback: Use existing PDF service
         return $this->pdfService->stream($invoice);
     }
 }

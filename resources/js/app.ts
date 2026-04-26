@@ -98,7 +98,7 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
             swPath = '/marketplace-sw.js';
             moduleName = 'Marketplace';
         } else if (path.startsWith('/cms')) {
-            swPath = '/cms-sw.js';
+            swPath = '/service-worker.js';
             moduleName = 'CMS';
         } else {
             // Default: register main service worker for all other routes

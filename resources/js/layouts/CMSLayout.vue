@@ -19,23 +19,100 @@
         sidebarCollapsed ? 'w-20' : 'w-64'
       ]"
     >
-      <!-- Logo/Company - Fixed Header -->
-      <div class="flex items-center flex-shrink-0 px-4 py-4 border-b border-gray-100 h-16 sticky top-0 bg-gradient-to-b from-white to-gray-50/50 z-10 backdrop-blur-sm">
-        <div class="flex items-center gap-3 flex-1 min-w-0">
-          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30 ring-2 ring-blue-100">
-            <BuildingOfficeIcon class="h-5 w-5 text-white" aria-hidden="true" />
+      <!-- Logo/Company - Fixed Header with Switcher -->
+      <div class="flex-shrink-0 border-b border-gray-100 sticky top-0 bg-gradient-to-b from-white to-gray-50/50 z-10 backdrop-blur-sm">
+        <div class="flex items-center gap-3 px-4 py-4 h-16">
+          <!-- Company Logo or Icon -->
+          <div v-if="company?.logo_url" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-white border border-gray-200">
+            <img 
+              :src="company.logo_url" 
+              :alt="company.name"
+              class="w-full h-full object-contain p-1"
+            />
           </div>
+          <div v-else class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30 ring-2 ring-blue-100">
+            <span class="text-white font-bold text-sm">{{ company?.name?.charAt(0) || 'C' }}</span>
+          </div>
+          
           <div v-if="!sidebarCollapsed" class="flex-1 min-w-0">
             <p class="text-sm font-bold text-gray-900 truncate tracking-tight leading-tight">{{ company?.name || 'Company Name' }}</p>
             <p class="text-xs text-gray-500 truncate font-medium">{{ cmsUser?.role?.name || 'Role' }}</p>
           </div>
+          <button
+            v-if="!sidebarCollapsed && userCompanies && userCompanies.length > 1"
+            @click="showCompanySwitcher = !showCompanySwitcher"
+            class="flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition"
+            aria-label="Switch company"
+          >
+            <ChevronUpDownIcon class="h-4 w-4 text-gray-400" aria-hidden="true" />
+          </button>
         </div>
+
+        <!-- Company Switcher Dropdown -->
+        <div v-if="showCompanySwitcher && userCompanies && userCompanies.length > 1"
+          class="border-t border-gray-100 bg-white shadow-lg"
+        >
+          <p class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">Switch Company</p>
+          <div class="pb-2">
+            <button
+              v-for="uc in userCompanies"
+              :key="uc.company_id"
+              @click="switchCompany(uc.company_id)"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-blue-50 transition"
+              :class="uc.is_active ? 'bg-blue-50' : ''"
+            >
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                :class="uc.is_active ? 'bg-blue-600' : 'bg-gray-200'">
+                <BuildingOfficeIcon class="h-4 w-4" :class="uc.is_active ? 'text-white' : 'text-gray-500'" aria-hidden="true" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ uc.company_name }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ uc.role }}</p>
+              </div>
+              <CheckIcon v-if="uc.is_active" class="h-4 w-4 text-blue-600 flex-shrink-0" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Search -->
+      <div v-if="!sidebarCollapsed" class="flex-shrink-0 px-3 pt-3 pb-2 border-b border-gray-100 bg-white sticky top-16 z-10">
+        <div class="relative">
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Quick find..."
+            class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            @input="handleSearch"
+          />
+          <button
+            v-if="searchQuery"
+            @click="clearSearch"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded transition"
+            aria-label="Clear search"
+          >
+            <XMarkIcon class="h-3 w-3 text-gray-400" aria-hidden="true" />
+          </button>
+        </div>
+        <p v-if="searchQuery && filteredNavItems.length === 0" class="text-xs text-gray-500 mt-2 px-2">
+          No results found
+        </p>
       </div>
 
       <!-- Navigation - Scrollable -->
       <div class="flex flex-col flex-grow overflow-y-auto custom-scrollbar bg-gradient-to-b from-gray-50/50 to-white">
-        <nav class="flex-1 px-3 py-4 space-y-1">
+        <!-- No results message -->
+        <div v-if="searchQuery && filteredNavItems.length === 0" class="px-6 py-12 text-center">
+          <MagnifyingGlassIcon class="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
+          <p class="text-sm font-medium text-gray-500">No pages found</p>
+          <p class="text-xs text-gray-400 mt-1">Try a different search term</p>
+        </div>
+
+        <!-- Regular Navigation (filtered when searching) -->
+        <nav v-else class="flex-1 px-3 py-4 space-y-1">
           <NavItem
+            v-if="shouldShowNavItem('cms.dashboard')"
             icon="HomeIcon"
             label="Dashboard"
             route-name="cms.dashboard"
@@ -45,6 +122,7 @@
           />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.jobs')"
             icon="BriefcaseIcon"
             label="Jobs"
             route-name="cms.jobs"
@@ -52,8 +130,19 @@
             :active="isActive('cms.jobs')"
             @click="navigateTo('cms.jobs.index')"
           />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.measurements') && hasFabrication"
+            icon="ScissorsIcon"
+            label="Measurements"
+            route-name="cms.measurements"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.measurements')"
+            @click="navigateTo('cms.measurements.index')"
+          />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.customers')"
             icon="UsersIcon"
             label="Customers"
             route-name="cms.customers"
@@ -63,6 +152,7 @@
           />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.invoices')"
             icon="DocumentTextIcon"
             label="Invoices"
             route-name="cms.invoices"
@@ -72,6 +162,7 @@
           />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.payments')"
             icon="CreditCardIcon"
             label="Payments"
             route-name="cms.payments"
@@ -81,6 +172,7 @@
           />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.reports')"
             icon="ChartBarIcon"
             label="Reports"
             route-name="cms.reports"
@@ -89,12 +181,12 @@
             @click="navigateTo('cms.reports.index')"
           />
 
-          <div class="pt-4 pb-2">
+          <div v-if="!searchQuery" class="pt-4 pb-2">
             <div class="border-t border-gray-100"></div>
           </div>
 
           <!-- Analytics Submenu -->
-          <div v-if="!sidebarCollapsed" class="px-3 mb-3">
+          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 mb-3">
             <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg">
               <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
               <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Analytics</p>
@@ -102,6 +194,7 @@
           </div>
           
           <NavItem
+            v-if="shouldShowNavItem('cms.analytics.operations')"
             icon="PresentationChartLineIcon"
             label="Operations"
             route-name="cms.analytics.operations"
@@ -111,6 +204,7 @@
           />
           
           <NavItem
+            v-if="shouldShowNavItem('cms.analytics.finance')"
             icon="CurrencyDollarIcon"
             label="Finance"
             route-name="cms.analytics.finance"
@@ -119,11 +213,12 @@
             @click="navigateTo('cms.analytics.finance')"
           />
 
-          <div class="pt-4 pb-2">
+          <div v-if="!searchQuery" class="pt-4 pb-2">
             <div class="border-t border-gray-100"></div>
           </div>
 
           <NavItem
+            v-if="shouldShowNavItem('cms.expenses')"
             icon="BanknotesIcon"
             label="Expenses"
             route-name="cms.expenses"
@@ -133,6 +228,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.quotations')"
             icon="DocumentDuplicateIcon"
             label="Quotations"
             route-name="cms.quotations"
@@ -142,6 +238,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.inventory')"
             icon="CubeIcon"
             label="Inventory"
             route-name="cms.inventory"
@@ -151,6 +248,17 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.materials') && (hasFabrication || hasConstruction)"
+            icon="CubeIcon"
+            label="Materials"
+            route-name="cms.materials"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.materials')"
+            @click="navigateTo('cms.materials.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.assets')"
             icon="ComputerDesktopIcon"
             label="Assets"
             route-name="cms.assets"
@@ -160,6 +268,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.payroll')"
             icon="UserGroupIcon"
             label="Payroll"
             route-name="cms.payroll"
@@ -168,12 +277,104 @@
             @click="navigateTo('cms.payroll.index')"
           />
 
-          <div class="pt-4 pb-2">
+          <NavItem
+            v-if="shouldShowNavItem('cms.payroll.workers')"
+            icon="UsersIcon"
+            label="Workers"
+            route-name="cms.payroll.workers"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.payroll.workers')"
+            @click="navigateTo('cms.payroll.workers.index')"
+          />
+
+          <div v-if="!searchQuery" class="pt-4 pb-2">
+            <div class="border-t border-gray-100"></div>
+          </div>
+
+          <!-- Construction Modules Submenu -->
+          <div v-if="!sidebarCollapsed && !searchQuery && hasConstruction" class="px-3 pt-2 mb-3">
+            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-orange-50 to-transparent rounded-lg">
+              <div class="w-1 h-4 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
+              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Construction</p>
+            </div>
+          </div>
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.projects') && hasConstruction"
+            icon="BuildingOffice2Icon"
+            label="Projects"
+            route-name="cms.projects"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.projects')"
+            @click="navigateTo('cms.projects.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.subcontractors') && hasConstruction"
+            icon="UserGroupIcon"
+            label="Subcontractors"
+            route-name="cms.subcontractors"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.subcontractors')"
+            @click="navigateTo('cms.subcontractors.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.equipment') && hasConstruction"
+            icon="WrenchScrewdriverIcon"
+            label="Equipment"
+            route-name="cms.equipment"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.equipment')"
+            @click="navigateTo('cms.equipment.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.labour.crews') && hasConstruction"
+            icon="UserGroupIcon"
+            label="Labour Crews"
+            route-name="cms.labour.crews"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.labour.crews')"
+            @click="navigateTo('cms.labour.crews.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.labour.timesheets') && hasConstruction"
+            icon="ClockIcon"
+            label="Timesheets"
+            route-name="cms.labour.timesheets"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.labour.timesheets')"
+            @click="navigateTo('cms.labour.timesheets.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.boq') && hasConstruction"
+            icon="DocumentTextIcon"
+            label="BOQ"
+            route-name="cms.boq"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.boq')"
+            @click="navigateTo('cms.boq.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.progress-billing') && hasConstruction"
+            icon="DocumentCheckIcon"
+            label="Progress Billing"
+            route-name="cms.progress-billing"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.progress-billing')"
+            @click="navigateTo('cms.progress-billing.certificates.index')"
+          />
+
+          <div v-if="!searchQuery" class="pt-4 pb-2">
             <div class="border-t border-gray-100"></div>
           </div>
 
           <!-- Payroll Configuration Submenu -->
-          <div v-if="!sidebarCollapsed" class="px-3 pt-2 mb-3">
+          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 pt-2 mb-3">
             <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-emerald-50 to-transparent rounded-lg">
               <div class="w-1 h-4 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></div>
               <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Payroll Config</p>
@@ -181,6 +382,7 @@
           </div>
 
           <NavItem
+            v-if="shouldShowNavItem('cms.payroll.configuration.allowance-types')"
             icon="BanknotesIcon"
             label="Allowance Types"
             route-name="cms.payroll.configuration.allowance-types"
@@ -190,6 +392,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.payroll.configuration.deduction-types')"
             icon="MinusCircleIcon"
             label="Deduction Types"
             route-name="cms.payroll.configuration.deduction-types"
@@ -199,7 +402,7 @@
           />
 
           <!-- HR Management Submenu -->
-          <div v-if="!sidebarCollapsed" class="px-3 pt-4 mb-3">
+          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 pt-4 mb-3">
             <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-purple-50 to-transparent rounded-lg">
               <div class="w-1 h-4 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
               <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">HR Management</p>
@@ -207,6 +410,7 @@
           </div>
 
           <NavItem
+            v-if="shouldShowNavItem('cms.departments')"
             icon="BuildingOffice2Icon"
             label="Departments"
             route-name="cms.departments"
@@ -216,6 +420,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.leave')"
             icon="CalendarDaysIcon"
             label="Leave Management"
             route-name="cms.leave"
@@ -225,6 +430,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.shifts')"
             icon="ClockIcon"
             label="Shifts"
             route-name="cms.shifts"
@@ -234,6 +440,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.attendance')"
             icon="ClipboardDocumentCheckIcon"
             label="Attendance"
             route-name="cms.attendance"
@@ -243,6 +450,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.overtime')"
             icon="ClockIcon"
             label="Overtime"
             route-name="cms.overtime"
@@ -252,6 +460,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.recruitment')"
             icon="BriefcaseIcon"
             label="Recruitment"
             route-name="cms.recruitment"
@@ -261,6 +470,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.hrms-onboarding')"
             icon="AcademicCapIcon"
             label="Onboarding"
             route-name="cms.hrms-onboarding"
@@ -270,6 +480,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.performance')"
             icon="ChartBarIcon"
             label="Performance"
             route-name="cms.performance"
@@ -279,6 +490,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.training')"
             icon="AcademicCapIcon"
             label="Training"
             route-name="cms.training"
@@ -288,6 +500,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.hr-reports')"
             icon="DocumentChartBarIcon"
             label="HR Reports"
             route-name="cms.hr-reports"
@@ -296,11 +509,12 @@
             @click="navigateTo('cms.hr-reports.index')"
           />
 
-          <div class="pt-4 pb-2">
+          <div v-if="!searchQuery" class="pt-4 pb-2">
             <div class="border-t border-gray-100"></div>
           </div>
 
           <NavItem
+            v-if="shouldShowNavItem('cms.time-tracking')"
             icon="ClockIcon"
             label="Time Tracking"
             route-name="cms.time-tracking"
@@ -310,6 +524,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.recurring-invoices')"
             icon="ArrowPathIcon"
             label="Recurring Invoices"
             route-name="cms.recurring-invoices"
@@ -319,6 +534,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.approvals')"
             icon="CheckCircleIcon"
             label="Approvals"
             route-name="cms.approvals"
@@ -328,6 +544,17 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.approvals')"
+            icon="CheckCircleIcon"
+            label="Approvals"
+            route-name="cms.approvals"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.approvals')"
+            @click="navigateTo('cms.approvals.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.accounting')"
             icon="CalculatorIcon"
             label="Chart of Accounts"
             route-name="cms.accounting"
@@ -336,12 +563,12 @@
             @click="navigateTo('cms.accounting.index')"
           />
 
-          <div class="pt-4 pb-2">
+          <div v-if="!searchQuery" class="pt-4 pb-2">
             <div class="border-t border-gray-100"></div>
           </div>
 
           <!-- Settings Submenu -->
-          <div v-if="!sidebarCollapsed" class="px-3 mb-3">
+          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 mb-3">
             <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-gray-100 to-transparent rounded-lg">
               <div class="w-1 h-4 bg-gradient-to-b from-gray-500 to-gray-600 rounded-full"></div>
               <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Settings</p>
@@ -349,6 +576,7 @@
           </div>
 
           <NavItem
+            v-if="shouldShowNavItem('cms.settings.index')"
             icon="Cog6ToothIcon"
             label="Company Settings"
             route-name="cms.settings"
@@ -358,6 +586,27 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.settings.document-templates') && company?.has_bizdocs_module"
+            icon="DocumentTextIcon"
+            label="Document Templates"
+            route-name="cms.settings.document-templates"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.settings.document-templates')"
+            @click="navigateTo('cms.settings.document-templates.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.settings.pricing-rules') && hasFabrication"
+            icon="CalculatorIcon"
+            label="Pricing Rules"
+            route-name="cms.settings.pricing-rules"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.settings.pricing-rules')"
+            @click="navigateTo('cms.settings.pricing-rules')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.settings.industry-presets.index')"
             icon="SwatchIcon"
             label="Industry Presets"
             route-name="cms.settings.industry-presets"
@@ -367,6 +616,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.settings.email.index')"
             icon="EnvelopeIcon"
             label="Email Settings"
             route-name="cms.settings.email"
@@ -376,6 +626,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.settings.sms.index')"
             icon="DevicePhoneMobileIcon"
             label="SMS Settings"
             route-name="cms.settings.sms"
@@ -385,6 +636,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.settings.currency.index')"
             icon="BanknotesIcon"
             label="Currency"
             route-name="cms.settings.currency"
@@ -394,6 +646,7 @@
           />
 
           <NavItem
+            v-if="shouldShowNavItem('cms.security.settings')"
             icon="ShieldCheckIcon"
             label="Security"
             route-name="cms.security"
@@ -615,13 +868,13 @@
                     </MenuItem>
                     <div v-if="isAdmin" class="border-t border-gray-200 my-1"></div>
                     <MenuItem v-slot="{ active }">
-                      <button
-                        @click="navigateTo('profile')"
+                      <Link
+                        :href="route('profile.edit')"
                         :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-gray-700']"
                       >
                         <UserCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                         Profile Settings
-                      </button>
+                      </Link>
                     </MenuItem>
                     <MenuItem v-slot="{ active }">
                       <Link
@@ -739,9 +992,18 @@
               <div class="flex flex-col flex-grow overflow-y-auto">
                 <div class="flex items-center flex-shrink-0 px-4 py-4 border-b border-gray-200">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <BuildingOfficeIcon class="h-6 w-6 text-white" aria-hidden="true" />
+                    <!-- Company Logo or Icon -->
+                    <div v-if="company?.logo_url" class="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden bg-white border border-gray-200">
+                      <img 
+                        :src="company.logo_url" 
+                        :alt="company.name"
+                        class="w-full h-full object-contain p-1"
+                      />
                     </div>
+                    <div v-else class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-sm">{{ company?.name?.charAt(0) || 'C' }}</span>
+                    </div>
+                    
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-semibold text-gray-900 truncate">{{ company?.name }}</p>
                       <p class="text-xs text-gray-500 truncate">{{ cmsUser?.role?.name }}</p>
@@ -773,7 +1035,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide, computed } from 'vue'
+import { ref, provide, computed, onMounted, onUnmounted } from 'vue'
 import { router, usePage, Link, Head } from '@inertiajs/vue3'
 import { Menu, MenuButton, MenuItem, MenuItems, Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -786,8 +1048,7 @@ import {
   Cog6ToothIcon,
   BuildingOfficeIcon,
   UserCircleIcon,
-  BellIcon,
-  MagnifyingGlassIcon,
+  BellIcon,  MagnifyingGlassIcon,
   Bars3Icon,
   Bars3BottomLeftIcon,
   XMarkIcon,
@@ -812,6 +1073,8 @@ import {
   ShieldCheckIcon,
   DocumentChartBarIcon,
   ArrowLeftIcon,
+  ChevronUpDownIcon,
+  CheckIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
@@ -834,9 +1097,9 @@ interface Notification {
 
 interface Props {
   pageTitle?: string
-  customers?: any[]
+  customers?: any  // Can be array or pagination object
   expenseCategories?: any[]
-  jobs?: any[]
+  jobs?: any  // Can be array or pagination object
 }
 
 const props = defineProps<Props>()
@@ -846,13 +1109,158 @@ const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 const slideOver = useCMSSlideOver()
 
+// Quick search functionality
+const searchQuery = ref('')
+const allNavItems = ref([
+  { label: 'Dashboard', route: 'cms.dashboard', keywords: ['home', 'overview', 'main'] },
+  { label: 'Jobs', route: 'cms.jobs', keywords: ['work', 'projects', 'tasks'] },
+  { label: 'Measurements', route: 'cms.measurements', keywords: ['measure', 'dimensions', 'fabrication'] },
+  { label: 'Customers', route: 'cms.customers', keywords: ['clients', 'contacts'] },
+  { label: 'Invoices', route: 'cms.invoices', keywords: ['bills', 'billing', 'payments'] },
+  { label: 'Payments', route: 'cms.payments', keywords: ['transactions', 'money'] },
+  { label: 'Reports', route: 'cms.reports', keywords: ['analytics', 'statistics'] },
+  { label: 'Operations', route: 'cms.analytics.operations', keywords: ['analytics', 'performance'] },
+  { label: 'Finance', route: 'cms.analytics.finance', keywords: ['analytics', 'financial', 'money'] },
+  { label: 'Expenses', route: 'cms.expenses', keywords: ['costs', 'spending'] },
+  { label: 'Quotations', route: 'cms.quotations', keywords: ['quotes', 'estimates'] },
+  { label: 'Inventory', route: 'cms.inventory', keywords: ['stock', 'products', 'items'] },
+  { label: 'Materials', route: 'cms.materials', keywords: ['materials', 'supplies', 'stock', 'aluminium', 'glass', 'profiles'] },
+  { label: 'Assets', route: 'cms.assets', keywords: ['equipment', 'property'] },
+  { label: 'Payroll', route: 'cms.payroll', keywords: ['salary', 'wages', 'pay'] },
+  { label: 'Workers', route: 'cms.payroll.workers', keywords: ['employees', 'staff', 'team'] },
+  // Construction Modules
+  { label: 'Projects', route: 'cms.projects', keywords: ['construction', 'sites', 'building'] },
+  { label: 'Subcontractors', route: 'cms.subcontractors', keywords: ['contractors', 'vendors', 'suppliers'] },
+  { label: 'Equipment', route: 'cms.equipment', keywords: ['machinery', 'tools', 'assets'] },
+  { label: 'Labour Crews', route: 'cms.labour.crews', keywords: ['teams', 'workers', 'crew'] },
+  { label: 'Timesheets', route: 'cms.labour.timesheets', keywords: ['hours', 'time tracking', 'attendance'] },
+  { label: 'BOQ', route: 'cms.boq', keywords: ['bill of quantities', 'estimates', 'quantities'] },
+  { label: 'Progress Billing', route: 'cms.progress-billing', keywords: ['certificates', 'billing', 'retention'] },
+  // Payroll Configuration
+  { label: 'Allowance Types', route: 'cms.payroll.configuration.allowance-types', keywords: ['benefits', 'perks'] },
+  { label: 'Deduction Types', route: 'cms.payroll.configuration.deduction-types', keywords: ['taxes', 'withholding'] },
+  { label: 'Departments', route: 'cms.departments', keywords: ['divisions', 'units'] },
+  { label: 'Leave Management', route: 'cms.leave', keywords: ['vacation', 'time off', 'absence'] },
+  { label: 'Shifts', route: 'cms.shifts', keywords: ['schedule', 'roster', 'timing'] },
+  { label: 'Attendance', route: 'cms.attendance', keywords: ['clock in', 'presence', 'tracking'] },
+  { label: 'Overtime', route: 'cms.overtime', keywords: ['extra hours', 'ot'] },
+  { label: 'Recruitment', route: 'cms.recruitment', keywords: ['hiring', 'jobs', 'candidates'] },
+  { label: 'Onboarding', route: 'cms.hrms-onboarding', keywords: ['new hire', 'orientation'] },
+  { label: 'Performance', route: 'cms.performance', keywords: ['reviews', 'goals', 'appraisal'] },
+  { label: 'Training', route: 'cms.training', keywords: ['learning', 'development', 'courses'] },
+  { label: 'HR Reports', route: 'cms.hr-reports', keywords: ['human resources', 'analytics'] },
+  { label: 'Time Tracking', route: 'cms.time-tracking', keywords: ['hours', 'timesheet'] },
+  { label: 'Recurring Invoices', route: 'cms.recurring-invoices', keywords: ['subscription', 'repeat'] },
+  { label: 'Approvals', route: 'cms.approvals', keywords: ['pending', 'review', 'authorize'] },
+  { label: 'Chart of Accounts', route: 'cms.accounting', keywords: ['accounting', 'ledger', 'books'] },
+  // Settings
+  { label: 'Company Settings', route: 'cms.settings.index', keywords: ['configuration', 'preferences', 'setup', 'company'] },
+  { label: 'Pricing Rules', route: 'cms.settings.pricing-rules', keywords: ['rates', 'pricing', 'fabrication', 'costs'] },
+  { label: 'Industry Presets', route: 'cms.settings.industry-presets.index', keywords: ['templates', 'industry', 'setup'] },
+  { label: 'Email Settings', route: 'cms.settings.email.index', keywords: ['mail', 'smtp', 'notifications'] },
+  { label: 'SMS Settings', route: 'cms.settings.sms.index', keywords: ['text', 'messages', 'notifications'] },
+  { label: 'Currency', route: 'cms.settings.currency.index', keywords: ['money', 'exchange', 'rates'] },
+  { label: 'Security', route: 'cms.security.settings', keywords: ['password', 'authentication', 'access'] },
+])
+
+const filteredNavItems = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return allNavItems.value
+  }
+  
+  const query = searchQuery.value.toLowerCase().trim()
+  return allNavItems.value.filter(item => {
+    const labelMatch = item.label.toLowerCase().includes(query)
+    const keywordMatch = item.keywords.some(keyword => keyword.includes(query))
+    return labelMatch || keywordMatch
+  })
+})
+
+const handleSearch = () => {
+  // Search is reactive through computed property
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
+
+const navigateToSearchResult = (route: string) => {
+  searchQuery.value = ''
+  navigateTo(route)
+}
+
+// Helper to determine if a nav item should be shown based on search filter
+const shouldShowNavItem = (route: string) => {
+  if (!searchQuery.value.trim()) {
+    return true // Show all when not searching
+  }
+  return filteredNavItems.value.some(item => item.route === route)
+}
+
 // Provide slideOver to child components
 provide('slideOver', slideOver)
+
+// PWA update notification — listen for the custom event fired by usePWA.ts
+// instead of using the native browser confirm() dialog
+onMounted(() => {
+  window.addEventListener('pwa:update-available', handlePwaUpdate)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('pwa:update-available', handlePwaUpdate)
+})
+
+function handlePwaUpdate(event: Event) {
+  const { apply } = (event as CustomEvent).detail
+  window.dispatchEvent(new CustomEvent('bizboost:toast', {
+    detail: {
+      type: 'info',
+      title: 'Update available',
+      message: 'A new version is ready.',
+      duration: 0, // keep visible until dismissed
+      action: {
+        label: 'Reload',
+        onClick: apply,
+      },
+    }
+  }))
+}
 
 // Access global shared data from Inertia
 const company = computed(() => page.props.company)
 const user = computed(() => page.props.auth?.user)
 const cmsUser = computed(() => page.props.cmsUser)
+const userCompanies = computed(() => (page.props as any).userCompanies ?? [])
+
+// Company switcher state
+const showCompanySwitcher = ref(false)
+
+function switchCompany(companyId: number) {
+  showCompanySwitcher.value = false
+  router.post(route('cms.switch-company'), { company_id: companyId })
+}
+
+// Fabrication module — driven by company settings shared from middleware
+const hasFabrication = computed(() => {
+  const c = company.value as any
+  if (!c) return false
+  // Explicit toggle in settings takes precedence
+  if (c.settings?.fabrication_module !== undefined) return !!c.settings.fabrication_module
+  // Fall back: show if industry_type suggests fabrication
+  const fabricationTypes = ['aluminium', 'fabrication', 'construction', 'manufacturing']
+  return fabricationTypes.includes((c.industry_type ?? '').toLowerCase())
+})
+
+// Construction modules — driven by company settings
+const hasConstruction = computed(() => {
+  const c = company.value as any
+  if (!c) return false
+  // Check if construction modules are explicitly enabled
+  if (c.settings?.construction_modules !== undefined) return !!c.settings.construction_modules
+  // Fall back: show if industry_type suggests construction
+  const constructionTypes = ['construction', 'building', 'contractor']
+  return constructionTypes.includes((c.industry_type ?? '').toLowerCase())
+})
 
 // Check if user is admin (has 'admin' or 'administrator' role)
 const isAdmin = computed(() => {
@@ -915,7 +1323,12 @@ const isActive = (routeName: string) => {
   
   // Convert route name to path pattern (e.g., 'cms.jobs' -> '/cms/jobs')
   const routePattern = routeName.replace(/\./g, '/').replace('/index', '')
-  return routePath.startsWith(`/${routePattern}`)
+  const fullPattern = `/${routePattern}`
+  
+  // Exact match or child route (with trailing slash or additional segments)
+  return routePath === fullPattern || 
+         routePath.startsWith(`${fullPattern}/`) ||
+         routePath.startsWith(`${fullPattern}?`)
 }
 
 const navigateTo = (routeName: string) => {

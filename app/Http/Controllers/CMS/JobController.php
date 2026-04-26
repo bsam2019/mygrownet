@@ -79,17 +79,32 @@ class JobController extends Controller
 
     public function show(JobModel $job): Response
     {
+        $companyId = request()->user()->cmsUser->company_id;
+        if ($job->company_id !== $companyId) abort(403);
+
         $job->load([
             'customer',
+            'quotation.measurement.items',
             'assignedTo.user',
             'createdBy.user',
             'lockedBy.user',
             'attachments',
-            'statusHistory.changedBy.user'
+            'statusHistory.changedBy.user',
         ]);
+
+        // Get available workers for assignment
+        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('company_id', $companyId)
+            ->with('user')
+            ->get()
+            ->map(fn($cmsUser) => [
+                'id' => $cmsUser->id,
+                'name' => $cmsUser->user->name,
+            ]);
 
         return Inertia::render('CMS/Jobs/Show', [
             'job' => $job,
+            'fabricationStatuses' => $this->getFabricationStatuses(),
+            'workers' => $workers,
         ]);
     }
 
@@ -122,6 +137,39 @@ class JobController extends Controller
         return back()->with('success', 'Job completed successfully');
     }
 
+    public function updateStatus(Request $request, JobModel $job)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        if ($job->company_id !== $companyId) abort(403);
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,materials_ordered,fabrication,ready_for_install,installing,completed,cancelled',
+            'notes'  => 'nullable|string|max:500',
+        ]);
+
+        $this->jobService->updateJobStatus(
+            $job,
+            $validated['status'],
+            $request->user()->cmsUser->id,
+            $validated['notes'] ?? null
+        );
+
+        return back()->with('success', 'Job status updated.');
+    }
+
+    private function getFabricationStatuses(): array
+    {
+        return [
+            ['value' => 'pending',            'label' => 'Pending',              'color' => 'gray'],
+            ['value' => 'materials_ordered',  'label' => 'Materials Ordered',    'color' => 'amber'],
+            ['value' => 'fabrication',        'label' => 'In Fabrication',       'color' => 'blue'],
+            ['value' => 'ready_for_install',  'label' => 'Ready for Install',    'color' => 'indigo'],
+            ['value' => 'installing',         'label' => 'Installing',           'color' => 'purple'],
+            ['value' => 'completed',          'label' => 'Completed',            'color' => 'green'],
+            ['value' => 'cancelled',          'label' => 'Cancelled',            'color' => 'red'],
+        ];
+    }
+
     public function uploadAttachment(Request $request, JobModel $job)
     {
         $request->validate([
@@ -132,14 +180,33 @@ class JobController extends Controller
         $file = $request->file('file');
         $companyId = $request->user()->cmsUser->company_id;
         
-        // Store file
-        $path = $file->store("cms/companies/{$companyId}/jobs/{$job->id}/attachments", 'public');
+        // Generate S3 key following the same pattern as GrowStorage
+        $filename = $file->getClientOriginalName();
+        $sanitizedFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($filename));
+        $uuid = \Illuminate\Support\Str::uuid();
+        $s3Key = "cms/companies/{$companyId}/jobs/{$job->id}/attachments/{$uuid}_{$sanitizedFilename}";
+        
+        // Store file to S3 (DigitalOcean Spaces)
+        \Illuminate\Support\Facades\Storage::disk('s3')->put(
+            $s3Key,
+            file_get_contents($file->getRealPath()),
+            [
+                'ContentType' => $file->getClientMimeType(),
+                'visibility' => 'private',
+            ]
+        );
+        
+        // Generate presigned URL for access (valid for 1 hour)
+        $fileUrl = \Illuminate\Support\Facades\Storage::disk('s3')->temporaryUrl(
+            $s3Key,
+            now()->addHours(1)
+        );
         
         // Create attachment record
         $job->attachments()->create([
             'company_id' => $companyId,
             'file_name' => $file->getClientOriginalName(),
-            'file_path' => '/storage/' . $path,
+            'file_path' => $s3Key, // Store S3 key instead of public path
             'file_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
             'description' => $request->description,

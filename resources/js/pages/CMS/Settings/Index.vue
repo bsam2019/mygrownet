@@ -15,11 +15,14 @@ import {
     ArrowPathIcon,
     BanknotesIcon,
     PaintBrushIcon,
-    DevicePhoneMobileIcon
+    DevicePhoneMobileIcon,
+    ScissorsIcon,
+    CubeIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
     company: any;
+    signatureUrl?: string | null;
     settings: {
         business_hours: Record<string, { open: string; close: string; enabled: boolean }>;
         tax: {
@@ -53,12 +56,17 @@ interface Props {
             email_expense_approval: boolean;
             email_job_updates: boolean;
         };
+        document_defaults?: {
+            quotation?: { notes?: string; terms?: string };
+            invoice?:   { notes?: string; terms?: string };
+            receipt?:   { notes?: string; terms?: string };
+        };
     };
 }
 
 const props = defineProps<Props>();
 
-const activeTab = ref<'business-hours' | 'tax' | 'approval' | 'invoice' | 'notifications' | 'payment' | 'branding' | 'sms'>('business-hours');
+const activeTab = ref<'business-hours' | 'tax' | 'approval' | 'invoice' | 'notifications' | 'payment' | 'branding' | 'sms' | 'modules' | 'document-defaults'>('business-hours');
 
 // Ensure business_hours has all days with proper structure
 const ensureBusinessHours = (hours: any) => {
@@ -186,9 +194,17 @@ const uploadLogo = () => {
     
     router.post(route('cms.settings.logo.upload'), formData, {
         preserveScroll: true,
+        forceFormData: true,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
         onSuccess: () => {
             logoFile.value = null;
             logoPreview.value = null;
+        },
+        onError: (errors) => {
+            console.error('Logo upload error:', errors);
+            alert('Failed to upload logo. Please try again.');
         }
     });
 };
@@ -218,16 +234,100 @@ const updateSmsSettings = () => {
     });
 };
 
+// Document Defaults Form
+const documentDefaultsForm = useForm({
+    document_defaults: {
+        quotation: {
+            notes: props.settings.document_defaults?.quotation?.notes ?? '',
+            terms: props.settings.document_defaults?.quotation?.terms ?? '',
+        },
+        invoice: {
+            notes: props.settings.document_defaults?.invoice?.notes ?? '',
+            terms: props.settings.document_defaults?.invoice?.terms ?? '',
+        },
+        receipt: {
+            notes: props.settings.document_defaults?.receipt?.notes ?? '',
+            terms: props.settings.document_defaults?.receipt?.terms ?? '',
+        },
+    }
+});
+
+const updateDocumentDefaults = () => {
+    documentDefaultsForm.post(route('cms.settings.document-defaults.update'), {
+        preserveScroll: true
+    });
+};
+
+// Signature upload
+const signatureInput = ref<HTMLInputElement | null>(null);
+const signaturePreview = ref<string | null>(props.signatureUrl ?? null);
+
+const uploadSignature = (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    signaturePreview.value = URL.createObjectURL(file);
+    const form = useForm({ signature: file });
+    form.post(route('cms.settings.signature.upload'), { preserveScroll: true });
+};
+
+const deleteSignature = () => {
+    if (!confirm('Remove signature?')) return;
+    signaturePreview.value = null;
+    router.delete(route('cms.settings.signature.delete'), { preserveScroll: true });
+};
+
 const tabs = [
-    { id: 'business-hours', name: 'Business Hours', icon: ClockIcon },
-    { id: 'tax', name: 'Tax Settings', icon: CurrencyDollarIcon },
-    { id: 'approval', name: 'Approval Thresholds', icon: CheckCircleIcon },
-    { id: 'invoice', name: 'Invoice Settings', icon: DocumentTextIcon },
-    { id: 'notifications', name: 'Notifications', icon: BellIcon },
-    { id: 'payment', name: 'Payment Instructions', icon: BanknotesIcon },
-    { id: 'branding', name: 'Branding', icon: PaintBrushIcon },
-    { id: 'sms', name: 'SMS Gateway', icon: DevicePhoneMobileIcon },
+    { id: 'modules',       name: 'Modules',               icon: ScissorsIcon },
+    { id: 'business-hours',name: 'Business Hours',         icon: ClockIcon },
+    { id: 'tax',           name: 'Tax Settings',           icon: CurrencyDollarIcon },
+    { id: 'approval',      name: 'Approval Thresholds',    icon: CheckCircleIcon },
+    { id: 'invoice',       name: 'Invoice Settings',       icon: DocumentTextIcon },
+    { id: 'notifications', name: 'Notifications',          icon: BellIcon },
+    { id: 'payment',       name: 'Payment Instructions',   icon: BanknotesIcon },
+    { id: 'branding',      name: 'Branding',               icon: PaintBrushIcon },
+    { id: 'sms',              name: 'SMS Gateway',            icon: DevicePhoneMobileIcon },
+    { id: 'document-defaults', name: 'Document Defaults',     icon: DocumentTextIcon },
 ];
+
+// Fabrication module toggle
+const fabricationEnabled = ref(!!(props.company?.settings?.fabrication_module));
+function toggleFabrication() {
+    router.post(route('cms.settings.fabrication-module.toggle'), {
+        enabled: fabricationEnabled.value,
+    }, { preserveScroll: true });
+}
+
+// BizDocs module toggle
+const bizdocsEnabled = ref(!!(props.company?.has_bizdocs_module));
+const bizdocsFeatures = ref({
+    invoices: props.company?.bizdocs_features?.invoices ?? true,
+    quotations: props.company?.bizdocs_features?.quotations ?? true,
+    receipts: props.company?.bizdocs_features?.receipts ?? true,
+    stationery: props.company?.bizdocs_features?.stationery ?? false,
+});
+
+function toggleBizDocs() {
+    router.post(route('cms.settings.bizdocs-module.toggle'), {
+        enabled: bizdocsEnabled.value,
+        features: bizdocsFeatures.value,
+    }, { preserveScroll: true });
+}
+
+// Material Planning module toggle
+const materialPlanningEnabled = ref(!!(props.company?.has_material_planning_module));
+function toggleMaterialPlanning() {
+    router.post(route('cms.settings.material-planning-module.toggle'), {
+        enabled: materialPlanningEnabled.value,
+    }, { preserveScroll: true });
+}
+
+// Construction Modules toggle
+const constructionModulesEnabled = ref(!!(props.company?.has_construction_modules));
+function toggleConstructionModules() {
+    router.post(route('cms.settings.construction-modules.toggle'), {
+        enabled: constructionModulesEnabled.value,
+    }, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -257,7 +357,7 @@ const tabs = [
 
             <!-- Tabs -->
             <div class="border-b border-gray-200 mb-6">
-                <nav class="-mb-px flex space-x-8">
+                <nav class="-mb-px flex space-x-4 overflow-x-auto scrollbar-hide">
                     <button
                         v-for="tab in tabs"
                         :key="tab.id"
@@ -266,7 +366,7 @@ const tabs = [
                             activeTab === tab.id
                                 ? 'border-blue-500 text-blue-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm'
+                            'group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0'
                         ]"
                     >
                         <component
@@ -777,9 +877,9 @@ const tabs = [
                                 Company Logo
                             </label>
                             
-                            <div v-if="company.logo_path || logoPreview" class="mb-4">
+                            <div v-if="company.logo_url || logoPreview" class="mb-4">
                                 <img
-                                    :src="logoPreview || `/storage/${company.logo_path}`"
+                                    :src="logoPreview || company.logo_url"
                                     alt="Company Logo"
                                     class="h-24 w-auto object-contain border border-gray-200 rounded-lg p-2"
                                 />
@@ -1028,6 +1128,369 @@ const tabs = [
                             </button>
                         </div>
                     </form>
+                </FormSection>
+            </div>
+
+            <!-- Modules Tab -->
+            <div v-if="activeTab === 'modules'" class="space-y-6">
+                <FormSection
+                    title="Optional Modules"
+                    description="Enable or disable industry-specific features for your company"
+                >
+                    <div class="space-y-6">
+                        <!-- Fabrication Module -->
+                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <ScissorsIcon class="h-5 w-5 text-teal-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Aluminium Fabrication Module</h3>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Enables site measurements, per-m² pricing rules, fabrication job workflow
+                                        (materials → fabrication → installation), and profit margin tracking.
+                                        Designed for aluminium, construction, and manufacturing companies.
+                                    </p>
+                                    <div v-if="fabricationEnabled" class="mt-2 flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">Measurements</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">Pricing Rules</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">Fabrication Workflow</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">Profit Tracking</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="fabricationEnabled = !fabricationEnabled; toggleFabrication()"
+                                    :class="fabricationEnabled
+                                        ? 'bg-teal-600 focus:ring-teal-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="fabricationEnabled"
+                                    role="switch"
+                                    :aria-label="fabricationEnabled ? 'Disable fabrication module' : 'Enable fabrication module'"
+                                >
+                                    <span
+                                        :class="fabricationEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- BizDocs Module -->
+                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <DocumentTextIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-sm font-semibold text-gray-900">BizDocs Integration</h3>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Professional document generation with customizable templates for invoices, quotations, and receipts.
+                                        Includes branded PDFs and print stationery generation.
+                                    </p>
+                                    
+                                    <!-- Feature toggles (shown when module is enabled) -->
+                                    <div v-if="bizdocsEnabled" class="mt-3 space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                v-model="bizdocsFeatures.invoices"
+                                                @change="toggleBizDocs"
+                                                class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
+                                            />
+                                            <span class="text-xs text-gray-700">Invoice PDFs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                v-model="bizdocsFeatures.quotations"
+                                                @change="toggleBizDocs"
+                                                class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
+                                            />
+                                            <span class="text-xs text-gray-700">Quotation PDFs</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                v-model="bizdocsFeatures.receipts"
+                                                @change="toggleBizDocs"
+                                                class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
+                                            />
+                                            <span class="text-xs text-gray-700">Payment Receipts</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                v-model="bizdocsFeatures.stationery"
+                                                @change="toggleBizDocs"
+                                                class="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
+                                            />
+                                            <span class="text-xs text-gray-700">Print Stationery</span>
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Advanced</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="bizdocsEnabled = !bizdocsEnabled; toggleBizDocs()"
+                                    :class="bizdocsEnabled
+                                        ? 'bg-blue-600 focus:ring-blue-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="bizdocsEnabled"
+                                    role="switch"
+                                    :aria-label="bizdocsEnabled ? 'Disable BizDocs module' : 'Enable BizDocs module'"
+                                >
+                                    <span
+                                        :class="bizdocsEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Material Planning Module -->
+                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <CubeIcon class="h-5 w-5 text-slate-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Material Planning</h3>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Plan materials for jobs, create purchase orders, track costs and variances. 
+                                        Essential for construction and aluminium fabrication businesses.
+                                    </p>
+                                    <div v-if="materialPlanningEnabled" class="mt-2 flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">Material Planning</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">Purchase Orders</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">Cost Tracking</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">Variance Analysis</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="materialPlanningEnabled = !materialPlanningEnabled; toggleMaterialPlanning()"
+                                    :class="materialPlanningEnabled
+                                        ? 'bg-slate-600 focus:ring-slate-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="materialPlanningEnabled"
+                                    role="switch"
+                                    :aria-label="materialPlanningEnabled ? 'Disable material planning module' : 'Enable material planning module'"
+                                >
+                                    <span
+                                        :class="materialPlanningEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Construction Modules -->
+                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <BuildingOffice2Icon class="h-5 w-5 text-orange-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Construction Modules</h3>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Complete construction management suite including projects, subcontractors, equipment, 
+                                        labour crews, BOQ, and progress billing. Essential for construction companies.
+                                    </p>
+                                    <div v-if="constructionModulesEnabled" class="mt-2 flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Projects</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Subcontractors</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Equipment</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Labour & Crews</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">BOQ</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">Progress Billing</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="constructionModulesEnabled = !constructionModulesEnabled; toggleConstructionModules()"
+                                    :class="constructionModulesEnabled
+                                        ? 'bg-orange-600 focus:ring-orange-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="constructionModulesEnabled"
+                                    role="switch"
+                                    :aria-label="constructionModulesEnabled ? 'Disable construction modules' : 'Enable construction modules'"
+                                >
+                                    <span
+                                        :class="constructionModulesEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-400">
+                            More modules coming soon — payroll, e-commerce, and more.
+                        </p>
+                    </div>
+                </FormSection>
+            </div>
+
+            <!-- Document Defaults Tab -->
+            <div v-if="activeTab === 'document-defaults'" class="space-y-6">
+                <FormSection
+                    title="Default Notes & Terms"
+                    description="Set default notes, terms, and signature for each document type. These pre-fill on every new document — you can still edit per document."
+                >
+                    <form @submit.prevent="updateDocumentDefaults" class="space-y-8">
+
+                        <!-- Quotation -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Quotation</span>
+                            </h3>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.quotation.notes"
+                                        rows="3"
+                                        placeholder="e.g. This quotation is valid for 30 days from the date of issue."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms & Conditions</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.quotation.terms"
+                                        rows="3"
+                                        placeholder="e.g. 1. Prices are subject to change without notice.&#10;2. 50% deposit required to confirm order."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100" />
+
+                        <!-- Invoice -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">Invoice</span>
+                            </h3>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.invoice.notes"
+                                        rows="3"
+                                        placeholder="e.g. Payment is due within 30 days of invoice date."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms & Conditions</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.invoice.terms"
+                                        rows="3"
+                                        placeholder="e.g. 1. Late payments attract a 5% monthly interest.&#10;2. Goods remain property of seller until paid in full."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100" />
+
+                        <!-- Receipt -->
+                        <div class="space-y-4">
+                            <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Receipt</span>
+                            </h3>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.receipt.notes"
+                                        rows="3"
+                                        placeholder="e.g. Thank you for your payment. Please keep this receipt for your records."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms & Conditions</label>
+                                    <textarea
+                                        v-model="documentDefaultsForm.document_defaults.receipt.terms"
+                                        rows="3"
+                                        placeholder="e.g. Refunds are subject to our returns policy."
+                                        class="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button
+                                type="submit"
+                                :disabled="documentDefaultsForm.processing"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                {{ documentDefaultsForm.processing ? 'Saving...' : 'Save Defaults' }}
+                            </button>
+                        </div>
+                    </form>
+                </FormSection>
+
+                <!-- Signature -->
+                <FormSection
+                    title="Company Signature"
+                    description="Upload your authorized signature. It will appear on quotations, invoices, and receipts."
+                >
+                    <div class="space-y-4">
+                        <!-- Preview -->
+                        <div v-if="signaturePreview" class="flex items-start gap-4">
+                            <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                <img :src="signaturePreview" alt="Signature" class="max-h-20 max-w-xs object-contain" />
+                            </div>
+                            <button
+                                type="button"
+                                @click="deleteSignature"
+                                class="text-sm text-red-600 hover:text-red-700 font-medium mt-2"
+                            >
+                                Remove signature
+                            </button>
+                        </div>
+                        <div v-else class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <DocumentTextIcon class="mx-auto h-10 w-10 text-gray-400" aria-hidden="true" />
+                            <p class="mt-2 text-sm text-gray-500">No signature uploaded yet</p>
+                        </div>
+
+                        <!-- Upload -->
+                        <div>
+                            <input
+                                ref="signatureInput"
+                                type="file"
+                                accept="image/png,image/jpeg,image/svg+xml"
+                                class="hidden"
+                                @change="uploadSignature"
+                            />
+                            <button
+                                type="button"
+                                @click="signatureInput?.click()"
+                                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                            >
+                                {{ signaturePreview ? 'Replace Signature' : 'Upload Signature' }}
+                            </button>
+                            <p class="mt-1 text-xs text-gray-500">PNG, JPG or SVG. Max 2MB. Use a transparent background for best results.</p>
+                        </div>
+                    </div>
                 </FormSection>
             </div>
         </div>

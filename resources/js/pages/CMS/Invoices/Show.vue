@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
+import { toast } from '@/utils/bizboost-toast';
 
 defineOptions({
   layout: CMSLayout
@@ -15,20 +16,38 @@ interface Props {
 const props = defineProps<Props>();
 
 const showCancelModal = ref(false);
+const showConfirmSend = ref(false);
 const cancelReason = ref('');
 
 const sendInvoice = () => {
-    if (confirm('Mark this invoice as sent?')) {
-        router.post(route('cms.invoices.send', props.invoice.id));
-    }
+    showConfirmSend.value = false;
+    router.post(route('cms.invoices.send', props.invoice.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success('Invoice sent', 'The invoice has been marked as sent');
+        },
+        onError: () => {
+            toast.error('Failed to send', 'Could not update invoice status');
+        }
+    });
 };
 
 const cancelInvoice = () => {
     if (cancelReason.value.trim()) {
         router.post(route('cms.invoices.cancel', props.invoice.id), {
             reason: cancelReason.value,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Invoice cancelled', 'The invoice has been cancelled');
+                showCancelModal.value = false;
+            },
+            onError: () => {
+                toast.error('Cancellation failed', 'Could not cancel invoice');
+            }
         });
-        showCancelModal.value = false;
+    } else {
+        toast.warning('Reason required', 'Please provide a reason for cancellation');
     }
 };
 
@@ -73,7 +92,7 @@ const getStatusColor = (status: string) => {
                 </Link>
                 <button
                     v-if="invoice.status === 'draft'"
-                    @click="sendInvoice"
+                    @click="showConfirmSend = true"
                     class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                 >
                     Send Invoice
@@ -126,6 +145,7 @@ const getStatusColor = (status: string) => {
                         <thead class="border-b">
                             <tr>
                                 <th class="pb-2 text-left text-sm font-medium text-gray-600">Description</th>
+                                <th class="pb-2 text-left text-sm font-medium text-gray-600">Dimensions</th>
                                 <th class="pb-2 text-right text-sm font-medium text-gray-600">Qty</th>
                                 <th class="pb-2 text-right text-sm font-medium text-gray-600">Price</th>
                                 <th class="pb-2 text-right text-sm font-medium text-gray-600">Total</th>
@@ -134,6 +154,10 @@ const getStatusColor = (status: string) => {
                         <tbody class="divide-y">
                             <tr v-for="item in invoice.items" :key="item.id">
                                 <td class="py-3 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="py-3 text-xs text-gray-500 font-mono">
+                                    <span v-if="item.dimensions">{{ item.dimensions }}</span>
+                                    <span v-else class="text-gray-300">—</span>
+                                </td>
                                 <td class="py-3 text-right text-sm text-gray-600">{{ item.quantity }}</td>
                                 <td class="py-3 text-right text-sm text-gray-600">{{ formatCurrency(item.unit_price) }}</td>
                                 <td class="py-3 text-right text-sm font-medium text-gray-900">{{ formatCurrency(item.line_total) }}</td>
@@ -230,6 +254,22 @@ const getStatusColor = (status: string) => {
                         Cancel Invoice
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Invoice Confirmation Modal -->
+    <div v-if="showConfirmSend" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showConfirmSend = false">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Send Invoice?</h3>
+            <p class="text-sm text-gray-600 mb-6">This will mark the invoice as sent to the customer.</p>
+            <div class="flex gap-3 justify-end">
+                <button @click="showConfirmSend = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button @click="sendInvoice" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                    Send Invoice
+                </button>
             </div>
         </div>
     </div>

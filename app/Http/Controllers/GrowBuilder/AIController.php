@@ -16,6 +16,7 @@ class AIController extends Controller
         private SiteRepositoryInterface $siteRepository,
         private AIContentService $aiService,
         private AIUsageService $aiUsageService,
+        private \App\Services\GrowBuilder\EditorActionService $actionService,
     ) {}
     
     /**
@@ -829,5 +830,286 @@ class AIController extends Controller
         }
         
         return $subdomain;
+    }
+    
+    /**
+     * Initialize or get editor session context
+     */
+    public function getSessionContext(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+        
+        $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+        $context = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+        
+        if (!$context->isInitialized() || $context->isStale()) {
+            $context->initialize($siteModel, $request->user());
+        }
+        
+        return response()->json([
+            'success' => true,
+            'context' => $context->all(),
+            'age_minutes' => $context->getAgeInMinutes(),
+        ]);
+    }
+    
+    /**
+     * Update session context
+     */
+    public function updateSessionContext(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+        
+        $validated = $request->validate([
+            'key' => 'required|string',
+            'value' => 'required',
+        ]);
+        
+        $context = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+        $context->update($validated['key'], $validated['value']);
+        
+        return response()->json([
+            'success' => true,
+            'context' => $context->all(),
+        ]);
+    }
+    
+    /**
+     * Enhanced smart chat with action generation
+     * 
+     * This replaces the old smartChat() with action-aware responses
+     */
+    public function smartChatWithActions(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        // Check AI access
+        $accessError = $this->checkAIAccess($request, 'content');
+        if ($accessError) {
+            return response()->json($accessError, 403);
+        }
+        
+        $validated = $request->validate([
+            'message' => 'required|string|max:2000',
+            'current_page_id' => 'nullable|integer',
+            'current_sections' => 'nullable|array',
+        ]);
+        
+        // Get or initialize session context
+        $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
+        $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+        
+        if (!$sessionContext->isInitialized()) {
+            $sessionContext->initialize($siteModel, $request->user());
+        }
+        
+        // Update current page context if provided
+        if (isset($validated['current_page_id']) && isset($validated['current_sections'])) {
+            $page = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::find($validated['current_page_id']);
+            if ($page) {
+                $sessionContext->setCurrentPage(
+                    $page->id,
+                    $page->title,
+                    $validated['current_sections']
+                );
+            }
+        }
+        
+        // Add user message to conversation
+        $sessionContext->addToConversation('user', $validated['message']);
+        
+        // Build context for AI
+        $context = [
+            'siteName' => $site->getName(),
+            'businessType' => $sessionContext->get('business_type', 'business'),
+            'location' => $sessionContext->get('location', 'Zambia'),
+            'language' => $sessionContext->get('language', 'en'),
+            'currentPage' => $sessionContext->get('current_page'),
+            'existingSections' => $sessionContext->get('existing_sections', []),
+            'conversationHistory' => $sessionContext->getConversationForPrompt(),
+        ];
+        
+        // Call AI service
+        $result = $this->aiService->smartChat(
+            $validated['message'],
+            $context
+        );
+        
+        // Add AI response to conversation
+        $aiMessage = $result['message'] ?? $result['response'] ?? 'I can help you with that.';
+        $sessionContext->addToConversation('assistant', $aiMessage);
+        
+        // Generate actions from AI response
+        $actions = $this->generateActionsFromAIResponse($result, $validated['message'], $sessionContext);
+        
+        // Record usage
+        $this->recordUsage($request, 'smart_chat_with_actions', $validated['message'], 0, $siteId);
+        
+        // Get updated usage stats
+        $usageStats = $this->aiUsageService->getUsageStats($request->user());
+        
+        return response()->json([
+            'success' => true,
+            'message' => $aiMessage,
+            'actions' => $actions,
+            'context' => $sessionContext->all(),
+            'usage' => $usageStats,
+        ]);
+    }
+    
+    /**
+     * Generate editor actions from AI response
+     * 
+     * This interprets the AI's response and creates actionable editor commands
+     */
+    private function generateActionsFromAIResponse(
+        array $aiResponse,
+        string $userMessage,
+        \App\Services\GrowBuilder\EditorSessionContext $context
+    ): array {
+        $actions = [];
+        
+        // Check if AI response includes structured data
+        if (isset($aiResponse['data']) && is_array($aiResponse['data'])) {
+            $data = $aiResponse['data'];
+            
+            // Handle section generation
+            if (isset($data['section'])) {
+                $actions[] = $this->actionService->createAddSectionAction(
+                    $data['section'],
+                    $data['position'] ?? null,
+                    false // Auto-apply section additions
+                );
+            }
+            
+            // Handle content modifications
+            if (isset($data['modifications']) && is_array($data['modifications'])) {
+                foreach ($data['modifications'] as $mod) {
+                    if (isset($mod['section_id'], $mod['changes'])) {
+                        $actions[] = $this->actionService->createModifySectionAction(
+                            $mod['section_id'],
+                            $mod['changes'],
+                            false
+                        );
+                    }
+                }
+            }
+            
+            // Handle style changes
+            if (isset($data['style_changes'])) {
+                $actions[] = $this->actionService->createChangeStyleAction(
+                    $data['target'] ?? 'site',
+                    $data['style_changes'],
+                    false
+                );
+            }
+        }
+        
+        // If no structured actions, try to infer from message
+        if (empty($actions)) {
+            $actions = $this->inferActionsFromMessage($userMessage, $aiResponse, $context);
+        }
+        
+        return $actions;
+    }
+    
+    /**
+     * Infer actions from user message when AI doesn't provide structured data
+     */
+    private function inferActionsFromMessage(
+        string $message,
+        array $aiResponse,
+        \App\Services\GrowBuilder\EditorSessionContext $context
+    ): array {
+        $actions = [];
+        $messageLower = strtolower($message);
+        
+        // Simple intent detection
+        if (str_contains($messageLower, 'add') || str_contains($messageLower, 'create')) {
+            // User wants to add something - but we need AI to generate it first
+            // Return empty actions - the AI message should guide the user
+            return [];
+        }
+        
+        if (str_contains($messageLower, 'change') || str_contains($messageLower, 'modify')) {
+            // User wants to modify something
+            // This requires more context - return empty for now
+            return [];
+        }
+        
+        return $actions;
+    }
+    
+    /**
+     * Apply an action to the editor
+     * 
+     * This endpoint receives an action and applies it to the site/page
+     */
+    public function applyAction(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+        
+        $validated = $request->validate([
+            'action' => 'required|array',
+            'action.id' => 'required|string',
+            'action.type' => 'required|string',
+            'action.target' => 'required|string',
+            'action.payload' => 'required|array',
+        ]);
+        
+        $action = $validated['action'];
+        
+        // Validate action
+        if (!$this->actionService->validateAction($action)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid action structure',
+            ], 400);
+        }
+        
+        try {
+            // The actual application happens on the frontend
+            // This endpoint just logs the action for analytics
+            $this->actionService->logActionExecution(
+                $action,
+                $request->user()->id,
+                $siteId,
+                true
+            );
+            
+            // Update session context
+            $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+            $sessionContext->recordAIAction($action);
+            
+            return response()->json([
+                'success' => true,
+                'action_id' => $action['id'],
+            ]);
+        } catch (\Exception $e) {
+            $this->actionService->logActionExecution(
+                $action,
+                $request->user()->id,
+                $siteId,
+                false,
+                $e->getMessage()
+            );
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

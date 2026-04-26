@@ -66,18 +66,13 @@ class AuthController extends Controller
         $cmsUser = CmsUserModel::where('user_id', $user->id)->first();
 
         if (!$cmsUser) {
-            $this->securityService->recordLoginAttempt(
-                email: $email,
-                userId: $user->id,
-                successful: false,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent(),
-                failureReason: 'no_cms_access'
-            );
-
-            return back()->withErrors([
-                'email' => 'You do not have access to the CMS system.',
-            ])->onlyInput('email');
+            // User exists but has no company yet — allow login, redirect to hub
+            if (!Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
+                $this->securityService->recordLoginAttempt(email: $email, userId: $user->id, successful: false, ipAddress: $request->ip(), userAgent: $request->userAgent(), failureReason: 'invalid_password');
+                return back()->withErrors(['email' => 'The provided credentials do not match our records.'])->onlyInput('email');
+            }
+            $request->session()->regenerate();
+            return redirect()->route('cms.companies.hub');
         }
 
         // Check if account is locked
@@ -146,6 +141,13 @@ class AuthController extends Controller
                 ->with('warning', 'Your password has expired. Please change it to continue.');
         }
 
+        // Check if user has any companies — if not, send to hub
+        $cmsUser = CmsUserModel::where('user_id', $user->id)->where('status', 'active')->first();
+
+        if (!$cmsUser) {
+            return redirect()->route('cms.companies.hub');
+        }
+
         return redirect()->intended(route('cms.dashboard'));
     }
 
@@ -158,98 +160,34 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle registration request
+     * Handle registration request — creates user only, no company yet.
+     * Redirects to Company Hub where user creates or joins a company.
      */
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Create a placeholder company first (needed for security settings)
-            $company = CompanyModel::create([
-                'name' => $validated['name'] . "'s Company", // Temporary name
-                'industry' => 'Not Set',
-                'owner_user_id' => null, // Will be set after user creation
-                'settings' => [
-                    'currency' => 'ZMW',
-                    'timezone' => 'Africa/Lusaka',
-                    'date_format' => 'Y-m-d',
-                    'onboarding_completed' => false,
-                ],
-            ]);
-
-            // Validate password strength
-            $passwordValidation = $this->securityService->validatePasswordStrength(
-                $validated['password'],
-                $company->id
-            );
-
-            if (!$passwordValidation['valid']) {
-                DB::rollBack();
-                return back()->withErrors([
-                    'password' => $passwordValidation['errors'],
-                ])->withInput();
-            }
-
-            // Create main user account
             $hashedPassword = Hash::make($validated['password']);
+
             $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => $hashedPassword,
-                'account_type' => 'cms',
+                'name'                => $validated['name'],
+                'email'               => $validated['email'],
+                'password'            => $hashedPassword,
+                'account_type'        => 'business',
                 'password_changed_at' => now(),
             ]);
 
-            // Update company owner
-            $company->update(['owner_user_id' => $user->id]);
-
-            // Save password to history
-            $this->securityService->savePasswordHistory($user->id, $hashedPassword);
-
-            // Get or create Owner role
-            $ownerRole = RoleModel::firstOrCreate(
-                [
-                    'company_id' => $company->id,
-                    'name' => 'Owner',
-                ],
-                [
-                    'permissions' => ['*'], // Full access
-                    'description' => 'Company owner with full access',
-                ]
-            );
-
-            // Create CMS user record
-            CmsUserModel::create([
-                'company_id' => $company->id,
-                'user_id' => $user->id,
-                'role_id' => $ownerRole->id,
-                'is_active' => true,
-            ]);
-
-            // Log security event
-            $this->securityService->logSecurityEvent(
-                userId: $user->id,
-                companyId: $company->id,
-                eventType: 'account_created',
-                ipAddress: $request->ip(),
-                description: 'New CMS account registered',
-                metadata: ['email' => $user->email],
-                severity: 'info'
-            );
-
             DB::commit();
 
-            // Log the user in
             Auth::login($user);
 
-            // Record successful login
             $this->securityService->recordLoginAttempt(
                 email: $user->email,
                 userId: $user->id,
@@ -258,15 +196,12 @@ class AuthController extends Controller
                 userAgent: $request->userAgent()
             );
 
-            // Redirect to onboarding wizard
-            return redirect()->route('cms.onboarding.index');
+            // No company yet — send to Company Hub
+            return redirect()->route('cms.companies.hub');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            return back()->withErrors([
-                'error' => 'Registration failed. Please try again.',
-            ])->withInput();
+            return back()->withErrors(['error' => 'Registration failed. Please try again.'])->withInput();
         }
     }
 
@@ -372,5 +307,36 @@ class AuthController extends Controller
 
         return redirect()->route('cms.dashboard')
             ->with('success', 'Password changed successfully.');
+    }
+
+    /**
+     * Switch the active company for the current session.
+     */
+    public function switchCompany(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+
+        // Verify the user actually belongs to this company
+        $membership = $user->cmsUsers()
+            ->where('company_id', $validated['company_id'])
+            ->where('status', 'active')
+            ->first();
+
+        if (!$membership) {
+            return back()->withErrors(['error' => 'You do not have access to that company.']);
+        }
+
+        // Store the active company in session
+        session(['active_cms_company_id' => $validated['company_id']]);
+
+        // Clear cached user data so the new company loads fresh
+        $user->unsetRelation('cmsUsers');
+
+        return redirect()->route('cms.dashboard')
+            ->with('success', "Switched to {$membership->company->name}.");
     }
 }

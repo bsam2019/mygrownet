@@ -3,6 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, inject } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, BanknotesIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
+import { toast } from '@/utils/bizboost-toast';
 
 defineOptions({
   layout: CMSLayout
@@ -58,6 +59,8 @@ const slideOver: any = inject('slideOver');
 const search = ref(props.filters.search);
 const selectedCategory = ref(props.filters.category_id);
 const selectedStatus = ref(props.filters.approval_status);
+const showApproveConfirm = ref(false);
+const pendingExpenseId = ref<number | null>(null);
 
 const applyFilters = () => {
     router.get('/cms/expenses', {
@@ -71,11 +74,20 @@ const applyFilters = () => {
 };
 
 const approveExpense = (id: number) => {
-    if (confirm('Approve this expense?')) {
-        router.post(route('cms.expenses.approve', id), {}, {
+    pendingExpenseId.value = id;
+    showApproveConfirm.value = true;
+};
+
+const confirmApprove = () => {
+    if (pendingExpenseId.value) {
+        router.post(route('cms.expenses.approve', pendingExpenseId.value), {}, {
             preserveScroll: true,
             onSuccess: () => {
-                // Success message handled by backend
+                toast.success('Expense approved', 'The expense has been approved');
+                showApproveConfirm.value = false;
+            },
+            onError: () => {
+                toast.error('Approval failed', 'Could not approve expense');
             }
         });
     }
@@ -333,6 +345,22 @@ const getStatusColor = (status: string) => {
                         />
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Expense Confirmation Modal -->
+    <div v-if="showApproveConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showApproveConfirm = false">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Approve Expense?</h3>
+            <p class="text-sm text-gray-600 mb-6">This will approve the expense and allow payment processing.</p>
+            <div class="flex gap-3 justify-end">
+                <button @click="showApproveConfirm = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button @click="confirmApprove" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition">
+                    Approve Expense
+                </button>
             </div>
         </div>
     </div>

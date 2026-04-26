@@ -15,12 +15,17 @@ class InvoiceItemModel extends Model
         'quantity',
         'unit_price',
         'amount',
+        'line_total',
+        'dimensions',
+        'dimensions_value',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'amount' => 'decimal:2',
+        'quantity'         => 'decimal:2',
+        'unit_price'       => 'decimal:2',
+        'amount'           => 'decimal:2',
+        'line_total'       => 'decimal:2',
+        'dimensions_value' => 'decimal:4',
     ];
 
     public function invoice(): BelongsTo

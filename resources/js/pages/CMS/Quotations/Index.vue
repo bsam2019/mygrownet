@@ -257,7 +257,7 @@ const getStatusLabel = (status: string) => {
             </table>
 
             <!-- Pagination -->
-            <div v-if="quotations.data.length > 0" class="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div v-if="quotations.data.length > 0 && quotations.meta" class="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-700">
                         Showing {{ quotations.meta.from }} to {{ quotations.meta.to }} of {{ quotations.meta.total }} results

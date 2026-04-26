@@ -15,7 +15,7 @@ class RecruitmentController extends Controller
 
     public function jobPostingsIndex(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         $status = $request->query('status');
         
         $jobPostings = $this->recruitmentService->getJobPostings($companyId, $status);
@@ -47,7 +47,7 @@ class RecruitmentController extends Controller
         $validated['created_by'] = $request->user()->id;
         
         $jobPosting = $this->recruitmentService->createJobPosting(
-            $request->user()->company_id,
+            $request->user()->cmsUser->company_id,
             $validated
         );
 
@@ -78,7 +78,7 @@ class RecruitmentController extends Controller
 
     public function interviewsIndex(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         $interviews = $this->recruitmentService->getUpcomingInterviews($companyId);
 
         return Inertia::render('CMS/Recruitment/Interviews', [

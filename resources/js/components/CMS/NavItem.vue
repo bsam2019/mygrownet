@@ -82,6 +82,7 @@ import {
   ClipboardDocumentCheckIcon,
   AcademicCapIcon,
   MinusCircleIcon,
+  ScissorsIcon,
 } from '@heroicons/vue/24/outline'
 
 interface Props {
@@ -127,6 +128,7 @@ const iconMap: Record<string, any> = {
   ClipboardDocumentCheckIcon,
   AcademicCapIcon,
   MinusCircleIcon,
+  ScissorsIcon,
 }
 
 const iconComponent = computed(() => iconMap[props.icon] || HomeIcon)

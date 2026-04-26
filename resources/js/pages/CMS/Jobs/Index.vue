@@ -86,60 +86,62 @@
 
     <!-- Desktop: Table -->
     <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Job #</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned To</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="job in jobs.data" :key="job.id" class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-              {{ job.job_number }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {{ job.customer?.name }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ job.job_type }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="getStatusClass(job.status)">
-                {{ formatStatus(job.status) }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ job.assigned_to?.user?.name || '-' }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              K{{ formatNumber(job.quoted_value || 0) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ job.deadline ? formatDate(job.deadline) : '-' }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <Link
-                :href="route('cms.jobs.show', job.id)"
-                class="text-blue-600 hover:text-blue-800"
-              >
-                View
-              </Link>
-            </td>
-          </tr>
-          <tr v-if="jobs.data.length === 0">
-            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
-              No jobs found. Create your first job to get started.
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Job #</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Customer</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Assigned To</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Value</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Deadline</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="job in jobs.data" :key="job.id" class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {{ job.job_number }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {{ job.customer?.name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ job.job_type }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="getStatusClass(job.status)">
+                  {{ formatStatus(job.status) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ job.assigned_to?.user?.name || '-' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                K{{ formatNumber(job.quoted_value || 0) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ job.deadline ? formatDate(job.deadline) : '-' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <Link
+                  :href="route('cms.jobs.show', job.id)"
+                  class="text-blue-600 hover:text-blue-800"
+                >
+                  View
+                </Link>
+              </td>
+            </tr>
+            <tr v-if="jobs.data.length === 0">
+              <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                No jobs found. Create your first job to get started.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Pagination -->
       <div v-if="jobs.data.length > 0" class="px-6 py-4 border-t border-gray-200">
@@ -148,10 +150,11 @@
             Showing {{ jobs.from }} to {{ jobs.to }} of {{ jobs.total }} jobs
           </div>
           <div class="flex gap-2">
-            <Link
+            <component
+              :is="link.url ? Link : 'span'"
               v-for="link in jobs.links"
               :key="link.label"
-              :href="link.url"
+              :href="link.url || undefined"
               :class="[
                 'px-3 py-1 rounded',
                 link.active
@@ -172,10 +175,11 @@
         {{ jobs.from }}-{{ jobs.to }} of {{ jobs.total }}
       </div>
       <div class="flex gap-2">
-        <Link
+        <component
+          :is="link.url ? Link : 'span'"
           v-for="link in jobs.links.filter((l: any) => l.label.includes('Previous') || l.label.includes('Next'))"
           :key="link.label"
-          :href="link.url"
+          :href="link.url || undefined"
           :class="[
             'px-3 py-1 rounded-lg text-sm font-medium',
             link.url
@@ -184,7 +188,7 @@
           ]"
         >
           {{ link.label.includes('Previous') ? '← Prev' : 'Next →' }}
-        </Link>
+        </component>
       </div>
     </div>
   </div>

@@ -47,6 +47,14 @@
             Jobs
           </Link>
           <Link
+            v-if="hasFabrication"
+            :href="route('cms.measurements.index')"
+            class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
+            @click="showMenu = false"
+          >
+            Measurements
+          </Link>
+          <Link
             :href="route('cms.customers.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
@@ -170,5 +178,13 @@ const page = usePage()
 
 const currentRoute = computed(() => {
   return page.component.value
+})
+
+const hasFabrication = computed(() => {
+  const c = (page.props as any).company
+  if (!c) return false
+  if (c.settings?.fabrication_module !== undefined) return !!c.settings.fabrication_module
+  const fabricationTypes = ['aluminium', 'fabrication', 'construction', 'manufacturing']
+  return fabricationTypes.includes((c.industry_type ?? '').toLowerCase())
 })
 </script>

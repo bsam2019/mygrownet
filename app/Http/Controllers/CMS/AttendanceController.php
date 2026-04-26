@@ -64,6 +64,7 @@ class AttendanceController extends Controller
             ->get();
 
         return Inertia::render('CMS/Attendance/Index', [
+            'title' => 'Attendance Records',
             'records' => $records,
             'workers' => $workers,
             'filters' => $filters,

@@ -18,7 +18,7 @@ return new class extends Migration
                         $table->foreignId('user_id')->constrained('cms_users');
                         $table->string('entity_type', 100);
                         $table->unsignedBigInteger('entity_id');
-                        $table->enum('action', ['created', 'updated', 'deleted', 'approved', 'rejected', 'locked', 'unlocked']);
+                        $table->enum('action', ['created', 'updated', 'deleted', 'approved', 'rejected', 'locked', 'unlocked', 'sent', 'converted', 'cancelled', 'voided']);
                         $table->json('old_values')->nullable();
                         $table->json('new_values')->nullable();
                         $table->string('ip_address', 45)->nullable();

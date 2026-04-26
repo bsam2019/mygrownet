@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, computed, inject } from 'vue';
+import { ref, computed } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
 
@@ -47,9 +47,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Get slideOver from layout
-const slideOver: any = inject('slideOver')
-
 const search = ref(props.filters.search);
 const selectedStatus = ref(props.filters.status);
 
@@ -87,13 +84,13 @@ const formatDate = (date: string) => {
                 <h1 class="text-2xl font-bold text-gray-900">Invoices</h1>
                 <p class="mt-1 text-sm text-gray-600">Manage customer invoices and billing</p>
             </div>
-            <button
-                @click="slideOver?.open('invoice')"
+            <Link
+                :href="route('cms.invoices.create')"
                 class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
                 Create Invoice
-            </button>
+            </Link>
         </div>
 
         <!-- Summary Stats -->

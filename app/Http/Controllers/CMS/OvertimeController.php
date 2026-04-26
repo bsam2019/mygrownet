@@ -17,7 +17,7 @@ class OvertimeController extends Controller
 
     public function index(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $filters = [
             'worker_id' => $request->input('worker_id'),
@@ -28,9 +28,16 @@ class OvertimeController extends Controller
         ];
 
         $records = $this->overtimeService->getOvertimeRecords($companyId, $filters);
+        
+        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $companyId)
+            ->active()
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('CMS/Overtime/Index', [
             'records' => $records,
+            'workers' => $workers,
             'filters' => $filters,
         ]);
     }
@@ -50,7 +57,7 @@ class OvertimeController extends Controller
 
         $record = $this->overtimeService->createManualOvertime([
             ...$validated,
-            'company_id' => $request->user()->company_id,
+            'company_id' => $request->user()->cmsUser->company_id,
         ]);
 
         return redirect()->route('cms.overtime.index')
@@ -83,7 +90,7 @@ class OvertimeController extends Controller
 
     public function summary(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         $workerId = $request->input('worker_id', $request->user()->id);
         $startDate = Carbon::parse($request->input('start_date', now()->startOfMonth()));
         $endDate = Carbon::parse($request->input('end_date', now()->endOfMonth()));

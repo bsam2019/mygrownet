@@ -79,6 +79,23 @@ class DashboardController extends Controller
         });
         $hasActiveGrowNetPackage = !is_null($user->lgr_package_id) || $isAdmin || $hasGrowNetModule;
         
+        // Get CMS companies for Business Manager module
+        $cmsCompanies = $user->cmsUsers()
+            ->with('company')
+            ->whereHas('company', function($q) {
+                $q->where('status', 'active');
+            })
+            ->get()
+            ->map(function($cmsUser) {
+                return [
+                    'id' => $cmsUser->company->id,
+                    'name' => $cmsUser->company->name,
+                    'industry' => $cmsUser->company->industry,
+                    'role' => $cmsUser->role,
+                ];
+            })
+            ->toArray();
+        
         return Inertia::render('Dashboard/Index', [
             // Wallet data
             'walletBalance' => $walletBreakdown['balance'],
@@ -92,11 +109,15 @@ class DashboardController extends Controller
             // Modules
             'modules' => $modules,
             
+            // CMS / Business Manager
+            'cmsCompanies' => $cmsCompanies,
+            
             // User info
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
             ],
             'isAdmin' => $isAdmin,
             'isManager' => $isManager,

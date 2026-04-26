@@ -4,6 +4,7 @@ namespace App\Http\Controllers\CMS;
 
 use App\Domain\CMS\Core\Services\PaymentService;
 use App\Domain\CMS\Core\Services\PdfPaymentReceiptService;
+use App\Domain\CMS\Core\Services\CompanySettingsService;
 use App\Domain\CMS\Core\ValueObjects\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
@@ -103,19 +104,49 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * JSON endpoint: return unpaid invoices for a customer (used by the Create form)
+     */
+    public function customerInvoices(Request $request, int $customerId)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $invoices = InvoiceModel::where('company_id', $companyId)
+            ->where('customer_id', $customerId)
+            ->whereIn('status', ['sent', 'partial'])
+            ->orderBy('invoice_date', 'desc')
+            ->get()
+            ->map(fn($inv) => [
+                'id'             => $inv->id,
+                'invoice_number' => $inv->invoice_number,
+                'invoice_date'   => $inv->invoice_date,
+                'total_amount'   => (float) $inv->total_amount,
+                'amount_paid'    => (float) $inv->amount_paid,
+                'balance_due'    => (float) ($inv->total_amount - $inv->amount_paid),
+            ]);
+
+        return response()->json($invoices);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'customer_id' => 'required|exists:cms_customers,id',
-            'amount' => 'required|numeric|min:0.01',
-            'payment_method' => 'required|string',
+            'customer_id'      => 'required|exists:cms_customers,id',
+            'amount'           => 'required|numeric|min:0.01',
+            'payment_method'   => 'required|string',
+            'payment_date'     => 'required|date',
             'reference_number' => 'nullable|string|max:100',
-            'notes' => 'nullable|string|max:1000',
-            'allocations' => 'required|array',
-            'allocations.*' => 'numeric|min:0',
+            'notes'            => 'nullable|string|max:1000',
+            'invoice_id'       => 'nullable|exists:cms_invoices,id',
         ]);
 
         $cmsUser = $request->user()->cmsUser;
+
+        // Build allocations array: ['invoice_id' => amount]
+        $allocations = [];
+        if (!empty($validated['invoice_id'])) {
+            $allocations[$validated['invoice_id']] = $validated['amount'];
+        }
 
         try {
             $payment = $this->paymentService->recordPayment(
@@ -124,8 +155,8 @@ class PaymentController extends Controller
                 amount: $validated['amount'],
                 method: PaymentMethod::from($validated['payment_method']),
                 reference: $validated['reference_number'] ?? null,
-                notes: $validated['notes'] ?? null,
-                allocations: $validated['allocations'],
+                notes: $validated['notes'] ?? app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($cmsUser->company_id, 'receipt')['notes'] ?: null,
+                allocations: $allocations,
                 createdBy: $cmsUser->id
             );
 
@@ -249,16 +280,66 @@ class PaymentController extends Controller
     /**
      * Download payment receipt PDF
      */
-    public function downloadReceipt(int $id)
+    public function downloadReceipt(Request $request, int $id)
     {
+        $cmsUser = $request->user()->cmsUser;
+
+        $payment = PaymentModel::where('company_id', $cmsUser->company_id)
+            ->with(['customer', 'company', 'allocations.invoice'])
+            ->findOrFail($id);
+
+        // Check if company has BizDocs module enabled
+        if ($payment->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generateReceiptPdf($payment);
+                
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="receipt-' . $payment->receipt_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs receipt PDF generation failed', [
+                    'payment_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to existing PDF service
+            }
+        }
+
+        // Fallback: Use existing PDF service
         return $this->receiptService->downloadReceipt($id);
     }
 
     /**
      * Preview payment receipt PDF
      */
-    public function previewReceipt(int $id)
+    public function previewReceipt(Request $request, int $id)
     {
+        $cmsUser = $request->user()->cmsUser;
+
+        $payment = PaymentModel::where('company_id', $cmsUser->company_id)
+            ->with(['customer', 'company', 'allocations.invoice'])
+            ->findOrFail($id);
+
+        // Check if company has BizDocs module enabled
+        if ($payment->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generateReceiptPdf($payment);
+                
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'inline; filename="receipt-' . $payment->receipt_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs receipt PDF preview failed', [
+                    'payment_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fall through to existing PDF service
+            }
+        }
+
+        // Fallback: Use existing PDF service
         return $this->receiptService->streamReceipt($id);
     }
 

@@ -9,6 +9,7 @@ import {
   WrenchIcon,
   BuildingOfficeIcon,
   CheckCircleIcon,
+  ScissorsIcon,
 } from '@heroicons/vue/24/outline'
 import CMSLayout from '@/Layouts/CMSLayout.vue'
 
@@ -48,8 +49,9 @@ const iconMap: Record<string, any> = {
   'shopping-bag': ShoppingBagIcon,
   'briefcase': BriefcaseIcon,
   'wrench': WrenchIcon,
-  'utensils': BriefcaseIcon, // Using briefcase as fallback
+  'utensils': BriefcaseIcon,
   'building-office': BuildingOfficeIcon,
+  'scissors': ScissorsIcon,
 }
 
 const getIcon = (iconName: string) => {
@@ -76,7 +78,54 @@ const viewPreset = async (code: string) => {
 }
 
 const applyPreset = async (code: string) => {
-  if (!confirm('Are you sure you want to apply this industry preset? This will add predefined roles, expense categories, and settings to your company.')) {
+  // Build warning message based on existing data
+  let warningMessage = 'Are you sure you want to apply this industry preset?\n\n'
+  
+  if (previewData.value?.existing_data) {
+    const existing = previewData.value.existing_data
+    
+    if (existing.has_industry) {
+      warningMessage += `⚠️ Your company already has "${existing.current_industry}" set as the industry.\n\n`
+    }
+    
+    warningMessage += 'What will happen:\n'
+    
+    if (existing.roles_count > 0) {
+      warningMessage += `• Roles: ${existing.roles_count} existing roles will be kept. Only NEW roles from the preset will be added.\n`
+    } else {
+      warningMessage += `• Roles: ${previewData.value.roles?.length || 0} new roles will be created.\n`
+    }
+    
+    if (existing.expense_categories_count > 0) {
+      warningMessage += `• Expense Categories: ${existing.expense_categories_count} existing categories will be kept. Only NEW categories will be added.\n`
+    } else {
+      warningMessage += `• Expense Categories: ${previewData.value.expense_categories?.length || 0} new categories will be created.\n`
+    }
+    
+    if (existing.pricing_rules_exist) {
+      warningMessage += `• Pricing Rules: Your existing pricing rules will NOT be changed.\n`
+    } else if (previewData.value.has_fabrication_module) {
+      warningMessage += `• Pricing Rules: Default fabrication pricing rules will be created.\n`
+    }
+    
+    if (existing.has_custom_job_types) {
+      warningMessage += `• Job Types: Your custom job types will NOT be changed.\n`
+    } else if (previewData.value.job_types?.length) {
+      warningMessage += `• Job Types: ${previewData.value.job_types.length} preset job types will be added.\n`
+    }
+    
+    if (existing.has_custom_inventory_categories) {
+      warningMessage += `• Inventory Categories: Your custom categories will NOT be changed.\n`
+    } else if (previewData.value.inventory_categories?.length) {
+      warningMessage += `• Inventory Categories: ${previewData.value.inventory_categories.length} preset categories will be added.\n`
+    }
+    
+    warningMessage += '\n✅ Your existing data will NOT be deleted or overwritten.'
+  } else {
+    warningMessage += 'This will add predefined roles, expense categories, and settings to your company.'
+  }
+
+  if (!confirm(warningMessage)) {
     return
   }
 
@@ -165,6 +214,10 @@ const closePreview = () => {
               <div class="flex-1 min-w-0">
                 <h3 class="text-lg font-semibold text-gray-900">{{ preset.name }}</h3>
                 <p class="mt-1 text-sm text-gray-500">{{ preset.description }}</p>
+                <!-- Fabrication module badge -->
+                <span v-if="preset.default_settings?.fabrication_module" class="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-700">
+                  ✂ Includes Fabrication Module
+                </span>
               </div>
             </div>
 
@@ -241,19 +294,40 @@ const closePreview = () => {
               </div>
 
               <div v-else-if="previewData" class="space-y-6 max-h-[60vh] overflow-y-auto">
+
+                <!-- Fabrication Module Badge -->
+                <div v-if="previewData.has_fabrication_module" class="flex items-center gap-2 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                  <span class="text-teal-700 text-sm font-medium">✂ Includes Aluminium Fabrication Module</span>
+                  <span class="text-xs text-teal-600">— Measurements, Pricing Rules, Fabrication Workflow</span>
+                </div>
+
+                <!-- What gets created summary -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-700">{{ previewData.roles?.length || 0 }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Roles</div>
+                  </div>
+                  <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-700">{{ previewData.expense_categories?.length || 0 }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Expense Categories</div>
+                  </div>
+                  <div class="text-center p-3 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-700">{{ previewData.job_types?.length || 0 }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Job Types</div>
+                  </div>
+                  <div class="text-center p-3 bg-amber-50 rounded-lg">
+                    <div class="text-2xl font-bold text-amber-700">{{ previewData.inventory_categories?.length || 0 }}</div>
+                    <div class="text-xs text-gray-500 mt-1">Inventory Categories</div>
+                  </div>
+                </div>
+
                 <!-- Roles -->
                 <div>
                   <h4 class="text-sm font-semibold text-gray-900 mb-3">Roles ({{ previewData.roles?.length || 0 }})</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div
-                      v-for="(role, index) in previewData.roles"
-                      :key="index"
-                      class="p-3 bg-gray-50 rounded-lg border border-gray-200"
-                    >
+                    <div v-for="(role, index) in previewData.roles" :key="index" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <div class="font-medium text-sm text-gray-900">{{ role.name }}</div>
-                      <div class="text-xs text-gray-500 mt-1">
-                        {{ role.permissions?.length || 0 }} permissions
-                      </div>
+                      <div class="text-xs text-gray-500 mt-1">{{ role.permissions?.length || 0 }} permissions</div>
                     </div>
                   </div>
                 </div>
@@ -262,21 +336,14 @@ const closePreview = () => {
                 <div>
                   <h4 class="text-sm font-semibold text-gray-900 mb-3">Expense Categories ({{ previewData.expense_categories?.length || 0 }})</h4>
                   <div class="space-y-2">
-                    <div
-                      v-for="(category, index) in previewData.expense_categories"
-                      :key="index"
-                      class="p-3 bg-gray-50 rounded-lg border border-gray-200"
-                    >
+                    <div v-for="(cat, index) in previewData.expense_categories" :key="index" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <div class="flex items-start justify-between">
                         <div>
-                          <div class="font-medium text-sm text-gray-900">{{ category.name }}</div>
-                          <div class="text-xs text-gray-500 mt-1">{{ category.description }}</div>
+                          <div class="font-medium text-sm text-gray-900">{{ cat.name }}</div>
+                          <div class="text-xs text-gray-500 mt-0.5">{{ cat.description }}</div>
                         </div>
-                        <span
-                          v-if="category.requires_approval"
-                          class="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded"
-                        >
-                          Requires Approval
+                        <span v-if="cat.requires_approval" class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded flex-shrink-0 ml-2">
+                          Approval required
                         </span>
                       </div>
                     </div>
@@ -287,13 +354,7 @@ const closePreview = () => {
                 <div v-if="previewData.job_types?.length">
                   <h4 class="text-sm font-semibold text-gray-900 mb-3">Job Types ({{ previewData.job_types.length }})</h4>
                   <div class="flex flex-wrap gap-2">
-                    <span
-                      v-for="(type, index) in previewData.job_types"
-                      :key="index"
-                      class="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full"
-                    >
-                      {{ type }}
-                    </span>
+                    <span v-for="(type, i) in previewData.job_types" :key="i" class="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full">{{ type }}</span>
                   </div>
                 </div>
 
@@ -301,13 +362,7 @@ const closePreview = () => {
                 <div v-if="previewData.inventory_categories?.length">
                   <h4 class="text-sm font-semibold text-gray-900 mb-3">Inventory Categories ({{ previewData.inventory_categories.length }})</h4>
                   <div class="flex flex-wrap gap-2">
-                    <span
-                      v-for="(category, index) in previewData.inventory_categories"
-                      :key="index"
-                      class="px-3 py-1 text-sm bg-green-50 text-green-700 rounded-full"
-                    >
-                      {{ category }}
-                    </span>
+                    <span v-for="(cat, i) in previewData.inventory_categories" :key="i" class="px-3 py-1 text-sm bg-green-50 text-green-700 rounded-full">{{ cat }}</span>
                   </div>
                 </div>
 
@@ -315,13 +370,18 @@ const closePreview = () => {
                 <div v-if="previewData.asset_types?.length">
                   <h4 class="text-sm font-semibold text-gray-900 mb-3">Asset Types ({{ previewData.asset_types.length }})</h4>
                   <div class="flex flex-wrap gap-2">
-                    <span
-                      v-for="(type, index) in previewData.asset_types"
-                      :key="index"
-                      class="px-3 py-1 text-sm bg-purple-50 text-purple-700 rounded-full"
-                    >
-                      {{ type }}
-                    </span>
+                    <span v-for="(type, i) in previewData.asset_types" :key="i" class="px-3 py-1 text-sm bg-purple-50 text-purple-700 rounded-full">{{ type }}</span>
+                  </div>
+                </div>
+
+                <!-- Default Settings summary -->
+                <div v-if="previewData.default_settings" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 class="text-sm font-semibold text-gray-900 mb-2">Default Settings Applied</h4>
+                  <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>Currency: <span class="font-medium text-gray-900">{{ previewData.default_settings.currency ?? 'ZMW' }}</span></div>
+                    <div>VAT Rate: <span class="font-medium text-gray-900">{{ previewData.default_settings.vat_rate ?? 16 }}%</span></div>
+                    <div>Invoice Due: <span class="font-medium text-gray-900">{{ previewData.default_settings.invoice_due_days ?? 30 }} days</span></div>
+                    <div>VAT: <span class="font-medium text-gray-900">{{ previewData.default_settings.vat_enabled ? 'Enabled' : 'Disabled' }}</span></div>
                   </div>
                 </div>
               </div>

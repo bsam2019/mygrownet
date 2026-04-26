@@ -2080,11 +2080,32 @@ class User extends Authenticatable
     // ==========================================
 
     /**
-     * Get user's CMS user profile (if they have access to CMS)
+     * All CMS memberships for this user (one per company)
      */
-    public function cmsUser(): HasOne
+    public function cmsUsers(): HasMany
     {
-        return $this->hasOne(\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::class);
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::class);
+    }
+
+    /**
+     * The currently active CMS user record, resolved from session.
+     * Falls back to the first active membership.
+     * This is what all CMS controllers use via $request->user()->cmsUser
+     */
+    public function getCmsUserAttribute(): ?\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel
+    {
+        $activeCompanyId = session('active_cms_company_id');
+
+        if ($activeCompanyId) {
+            $record = $this->cmsUsers()
+                ->where('company_id', $activeCompanyId)
+                ->where('status', 'active')
+                ->first();
+            if ($record) return $record;
+        }
+
+        // Fall back to first active membership
+        return $this->cmsUsers()->where('status', 'active')->first();
     }
 
     /**
@@ -2092,7 +2113,7 @@ class User extends Authenticatable
      */
     public function hasCmsAccess(): bool
     {
-        return $this->cmsUser()->exists();
+        return $this->cmsUsers()->where('status', 'active')->exists();
     }
 
     /**

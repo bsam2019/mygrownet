@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
 import { 
     CheckCircleIcon, 
@@ -7,6 +8,7 @@ import {
     ClockIcon,
     DocumentTextIcon 
 } from '@heroicons/vue/24/outline';
+import { toast } from '@/utils/bizboost-toast';
 
 interface Props {
     pendingApprovals: any[];
@@ -14,6 +16,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const showApproveConfirm = ref(false);
+const showRejectModal = ref(false);
+const pendingApprovalId = ref<number | null>(null);
+const rejectReason = ref('');
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -34,19 +41,49 @@ const viewDetails = (id: number) => {
 };
 
 const approve = (id: number) => {
-    if (confirm('Are you sure you want to approve this request?')) {
-        router.post(route('cms.approvals.approve', id), {
+    pendingApprovalId.value = id;
+    showApproveConfirm.value = true;
+};
+
+const confirmApprove = () => {
+    if (pendingApprovalId.value) {
+        router.post(route('cms.approvals.approve', pendingApprovalId.value), {
             comments: null
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Request approved', 'The approval request has been approved');
+                showApproveConfirm.value = false;
+            },
+            onError: () => {
+                toast.error('Approval failed', 'Could not approve request');
+            }
         });
     }
 };
 
 const reject = (id: number) => {
-    const reason = prompt('Please provide a reason for rejection:');
-    if (reason) {
-        router.post(route('cms.approvals.reject', id), {
-            reason
+    pendingApprovalId.value = id;
+    rejectReason.value = '';
+    showRejectModal.value = true;
+};
+
+const confirmReject = () => {
+    if (pendingApprovalId.value && rejectReason.value.trim()) {
+        router.post(route('cms.approvals.reject', pendingApprovalId.value), {
+            reason: rejectReason.value
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Request rejected', 'The approval request has been rejected');
+                showRejectModal.value = false;
+            },
+            onError: () => {
+                toast.error('Rejection failed', 'Could not reject request');
+            }
         });
+    } else {
+        toast.warning('Reason required', 'Please provide a reason for rejection');
     }
 };
 </script>
@@ -171,4 +208,42 @@ const reject = (id: number) => {
             </div>
         </div>
     </CMSLayout>
+
+    <!-- Approve Confirmation Modal -->
+    <div v-if="showApproveConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showApproveConfirm = false">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Approve Request?</h3>
+            <p class="text-sm text-gray-600 mb-6">This will approve the request and allow it to proceed.</p>
+            <div class="flex gap-3 justify-end">
+                <button @click="showApproveConfirm = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button @click="confirmApprove" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition">
+                    Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div v-if="showRejectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showRejectModal = false">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Reject Request</h3>
+            <p class="text-sm text-gray-600 mb-4">Please provide a reason for rejecting this request:</p>
+            <textarea
+                v-model="rejectReason"
+                rows="4"
+                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 mb-6"
+                placeholder="Enter rejection reason..."
+            ></textarea>
+            <div class="flex gap-3 justify-end">
+                <button @click="showRejectModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button @click="confirmReject" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition">
+                    Reject Request
+                </button>
+            </div>
+        </div>
+    </div>
 </template>

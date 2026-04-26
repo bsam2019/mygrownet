@@ -183,7 +183,7 @@
                     </div>
                   </div>
                   <a
-                    :href="document.file_path"
+                    :href="document.download_url"
                     target="_blank"
                     class="flex-shrink-0 ml-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >

@@ -16,7 +16,7 @@ class ShiftController extends Controller
 
     public function index(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->cmsUser->company_id;
         $shifts = $this->shiftService->getShifts($companyId, activeOnly: false);
         $statistics = $this->shiftService->getShiftStatistics($companyId);
 
@@ -35,7 +35,7 @@ class ShiftController extends Controller
     {
         $validated = $request->validate([
             'shift_name' => 'required|string|max:255',
-            'shift_code' => 'required|string|max:50|unique:cms_shifts,shift_code,NULL,id,company_id,' . $request->user()->company_id,
+            'shift_code' => 'required|string|max:50|unique:cms_shifts,shift_code,NULL,id,company_id,' . $request->user()->cmsUser->company_id,
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
             'break_duration_minutes' => 'nullable|integer|min:0',
@@ -52,7 +52,7 @@ class ShiftController extends Controller
 
         $shift = $this->shiftService->createShift([
             ...$validated,
-            'company_id' => $request->user()->company_id,
+            'company_id' => $request->user()->cmsUser->company_id,
         ]);
 
         return redirect()->route('cms.shifts.index')
@@ -70,7 +70,7 @@ class ShiftController extends Controller
     {
         $validated = $request->validate([
             'shift_name' => 'required|string|max:255',
-            'shift_code' => 'required|string|max:50|unique:cms_shifts,shift_code,' . $shift->id . ',id,company_id,' . $request->user()->company_id,
+            'shift_code' => 'required|string|max:50|unique:cms_shifts,shift_code,' . $shift->id . ',id,company_id,' . $request->user()->cmsUser->company_id,
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
             'break_duration_minutes' => 'nullable|integer|min:0',
@@ -116,7 +116,7 @@ class ShiftController extends Controller
 
         $this->shiftService->assignShiftToWorker([
             ...$validated,
-            'company_id' => $request->user()->company_id,
+            'company_id' => $request->user()->cmsUser->company_id,
             'shift_id' => $shift->id,
         ]);
 

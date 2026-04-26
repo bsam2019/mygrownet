@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { PlusIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
+import { computed, onMounted } from 'vue';
+import { toast } from '@/utils/bizboost-toast';
+import { useAutoSave } from '@/composables/useAutoSave';
 
 defineOptions({
   layout: CMSLayout
@@ -16,25 +19,58 @@ interface Customer {
 
 interface Props {
     customers: Customer[];
+    defaultNotes?: string;
+    defaultTerms?: string;
 }
 
 const props = defineProps<Props>();
+const page = usePage();
+
+// Check if fabrication module is enabled
+const fabricationEnabled = computed(() => {
+    return page.props.company?.settings?.fabrication_module === true;
+});
 
 const form = useForm({
     customer_id: null as number | null,
     quotation_date: new Date().toISOString().split('T')[0],
     expiry_date: '',
     items: [
-        { description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_rate: 0, line_total: 0 },
+        { 
+            description: '', 
+            quantity: 1, 
+            unit_price: 0, 
+            line_total: 0,
+            width: null as number | null,
+            height: null as number | null,
+            area: null as number | null,
+            dimensions: null as string | null,
+            dimensions_value: 1,
+        },
     ],
-    tax_amount: 0,
+    subtotal: 0,
+    discount_type: 'percentage' as 'percentage' | 'fixed',
+    discount_value: 0,
     discount_amount: 0,
-    notes: '',
-    terms: '',
+    tax_rate: 16,
+    tax_amount: 0,
+    total: 0,
+    notes: props.defaultNotes ?? '',
+    terms: props.defaultTerms ?? '',
 });
 
 const addItem = () => {
-    form.items.push({ description: '', quantity: 1, unit_price: 0, tax_rate: 0, discount_rate: 0, line_total: 0 });
+    form.items.push({ 
+        description: '', 
+        quantity: 1, 
+        unit_price: 0, 
+        line_total: 0,
+        width: null,
+        height: null,
+        area: null,
+        dimensions: null,
+        dimensions_value: 1,
+    });
 };
 
 const removeItem = (index: number) => {
@@ -44,40 +80,78 @@ const removeItem = (index: number) => {
     }
 };
 
+// Calculate area from dimensions
+const calculateArea = (item: any) => {
+    if (item.width && item.height) {
+        // width/height are in metres on the form
+        const areaM2 = item.width * item.height;
+        item.area = areaM2.toFixed(4);
+        item.dimensions = `${item.width} m × ${item.height} m`;
+        item.dimensions_value = areaM2;
+        // Area-based pricing: quantity = area × count (default 1)
+        if (fabricationEnabled.value) {
+            item.quantity = parseFloat(item.area);
+        }
+    } else {
+        item.area = null;
+        item.dimensions = null;
+        item.dimensions_value = 1;
+    }
+    calculateLineTotal(item);
+    recalculateTotals();
+};
+
 const calculateLineTotal = (item: any) => {
-    const subtotal = item.quantity * item.unit_price;
-    const discount = subtotal * (item.discount_rate / 100);
-    const afterDiscount = subtotal - discount;
-    const tax = afterDiscount * (item.tax_rate / 100);
-    item.line_total = afterDiscount + tax;
+    // Simple line total: quantity × unit price
+    item.line_total = item.quantity * item.unit_price;
     return item.line_total;
 };
 
 const recalculateTotals = () => {
-    form.tax_amount = form.items.reduce((sum, item) => {
-        const subtotal = item.quantity * item.unit_price;
-        const discount = subtotal * (item.discount_rate / 100);
-        const afterDiscount = subtotal - discount;
-        return sum + (afterDiscount * (item.tax_rate / 100));
-    }, 0);
-
-    form.discount_amount = form.items.reduce((sum, item) => {
-        const subtotal = item.quantity * item.unit_price;
-        return sum + (subtotal * (item.discount_rate / 100));
-    }, 0);
-};
-
-const calculateSubtotal = () => {
-    return form.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-};
-
-const calculateTotal = () => {
-    return form.items.reduce((sum, item) => sum + item.line_total, 0);
+    // Calculate subtotal (sum of all line totals)
+    form.subtotal = form.items.reduce((sum, item) => sum + item.line_total, 0);
+    
+    // Calculate discount amount
+    if (form.discount_type === 'percentage') {
+        form.discount_amount = form.subtotal * (form.discount_value / 100);
+    } else {
+        form.discount_amount = form.discount_value;
+    }
+    
+    // Calculate amount after discount
+    const afterDiscount = form.subtotal - form.discount_amount;
+    
+    // Calculate tax amount
+    form.tax_amount = afterDiscount * (form.tax_rate / 100);
+    
+    // Calculate final total
+    form.total = afterDiscount + form.tax_amount;
 };
 
 const submit = () => {
-    form.post(route('cms.quotations.store'));
+    form.post(route('cms.quotations.store'), {
+        onSuccess: () => {
+            clearDraft();
+            toast.success('Quotation created', 'The quotation has been created successfully');
+        },
+        onError: () => {
+            toast.error('Failed to create quotation', 'Please check the form and try again');
+        },
+    });
 };
+
+// Auto-save
+const { autoSaveStatus, loadDraft, hasDraft, clearDraft } = useAutoSave('cms-quotation-draft', form);
+
+onMounted(() => {
+    if (hasDraft()) {
+        const draft = loadDraft();
+        if (draft) {
+            Object.assign(form, draft);
+            toast.info('Draft restored', 'Your unsaved quotation has been restored');
+        }
+    }
+});
 
 const formatCurrency = (amount: number) => {
     return `K${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
@@ -92,13 +166,23 @@ const formatCurrency = (amount: number) => {
             <!-- Header -->
             <div class="mb-6">
                 <button
-                    @click="$inertia.visit(route('cms.quotations.index'))"
+                    @click="router.visit(route('cms.quotations.index'))"
                     class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
                 >
                     <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                     Back to Quotations
                 </button>
-                <h1 class="text-2xl font-bold text-gray-900">Create Quotation</h1>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold text-gray-900">Create Quotation</h1>
+                    <span v-if="autoSaveStatus === 'saving'" class="text-xs text-gray-400 flex items-center gap-1">
+                        <svg class="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                        Saving draft…
+                    </span>
+                    <span v-else-if="autoSaveStatus === 'saved'" class="text-xs text-green-600 flex items-center gap-1">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Draft saved
+                    </span>
+                </div>
                 <p class="mt-1 text-sm text-gray-500">Create a new quotation for a customer</p>
             </div>
 
@@ -169,10 +253,11 @@ const formatCurrency = (amount: number) => {
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Description</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Qty</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Price</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Discount %</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Tax %</th>
+                                    <th v-if="fabricationEnabled" class="px-3 py-2 text-left text-xs font-medium text-gray-500">Width (m)</th>
+                                    <th v-if="fabricationEnabled" class="px-3 py-2 text-left text-xs font-medium text-gray-500">Height (m)</th>
+                                    <th v-if="fabricationEnabled" class="px-3 py-2 text-left text-xs font-medium text-gray-500">Area (m²)</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">{{ fabricationEnabled ? 'Area/Qty' : 'Qty' }}</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Unit Price</th>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Total</th>
                                     <th class="px-3 py-2"></th>
                                 </tr>
@@ -188,6 +273,40 @@ const formatCurrency = (amount: number) => {
                                             class="block w-full min-w-[200px] rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                                         />
                                     </td>
+                                    <!-- Fabrication: Width -->
+                                    <td v-if="fabricationEnabled" class="px-3 py-2">
+                                        <input
+                                            v-model.number="item.width"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="0.00"
+                                            @input="calculateArea(item)"
+                                            class="block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                                        />
+                                    </td>
+                                    <!-- Fabrication: Height -->
+                                    <td v-if="fabricationEnabled" class="px-3 py-2">
+                                        <input
+                                            v-model.number="item.height"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="0.00"
+                                            @input="calculateArea(item)"
+                                            class="block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                                        />
+                                    </td>
+                                    <!-- Fabrication: Area (calculated) -->
+                                    <td v-if="fabricationEnabled" class="px-3 py-2">
+                                        <input
+                                            :value="item.area || ''"
+                                            type="text"
+                                            readonly
+                                            placeholder="Auto"
+                                            class="block w-20 rounded border-gray-200 bg-gray-50 shadow-sm text-sm text-gray-600"
+                                        />
+                                    </td>
                                     <td class="px-3 py-2">
                                         <input
                                             v-model.number="item.quantity"
@@ -195,8 +314,12 @@ const formatCurrency = (amount: number) => {
                                             step="0.01"
                                             min="0.01"
                                             required
+                                            :readonly="fabricationEnabled && item.area"
                                             @input="calculateLineTotal(item); recalculateTotals()"
-                                            class="block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                                            :class="[
+                                                'block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200',
+                                                fabricationEnabled && item.area ? 'bg-gray-50 text-gray-600' : ''
+                                            ]"
                                         />
                                     </td>
                                     <td class="px-3 py-2">
@@ -208,28 +331,6 @@ const formatCurrency = (amount: number) => {
                                             required
                                             @input="calculateLineTotal(item); recalculateTotals()"
                                             class="block w-24 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                                        />
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <input
-                                            v-model.number="item.discount_rate"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            @input="calculateLineTotal(item); recalculateTotals()"
-                                            class="block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                                        />
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <input
-                                            v-model.number="item.tax_rate"
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            max="100"
-                                            @input="calculateLineTotal(item); recalculateTotals()"
-                                            class="block w-20 rounded border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                                         />
                                     </td>
                                     <td class="px-3 py-2 text-sm font-medium text-gray-900">
@@ -254,22 +355,60 @@ const formatCurrency = (amount: number) => {
                     <!-- Totals -->
                     <div class="mt-6 border-t pt-4">
                         <div class="flex justify-end">
-                            <div class="w-64 space-y-2">
+                            <div class="w-80 space-y-3">
+                                <!-- Subtotal -->
                                 <div class="flex justify-between text-sm">
                                     <span class="text-gray-600">Subtotal:</span>
-                                    <span class="font-medium">{{ formatCurrency(calculateSubtotal()) }}</span>
+                                    <span class="font-medium">{{ formatCurrency(form.subtotal) }}</span>
                                 </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Discount:</span>
+                                
+                                <!-- Discount -->
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-600">Discount:</span>
+                                        <select
+                                            v-model="form.discount_type"
+                                            @change="recalculateTotals()"
+                                            class="text-xs rounded border-gray-300 py-1 px-2 focus:border-blue-500 focus:ring-blue-500"
+                                        >
+                                            <option value="percentage">%</option>
+                                            <option value="fixed">K</option>
+                                        </select>
+                                        <input
+                                            v-model.number="form.discount_value"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="0"
+                                            @input="recalculateTotals()"
+                                            class="w-20 text-xs rounded border-gray-300 py-1 px-2 focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
                                     <span class="font-medium text-red-600">-{{ formatCurrency(form.discount_amount) }}</span>
                                 </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">Tax:</span>
+                                
+                                <!-- Tax -->
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-600">Tax (VAT):</span>
+                                        <input
+                                            v-model.number="form.tax_rate"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            @input="recalculateTotals()"
+                                            class="w-16 text-xs rounded border-gray-300 py-1 px-2 focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                        <span class="text-xs text-gray-500">%</span>
+                                    </div>
                                     <span class="font-medium">{{ formatCurrency(form.tax_amount) }}</span>
                                 </div>
-                                <div class="flex justify-between border-t pt-2 text-lg font-bold">
+                                
+                                <!-- Total -->
+                                <div class="flex justify-between border-t pt-3 text-lg font-bold">
                                     <span>Total:</span>
-                                    <span>{{ formatCurrency(calculateTotal()) }}</span>
+                                    <span>{{ formatCurrency(form.total) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -305,7 +444,7 @@ const formatCurrency = (amount: number) => {
                 <div class="flex justify-end gap-3">
                     <button
                         type="button"
-                        @click="$inertia.visit(route('cms.quotations.index'))"
+                        @click="router.visit(route('cms.quotations.index'))"
                         class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
                         Cancel

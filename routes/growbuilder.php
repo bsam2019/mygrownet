@@ -231,8 +231,20 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
     Route::post('/ai/generate-website', [AIController::class, 'generateWebsite'])->name('ai.generate-website');
     Route::post('/ai/refine-website', [AIController::class, 'refineWebsite'])->name('ai.refine-website');
     Route::post('/ai/publish-generated-website', [AIController::class, 'publishGeneratedWebsite'])->name('ai.publish-generated-website');
+    
+    // AI Session Context (NEW - Phase 1)
+    Route::get('/sites/{siteId}/ai/context', [AIController::class, 'getSessionContext'])->name('ai.context');
+    Route::post('/sites/{siteId}/ai/context', [AIController::class, 'updateSessionContext'])->name('ai.context.update');
+    
+    // AI Chat with Actions (NEW - Phase 1)
+    Route::post('/sites/{siteId}/ai/chat', [AIController::class, 'smartChatWithActions'])->name('ai.chat');
+    Route::post('/sites/{siteId}/ai/apply-action', [AIController::class, 'applyAction'])->name('ai.apply-action');
+    
+    // AI Feedback & Stats
     Route::post('/sites/{siteId}/ai/feedback', [AIController::class, 'recordFeedback'])->name('ai.feedback');
     Route::get('/sites/{siteId}/ai/feedback-stats', [AIController::class, 'getFeedbackStats'])->name('ai.feedback-stats');
+    
+    // Legacy AI endpoints (kept for backwards compatibility)
     Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');
     Route::post('/sites/{siteId}/ai/classify-intent', [AIController::class, 'classifyIntent'])->name('ai.classify-intent');
     Route::post('/sites/{siteId}/ai/generate-content', [AIController::class, 'generateContent'])->name('ai.generate-content');

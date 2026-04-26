@@ -130,12 +130,16 @@ class InvoiceService
 
             // Create invoice items
             foreach ($items as $item) {
+                $lineTotal = $item['quantity'] * $item['unit_price'];
                 InvoiceItemModel::create([
-                    'invoice_id' => $invoice->id,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'line_total' => $item['quantity'] * $item['unit_price'],
+                    'invoice_id'       => $invoice->id,
+                    'description'      => $item['description'],
+                    'quantity'         => $item['quantity'],
+                    'unit_price'       => $item['unit_price'],
+                    'amount'           => $lineTotal,
+                    'line_total'       => $lineTotal,
+                    'dimensions'       => $item['dimensions'] ?? null,
+                    'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
             }
 
@@ -192,12 +196,16 @@ class InvoiceService
             // Delete old items and create new ones
             $invoice->items()->delete();
             foreach ($items as $item) {
+                $lineTotal = $item['quantity'] * $item['unit_price'];
                 InvoiceItemModel::create([
-                    'invoice_id' => $invoice->id,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'line_total' => $item['quantity'] * $item['unit_price'],
+                    'invoice_id'       => $invoice->id,
+                    'description'      => $item['description'],
+                    'quantity'         => $item['quantity'],
+                    'unit_price'       => $item['unit_price'],
+                    'amount'           => $lineTotal,
+                    'line_total'       => $lineTotal,
+                    'dimensions'       => $item['dimensions'] ?? null,
+                    'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
             }
 

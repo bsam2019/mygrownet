@@ -248,28 +248,29 @@
         </table>
 
         <!-- Totals -->
-        <table class="totals-table">
+        <table style="width:300px;border-collapse:collapse;margin-left:auto;margin-top:20px;float:right;">
             <tr>
-                <td>Subtotal:</td>
-                <td class="text-right">{{ $document->currency() }} {{ number_format($totals['subtotal']->amount() / 100, 2) }}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">Subtotal:</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;white-space:nowrap;">{{ $document->currency() }} {{ number_format($totals['subtotal']->amount() / 100, 2) }}</td>
             </tr>
             @if($totals['discount_total']->amount() > 0)
-                <tr>
-                    <td>Discount:</td>
-                    <td class="text-right">-{{ $document->currency() }} {{ number_format($totals['discount_total']->amount() / 100, 2) }}</td>
-                </tr>
+            <tr>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">Discount:</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;white-space:nowrap;color:#dc2626;">-{{ $document->currency() }} {{ number_format($totals['discount_total']->amount() / 100, 2) }}</td>
+            </tr>
             @endif
-            @if(($document->collectTax() ?? true) && $totals['tax_total']->amount() > 0)
-                <tr>
-                    <td>Tax:</td>
-                    <td class="text-right">{{ $document->currency() }} {{ number_format($totals['tax_total']->amount() / 100, 2) }}</td>
-                </tr>
+            @if($totals['tax_total']->amount() > 0)
+            <tr>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">Tax:</td>
+                <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right;white-space:nowrap;">{{ $document->currency() }} {{ number_format($totals['tax_total']->amount() / 100, 2) }}</td>
+            </tr>
             @endif
-            <tr class="total-row">
-                <td>Total:</td>
-                <td class="text-right">{{ $document->currency() }} {{ number_format($totals['grand_total']->amount() / 100, 2) }}</td>
+            <tr>
+                <td style="padding:10px;font-size:14pt;font-weight:bold;border-top:2px solid #2563eb;white-space:nowrap;">Total:</td>
+                <td style="padding:10px;font-size:14pt;font-weight:bold;border-top:2px solid #2563eb;text-align:right;white-space:nowrap;">{{ $document->currency() }} {{ number_format($totals['grand_total']->amount() / 100, 2) }}</td>
             </tr>
         </table>
+        <div style="clear:both;"></div>
 
         <!-- Notes -->
         @if($document->notes())

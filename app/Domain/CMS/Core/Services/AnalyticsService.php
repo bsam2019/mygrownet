@@ -74,14 +74,25 @@ class AnalyticsService
 
     private function getAverageJobDuration(int $companyId, Carbon $startDate): float
     {
-        $avgDays = JobModel::forCompany($companyId)
+        // Use database-agnostic date calculation
+        $jobs = JobModel::forCompany($companyId)
             ->where('status', 'completed')
             ->where('completed_at', '>=', $startDate)
             ->whereNotNull('completed_at')
-            ->selectRaw('AVG(DATEDIFF(completed_at, created_at)) as avg_duration')
-            ->value('avg_duration');
+            ->select('completed_at', 'created_at')
+            ->get();
 
-        return round($avgDays ?? 0, 1);
+        if ($jobs->isEmpty()) {
+            return 0;
+        }
+
+        $totalDays = $jobs->sum(function ($job) {
+            return Carbon::parse($job->completed_at)->diffInDays(Carbon::parse($job->created_at));
+        });
+
+        $avgDays = $totalDays / $jobs->count();
+
+        return round($avgDays, 1);
     }
 
     private function getJobsByStatus(int $companyId): array

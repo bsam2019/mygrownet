@@ -23,5 +23,6 @@ return [
     App\Providers\QuickInvoiceServiceProvider::class,
     App\Providers\UbumiServiceProvider::class,
     App\Providers\BizDocsServiceProvider::class,
+    App\Providers\BizDocsIntegrationServiceProvider::class,
     App\Domain\GrowStream\GrowStreamServiceProvider::class,
 ];

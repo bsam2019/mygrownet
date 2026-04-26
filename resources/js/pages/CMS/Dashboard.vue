@@ -11,6 +11,8 @@ import {
   UserPlusIcon,
   DocumentPlusIcon,
   ChartBarIcon,
+  ScissorsIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
@@ -23,8 +25,15 @@ interface Props {
     totalCustomers: number
     pendingInvoices: number
     monthlyRevenue: number
+    // fabrication (only present when hasFabrication = true)
+    pendingMeasurements?: number
+    completedMeasurements?: number
+    pendingQuotations?: number
+    fabricationJobs?: number
   }
   recentJobs: any[]
+  recentMeasurements: any[]
+  hasFabrication: boolean
 }
 
 defineProps<Props>()
@@ -139,10 +148,58 @@ const getStatusClass = (status: string) => {
       </div>
     </div>
 
+    <!-- Fabrication Pipeline Stats (aluminium/fabrication tenants only) -->
+    <div v-if="hasFabrication" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <Link :href="route('cms.measurements.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition">
+            <ScissorsIcon class="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition" aria-hidden="true" />
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Pending Measurements</p>
+            <p class="text-xl font-bold text-gray-900">{{ stats.pendingMeasurements }}</p>
+          </div>
+        </div>
+      </Link>
+      <Link :href="route('cms.measurements.index', { status: 'completed' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <ClipboardDocumentCheckIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Ready to Quote</p>
+            <p class="text-xl font-bold text-blue-700">{{ stats.completedMeasurements }}</p>
+          </div>
+        </div>
+      </Link>
+      <Link :href="route('cms.quotations.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-amber-300 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+            <DocumentTextIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Draft Quotations</p>
+            <p class="text-xl font-bold text-amber-700">{{ stats.pendingQuotations }}</p>
+          </div>
+        </div>
+      </Link>
+      <Link :href="route('cms.jobs.index')" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-purple-300 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <BriefcaseIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">In Fabrication</p>
+            <p class="text-xl font-bold text-purple-700">{{ stats.fabricationJobs }}</p>
+          </div>
+        </div>
+      </Link>
+    </div>
+
     <!-- Quick Actions -->
     <div class="mb-8">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <button
           @click="slideOver?.open('job')"
           class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all shadow-sm hover:shadow-md text-left"
@@ -194,6 +251,25 @@ const getStatusClass = (status: string) => {
           </div>
         </button>
 
+        <!-- New Measurement — fabrication tenants only -->
+        <Link
+          v-if="hasFabrication"
+          :href="route('cms.measurements.create')"
+          class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-teal-500 transition-all shadow-sm hover:shadow-md text-left"
+        >
+          <div class="flex items-center gap-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-600 transition">
+                <ScissorsIcon class="h-6 w-6 text-teal-600 group-hover:text-white transition" aria-hidden="true" />
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold text-gray-900 group-hover:text-teal-600 transition">New Measurement</h3>
+              <p class="text-sm text-gray-500">Site measurement</p>
+            </div>
+          </div>
+        </Link>
+
         <Link
           :href="route('cms.reports.index')"
           class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-indigo-500 transition-all shadow-sm hover:shadow-md text-left"
@@ -210,6 +286,30 @@ const getStatusClass = (status: string) => {
             </div>
           </div>
         </Link>
+      </div>
+    </div>
+
+    <!-- Recent Measurements (fabrication tenants only) -->
+    <div v-if="hasFabrication && recentMeasurements?.length > 0" class="bg-white shadow-sm rounded-lg border border-gray-200 mb-8">
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Recent Measurements</h2>
+        <Link :href="route('cms.measurements.index')" class="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</Link>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <div v-for="m in recentMeasurements" :key="m.id" class="px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition">
+          <div>
+            <Link :href="route('cms.measurements.show', m.id)" class="text-sm font-medium text-gray-900 hover:text-blue-600">{{ m.project_name }}</Link>
+            <p class="text-xs text-gray-500 font-mono">{{ m.measurement_number }} · {{ m.customer?.name }}</p>
+          </div>
+          <span class="px-2 py-1 rounded-full text-xs font-medium"
+            :class="{
+              'bg-gray-100 text-gray-700': m.status === 'draft',
+              'bg-blue-100 text-blue-700': m.status === 'completed',
+              'bg-green-100 text-green-700': m.status === 'quoted',
+            }">
+            {{ m.status.charAt(0).toUpperCase() + m.status.slice(1) }}
+          </span>
+        </div>
       </div>
     </div>
 

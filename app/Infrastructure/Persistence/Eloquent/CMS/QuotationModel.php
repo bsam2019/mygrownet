@@ -13,6 +13,7 @@ class QuotationModel extends Model
     protected $fillable = [
         'company_id',
         'customer_id',
+        'measurement_id',
         'quotation_number',
         'quotation_date',
         'expiry_date',
@@ -47,6 +48,11 @@ class QuotationModel extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(CustomerModel::class, 'customer_id');
+    }
+
+    public function measurement(): BelongsTo
+    {
+        return $this->belongsTo(MeasurementRecordModel::class, 'measurement_id');
     }
 
     public function items(): HasMany

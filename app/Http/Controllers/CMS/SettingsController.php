@@ -5,6 +5,7 @@ namespace App\Http\Controllers\CMS;
 use App\Http\Controllers\Controller;
 use App\Domain\CMS\Core\Services\CompanySettingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,14 +17,34 @@ class SettingsController extends Controller
 
     public function index(Request $request): Response
     {
-        $companyId = $request->user()->cmsUser->company_id;
-        $company = $request->user()->cmsUser->company;
-        
-        $settings = $this->settingsService->getSettings($companyId);
+        $user = $request->user();
+        $companyId = $user->cmsUser->company_id;
+        $company   = $user->cmsUser->company;
+        $settings  = $this->settingsService->getSettings($companyId);
+
+        // Build signature URL if set
+        $signatureUrl = null;
+        if (!empty($company->settings['signature_image'])) {
+            $signatureUrl = \Storage::disk('s3')->url($company->settings['signature_image']);
+        }
+
+        // Check if Material Planning module is enabled
+        $hasMaterialPlanningModule = DB::table('module_subscriptions')
+            ->where('user_id', $user->id)
+            ->where('module_id', 'material-planning')
+            ->where('status', 'active')
+            ->exists();
+
+        // Check if Construction Modules are enabled
+        $hasConstructionModules = $company->settings['construction_modules'] ?? false;
 
         return Inertia::render('CMS/Settings/Index', [
-            'company' => $company,
-            'settings' => $settings,
+            'company'      => array_merge($company->toArray(), [
+                'has_material_planning_module' => $hasMaterialPlanningModule,
+                'has_construction_modules' => $hasConstructionModules,
+            ]),
+            'settings'     => $settings,
+            'signatureUrl' => $signatureUrl,
         ]);
     }
 
@@ -201,5 +222,177 @@ class SettingsController extends Controller
         $this->settingsService->updateSmsSettings($companyId, $validated['sms']);
 
         return back()->with('success', 'SMS settings updated successfully');
+    }
+
+    public function updateDocumentDefaults(Request $request)
+    {
+        $validated = $request->validate([
+            'document_defaults.quotation.notes' => 'nullable|string|max:2000',
+            'document_defaults.quotation.terms' => 'nullable|string|max:2000',
+            'document_defaults.invoice.notes'   => 'nullable|string|max:2000',
+            'document_defaults.invoice.terms'   => 'nullable|string|max:2000',
+            'document_defaults.receipt.notes'   => 'nullable|string|max:2000',
+            'document_defaults.receipt.terms'   => 'nullable|string|max:2000',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $this->settingsService->updateDocumentDefaults($companyId, $validated['document_defaults'] ?? []);
+
+        return back()->with('success', 'Document defaults updated successfully');
+    }
+
+    public function uploadSignature(Request $request)
+    {
+        $request->validate([
+            'signature' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $this->settingsService->uploadSignature($companyId, $request->file('signature'));
+
+        return back()->with('success', 'Signature uploaded successfully');
+    }
+
+    public function deleteSignature(Request $request)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $this->settingsService->deleteSignature($companyId);
+
+        return back()->with('success', 'Signature deleted successfully');
+    }
+
+    /**
+     * Toggle the fabrication/aluminium module on or off for this company.
+     */
+    public function toggleFabricationModule(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $company = $request->user()->cmsUser->company;
+        $company->setFabricationModule($validated['enabled']);
+
+        $status = $validated['enabled'] ? 'enabled' : 'disabled';
+        return back()->with('success', "Fabrication module {$status} successfully.");
+    }
+
+    /**
+     * Toggle the BizDocs module on or off for this company.
+     */
+    public function toggleBizDocsModule(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+            'features' => 'nullable|array',
+            'features.invoices' => 'nullable|boolean',
+            'features.quotations' => 'nullable|boolean',
+            'features.receipts' => 'nullable|boolean',
+            'features.stationery' => 'nullable|boolean',
+        ]);
+
+        $company = $request->user()->cmsUser->company;
+        
+        // Update module status
+        $settings = $company->settings ?? [];
+        $settings['bizdocs_module'] = $validated['enabled'];
+        
+        // Update features if provided
+        if (isset($validated['features'])) {
+            $settings['bizdocs_features'] = $validated['features'];
+        }
+        
+        $company->settings = $settings;
+        $company->save();
+
+        $status = $validated['enabled'] ? 'enabled' : 'disabled';
+        return back()->with('success', "BizDocs module {$status} successfully.");
+    }
+
+    /**
+     * Toggle the Material Planning module on or off for this company.
+     */
+    public function toggleMaterialPlanningModule(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $user = $request->user();
+        $company = $user->cmsUser->company;
+        
+        // Check if module exists
+        $module = DB::table('modules')->where('id', 'material-planning')->first();
+        
+        if (!$module) {
+            return back()->with('error', 'Material Planning module not found.');
+        }
+
+        if ($validated['enabled']) {
+            // Check if already exists
+            $existing = DB::table('module_subscriptions')
+                ->where('user_id', $user->id)
+                ->where('module_id', 'material-planning')
+                ->first();
+
+            if ($existing) {
+                // Update existing subscription
+                DB::table('module_subscriptions')
+                    ->where('user_id', $user->id)
+                    ->where('module_id', 'material-planning')
+                    ->update([
+                        'status' => 'active',
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                // Create new subscription
+                DB::table('module_subscriptions')->insert([
+                    'user_id' => $user->id,
+                    'module_id' => 'material-planning',
+                    'subscription_tier' => 'free',
+                    'status' => 'active',
+                    'started_at' => now(),
+                    'expires_at' => null,
+                    'auto_renew' => false,
+                    'billing_cycle' => 'monthly',
+                    'amount' => 0.00,
+                    'currency' => 'ZMW',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            
+            return back()->with('success', 'Material Planning module enabled successfully.');
+        } else {
+            // Disable the module
+            DB::table('module_subscriptions')
+                ->where('user_id', $user->id)
+                ->where('module_id', 'material-planning')
+                ->delete();
+            
+            return back()->with('success', 'Material Planning module disabled successfully.');
+        }
+    }
+
+    /**
+     * Toggle the Construction Modules on or off for this company.
+     */
+    public function toggleConstructionModules(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $company = $request->user()->cmsUser->company;
+        
+        // Update module status
+        $settings = $company->settings ?? [];
+        $settings['construction_modules'] = $validated['enabled'];
+        
+        $company->settings = $settings;
+        $company->save();
+
+        $status = $validated['enabled'] ? 'enabled' : 'disabled';
+        return back()->with('success', "Construction modules {$status} successfully.");
     }
 }

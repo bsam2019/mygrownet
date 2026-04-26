@@ -1,456 +1,109 @@
 <?php
-
 namespace Database\Seeders;
-
 use App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel;
 use Illuminate\Database\Seeder;
-
 class IndustryPresetsSeeder extends Seeder
 {
+    private function s(array $d): void
+    {
+        IndustryPresetModel::updateOrCreate(['code' => $d['code']], $d);
+    }
+    private function ds(string $currency = 'ZMW', int $due = 30, bool $vat = true, float $rate = 16.0, array $pay = ['cash','mobile_money','bank_transfer'], array $extra = []): array
+    {
+        return array_merge(['currency'=>$currency,'vat_enabled'=>$vat,'vat_rate'=>$rate,'invoice_due_days'=>$due,'payment_methods'=>$pay], $extra);
+    }
+    private function roles(array $extra = []): array
+    {
+        $base = [
+            ['name'=>'Owner','is_system_role'=>true,'permissions'=>['*'],'approval_authority'=>['limit'=>999999999]],
+            ['name'=>'Manager','is_system_role'=>true,'permissions'=>['customers.manage','jobs.manage','invoices.manage','payments.manage','inventory.manage','reports.view'],'approval_authority'=>['limit'=>10000]],
+            ['name'=>'Staff','is_system_role'=>true,'permissions'=>['customers.view','jobs.view','jobs.create','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]],
+        ];
+        return array_merge($base, $extra);
+    }
+    private function cats(array $items): array
+    {
+        return array_map(fn($i) => array_merge(['requires_approval'=>false,'approval_limit'=>null], is_string($i) ? ['name'=>$i,'description'=>''] : $i), $items);
+    }
     public function run(): void
     {
-        $presets = [
-            [
-                'code' => 'printing_branding',
-                'name' => 'Printing & Branding',
-                'description' => 'For printing shops, branding agencies, and signage businesses',
-                'icon' => 'printer',
-                'sort_order' => 1,
-                'roles' => $this->getPrintingRoles(),
-                'expense_categories' => $this->getPrintingExpenseCategories(),
-                'job_types' => ['Printing', 'Branding', 'Signage', 'T-Shirt Printing', 'Banner Design', 'Business Cards', 'Flyers', 'Posters'],
-                'inventory_categories' => ['Ink & Toner', 'Paper & Cardstock', 'Vinyl & Stickers', 'T-Shirts & Apparel', 'Banners & Flags'],
-                'asset_types' => ['Printer', 'Cutting Machine', 'Heat Press', 'Computer', 'Design Software'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 30,
-                    'payment_methods' => ['cash', 'mobile_money', 'bank_transfer'],
-                ],
-            ],
-            [
-                'code' => 'construction',
-                'name' => 'Construction & Building',
-                'description' => 'For construction companies, contractors, and building services',
-                'icon' => 'building',
-                'sort_order' => 2,
-                'roles' => $this->getConstructionRoles(),
-                'expense_categories' => $this->getConstructionExpenseCategories(),
-                'job_types' => ['New Construction', 'Renovation', 'Plumbing', 'Electrical', 'Painting', 'Roofing', 'Flooring', 'Landscaping'],
-                'inventory_categories' => ['Cement & Concrete', 'Bricks & Blocks', 'Timber & Wood', 'Roofing Materials', 'Plumbing Supplies', 'Electrical Supplies', 'Paint & Finishes'],
-                'asset_types' => ['Vehicle', 'Excavator', 'Mixer', 'Scaffolding', 'Power Tools', 'Safety Equipment'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 30,
-                    'payment_methods' => ['cash', 'mobile_money', 'bank_transfer', 'cheque'],
-                    'approval_thresholds' => [
-                        'expense' => 5000,
-                        'commission' => 1000,
-                    ],
-                ],
-            ],
-            [
-                'code' => 'retail',
-                'name' => 'Retail & Shop',
-                'description' => 'For retail stores, shops, and merchandise businesses',
-                'icon' => 'shopping-bag',
-                'sort_order' => 3,
-                'roles' => $this->getRetailRoles(),
-                'expense_categories' => $this->getRetailExpenseCategories(),
-                'job_types' => ['Sale', 'Order', 'Delivery', 'Return', 'Exchange'],
-                'inventory_categories' => ['Products', 'Merchandise', 'Supplies', 'Packaging'],
-                'asset_types' => ['POS System', 'Display Shelves', 'Refrigerator', 'Security System', 'Vehicle'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 7,
-                    'payment_methods' => ['cash', 'mobile_money', 'card'],
-                ],
-            ],
-            [
-                'code' => 'services',
-                'name' => 'Professional Services',
-                'description' => 'For consulting, accounting, legal, and other professional services',
-                'icon' => 'briefcase',
-                'sort_order' => 4,
-                'roles' => $this->getServicesRoles(),
-                'expense_categories' => $this->getServicesExpenseCategories(),
-                'job_types' => ['Consultation', 'Project', 'Retainer', 'Audit', 'Advisory', 'Training'],
-                'inventory_categories' => ['Office Supplies', 'Software Licenses', 'Reference Materials'],
-                'asset_types' => ['Computer', 'Software', 'Office Furniture', 'Server', 'Network Equipment'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 30,
-                    'payment_methods' => ['bank_transfer', 'mobile_money', 'cheque'],
-                ],
-            ],
-            [
-                'code' => 'automotive',
-                'name' => 'Automotive & Repair',
-                'description' => 'For auto repair shops, mechanics, and vehicle services',
-                'icon' => 'wrench',
-                'sort_order' => 5,
-                'roles' => $this->getAutomotiveRoles(),
-                'expense_categories' => $this->getAutomotiveExpenseCategories(),
-                'job_types' => ['Service', 'Repair', 'Maintenance', 'Inspection', 'Parts Replacement', 'Bodywork', 'Painting'],
-                'inventory_categories' => ['Engine Parts', 'Body Parts', 'Oils & Fluids', 'Tires', 'Batteries', 'Filters', 'Tools'],
-                'asset_types' => ['Lift', 'Diagnostic Equipment', 'Tools', 'Air Compressor', 'Welding Machine'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 14,
-                    'payment_methods' => ['cash', 'mobile_money', 'bank_transfer'],
-                ],
-            ],
-            [
-                'code' => 'hospitality',
-                'name' => 'Hospitality & Food',
-                'description' => 'For restaurants, cafes, catering, and food services',
-                'icon' => 'utensils',
-                'sort_order' => 6,
-                'roles' => $this->getHospitalityRoles(),
-                'expense_categories' => $this->getHospitalityExpenseCategories(),
-                'job_types' => ['Dine-In', 'Takeaway', 'Delivery', 'Catering', 'Event'],
-                'inventory_categories' => ['Food Ingredients', 'Beverages', 'Packaging', 'Cleaning Supplies', 'Kitchen Supplies'],
-                'asset_types' => ['Kitchen Equipment', 'Refrigerator', 'Freezer', 'Oven', 'POS System', 'Furniture'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 0,
-                    'payment_methods' => ['cash', 'mobile_money', 'card'],
-                ],
-            ],
-            [
-                'code' => 'general',
-                'name' => 'General Business',
-                'description' => 'Generic preset for any type of business',
-                'icon' => 'building-office',
-                'sort_order' => 99,
-                'roles' => $this->getGeneralRoles(),
-                'expense_categories' => $this->getGeneralExpenseCategories(),
-                'job_types' => ['Service', 'Project', 'Order', 'Task'],
-                'inventory_categories' => ['Products', 'Materials', 'Supplies'],
-                'asset_types' => ['Equipment', 'Furniture', 'Vehicle', 'Computer'],
-                'default_settings' => [
-                    'currency' => 'ZMW',
-                    'vat_enabled' => true,
-                    'vat_rate' => 16,
-                    'invoice_due_days' => 30,
-                    'payment_methods' => ['cash', 'mobile_money', 'bank_transfer'],
-                ],
-            ],
-        ];
+        // 1 Aluminium & Fabrication
+        $this->s(['code'=>'aluminium_fabrication','name'=>'Aluminium & Fabrication','description'=>'Window & door fabricators, aluminium cladding, shopfronts','icon'=>'scissors','sort_order'=>1,'roles'=>$this->roles([['name'=>'Estimator','is_system_role'=>true,'permissions'=>['measurements.manage','quotations.manage','customers.view'],'approval_authority'=>['limit'=>0]],['name'=>'Fabricator','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]],['name'=>'Installer','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Aluminium Profiles','description'=>'Raw profiles & extrusions','requires_approval'=>true,'approval_limit'=>10000],['name'=>'Glass & Glazing','description'=>'Float, tempered, laminated glass','requires_approval'=>true,'approval_limit'=>8000],'Hardware & Fittings','Sealants & Adhesives',['name'=>'Powder Coating','description'=>'Finishing services','requires_approval'=>true,'approval_limit'=>5000],['name'=>'Subcontractors','description'=>'Installation subs','requires_approval'=>true,'approval_limit'=>15000],'Transport & Delivery','Tools & Equipment','Rent & Premises','Safety Equipment']),'job_types'=>['Window Fabrication','Door Fabrication','Curtain Wall','Shopfront','Balustrade','Sliding Door','Casement Window','Aluminium Cladding'],'inventory_categories'=>['Aluminium Profiles','Glass','Hardware & Fittings','Sealants','Powder Coating','Tools'],'asset_types'=>['Cutting Machine','Welding Machine','Drill Press','Compressor','Vehicle'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer','cheque'],['fabrication_module'=>true])]);
+        // 2 Construction
+        $this->s(['code'=>'construction','name'=>'Construction & Building','description'=>'Contractors, civil works, renovation, and building services','icon'=>'building','sort_order'=>2,'roles'=>$this->roles([['name'=>'Site Supervisor','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view','workers.view'],'approval_authority'=>['limit'=>5000]]]),'expense_categories'=>$this->cats([['name'=>'Materials','description'=>'Cement, bricks, timber','requires_approval'=>true,'approval_limit'=>10000],['name'=>'Equipment Rental','description'=>'Machinery & tools','requires_approval'=>true,'approval_limit'=>5000],['name'=>'Subcontractors','description'=>'Specialist contractors','requires_approval'=>true,'approval_limit'=>15000],'Transport','Site Costs','Safety Equipment',['name'=>'Permits & Licenses','description'=>'Building permits','requires_approval'=>true,'approval_limit'=>5000]]),'job_types'=>['New Construction','Renovation','Plumbing','Electrical','Painting','Roofing','Flooring','Landscaping'],'inventory_categories'=>['Cement & Concrete','Bricks & Blocks','Timber','Roofing Materials','Plumbing Supplies','Electrical Supplies','Paint'],'asset_types'=>['Vehicle','Excavator','Concrete Mixer','Scaffolding','Power Tools'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer','cheque'])]);
+        // 3 Retail
+        $this->s(['code'=>'retail','name'=>'Retail & Shop','description'=>'Retail stores, supermarkets, boutiques, and merchandise businesses','icon'=>'shopping-bag','sort_order'=>3,'roles'=>$this->roles([['name'=>'Cashier','is_system_role'=>true,'permissions'=>['jobs.create','invoices.create','payments.create','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Inventory Purchase','description'=>'Stock purchases','requires_approval'=>true,'approval_limit'=>10000],'Rent','Utilities','Marketing','Packaging','Security','Maintenance']),'job_types'=>['Sale','Order','Delivery','Return','Exchange'],'inventory_categories'=>['Products','Merchandise','Supplies','Packaging'],'asset_types'=>['POS System','Display Shelves','Refrigerator','Security System','Vehicle'],'default_settings'=>$this->ds('ZMW',7,true,16,['cash','mobile_money','card'])]);
+        // 4 Professional Services
+        $this->s(['code'=>'services','name'=>'Professional Services','description'=>'Consulting, accounting, legal, HR, and advisory firms','icon'=>'briefcase','sort_order'=>4,'roles'=>$this->roles(),'expense_categories'=>$this->cats([['name'=>'Professional Fees','description'=>'Subcontractors & specialists','requires_approval'=>true,'approval_limit'=>10000],'Office Rent',['name'=>'Software & Subscriptions','description'=>'Tools & licenses','requires_approval'=>true,'approval_limit'=>5000],['name'=>'Travel','description'=>'Client visits','requires_approval'=>true,'approval_limit'=>3000],'Marketing','Office Supplies','Utilities']),'job_types'=>['Consultation','Project','Retainer','Audit','Advisory','Training','Research'],'inventory_categories'=>['Office Supplies','Software Licenses','Reference Materials'],'asset_types'=>['Computer','Software','Office Furniture','Server'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','mobile_money','cheque'])]);
+        // 5 Automotive
+        $this->s(['code'=>'automotive','name'=>'Automotive & Repair','description'=>'Auto repair shops, mechanics, car wash, and vehicle services','icon'=>'wrench','sort_order'=>5,'roles'=>$this->roles([['name'=>'Mechanic','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Parts & Supplies','description'=>'Auto parts, oils, fluids','requires_approval'=>true,'approval_limit'=>5000],['name'=>'Tools & Equipment','description'=>'Workshop tools','requires_approval'=>true,'approval_limit'=>10000],'Rent','Utilities','Waste Disposal','Marketing']),'job_types'=>['Service','Repair','Maintenance','Inspection','Parts Replacement','Bodywork','Painting','Car Wash'],'inventory_categories'=>['Engine Parts','Body Parts','Oils & Fluids','Tires','Batteries','Filters'],'asset_types'=>['Hydraulic Lift','Diagnostic Equipment','Air Compressor','Welding Machine'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money','bank_transfer'])]);
+        // 6 Hospitality & Food
+        $this->s(['code'=>'hospitality','name'=>'Hospitality & Food','description'=>'Restaurants, cafes, lodges, catering, and food services','icon'=>'utensils','sort_order'=>6,'roles'=>$this->roles([['name'=>'Chef','is_system_role'=>true,'permissions'=>['inventory.view','inventory.update','jobs.view'],'approval_authority'=>['limit'=>0]],['name'=>'Waiter','is_system_role'=>true,'permissions'=>['jobs.create','jobs.view','payments.create'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Food & Ingredients','Beverages',['name'=>'Kitchen Equipment','description'=>'Equipment & utensils','requires_approval'=>true,'approval_limit'=>5000],'Rent','Utilities','Cleaning Supplies','Marketing']),'job_types'=>['Dine-In','Takeaway','Delivery','Catering','Event','Room Service'],'inventory_categories'=>['Food Ingredients','Beverages','Packaging','Cleaning Supplies','Kitchen Supplies'],'asset_types'=>['Kitchen Equipment','Refrigerator','Freezer','Oven','POS System','Furniture'],'default_settings'=>$this->ds('ZMW',0,true,16,['cash','mobile_money','card'])]);
+        // 7 Printing & Branding
+        $this->s(['code'=>'printing_branding','name'=>'Printing & Branding','description'=>'Printing shops, signage, branding agencies, and design studios','icon'=>'printer','sort_order'=>7,'roles'=>$this->roles([['name'=>'Designer','is_system_role'=>true,'permissions'=>['jobs.view','jobs.create','jobs.update','customers.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Materials & Supplies',['name'=>'Equipment Maintenance','description'=>'Printer repairs','requires_approval'=>true,'approval_limit'=>5000],'Transport','Utilities','Rent','Marketing','Office Supplies']),'job_types'=>['Printing','Branding','Signage','T-Shirt Printing','Banner Design','Business Cards','Flyers','Posters','Vehicle Wraps'],'inventory_categories'=>['Ink & Toner','Paper & Cardstock','Vinyl & Stickers','T-Shirts','Banners'],'asset_types'=>['Large Format Printer','Cutting Plotter','Heat Press','Computer','Laminator'],'default_settings'=>$this->ds()]);
+        // 8 Healthcare & Clinic
+        $this->s(['code'=>'healthcare','name'=>'Healthcare & Clinic','description'=>'Clinics, pharmacies, dental, optical, and health services','icon'=>'heart','sort_order'=>8,'roles'=>$this->roles([['name'=>'Doctor / Clinician','is_system_role'=>true,'permissions'=>['customers.view','jobs.create','jobs.update'],'approval_authority'=>['limit'=>0]],['name'=>'Pharmacist','is_system_role'=>true,'permissions'=>['inventory.manage','jobs.view'],'approval_authority'=>['limit'=>2000]]]),'expense_categories'=>$this->cats([['name'=>'Medical Supplies','description'=>'Drugs, consumables','requires_approval'=>true,'approval_limit'=>10000],'Equipment Maintenance','Rent','Utilities','Staff Welfare','Marketing','Insurance']),'job_types'=>['Consultation','Procedure','Prescription','Lab Test','Dental','Optical','Physiotherapy'],'inventory_categories'=>['Medicines','Medical Supplies','Lab Reagents','Surgical Supplies','PPE'],'asset_types'=>['Medical Equipment','Examination Bed','Refrigerator','Computer','Autoclave'],'default_settings'=>$this->ds('ZMW',0,true,16,['cash','mobile_money','insurance'])]);
+        // 9 Education & Training
+        $this->s(['code'=>'education','name'=>'Education & Training','description'=>'Schools, colleges, tutoring centres, and training institutes','icon'=>'academic','sort_order'=>9,'roles'=>$this->roles([['name'=>'Teacher / Trainer','is_system_role'=>true,'permissions'=>['customers.view','jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Learning Materials',['name'=>'Equipment','description'=>'Computers, projectors','requires_approval'=>true,'approval_limit'=>5000],'Rent','Utilities','Marketing','Staff Welfare','Exam Fees']),'job_types'=>['Tuition','Training Course','Workshop','Exam Preparation','Online Class','Certificate Program'],'inventory_categories'=>['Books & Materials','Stationery','Lab Supplies','Sports Equipment'],'asset_types'=>['Computers','Projector','Whiteboard','Printer','Furniture'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer'])]);
+        // 10 Real Estate & Property
+        $this->s(['code'=>'real_estate','name'=>'Real Estate & Property','description'=>'Property agents, landlords, developers, and property managers','icon'=>'home','sort_order'=>10,'roles'=>$this->roles([['name'=>'Agent','is_system_role'=>true,'permissions'=>['customers.view','jobs.create','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Property Maintenance','description'=>'Repairs & upkeep','requires_approval'=>true,'approval_limit'=>10000],'Marketing & Advertising','Legal & Conveyancing','Transport','Office Rent','Utilities','Insurance']),'job_types'=>['Property Sale','Property Rental','Property Management','Valuation','Development','Lease Renewal'],'inventory_categories'=>['Property Listings','Maintenance Supplies','Office Supplies'],'asset_types'=>['Vehicle','Computer','Camera','Office Furniture'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','cheque','mobile_money'])]);
+        // 11 Transport & Logistics
+        $this->s(['code'=>'transport','name'=>'Transport & Logistics','description'=>'Trucking, courier, taxi, bus services, and freight companies','icon'=>'truck','sort_order'=>11,'roles'=>$this->roles([['name'=>'Driver','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Fuel',['name'=>'Vehicle Maintenance','description'=>'Repairs & servicing','requires_approval'=>true,'approval_limit'=>5000],'Insurance','Licensing & Permits','Driver Allowances','Tyres & Parts','Toll Fees']),'job_types'=>['Delivery','Freight','Passenger Transport','Courier','Moving','Charter'],'inventory_categories'=>['Fuel','Spare Parts','Tyres','Lubricants'],'asset_types'=>['Trucks','Vans','Motorcycles','Trailers','GPS Trackers'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money','bank_transfer'])]);
+        // 12 Agriculture & Farming
+        $this->s(['code'=>'agriculture','name'=>'Agriculture & Farming','description'=>'Crop farming, livestock, agro-processing, and agricultural services','icon'=>'tractor','sort_order'=>12,'roles'=>$this->roles([['name'=>'Farm Manager','is_system_role'=>true,'permissions'=>['inventory.manage','jobs.manage','expenses.manage'],'approval_authority'=>['limit'=>5000]]]),'expense_categories'=>$this->cats(['Seeds & Seedlings','Fertilisers & Chemicals','Labour','Equipment Maintenance','Irrigation','Transport','Storage & Cold Chain','Veterinary Supplies']),'job_types'=>['Planting','Harvesting','Livestock Management','Processing','Distribution','Contract Farming'],'inventory_categories'=>['Seeds','Fertilisers','Pesticides','Livestock Feed','Harvested Produce','Equipment'],'asset_types'=>['Tractor','Irrigation System','Storage Facility','Vehicle','Plough'],'default_settings'=>$this->ds('ZMW',30,false,0,['cash','mobile_money','bank_transfer'])]);
+// 13 IT & Technology
+$this->s(['code'=>'it_technology','name'=>'IT & Technology','description'=>'Software development, IT support, web design, and tech services','icon'=>'computer','sort_order'=>13,'roles'=>$this->roles([['name'=>'Developer','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','customers.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Software Licenses','Cloud Services','Hardware','Internet & Hosting','Marketing','Office Rent','Utilities']),'job_types'=>['Software Development','Website Design','IT Support','System Integration','Maintenance','Consulting','Training'],'inventory_categories'=>['Software Licenses','Hardware','Accessories','Cables & Connectors'],'asset_types'=>['Computers','Servers','Networking Equipment','Software','Testing Devices'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','mobile_money'])]);
 
-        foreach ($presets as $preset) {
-            IndustryPresetModel::updateOrCreate(
-                ['code' => $preset['code']],
-                $preset
-            );
-        }
+// 14 Beauty & Salon
+$this->s(['code'=>'beauty_salon','name'=>'Beauty & Salon','description'=>'Hair salons, barbershops, spas, beauty parlours, and wellness centres','icon'=>'sparkles','sort_order'=>14,'roles'=>$this->roles([['name'=>'Stylist','is_system_role'=>true,'permissions'=>['jobs.create','jobs.view','customers.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Products & Supplies','Equipment Maintenance','Rent','Utilities','Marketing','Staff Commission','Cleaning Supplies']),'job_types'=>['Haircut','Hair Treatment','Manicure','Pedicure','Facial','Massage','Makeup','Braiding'],'inventory_categories'=>['Hair Products','Cosmetics','Nail Products','Spa Supplies','Cleaning Products'],'asset_types'=>['Salon Chairs','Hair Dryers','Washing Stations','Sterilizers','Mirrors'],'default_settings'=>$this->ds('ZMW',0,true,16,['cash','mobile_money'])]);
 
-        $this->command->info('✅ Created ' . count($presets) . ' industry presets');
-    }
+// 15 Security Services
+$this->s(['code'=>'security','name'=>'Security Services','description'=>'Security companies, guarding services, alarm systems, and surveillance','icon'=>'shield','sort_order'=>15,'roles'=>$this->roles([['name'=>'Security Officer','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Salaries & Wages','Uniforms & Equipment','Training','Transport','Insurance','Licensing','Communication']),'job_types'=>['Guarding Contract','Event Security','Alarm Installation','Patrol Service','CCTV Installation','Risk Assessment'],'inventory_categories'=>['Uniforms','Communication Equipment','Safety Equipment','Surveillance Equipment'],'asset_types'=>['Vehicles','CCTV Systems','Alarm Systems','Communication Radios','Patrol Equipment'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','cheque','mobile_money'])]);
 
-    protected function getPrintingRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 10000],
-            ],
-            [
-                'name' => 'Designer',
-                'is_system_role' => true,
-                'permissions' => ['jobs.view', 'jobs.create', 'jobs.update', 'customers.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-            [
-                'name' => 'Printer Operator',
-                'is_system_role' => true,
-                'permissions' => ['jobs.view', 'inventory.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-        ];
-    }
+// 16 Cleaning Services
+$this->s(['code'=>'cleaning','name'=>'Cleaning Services','description'=>'Commercial cleaning, janitorial, pest control, and sanitation services','icon'=>'broom','sort_order'=>16,'roles'=>$this->roles([['name'=>'Cleaner','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Cleaning Supplies','Equipment','Transport','Staff Wages','Uniforms','Marketing']),'job_types'=>['Office Cleaning','Deep Cleaning','Carpet Cleaning','Window Cleaning','Pest Control','Sanitation'],'inventory_categories'=>['Cleaning Chemicals','Equipment','Protective Gear','Waste Bags'],'asset_types'=>['Vacuum Cleaners','Pressure Washers','Vehicles','Cleaning Equipment'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getPrintingExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Materials & Supplies', 'description' => 'Ink, paper, vinyl, t-shirts, etc.', 'requires_approval' => false],
-            ['name' => 'Equipment & Maintenance', 'description' => 'Printer maintenance, repairs', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Transport & Delivery', 'description' => 'Fuel, delivery costs', 'requires_approval' => false],
-            ['name' => 'Utilities', 'description' => 'Electricity, water, internet', 'requires_approval' => false],
-            ['name' => 'Rent & Premises', 'description' => 'Office rent, security', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Marketing', 'description' => 'Advertising, promotions', 'requires_approval' => true, 'approval_limit' => 3000],
-            ['name' => 'Office Supplies', 'description' => 'Stationery, misc items', 'requires_approval' => false],
-            ['name' => 'Staff Welfare', 'description' => 'Lunch, benefits', 'requires_approval' => false],
-        ];
-    }
+// 17 Event Management
+$this->s(['code'=>'events','name'=>'Event Management','description'=>'Event planning, weddings, conferences, parties, and entertainment','icon'=>'calendar','sort_order'=>17,'roles'=>$this->roles([['name'=>'Event Coordinator','is_system_role'=>true,'permissions'=>['jobs.manage','customers.manage','expenses.manage'],'approval_authority'=>['limit'=>10000]]]),'expense_categories'=>$this->cats([['name'=>'Venue Rental','description'=>'Event venues','requires_approval'=>true,'approval_limit'=>20000],['name'=>'Catering','description'=>'Food & beverages','requires_approval'=>true,'approval_limit'=>15000],['name'=>'Entertainment','description'=>'DJs, bands, performers','requires_approval'=>true,'approval_limit'=>10000],'Decorations','Equipment Rental','Transport','Marketing']),'job_types'=>['Wedding','Conference','Birthday Party','Corporate Event','Exhibition','Concert','Workshop'],'inventory_categories'=>['Decorations','Equipment','Supplies','Marketing Materials'],'asset_types'=>['Sound System','Lighting Equipment','Tents','Chairs & Tables','Vehicles'],'default_settings'=>$this->ds('ZMW',14,true,16,['bank_transfer','mobile_money','cash'])]);
 
-    protected function getConstructionRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Project Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'workers.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 20000],
-            ],
-            [
-                'name' => 'Site Supervisor',
-                'is_system_role' => true,
-                'permissions' => ['jobs.view', 'jobs.update', 'inventory.view', 'workers.view'],
-                'approval_authority' => ['limit' => 5000],
-            ],
-            [
-                'name' => 'Foreman',
-                'is_system_role' => true,
-                'permissions' => ['jobs.view', 'workers.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-        ];
-    }
+// 18 Manufacturing
+$this->s(['code'=>'manufacturing','name'=>'Manufacturing & Production','description'=>'Small-scale manufacturing, production, assembly, and processing','icon'=>'factory','sort_order'=>18,'roles'=>$this->roles([['name'=>'Production Manager','is_system_role'=>true,'permissions'=>['inventory.manage','jobs.manage','expenses.manage'],'approval_authority'=>['limit'=>10000]],['name'=>'Quality Controller','is_system_role'=>true,'permissions'=>['jobs.view','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Raw Materials','description'=>'Production inputs','requires_approval'=>true,'approval_limit'=>20000],'Labour','Equipment Maintenance','Utilities','Packaging','Transport','Quality Control']),'job_types'=>['Production Run','Custom Order','Assembly','Packaging','Quality Inspection','Distribution'],'inventory_categories'=>['Raw Materials','Work in Progress','Finished Goods','Packaging Materials','Spare Parts'],'asset_types'=>['Production Machinery','Assembly Equipment','Quality Testing Equipment','Vehicles','Storage Facilities'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','cheque'])]);
 
-    protected function getConstructionExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Materials', 'description' => 'Cement, bricks, timber, etc.', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Equipment Rental', 'description' => 'Machinery, tools rental', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Subcontractors', 'description' => 'Specialist contractors', 'requires_approval' => true, 'approval_limit' => 15000],
-            ['name' => 'Transport', 'description' => 'Fuel, vehicle maintenance', 'requires_approval' => false],
-            ['name' => 'Site Costs', 'description' => 'Security, utilities', 'requires_approval' => false],
-            ['name' => 'Safety Equipment', 'description' => 'PPE, safety gear', 'requires_approval' => false],
-            ['name' => 'Permits & Licenses', 'description' => 'Building permits, licenses', 'requires_approval' => true, 'approval_limit' => 5000],
-        ];
-    }
+// 19 Telecommunications
+$this->s(['code'=>'telecommunications','name'=>'Telecommunications','description'=>'Airtime vendors, phone repairs, accessories, and telecom services','icon'=>'phone','sort_order'=>19,'roles'=>$this->roles([['name'=>'Technician','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Airtime & Data Purchase','Accessories','Repair Parts','Rent','Utilities','Marketing']),'job_types'=>['Airtime Sale','Phone Repair','Accessory Sale','SIM Registration','Data Bundle','Money Transfer'],'inventory_categories'=>['Airtime','Phones','Accessories','Repair Parts','SIM Cards'],'asset_types'=>['Display Cases','Repair Tools','POS System','Security System'],'default_settings'=>$this->ds('ZMW',0,true,16,['cash','mobile_money'])]);
 
-    protected function getRetailRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Store Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 5000],
-            ],
-            [
-                'name' => 'Cashier',
-                'is_system_role' => true,
-                'permissions' => ['jobs.create', 'invoices.create', 'payments.create', 'inventory.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-            [
-                'name' => 'Stock Clerk',
-                'is_system_role' => true,
-                'permissions' => ['inventory.view', 'inventory.update'],
-                'approval_authority' => ['limit' => 0],
-            ],
-        ];
-    }
+// 20 Furniture & Carpentry
+$this->s(['code'=>'furniture','name'=>'Furniture & Carpentry','description'=>'Furniture making, carpentry, joinery, and woodwork services','icon'=>'hammer','sort_order'=>20,'roles'=>$this->roles([['name'=>'Carpenter','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Timber & Wood','description'=>'Raw materials','requires_approval'=>true,'approval_limit'=>10000],'Hardware & Fittings','Finishing Materials','Tools & Equipment','Transport','Workshop Rent']),'job_types'=>['Custom Furniture','Kitchen Cabinets','Doors & Frames','Roofing','Repairs','Installation'],'inventory_categories'=>['Timber','Hardware','Finishing Materials','Tools'],'asset_types'=>['Woodworking Machines','Hand Tools','Power Tools','Vehicles','Workshop Equipment'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getRetailExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Inventory Purchase', 'description' => 'Stock purchases', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Rent', 'description' => 'Shop rent', 'requires_approval' => true, 'approval_limit' => 15000],
-            ['name' => 'Utilities', 'description' => 'Electricity, water', 'requires_approval' => false],
-            ['name' => 'Marketing', 'description' => 'Advertising, promotions', 'requires_approval' => true, 'approval_limit' => 3000],
-            ['name' => 'Packaging', 'description' => 'Bags, boxes, wrapping', 'requires_approval' => false],
-            ['name' => 'Security', 'description' => 'Security services', 'requires_approval' => false],
-            ['name' => 'Maintenance', 'description' => 'Shop maintenance', 'requires_approval' => false],
-        ];
-    }
+// 21 Tailoring & Fashion
+$this->s(['code'=>'tailoring','name'=>'Tailoring & Fashion','description'=>'Tailors, dressmakers, fashion designers, and clothing alterations','icon'=>'scissors','sort_order'=>21,'roles'=>$this->roles([['name'=>'Tailor','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','customers.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Fabrics & Materials','Sewing Supplies','Equipment Maintenance','Rent','Utilities','Marketing']),'job_types'=>['Custom Tailoring','Alterations','Dress Making','Suit Making','Uniform Production','Repairs'],'inventory_categories'=>['Fabrics','Threads & Buttons','Zippers & Fasteners','Patterns','Accessories'],'asset_types'=>['Sewing Machines','Overlock Machines','Cutting Tables','Mannequins','Irons'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money'])]);
 
-    protected function getServicesRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Partner',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 50000],
-            ],
-            [
-                'name' => 'Consultant',
-                'is_system_role' => true,
-                'permissions' => ['customers.view', 'jobs.view', 'jobs.create', 'jobs.update'],
-                'approval_authority' => ['limit' => 0],
-            ],
-            [
-                'name' => 'Admin',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'invoices.manage', 'payments.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 5000],
-            ],
-        ];
-    }
+// 22 Photography & Videography
+$this->s(['code'=>'photography','name'=>'Photography & Videography','description'=>'Photo studios, videographers, event coverage, and media production','icon'=>'camera','sort_order'=>22,'roles'=>$this->roles([['name'=>'Photographer','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','customers.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Equipment Maintenance','Studio Rent','Transport','Marketing','Software Subscriptions','Props & Backdrops']),'job_types'=>['Wedding Photography','Event Coverage','Portrait Session','Product Photography','Video Production','Editing'],'inventory_categories'=>['Memory Cards','Batteries','Props','Backdrops','Printing Supplies'],'asset_types'=>['Cameras','Lenses','Lighting Equipment','Drones','Computers','Editing Software'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getServicesExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Professional Services', 'description' => 'Subcontractors, specialists', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Office Rent', 'description' => 'Office space rental', 'requires_approval' => true, 'approval_limit' => 15000],
-            ['name' => 'Software & Subscriptions', 'description' => 'Software licenses, tools', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Travel', 'description' => 'Client visits, meetings', 'requires_approval' => true, 'approval_limit' => 3000],
-            ['name' => 'Marketing', 'description' => 'Advertising, networking', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Office Supplies', 'description' => 'Stationery, supplies', 'requires_approval' => false],
-            ['name' => 'Utilities', 'description' => 'Internet, phone, electricity', 'requires_approval' => false],
-        ];
-    }
+// 23 Gym & Fitness
+$this->s(['code'=>'fitness','name'=>'Gym & Fitness','description'=>'Gyms, fitness centres, personal training, and wellness facilities','icon'=>'dumbbell','sort_order'=>23,'roles'=>$this->roles([['name'=>'Trainer','is_system_role'=>true,'permissions'=>['customers.view','jobs.view','jobs.update'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Equipment Maintenance','Rent','Utilities','Marketing','Cleaning Supplies','Staff Salaries','Insurance']),'job_types'=>['Membership','Personal Training','Group Class','Nutrition Consultation','Fitness Assessment'],'inventory_categories'=>['Supplements','Merchandise','Cleaning Supplies','Equipment Parts'],'asset_types'=>['Gym Equipment','Cardio Machines','Weights','Mats','Sound System'],'default_settings'=>$this->ds('ZMW',30,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getAutomotiveRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Workshop Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'workers.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 10000],
-            ],
-            [
-                'name' => 'Mechanic',
-                'is_system_role' => true,
-                'permissions' => ['jobs.view', 'jobs.update', 'inventory.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-            [
-                'name' => 'Parts Manager',
-                'is_system_role' => true,
-                'permissions' => ['inventory.manage', 'jobs.view'],
-                'approval_authority' => ['limit' => 5000],
-            ],
-        ];
-    }
+// 24 Legal Services
+$this->s(['code'=>'legal','name'=>'Legal Services','description'=>'Law firms, legal consultants, notaries, and legal advisory services','icon'=>'scale','sort_order'=>24,'roles'=>$this->roles([['name'=>'Lawyer','is_system_role'=>true,'permissions'=>['customers.manage','jobs.manage','invoices.manage'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats(['Court Fees','Research & Subscriptions','Office Rent','Utilities','Marketing','Professional Development','Insurance']),'job_types'=>['Legal Consultation','Contract Drafting','Court Representation','Notarization','Legal Research','Document Review'],'inventory_categories'=>['Legal Forms','Office Supplies','Reference Books'],'asset_types'=>['Computers','Legal Software','Office Furniture','Library'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','cheque','mobile_money'])]);
 
-    protected function getAutomotiveExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Parts & Supplies', 'description' => 'Auto parts, oils, fluids', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Tools & Equipment', 'description' => 'Tools, diagnostic equipment', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Rent', 'description' => 'Workshop rent', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Utilities', 'description' => 'Electricity, water', 'requires_approval' => false],
-            ['name' => 'Waste Disposal', 'description' => 'Oil disposal, waste management', 'requires_approval' => false],
-            ['name' => 'Marketing', 'description' => 'Advertising', 'requires_approval' => true, 'approval_limit' => 2000],
-        ];
-    }
+// 25 Media & Advertising
+$this->s(['code'=>'media_advertising','name'=>'Media & Advertising','description'=>'Advertising agencies, media buying, content creation, and marketing','icon'=>'megaphone','sort_order'=>25,'roles'=>$this->roles([['name'=>'Creative Director','is_system_role'=>true,'permissions'=>['jobs.manage','customers.manage','expenses.manage'],'approval_authority'=>['limit'=>10000]],['name'=>'Account Manager','is_system_role'=>true,'permissions'=>['customers.manage','jobs.view','invoices.manage'],'approval_authority'=>['limit'=>5000]]]),'expense_categories'=>$this->cats([['name'=>'Media Buying','description'=>'Ad placements','requires_approval'=>true,'approval_limit'=>20000],['name'=>'Production Costs','description'=>'Content creation','requires_approval'=>true,'approval_limit'=>10000],'Software Subscriptions','Office Rent','Utilities','Marketing','Freelancers']),'job_types'=>['Campaign Management','Content Creation','Media Buying','Brand Strategy','Social Media Management','Video Production'],'inventory_categories'=>['Software Licenses','Stock Media','Office Supplies'],'asset_types'=>['Computers','Cameras','Software','Studio Equipment'],'default_settings'=>$this->ds('ZMW',30,true,16,['bank_transfer','mobile_money'])]);
 
-    protected function getHospitalityRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'workers.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 5000],
-            ],
-            [
-                'name' => 'Chef',
-                'is_system_role' => true,
-                'permissions' => ['inventory.view', 'inventory.update', 'jobs.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-            [
-                'name' => 'Waiter',
-                'is_system_role' => true,
-                'permissions' => ['jobs.create', 'jobs.view', 'payments.create'],
-                'approval_authority' => ['limit' => 0],
-            ],
-        ];
-    }
+// 26 Electrical Services
+$this->s(['code'=>'electrical','name'=>'Electrical Services','description'=>'Electricians, electrical installations, repairs, and maintenance','icon'=>'bolt','sort_order'=>26,'roles'=>$this->roles([['name'=>'Electrician','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Electrical Materials','description'=>'Cables, switches, fixtures','requires_approval'=>true,'approval_limit'=>5000],'Tools & Equipment','Transport','Licensing','Insurance','Marketing']),'job_types'=>['Installation','Repair','Maintenance','Inspection','Wiring','Solar Installation'],'inventory_categories'=>['Cables','Switches','Sockets','Circuit Breakers','Light Fixtures','Tools'],'asset_types'=>['Testing Equipment','Power Tools','Vehicles','Ladders','Safety Equipment'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getHospitalityExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Food & Ingredients', 'description' => 'Fresh produce, ingredients', 'requires_approval' => false],
-            ['name' => 'Beverages', 'description' => 'Drinks, alcohol', 'requires_approval' => true, 'approval_limit' => 3000],
-            ['name' => 'Kitchen Equipment', 'description' => 'Equipment, utensils', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Rent', 'description' => 'Restaurant rent', 'requires_approval' => true, 'approval_limit' => 15000],
-            ['name' => 'Utilities', 'description' => 'Gas, electricity, water', 'requires_approval' => false],
-            ['name' => 'Cleaning Supplies', 'description' => 'Cleaning materials', 'requires_approval' => false],
-            ['name' => 'Marketing', 'description' => 'Advertising, promotions', 'requires_approval' => true, 'approval_limit' => 2000],
-        ];
-    }
+// 27 Plumbing Services
+$this->s(['code'=>'plumbing','name'=>'Plumbing Services','description'=>'Plumbers, pipe fitting, water systems, and sanitation services','icon'=>'wrench','sort_order'=>27,'roles'=>$this->roles([['name'=>'Plumber','is_system_role'=>true,'permissions'=>['jobs.view','jobs.update','inventory.view'],'approval_authority'=>['limit'=>0]]]),'expense_categories'=>$this->cats([['name'=>'Plumbing Materials','description'=>'Pipes, fittings, fixtures','requires_approval'=>true,'approval_limit'=>5000],'Tools & Equipment','Transport','Licensing','Insurance','Marketing']),'job_types'=>['Installation','Repair','Maintenance','Inspection','Drainage','Water Heater Installation'],'inventory_categories'=>['Pipes','Fittings','Fixtures','Valves','Sealants','Tools'],'asset_types'=>['Pipe Threading Machine','Drain Snake','Testing Equipment','Vehicles','Tools'],'default_settings'=>$this->ds('ZMW',14,true,16,['cash','mobile_money','bank_transfer'])]);
 
-    protected function getGeneralRoles(): array
-    {
-        return [
-            [
-                'name' => 'Owner',
-                'is_system_role' => true,
-                'permissions' => ['*'],
-                'approval_authority' => ['limit' => 999999999],
-            ],
-            [
-                'name' => 'Manager',
-                'is_system_role' => true,
-                'permissions' => ['customers.manage', 'jobs.manage', 'invoices.manage', 'payments.manage', 'inventory.manage', 'reports.view'],
-                'approval_authority' => ['limit' => 10000],
-            ],
-            [
-                'name' => 'Staff',
-                'is_system_role' => true,
-                'permissions' => ['customers.view', 'jobs.view', 'jobs.create', 'jobs.update', 'inventory.view'],
-                'approval_authority' => ['limit' => 0],
-            ],
-        ];
-    }
+// 28 Laundry & Dry Cleaning
+$this->s(['code'=>'laundry','name'=>'Laundry & Dry Cleaning','description'=>'Laundry services, dry cleaning, ironing, and garment care','icon'=>'washing-machine','sort_order'=>28,'roles'=>$this->roles(),'expense_categories'=>$this->cats(['Detergents & Chemicals','Equipment Maintenance','Utilities','Rent','Packaging','Marketing']),'job_types'=>['Laundry','Dry Cleaning','Ironing','Stain Removal','Alterations','Delivery'],'inventory_categories'=>['Detergents','Chemicals','Hangers','Packaging','Supplies'],'asset_types'=>['Washing Machines','Dryers','Irons','Dry Cleaning Equipment','Vehicles'],'default_settings'=>$this->ds('ZMW',7,true,16,['cash','mobile_money'])]);
 
-    protected function getGeneralExpenseCategories(): array
-    {
-        return [
-            ['name' => 'Materials & Supplies', 'description' => 'Business materials', 'requires_approval' => false],
-            ['name' => 'Equipment', 'description' => 'Equipment purchases', 'requires_approval' => true, 'approval_limit' => 5000],
-            ['name' => 'Rent', 'description' => 'Office/shop rent', 'requires_approval' => true, 'approval_limit' => 10000],
-            ['name' => 'Utilities', 'description' => 'Electricity, water, internet', 'requires_approval' => false],
-            ['name' => 'Transport', 'description' => 'Fuel, vehicle costs', 'requires_approval' => false],
-            ['name' => 'Marketing', 'description' => 'Advertising, promotions', 'requires_approval' => true, 'approval_limit' => 3000],
-            ['name' => 'Miscellaneous', 'description' => 'Other expenses', 'requires_approval' => true, 'approval_limit' => 2000],
-        ];
-    }
+// 29 Stationery & Bookshop
+$this->s(['code'=>'stationery','name'=>'Stationery & Bookshop','description'=>'Stationery stores, bookshops, office supplies, and educational materials','icon'=>'book','sort_order'=>29,'roles'=>$this->roles(),'expense_categories'=>$this->cats([['name'=>'Stock Purchase','description'=>'Books & stationery','requires_approval'=>true,'approval_limit'=>10000],'Rent','Utilities','Marketing','Packaging','Security']),'job_types'=>['Sale','Order','Delivery','Printing','Photocopying','Binding'],'inventory_categories'=>['Books','Stationery','Office Supplies','Art Supplies','Educational Materials'],'asset_types'=>['Display Shelves','POS System','Photocopier','Binding Machine','Security System'],'default_settings'=>$this->ds('ZMW',7,true,16,['cash','mobile_money'])]);
+
+// 30 General Business
+$this->s(['code'=>'general','name'=>'General Business','description'=>'Generic business setup for any industry not listed above','icon'=>'briefcase','sort_order'=>30,'roles'=>$this->roles(),'expense_categories'=>$this->cats(['Operating Expenses','Rent','Utilities','Marketing','Supplies','Transport','Insurance']),'job_types'=>['Service','Sale','Project','Consultation','Delivery'],'inventory_categories'=>['Products','Supplies','Materials'],'asset_types'=>['Equipment','Furniture','Vehicles','Computers'],'default_settings'=>$this->ds()]);
+
+}
 }

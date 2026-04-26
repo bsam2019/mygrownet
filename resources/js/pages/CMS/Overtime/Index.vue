@@ -62,7 +62,7 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="record in records.data" :key="record.id" class="hover:bg-gray-50">
+            <tr v-for="record in records?.data || []" :key="record.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ formatDate(record.overtime_date) }}
               </td>
@@ -112,7 +112,7 @@
         </table>
 
         <!-- Pagination -->
-        <div v-if="records.data.length > 0" class="px-6 py-4 border-t">
+        <div v-if="records?.data && records.data.length > 0" class="px-6 py-4 border-t">
           <div class="flex items-center justify-between">
             <div class="text-sm text-gray-500">
               Showing {{ records.from }} to {{ records.to }} of {{ records.total }} results
@@ -135,7 +135,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="records.data.length === 0" class="text-center py-12">
+        <div v-if="!records?.data || records.data.length === 0" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

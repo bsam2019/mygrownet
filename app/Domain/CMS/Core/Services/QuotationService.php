@@ -44,13 +44,15 @@ class QuotationService
             // Create line items
             foreach ($data['items'] as $item) {
                 QuotationItemModel::create([
-                    'quotation_id' => $quotation->id,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'tax_rate' => $item['tax_rate'] ?? 0,
-                    'discount_rate' => $item['discount_rate'] ?? 0,
-                    'line_total' => $item['line_total'],
+                    'quotation_id'     => $quotation->id,
+                    'description'      => $item['description'],
+                    'quantity'         => $item['quantity'],
+                    'unit_price'       => $item['unit_price'],
+                    'tax_rate'         => $item['tax_rate'] ?? 0,
+                    'discount_rate'    => $item['discount_rate'] ?? 0,
+                    'line_total'       => $item['line_total'],
+                    'dimensions'       => $item['dimensions'] ?? null,
+                    'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
             }
 
@@ -106,13 +108,15 @@ class QuotationService
             $quotation->items()->delete();
             foreach ($data['items'] as $item) {
                 QuotationItemModel::create([
-                    'quotation_id' => $quotation->id,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'tax_rate' => $item['tax_rate'] ?? 0,
-                    'discount_rate' => $item['discount_rate'] ?? 0,
-                    'line_total' => $item['line_total'],
+                    'quotation_id'     => $quotation->id,
+                    'description'      => $item['description'],
+                    'quantity'         => $item['quantity'],
+                    'unit_price'       => $item['unit_price'],
+                    'tax_rate'         => $item['tax_rate'] ?? 0,
+                    'discount_rate'    => $item['discount_rate'] ?? 0,
+                    'line_total'       => $item['line_total'],
+                    'dimensions'       => $item['dimensions'] ?? null,
+                    'dimensions_value' => $item['dimensions_value'] ?? 1,
                 ]);
             }
 
@@ -166,14 +170,17 @@ class QuotationService
             $jobService = app(JobService::class);
             
             $jobData = [
-                'customer_id' => $quotation->customer_id,
-                'job_type' => 'From Quotation ' . $quotation->quotation_number,
-                'description' => $quotation->notes ?? 'Converted from quotation',
+                'company_id'   => $quotation->company_id,
+                'customer_id'  => $quotation->customer_id,
+                'quotation_id' => $quotation->id,
+                'job_type'     => 'Aluminium Fabrication – ' . $quotation->quotation_number,
+                'description'  => $quotation->notes ?? 'Converted from quotation ' . $quotation->quotation_number,
                 'quoted_value' => $quotation->total_amount,
-                'priority' => 'normal',
+                'priority'     => 'normal',
+                'created_by'   => $userId,
             ];
 
-            $job = $jobService->createJob($jobData, $quotation->company_id, $userId);
+            $job = $jobService->createJob($jobData);
 
             // Update quotation
             $quotation->update([
@@ -187,7 +194,7 @@ class QuotationService
                 $userId,
                 'quotation',
                 $quotation->id,
-                'converted_to_job',
+                'converted',
                 null,
                 ['job_id' => $job->id]
             );

@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import PWAInstallPrompt from '@/Components/PWAInstallPrompt.vue';
 import PWAInstallButton from '@/Components/PWAInstallButton.vue';
+import CompanySelectorModal from '@/Components/CompanySelectorModal.vue';
 import { 
     WalletIcon, 
     CubeIcon,
@@ -25,7 +26,8 @@ import {
     CheckCircleIcon,
     ArrowRightIcon,
     UserGroupIcon,
-    BuildingStorefrontIcon
+    BuildingStorefrontIcon,
+    BriefcaseIcon
 } from '@heroicons/vue/24/solid';
 
 interface Module {
@@ -39,6 +41,13 @@ interface Module {
     description?: string | null;
 }
 
+interface Company {
+    id: number;
+    name: string;
+    industry: string | null;
+    role: string;
+}
+
 interface Props {
     walletBalance?: number;
     bonusBalance?: number;
@@ -47,6 +56,7 @@ interface Props {
     commissions?: number;
     profitShares?: number;
     modules?: Module[];
+    cmsCompanies?: Company[];
     user?: any;
     accountType?: string;
     isAdmin?: boolean;
@@ -62,10 +72,14 @@ const props = withDefaults(defineProps<Props>(), {
     commissions: 0,
     profitShares: 0,
     modules: () => [],
+    cmsCompanies: () => [],
     isAdmin: false,
     isManager: false,
     hasActiveGrowNetPackage: false,
 });
+
+// Company selector modal state
+const showCompanySelector = ref(false);
 
 // Start Here section dismissal state
 const startHereDismissed = ref(false); // Temporarily always show for debugging
@@ -172,6 +186,7 @@ const getModuleIcon = (slug: string) => {
         'lifeplus': HeartIcon,
         'inventory': CubeIcon,
         'pos': BuildingStorefrontIcon,
+        'business-manager': BriefcaseIcon,
     };
     return iconMap[slug] || CubeIcon;
 };
@@ -187,12 +202,30 @@ const getModuleDescription = (slug: string): string => {
         'lifeplus': 'Health & wellness companion',
         'inventory': 'Inventory management',
         'pos': 'Point of sale system',
+        'business-manager': 'Manage your business operations',
     };
     return descriptions[slug] || '';
 };
 
 const handleModuleClick = (module: Module) => {
     router.visit(module.primary_route);
+};
+
+const handleBusinessManagerClick = () => {
+    if (props.cmsCompanies.length === 0) {
+        // No companies - go to create
+        router.visit('/cms/companies/create');
+    } else if (props.cmsCompanies.length === 1) {
+        // One company - go directly to dashboard
+        router.post('/cms/switch-company', { company_id: props.cmsCompanies[0].id }, {
+            onSuccess: () => {
+                router.visit('/cms/dashboard');
+            }
+        });
+    } else {
+        // Multiple companies - show selector
+        showCompanySelector.value = true;
+    }
 };
 </script>
 
@@ -355,12 +388,49 @@ const handleModuleClick = (module: Module) => {
                         </div>
 
                         <!-- Business Operations -->
-                        <div v-if="businessModules.length > 0" class="mb-6">
+                        <div v-if="businessModules.length > 0 || cmsCompanies !== undefined" class="mb-6">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                                 <BanknotesIcon class="w-4 h-4 text-blue-600" aria-hidden="true" />
                                 Business Operations
                             </h3>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <!-- Business Manager (CMS) - Always show -->
+                                <button
+                                    @click="handleBusinessManagerClick"
+                                    class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-98 border border-blue-100/50"
+                                >
+                                    <div 
+                                        class="w-14 h-14 flex items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 shadow-sm bg-blue-600"
+                                    >
+                                        <BriefcaseIcon 
+                                            class="w-7 h-7 text-white"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
+                                    
+                                    <span class="text-gray-900 text-center font-semibold text-sm">
+                                        Business Manager
+                                    </span>
+
+                                    <span class="text-[11px] text-gray-600 text-center leading-tight">
+                                        {{ cmsCompanies.length === 0 ? 'Create your business' : 'Manage your business operations' }}
+                                    </span>
+
+                                    <span 
+                                        v-if="cmsCompanies.length > 0"
+                                        class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 rounded-full"
+                                    >
+                                        {{ cmsCompanies.length }}
+                                    </span>
+                                    <span 
+                                        v-else
+                                        class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-semibold uppercase bg-blue-100 text-blue-700 rounded-full"
+                                    >
+                                        New
+                                    </span>
+                                </button>
+
+                                <!-- Other Business Modules -->
                                 <button
                                     v-for="module in businessModules"
                                     :key="module.id"
@@ -725,5 +795,12 @@ const handleModuleClick = (module: Module) => {
                 </div>
             </div>
         </div>
+
+        <!-- Company Selector Modal -->
+        <CompanySelectorModal 
+            :companies="cmsCompanies" 
+            :show="showCompanySelector"
+            @close="showCompanySelector = false"
+        />
     </AppLayout>
 </template>

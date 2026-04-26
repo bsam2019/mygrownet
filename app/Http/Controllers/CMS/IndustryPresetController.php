@@ -32,7 +32,13 @@ class IndustryPresetController extends Controller
      */
     public function show(string $code)
     {
-        $configuration = $this->presetService->getPresetConfiguration($code);
+        $companyId = auth()->user()->cmsUser?->company_id;
+        
+        if (!$companyId) {
+            return response()->json(['error' => 'No company found'], 404);
+        }
+
+        $configuration = $this->presetService->getPresetConfigurationWithExistingData($code, $companyId);
 
         if (!$configuration) {
             return response()->json(['error' => 'Preset not found'], 404);

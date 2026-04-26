@@ -9,11 +9,19 @@ use App\Http\Controllers\CMS\ExpenseCategoryController;
 use App\Http\Controllers\CMS\InventoryController;
 use App\Http\Controllers\CMS\InvoiceController;
 use App\Http\Controllers\CMS\JobController;
+use App\Http\Controllers\CMS\MeasurementController;
 use App\Http\Controllers\CMS\PaymentController;
+use App\Http\Controllers\CMS\PricingRulesController;
 use App\Http\Controllers\CMS\QuotationController;
 use App\Http\Controllers\CMS\ReportController;
 use App\Http\Controllers\CMS\BudgetController;
 use App\Http\Controllers\CMS\ScheduledReportController;
+use App\Http\Controllers\CMS\ProjectController;
+use App\Http\Controllers\CMS\SubcontractorController;
+use App\Http\Controllers\CMS\EquipmentController;
+use App\Http\Controllers\CMS\LabourController;
+use App\Http\Controllers\CMS\BOQController;
+use App\Http\Controllers\CMS\ProgressBillingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -40,27 +48,26 @@ Route::prefix('cms')->name('cms.')->group(function () {
         return Inertia::render('CMS/Offline');
     })->name('offline');
 
+    // Template preview — signed URL, no auth required (iframe safe)
+    Route::get('/settings/document-templates/{id}/preview', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'preview'])->name('settings.document-templates.preview');
+
+    // Signed quotation PDF — for WhatsApp links (no auth required)
+    Route::get('/quotations/{id}/pdf/signed', [\App\Http\Controllers\CMS\QuotationController::class, 'downloadPdfSigned'])->name('quotations.pdf.signed');
+
     // Email Unsubscribe (Public)
     Route::get('/email/unsubscribe', [\App\Http\Controllers\CMS\EmailSettingsController::class, 'unsubscribe'])->name('email.unsubscribe');
 
-    // Authentication Routes (Guest only)
-    Route::middleware('guest')->group(function () {
-        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [AuthController::class, 'login']);
-        
-        Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [AuthController::class, 'register']);
-    });
-
-    // Logout (Authenticated only)
-    Route::post('/logout', [AuthController::class, 'logout'])
+    // Switch active company (authenticated users)
+    Route::post('/switch-company', [AuthController::class, 'switchCompany'])
         ->middleware('auth')
-        ->name('logout');
+        ->name('switch-company');
 
-    // Password Change (Authenticated only)
+    // Company Hub — auth required but no company needed yet
     Route::middleware('auth')->group(function () {
-        Route::get('/password/change', [AuthController::class, 'showPasswordChange'])->name('password.change');
-        Route::post('/password/change', [AuthController::class, 'changePassword'])->name('password.update');
+        Route::get('/companies/hub', [\App\Http\Controllers\CMS\CompanyController::class, 'hub'])->name('companies.hub');
+        Route::get('/companies/create', [\App\Http\Controllers\CMS\CompanyController::class, 'create'])->name('companies.create');
+        Route::post('/companies', [\App\Http\Controllers\CMS\CompanyController::class, 'store'])->name('companies.store');
+        Route::post('/companies/{companyId}/enter', [\App\Http\Controllers\CMS\CompanyController::class, 'enter'])->name('companies.enter');
     });
 });
 
@@ -73,6 +80,39 @@ Route::prefix('cms')
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+        // Measurements (Aluminium Fabrication)
+        Route::prefix('measurements')->name('measurements.')->group(function () {
+            Route::get('/', [MeasurementController::class, 'index'])->name('index');
+            Route::get('/create', [MeasurementController::class, 'create'])->name('create');
+            Route::post('/', [MeasurementController::class, 'store'])->name('store');
+            Route::get('/{id}', [MeasurementController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [MeasurementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [MeasurementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [MeasurementController::class, 'destroy'])->name('destroy');
+            // Item management
+            Route::post('/{id}/items', [MeasurementController::class, 'storeItem'])->name('items.store');
+            Route::put('/{id}/items/{itemId}', [MeasurementController::class, 'updateItem'])->name('items.update');
+            Route::delete('/{id}/items/{itemId}', [MeasurementController::class, 'destroyItem'])->name('items.destroy');
+            // Actions
+            Route::post('/{id}/complete', [MeasurementController::class, 'complete'])->name('complete');
+            Route::post('/{id}/generate-quotation', [MeasurementController::class, 'generateQuotation'])->name('generate-quotation');
+        });
+
+        // Pricing Rules (Company Settings)
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/pricing-rules', [PricingRulesController::class, 'show'])->name('pricing-rules');
+            Route::put('/pricing-rules', [PricingRulesController::class, 'update'])->name('pricing-rules.update');
+            Route::post('/fabrication-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleFabricationModule'])->name('fabrication-module.toggle');
+            Route::post('/bizdocs-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleBizDocsModule'])->name('bizdocs-module.toggle');
+            Route::post('/material-planning-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleMaterialPlanningModule'])->name('material-planning-module.toggle');
+            Route::post('/construction-modules', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleConstructionModules'])->name('construction-modules.toggle');
+
+            // Document Templates (BizDocs)
+            Route::get('/document-templates', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'index'])->name('document-templates.index');
+            Route::post('/document-templates/set', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'setTemplate'])->name('document-templates.set');
+            Route::get('/document-templates/{id}/preview-url', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'previewUrl'])->name('document-templates.preview-url');
+        });
+
         // Jobs
         Route::prefix('jobs')->name('jobs.')->group(function () {
             Route::get('/', [JobController::class, 'index'])->name('index');
@@ -81,7 +121,19 @@ Route::prefix('cms')
             Route::get('/{job}', [JobController::class, 'show'])->name('show');
             Route::post('/{job}/assign', [JobController::class, 'assign'])->name('assign');
             Route::post('/{job}/complete', [JobController::class, 'complete'])->name('complete');
+            Route::post('/{job}/status', [JobController::class, 'updateStatus'])->name('status');
             Route::post('/{job}/attachments', [JobController::class, 'uploadAttachment'])->name('attachments.upload');
+            
+            // Material Planning for Jobs
+            Route::prefix('{job}/materials')->name('materials.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'index'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'store'])->name('store');
+                Route::put('/{plan}', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'update'])->name('update');
+                Route::delete('/{plan}', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'destroy'])->name('destroy');
+                Route::post('/apply-template', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'applyTemplate'])->name('apply-template');
+                Route::post('/{plan}/actual-costs', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'updateActualCosts'])->name('actual-costs');
+                Route::post('/bulk-status', [\App\Http\Controllers\CMS\JobMaterialPlanningController::class, 'bulkUpdateStatus'])->name('bulk-status');
+            });
         });
 
         // Customers
@@ -127,6 +179,7 @@ Route::prefix('cms')
             Route::get('/create', [PaymentController::class, 'create'])->name('create');
             Route::post('/', [PaymentController::class, 'store'])->name('store');
             Route::get('/daily-summary', [PaymentController::class, 'dailySummary'])->name('daily-summary');
+            Route::get('/customer/{customer}/invoices', [PaymentController::class, 'customerInvoices'])->name('customer-invoices');
             Route::get('/{payment}', [PaymentController::class, 'show'])->name('show');
             Route::post('/{payment}/void', [PaymentController::class, 'void'])->name('void');
             Route::post('/{payment}/allocate', [PaymentController::class, 'allocate'])->name('allocate');
@@ -175,7 +228,11 @@ Route::prefix('cms')
             Route::post('/', [QuotationController::class, 'store'])->name('store');
             Route::get('/{quotation}', [QuotationController::class, 'show'])->name('show');
             Route::post('/{quotation}/send', [QuotationController::class, 'send'])->name('send');
+            Route::post('/{quotation}/send-email', [QuotationController::class, 'sendViaEmail'])->name('send-email');
+            Route::get('/{quotation}/whatsapp-link', [QuotationController::class, 'whatsappLink'])->name('whatsapp-link');
             Route::post('/{quotation}/convert', [QuotationController::class, 'convertToJob'])->name('convert');
+            Route::get('/{quotation}/pdf', [QuotationController::class, 'downloadPdf'])->name('pdf');
+            Route::get('/{quotation}/preview', [QuotationController::class, 'previewPdf'])->name('preview');
         });
 
         // Inventory
@@ -188,6 +245,41 @@ Route::prefix('cms')
             Route::get('/{inventory}/edit', [InventoryController::class, 'edit'])->name('edit');
             Route::put('/{inventory}', [InventoryController::class, 'update'])->name('update');
             Route::post('/{inventory}/movement', [InventoryController::class, 'recordMovement'])->name('movement');
+        });
+
+        // Materials Management
+        Route::prefix('materials')->name('materials.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\MaterialController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\MaterialController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\MaterialController::class, 'store'])->name('store');
+            Route::get('/{material}/edit', [\App\Http\Controllers\CMS\MaterialController::class, 'edit'])->name('edit');
+            Route::put('/{material}', [\App\Http\Controllers\CMS\MaterialController::class, 'update'])->name('update');
+            Route::delete('/{material}', [\App\Http\Controllers\CMS\MaterialController::class, 'destroy'])->name('destroy');
+            Route::get('/{material}/price-history', [\App\Http\Controllers\CMS\MaterialController::class, 'priceHistory'])->name('price-history');
+            Route::post('/bulk-update-prices', [\App\Http\Controllers\CMS\MaterialController::class, 'bulkUpdatePrices'])->name('bulk-update-prices');
+        });
+
+        // Material Categories
+        Route::prefix('material-categories')->name('material-categories.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\MaterialCategoryController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\MaterialCategoryController::class, 'store'])->name('store');
+            Route::put('/{category}', [\App\Http\Controllers\CMS\MaterialCategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [\App\Http\Controllers\CMS\MaterialCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // Purchase Orders
+        Route::prefix('purchase-orders')->name('purchase-orders.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'store'])->name('store');
+            Route::get('/{purchaseOrder}', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'show'])->name('show');
+            Route::post('/{purchaseOrder}/approve', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'approve'])->name('approve');
+            Route::post('/{purchaseOrder}/receive', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'receive'])->name('receive');
+            Route::post('/{purchaseOrder}/cancel', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'cancel'])->name('cancel');
+            
+            // Create PO from Job
+            Route::get('/jobs/{job}/create', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'createFromJob'])->name('create-from-job');
+            Route::post('/jobs/{job}', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'storeFromJob'])->name('store-from-job');
         });
 
         // Assets
@@ -370,6 +462,9 @@ Route::prefix('cms')
             Route::delete('/logo', [\App\Http\Controllers\CMS\SettingsController::class, 'deleteLogo'])->name('logo.delete');
             Route::post('/sms', [\App\Http\Controllers\CMS\SettingsController::class, 'updateSmsSettings'])->name('sms.update');
             Route::post('/reset-defaults', [\App\Http\Controllers\CMS\SettingsController::class, 'resetToDefaults'])->name('reset-defaults');
+            Route::post('/document-defaults', [\App\Http\Controllers\CMS\SettingsController::class, 'updateDocumentDefaults'])->name('document-defaults.update');
+            Route::post('/signature', [\App\Http\Controllers\CMS\SettingsController::class, 'uploadSignature'])->name('signature.upload');
+            Route::delete('/signature', [\App\Http\Controllers\CMS\SettingsController::class, 'deleteSignature'])->name('signature.delete');
             
             Route::get('/industry-presets', [\App\Http\Controllers\CMS\IndustryPresetController::class, 'index'])->name('industry-presets.index');
             Route::get('/industry-presets/{code}', [\App\Http\Controllers\CMS\IndustryPresetController::class, 'show'])->name('industry-presets.show');
@@ -548,5 +643,130 @@ Route::prefix('cms')
             Route::post('/generate', [\App\Http\Controllers\CMS\HRReportsController::class, 'generate'])->name('generate');
             Route::get('/{id}', [\App\Http\Controllers\CMS\HRReportsController::class, 'show'])->name('show');
             Route::delete('/{id}', [\App\Http\Controllers\CMS\HRReportsController::class, 'destroy'])->name('destroy');
+        });
+
+        // Construction Modules - Projects
+        Route::prefix('projects')->name('projects.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\ProjectController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\ProjectController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\ProjectController::class, 'store'])->name('store');
+            Route::get('/{project}', [\App\Http\Controllers\CMS\ProjectController::class, 'show'])->name('show');
+            Route::get('/{project}/edit', [\App\Http\Controllers\CMS\ProjectController::class, 'edit'])->name('edit');
+            Route::put('/{project}', [\App\Http\Controllers\CMS\ProjectController::class, 'update'])->name('update');
+            Route::delete('/{project}', [\App\Http\Controllers\CMS\ProjectController::class, 'destroy'])->name('destroy');
+            Route::post('/{project}/status', [\App\Http\Controllers\CMS\ProjectController::class, 'updateStatus'])->name('status');
+            Route::post('/{project}/milestones', [\App\Http\Controllers\CMS\ProjectController::class, 'storeMilestone'])->name('milestones.store');
+            Route::post('/{project}/milestones/{milestone}/complete', [\App\Http\Controllers\CMS\ProjectController::class, 'completeMilestone'])->name('milestones.complete');
+            Route::get('/{project}/timeline', [\App\Http\Controllers\CMS\ProjectController::class, 'timeline'])->name('timeline');
+        });
+
+        // Construction Modules - Subcontractors
+        Route::prefix('subcontractors')->name('subcontractors.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\SubcontractorController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\SubcontractorController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\SubcontractorController::class, 'store'])->name('store');
+            Route::get('/{subcontractor}', [\App\Http\Controllers\CMS\SubcontractorController::class, 'show'])->name('show');
+            Route::get('/{subcontractor}/edit', [\App\Http\Controllers\CMS\SubcontractorController::class, 'edit'])->name('edit');
+            Route::put('/{subcontractor}', [\App\Http\Controllers\CMS\SubcontractorController::class, 'update'])->name('update');
+            Route::delete('/{subcontractor}', [\App\Http\Controllers\CMS\SubcontractorController::class, 'destroy'])->name('destroy');
+            Route::post('/{subcontractor}/assign', [\App\Http\Controllers\CMS\SubcontractorController::class, 'assign'])->name('assign');
+            Route::post('/{subcontractor}/payments', [\App\Http\Controllers\CMS\SubcontractorController::class, 'recordPayment'])->name('payments.store');
+            Route::post('/{subcontractor}/rate', [\App\Http\Controllers\CMS\SubcontractorController::class, 'rate'])->name('rate');
+        });
+
+        // Construction Modules - Equipment
+        Route::prefix('equipment')->name('equipment.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\EquipmentController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\EquipmentController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\EquipmentController::class, 'store'])->name('store');
+            Route::get('/{equipment}', [\App\Http\Controllers\CMS\EquipmentController::class, 'show'])->name('show');
+            Route::get('/{equipment}/edit', [\App\Http\Controllers\CMS\EquipmentController::class, 'edit'])->name('edit');
+            Route::put('/{equipment}', [\App\Http\Controllers\CMS\EquipmentController::class, 'update'])->name('update');
+            Route::delete('/{equipment}', [\App\Http\Controllers\CMS\EquipmentController::class, 'destroy'])->name('destroy');
+            Route::post('/{equipment}/maintenance', [\App\Http\Controllers\CMS\EquipmentController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
+            Route::post('/maintenance/{maintenance}/complete', [\App\Http\Controllers\CMS\EquipmentController::class, 'completeMaintenance'])->name('maintenance.complete');
+            Route::post('/{equipment}/usage', [\App\Http\Controllers\CMS\EquipmentController::class, 'recordUsage'])->name('usage.store');
+            Route::post('/{equipment}/rentals', [\App\Http\Controllers\CMS\EquipmentController::class, 'createRental'])->name('rentals.store');
+        });
+
+        // Construction Modules - Labour
+        Route::prefix('labour')->name('labour.')->group(function () {
+            // Crews
+            Route::prefix('crews')->name('crews.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\LabourController::class, 'crewsIndex'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\CMS\LabourController::class, 'crewsCreate'])->name('create');
+                Route::post('/', [\App\Http\Controllers\CMS\LabourController::class, 'crewsStore'])->name('store');
+                Route::get('/{crew}', [\App\Http\Controllers\CMS\LabourController::class, 'crewsShow'])->name('show');
+                Route::put('/{crew}', [\App\Http\Controllers\CMS\LabourController::class, 'crewsUpdate'])->name('update');
+                Route::post('/{crew}/members', [\App\Http\Controllers\CMS\LabourController::class, 'addCrewMember'])->name('members.add');
+                Route::delete('/{crew}/members/{member}', [\App\Http\Controllers\CMS\LabourController::class, 'removeCrewMember'])->name('members.remove');
+            });
+            
+            // Timesheets
+            Route::prefix('timesheets')->name('timesheets.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\LabourController::class, 'timesheetsIndex'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\CMS\LabourController::class, 'timesheetsCreate'])->name('create');
+                Route::post('/', [\App\Http\Controllers\CMS\LabourController::class, 'timesheetsStore'])->name('store');
+                Route::post('/{timesheet}/approve', [\App\Http\Controllers\CMS\LabourController::class, 'timesheetsApprove'])->name('approve');
+                Route::post('/{timesheet}/reject', [\App\Http\Controllers\CMS\LabourController::class, 'timesheetsReject'])->name('reject');
+            });
+            
+            // Productivity
+            Route::get('/productivity', [\App\Http\Controllers\CMS\LabourController::class, 'productivity'])->name('productivity');
+        });
+
+        // Construction Modules - BOQ
+        Route::prefix('boq')->name('boq.')->group(function () {
+            // Templates
+            Route::prefix('templates')->name('templates.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\BOQController::class, 'templatesIndex'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\BOQController::class, 'templatesStore'])->name('store');
+            });
+            
+            // BOQs
+            Route::get('/', [\App\Http\Controllers\CMS\BOQController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\BOQController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\BOQController::class, 'store'])->name('store');
+            Route::get('/{boq}', [\App\Http\Controllers\CMS\BOQController::class, 'show'])->name('show');
+            Route::get('/{boq}/edit', [\App\Http\Controllers\CMS\BOQController::class, 'edit'])->name('edit');
+            Route::put('/{boq}', [\App\Http\Controllers\CMS\BOQController::class, 'update'])->name('update');
+            Route::delete('/{boq}', [\App\Http\Controllers\CMS\BOQController::class, 'destroy'])->name('destroy');
+            Route::post('/{boq}/variations', [\App\Http\Controllers\CMS\BOQController::class, 'addVariation'])->name('variations.add');
+            Route::post('/{boq}/variations/{variation}/approve', [\App\Http\Controllers\CMS\BOQController::class, 'approveVariation'])->name('variations.approve');
+            Route::post('/{boq}/actuals', [\App\Http\Controllers\CMS\BOQController::class, 'updateActuals'])->name('actuals.update');
+            Route::get('/{boq}/export', [\App\Http\Controllers\CMS\BOQController::class, 'export'])->name('export');
+        });
+
+        // Construction Modules - Progress Billing
+        Route::prefix('progress-billing')->name('progress-billing.')->group(function () {
+            // Progress Certificates
+            Route::prefix('certificates')->name('certificates.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesIndex'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesCreate'])->name('create');
+                Route::post('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesStore'])->name('store');
+                Route::get('/{certificate}', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesShow'])->name('show');
+                Route::post('/{certificate}/approve', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesApprove'])->name('approve');
+                Route::post('/{certificate}/reject', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'certificatesReject'])->name('reject');
+            });
+            
+            // Payment Applications
+            Route::prefix('applications')->name('applications.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'applicationsIndex'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'applicationsStore'])->name('store');
+                Route::post('/{application}/approve', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'applicationsApprove'])->name('approve');
+            });
+            
+            // Retention
+            Route::prefix('retention')->name('retention.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'retentionIndex'])->name('index');
+                Route::post('/release', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'releaseRetention'])->name('release');
+            });
+            
+            // Billing Stages
+            Route::prefix('projects/{project}/stages')->name('stages.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'stagesIndex'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'stagesStore'])->name('store');
+                Route::post('/{stage}/complete', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'stagesComplete'])->name('complete');
+            });
         });
     });

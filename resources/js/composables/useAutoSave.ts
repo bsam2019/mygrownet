@@ -1,123 +1,90 @@
-import { watch, onMounted, onUnmounted } from 'vue';
-import { debounce } from 'lodash';
+/**
+ * useAutoSave composable
+ *
+ * Saves form data to localStorage after a debounce delay.
+ * Shows a subtle status indicator: "Saving…" → "Draft saved"
+ *
+ * Usage:
+ *   const { autoSaveStatus, clearDraft, hasDraft } = useAutoSave('cms-invoice-draft', form)
+ */
 
-interface AutoSaveOptions {
-    key: string;
-    data: () => any;
-    onRestore?: (data: any) => void;
-    debounceMs?: number;
-    exclude?: string[];
-}
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 
-export function useAutoSave(options: AutoSaveOptions) {
-    const {
-        key,
-        data,
-        onRestore,
-        debounceMs = 2000,
-        exclude = []
-    } = options;
+type AutoSaveStatus = 'idle' | 'saving' | 'saved';
 
-    const STORAGE_KEY = `autosave_${key}`;
-    const TIMESTAMP_KEY = `${STORAGE_KEY}_timestamp`;
+export function useAutoSave<T extends object>(
+    key: string,
+    formData: T,
+    options: { debounce?: number } = {}
+) {
+    const { debounce = 1500 } = options;
 
-    // Save data to localStorage
-    const saveData = () => {
+    const status = ref<AutoSaveStatus>('idle');
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let savedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const save = () => {
         try {
-            const dataToSave = data();
-            
-            // Filter out excluded fields
-            const filteredData = { ...dataToSave };
-            exclude.forEach(field => {
-                delete filteredData[field];
-            });
+            localStorage.setItem(key, JSON.stringify(formData));
+            status.value = 'saved';
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredData));
-            localStorage.setItem(TIMESTAMP_KEY, new Date().toISOString());
-            
-            console.log('[AutoSave] Data saved:', key);
-        } catch (error) {
-            console.error('[AutoSave] Failed to save:', error);
+            // Reset to idle after 3 seconds
+            if (savedTimer) clearTimeout(savedTimer);
+            savedTimer = setTimeout(() => {
+                status.value = 'idle';
+            }, 3000);
+        } catch {
+            // localStorage might be full or unavailable — fail silently
         }
     };
 
-    // Debounced save function
-    const debouncedSave = debounce(saveData, debounceMs);
+    const debouncedSave = () => {
+        status.value = 'saving';
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(save, debounce);
+    };
 
-    // Restore data from localStorage
-    const restoreData = (): any | null => {
+    // Deep watch the form data
+    const stopWatch = watch(
+        () => JSON.stringify(formData),
+        debouncedSave,
+        { deep: true }
+    );
+
+    const loadDraft = (): Partial<T> | null => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            const timestamp = localStorage.getItem(TIMESTAMP_KEY);
-            
-            if (saved && timestamp) {
-                const savedData = JSON.parse(saved);
-                const savedTime = new Date(timestamp);
-                const now = new Date();
-                const hoursSince = (now.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
-                
-                // Only restore if saved within last 24 hours
-                if (hoursSince < 24) {
-                    console.log('[AutoSave] Restored data from:', savedTime.toLocaleString());
-                    return savedData;
-                } else {
-                    console.log('[AutoSave] Saved data too old, clearing');
-                    clearSavedData();
-                }
-            }
-        } catch (error) {
-            console.error('[AutoSave] Failed to restore:', error);
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
         }
-        return null;
     };
 
-    // Clear saved data
-    const clearSavedData = () => {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(TIMESTAMP_KEY);
-        console.log('[AutoSave] Cleared saved data');
+    const hasDraft = (): boolean => {
+        try {
+            return localStorage.getItem(key) !== null;
+        } catch {
+            return false;
+        }
     };
 
-    // Get last save timestamp
-    const getLastSaveTime = (): Date | null => {
-        const timestamp = localStorage.getItem(TIMESTAMP_KEY);
-        return timestamp ? new Date(timestamp) : null;
+    const clearDraft = () => {
+        try {
+            localStorage.removeItem(key);
+            status.value = 'idle';
+        } catch {}
     };
 
-    // Check if there's saved data
-    const hasSavedData = (): boolean => {
-        return !!localStorage.getItem(STORAGE_KEY);
-    };
-
-    // Setup auto-save watcher
-    const setupAutoSave = () => {
-        // Watch the data and save on changes
-        watch(data, () => {
-            debouncedSave();
-        }, { deep: true });
-    };
-
-    // Cleanup on unmount
     onUnmounted(() => {
-        debouncedSave.cancel();
-    });
-
-    // Restore on mount if callback provided
-    onMounted(() => {
-        if (onRestore) {
-            const savedData = restoreData();
-            if (savedData) {
-                onRestore(savedData);
-            }
-        }
+        stopWatch();
+        if (timer) clearTimeout(timer);
+        if (savedTimer) clearTimeout(savedTimer);
     });
 
     return {
-        saveData,
-        restoreData,
-        clearSavedData,
-        getLastSaveTime,
-        hasSavedData,
-        setupAutoSave,
+        autoSaveStatus: status,
+        loadDraft,
+        hasDraft,
+        clearDraft,
     };
 }
