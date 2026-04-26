@@ -282,6 +282,37 @@ Route::prefix('cms')
             Route::post('/jobs/{job}', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'storeFromJob'])->name('store-from-job');
         });
 
+        // Production Management
+        Route::prefix('production')->name('production.')->group(function () {
+            // Production Orders
+            Route::get('/', [\App\Http\Controllers\CMS\ProductionController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\ProductionController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\ProductionController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\ProductionController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\ProductionController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\CMS\ProductionController::class, 'destroy'])->name('destroy');
+            
+            // Production Tracking
+            Route::post('/{id}/tracking', [\App\Http\Controllers\CMS\ProductionController::class, 'updateTracking'])->name('tracking.update');
+            
+            // Quality Checkpoints
+            Route::post('/checkpoints/{checkpointId}', [\App\Http\Controllers\CMS\ProductionController::class, 'updateCheckpoint'])->name('checkpoints.update');
+            
+            // Material Usage
+            Route::post('/{id}/material-usage', [\App\Http\Controllers\CMS\ProductionController::class, 'recordMaterialUsage'])->name('material-usage.record');
+            
+            // Cutting Lists
+            Route::get('/cutting-lists', [\App\Http\Controllers\CMS\ProductionController::class, 'cuttingLists'])->name('cutting-lists.index');
+            Route::get('/{id}/cutting-lists/create', [\App\Http\Controllers\CMS\ProductionController::class, 'createCuttingList'])->name('cutting-lists.create');
+            Route::post('/{id}/cutting-lists', [\App\Http\Controllers\CMS\ProductionController::class, 'storeCuttingList'])->name('cutting-lists.store');
+            Route::get('/cutting-lists/{id}', [\App\Http\Controllers\CMS\ProductionController::class, 'showCuttingList'])->name('cutting-lists.show');
+            Route::post('/cutting-lists/{id}/optimize', [\App\Http\Controllers\CMS\ProductionController::class, 'optimizeCuttingList'])->name('cutting-lists.optimize');
+            
+            // Waste Tracking
+            Route::get('/waste', [\App\Http\Controllers\CMS\ProductionController::class, 'wasteTracking'])->name('waste.index');
+            Route::post('/waste', [\App\Http\Controllers\CMS\ProductionController::class, 'storeWaste'])->name('waste.store');
+        });
+
         // Assets
         Route::prefix('assets')->name('assets.')->group(function () {
             Route::get('/', [\App\Http\Controllers\CMS\AssetController::class, 'index'])->name('index');
