@@ -373,6 +373,88 @@
             <div class="border-t border-gray-100"></div>
           </div>
 
+          <!-- Operations Modules Submenu -->
+          <div v-if="!sidebarCollapsed && !searchQuery && (hasFabrication || hasConstruction)" class="px-3 pt-2 mb-3">
+            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg">
+              <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Operations</p>
+            </div>
+          </div>
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.production') && hasFabrication"
+            icon="CogIcon"
+            label="Production"
+            route-name="cms.production"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.production')"
+            @click="navigateTo('cms.production.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.installation') && (hasFabrication || hasConstruction)"
+            icon="WrenchScrewdriverIcon"
+            label="Installation"
+            route-name="cms.installation"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.installation')"
+            @click="navigateTo('cms.installation.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.inventory') && (hasFabrication || hasConstruction)"
+            icon="CubeIcon"
+            label="Stock Management"
+            route-name="cms.inventory"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.inventory')"
+            @click="navigateTo('cms.inventory.stock-levels.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.fleet')"
+            icon="TruckIcon"
+            label="Fleet"
+            route-name="cms.fleet"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.fleet')"
+            @click="navigateTo('cms.fleet.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.documents')"
+            icon="FolderIcon"
+            label="Documents"
+            route-name="cms.documents"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.documents')"
+            @click="navigateTo('cms.documents.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.safety') && hasConstruction"
+            icon="ShieldCheckIcon"
+            label="Safety"
+            route-name="cms.safety"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.safety')"
+            @click="navigateTo('cms.safety.incidents.index')"
+          />
+
+          <NavItem
+            v-if="shouldShowNavItem('cms.quality') && (hasFabrication || hasConstruction)"
+            icon="CheckBadgeIcon"
+            label="Quality"
+            route-name="cms.quality"
+            :collapsed="sidebarCollapsed"
+            :active="isActive('cms.quality')"
+            @click="navigateTo('cms.quality.inspections.index')"
+          />
+
+          <div v-if="!searchQuery" class="pt-4 pb-2">
+            <div class="border-t border-gray-100"></div>
+          </div>
+
           <!-- Payroll Configuration Submenu -->
           <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 pt-2 mb-3">
             <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-emerald-50 to-transparent rounded-lg">

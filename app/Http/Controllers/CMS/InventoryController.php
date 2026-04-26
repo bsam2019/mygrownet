@@ -3,175 +3,170 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\InventoryService;
-use App\Infrastructure\Persistence\Eloquent\CMS\InventoryItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LowStockAlertModel;
+use App\Domain\CMS\Inventory\Services\InventoryService;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockLocationModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockLevelModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockTransferModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockAdjustmentModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockCountModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class InventoryController extends Controller
 {
-    public function __construct(
-        private InventoryService $inventoryService
-    ) {}
+    public function __construct(private InventoryService $inventoryService) {}
 
-    public function index(Request $request): Response
+    public function locations(Request $request)
     {
-        $companyId = $request->user()->cmsUser->company_id;
-
-        $items = InventoryItemModel::forCompany($companyId)
-            ->when($request->search, fn($q, $search) => 
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('item_code', 'like', "%{$search}%")
-            )
-            ->when($request->category, fn($q) => $q->byCategory($request->category))
-            ->when($request->low_stock, fn($q) => $q->lowStock())
-            ->with('createdBy.user')
-            ->orderBy('name')
-            ->paginate(20);
-
-        // Get categories for filter
-        $categories = InventoryItemModel::forCompany($companyId)
-            ->select('category')
-            ->distinct()
-            ->pluck('category');
-
-        // Get low stock count
-        $lowStockCount = InventoryItemModel::forCompany($companyId)
-            ->lowStock()
-            ->active()
-            ->count();
-
-        return Inertia::render('CMS/Inventory/Index', [
-            'items' => $items,
-            'categories' => $categories,
-            'lowStockCount' => $lowStockCount,
-            'filters' => $request->only(['search', 'category', 'low_stock']),
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('CMS/Inventory/Create');
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|string|max:100',
-            'unit' => 'required|string|max:50',
-            'unit_cost' => 'required|numeric|min:0',
-            'selling_price' => 'nullable|numeric|min:0',
-            'current_stock' => 'required|integer|min:0',
-            'minimum_stock' => 'required|integer|min:0',
-            'reorder_quantity' => 'nullable|integer|min:0',
-            'supplier' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-        ]);
-
-        $companyId = $request->user()->cmsUser->company_id;
-        $userId = $request->user()->cmsUser->id;
-
-        $item = $this->inventoryService->createItem([
-            ...$validated,
-            'company_id' => $companyId,
-            'created_by' => $userId,
-        ]);
-
-        return redirect()
-            ->route('cms.inventory.show', $item->id)
-            ->with('success', 'Inventory item created successfully');
-    }
-
-    public function show(InventoryItemModel $inventory): Response
-    {
-        $inventory->load(['createdBy.user', 'lowStockAlerts' => fn($q) => $q->unresolved()]);
-
-        // Get stock movement history
-        $movements = $this->inventoryService->getStockMovementHistory($inventory->id, 20);
-
-        // Get job usage
-        $jobUsage = $inventory->jobUsages()
-            ->with('job.customer')
-            ->latest()
-            ->limit(10)
+        $locations = StockLocationModel::where('company_id', $request->user()->current_company_id)
+            ->with('manager')
             ->get();
 
-        return Inertia::render('CMS/Inventory/Show', [
-            'item' => $inventory,
-            'movements' => $movements,
-            'jobUsage' => $jobUsage,
-        ]);
+        return Inertia::render('CMS/Inventory/Locations', ['locations' => $locations]);
     }
 
-    public function edit(InventoryItemModel $inventory): Response
-    {
-        return Inertia::render('CMS/Inventory/Edit', [
-            'item' => $inventory,
-        ]);
-    }
-
-    public function update(Request $request, InventoryItemModel $inventory)
+    public function storeLocation(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|string|max:100',
-            'unit' => 'required|string|max:50',
-            'unit_cost' => 'required|numeric|min:0',
-            'selling_price' => 'nullable|numeric|min:0',
-            'minimum_stock' => 'required|integer|min:0',
-            'reorder_quantity' => 'nullable|integer|min:0',
-            'supplier' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
+            'code' => 'required|string|max:50',
+            'type' => 'required|in:warehouse,workshop,site,vehicle,other',
+            'address' => 'nullable|string',
+            'manager_id' => 'nullable|exists:users,id',
             'is_active' => 'boolean',
         ]);
 
-        $userId = $request->user()->cmsUser->id;
-
-        $this->inventoryService->updateItem($inventory, $validated, $userId);
-
-        return redirect()
-            ->route('cms.inventory.show', $inventory->id)
-            ->with('success', 'Inventory item updated successfully');
+        $location = $this->inventoryService->createLocation($request->user()->current_company_id, $validated);
+        return back()->with('success', 'Location created successfully');
     }
 
-    public function recordMovement(Request $request, InventoryItemModel $inventory)
+    public function stockLevels(Request $request)
+    {
+        $levels = StockLevelModel::whereHas('location', fn($q) => $q->where('company_id', $request->user()->current_company_id))
+            ->with(['material', 'location'])
+            ->paginate(50);
+
+        return Inertia::render('CMS/Inventory/StockLevels', ['levels' => $levels]);
+    }
+
+    public function lowStockAlerts(Request $request)
+    {
+        $alerts = $this->inventoryService->getLowStockAlerts($request->user()->current_company_id);
+        return response()->json($alerts);
+    }
+
+    public function transfers(Request $request)
+    {
+        $transfers = StockTransferModel::where('company_id', $request->user()->current_company_id)
+            ->with(['fromLocation', 'toLocation', 'requestedBy'])
+            ->latest()
+            ->paginate(20);
+
+        return Inertia::render('CMS/Inventory/Transfers', ['transfers' => $transfers]);
+    }
+
+    public function createTransfer(Request $request)
     {
         $validated = $request->validate([
-            'movement_type' => 'required|in:purchase,usage,adjustment,return,damage,transfer',
-            'quantity' => 'required|integer',
-            'unit_cost' => 'nullable|numeric|min:0',
-            'reference_number' => 'nullable|string|max:255',
+            'from_location_id' => 'required|exists:cms_stock_locations,id',
+            'to_location_id' => 'required|exists:cms_stock_locations,id|different:from_location_id',
+            'transfer_date' => 'required|date',
+            'requested_by' => 'required|exists:users,id',
             'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.material_id' => 'required|exists:cms_materials,id',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'required|string',
         ]);
 
-        $userId = $request->user()->cmsUser->id;
-
-        $this->inventoryService->recordStockMovement([
-            'inventory_item_id' => $inventory->id,
-            ...$validated,
-            'created_by' => $userId,
-        ]);
-
-        return back()->with('success', 'Stock movement recorded successfully');
+        $transfer = $this->inventoryService->createTransfer($request->user()->current_company_id, $validated);
+        return back()->with('success', 'Transfer created successfully');
     }
 
-    public function lowStockAlerts(Request $request): Response
+    public function approveTransfer(Request $request, int $id)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $transfer = $this->inventoryService->approveTransfer($id, $request->user()->id);
+        return back()->with('success', 'Transfer approved');
+    }
 
-        $alerts = LowStockAlertModel::forCompany($companyId)
-            ->unresolved()
-            ->with('inventoryItem')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return Inertia::render('CMS/Inventory/LowStockAlerts', [
-            'alerts' => $alerts,
+    public function receiveTransfer(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*' => 'required|numeric|min:0',
         ]);
+
+        $transfer = $this->inventoryService->receiveTransfer($id, $request->user()->id, $validated['items']);
+        return back()->with('success', 'Transfer received');
+    }
+
+    public function adjustments(Request $request)
+    {
+        $adjustments = StockAdjustmentModel::where('company_id', $request->user()->current_company_id)
+            ->with('createdBy')
+            ->latest()
+            ->paginate(20);
+
+        return Inertia::render('CMS/Inventory/Adjustments', ['adjustments' => $adjustments]);
+    }
+
+    public function createAdjustment(Request $request)
+    {
+        $validated = $request->validate([
+            'adjustment_date' => 'required|date',
+            'adjustment_type' => 'required|in:increase,decrease,correction',
+            'reason' => 'required|in:damaged,expired,found,lost,count_correction,other',
+            'created_by' => 'required|exists:users,id',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.material_id' => 'required|exists:cms_materials,id',
+            'items.*.location_id' => 'required|exists:cms_stock_locations,id',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.unit' => 'required|string',
+            'items.*.unit_cost' => 'nullable|numeric|min:0',
+        ]);
+
+        $adjustment = $this->inventoryService->createAdjustment($request->user()->current_company_id, $validated);
+        return back()->with('success', 'Adjustment created successfully');
+    }
+
+    public function approveAdjustment(Request $request, int $id)
+    {
+        $adjustment = $this->inventoryService->approveAdjustment($id, $request->user()->id);
+        return back()->with('success', 'Adjustment approved and stock updated');
+    }
+
+    public function counts(Request $request)
+    {
+        $counts = StockCountModel::where('company_id', $request->user()->current_company_id)
+            ->with(['location', 'countedBy'])
+            ->latest()
+            ->paginate(20);
+
+        return Inertia::render('CMS/Inventory/Counts', ['counts' => $counts]);
+    }
+
+    public function createCount(Request $request)
+    {
+        $validated = $request->validate([
+            'count_date' => 'required|date',
+            'count_type' => 'required|in:full,partial,cycle',
+            'location_id' => 'nullable|exists:cms_stock_locations,id',
+            'counted_by' => 'required|exists:users,id',
+            'items' => 'required|array|min:1',
+            'items.*.material_id' => 'required|exists:cms_materials,id',
+            'items.*.location_id' => 'required|exists:cms_stock_locations,id',
+            'items.*.counted_quantity' => 'required|numeric|min:0',
+            'items.*.unit' => 'required|string',
+        ]);
+
+        $count = $this->inventoryService->createStockCount($request->user()->current_company_id, $validated);
+        return back()->with('success', 'Stock count created successfully');
+    }
+
+    public function completeCount(Request $request, int $id)
+    {
+        $count = $this->inventoryService->completeStockCount($id, $request->user()->id);
+        return back()->with('success', 'Stock count completed and variances adjusted');
     }
 }

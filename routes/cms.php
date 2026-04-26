@@ -800,4 +800,134 @@ Route::prefix('cms')
                 Route::post('/{stage}/complete', [\App\Http\Controllers\CMS\ProgressBillingController::class, 'stagesComplete'])->name('complete');
             });
         });
+
+        // Installation Management
+        Route::prefix('installation')->name('installation.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\InstallationController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\InstallationController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\InstallationController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\InstallationController::class, 'update'])->name('update');
+            
+            // Site Visits
+            Route::post('/{scheduleId}/visits', [\App\Http\Controllers\CMS\InstallationController::class, 'recordVisit'])->name('visits.store');
+            
+            // Customer Signoff
+            Route::post('/{scheduleId}/signoff', [\App\Http\Controllers\CMS\InstallationController::class, 'recordSignoff'])->name('signoff.store');
+            
+            // Defects
+            Route::get('/defects', [\App\Http\Controllers\CMS\InstallationController::class, 'defects'])->name('defects.index');
+            Route::post('/defects', [\App\Http\Controllers\CMS\InstallationController::class, 'storeDefect'])->name('defects.store');
+            Route::post('/defects/{defectId}/resolve', [\App\Http\Controllers\CMS\InstallationController::class, 'resolveDefect'])->name('defects.resolve');
+        });
+
+        // Enhanced Inventory Management
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            // Stock Locations
+            Route::get('/locations', [\App\Http\Controllers\CMS\InventoryController::class, 'locations'])->name('locations.index');
+            Route::post('/locations', [\App\Http\Controllers\CMS\InventoryController::class, 'storeLocation'])->name('locations.store');
+            
+            // Stock Levels
+            Route::get('/stock-levels', [\App\Http\Controllers\CMS\InventoryController::class, 'stockLevels'])->name('stock-levels.index');
+            Route::get('/stock-levels/alerts', [\App\Http\Controllers\CMS\InventoryController::class, 'lowStockAlerts'])->name('stock-levels.alerts');
+            
+            // Stock Transfers
+            Route::get('/transfers', [\App\Http\Controllers\CMS\InventoryController::class, 'transfers'])->name('transfers.index');
+            Route::post('/transfers', [\App\Http\Controllers\CMS\InventoryController::class, 'createTransfer'])->name('transfers.store');
+            Route::post('/transfers/{id}/approve', [\App\Http\Controllers\CMS\InventoryController::class, 'approveTransfer'])->name('transfers.approve');
+            Route::post('/transfers/{id}/receive', [\App\Http\Controllers\CMS\InventoryController::class, 'receiveTransfer'])->name('transfers.receive');
+            
+            // Stock Adjustments
+            Route::get('/adjustments', [\App\Http\Controllers\CMS\InventoryController::class, 'adjustments'])->name('adjustments.index');
+            Route::post('/adjustments', [\App\Http\Controllers\CMS\InventoryController::class, 'createAdjustment'])->name('adjustments.store');
+            Route::post('/adjustments/{id}/approve', [\App\Http\Controllers\CMS\InventoryController::class, 'approveAdjustment'])->name('adjustments.approve');
+            
+            // Stock Counts
+            Route::get('/counts', [\App\Http\Controllers\CMS\InventoryController::class, 'counts'])->name('counts.index');
+            Route::post('/counts', [\App\Http\Controllers\CMS\InventoryController::class, 'createCount'])->name('counts.store');
+            Route::post('/counts/{id}/complete', [\App\Http\Controllers\CMS\InventoryController::class, 'completeCount'])->name('counts.complete');
+        });
+
+        // Vehicle/Fleet Management
+        Route::prefix('fleet')->name('fleet.')->group(function () {
+            // Vehicles
+            Route::get('/', [\App\Http\Controllers\CMS\FleetController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\FleetController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\FleetController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\FleetController::class, 'update'])->name('update');
+            
+            // Fuel Records
+            Route::post('/{vehicleId}/fuel', [\App\Http\Controllers\CMS\FleetController::class, 'recordFuel'])->name('fuel.store');
+            
+            // Maintenance
+            Route::get('/maintenance', [\App\Http\Controllers\CMS\FleetController::class, 'maintenance'])->name('maintenance.index');
+            Route::post('/{vehicleId}/maintenance', [\App\Http\Controllers\CMS\FleetController::class, 'scheduleMaintenance'])->name('maintenance.store');
+            Route::post('/maintenance/{id}/complete', [\App\Http\Controllers\CMS\FleetController::class, 'completeMaintenance'])->name('maintenance.complete');
+            
+            // Trip Logs
+            Route::post('/{vehicleId}/trips', [\App\Http\Controllers\CMS\FleetController::class, 'recordTrip'])->name('trips.store');
+            
+            // Expenses
+            Route::post('/{vehicleId}/expenses', [\App\Http\Controllers\CMS\FleetController::class, 'recordExpense'])->name('expenses.store');
+        });
+
+        // Document Management
+        Route::prefix('documents')->name('documents.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\DocumentController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\CMS\DocumentController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\DocumentController::class, 'show'])->name('show');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\DocumentController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\CMS\DocumentController::class, 'destroy'])->name('destroy');
+            
+            // Versions
+            Route::post('/{id}/versions', [\App\Http\Controllers\CMS\DocumentController::class, 'uploadVersion'])->name('versions.store');
+            
+            // Sharing
+            Route::post('/{id}/share', [\App\Http\Controllers\CMS\DocumentController::class, 'share'])->name('share');
+            
+            // Signatures
+            Route::post('/{id}/sign', [\App\Http\Controllers\CMS\DocumentController::class, 'sign'])->name('sign');
+        });
+
+        // Safety Management
+        Route::prefix('safety')->name('safety.')->group(function () {
+            // Incidents
+            Route::get('/incidents', [\App\Http\Controllers\CMS\SafetyController::class, 'incidents'])->name('incidents.index');
+            Route::post('/incidents', [\App\Http\Controllers\CMS\SafetyController::class, 'storeIncident'])->name('incidents.store');
+            Route::get('/incidents/{id}', [\App\Http\Controllers\CMS\SafetyController::class, 'showIncident'])->name('incidents.show');
+            
+            // Inspections
+            Route::get('/inspections', [\App\Http\Controllers\CMS\SafetyController::class, 'inspections'])->name('inspections.index');
+            Route::post('/inspections', [\App\Http\Controllers\CMS\SafetyController::class, 'storeInspection'])->name('inspections.store');
+            
+            // PPE
+            Route::get('/ppe', [\App\Http\Controllers\CMS\SafetyController::class, 'ppe'])->name('ppe.index');
+            Route::post('/ppe', [\App\Http\Controllers\CMS\SafetyController::class, 'storePPE'])->name('ppe.store');
+            Route::post('/ppe/{id}/distribute', [\App\Http\Controllers\CMS\SafetyController::class, 'distributePPE'])->name('ppe.distribute');
+            
+            // Training
+            Route::get('/training', [\App\Http\Controllers\CMS\SafetyController::class, 'training'])->name('training.index');
+            Route::post('/training', [\App\Http\Controllers\CMS\SafetyController::class, 'storeTraining'])->name('training.store');
+            Route::post('/training/{id}/record', [\App\Http\Controllers\CMS\SafetyController::class, 'recordTraining'])->name('training.record');
+        });
+
+        // Quality Control
+        Route::prefix('quality')->name('quality.')->group(function () {
+            // Inspections
+            Route::get('/inspections', [\App\Http\Controllers\CMS\QualityController::class, 'inspections'])->name('inspections.index');
+            Route::post('/inspections', [\App\Http\Controllers\CMS\QualityController::class, 'storeInspection'])->name('inspections.store');
+            Route::get('/inspections/{id}', [\App\Http\Controllers\CMS\QualityController::class, 'showInspection'])->name('inspections.show');
+            
+            // Non-Conformances
+            Route::get('/ncr', [\App\Http\Controllers\CMS\QualityController::class, 'ncr'])->name('ncr.index');
+            Route::post('/ncr', [\App\Http\Controllers\CMS\QualityController::class, 'storeNCR'])->name('ncr.store');
+            Route::post('/ncr/{id}/corrective-action', [\App\Http\Controllers\CMS\QualityController::class, 'storeCorrectiveAction'])->name('ncr.corrective-action');
+            
+            // Customer Complaints
+            Route::get('/complaints', [\App\Http\Controllers\CMS\QualityController::class, 'complaints'])->name('complaints.index');
+            Route::post('/complaints', [\App\Http\Controllers\CMS\QualityController::class, 'storeComplaint'])->name('complaints.store');
+            
+            // Rework
+            Route::get('/rework', [\App\Http\Controllers\CMS\QualityController::class, 'rework'])->name('rework.index');
+            Route::post('/rework', [\App\Http\Controllers\CMS\QualityController::class, 'storeRework'])->name('rework.store');
+        });
     });
