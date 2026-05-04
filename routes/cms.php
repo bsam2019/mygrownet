@@ -106,6 +106,7 @@ Route::prefix('cms')
             Route::post('/bizdocs-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleBizDocsModule'])->name('bizdocs-module.toggle');
             Route::post('/material-planning-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleMaterialPlanningModule'])->name('material-planning-module.toggle');
             Route::post('/construction-modules', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleConstructionModules'])->name('construction-modules.toggle');
+            Route::post('/growfinance-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleGrowFinanceModule'])->name('growfinance-module.toggle');
 
             // Document Templates (BizDocs)
             Route::get('/document-templates', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'index'])->name('document-templates.index');
@@ -196,6 +197,12 @@ Route::prefix('cms')
         // Reports
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+        
+        // GrowFinance-powered Reports
+        Route::get('/reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
+        Route::get('/reports/cash-flow-statement', [ReportController::class, 'cashFlowStatement'])->name('reports.cash-flow-statement');
+        Route::get('/reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
+        Route::get('/reports/trial-balance', [ReportController::class, 'trialBalance'])->name('reports.trial-balance');
 
         // Budgets
         Route::resource('budgets', BudgetController::class);

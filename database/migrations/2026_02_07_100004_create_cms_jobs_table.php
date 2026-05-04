@@ -41,10 +41,10 @@ return new class extends Migration
                         $table->timestamps();
             
                         $table->unique(['company_id', 'job_number'], 'unique_job_number');
-                        $table->index(['company_id', 'status'], 'idx_company_status');
-                        $table->index(['assigned_to', 'status'], 'idx_assigned');
-                        $table->index(['company_id', 'deadline'], 'idx_deadline');
-                        $table->index(['company_id', 'completed_at'], 'idx_completed');
+                        $table->index(['company_id', 'status'], 'idx_cms_jobs_company_status');
+                        $table->index(['assigned_to', 'status'], 'idx_jobs_assigned');
+                        $table->index(['company_id', 'deadline'], 'idx_jobs_deadline');
+                        $table->index(['company_id', 'completed_at'], 'idx_jobs_completed');
                     });
         }
     }

@@ -7,6 +7,7 @@ use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
+use App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response as FacadeResponse;
 use Inertia\Inertia;
@@ -15,6 +16,9 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+    public function __construct(
+        private GrowFinanceReportService $growFinanceReportService
+    ) {}
     public function index(Request $request): Response
     {
         $cmsUser = $request->user()->cmsUser;
@@ -57,6 +61,22 @@ class ReportController extends Controller
             ->forPeriod($startDate, $endDate)
             ->get(['id', 'name', 'start_date', 'end_date']);
 
+        // Check if GrowFinance module is enabled
+        $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
+
+        // Get GrowFinance-powered reports if enabled
+        $balanceSheet = $growFinanceEnabled 
+            ? $this->growFinanceReportService->getBalanceSheet($companyId)
+            : null;
+
+        $cashFlowStatement = $growFinanceEnabled
+            ? $this->growFinanceReportService->getCashFlowStatement($companyId, $startDate, $endDate)
+            : null;
+
+        $trialBalance = $growFinanceEnabled
+            ? $this->growFinanceReportService->getTrialBalance($companyId)
+            : null;
+
         return Inertia::render('CMS/Reports/Index', [
             'salesSummary' => $salesSummary,
             'paymentSummary' => $paymentSummary,
@@ -68,6 +88,10 @@ class ReportController extends Controller
             'taxReport' => $taxReport,
             'comparative' => $comparative,
             'activeBudgets' => $activeBudgets,
+            'growFinanceEnabled' => $growFinanceEnabled,
+            'balanceSheet' => $balanceSheet,
+            'cashFlowStatement' => $cashFlowStatement,
+            'trialBalance' => $trialBalance,
             'filters' => [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
@@ -631,5 +655,86 @@ class ReportController extends Controller
                 'profit' => $profitGrowthYoY,
             ],
         ];
+    }
+
+    /**
+     * Get Balance Sheet report (GrowFinance-powered)
+     */
+    public function balanceSheet(Request $request): Response
+    {
+        $cmsUser = $request->user()->cmsUser;
+        $companyId = $cmsUser->company_id;
+        $asOfDate = $request->input('as_of_date', now()->toDateString());
+
+        $balanceSheet = $this->growFinanceReportService->getBalanceSheet($companyId, $asOfDate);
+        $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
+
+        return Inertia::render('CMS/Reports/BalanceSheet', [
+            'balanceSheet' => $balanceSheet,
+            'growFinanceEnabled' => $growFinanceEnabled,
+            'asOfDate' => $asOfDate,
+        ]);
+    }
+
+    /**
+     * Get Cash Flow Statement (GrowFinance-powered)
+     */
+    public function cashFlowStatement(Request $request): Response
+    {
+        $cmsUser = $request->user()->cmsUser;
+        $companyId = $cmsUser->company_id;
+        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
+
+        $cashFlow = $this->growFinanceReportService->getCashFlowStatement($companyId, $startDate, $endDate);
+        $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
+
+        return Inertia::render('CMS/Reports/CashFlowStatement', [
+            'cashFlow' => $cashFlow,
+            'growFinanceEnabled' => $growFinanceEnabled,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    }
+
+    /**
+     * Get General Ledger (GrowFinance-powered)
+     */
+    public function generalLedger(Request $request): Response
+    {
+        $cmsUser = $request->user()->cmsUser;
+        $companyId = $cmsUser->company_id;
+        $accountId = $request->input('account_id');
+        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
+        $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
+
+        $generalLedger = $this->growFinanceReportService->getGeneralLedger($companyId, $accountId, $startDate, $endDate);
+        $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
+
+        return Inertia::render('CMS/Reports/GeneralLedger', [
+            'generalLedger' => $generalLedger,
+            'growFinanceEnabled' => $growFinanceEnabled,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    }
+
+    /**
+     * Get Trial Balance (GrowFinance-powered)
+     */
+    public function trialBalance(Request $request): Response
+    {
+        $cmsUser = $request->user()->cmsUser;
+        $companyId = $cmsUser->company_id;
+        $asOfDate = $request->input('as_of_date', now()->toDateString());
+
+        $trialBalance = $this->growFinanceReportService->getTrialBalance($companyId, $asOfDate);
+        $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
+
+        return Inertia::render('CMS/Reports/TrialBalance', [
+            'trialBalance' => $trialBalance,
+            'growFinanceEnabled' => $growFinanceEnabled,
+            'asOfDate' => $asOfDate,
+        ]);
     }
 }

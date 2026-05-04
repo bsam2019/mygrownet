@@ -32,8 +32,8 @@ return new class extends Migration
                         $table->timestamps();
             
                         $table->unique(['company_id', 'customer_number'], 'unique_customer_number');
-                        $table->index(['company_id', 'status'], 'idx_company_status');
-                        $table->index(['company_id', 'outstanding_balance'], 'idx_outstanding');
+                        $table->index(['company_id', 'status'], 'idx_cms_customers_company_status');
+                        $table->index(['company_id', 'outstanding_balance'], 'idx_customers_outstanding');
                     });
         }
     }

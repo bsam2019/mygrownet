@@ -42,6 +42,7 @@ class AnalyticsService
             'expense_breakdown' => $this->getExpenseBreakdown($companyId, $startDate),
             'payment_trends' => $this->getPaymentTrends($companyId, $startDate),
             'profit_margin_trend' => $this->getProfitMarginTrend($companyId, $startDate),
+            'revenue_expense_trend' => $this->getRevenueExpenseTrend($companyId, $startDate),
         ];
     }
 
@@ -265,15 +266,11 @@ class AnalyticsService
             ->with('category')
             ->get()
             ->groupBy('category_id')
-            ->map(function ($expenses) {
+            ->mapWithKeys(function ($expenses) {
                 $category = $expenses->first()->category;
-                return [
-                    'category_name' => $category ? $category->name : 'Uncategorized',
-                    'total' => $expenses->sum('amount'),
-                    'count' => $expenses->count(),
-                ];
+                $categoryName = $category ? $category->name : 'Uncategorized';
+                return [$categoryName => $expenses->sum('amount')];
             })
-            ->values()
             ->toArray();
     }
 
@@ -314,5 +311,37 @@ class AnalyticsService
         }
         
         return $months;
+    }
+
+    private function getRevenueExpenseTrend(int $companyId, Carbon $startDate): array
+    {
+        $payments = PaymentModel::where('company_id', $companyId)
+            ->where('payment_date', '>=', $startDate)
+            ->where('is_voided', false)
+            ->selectRaw('DATE(payment_date) as date, SUM(amount) as revenue')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $expenses = ExpenseModel::where('company_id', $companyId)
+            ->where('expense_date', '>=', $startDate)
+            ->where('approval_status', 'approved')
+            ->selectRaw('DATE(expense_date) as date, SUM(amount) as expense')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $dates = $payments->keys()->merge($expenses->keys())->unique()->sort()->values();
+
+        return [
+            'dates' => $dates->toArray(),
+            'revenue' => $dates->map(fn($date) => $payments->get($date)?->revenue ?? 0)->toArray(),
+            'expenses' => $dates->map(fn($date) => $expenses->get($date)?->expense ?? 0)->toArray(),
+            'profit' => $dates->map(fn($date) => 
+                ($payments->get($date)?->revenue ?? 0) - ($expenses->get($date)?->expense ?? 0)
+            )->toArray(),
+        ];
     }
 }

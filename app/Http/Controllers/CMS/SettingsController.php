@@ -38,10 +38,14 @@ class SettingsController extends Controller
         // Check if Construction Modules are enabled
         $hasConstructionModules = $company->settings['construction_modules'] ?? false;
 
+        // Check if GrowFinance module is enabled
+        $hasGrowFinanceModule = $company->settings['growfinance_module'] ?? false;
+
         return Inertia::render('CMS/Settings/Index', [
             'company'      => array_merge($company->toArray(), [
                 'has_material_planning_module' => $hasMaterialPlanningModule,
                 'has_construction_modules' => $hasConstructionModules,
+                'has_growfinance_module' => $hasGrowFinanceModule,
             ]),
             'settings'     => $settings,
             'signatureUrl' => $signatureUrl,
@@ -394,5 +398,37 @@ class SettingsController extends Controller
 
         $status = $validated['enabled'] ? 'enabled' : 'disabled';
         return back()->with('success', "Construction modules {$status} successfully.");
+    }
+
+    /**
+     * Toggle the GrowFinance (Full Accounting) module on or off for this company.
+     */
+    public function toggleGrowFinanceModule(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $company = $request->user()->cmsUser->company;
+        
+        // Update module status in company settings
+        $settings = $company->settings ?? [];
+        $settings['growfinance_module'] = $validated['enabled'];
+        
+        $company->settings = $settings;
+        $company->save();
+
+        // If enabling, set up GrowFinance integration
+        if ($validated['enabled']) {
+            $syncService = app(\App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
+            $syncService->enableSync($company->id);
+        } else {
+            // If disabling, disable sync
+            $syncService = app(\App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
+            $syncService->disableSync($company->id);
+        }
+
+        $status = $validated['enabled'] ? 'enabled' : 'disabled';
+        return back()->with('success', "GrowFinance (Full Accounting) module {$status} successfully.");
     }
 }

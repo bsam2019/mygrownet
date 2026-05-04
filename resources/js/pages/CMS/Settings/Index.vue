@@ -18,6 +18,8 @@ import {
     DevicePhoneMobileIcon,
     ScissorsIcon,
     CubeIcon,
+    BuildingOffice2Icon,
+    CalculatorIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -326,6 +328,14 @@ const constructionModulesEnabled = ref(!!(props.company?.has_construction_module
 function toggleConstructionModules() {
     router.post(route('cms.settings.construction-modules.toggle'), {
         enabled: constructionModulesEnabled.value,
+    }, { preserveScroll: true });
+}
+
+// GrowFinance Module toggle
+const growfinanceEnabled = ref(!!(props.company?.has_growfinance_module));
+function toggleGrowFinance() {
+    router.post(route('cms.settings.growfinance-module.toggle'), {
+        enabled: growfinanceEnabled.value,
     }, { preserveScroll: true });
 }
 </script>
@@ -1330,6 +1340,60 @@ function toggleConstructionModules() {
                                 >
                                     <span
                                         :class="constructionModulesEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- GrowFinance Module -->
+                        <div class="flex items-start justify-between p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border-2 border-emerald-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <CalculatorIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-semibold text-gray-900">GrowFinance (Full Accounting)</h3>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Professional</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Complete double-entry accounting system with general ledger, balance sheet, cash flow statements, 
+                                        and bank reconciliation. Automatically syncs all CMS transactions to proper accounting records.
+                                    </p>
+                                    <div v-if="growfinanceEnabled" class="mt-2 flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">General Ledger</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Balance Sheet</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Cash Flow</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Bank Reconciliation</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Trial Balance</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Auto-Sync</span>
+                                    </div>
+                                    <div v-if="growfinanceEnabled" class="mt-2 flex items-start gap-2 p-2 bg-white/60 rounded-lg border border-emerald-200">
+                                        <svg class="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <p class="text-xs text-emerald-700">
+                                            <strong>Enabled:</strong> All invoices, expenses, and payments are automatically synced to GrowFinance accounting system. 
+                                            Enhanced financial reports are now available.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="growfinanceEnabled = !growfinanceEnabled; toggleGrowFinance()"
+                                    :class="growfinanceEnabled
+                                        ? 'bg-emerald-600 focus:ring-emerald-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="growfinanceEnabled"
+                                    role="switch"
+                                    :aria-label="growfinanceEnabled ? 'Disable GrowFinance module' : 'Enable GrowFinance module'"
+                                >
+                                    <span
+                                        :class="growfinanceEnabled ? 'translate-x-5' : 'translate-x-0'"
                                         class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                     />
                                 </button>

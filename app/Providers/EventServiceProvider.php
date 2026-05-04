@@ -44,6 +44,13 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\CMS\InvoiceCreated::class => [
             \App\Listeners\CMS\NotifyGrowBuilderOfInvoice::class,
             \App\Listeners\CMS\NotifyGrowMarketOfInvoice::class,
+            \App\Listeners\CMS\GrowFinanceSync\InvoiceCreatedListener::class, // Sync to GrowFinance
+        ],
+        \App\Events\CMS\ExpenseCreated::class => [
+            \App\Listeners\CMS\GrowFinanceSync\ExpenseCreatedListener::class, // Sync to GrowFinance
+        ],
+        \App\Events\CMS\PaymentRecorded::class => [
+            \App\Listeners\CMS\GrowFinanceSync\PaymentRecordedListener::class, // Sync to GrowFinance
         ],
         \App\Events\CMS\InventoryUpdated::class => [
             \App\Listeners\CMS\SyncInventoryToGrowMarket::class,

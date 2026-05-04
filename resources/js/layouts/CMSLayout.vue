@@ -1,15 +1,8 @@
 <template>
   <div>
     <Head>
-      <link rel="manifest" href="/manifest.json" />
-      <meta name="theme-color" content="#2563eb" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <meta name="apple-mobile-web-app-title" content="CMS" />
+      <!-- CMS-specific meta tags removed - using main site PWA only -->
     </Head>
-
-    <!-- PWA Install Prompt -->
-    <PwaInstallPrompt />
 
     <div class="flex h-screen overflow-hidden bg-gray-50">
     <!-- Desktop Sidebar -->
@@ -120,628 +113,750 @@
             :active="isActive('cms.dashboard')"
             @click="navigateTo('cms.dashboard')"
           />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.jobs')"
-            icon="BriefcaseIcon"
-            label="Jobs"
-            route-name="cms.jobs"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.jobs')"
-            @click="navigateTo('cms.jobs.index')"
-          />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.measurements') && hasFabrication"
-            icon="ScissorsIcon"
-            label="Measurements"
-            route-name="cms.measurements"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.measurements')"
-            @click="navigateTo('cms.measurements.index')"
-          />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.customers')"
-            icon="UsersIcon"
-            label="Customers"
-            route-name="cms.customers"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.customers')"
-            @click="navigateTo('cms.customers.index')"
-          />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.invoices')"
-            icon="DocumentTextIcon"
-            label="Invoices"
-            route-name="cms.invoices"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.invoices')"
-            @click="navigateTo('cms.invoices.index')"
-          />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.payments')"
-            icon="CreditCardIcon"
-            label="Payments"
-            route-name="cms.payments"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.payments')"
-            @click="navigateTo('cms.payments.index')"
-          />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.reports')"
-            icon="ChartBarIcon"
-            label="Reports"
-            route-name="cms.reports"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.reports')"
-            @click="navigateTo('cms.reports.index')"
-          />
+          <!-- Core Business Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.jobs', 'cms.measurements', 'cms.customers', 'cms.invoices', 'cms.payments', 'cms.reports', 'cms.budgets'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('business')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Core Business</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.business ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
+            <div v-show="sidebarCollapsed || !collapsedSections.business || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.jobs')"
+                icon="BriefcaseIcon"
+                label="Jobs"
+                route-name="cms.jobs"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.jobs')"
+                @click="navigateTo('cms.jobs.index')"
+              />
 
-          <!-- Analytics Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Analytics</p>
-            </div>
-          </div>
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.analytics.operations')"
-            icon="PresentationChartLineIcon"
-            label="Operations"
-            route-name="cms.analytics.operations"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.analytics.operations')"
-            @click="navigateTo('cms.analytics.operations')"
-          />
-          
-          <NavItem
-            v-if="shouldShowNavItem('cms.analytics.finance')"
-            icon="CurrencyDollarIcon"
-            label="Finance"
-            route-name="cms.analytics.finance"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.analytics.finance')"
-            @click="navigateTo('cms.analytics.finance')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.measurements') && hasFabrication"
+                icon="ScissorsIcon"
+                label="Measurements"
+                route-name="cms.measurements"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.measurements')"
+                @click="navigateTo('cms.measurements.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.customers')"
+                icon="UsersIcon"
+                label="Customers"
+                route-name="cms.customers"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.customers')"
+                @click="navigateTo('cms.customers.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.invoices')"
+                icon="DocumentTextIcon"
+                label="Invoices"
+                route-name="cms.invoices"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.invoices')"
+                @click="navigateTo('cms.invoices.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.payments')"
+                icon="CreditCardIcon"
+                label="Payments"
+                route-name="cms.payments"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.payments')"
+                @click="navigateTo('cms.payments.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.reports')"
+                icon="ChartBarIcon"
+                label="Reports"
+                route-name="cms.reports"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.reports')"
+                @click="navigateTo('cms.reports.index')"
+              />
 
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.expenses')"
-            icon="BanknotesIcon"
-            label="Expenses"
-            route-name="cms.expenses"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.expenses')"
-            @click="navigateTo('cms.expenses.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.quotations')"
-            icon="DocumentDuplicateIcon"
-            label="Quotations"
-            route-name="cms.quotations"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.quotations')"
-            @click="navigateTo('cms.quotations.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.inventory')"
-            icon="CubeIcon"
-            label="Inventory"
-            route-name="cms.inventory"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.inventory')"
-            @click="navigateTo('cms.inventory.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.materials') && (hasFabrication || hasConstruction)"
-            icon="CubeIcon"
-            label="Materials"
-            route-name="cms.materials"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.materials')"
-            @click="navigateTo('cms.materials.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.assets')"
-            icon="ComputerDesktopIcon"
-            label="Assets"
-            route-name="cms.assets"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.assets')"
-            @click="navigateTo('cms.assets.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.payroll')"
-            icon="UserGroupIcon"
-            label="Payroll"
-            route-name="cms.payroll"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.payroll')"
-            @click="navigateTo('cms.payroll.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.payroll.workers')"
-            icon="UsersIcon"
-            label="Workers"
-            route-name="cms.payroll.workers"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.payroll.workers')"
-            @click="navigateTo('cms.payroll.workers.index')"
-          />
-
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <!-- Construction Modules Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery && hasConstruction" class="px-3 pt-2 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-orange-50 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Construction</p>
+              <NavItem
+                v-if="shouldShowNavItem('cms.budgets')"
+                icon="CalculatorIcon"
+                label="Budgets"
+                route-name="cms.budgets"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.budgets')"
+                @click="navigateTo('cms.budgets.index')"
+              />
             </div>
           </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.projects') && hasConstruction"
-            icon="BuildingOffice2Icon"
-            label="Projects"
-            route-name="cms.projects"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.projects')"
-            @click="navigateTo('cms.projects.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.subcontractors') && hasConstruction"
-            icon="UserGroupIcon"
-            label="Subcontractors"
-            route-name="cms.subcontractors"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.subcontractors')"
-            @click="navigateTo('cms.subcontractors.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.equipment') && hasConstruction"
-            icon="WrenchScrewdriverIcon"
-            label="Equipment"
-            route-name="cms.equipment"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.equipment')"
-            @click="navigateTo('cms.equipment.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.labour.crews') && hasConstruction"
-            icon="UserGroupIcon"
-            label="Labour Crews"
-            route-name="cms.labour.crews"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.labour.crews')"
-            @click="navigateTo('cms.labour.crews.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.labour.timesheets') && hasConstruction"
-            icon="ClockIcon"
-            label="Timesheets"
-            route-name="cms.labour.timesheets"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.labour.timesheets')"
-            @click="navigateTo('cms.labour.timesheets.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.boq') && hasConstruction"
-            icon="DocumentTextIcon"
-            label="BOQ"
-            route-name="cms.boq"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.boq')"
-            @click="navigateTo('cms.boq.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.progress-billing') && hasConstruction"
-            icon="DocumentCheckIcon"
-            label="Progress Billing"
-            route-name="cms.progress-billing"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.progress-billing')"
-            @click="navigateTo('cms.progress-billing.certificates.index')"
-          />
-
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <!-- Operations Modules Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery && (hasFabrication || hasConstruction)" class="px-3 pt-2 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Operations</p>
+          <!-- Analytics Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.analytics.operations', 'cms.analytics.finance'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('analytics')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Analytics</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.analytics ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+            
+            <div v-show="sidebarCollapsed || !collapsedSections.analytics || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.analytics.operations')"
+                icon="PresentationChartLineIcon"
+                label="Operations"
+                route-name="cms.analytics.operations"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.analytics.operations')"
+                @click="navigateTo('cms.analytics.operations')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.analytics.finance')"
+                icon="CurrencyDollarIcon"
+                label="Finance"
+                route-name="cms.analytics.finance"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.analytics.finance')"
+                @click="navigateTo('cms.analytics.finance')"
+              />
             </div>
           </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.production') && hasFabrication"
-            icon="CogIcon"
-            label="Production"
-            route-name="cms.production"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.production')"
-            @click="navigateTo('cms.production.index')"
-          />
+          <!-- Financial Management Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.expenses', 'cms.quotations', 'cms.inventory', 'cms.materials', 'cms.assets', 'cms.payroll', 'cms.payroll.workers'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('financial')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-green-50 to-transparent rounded-lg hover:from-green-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Financial</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.financial ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.installation') && (hasFabrication || hasConstruction)"
-            icon="WrenchScrewdriverIcon"
-            label="Installation"
-            route-name="cms.installation"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.installation')"
-            @click="navigateTo('cms.installation.index')"
-          />
+            <div v-show="sidebarCollapsed || !collapsedSections.financial || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.expenses')"
+                icon="BanknotesIcon"
+                label="Expenses"
+                route-name="cms.expenses"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.expenses')"
+                @click="navigateTo('cms.expenses.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.inventory') && (hasFabrication || hasConstruction)"
-            icon="CubeIcon"
-            label="Stock Management"
-            route-name="cms.inventory"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.inventory')"
-            @click="navigateTo('cms.inventory.stock-levels.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.quotations')"
+                icon="DocumentDuplicateIcon"
+                label="Quotations"
+                route-name="cms.quotations"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.quotations')"
+                @click="navigateTo('cms.quotations.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.fleet')"
-            icon="TruckIcon"
-            label="Fleet"
-            route-name="cms.fleet"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.fleet')"
-            @click="navigateTo('cms.fleet.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory')"
+                icon="CubeIcon"
+                label="Inventory"
+                route-name="cms.inventory"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory')"
+                @click="navigateTo('cms.inventory.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.documents')"
-            icon="FolderIcon"
-            label="Documents"
-            route-name="cms.documents"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.documents')"
-            @click="navigateTo('cms.documents.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.materials') && (hasFabrication || hasConstruction)"
+                icon="CubeIcon"
+                label="Materials"
+                route-name="cms.materials"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.materials')"
+                @click="navigateTo('cms.materials.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.safety') && hasConstruction"
-            icon="ShieldCheckIcon"
-            label="Safety"
-            route-name="cms.safety"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.safety')"
-            @click="navigateTo('cms.safety.incidents.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.assets')"
+                icon="ComputerDesktopIcon"
+                label="Assets"
+                route-name="cms.assets"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.assets')"
+                @click="navigateTo('cms.assets.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.quality') && (hasFabrication || hasConstruction)"
-            icon="CheckBadgeIcon"
-            label="Quality"
-            route-name="cms.quality"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.quality')"
-            @click="navigateTo('cms.quality.inspections.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.payroll')"
+                icon="UserGroupIcon"
+                label="Payroll"
+                route-name="cms.payroll"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.payroll')"
+                @click="navigateTo('cms.payroll.index')"
+              />
 
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <!-- Payroll Configuration Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 pt-2 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-emerald-50 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Payroll Config</p>
+              <NavItem
+                v-if="shouldShowNavItem('cms.payroll.workers')"
+                icon="UsersIcon"
+                label="Workers"
+                route-name="cms.payroll.workers"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.payroll.workers')"
+                @click="navigateTo('cms.payroll.workers.index')"
+              />
             </div>
           </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.payroll.configuration.allowance-types')"
-            icon="BanknotesIcon"
-            label="Allowance Types"
-            route-name="cms.payroll.configuration.allowance-types"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.payroll.configuration.allowance-types')"
-            @click="navigateTo('cms.payroll.configuration.allowance-types.index')"
-          />
+          <!-- Construction Section (Collapsible) -->
+          <div v-if="hasConstruction && isSectionVisible(['cms.projects', 'cms.subcontractors', 'cms.equipment', 'cms.labour.crews', 'cms.labour.timesheets', 'cms.boq', 'cms.progress-billing'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('construction')"
+              class="w-full px-3 pt-2 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-orange-50 to-transparent rounded-lg hover:from-orange-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Construction</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.construction ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.payroll.configuration.deduction-types')"
-            icon="MinusCircleIcon"
-            label="Deduction Types"
-            route-name="cms.payroll.configuration.deduction-types"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.payroll.configuration.deduction-types')"
-            @click="navigateTo('cms.payroll.configuration.deduction-types.index')"
-          />
+            <div v-show="sidebarCollapsed || !collapsedSections.construction || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.projects') && hasConstruction"
+                icon="BuildingOffice2Icon"
+                label="Projects"
+                route-name="cms.projects"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.projects')"
+                @click="navigateTo('cms.projects.index')"
+              />
 
-          <!-- HR Management Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 pt-4 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-purple-50 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">HR Management</p>
+              <NavItem
+                v-if="shouldShowNavItem('cms.subcontractors') && hasConstruction"
+                icon="UserGroupIcon"
+                label="Subcontractors"
+                route-name="cms.subcontractors"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.subcontractors')"
+                @click="navigateTo('cms.subcontractors.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.equipment') && hasConstruction"
+                icon="WrenchScrewdriverIcon"
+                label="Equipment"
+                route-name="cms.equipment"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.equipment')"
+                @click="navigateTo('cms.equipment.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.labour.crews') && hasConstruction"
+                icon="UserGroupIcon"
+                label="Labour Crews"
+                route-name="cms.labour.crews"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.labour.crews')"
+                @click="navigateTo('cms.labour.crews.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.labour.timesheets') && hasConstruction"
+                icon="ClockIcon"
+                label="Timesheets"
+                route-name="cms.labour.timesheets"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.labour.timesheets')"
+                @click="navigateTo('cms.labour.timesheets.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.boq') && hasConstruction"
+                icon="DocumentTextIcon"
+                label="BOQ"
+                route-name="cms.boq"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.boq')"
+                @click="navigateTo('cms.boq.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.progress-billing') && hasConstruction"
+                icon="DocumentCheckIcon"
+                label="Progress Billing"
+                route-name="cms.progress-billing"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.progress-billing')"
+                @click="navigateTo('cms.progress-billing.certificates.index')"
+              />
             </div>
           </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.departments')"
-            icon="BuildingOffice2Icon"
-            label="Departments"
-            route-name="cms.departments"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.departments')"
-            @click="navigateTo('cms.departments.index')"
-          />
+          <!-- Operations Section (Collapsible) -->
+          <div v-if="(hasFabrication || hasConstruction) && isSectionVisible(['cms.production', 'cms.installation', 'cms.inventory', 'cms.fleet', 'cms.documents', 'cms.safety', 'cms.quality'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('operations')"
+              class="w-full px-3 pt-2 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Operations</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.operations ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.leave')"
-            icon="CalendarDaysIcon"
-            label="Leave Management"
-            route-name="cms.leave"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.leave')"
-            @click="navigateTo('cms.leave.index')"
-          />
+            <div v-show="sidebarCollapsed || !collapsedSections.operations || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.production') && hasFabrication"
+                icon="CogIcon"
+                label="Production"
+                route-name="cms.production"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.production')"
+                @click="navigateTo('cms.production.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.shifts')"
-            icon="ClockIcon"
-            label="Shifts"
-            route-name="cms.shifts"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.shifts')"
-            @click="navigateTo('cms.shifts.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.installation') && (hasFabrication || hasConstruction)"
+                icon="WrenchScrewdriverIcon"
+                label="Installation"
+                route-name="cms.installation"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.installation')"
+                @click="navigateTo('cms.installation.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.attendance')"
-            icon="ClipboardDocumentCheckIcon"
-            label="Attendance"
-            route-name="cms.attendance"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.attendance')"
-            @click="navigateTo('cms.attendance.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory') && (hasFabrication || hasConstruction)"
+                icon="CubeIcon"
+                label="Stock Management"
+                route-name="cms.inventory"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory')"
+                @click="navigateTo('cms.inventory.stock-levels.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.overtime')"
-            icon="ClockIcon"
-            label="Overtime"
-            route-name="cms.overtime"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.overtime')"
-            @click="navigateTo('cms.overtime.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.fleet')"
+                icon="TruckIcon"
+                label="Fleet"
+                route-name="cms.fleet"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.fleet')"
+                @click="navigateTo('cms.fleet.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.recruitment')"
-            icon="BriefcaseIcon"
-            label="Recruitment"
-            route-name="cms.recruitment"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.recruitment')"
-            @click="navigateTo('cms.recruitment.job-postings.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.documents')"
+                icon="FolderIcon"
+                label="Documents"
+                route-name="cms.documents"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.documents')"
+                @click="navigateTo('cms.documents.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.hrms-onboarding')"
-            icon="AcademicCapIcon"
-            label="Onboarding"
-            route-name="cms.hrms-onboarding"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.hrms-onboarding')"
-            @click="navigateTo('cms.hrms-onboarding.templates.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.safety') && hasConstruction"
+                icon="ShieldCheckIcon"
+                label="Safety"
+                route-name="cms.safety"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.safety')"
+                @click="navigateTo('cms.safety.incidents.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.performance')"
-            icon="ChartBarIcon"
-            label="Performance"
-            route-name="cms.performance"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.performance')"
-            @click="navigateTo('cms.performance.goals.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.training')"
-            icon="AcademicCapIcon"
-            label="Training"
-            route-name="cms.training"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.training')"
-            @click="navigateTo('cms.training.programs')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.hr-reports')"
-            icon="DocumentChartBarIcon"
-            label="HR Reports"
-            route-name="cms.hr-reports"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.hr-reports')"
-            @click="navigateTo('cms.hr-reports.index')"
-          />
-
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.time-tracking')"
-            icon="ClockIcon"
-            label="Time Tracking"
-            route-name="cms.time-tracking"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.time-tracking')"
-            @click="navigateTo('cms.time-tracking.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.recurring-invoices')"
-            icon="ArrowPathIcon"
-            label="Recurring Invoices"
-            route-name="cms.recurring-invoices"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.recurring-invoices')"
-            @click="navigateTo('cms.recurring-invoices.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.approvals')"
-            icon="CheckCircleIcon"
-            label="Approvals"
-            route-name="cms.approvals"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.approvals')"
-            @click="navigateTo('cms.approvals.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.approvals')"
-            icon="CheckCircleIcon"
-            label="Approvals"
-            route-name="cms.approvals"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.approvals')"
-            @click="navigateTo('cms.approvals.index')"
-          />
-
-          <NavItem
-            v-if="shouldShowNavItem('cms.accounting')"
-            icon="CalculatorIcon"
-            label="Chart of Accounts"
-            route-name="cms.accounting"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.accounting')"
-            @click="navigateTo('cms.accounting.index')"
-          />
-
-          <div v-if="!searchQuery" class="pt-4 pb-2">
-            <div class="border-t border-gray-100"></div>
-          </div>
-
-          <!-- Settings Submenu -->
-          <div v-if="!sidebarCollapsed && !searchQuery" class="px-3 mb-3">
-            <div class="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-gray-100 to-transparent rounded-lg">
-              <div class="w-1 h-4 bg-gradient-to-b from-gray-500 to-gray-600 rounded-full"></div>
-              <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Settings</p>
+              <NavItem
+                v-if="shouldShowNavItem('cms.quality') && (hasFabrication || hasConstruction)"
+                icon="CheckBadgeIcon"
+                label="Quality"
+                route-name="cms.quality"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.quality')"
+                @click="navigateTo('cms.quality.inspections.index')"
+              />
             </div>
           </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.index')"
-            icon="Cog6ToothIcon"
-            label="Company Settings"
-            route-name="cms.settings"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.index')"
-            @click="navigateTo('cms.settings.index')"
-          />
+          <!-- Payroll Configuration Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.payroll.configuration.allowance-types', 'cms.payroll.configuration.deduction-types'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('payroll')"
+              class="w-full px-3 pt-2 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-emerald-50 to-transparent rounded-lg hover:from-emerald-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Payroll Config</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.payroll ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.document-templates') && company?.has_bizdocs_module"
-            icon="DocumentTextIcon"
-            label="Document Templates"
-            route-name="cms.settings.document-templates"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.document-templates')"
-            @click="navigateTo('cms.settings.document-templates.index')"
-          />
+            <div v-show="sidebarCollapsed || !collapsedSections.payroll || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.payroll.configuration.allowance-types')"
+                icon="BanknotesIcon"
+                label="Allowance Types"
+                route-name="cms.payroll.configuration.allowance-types"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.payroll.configuration.allowance-types')"
+                @click="navigateTo('cms.payroll.configuration.allowance-types.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.pricing-rules') && hasFabrication"
-            icon="CalculatorIcon"
-            label="Pricing Rules"
-            route-name="cms.settings.pricing-rules"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.pricing-rules')"
-            @click="navigateTo('cms.settings.pricing-rules')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.payroll.configuration.deduction-types')"
+                icon="MinusCircleIcon"
+                label="Deduction Types"
+                route-name="cms.payroll.configuration.deduction-types"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.payroll.configuration.deduction-types')"
+                @click="navigateTo('cms.payroll.configuration.deduction-types.index')"
+              />
+            </div>
+          </div>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.industry-presets.index')"
-            icon="SwatchIcon"
-            label="Industry Presets"
-            route-name="cms.settings.industry-presets"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.industry-presets')"
-            @click="navigateTo('cms.settings.industry-presets.index')"
-          />
+          <!-- HR Management Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.departments', 'cms.leave', 'cms.shifts', 'cms.attendance', 'cms.overtime', 'cms.recruitment', 'cms.hrms-onboarding', 'cms.performance', 'cms.training', 'cms.hr-reports'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('hr')"
+              class="w-full px-3 pt-4 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-purple-50 to-transparent rounded-lg hover:from-purple-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">HR Management</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.hr ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.email.index')"
-            icon="EnvelopeIcon"
-            label="Email Settings"
-            route-name="cms.settings.email"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.email')"
-            @click="navigateTo('cms.settings.email.index')"
-          />
+            <div v-show="sidebarCollapsed || !collapsedSections.hr || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.departments')"
+                icon="BuildingOffice2Icon"
+                label="Departments"
+                route-name="cms.departments"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.departments')"
+                @click="navigateTo('cms.departments.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.sms.index')"
-            icon="DevicePhoneMobileIcon"
-            label="SMS Settings"
-            route-name="cms.settings.sms"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.sms')"
-            @click="navigateTo('cms.settings.sms.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.leave')"
+                icon="CalendarDaysIcon"
+                label="Leave Management"
+                route-name="cms.leave"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.leave')"
+                @click="navigateTo('cms.leave.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.settings.currency.index')"
-            icon="BanknotesIcon"
-            label="Currency"
-            route-name="cms.settings.currency"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.settings.currency')"
-            @click="navigateTo('cms.settings.currency.index')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.shifts')"
+                icon="ClockIcon"
+                label="Shifts"
+                route-name="cms.shifts"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.shifts')"
+                @click="navigateTo('cms.shifts.index')"
+              />
 
-          <NavItem
-            v-if="shouldShowNavItem('cms.security.settings')"
-            icon="ShieldCheckIcon"
-            label="Security"
-            route-name="cms.security"
-            :collapsed="sidebarCollapsed"
-            :active="isActive('cms.security')"
-            @click="navigateTo('cms.security.settings')"
-          />
+              <NavItem
+                v-if="shouldShowNavItem('cms.attendance')"
+                icon="ClipboardDocumentCheckIcon"
+                label="Attendance"
+                route-name="cms.attendance"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.attendance')"
+                @click="navigateTo('cms.attendance.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.overtime')"
+                icon="ClockIcon"
+                label="Overtime"
+                route-name="cms.overtime"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.overtime')"
+                @click="navigateTo('cms.overtime.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.recruitment')"
+                icon="BriefcaseIcon"
+                label="Recruitment"
+                route-name="cms.recruitment"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.recruitment')"
+                @click="navigateTo('cms.recruitment.job-postings.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.hrms-onboarding')"
+                icon="AcademicCapIcon"
+                label="Onboarding"
+                route-name="cms.hrms-onboarding"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.hrms-onboarding')"
+                @click="navigateTo('cms.hrms-onboarding.templates.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.performance')"
+                icon="ChartBarIcon"
+                label="Performance"
+                route-name="cms.performance"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.performance')"
+                @click="navigateTo('cms.performance.goals.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.training')"
+                icon="AcademicCapIcon"
+                label="Training"
+                route-name="cms.training"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.training')"
+                @click="navigateTo('cms.training.programs')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.hr-reports')"
+                icon="DocumentChartBarIcon"
+                label="HR Reports"
+                route-name="cms.hr-reports"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.hr-reports')"
+                @click="navigateTo('cms.hr-reports.index')"
+              />
+            </div>
+          </div>
+
+          <!-- Administration Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.time-tracking', 'cms.recurring-invoices', 'cms.approvals', 'cms.accounting'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('administration')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-indigo-50 to-transparent rounded-lg hover:from-indigo-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Administration</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.administration ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <div v-show="sidebarCollapsed || !collapsedSections.administration || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.time-tracking')"
+                icon="ClockIcon"
+                label="Time Tracking"
+                route-name="cms.time-tracking"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.time-tracking')"
+                @click="navigateTo('cms.time-tracking.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.recurring-invoices')"
+                icon="ArrowPathIcon"
+                label="Recurring Invoices"
+                route-name="cms.recurring-invoices"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.recurring-invoices')"
+                @click="navigateTo('cms.recurring-invoices.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.approvals')"
+                icon="CheckCircleIcon"
+                label="Approvals"
+                route-name="cms.approvals"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.approvals')"
+                @click="navigateTo('cms.approvals.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.accounting')"
+                icon="CalculatorIcon"
+                label="Chart of Accounts"
+                route-name="cms.accounting"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.accounting')"
+                @click="navigateTo('cms.accounting.index')"
+              />
+            </div>
+          </div>
+
+          <!-- Settings Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.settings.index', 'cms.settings.document-templates', 'cms.settings.pricing-rules', 'cms.settings.industry-presets.index', 'cms.settings.email.index', 'cms.settings.sms.index', 'cms.settings.currency.index', 'cms.security.settings'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('settings')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-gray-100 to-transparent rounded-lg hover:from-gray-200 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-gray-500 to-gray-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Settings</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.settings ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <div v-show="sidebarCollapsed || !collapsedSections.settings || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.index')"
+                icon="Cog6ToothIcon"
+                label="Company Settings"
+                route-name="cms.settings"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.index')"
+                @click="navigateTo('cms.settings.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.document-templates') && company?.has_bizdocs_module"
+                icon="DocumentTextIcon"
+                label="Document Templates"
+                route-name="cms.settings.document-templates"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.document-templates')"
+                @click="navigateTo('cms.settings.document-templates.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.pricing-rules') && hasFabrication"
+                icon="CalculatorIcon"
+                label="Pricing Rules"
+                route-name="cms.settings.pricing-rules"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.pricing-rules')"
+                @click="navigateTo('cms.settings.pricing-rules')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.industry-presets.index')"
+                icon="SwatchIcon"
+                label="Industry Presets"
+                route-name="cms.settings.industry-presets"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.industry-presets')"
+                @click="navigateTo('cms.settings.industry-presets.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.email.index')"
+                icon="EnvelopeIcon"
+                label="Email Settings"
+                route-name="cms.settings.email"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.email')"
+                @click="navigateTo('cms.settings.email.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.sms.index')"
+                icon="DevicePhoneMobileIcon"
+                label="SMS Settings"
+                route-name="cms.settings.sms"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.sms')"
+                @click="navigateTo('cms.settings.sms.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.settings.currency.index')"
+                icon="BanknotesIcon"
+                label="Currency"
+                route-name="cms.settings.currency"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.settings.currency')"
+                @click="navigateTo('cms.settings.currency.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.security.settings')"
+                icon="ShieldCheckIcon"
+                label="Security"
+                route-name="cms.security"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.security')"
+                @click="navigateTo('cms.security.settings')"
+              />
+            </div>
+          </div>
         </nav>
       </div>
 
       <!-- User Profile - Fixed at Bottom -->
-      <div class="flex-shrink-0 border-t border-gray-100 p-4 bg-gradient-to-t from-gray-50 to-white sticky bottom-0 z-10 backdrop-blur-sm">
-        <div v-if="!sidebarCollapsed" class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/80 transition-all duration-200 cursor-pointer group">
+      <div class="flex-shrink-0 border-t border-gray-100 px-3 py-2 bg-gradient-to-t from-gray-50 to-white mt-auto">
+        <div v-if="!sidebarCollapsed" class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-white/80 transition-all duration-200 cursor-pointer group">
           <div class="w-10 h-10 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center flex-shrink-0 ring-2 ring-gray-100 group-hover:ring-blue-100 transition-all">
             <UserCircleIcon class="h-7 w-7 text-gray-600 group-hover:text-blue-600 transition-colors" aria-hidden="true" />
           </div>
@@ -784,7 +899,7 @@
             </MenuItems>
           </Menu>
         </div>
-        <div v-else class="flex justify-center">
+        <div v-else class="flex justify-center py-1">
           <Menu as="div" class="relative">
             <MenuButton class="w-11 h-11 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center hover:from-blue-100 hover:to-blue-200 transition-all duration-200 ring-2 ring-gray-100 hover:ring-blue-200">
               <UserCircleIcon class="h-7 w-7 text-gray-600 hover:text-blue-600 transition-colors" aria-hidden="true" />
@@ -1164,7 +1279,6 @@ import CustomerForm from '@/components/CMS/Forms/CustomerForm.vue'
 import InvoiceForm from '@/components/CMS/Forms/InvoiceForm.vue'
 import ExpenseForm from '@/components/CMS/Forms/ExpenseForm.vue'
 import NavItem from '@/components/CMS/NavItem.vue'
-import PwaInstallPrompt from '@/components/CMS/PwaInstallPrompt.vue'
 import { useCMSSlideOver } from '@/composables/useCMSSlideOver'
 
 interface Notification {
@@ -1191,6 +1305,44 @@ const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 const slideOver = useCMSSlideOver()
 
+// Collapsible sections state - persisted in localStorage
+const STORAGE_KEY = 'cms_sidebar_sections'
+const collapsedSections = ref<Record<string, boolean>>({
+  business: true,
+  financial: true,
+  analytics: true,
+  construction: true,
+  operations: true,
+  hr: true,
+  administration: true,
+  payroll: true,
+  settings: true,
+})
+
+// Load collapsed state from localStorage
+onMounted(() => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      collapsedSections.value = { ...collapsedSections.value, ...JSON.parse(saved) }
+    } catch (e) {
+      console.error('Failed to parse sidebar state:', e)
+    }
+  }
+})
+
+// Toggle section collapse
+const toggleSection = (section: string) => {
+  collapsedSections.value[section] = !collapsedSections.value[section]
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsedSections.value))
+}
+
+// Check if section should be shown (for search functionality)
+const isSectionVisible = (sectionRoutes: string[]) => {
+  if (!searchQuery.value.trim()) return true
+  return sectionRoutes.some(route => shouldShowNavItem(route))
+}
+
 // Quick search functionality
 const searchQuery = ref('')
 const allNavItems = ref([
@@ -1201,8 +1353,11 @@ const allNavItems = ref([
   { label: 'Invoices', route: 'cms.invoices', keywords: ['bills', 'billing', 'payments'] },
   { label: 'Payments', route: 'cms.payments', keywords: ['transactions', 'money'] },
   { label: 'Reports', route: 'cms.reports', keywords: ['analytics', 'statistics'] },
-  { label: 'Operations', route: 'cms.analytics.operations', keywords: ['analytics', 'performance'] },
-  { label: 'Finance', route: 'cms.analytics.finance', keywords: ['analytics', 'financial', 'money'] },
+  { label: 'Budgets', route: 'cms.budgets', keywords: ['budget', 'planning', 'forecast'] },
+  // Analytics
+  { label: 'Operations Analytics', route: 'cms.analytics.operations', keywords: ['analytics', 'performance', 'operations'] },
+  { label: 'Finance Analytics', route: 'cms.analytics.finance', keywords: ['analytics', 'financial', 'money'] },
+  // Financial
   { label: 'Expenses', route: 'cms.expenses', keywords: ['costs', 'spending'] },
   { label: 'Quotations', route: 'cms.quotations', keywords: ['quotes', 'estimates'] },
   { label: 'Inventory', route: 'cms.inventory', keywords: ['stock', 'products', 'items'] },
@@ -1218,9 +1373,16 @@ const allNavItems = ref([
   { label: 'Timesheets', route: 'cms.labour.timesheets', keywords: ['hours', 'time tracking', 'attendance'] },
   { label: 'BOQ', route: 'cms.boq', keywords: ['bill of quantities', 'estimates', 'quantities'] },
   { label: 'Progress Billing', route: 'cms.progress-billing', keywords: ['certificates', 'billing', 'retention'] },
-  // Payroll Configuration
-  { label: 'Allowance Types', route: 'cms.payroll.configuration.allowance-types', keywords: ['benefits', 'perks'] },
-  { label: 'Deduction Types', route: 'cms.payroll.configuration.deduction-types', keywords: ['taxes', 'withholding'] },
+  // Operations
+  { label: 'Production', route: 'cms.production', keywords: ['manufacturing', 'fabrication', 'production'] },
+  { label: 'Installation', route: 'cms.installation', keywords: ['install', 'fitting', 'setup'] },
+  { label: 'Stock Management', route: 'cms.inventory', keywords: ['stock levels', 'inventory', 'warehouse'] },
+  { label: 'Fleet', route: 'cms.fleet', keywords: ['vehicles', 'transport', 'trucks'] },
+  { label: 'Documents', route: 'cms.documents', keywords: ['files', 'storage', 'uploads'] },
+  { label: 'Safety', route: 'cms.safety', keywords: ['health', 'safety', 'compliance'] },
+  { label: 'Purchase Orders', route: 'cms.purchase-orders', keywords: ['po', 'orders', 'procurement'] },
+  // HR Management
+  { label: 'Employees', route: 'cms.employees', keywords: ['staff', 'personnel', 'workforce'] },
   { label: 'Departments', route: 'cms.departments', keywords: ['divisions', 'units'] },
   { label: 'Leave Management', route: 'cms.leave', keywords: ['vacation', 'time off', 'absence'] },
   { label: 'Shifts', route: 'cms.shifts', keywords: ['schedule', 'roster', 'timing'] },
@@ -1231,12 +1393,20 @@ const allNavItems = ref([
   { label: 'Performance', route: 'cms.performance', keywords: ['reviews', 'goals', 'appraisal'] },
   { label: 'Training', route: 'cms.training', keywords: ['learning', 'development', 'courses'] },
   { label: 'HR Reports', route: 'cms.hr-reports', keywords: ['human resources', 'analytics'] },
+  { label: 'Loans', route: 'cms.loans', keywords: ['advances', 'lending', 'credit'] },
+  // Other
   { label: 'Time Tracking', route: 'cms.time-tracking', keywords: ['hours', 'timesheet'] },
   { label: 'Recurring Invoices', route: 'cms.recurring-invoices', keywords: ['subscription', 'repeat'] },
   { label: 'Approvals', route: 'cms.approvals', keywords: ['pending', 'review', 'authorize'] },
   { label: 'Chart of Accounts', route: 'cms.accounting', keywords: ['accounting', 'ledger', 'books'] },
+  { label: 'Notifications', route: 'cms.notifications', keywords: ['alerts', 'messages', 'updates'] },
+  // Payroll Configuration
+  { label: 'Allowance Types', route: 'cms.payroll.configuration.allowance-types', keywords: ['benefits', 'perks', 'allowances'] },
+  { label: 'Deduction Types', route: 'cms.payroll.configuration.deduction-types', keywords: ['taxes', 'withholding', 'deductions'] },
+  { label: 'Payroll Settings', route: 'cms.payroll.configuration.settings', keywords: ['payroll config', 'settings'] },
   // Settings
   { label: 'Company Settings', route: 'cms.settings.index', keywords: ['configuration', 'preferences', 'setup', 'company'] },
+  { label: 'Document Templates', route: 'cms.settings.document-templates', keywords: ['templates', 'documents', 'formats'] },
   { label: 'Pricing Rules', route: 'cms.settings.pricing-rules', keywords: ['rates', 'pricing', 'fabrication', 'costs'] },
   { label: 'Industry Presets', route: 'cms.settings.industry-presets.index', keywords: ['templates', 'industry', 'setup'] },
   { label: 'Email Settings', route: 'cms.settings.email.index', keywords: ['mail', 'smtp', 'notifications'] },
@@ -1281,32 +1451,6 @@ const shouldShowNavItem = (route: string) => {
 
 // Provide slideOver to child components
 provide('slideOver', slideOver)
-
-// PWA update notification — listen for the custom event fired by usePWA.ts
-// instead of using the native browser confirm() dialog
-onMounted(() => {
-  window.addEventListener('pwa:update-available', handlePwaUpdate)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('pwa:update-available', handlePwaUpdate)
-})
-
-function handlePwaUpdate(event: Event) {
-  const { apply } = (event as CustomEvent).detail
-  window.dispatchEvent(new CustomEvent('bizboost:toast', {
-    detail: {
-      type: 'info',
-      title: 'Update available',
-      message: 'A new version is ready.',
-      duration: 0, // keep visible until dismissed
-      action: {
-        label: 'Reload',
-        onClick: apply,
-      },
-    }
-  }))
-}
 
 // Access global shared data from Inertia
 const company = computed(() => page.props.company)

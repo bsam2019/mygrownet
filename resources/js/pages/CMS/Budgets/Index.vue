@@ -9,13 +9,13 @@
                         Manage budgets and track spending against targets
                     </p>
                 </div>
-                <button
-                    @click="openCreateModal"
+                <Link
+                    :href="route('cms.budgets.create')"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
                     Create Budget
-                </button>
+                </Link>
             </div>
 
             <!-- Budgets List -->
@@ -120,37 +120,20 @@
                 <CalendarIcon class="h-16 w-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No Budgets Yet</h3>
                 <p class="text-gray-600 mb-6">Get started by creating your first budget</p>
-                <button
-                    @click="openCreateModal"
+                <Link
+                    :href="route('cms.budgets.create')"
                     class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
                     Create Budget
-                </button>
-            </div>
-        </div>
-
-        <!-- Create/Edit Modal (placeholder - implement as needed) -->
-        <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-                <h2 class="text-xl font-bold mb-4">Create Budget</h2>
-                <p class="text-gray-600 mb-4">Budget creation form coming soon...</p>
-                <div class="flex justify-end gap-2">
-                    <button
-                        @click="showModal = false"
-                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                    >
-                        Close
-                    </button>
-                </div>
+                </Link>
             </div>
         </div>
     </CMSLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { router, Link } from '@inertiajs/vue3';
 import CMSLayout from '@/layouts/CMSLayout.vue';
 import { PlusIcon, CalendarIcon } from '@heroicons/vue/24/outline';
 
@@ -176,12 +159,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const showModal = ref(false);
-
-const openCreateModal = () => {
-    showModal.value = true;
-};
 
 const confirmDelete = (budget: Budget) => {
     if (confirm(`Are you sure you want to delete "${budget.name}"?`)) {

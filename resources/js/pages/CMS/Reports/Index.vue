@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { ChartBarIcon, BanknotesIcon, DocumentTextIcon, BriefcaseIcon, CalculatorIcon, BookOpenIcon, ReceiptPercentIcon } from '@heroicons/vue/24/outline';
+import { ChartBarIcon, BanknotesIcon, DocumentTextIcon, BriefcaseIcon, CalculatorIcon, BookOpenIcon, ReceiptPercentIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon, ScaleIcon, ArrowTrendingUpIcon } from '@heroicons/vue/24/outline';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
 
@@ -19,6 +19,7 @@ interface Props {
     expenseSummary: any;
     taxReport: any;
     comparative: any;
+    growFinanceEnabled: boolean;
     filters: {
         start_date: string;
         end_date: string;
@@ -99,8 +100,19 @@ const exportReport = (reportType: string) => {
     <div class="px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Financial Reports</h1>
-            <p class="mt-1 text-sm text-gray-600">View financial performance and analytics</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Financial Reports</h1>
+                    <p class="mt-1 text-sm text-gray-600">View financial performance and analytics</p>
+                </div>
+                <Link
+                    :href="route('cms.analytics.finance')"
+                    class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow border border-gray-300"
+                >
+                    <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
+                    Finance Analytics
+                </Link>
+            </div>
         </div>
 
         <!-- Date Filter -->
@@ -612,6 +624,116 @@ const exportReport = (reportType: string) => {
                 <div v-else class="text-center py-8 text-gray-500">
                     No tax data available for the selected period
                 </div>
+            </div>
+        </div>
+
+        <!-- GrowFinance Enhanced Reports -->
+        <div v-if="growFinanceEnabled" class="mb-6">
+            <div class="mb-3 flex items-center gap-2">
+                <ScaleIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                <h2 class="text-lg font-semibold text-gray-900">GrowFinance Reports</h2>
+                <div class="flex items-center gap-2 px-2 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div class="h-2 w-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs font-medium text-emerald-700">Full Accounting</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Balance Sheet Card -->
+                <Link
+                    :href="route('cms.reports.balance-sheet')"
+                    class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-emerald-500 hover:border-emerald-600"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition">
+                            <ScaleIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-emerald-600 transition">
+                            Balance Sheet
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Complete balance sheet with assets, liabilities, and equity
+                    </p>
+                    <div class="mt-4 flex items-center text-sm font-medium text-emerald-600 group-hover:text-emerald-700">
+                        View Report
+                        <svg class="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </Link>
+
+                <!-- Cash Flow Statement Card -->
+                <Link
+                    :href="route('cms.reports.cash-flow-statement')"
+                    class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-blue-500 hover:border-blue-600"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition">
+                            <ArrowTrendingUpIcon class="h-6 w-6 text-blue-600" aria-hidden="true" />
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                            Cash Flow
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Operating, investing, and financing activities
+                    </p>
+                    <div class="mt-4 flex items-center text-sm font-medium text-blue-600 group-hover:text-blue-700">
+                        View Report
+                        <svg class="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </Link>
+
+                <!-- General Ledger Card -->
+                <Link
+                    :href="route('cms.reports.general-ledger')"
+                    class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-purple-500 hover:border-purple-600"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
+                            <BookOpenIcon class="h-6 w-6 text-purple-600" aria-hidden="true" />
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition">
+                            General Ledger
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Detailed account transactions with running balance
+                    </p>
+                    <div class="mt-4 flex items-center text-sm font-medium text-purple-600 group-hover:text-purple-700">
+                        View Report
+                        <svg class="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </Link>
+
+                <!-- Trial Balance Card -->
+                <Link
+                    :href="route('cms.reports.trial-balance')"
+                    class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-indigo-500 hover:border-indigo-600"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition">
+                            <CalculatorIcon class="h-6 w-6 text-indigo-600" aria-hidden="true" />
+                        </div>
+                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition">
+                            Trial Balance
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Account balances verification and validation
+                    </p>
+                    <div class="mt-4 flex items-center text-sm font-medium text-indigo-600 group-hover:text-indigo-700">
+                        View Report
+                        <svg class="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </Link>
             </div>
         </div>
 

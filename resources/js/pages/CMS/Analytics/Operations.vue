@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { ChartBarIcon, ClockIcon, CheckCircleIcon, TruckIcon } from '@heroicons/vue/24/outline'
 import CMSLayout from '@/Layouts/CMSLayout.vue'
+import DoughnutChart from '@/components/CMS/Charts/DoughnutChart.vue'
+import LineChart from '@/components/CMS/Charts/LineChart.vue'
+import BarChart from '@/components/CMS/Charts/BarChart.vue'
+import GaugeChart from '@/components/CMS/Charts/GaugeChart.vue'
 
 defineOptions({
   layout: CMSLayout
@@ -54,6 +58,39 @@ const getStatusColor = (status: string) => {
   }
   return colors[status as keyof typeof colors] || 'bg-gray-500'
 }
+
+// Chart data computations
+const statusChartColors = ['#6b7280', '#3b82f6', '#10b981', '#ef4444']
+
+const timelineChartData = computed(() => {
+  const dates = Object.keys(props.metrics.jobs_timeline)
+  const counts = Object.values(props.metrics.jobs_timeline)
+  
+  return {
+    labels: dates,
+    datasets: [{
+      label: 'Jobs Created',
+      data: counts,
+      color: '#3b82f6',
+      fill: true
+    }]
+  }
+})
+
+const workerProductivityChartData = computed(() => {
+  const topWorkers = props.metrics.worker_productivity.slice(0, 10)
+  return {
+    labels: topWorkers.map(w => w.worker_name),
+    data: topWorkers.map(w => w.total_hours)
+  }
+})
+
+const jobsByTypeChartData = computed(() => {
+  return {
+    labels: Object.keys(props.metrics.jobs_by_type),
+    data: Object.values(props.metrics.jobs_by_type)
+  }
+})
 </script>
 
 <template>
@@ -82,21 +119,25 @@ const getStatusColor = (status: string) => {
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
       <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
         <div class="p-5">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircleIcon class="h-6 w-6 text-green-600" aria-hidden="true" />
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircleIcon class="h-6 w-6 text-green-600" aria-hidden="true" />
+                </div>
+              </div>
+              <div class="ml-3">
+                <dt class="text-sm font-medium text-gray-500">Completion Rate</dt>
               </div>
             </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
-                <dd class="flex items-baseline">
-                  <div class="text-2xl font-semibold text-gray-900">{{ metrics.job_completion_rate }}%</div>
-                </dd>
-              </dl>
-            </div>
           </div>
+          <GaugeChart 
+            :value="metrics.job_completion_rate" 
+            :max="100"
+            :height="160"
+            :colors="{ low: '#ef4444', medium: '#f59e0b', high: '#10b981' }"
+            :thresholds="{ medium: 60, high: 80 }"
+          />
         </div>
       </div>
 
@@ -168,29 +209,22 @@ const getStatusColor = (status: string) => {
       <!-- Jobs by Status -->
       <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Jobs by Status</h3>
-        <div class="space-y-3">
-          <div v-for="(count, status) in metrics.jobs_by_status" :key="status" class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div :class="['w-3 h-3 rounded-full', getStatusColor(status)]"></div>
-              <span class="text-sm font-medium text-gray-700 capitalize">{{ status.replace('_', ' ') }}</span>
-            </div>
-            <span class="text-sm font-semibold text-gray-900">{{ count }}</span>
-          </div>
-        </div>
+        <DoughnutChart 
+          :data="metrics.jobs_by_status"
+          :colors="statusChartColors"
+          :height="280"
+        />
       </div>
 
       <!-- Jobs by Type -->
       <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Jobs by Type</h3>
-        <div class="space-y-3">
-          <div v-for="(count, type) in metrics.jobs_by_type" :key="type" class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700">{{ type }}</span>
-            <span class="text-sm font-semibold text-gray-900">{{ count }}</span>
-          </div>
-          <div v-if="Object.keys(metrics.jobs_by_type).length === 0" class="text-center py-4 text-sm text-gray-500">
-            No data available
-          </div>
-        </div>
+        <BarChart 
+          :labels="jobsByTypeChartData.labels"
+          :data="jobsByTypeChartData.data"
+          color="#8b5cf6"
+          :height="280"
+        />
       </div>
     </div>
 
@@ -199,6 +233,21 @@ const getStatusColor = (status: string) => {
       <div class="px-6 py-4 border-b border-gray-200">
         <h3 class="text-lg font-semibold text-gray-900">Worker Productivity</h3>
       </div>
+      
+      <!-- Chart View -->
+      <div class="p-6 border-b border-gray-200">
+        <h4 class="text-sm font-medium text-gray-700 mb-4">Top 10 Workers by Hours</h4>
+        <BarChart 
+          :labels="workerProductivityChartData.labels"
+          :data="workerProductivityChartData.data"
+          color="#3b82f6"
+          :height="300"
+          horizontal
+          x-axis-label="Total Hours"
+        />
+      </div>
+      
+      <!-- Table View -->
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
@@ -237,23 +286,13 @@ const getStatusColor = (status: string) => {
     <!-- Jobs Timeline -->
     <div class="bg-white rounded-lg shadow p-6">
       <h3 class="text-lg font-semibold text-gray-900 mb-4">Jobs Timeline</h3>
-      <div class="space-y-2">
-        <div v-for="(count, date) in metrics.jobs_timeline" :key="date" class="flex items-center justify-between">
-          <span class="text-sm text-gray-600">{{ date }}</span>
-          <div class="flex items-center gap-2">
-            <div class="w-32 bg-gray-200 rounded-full h-2">
-              <div 
-                class="bg-blue-600 h-2 rounded-full" 
-                :style="{ width: `${Math.min((count / Math.max(...Object.values(metrics.jobs_timeline))) * 100, 100)}%` }"
-              ></div>
-            </div>
-            <span class="text-sm font-medium text-gray-900 w-8 text-right">{{ count }}</span>
-          </div>
-        </div>
-        <div v-if="Object.keys(metrics.jobs_timeline).length === 0" class="text-center py-4 text-sm text-gray-500">
-          No timeline data available
-        </div>
-      </div>
+      <LineChart 
+        :labels="timelineChartData.labels"
+        :datasets="timelineChartData.datasets"
+        :height="300"
+        y-axis-label="Number of Jobs"
+        x-axis-label="Date"
+      />
     </div>
   </div>
 </template>

@@ -23,7 +23,7 @@ return new class extends Migration
                         $table->timestamps();
             
                         $table->unique(['user_id', 'company_id'], 'unique_user_company');
-                        $table->index(['company_id', 'status'], 'idx_company_status');
+                        $table->index(['company_id', 'status'], 'idx_cms_users_company_status');
                     });
         }
     }
