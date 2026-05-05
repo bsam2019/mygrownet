@@ -249,7 +249,7 @@
           </div>
 
           <!-- Operations Module Section (Unified Task Management) -->
-          <div v-if="company?.has_operations_module && isSectionVisible(['cms.operations.dashboard', 'cms.operations.my-tasks', 'cms.operations.tasks', 'cms.operations.workflows', 'cms.operations.planning'])">
+          <div v-if="company?.has_operations_module && isSectionVisible(['cms.operations.dashboard', 'cms.operations.my-tasks', 'cms.operations.tasks', 'cms.operations.workflows', 'cms.operations.kanban', 'cms.operations.planning'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('operationsModule')"
@@ -309,6 +309,16 @@
               />
               
               <NavItem
+                v-if="shouldShowNavItem('cms.operations.kanban')"
+                icon="ViewColumnsIcon"
+                label="Kanban Board"
+                route-name="cms.operations.kanban"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.kanban')"
+                @click="navigateTo('cms.operations.kanban')"
+              />
+              
+              <NavItem
                 v-if="shouldShowNavItem('cms.operations.planning')"
                 icon="CalendarDaysIcon"
                 label="Planning"
@@ -316,6 +326,26 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.operations.planning')"
                 @click="navigateTo('cms.operations.planning')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.templates')"
+                icon="DocumentDuplicateIcon"
+                label="Templates"
+                route-name="cms.operations.templates"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.templates')"
+                @click="navigateTo('cms.operations.templates.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.recurring-tasks')"
+                icon="ArrowPathRoundedSquareIcon"
+                label="Recurring Tasks"
+                route-name="cms.operations.recurring-tasks"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.recurring-tasks')"
+                @click="navigateTo('cms.operations.recurring-tasks.index')"
               />
             </div>
           </div>
@@ -1346,6 +1376,9 @@ import {
   CheckIcon,
   ClipboardDocumentCheckIcon,
   CalendarDaysIcon,
+  ViewColumnsIcon,
+  DocumentDuplicateIcon as DocumentDuplicateIconOutline,
+  ArrowPathRoundedSquareIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
@@ -1428,7 +1461,10 @@ const allNavItems = ref([
   { label: 'My Tasks', route: 'cms.operations.my-tasks', keywords: ['my tasks', 'assigned', 'todo'] },
   { label: 'All Tasks', route: 'cms.operations.tasks', keywords: ['tasks', 'work items', 'operations'] },
   { label: 'Workflows', route: 'cms.operations.workflows', keywords: ['workflows', 'processes', 'stages'] },
+  { label: 'Kanban Board', route: 'cms.operations.kanban', keywords: ['kanban', 'board', 'visual', 'drag drop'] },
   { label: 'Planning', route: 'cms.operations.planning', keywords: ['planning', 'schedule', 'capacity', 'workload'] },
+  { label: 'Task Templates', route: 'cms.operations.templates', keywords: ['templates', 'reusable', 'task templates'] },
+  { label: 'Recurring Tasks', route: 'cms.operations.recurring-tasks', keywords: ['recurring', 'automated', 'scheduled tasks'] },
   { label: 'Measurements', route: 'cms.measurements', keywords: ['measure', 'dimensions', 'fabrication'] },
   { label: 'Customers', route: 'cms.customers', keywords: ['clients', 'contacts'] },
   { label: 'Invoices', route: 'cms.invoices', keywords: ['bills', 'billing', 'payments'] },

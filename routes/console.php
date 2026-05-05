@@ -37,6 +37,10 @@ Schedule::command('cms:send-scheduled-reports')
     ->hourly()
     ->description('Send scheduled reports');
 
+Schedule::command('cms:generate-recurring-tasks')
+    ->dailyAt('00:00')
+    ->description('Generate tasks from recurring task definitions');
+
 // Subscription Management
 Schedule::command('subscriptions:check-expiring')
     ->dailyAt('08:00')

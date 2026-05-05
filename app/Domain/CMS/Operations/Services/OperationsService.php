@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class OperationsService
 {
+    public function __construct(
+        private TaskNotificationService $notificationService
+    ) {}
+
     public function createTask(int $companyId, array $data): TaskModel
     {
         return DB::transaction(function () use ($companyId, $data) {
@@ -37,6 +41,11 @@ class OperationsService
                 'action' => 'created',
                 'note' => 'Task created',
             ]);
+
+            // Send notification if assigned
+            if (isset($data['assigned_to'])) {
+                $this->notificationService->notifyTaskAssigned($task);
+            }
 
             return $task->load(['workflow', 'workflowStage', 'assignedUser', 'creator']);
         });
@@ -107,6 +116,9 @@ class OperationsService
                 'note' => 'Task completed',
             ]);
 
+            // Send notification
+            $this->notificationService->notifyTaskCompleted($task);
+
             return $task->fresh();
         });
     }
@@ -123,6 +135,9 @@ class OperationsService
                 'action' => 'blocked',
                 'note' => $reason,
             ]);
+
+            // Send notification
+            $this->notificationService->notifyTaskBlocked($task, $reason);
 
             return $task->fresh();
         });
@@ -149,7 +164,8 @@ class OperationsService
     {
         return DB::transaction(function () use ($taskId, $newAssigneeId) {
             $task = TaskModel::findOrFail($taskId);
-            $oldAssignee = $task->assignedUser?->name ?? 'Unassigned';
+            $oldAssignee = $task->assignedUser;
+            $oldAssigneeName = $oldAssignee?->name ?? 'Unassigned';
 
             $task->update(['assigned_to' => $newAssigneeId]);
 
@@ -158,12 +174,19 @@ class OperationsService
             $task->logs()->create([
                 'user_id' => auth()->id(),
                 'action' => 'reassigned',
-                'note' => "Reassigned from {$oldAssignee} to {$newAssignee}",
+                'note' => "Reassigned from {$oldAssigneeName} to {$newAssignee}",
                 'changes' => [
-                    'old_assignee' => $oldAssignee,
+                    'old_assignee' => $oldAssigneeName,
                     'new_assignee' => $newAssignee,
                 ],
             ]);
+
+            // Send notifications
+            if ($oldAssignee) {
+                $this->notificationService->notifyTaskReassigned($task, $oldAssignee);
+            } else {
+                $this->notificationService->notifyTaskAssigned($task);
+            }
 
             return $task->fresh(['assignedUser']);
         });

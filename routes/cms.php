@@ -343,10 +343,47 @@ Route::prefix('cms')
                 Route::post('/{id}/block', [\App\Http\Controllers\CMS\OperationsController::class, 'block'])->name('block');
                 Route::post('/{id}/unblock', [\App\Http\Controllers\CMS\OperationsController::class, 'unblock'])->name('unblock');
                 Route::post('/{id}/reassign', [\App\Http\Controllers\CMS\OperationsController::class, 'reassign'])->name('reassign');
+                Route::post('/{id}/move', [\App\Http\Controllers\CMS\OperationsController::class, 'moveTask'])->name('move');
+                
+                // Comments
+                Route::post('/{id}/comments', [\App\Http\Controllers\CMS\OperationsController::class, 'storeComment'])->name('comments.store');
+                
+                // Attachments
+                Route::post('/{id}/attachments', [\App\Http\Controllers\CMS\OperationsController::class, 'storeAttachment'])->name('attachments.store');
+                Route::delete('/{id}/attachments/{attachmentId}', [\App\Http\Controllers\CMS\OperationsController::class, 'deleteAttachment'])->name('attachments.delete');
+                
+                // Time Entries
+                Route::post('/{id}/time-entries', [\App\Http\Controllers\CMS\OperationsController::class, 'storeTimeEntry'])->name('time-entries.store');
+                Route::post('/{id}/time-entries/{entryId}/stop', [\App\Http\Controllers\CMS\OperationsController::class, 'stopTimeEntry'])->name('time-entries.stop');
+                
+                // Dependencies
+                Route::post('/{id}/dependencies', [\App\Http\Controllers\CMS\OperationsController::class, 'storeDependency'])->name('dependencies.store');
+                Route::delete('/{id}/dependencies/{dependencyId}', [\App\Http\Controllers\CMS\OperationsController::class, 'deleteDependency'])->name('dependencies.delete');
+                
+                // Watchers
+                Route::post('/{id}/watchers', [\App\Http\Controllers\CMS\OperationsController::class, 'addWatcher'])->name('watchers.add');
+                Route::delete('/{id}/watchers/{watcherId}', [\App\Http\Controllers\CMS\OperationsController::class, 'removeWatcher'])->name('watchers.remove');
+            });
+            
+            // Templates
+            Route::prefix('templates')->name('templates.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\OperationsController::class, 'templates'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\OperationsController::class, 'storeTemplate'])->name('store');
+                Route::post('/{id}/create-task', [\App\Http\Controllers\CMS\OperationsController::class, 'createFromTemplate'])->name('create-task');
+            });
+            
+            // Recurring Tasks
+            Route::prefix('recurring-tasks')->name('recurring-tasks.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\OperationsController::class, 'recurringTasks'])->name('index');
+                Route::post('/', [\App\Http\Controllers\CMS\OperationsController::class, 'storeRecurringTask'])->name('store');
+                Route::post('/{id}/toggle', [\App\Http\Controllers\CMS\OperationsController::class, 'toggleRecurringTask'])->name('toggle');
             });
             
             // Workflows
             Route::get('/workflows', [\App\Http\Controllers\CMS\OperationsController::class, 'workflows'])->name('workflows.index');
+            
+            // Kanban Board
+            Route::get('/kanban', [\App\Http\Controllers\CMS\OperationsController::class, 'kanban'])->name('kanban');
             
             // Planning Dashboard
             Route::get('/planning', [\App\Http\Controllers\CMS\OperationsController::class, 'planning'])->name('planning');
