@@ -24,6 +24,10 @@ class TaskModel extends Model
         'priority',
         'workflow_id',
         'workflow_stage_id',
+        'template_id',
+        'recurring_task_id',
+        'tags',
+        'progress_percentage',
         'assigned_to',
         'created_by',
         'project_id',
@@ -33,6 +37,7 @@ class TaskModel extends Model
         'due_date',
         'started_at',
         'completed_at',
+        'last_activity_at',
         'estimated_hours',
         'actual_hours',
     ];
@@ -41,8 +46,11 @@ class TaskModel extends Model
         'due_date' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'last_activity_at' => 'datetime',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'progress_percentage' => 'decimal:2',
+        'tags' => 'array',
     ];
 
     public function company(): BelongsTo
@@ -108,6 +116,46 @@ class TaskModel extends Model
     public function recommendations(): HasMany
     {
         return $this->hasMany(TaskRecommendationModel::class, 'task_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskCommentModel::class, 'task_id')->latest();
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TaskAttachmentModel::class, 'task_id');
+    }
+
+    public function dependencies(): HasMany
+    {
+        return $this->hasMany(TaskDependencyModel::class, 'task_id');
+    }
+
+    public function dependentTasks(): HasMany
+    {
+        return $this->hasMany(TaskDependencyModel::class, 'depends_on_task_id');
+    }
+
+    public function watchers(): HasMany
+    {
+        return $this->hasMany(TaskWatcherModel::class, 'task_id');
+    }
+
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TaskTimeEntryModel::class, 'task_id');
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(TaskTemplateModel::class, 'template_id');
+    }
+
+    public function recurringTask(): BelongsTo
+    {
+        return $this->belongsTo(RecurringTaskModel::class, 'recurring_task_id');
     }
 
     // Scopes
