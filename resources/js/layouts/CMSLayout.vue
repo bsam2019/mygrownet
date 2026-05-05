@@ -248,6 +248,78 @@
             </div>
           </div>
 
+          <!-- Operations Module Section (Unified Task Management) -->
+          <div v-if="company?.has_operations_module && isSectionVisible(['cms.operations.dashboard', 'cms.operations.my-tasks', 'cms.operations.tasks', 'cms.operations.workflows', 'cms.operations.planning'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('operationsModule')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-indigo-50 to-transparent rounded-lg hover:from-indigo-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Operations</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.operationsModule ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+            
+            <div v-show="sidebarCollapsed || !collapsedSections.operationsModule || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.dashboard')"
+                icon="ChartBarIcon"
+                label="Dashboard"
+                route-name="cms.operations.dashboard"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.dashboard')"
+                @click="navigateTo('cms.operations.dashboard')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.my-tasks')"
+                icon="ClipboardDocumentCheckIcon"
+                label="My Tasks"
+                route-name="cms.operations.my-tasks"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.my-tasks')"
+                @click="navigateTo('cms.operations.my-tasks')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.tasks')"
+                icon="DocumentTextIcon"
+                label="All Tasks"
+                route-name="cms.operations.tasks"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.tasks')"
+                @click="navigateTo('cms.operations.tasks.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.workflows')"
+                icon="ArrowPathIcon"
+                label="Workflows"
+                route-name="cms.operations.workflows"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.workflows')"
+                @click="navigateTo('cms.operations.workflows.index')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.planning')"
+                icon="CalendarDaysIcon"
+                label="Planning"
+                route-name="cms.operations.planning"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.planning')"
+                @click="navigateTo('cms.operations.planning')"
+              />
+            </div>
+          </div>
+
           <!-- Financial Management Section (Collapsible) -->
           <div v-if="isSectionVisible(['cms.expenses', 'cms.quotations', 'cms.inventory', 'cms.materials', 'cms.assets', 'cms.payroll', 'cms.payroll.workers'])">
             <button
@@ -1272,6 +1344,8 @@ import {
   ArrowLeftIcon,
   ChevronUpDownIcon,
   CheckIcon,
+  ClipboardDocumentCheckIcon,
+  CalendarDaysIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
@@ -1313,6 +1387,7 @@ const collapsedSections = ref<Record<string, boolean>>({
   analytics: true,
   construction: true,
   operations: true,
+  operationsModule: true,
   hr: true,
   administration: true,
   payroll: true,
@@ -1348,6 +1423,12 @@ const searchQuery = ref('')
 const allNavItems = ref([
   { label: 'Dashboard', route: 'cms.dashboard', keywords: ['home', 'overview', 'main'] },
   { label: 'Jobs', route: 'cms.jobs', keywords: ['work', 'projects', 'tasks'] },
+  // Operations Module
+  { label: 'Operations Dashboard', route: 'cms.operations.dashboard', keywords: ['operations', 'tasks', 'workflow', 'planning'] },
+  { label: 'My Tasks', route: 'cms.operations.my-tasks', keywords: ['my tasks', 'assigned', 'todo'] },
+  { label: 'All Tasks', route: 'cms.operations.tasks', keywords: ['tasks', 'work items', 'operations'] },
+  { label: 'Workflows', route: 'cms.operations.workflows', keywords: ['workflows', 'processes', 'stages'] },
+  { label: 'Planning', route: 'cms.operations.planning', keywords: ['planning', 'schedule', 'capacity', 'workload'] },
   { label: 'Measurements', route: 'cms.measurements', keywords: ['measure', 'dimensions', 'fabrication'] },
   { label: 'Customers', route: 'cms.customers', keywords: ['clients', 'contacts'] },
   { label: 'Invoices', route: 'cms.invoices', keywords: ['bills', 'billing', 'payments'] },

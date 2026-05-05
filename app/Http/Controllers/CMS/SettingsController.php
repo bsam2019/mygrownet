@@ -431,4 +431,27 @@ class SettingsController extends Controller
         $status = $validated['enabled'] ? 'enabled' : 'disabled';
         return back()->with('success', "GrowFinance (Full Accounting) module {$status} successfully.");
     }
+
+    /**
+     * Toggle the Operations Module on or off for this company.
+     */
+    public function toggleOperationsModule(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $company = $request->user()->cmsUser->company;
+        $company->has_operations_module = $validated['enabled'];
+        $company->save();
+
+        // If enabling, create default workflows
+        if ($validated['enabled']) {
+            $operationsService = app(\App\Domain\CMS\Operations\Services\OperationsService::class);
+            $operationsService->enableOperationsModule($company->id);
+        }
+
+        $status = $validated['enabled'] ? 'enabled' : 'disabled';
+        return back()->with('success', "Operations Module {$status} successfully.");
+    }
 }

@@ -107,6 +107,7 @@ Route::prefix('cms')
             Route::post('/material-planning-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleMaterialPlanningModule'])->name('material-planning-module.toggle');
             Route::post('/construction-modules', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleConstructionModules'])->name('construction-modules.toggle');
             Route::post('/growfinance-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleGrowFinanceModule'])->name('growfinance-module.toggle');
+            Route::post('/operations-module', [\App\Http\Controllers\CMS\SettingsController::class, 'toggleOperationsModule'])->name('operations-module.toggle');
 
             // Document Templates (BizDocs)
             Route::get('/document-templates', [\App\Http\Controllers\CMS\DocumentTemplatesController::class, 'index'])->name('document-templates.index');
@@ -318,6 +319,37 @@ Route::prefix('cms')
             // Waste Tracking
             Route::get('/waste', [\App\Http\Controllers\CMS\ProductionController::class, 'wasteTracking'])->name('waste.index');
             Route::post('/waste', [\App\Http\Controllers\CMS\ProductionController::class, 'storeWaste'])->name('waste.store');
+        });
+
+        // Operations Module (Unified Task Management)
+        Route::prefix('operations')->name('operations.')->group(function () {
+            // Dashboard
+            Route::get('/dashboard', [\App\Http\Controllers\CMS\OperationsController::class, 'dashboard'])->name('dashboard');
+            
+            // My Tasks (Worker View)
+            Route::get('/my-tasks', [\App\Http\Controllers\CMS\OperationsController::class, 'myTasks'])->name('my-tasks');
+            
+            // Tasks
+            Route::prefix('tasks')->name('tasks.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\CMS\OperationsController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\CMS\OperationsController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\CMS\OperationsController::class, 'store'])->name('store');
+                Route::get('/{id}', [\App\Http\Controllers\CMS\OperationsController::class, 'show'])->name('show');
+                Route::put('/{id}', [\App\Http\Controllers\CMS\OperationsController::class, 'update'])->name('update');
+                
+                // Task Actions
+                Route::post('/{id}/start', [\App\Http\Controllers\CMS\OperationsController::class, 'start'])->name('start');
+                Route::post('/{id}/complete', [\App\Http\Controllers\CMS\OperationsController::class, 'complete'])->name('complete');
+                Route::post('/{id}/block', [\App\Http\Controllers\CMS\OperationsController::class, 'block'])->name('block');
+                Route::post('/{id}/unblock', [\App\Http\Controllers\CMS\OperationsController::class, 'unblock'])->name('unblock');
+                Route::post('/{id}/reassign', [\App\Http\Controllers\CMS\OperationsController::class, 'reassign'])->name('reassign');
+            });
+            
+            // Workflows
+            Route::get('/workflows', [\App\Http\Controllers\CMS\OperationsController::class, 'workflows'])->name('workflows.index');
+            
+            // Planning Dashboard
+            Route::get('/planning', [\App\Http\Controllers\CMS\OperationsController::class, 'planning'])->name('planning');
         });
 
         // Assets

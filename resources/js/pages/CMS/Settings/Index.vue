@@ -20,6 +20,7 @@ import {
     CubeIcon,
     BuildingOffice2Icon,
     CalculatorIcon,
+    ClipboardDocumentCheckIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -336,6 +337,14 @@ const growfinanceEnabled = ref(!!(props.company?.has_growfinance_module));
 function toggleGrowFinance() {
     router.post(route('cms.settings.growfinance-module.toggle'), {
         enabled: growfinanceEnabled.value,
+    }, { preserveScroll: true });
+}
+
+// Operations Module toggle
+const operationsModuleEnabled = ref(!!(props.company?.has_operations_module));
+function toggleOperationsModule() {
+    router.post(route('cms.settings.operations-module.toggle'), {
+        enabled: operationsModuleEnabled.value,
     }, { preserveScroll: true });
 }
 </script>
@@ -1394,6 +1403,48 @@ function toggleGrowFinance() {
                                 >
                                     <span
                                         :class="growfinanceEnabled ? 'translate-x-5' : 'translate-x-0'"
+                                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Operations Module -->
+                        <div class="flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <ClipboardDocumentCheckIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Operations Management Module</h3>
+                                    <p class="text-sm text-gray-500 mt-0.5">
+                                        Unified task management system with workflows, workload planning, bottleneck detection, 
+                                        and capacity forecasting. Converts requests and orders into structured tasks with real-time tracking.
+                                    </p>
+                                    <div v-if="operationsModuleEnabled" class="mt-2 flex flex-wrap gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Task Management</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Workflows</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Workload Planning</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Bottleneck Detection</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Capacity Forecasting</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Decision Support</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                <button
+                                    type="button"
+                                    @click="operationsModuleEnabled = !operationsModuleEnabled; toggleOperationsModule()"
+                                    :class="operationsModuleEnabled
+                                        ? 'bg-indigo-600 focus:ring-indigo-500'
+                                        : 'bg-gray-200 focus:ring-gray-400'"
+                                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                    :aria-checked="operationsModuleEnabled"
+                                    role="switch"
+                                    :aria-label="operationsModuleEnabled ? 'Disable Operations module' : 'Enable Operations module'"
+                                >
+                                    <span
+                                        :class="operationsModuleEnabled ? 'translate-x-5' : 'translate-x-0'"
                                         class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                     />
                                 </button>
