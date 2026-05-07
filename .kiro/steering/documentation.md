@@ -2,7 +2,23 @@
 
 ## Core Principle
 
-**ONE document per feature** - Always update existing docs instead of creating multiple versions.
+**MINIMIZE DOCUMENTATION** - Only create docs when absolutely necessary. Most features don't need documentation files.
+
+**ONE document per feature** - If you must document, update existing docs instead of creating multiple versions.
+
+## When to Create Documentation
+
+✅ **DO create docs for:**
+- Complex system architecture changes
+- API specifications that external teams need
+- Migration guides for breaking changes
+
+❌ **DON'T create docs for:**
+- New features (code comments are enough)
+- Bug fixes
+- UI changes
+- Session summaries
+- Implementation details (use inline comments instead)
 
 ---
 

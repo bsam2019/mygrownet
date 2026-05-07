@@ -360,6 +360,26 @@
               />
               
               <NavItem
+                v-if="shouldShowNavItem('cms.operations.capacity-forecast')"
+                icon="CalendarDaysIcon"
+                label="Capacity Forecast"
+                route-name="cms.operations.capacity-forecast"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.capacity-forecast')"
+                @click="navigateTo('cms.operations.capacity-forecast')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.scenarios')"
+                icon="BeakerIcon"
+                label="Scenarios"
+                route-name="cms.operations.scenarios.index"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.scenarios')"
+                @click="navigateTo('cms.operations.scenarios.index')"
+              />
+              
+              <NavItem
                 v-if="shouldShowNavItem('cms.operations.analytics')"
                 icon="ChartPieIcon"
                 label="Analytics"
@@ -377,16 +397,6 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.operations.gantt')"
                 @click="navigateTo('cms.operations.gantt')"
-              />
-              
-              <NavItem
-                v-if="shouldShowNavItem('cms.operations.recurring-tasks')"
-                icon="ArrowPathRoundedSquareIcon"
-                label="Recurring Tasks"
-                route-name="cms.operations.recurring-tasks"
-                :collapsed="sidebarCollapsed"
-                :active="isActive('cms.operations.recurring-tasks')"
-                @click="navigateTo('cms.operations.recurring-tasks.index')"
               />
             </div>
           </div>
@@ -1422,6 +1432,7 @@ import {
   ArrowPathRoundedSquareIcon,
   ScaleIcon,
   ChartPieIcon,
+  BeakerIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'
