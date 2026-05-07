@@ -1420,6 +1420,8 @@ import {
   ViewColumnsIcon,
   DocumentDuplicateIcon as DocumentDuplicateIconOutline,
   ArrowPathRoundedSquareIcon,
+  ScaleIcon,
+  ChartPieIcon,
 } from '@heroicons/vue/24/outline'
 import SlideOver from '@/components/CMS/SlideOver.vue'
 import JobForm from '@/components/CMS/Forms/JobForm.vue'

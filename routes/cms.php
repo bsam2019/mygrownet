@@ -405,7 +405,9 @@ Route::prefix('cms')
             
             // What-If Scenarios
             Route::get('/scenarios', [\App\Http\Controllers\CMS\OperationsController::class, 'scenarios'])->name('scenarios.index');
-            Route::post('/scenarios', [\App\Http\Controllers\CMS\OperationsController::class, 'createScenario'])->name('scenarios.create');
+            Route::post('/scenarios', [\App\Http\Controllers\CMS\OperationsController::class, 'createScenario'])->name('scenarios.store');
+            Route::post('/scenarios/{scenarioId}/apply', [\App\Http\Controllers\CMS\OperationsController::class, 'applyScenario'])->name('scenarios.apply');
+            Route::post('/scenarios/{scenarioId}/reject', [\App\Http\Controllers\CMS\OperationsController::class, 'rejectScenario'])->name('scenarios.reject');
             
             // Resource Allocation
             Route::post('/resources/allocate', [\App\Http\Controllers\CMS\OperationsController::class, 'allocateResource'])->name('resources.allocate');

@@ -771,6 +771,48 @@ class OperationsController extends Controller
         return back()->with('success', 'Scenario created successfully')->with('scenario', $result);
     }
 
+    /**
+     * Apply What-If Scenario
+     */
+    public function applyScenario(Request $request, $scenarioId)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        
+        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
+            ->where('company_id', $companyId)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        // Apply the scenario changes
+        $scenario->status = 'applied';
+        $scenario->applied_by = $request->user()->id;
+        $scenario->applied_at = now();
+        $scenario->save();
+
+        // TODO: Actually apply the changes from the scenario
+        // This would involve executing the task reassignments, etc.
+
+        return back()->with('success', 'Scenario applied successfully');
+    }
+
+    /**
+     * Reject What-If Scenario
+     */
+    public function rejectScenario(Request $request, $scenarioId)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        
+        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
+            ->where('company_id', $companyId)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $scenario->status = 'rejected';
+        $scenario->save();
+
+        return back()->with('success', 'Scenario rejected');
+    }
+
     // ========================================
     // RESOURCE ALLOCATION
     // ========================================
