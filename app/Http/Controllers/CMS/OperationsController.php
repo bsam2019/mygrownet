@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\CMS\Operations\Services\OperationsService;
 use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowStageModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,7 +20,7 @@ class OperationsController extends Controller
     // Dashboard
     public function dashboard(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $statistics = $this->operationsService->getTaskStatistics($companyId);
         $workload = $this->operationsService->getWorkloadByUser($companyId);
@@ -42,7 +43,7 @@ class OperationsController extends Controller
     // Tasks List
     public function index(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $tasks = TaskModel::where('company_id', $companyId)
             ->with(['assignedUser', 'workflowStage', 'workflow', 'creator'])
@@ -64,8 +65,8 @@ class OperationsController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name']);
 
-        $users = \App\Models\User::whereHas('cmsCompanies', function ($q) use ($companyId) {
-                $q->where('cms_companies.id', $companyId);
+        $users = \App\Models\User::whereHas('cmsUsers', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
             })
             ->get(['id', 'name']);
 
@@ -80,15 +81,15 @@ class OperationsController extends Controller
     // Create Task
     public function create(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $workflows = WorkflowModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->with('stages')
             ->get();
 
-        $users = \App\Models\User::whereHas('cmsCompanies', function ($q) use ($companyId) {
-                $q->where('cms_companies.id', $companyId);
+        $users = \App\Models\User::whereHas('cmsUsers', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
             })
             ->get(['id', 'name']);
 
@@ -114,7 +115,7 @@ class OperationsController extends Controller
             'project_id' => 'nullable|exists:cms_projects,id',
         ]);
 
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $task = $this->operationsService->createTask($companyId, $validated);
 
         return redirect()->route('cms.operations.tasks.show', $task->id)
@@ -221,7 +222,7 @@ class OperationsController extends Controller
     public function myTasks(Request $request): Response
     {
         $userId = $request->user()->id;
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $tasks = TaskModel::where('company_id', $companyId)
             ->where('assigned_to', $userId)
@@ -248,7 +249,7 @@ class OperationsController extends Controller
     // Workflows Management
     public function workflows(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $workflows = WorkflowModel::where('company_id', $companyId)
             ->withCount('tasks')
@@ -263,7 +264,7 @@ class OperationsController extends Controller
     // Planning Dashboard
     public function planning(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $workload = $this->operationsService->getWorkloadByUser($companyId);
         $bottlenecks = $this->operationsService->detectBottlenecks($companyId);
@@ -286,7 +287,7 @@ class OperationsController extends Controller
     // Kanban Board
     public function kanban(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $workflows = WorkflowModel::where('company_id', $companyId)
             ->where('is_active', true)
@@ -432,7 +433,7 @@ class OperationsController extends Controller
     // Task Templates
     public function templates(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $templates = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTemplateModel::where('company_id', $companyId)
             ->with('workflow')
@@ -456,7 +457,7 @@ class OperationsController extends Controller
             'default_assignees' => 'nullable|array',
         ]);
 
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $validated['company_id'] = $companyId;
 
         $template = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTemplateModel::create($validated);
@@ -487,7 +488,7 @@ class OperationsController extends Controller
             'template_id' => $template->id,
         ];
 
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $task = $this->operationsService->createTask($companyId, $taskData);
 
         return redirect()->route('cms.operations.tasks.show', $task->id)
@@ -497,7 +498,7 @@ class OperationsController extends Controller
     // Recurring Tasks
     public function recurringTasks(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
 
         $recurringTasks = \App\Infrastructure\Persistence\Eloquent\CMS\RecurringTaskModel::where('company_id', $companyId)
             ->with(['template', 'assignedUser'])
@@ -526,7 +527,7 @@ class OperationsController extends Controller
             'end_date' => 'nullable|date|after:start_date',
         ]);
 
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $validated['company_id'] = $companyId;
 
         // Calculate next generation date
@@ -625,5 +626,354 @@ class OperationsController extends Controller
         ]);
 
         return back()->with('success', 'Task moved');
+    }
+
+    // ========================================
+    // ADVANCED FEATURES - Planning & Decision Support
+    // ========================================
+
+    /**
+     * Workload Balancing Dashboard
+     */
+    public function workloadBalance(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $workloadData = $planningService->getWorkloadBalance($companyId);
+
+        return Inertia::render('CMS/Operations/WorkloadBalance', [
+            'workload' => $workloadData,
+        ]);
+    }
+
+    /**
+     * Capacity Forecast
+     */
+    public function capacityForecast(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $forecast = $planningService->getCapacityForecast($companyId, 8); // 8 weeks ahead
+
+        return Inertia::render('CMS/Operations/CapacityForecast', [
+            'forecast' => $forecast,
+        ]);
+    }
+
+    /**
+     * Bulk Reassign Tasks
+     */
+    public function bulkReassign(Request $request)
+    {
+        $request->validate([
+            'task_ids' => 'required|array',
+            'task_ids.*' => 'exists:cms_tasks,id',
+            'new_assignee_id' => 'required|exists:users,id',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        
+        $result = $planningService->bulkReassignTasks(
+            $companyId,
+            $request->task_ids,
+            $request->new_assignee_id,
+            $request->user()->id
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
+    }
+
+    /**
+     * Bulk Update Priority
+     */
+    public function bulkUpdatePriority(Request $request)
+    {
+        $request->validate([
+            'task_ids' => 'required|array',
+            'task_ids.*' => 'exists:cms_tasks,id',
+            'priority' => 'required|in:low,medium,high,urgent',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        
+        $result = $planningService->bulkUpdatePriority(
+            $companyId,
+            $request->task_ids,
+            $request->priority,
+            $request->user()->id
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
+    }
+
+    /**
+     * Bulk Reschedule Tasks
+     */
+    public function bulkReschedule(Request $request)
+    {
+        $request->validate([
+            'task_ids' => 'required|array',
+            'task_ids.*' => 'exists:cms_tasks,id',
+            'new_due_date' => 'required|date',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        
+        $result = $planningService->bulkRescheduleTasks(
+            $companyId,
+            $request->task_ids,
+            $request->new_due_date,
+            $request->user()->id
+        );
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
+    }
+
+    /**
+     * What-If Scenarios
+     */
+    public function scenarios(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        
+        $scenarios = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('company_id', $companyId)
+            ->with('creator')
+            ->latest()
+            ->get();
+
+        return Inertia::render('CMS/Operations/Scenarios', [
+            'scenarios' => $scenarios,
+        ]);
+    }
+
+    /**
+     * Create What-If Scenario
+     */
+    public function createScenario(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|in:workload_balance,resource_allocation,deadline_adjustment,custom',
+            'changes' => 'required|array',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        
+        $result = $planningService->createScenario($companyId, $request->user()->id, $request->all());
+
+        return back()->with('success', 'Scenario created successfully')->with('scenario', $result);
+    }
+
+    // ========================================
+    // RESOURCE ALLOCATION
+    // ========================================
+
+    /**
+     * Allocate Resource to Task
+     */
+    public function allocateResource(Request $request)
+    {
+        $request->validate([
+            'task_id' => 'required|exists:cms_tasks,id',
+            'resource_type' => 'required|in:employee,vehicle,equipment',
+            'resource_id' => 'required|integer',
+            'allocated_from' => 'required|date',
+            'allocated_to' => 'required|date|after:allocated_from',
+            'notes' => 'nullable|string',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        
+        $result = $resourceService->allocateResource($companyId, $request->all());
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error'])
+            ->with('conflicts', $result['conflicts'] ?? []);
+    }
+
+    /**
+     * Get Resource Availability
+     */
+    public function resourceAvailability(Request $request)
+    {
+        $request->validate([
+            'resource_type' => 'required|in:employee,vehicle,equipment',
+            'resource_id' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        
+        $availability = $resourceService->getResourceAvailability(
+            $companyId,
+            $request->resource_type,
+            $request->resource_id,
+            $request->start_date,
+            $request->end_date
+        );
+
+        return response()->json($availability);
+    }
+
+    /**
+     * Set Resource Unavailability
+     */
+    public function setResourceUnavailability(Request $request)
+    {
+        $request->validate([
+            'resource_type' => 'required|in:employee,vehicle,equipment',
+            'resource_id' => 'required|integer',
+            'date' => 'required|date',
+            'reason' => 'required|string',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        
+        $result = $resourceService->setResourceUnavailability($companyId, $request->all());
+
+        return back()->with('success', $result['message']);
+    }
+
+    // ========================================
+    // ANALYTICS
+    // ========================================
+
+    /**
+     * Analytics Dashboard
+     */
+    public function analytics(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        
+        $startDate = $request->start_date ?? now()->subDays(30)->toDateString();
+        $endDate = $request->end_date ?? now()->toDateString();
+
+        $trends = $analyticsService->getCompletionTrends($companyId, 'daily', $startDate, $endDate);
+        $teamPerformance = $analyticsService->getTeamPerformanceComparison($companyId, $startDate, $endDate);
+        $estimationAccuracy = $analyticsService->getTimeEstimationAccuracy($companyId);
+
+        return Inertia::render('CMS/Operations/Analytics', [
+            'trends' => $trends,
+            'team_performance' => $teamPerformance,
+            'estimation_accuracy' => $estimationAccuracy,
+            'date_range' => ['start' => $startDate, 'end' => $endDate],
+        ]);
+    }
+
+    /**
+     * User Productivity Report
+     */
+    public function userProductivity(Request $request, int $userId): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        
+        $startDate = $request->start_date ?? now()->subDays(30)->toDateString();
+        $endDate = $request->end_date ?? now()->toDateString();
+
+        $metrics = $analyticsService->getUserProductivityMetrics($companyId, $userId, $startDate, $endDate);
+
+        return Inertia::render('CMS/Operations/UserProductivity', [
+            'user_id' => $userId,
+            'metrics' => $metrics,
+            'date_range' => ['start' => $startDate, 'end' => $endDate],
+        ]);
+    }
+
+    /**
+     * Gantt Chart View
+     */
+    public function gantt(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        
+        $ganttData = $analyticsService->getGanttChartData($companyId, $request->workflow_id);
+
+        $workflows = WorkflowModel::where('company_id', $companyId)->get();
+
+        return Inertia::render('CMS/Operations/Gantt', [
+            'tasks' => $ganttData,
+            'workflows' => $workflows,
+        ]);
+    }
+
+    // ========================================
+    // INTEGRATIONS
+    // ========================================
+
+    /**
+     * Create Task from CRM Lead
+     */
+    public function createTaskFromLead(Request $request)
+    {
+        $request->validate([
+            'lead_id' => 'required|exists:cms_leads,id',
+        ]);
+
+        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $result = $integrationService->createTaskFromLead($request->lead_id);
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
+    }
+
+    /**
+     * Create Invoice from Completed Task
+     */
+    public function createInvoiceFromTask(Request $request, int $taskId)
+    {
+        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $result = $integrationService->createInvoiceFromTask($taskId);
+
+        return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
+    }
+
+    /**
+     * Get Available Employees
+     */
+    public function availableEmployees(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        
+        $employees = $integrationService->getAvailableEmployees($companyId, $request->date);
+
+        return response()->json($employees);
+    }
+
+    /**
+     * Setup Automation Trigger
+     */
+    public function setupTrigger(Request $request)
+    {
+        $request->validate([
+            'trigger_type' => 'required|in:crm_lead,task_completed,task_overdue',
+            'action_type' => 'required|in:create_task,create_invoice,send_notification',
+            'conditions' => 'nullable|array',
+            'config' => 'required|array',
+            'is_active' => 'boolean',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        
+        $result = $integrationService->setupTrigger($companyId, $request->all());
+
+        return back()->with('success', $result['message']);
     }
 }

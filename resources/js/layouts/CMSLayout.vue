@@ -347,6 +347,47 @@
                 :active="isActive('cms.operations.recurring-tasks')"
                 @click="navigateTo('cms.operations.recurring-tasks.index')"
               />
+              
+              <!-- Advanced Features -->
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.workload-balance')"
+                icon="ScaleIcon"
+                label="Workload Balance"
+                route-name="cms.operations.workload-balance"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.workload-balance')"
+                @click="navigateTo('cms.operations.workload-balance')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.analytics')"
+                icon="ChartPieIcon"
+                label="Analytics"
+                route-name="cms.operations.analytics"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.analytics')"
+                @click="navigateTo('cms.operations.analytics')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.gantt')"
+                icon="Bars3BottomLeftIcon"
+                label="Gantt Chart"
+                route-name="cms.operations.gantt"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.gantt')"
+                @click="navigateTo('cms.operations.gantt')"
+              />
+              
+              <NavItem
+                v-if="shouldShowNavItem('cms.operations.recurring-tasks')"
+                icon="ArrowPathRoundedSquareIcon"
+                label="Recurring Tasks"
+                route-name="cms.operations.recurring-tasks"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.operations.recurring-tasks')"
+                @click="navigateTo('cms.operations.recurring-tasks.index')"
+              />
             </div>
           </div>
 
@@ -534,26 +575,26 @@
             </div>
           </div>
 
-          <!-- Operations Section (Collapsible) -->
+          <!-- Field Operations Section (Collapsible) -->
           <div v-if="(hasFabrication || hasConstruction) && isSectionVisible(['cms.production', 'cms.installation', 'cms.inventory', 'cms.fleet', 'cms.documents', 'cms.safety', 'cms.quality'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
-              @click="toggleSection('operations')"
+              @click="toggleSection('fieldOperations')"
               class="w-full px-3 pt-2 mb-1 group"
             >
               <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-blue-50 to-transparent rounded-lg hover:from-blue-100 transition-colors">
                 <div class="flex items-center gap-2">
                   <div class="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Operations</p>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Field Operations</p>
                 </div>
                 <ChevronDownIcon 
-                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.operations ? '-rotate-90' : '']"
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.fieldOperations ? '-rotate-90' : '']"
                   aria-hidden="true"
                 />
               </div>
             </button>
 
-            <div v-show="sidebarCollapsed || !collapsedSections.operations || searchQuery" class="space-y-1">
+            <div v-show="sidebarCollapsed || !collapsedSections.fieldOperations || searchQuery" class="space-y-1">
               <NavItem
                 v-if="shouldShowNavItem('cms.production') && hasFabrication"
                 icon="CogIcon"
@@ -1420,6 +1461,7 @@ const collapsedSections = ref<Record<string, boolean>>({
   analytics: true,
   construction: true,
   operations: true,
+  fieldOperations: true,
   operationsModule: true,
   hr: true,
   administration: true,

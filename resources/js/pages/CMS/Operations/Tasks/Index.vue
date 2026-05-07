@@ -145,17 +145,25 @@
             Showing {{ tasks.from }} to {{ tasks.to }} of {{ tasks.total }} tasks
           </div>
           <div class="flex gap-2">
-            <Link
-              v-for="link in tasks.links"
-              :key="link.label"
-              :href="link.url"
-              :class="[
-                link.active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
-                !link.url ? 'opacity-50 cursor-not-allowed' : '',
-                'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg transition'
-              ]"
-              v-html="link.label"
-            />
+            <template v-for="link in tasks.links" :key="link.label">
+              <Link
+                v-if="link.url"
+                :href="link.url"
+                :class="[
+                  link.active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                  'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg transition'
+                ]"
+                v-html="link.label"
+              />
+              <span
+                v-else
+                :class="[
+                  'bg-white text-gray-700 opacity-50 cursor-not-allowed',
+                  'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg'
+                ]"
+                v-html="link.label"
+              />
+            </template>
           </div>
         </div>
       </div>

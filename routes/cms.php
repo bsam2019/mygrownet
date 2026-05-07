@@ -387,6 +387,41 @@ Route::prefix('cms')
             
             // Planning Dashboard
             Route::get('/planning', [\App\Http\Controllers\CMS\OperationsController::class, 'planning'])->name('planning');
+            
+            // ========================================
+            // ADVANCED FEATURES
+            // ========================================
+            
+            // Workload Balancing
+            Route::get('/workload-balance', [\App\Http\Controllers\CMS\OperationsController::class, 'workloadBalance'])->name('workload-balance');
+            
+            // Capacity Forecast
+            Route::get('/capacity-forecast', [\App\Http\Controllers\CMS\OperationsController::class, 'capacityForecast'])->name('capacity-forecast');
+            
+            // Bulk Operations
+            Route::post('/bulk/reassign', [\App\Http\Controllers\CMS\OperationsController::class, 'bulkReassign'])->name('bulk.reassign');
+            Route::post('/bulk/priority', [\App\Http\Controllers\CMS\OperationsController::class, 'bulkUpdatePriority'])->name('bulk.priority');
+            Route::post('/bulk/reschedule', [\App\Http\Controllers\CMS\OperationsController::class, 'bulkReschedule'])->name('bulk.reschedule');
+            
+            // What-If Scenarios
+            Route::get('/scenarios', [\App\Http\Controllers\CMS\OperationsController::class, 'scenarios'])->name('scenarios.index');
+            Route::post('/scenarios', [\App\Http\Controllers\CMS\OperationsController::class, 'createScenario'])->name('scenarios.create');
+            
+            // Resource Allocation
+            Route::post('/resources/allocate', [\App\Http\Controllers\CMS\OperationsController::class, 'allocateResource'])->name('resources.allocate');
+            Route::get('/resources/availability', [\App\Http\Controllers\CMS\OperationsController::class, 'resourceAvailability'])->name('resources.availability');
+            Route::post('/resources/unavailability', [\App\Http\Controllers\CMS\OperationsController::class, 'setResourceUnavailability'])->name('resources.unavailability');
+            
+            // Analytics
+            Route::get('/analytics', [\App\Http\Controllers\CMS\OperationsController::class, 'analytics'])->name('analytics');
+            Route::get('/analytics/user/{userId}', [\App\Http\Controllers\CMS\OperationsController::class, 'userProductivity'])->name('analytics.user');
+            Route::get('/gantt', [\App\Http\Controllers\CMS\OperationsController::class, 'gantt'])->name('gantt');
+            
+            // Integrations
+            Route::post('/integrations/create-task-from-lead', [\App\Http\Controllers\CMS\OperationsController::class, 'createTaskFromLead'])->name('integrations.create-task-from-lead');
+            Route::post('/integrations/create-invoice/{taskId}', [\App\Http\Controllers\CMS\OperationsController::class, 'createInvoiceFromTask'])->name('integrations.create-invoice');
+            Route::get('/integrations/available-employees', [\App\Http\Controllers\CMS\OperationsController::class, 'availableEmployees'])->name('integrations.available-employees');
+            Route::post('/integrations/setup-trigger', [\App\Http\Controllers\CMS\OperationsController::class, 'setupTrigger'])->name('integrations.setup-trigger');
         });
 
         // Assets

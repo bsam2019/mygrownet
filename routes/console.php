@@ -41,6 +41,11 @@ Schedule::command('cms:generate-recurring-tasks')
     ->dailyAt('00:00')
     ->description('Generate tasks from recurring task definitions');
 
+// Operations Module - Calculate daily productivity metrics
+Schedule::command('operations:calculate-productivity')
+    ->dailyAt('01:00')
+    ->description('Calculate daily productivity metrics for all companies');
+
 // Subscription Management
 Schedule::command('subscriptions:check-expiring')
     ->dailyAt('08:00')

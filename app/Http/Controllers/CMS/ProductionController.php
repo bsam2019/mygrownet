@@ -20,7 +20,7 @@ class ProductionController extends Controller
 
     public function index(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $orders = ProductionOrderModel::with(['job', 'assignedUser', 'cuttingLists'])
             ->where('company_id', $companyId)
@@ -47,7 +47,7 @@ class ProductionController extends Controller
 
     public function create(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $jobs = JobModel::where('company_id', $companyId)
             ->whereIn('status', ['confirmed', 'in_progress'])
@@ -70,7 +70,7 @@ class ProductionController extends Controller
             'notes' => 'nullable|string',
         ]);
         
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $order = $this->productionService->createProductionOrder($companyId, $validated);
         
         return redirect()->route('cms.production.show', $order->id)
@@ -122,7 +122,7 @@ class ProductionController extends Controller
     // Cutting Lists
     public function cuttingLists(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $lists = CuttingListModel::with(['productionOrder.job', 'items'])
             ->where('company_id', $companyId)
@@ -199,7 +199,7 @@ class ProductionController extends Controller
     // Waste Tracking
     public function wasteTracking(Request $request): Response
     {
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         
         $waste = WasteTrackingModel::with(['material', 'productionOrder', 'recordedBy'])
             ->where('company_id', $companyId)
@@ -234,7 +234,7 @@ class ProductionController extends Controller
             'reason' => 'nullable|string',
         ]);
         
-        $companyId = $request->user()->currentCompany->id;
+        $companyId = $request->user()->cmsUser->company_id;
         $validated['recorded_by'] = $request->user()->id;
         
         $waste = $this->productionService->recordWaste($companyId, $validated);

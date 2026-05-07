@@ -199,15 +199,20 @@ class TaskNotificationService
 
     private function createNotification(User $user, array $data): void
     {
-        // Create notification in database
+        // Create notification in database using custom structure with polymorphic relationship
         \DB::table('notifications')->insert([
             'id' => \Str::uuid(),
-            'type' => 'App\\Notifications\\TaskNotification',
             'notifiable_type' => 'App\\Models\\User',
             'notifiable_id' => $user->id,
-            'data' => json_encode($data),
+            'type' => $data['type'] ?? 'task',
+            'category' => 'operations',
+            'title' => $data['title'],
+            'message' => $data['message'],
+            'action_url' => $data['data']['url'] ?? null,
+            'action_text' => 'View Task',
+            'data' => json_encode($data['data'] ?? []),
+            'priority' => 'normal',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
     }
 }

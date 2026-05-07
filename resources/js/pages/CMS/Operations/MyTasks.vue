@@ -2,9 +2,18 @@
   <CMSLayout page-title="My Tasks">
     <div class="space-y-6">
       <!-- Page Header -->
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">My Tasks</h1>
-        <p class="mt-1 text-sm text-gray-500">Tasks assigned to you</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">My Tasks</h1>
+          <p class="mt-1 text-sm text-gray-500">Tasks assigned to you</p>
+        </div>
+        <Link
+          :href="route('cms.operations.tasks.create')"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          <PlusIcon class="h-5 w-5" aria-hidden="true" />
+          New Task
+        </Link>
       </div>
 
       <!-- Statistics -->
@@ -149,17 +158,25 @@
               Showing {{ tasks.from }} to {{ tasks.to }} of {{ tasks.total }} tasks
             </div>
             <div class="flex gap-2">
-              <Link
-                v-for="link in tasks.links"
-                :key="link.label"
-                :href="link.url"
-                :class="[
-                  link.active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
-                  !link.url ? 'opacity-50 cursor-not-allowed' : '',
-                  'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg transition'
-                ]"
-                v-html="link.label"
-              />
+              <template v-for="link in tasks.links" :key="link.label">
+                <Link
+                  v-if="link.url"
+                  :href="link.url"
+                  :class="[
+                    link.active ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg transition'
+                  ]"
+                  v-html="link.label"
+                />
+                <span
+                  v-else
+                  :class="[
+                    'bg-white text-gray-700 opacity-50 cursor-not-allowed',
+                    'px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg'
+                  ]"
+                  v-html="link.label"
+                />
+              </template>
             </div>
           </div>
         </div>
@@ -171,7 +188,7 @@
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3'
 import CMSLayout from '@/Layouts/CMSLayout.vue'
-import { ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { ClipboardDocumentCheckIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 interface Props {
   tasks: {
