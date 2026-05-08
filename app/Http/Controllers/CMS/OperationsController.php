@@ -261,6 +261,71 @@ class OperationsController extends Controller
         ]);
     }
 
+    public function storeWorkflow(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+
+        WorkflowModel::create([
+            'company_id' => $companyId,
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return back()->with('success', 'Workflow created successfully');
+    }
+
+    public function updateWorkflow(Request $request, $workflowId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $workflow = WorkflowModel::where('company_id', $companyId)
+            ->findOrFail($workflowId);
+
+        $workflow->update([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return back()->with('success', 'Workflow updated successfully');
+    }
+
+    public function storeWorkflowStage(Request $request, $workflowId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'color' => 'nullable|string',
+            'requires_approval' => 'boolean',
+        ]);
+
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $workflow = WorkflowModel::where('company_id', $companyId)
+            ->findOrFail($workflowId);
+
+        // Get next sequence order
+        $maxOrder = WorkflowStageModel::where('workflow_id', $workflowId)->max('sequence_order') ?? 0;
+
+        WorkflowStageModel::create([
+            'workflow_id' => $workflowId,
+            'name' => $request->name,
+            'color' => $request->color ?? '#6b7280',
+            'sequence_order' => $maxOrder + 1,
+            'requires_approval' => $request->requires_approval ?? false,
+        ]);
+
+        return back()->with('success', 'Stage added successfully');
+    }
+
     // Planning Dashboard
     public function planning(Request $request): Response
     {
@@ -786,7 +851,6 @@ class OperationsController extends Controller
             'scenario_name' => $request->name,
             'description' => $request->description,
             'scenario_type' => $request->type,
-            'status' => 'pending',
             'created_by' => $request->user()->id,
             'changes_json' => json_encode($request->changes ?? []),
             'impact_analysis_json' => json_encode([]),
@@ -812,11 +876,9 @@ class OperationsController extends Controller
         
         $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
             ->where('company_id', $companyId)
-            ->where('status', 'pending')
             ->firstOrFail();
 
         // Apply the scenario changes
-        $scenario->status = 'applied';
         $scenario->applied_by = $request->user()->id;
         $scenario->applied_at = now();
         $scenario->save();
@@ -836,11 +898,10 @@ class OperationsController extends Controller
         
         $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
             ->where('company_id', $companyId)
-            ->where('status', 'pending')
             ->firstOrFail();
 
-        $scenario->status = 'rejected';
-        $scenario->save();
+        // Just delete the scenario for now
+        $scenario->delete();
 
         return back()->with('success', 'Scenario rejected');
     }

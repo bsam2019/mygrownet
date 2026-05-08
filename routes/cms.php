@@ -381,6 +381,9 @@ Route::prefix('cms')
             
             // Workflows
             Route::get('/workflows', [\App\Http\Controllers\CMS\OperationsController::class, 'workflows'])->name('workflows.index');
+            Route::post('/workflows', [\App\Http\Controllers\CMS\OperationsController::class, 'storeWorkflow'])->name('workflows.store');
+            Route::put('/workflows/{workflowId}', [\App\Http\Controllers\CMS\OperationsController::class, 'updateWorkflow'])->name('workflows.update');
+            Route::post('/workflows/{workflowId}/stages', [\App\Http\Controllers\CMS\OperationsController::class, 'storeWorkflowStage'])->name('workflows.stages.store');
             
             // Kanban Board
             Route::get('/kanban', [\App\Http\Controllers\CMS\OperationsController::class, 'kanban'])->name('kanban');

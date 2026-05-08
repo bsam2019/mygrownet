@@ -19,7 +19,6 @@ class PlanningScenarioModel extends Model
         'original_state',
         'metrics_before',
         'metrics_after',
-        'status',
         'created_by',
         'applied_by',
         'applied_at',
@@ -34,10 +33,21 @@ class PlanningScenarioModel extends Model
         'applied_at' => 'datetime',
     ];
 
+    protected $appends = ['name', 'status', 'created_by_name'];
+
     // Accessor for 'name' to map to 'scenario_name'
     public function getNameAttribute()
     {
         return $this->scenario_name;
+    }
+
+    // Accessor for status based on applied_at
+    public function getStatusAttribute()
+    {
+        if ($this->applied_at) {
+            return 'applied';
+        }
+        return 'pending';
     }
 
     // Accessor for created_by_name
