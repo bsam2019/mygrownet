@@ -776,15 +776,30 @@ class OperationsController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:workload_balance,resource_allocation,deadline_adjustment,custom',
-            'changes' => 'required|array',
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
         
-        $result = $planningService->createScenario($companyId, $request->user()->id, $request->all());
+        // Create scenario with empty changes for now
+        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::create([
+            'company_id' => $companyId,
+            'name' => $request->name,
+            'description' => $request->description,
+            'scenario_type' => $request->type,
+            'status' => 'pending',
+            'created_by' => $request->user()->id,
+            'changes' => json_encode($request->changes ?? []),
+            'metrics_before' => json_encode([
+                'overloaded_users' => 0,
+                'average_utilization' => 0,
+            ]),
+            'metrics_after' => json_encode([
+                'overloaded_users' => 0,
+                'average_utilization' => 0,
+            ]),
+        ]);
 
-        return back()->with('success', 'Scenario created successfully')->with('scenario', $result);
+        return back()->with('success', 'Scenario created successfully');
     }
 
     /**

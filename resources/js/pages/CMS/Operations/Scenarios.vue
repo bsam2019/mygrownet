@@ -171,7 +171,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Scenario Type</label>
             <select
-              v-model="form.scenario_type"
+              v-model="form.type"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="workload_balance">Workload Balance</option>
@@ -238,7 +238,8 @@ const showCreateModal = ref(false)
 const form = ref({
   name: '',
   description: '',
-  scenario_type: 'workload_balance'
+  type: 'workload_balance',
+  changes: []
 })
 
 const formatDate = (dateString: string) => {
@@ -260,7 +261,8 @@ const createScenario = () => {
       form.value = {
         name: '',
         description: '',
-        scenario_type: 'workload_balance'
+        type: 'workload_balance',
+        changes: []
       }
     }
   })
