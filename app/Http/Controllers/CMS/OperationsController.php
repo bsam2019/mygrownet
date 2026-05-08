@@ -640,10 +640,16 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         
         $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
-        $workloadData = $planningService->getWorkloadBalance($companyId);
+        $data = $planningService->getWorkloadBalance($companyId);
 
         return Inertia::render('CMS/Operations/WorkloadBalance', [
-            'workloadData' => $workloadData,
+            'workloadData' => [
+                'users' => $data['users'],
+                'overloaded_users' => $data['summary']['overloaded_users'],
+                'balanced_users' => $data['summary']['balanced_users'],
+                'underutilized_users' => $data['summary']['underutilized_users'],
+                'average_utilization' => $data['summary']['average_utilization'],
+            ],
         ]);
     }
 
@@ -656,7 +662,7 @@ class OperationsController extends Controller
         $weeksAhead = $request->input('weeks', 8);
         
         $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
-        $forecast = $planningService->getCapacityForecast($companyId, $weeksAhead);
+        $weeks = $planningService->getCapacityForecast($companyId, $weeksAhead);
 
         // Get workflows for filter
         $workflows = \App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel::where('company_id', $companyId)
@@ -664,7 +670,10 @@ class OperationsController extends Controller
             ->get();
 
         return Inertia::render('CMS/Operations/CapacityForecast', [
-            'forecastData' => $forecast,
+            'forecastData' => [
+                'weeks_ahead' => $weeksAhead,
+                'weeks' => $weeks,
+            ],
             'workflows' => $workflows,
         ]);
     }

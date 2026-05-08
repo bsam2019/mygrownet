@@ -36,7 +36,7 @@
             </div>
             <div>
               <p class="text-sm font-medium text-gray-500">Total Weeks</p>
-              <p class="mt-1 text-2xl font-bold text-blue-600">{{ forecastData.weeks.length }}</p>
+              <p class="mt-1 text-2xl font-bold text-blue-600">{{ forecastData?.weeks?.length || 0 }}</p>
             </div>
           </div>
         </div>
@@ -78,7 +78,12 @@
       <!-- Capacity Chart -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-6">Capacity vs Demand</h2>
-        <div class="space-y-6">
+        <div v-if="!forecastData?.weeks || forecastData.weeks.length === 0" class="text-center py-12">
+          <CalendarIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No forecast data</h3>
+          <p class="mt-1 text-sm text-gray-500">Schedule tasks to see capacity forecast.</p>
+        </div>
+        <div v-else class="space-y-6">
           <div
             v-for="week in forecastData.weeks"
             :key="week.week_start"
@@ -191,27 +196,35 @@ interface Week {
 }
 
 interface Props {
-  forecastData: {
+  forecastData?: {
     weeks_ahead: number
     weeks: Week[]
   }
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  forecastData: () => ({
+    weeks_ahead: 8,
+    weeks: []
+  })
+})
 
-const weeksAhead = ref(props.forecastData.weeks_ahead)
+const weeksAhead = ref(props.forecastData?.weeks_ahead || 8)
 
-const overbookedWeeks = computed(() => 
-  props.forecastData.weeks.filter(w => w.status === 'overbooked').length
-)
+const overbookedWeeks = computed(() => {
+  if (!props.forecastData?.weeks) return 0
+  return props.forecastData.weeks.filter(w => w.status === 'overbooked').length
+})
 
-const highUtilizationWeeks = computed(() => 
-  props.forecastData.weeks.filter(w => w.status === 'high').length
-)
+const highUtilizationWeeks = computed(() => {
+  if (!props.forecastData?.weeks) return 0
+  return props.forecastData.weeks.filter(w => w.status === 'high').length
+})
 
-const normalWeeks = computed(() => 
-  props.forecastData.weeks.filter(w => w.status === 'normal').length
-)
+const normalWeeks = computed(() => {
+  if (!props.forecastData?.weeks) return 0
+  return props.forecastData.weeks.filter(w => w.status === 'normal').length
+})
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)

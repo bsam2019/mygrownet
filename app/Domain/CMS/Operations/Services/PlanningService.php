@@ -111,7 +111,7 @@ class PlanningService
                 'week_start' => $weekStart->toDateString(),
                 'week_end' => $weekEnd->toDateString(),
                 'demand_hours' => round($demandHours, 2),
-                'capacity_hours' => $capacityHours,
+                'available_capacity' => $capacityHours,
                 'capacity_gap' => round($demandHours - $capacityHours, 2),
                 'utilization_rate' => round($utilizationRate, 2),
                 'status' => $utilizationRate > 100 ? 'overbooked' : ($utilizationRate > 80 ? 'high' : 'normal'),
