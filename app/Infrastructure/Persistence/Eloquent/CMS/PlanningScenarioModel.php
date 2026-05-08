@@ -11,20 +11,40 @@ class PlanningScenarioModel extends Model
 
     protected $fillable = [
         'company_id',
-        'name',
+        'scenario_name',
         'description',
         'scenario_type',
-        'scenario_data',
-        'results',
+        'changes_json',
+        'impact_analysis_json',
+        'original_state',
+        'metrics_before',
+        'metrics_after',
+        'status',
         'created_by',
-        'is_active',
+        'applied_by',
+        'applied_at',
     ];
 
     protected $casts = [
-        'scenario_data' => 'array',
-        'results' => 'array',
-        'is_active' => 'boolean',
+        'changes_json' => 'array',
+        'impact_analysis_json' => 'array',
+        'original_state' => 'array',
+        'metrics_before' => 'array',
+        'metrics_after' => 'array',
+        'applied_at' => 'datetime',
     ];
+
+    // Accessor for 'name' to map to 'scenario_name'
+    public function getNameAttribute()
+    {
+        return $this->scenario_name;
+    }
+
+    // Accessor for created_by_name
+    public function getCreatedByNameAttribute()
+    {
+        return $this->creator?->name ?? 'Unknown';
+    }
 
     public function company(): BelongsTo
     {

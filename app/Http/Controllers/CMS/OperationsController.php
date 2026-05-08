@@ -783,12 +783,13 @@ class OperationsController extends Controller
         // Create scenario with empty changes for now
         $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::create([
             'company_id' => $companyId,
-            'name' => $request->name,
+            'scenario_name' => $request->name,
             'description' => $request->description,
             'scenario_type' => $request->type,
             'status' => 'pending',
             'created_by' => $request->user()->id,
-            'changes' => json_encode($request->changes ?? []),
+            'changes_json' => json_encode($request->changes ?? []),
+            'impact_analysis_json' => json_encode([]),
             'metrics_before' => json_encode([
                 'overloaded_users' => 0,
                 'average_utilization' => 0,
