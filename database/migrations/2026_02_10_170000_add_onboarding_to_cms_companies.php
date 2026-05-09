@@ -8,16 +8,36 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cms_companies', function (Blueprint $table) {
-            $table->boolean('onboarding_completed')->default(false)->after('settings');
-            $table->json('onboarding_progress')->nullable()->after('onboarding_completed');
-            $table->timestamp('onboarding_completed_at')->nullable()->after('onboarding_progress');
-        });
+        if (Schema::hasTable('cms_companies')) {
+            if (!Schema::hasColumn('cms_companies', 'onboarding_completed')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->boolean('onboarding_completed')->default(false)->after('settings');
+                });
+            }
+            if (!Schema::hasColumn('cms_companies', 'onboarding_progress')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->json('onboarding_progress')->nullable()->after('onboarding_completed');
+                });
+            }
+            if (!Schema::hasColumn('cms_companies', 'onboarding_completed_at')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->timestamp('onboarding_completed_at')->nullable()->after('onboarding_progress');
+                });
+            }
+        }
 
-        Schema::table('cms_users', function (Blueprint $table) {
-            $table->boolean('tour_completed')->default(false)->after('last_login_at');
-            $table->json('tour_progress')->nullable()->after('tour_completed');
-        });
+        if (Schema::hasTable('cms_users')) {
+            if (!Schema::hasColumn('cms_users', 'tour_completed')) {
+                Schema::table('cms_users', function (Blueprint $table) {
+                    $table->boolean('tour_completed')->default(false)->after('last_login_at');
+                });
+            }
+            if (!Schema::hasColumn('cms_users', 'tour_progress')) {
+                Schema::table('cms_users', function (Blueprint $table) {
+                    $table->json('tour_progress')->nullable()->after('tour_completed');
+                });
+            }
+        }
     }
 
     public function down(): void

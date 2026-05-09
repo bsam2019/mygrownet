@@ -11,19 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cms_companies', function (Blueprint $table) {
-            $table->string('subscription_type')->default('paid')->after('status');
-            // paid, sponsored, complimentary, partner
-            
-            $table->string('sponsor_reference')->nullable()->after('subscription_type');
-            // Reference to who is sponsoring (e.g., "MyGrowNet", "Partner XYZ")
-            
-            $table->text('subscription_notes')->nullable()->after('sponsor_reference');
-            // Internal notes about the subscription arrangement
-            
-            $table->timestamp('complimentary_until')->nullable()->after('subscription_notes');
-            // For time-limited complimentary access
-        });
+        if (Schema::hasTable('cms_companies')) {
+            if (!Schema::hasColumn('cms_companies', 'subscription_type')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->string('subscription_type')->default('paid')->after('status');
+                });
+            }
+            if (!Schema::hasColumn('cms_companies', 'sponsor_reference')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->string('sponsor_reference')->nullable()->after('subscription_type');
+                });
+            }
+            if (!Schema::hasColumn('cms_companies', 'subscription_notes')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->text('subscription_notes')->nullable()->after('sponsor_reference');
+                });
+            }
+            if (!Schema::hasColumn('cms_companies', 'complimentary_until')) {
+                Schema::table('cms_companies', function (Blueprint $table) {
+                    $table->timestamp('complimentary_until')->nullable()->after('subscription_notes');
+                });
+            }
+        }
     }
 
     /**

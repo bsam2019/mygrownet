@@ -8,12 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cms_invoice_items', function (Blueprint $table) {
-            $table->string('dimensions', 100)->nullable()->after('amount');
-            $table->decimal('dimensions_value', 10, 4)->default(1)->after('dimensions');
-            // Add line_total as alias (amount column already exists)
-            $table->decimal('line_total', 15, 2)->default(0)->after('dimensions_value');
-        });
+        if (Schema::hasTable('cms_invoice_items')) {
+            if (!Schema::hasColumn('cms_invoice_items', 'dimensions')) {
+                Schema::table('cms_invoice_items', function (Blueprint $table) {
+                    $table->string('dimensions', 100)->nullable()->after('amount');
+                });
+            }
+            if (!Schema::hasColumn('cms_invoice_items', 'dimensions_value')) {
+                Schema::table('cms_invoice_items', function (Blueprint $table) {
+                    $table->decimal('dimensions_value', 10, 4)->default(1)->after('dimensions');
+                });
+            }
+            if (!Schema::hasColumn('cms_invoice_items', 'line_total')) {
+                Schema::table('cms_invoice_items', function (Blueprint $table) {
+                    $table->decimal('line_total', 15, 2)->default(0)->after('dimensions_value');
+                });
+            }
+        }
     }
 
     public function down(): void

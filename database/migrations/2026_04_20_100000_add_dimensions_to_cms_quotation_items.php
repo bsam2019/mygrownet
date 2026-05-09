@@ -8,12 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cms_quotation_items', function (Blueprint $table) {
-            // Dimensions string e.g. "1200mm × 900mm" — shown on PDF
-            $table->string('dimensions', 100)->nullable()->after('line_total');
-            // Effective multiplier (total_area for fabrication items, 1 for standard items)
-            $table->decimal('dimensions_value', 10, 4)->default(1)->after('dimensions');
-        });
+        if (Schema::hasTable('cms_quotation_items')) {
+            if (!Schema::hasColumn('cms_quotation_items', 'dimensions')) {
+                Schema::table('cms_quotation_items', function (Blueprint $table) {
+                    $table->string('dimensions', 100)->nullable()->after('line_total');
+                });
+            }
+            if (!Schema::hasColumn('cms_quotation_items', 'dimensions_value')) {
+                Schema::table('cms_quotation_items', function (Blueprint $table) {
+                    $table->decimal('dimensions_value', 10, 4)->default(1)->after('dimensions');
+                });
+            }
+        }
     }
 
     public function down(): void

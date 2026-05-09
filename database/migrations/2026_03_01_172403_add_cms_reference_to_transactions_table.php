@@ -11,18 +11,41 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            // CMS expense reference
-            $table->unsignedBigInteger('cms_expense_id')->nullable()->after('module_reference');
+        if (Schema::hasTable('transactions')) {
+            if (!Schema::hasColumn('transactions', 'cms_expense_id')) {
+                Schema::table('transactions', function (Blueprint $table) {
+                    $table->unsignedBigInteger('cms_expense_id')->nullable()->after('module_reference');
+                });
+            }
+            if (!Schema::hasColumn('transactions', 'cms_reference_type')) {
+                Schema::table('transactions', function (Blueprint $table) {
+                    $table->string('cms_reference_type', 50)->nullable()->after('cms_expense_id');
+                });
+            }
+            if (!Schema::hasColumn('transactions', 'cms_reference_id')) {
+                Schema::table('transactions', function (Blueprint $table) {
+                    $table->unsignedBigInteger('cms_reference_id')->nullable()->after('cms_reference_type');
+                });
+            }
             
-            // Generic CMS reference for future use
-            $table->string('cms_reference_type', 50)->nullable()->after('cms_expense_id');
-            $table->unsignedBigInteger('cms_reference_id')->nullable()->after('cms_reference_type');
-            
-            // Indexes for performance
-            $table->index('cms_expense_id', 'idx_cms_expense');
-            $table->index(['cms_reference_type', 'cms_reference_id'], 'idx_cms_reference');
-        });
+            // Add indexes if columns were added
+            if (Schema::hasColumn('transactions', 'cms_expense_id')) {
+                Schema::table('transactions', function (Blueprint $table) {
+                    $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('transactions');
+                    if (!isset($indexes['idx_cms_expense'])) {
+                        $table->index('cms_expense_id', 'idx_cms_expense');
+                    }
+                });
+            }
+            if (Schema::hasColumn('transactions', 'cms_reference_type') && Schema::hasColumn('transactions', 'cms_reference_id')) {
+                Schema::table('transactions', function (Blueprint $table) {
+                    $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('transactions');
+                    if (!isset($indexes['idx_cms_reference'])) {
+                        $table->index(['cms_reference_type', 'cms_reference_id'], 'idx_cms_reference');
+                    }
+                });
+            }
+        }
     }
 
     /**

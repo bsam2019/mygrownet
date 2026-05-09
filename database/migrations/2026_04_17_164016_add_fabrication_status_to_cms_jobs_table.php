@@ -12,10 +12,12 @@ return new class extends Migration
         // SQLite doesn't support MODIFY COLUMN, so we use a raw approach
         // For MySQL/PostgreSQL this would be a column modification
         // We add a quotation_id FK to jobs for traceability
-        Schema::table('cms_jobs', function (Blueprint $table) {
-            $table->foreignId('quotation_id')->nullable()->after('customer_id')
-                ->constrained('cms_quotations')->onDelete('set null');
-        });
+        if (Schema::hasTable('cms_jobs') && !Schema::hasColumn('cms_jobs', 'quotation_id')) {
+            Schema::table('cms_jobs', function (Blueprint $table) {
+                $table->foreignId('quotation_id')->nullable()->after('customer_id')
+                    ->constrained('cms_quotations')->onDelete('set null');
+            });
+        }
     }
 
     public function down(): void

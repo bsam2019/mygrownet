@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cms_quotations', function (Blueprint $table) {
-            $table->foreignId('measurement_id')->nullable()->after('customer_id')->constrained('cms_measurement_records')->onDelete('set null');
-            $table->index('measurement_id');
-        });
+        if (Schema::hasTable('cms_quotations') && !Schema::hasColumn('cms_quotations', 'measurement_id')) {
+            Schema::table('cms_quotations', function (Blueprint $table) {
+                $table->foreignId('measurement_id')->nullable()->after('customer_id')->constrained('cms_measurement_records')->onDelete('set null');
+                $table->index('measurement_id');
+            });
+        }
     }
 
     /**

@@ -8,9 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('cms_companies', function (Blueprint $table) {
-            $table->json('integration_settings')->nullable()->after('settings');
-        });
+        if (Schema::hasTable('cms_companies') && !Schema::hasColumn('cms_companies', 'integration_settings')) {
+            Schema::table('cms_companies', function (Blueprint $table) {
+                $table->json('integration_settings')->nullable()->after('settings');
+            });
+        }
     }
 
     public function down(): void
