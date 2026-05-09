@@ -51,7 +51,7 @@ return new class extends Migration
         // Enhance existing stock_movements table
         if (Schema::hasTable('cms_stock_movements') && !Schema::hasColumn('cms_stock_movements', 'from_location_id')) {
             Schema::table('cms_stock_movements', function (Blueprint $table) {
-                $table->foreignId('from_location_id')->nullable()->after('material_id')->constrained('cms_stock_locations');
+                $table->foreignId('from_location_id')->nullable()->after('inventory_item_id')->constrained('cms_stock_locations');
                 $table->foreignId('to_location_id')->nullable()->after('from_location_id')->constrained('cms_stock_locations');
                 $table->string('movement_number')->unique()->after('to_location_id');
             });
