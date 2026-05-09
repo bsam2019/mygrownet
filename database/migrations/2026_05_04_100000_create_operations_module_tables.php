@@ -122,7 +122,7 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
             
-            $table->index(['checklist_template_id', 'sort_order']);
+            $table->index(['checklist_template_id', 'sort_order'], 'cms_checklist_tpl_items_tpl_id_sort_idx');
         });
 
         // Task Checklist Responses
