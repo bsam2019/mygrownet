@@ -16,7 +16,8 @@ return new class extends Migration
         // ============================================
         
         // Projects table
-        Schema::create('cms_projects', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_projects')) {
+            Schema::create('cms_projects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->foreignId('customer_id')->nullable()->constrained('cms_customers')->onDelete('set null');
@@ -43,10 +44,12 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index('project_number');
-        });
+            });
+        }
 
         // Project milestones
-        Schema::create('cms_project_milestones', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_project_milestones')) {
+            Schema::create('cms_project_milestones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->string('name');
@@ -59,10 +62,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'status']);
-        });
+            });
+        }
 
         // Site diary entries
-        Schema::create('cms_site_diary_entries', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_site_diary_entries')) {
+            Schema::create('cms_site_diary_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('cms_users')->onDelete('cascade');
@@ -81,10 +86,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'entry_date']);
-        });
+            });
+        }
 
         // Project documents
-        Schema::create('cms_project_documents', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_project_documents')) {
+            Schema::create('cms_project_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('uploaded_by')->constrained('cms_users')->onDelete('cascade');
@@ -100,13 +107,15 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'document_type']);
-        });
+            });
+        }
 
         // ============================================
         // MODULE 2: SUBCONTRACTOR MANAGEMENT
         // ============================================
         
-        Schema::create('cms_subcontractors', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_subcontractors')) {
+            Schema::create('cms_subcontractors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('code')->unique();
@@ -130,9 +139,11 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index('trade');
-        });
+            });
+        }
 
-        Schema::create('cms_subcontractor_assignments', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_subcontractor_assignments')) {
+            Schema::create('cms_subcontractor_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subcontractor_id')->constrained('cms_subcontractors')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
@@ -151,9 +162,11 @@ return new class extends Migration
             $table->index(['subcontractor_id', 'status']);
             $table->index('project_id');
             $table->index('job_id');
-        });
+            });
+        }
 
-        Schema::create('cms_subcontractor_payments', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_subcontractor_payments')) {
+            Schema::create('cms_subcontractor_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subcontractor_id')->constrained('cms_subcontractors')->onDelete('cascade');
             $table->foreignId('assignment_id')->nullable()->constrained('cms_subcontractor_assignments')->onDelete('set null');
@@ -167,9 +180,11 @@ return new class extends Migration
             
             $table->index('subcontractor_id');
             $table->index('payment_date');
-        });
+            });
+        }
 
-        Schema::create('cms_subcontractor_ratings', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_subcontractor_ratings')) {
+            Schema::create('cms_subcontractor_ratings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subcontractor_id')->constrained('cms_subcontractors')->onDelete('cascade');
             $table->foreignId('assignment_id')->constrained('cms_subcontractor_assignments')->onDelete('cascade');
@@ -183,13 +198,15 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('subcontractor_id');
-        });
+            });
+        }
 
         // ============================================
         // MODULE 3: EQUIPMENT MANAGEMENT
         // ============================================
         
-        Schema::create('cms_equipment', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_equipment')) {
+            Schema::create('cms_equipment', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('equipment_code')->unique();
@@ -215,9 +232,11 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index('category');
-        });
+            });
+        }
 
-        Schema::create('cms_equipment_maintenance', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_equipment_maintenance')) {
+            Schema::create('cms_equipment_maintenance', function (Blueprint $table) {
             $table->id();
             $table->foreignId('equipment_id')->constrained('cms_equipment')->onDelete('cascade');
             $table->foreignId('performed_by')->nullable()->constrained('cms_users')->onDelete('set null');
@@ -232,9 +251,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['equipment_id', 'maintenance_date']);
-        });
+            });
+        }
 
-        Schema::create('cms_equipment_usage', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_equipment_usage')) {
+            Schema::create('cms_equipment_usage', function (Blueprint $table) {
             $table->id();
             $table->foreignId('equipment_id')->constrained('cms_equipment')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
@@ -252,9 +273,11 @@ return new class extends Migration
             $table->index(['equipment_id', 'start_date']);
             $table->index('project_id');
             $table->index('job_id');
-        });
+            });
+        }
 
-        Schema::create('cms_equipment_rentals', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_equipment_rentals')) {
+            Schema::create('cms_equipment_rentals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('equipment_id')->constrained('cms_equipment')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
@@ -270,13 +293,15 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['equipment_id', 'status']);
-        });
+            });
+        }
 
         // ============================================
         // MODULE 4: LABOUR & CREW MANAGEMENT
         // ============================================
         
-        Schema::create('cms_crews', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_crews')) {
+            Schema::create('cms_crews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('crew_name');
@@ -287,9 +312,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['company_id', 'status']);
-        });
+            });
+        }
 
-        Schema::create('cms_crew_members', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_crew_members')) {
+            Schema::create('cms_crew_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('crew_id')->constrained('cms_crews')->onDelete('cascade');
             $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
@@ -301,9 +328,11 @@ return new class extends Migration
             
             $table->unique(['crew_id', 'employee_id']);
             $table->index('crew_id');
-        });
+            });
+        }
 
-        Schema::create('cms_labour_timesheets', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_labour_timesheets')) {
+            Schema::create('cms_labour_timesheets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
@@ -327,9 +356,11 @@ return new class extends Migration
             $table->index('project_id');
             $table->index('job_id');
             $table->index('status');
-        });
+            });
+        }
 
-        Schema::create('cms_skill_matrix', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_skill_matrix')) {
+            Schema::create('cms_skill_matrix', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
             $table->string('skill_name');
@@ -343,13 +374,15 @@ return new class extends Migration
             
             $table->index('employee_id');
             $table->index('skill_name');
-        });
+            });
+        }
 
         // ============================================
         // MODULE 5: BILL OF QUANTITIES (BOQ)
         // ============================================
         
-        Schema::create('cms_boq_templates', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_boq_templates')) {
+            Schema::create('cms_boq_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('name');
@@ -360,9 +393,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['company_id', 'status']);
-        });
+            });
+        }
 
-        Schema::create('cms_boq_categories', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_boq_categories')) {
+            Schema::create('cms_boq_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('name');
@@ -372,9 +407,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('company_id');
-        });
+            });
+        }
 
-        Schema::create('cms_boqs', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_boqs')) {
+            Schema::create('cms_boqs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
@@ -395,9 +432,11 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index('project_id');
-        });
+            });
+        }
 
-        Schema::create('cms_boq_items', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_boq_items')) {
+            Schema::create('cms_boq_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('boq_id')->constrained('cms_boqs')->onDelete('cascade');
             $table->foreignId('category_id')->nullable()->constrained('cms_boq_categories')->onDelete('set null');
@@ -415,9 +454,11 @@ return new class extends Migration
             
             $table->index('boq_id');
             $table->index('category_id');
-        });
+            });
+        }
 
-        Schema::create('cms_boq_variations', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_boq_variations')) {
+            Schema::create('cms_boq_variations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('boq_id')->constrained('cms_boqs')->onDelete('cascade');
             $table->string('variation_number');
@@ -432,13 +473,15 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['boq_id', 'status']);
-        });
+            });
+        }
 
         // ============================================
         // MODULE 6: PROGRESS BILLING & RETENTION
         // ============================================
         
-        Schema::create('cms_billing_stages', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_billing_stages')) {
+            Schema::create('cms_billing_stages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->string('stage_name');
@@ -452,9 +495,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'status']);
-        });
+            });
+        }
 
-        Schema::create('cms_progress_certificates', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_progress_certificates')) {
+            Schema::create('cms_progress_certificates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('billing_stage_id')->nullable()->constrained('cms_billing_stages')->onDelete('set null');
@@ -480,9 +525,11 @@ return new class extends Migration
             
             $table->index(['project_id', 'status']);
             $table->index('certificate_number');
-        });
+            });
+        }
 
-        Schema::create('cms_retention_tracking', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_retention_tracking')) {
+            Schema::create('cms_retention_tracking', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('progress_certificate_id')->constrained('cms_progress_certificates')->onDelete('cascade');
@@ -496,9 +543,11 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'status']);
-        });
+            });
+        }
 
-        Schema::create('cms_payment_applications', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_payment_applications')) {
+            Schema::create('cms_payment_applications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('progress_certificate_id')->constrained('cms_progress_certificates')->onDelete('cascade');
@@ -514,7 +563,8 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['project_id', 'status']);
-        });
+            });
+        }
 
         // Link projects to jobs
         Schema::table('cms_jobs', function (Blueprint $table) {
