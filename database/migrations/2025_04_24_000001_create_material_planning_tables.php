@@ -114,21 +114,23 @@ return new class extends Migration
         });
 
         // Purchase Order Items
-        Schema::create('cms_purchase_order_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('purchase_order_id')->constrained('cms_material_purchase_orders')->cascadeOnDelete();
-            $table->foreignId('material_id')->nullable()->constrained('cms_materials')->nullOnDelete();
-            $table->foreignId('job_material_plan_id')->nullable()->constrained('cms_job_material_plans')->nullOnDelete();
-            $table->string('description', 500);
-            $table->decimal('quantity', 10, 2);
-            $table->string('unit', 50);
-            $table->decimal('unit_price', 15, 2);
-            $table->decimal('total_price', 15, 2);
-            $table->decimal('received_quantity', 10, 2)->default(0);
-            $table->timestamps();
-            
-            $table->index('purchase_order_id');
-        });
+        if (!Schema::hasTable('cms_purchase_order_items')) {
+            Schema::create('cms_purchase_order_items', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('purchase_order_id')->constrained('cms_material_purchase_orders')->cascadeOnDelete();
+                $table->foreignId('material_id')->nullable()->constrained('cms_materials')->nullOnDelete();
+                $table->foreignId('job_material_plan_id')->nullable()->constrained('cms_job_material_plans')->nullOnDelete();
+                $table->string('description', 500);
+                $table->decimal('quantity', 10, 2);
+                $table->string('unit', 50);
+                $table->decimal('unit_price', 15, 2);
+                $table->decimal('total_price', 15, 2);
+                $table->decimal('received_quantity', 10, 2)->default(0);
+                $table->timestamps();
+                
+                $table->index('purchase_order_id');
+            });
+        }
 
         // Material Templates (for common job types)
         Schema::create('cms_material_templates', function (Blueprint $table) {
