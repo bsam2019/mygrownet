@@ -9,18 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         // Workflows - Define process structures
-        Schema::create('cms_workflows', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->enum('workflow_type', ['production', 'installation', 'general', 'maintenance', 'custom'])->default('general');
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_default')->default(false);
-            $table->timestamps();
-            
-            $table->index(['company_id', 'is_active']);
-        });
+        if (!Schema::hasTable('cms_workflows')) {
+            Schema::create('cms_workflows', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->enum('workflow_type', ['production', 'installation', 'general', 'maintenance', 'custom'])->default('general');
+                $table->boolean('is_active')->default(true);
+                $table->boolean('is_default')->default(false);
+                $table->timestamps();
+                
+                $table->index(['company_id', 'is_active']);
+            });
+        }
 
         // Workflow Stages - Define steps in a workflow
         Schema::create('cms_workflow_stages', function (Blueprint $table) {
