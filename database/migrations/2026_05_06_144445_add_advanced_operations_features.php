@@ -181,7 +181,7 @@ return new class extends Migration
                 $table->decimal('completion_rate_percentage', 5, 2)->nullable();
                 $table->timestamps();
 
-                $table->unique(['company_id', 'trend_date', 'period_type']);
+                $table->unique(['company_id', 'trend_date', 'period_type'], 'cms_task_trends_unique');
             });
         }
 
