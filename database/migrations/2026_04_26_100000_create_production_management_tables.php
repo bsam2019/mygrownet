@@ -30,7 +30,7 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index(['job_id']);
-            });
+        });
         }
 
         // Cutting Lists
@@ -52,7 +52,7 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index(['production_order_id']);
-            });
+        });
         }
 
         // Cutting List Items
@@ -78,7 +78,7 @@ return new class extends Migration
             
             $table->index(['cutting_list_id']);
             $table->index(['material_id']);
-            });
+        });
         }
 
         // Production Tracking
@@ -98,7 +98,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['production_order_id', 'stage']);
-            });
+        });
         }
 
         // Waste Tracking
@@ -121,7 +121,7 @@ return new class extends Migration
             $table->index(['company_id', 'waste_date']);
             $table->index(['production_order_id']);
             $table->index(['material_id']);
-            });
+        });
         }
 
         // Workshop Capacity Planning
@@ -141,7 +141,7 @@ return new class extends Migration
             
             $table->unique(['company_id', 'date']);
             $table->index(['company_id', 'date']);
-            });
+        });
         }
 
         // Quality Control Checkpoints
@@ -160,7 +160,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['production_order_id', 'stage']);
-            });
+        });
         }
 
         // Production Materials Usage
@@ -180,7 +180,7 @@ return new class extends Migration
             
             $table->index(['production_order_id']);
             $table->index(['material_id']);
-            });
+        });
         }
 
         // Cutting Optimization Patterns
@@ -200,7 +200,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['company_id', 'material_id']);
-            });
+        });
         }
 
         // Production Schedule
@@ -220,7 +220,7 @@ return new class extends Migration
             
             $table->index(['company_id', 'scheduled_date']);
             $table->index(['production_order_id']);
-            });
+        });
         }
     }
 
