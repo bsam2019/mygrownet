@@ -116,7 +116,7 @@ return new class extends Migration
             $table->decimal('average_task_duration_hours', 8, 2)->nullable();
             $table->timestamps();
 
-            $table->unique(['company_id', 'user_id', 'metric_date']);
+            $table->unique(['company_id', 'user_id', 'metric_date'], 'cms_user_prod_metrics_unique');
         });
 
         // Task Completion Trends
