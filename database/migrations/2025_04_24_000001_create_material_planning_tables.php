@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         // Material Categories
-        Schema::create('cms_material_categories', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_material_categories')) {
+            Schema::create('cms_material_categories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->string('name', 100);
@@ -23,10 +24,12 @@ return new class extends Migration
             
             $table->unique(['company_id', 'code']);
             $table->index(['company_id', 'is_active']);
-        });
+            });
+        }
 
         // Materials Library
-        Schema::create('cms_materials', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_materials')) {
+            Schema::create('cms_materials', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('cms_material_categories')->nullOnDelete();
@@ -46,10 +49,12 @@ return new class extends Migration
             
             $table->index(['company_id', 'is_active']);
             $table->index(['company_id', 'category_id']);
-        });
+            });
+        }
 
         // Material Price History
-        Schema::create('cms_material_price_history', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_material_price_history')) {
+            Schema::create('cms_material_price_history', function (Blueprint $table) {
             $table->id();
             $table->foreignId('material_id')->constrained('cms_materials')->cascadeOnDelete();
             $table->decimal('old_price', 15, 2);
@@ -61,10 +66,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['material_id', 'effective_date']);
-        });
+            });
+        }
 
         // Job Material Plans
-        Schema::create('cms_job_material_plans', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_job_material_plans')) {
+            Schema::create('cms_job_material_plans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('job_id')->constrained('cms_jobs')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained('cms_materials')->cascadeOnDelete();
@@ -84,10 +91,12 @@ return new class extends Migration
             
             $table->index(['job_id', 'status']);
             $table->index('material_id');
-        });
+            });
+        }
 
         // Material Purchase Orders
-        Schema::create('cms_material_purchase_orders', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_material_purchase_orders')) {
+            Schema::create('cms_material_purchase_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('job_id')->nullable()->constrained('cms_jobs')->nullOnDelete();
@@ -111,7 +120,8 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index('job_id');
-        });
+            });
+        }
 
         // Purchase Order Items
         if (!Schema::hasTable('cms_purchase_order_items')) {
@@ -133,7 +143,8 @@ return new class extends Migration
         }
 
         // Material Templates (for common job types)
-        Schema::create('cms_material_templates', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_material_templates')) {
+            Schema::create('cms_material_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->string('name', 200);
@@ -144,10 +155,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['company_id', 'job_type']);
-        });
+            });
+        }
 
         // Material Template Items
-        Schema::create('cms_material_template_items', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_material_template_items')) {
+            Schema::create('cms_material_template_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('template_id')->constrained('cms_material_templates')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained('cms_materials')->cascadeOnDelete();
@@ -155,7 +168,8 @@ return new class extends Migration
             $table->decimal('wastage_percentage', 5, 2)->default(5);
             $table->text('notes')->nullable();
             $table->timestamps();
-        });
+            });
+        }
     }
 
     public function down(): void
