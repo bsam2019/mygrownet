@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         // Production Orders
-        Schema::create('cms_production_orders', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_production_orders')) {
+            Schema::create('cms_production_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('job_id')->constrained('cms_jobs')->cascadeOnDelete();
@@ -29,10 +30,12 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index(['job_id']);
-        });
+            });
+        }
 
         // Cutting Lists
-        Schema::create('cms_cutting_lists', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_cutting_lists')) {
+            Schema::create('cms_cutting_lists', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('production_order_id')->constrained('cms_production_orders')->cascadeOnDelete();
@@ -49,10 +52,12 @@ return new class extends Migration
             
             $table->index(['company_id', 'status']);
             $table->index(['production_order_id']);
-        });
+            });
+        }
 
         // Cutting List Items
-        Schema::create('cms_cutting_list_items', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_cutting_list_items')) {
+            Schema::create('cms_cutting_list_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cutting_list_id')->constrained('cms_cutting_lists')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained('cms_materials');
@@ -73,10 +78,12 @@ return new class extends Migration
             
             $table->index(['cutting_list_id']);
             $table->index(['material_id']);
-        });
+            });
+        }
 
         // Production Tracking
-        Schema::create('cms_production_tracking', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_production_tracking')) {
+            Schema::create('cms_production_tracking', function (Blueprint $table) {
             $table->id();
             $table->foreignId('production_order_id')->constrained('cms_production_orders')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users');
@@ -91,10 +98,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['production_order_id', 'stage']);
-        });
+            });
+        }
 
         // Waste Tracking
-        Schema::create('cms_waste_tracking', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_waste_tracking')) {
+            Schema::create('cms_waste_tracking', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('production_order_id')->nullable()->constrained('cms_production_orders')->cascadeOnDelete();
@@ -112,10 +121,12 @@ return new class extends Migration
             $table->index(['company_id', 'waste_date']);
             $table->index(['production_order_id']);
             $table->index(['material_id']);
-        });
+            });
+        }
 
         // Workshop Capacity Planning
-        Schema::create('cms_workshop_capacity', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_workshop_capacity')) {
+            Schema::create('cms_workshop_capacity', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->date('date');
@@ -130,10 +141,12 @@ return new class extends Migration
             
             $table->unique(['company_id', 'date']);
             $table->index(['company_id', 'date']);
-        });
+            });
+        }
 
         // Quality Control Checkpoints
-        Schema::create('cms_quality_checkpoints', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_quality_checkpoints')) {
+            Schema::create('cms_quality_checkpoints', function (Blueprint $table) {
             $table->id();
             $table->foreignId('production_order_id')->constrained('cms_production_orders')->cascadeOnDelete();
             $table->string('checkpoint_name');
@@ -147,10 +160,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['production_order_id', 'stage']);
-        });
+            });
+        }
 
         // Production Materials Usage
-        Schema::create('cms_production_materials_usage', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_production_materials_usage')) {
+            Schema::create('cms_production_materials_usage', function (Blueprint $table) {
             $table->id();
             $table->foreignId('production_order_id')->constrained('cms_production_orders')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained('cms_materials');
@@ -165,10 +180,12 @@ return new class extends Migration
             
             $table->index(['production_order_id']);
             $table->index(['material_id']);
-        });
+            });
+        }
 
         // Cutting Optimization Patterns
-        Schema::create('cms_cutting_patterns', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_cutting_patterns')) {
+            Schema::create('cms_cutting_patterns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('material_id')->constrained('cms_materials');
@@ -183,10 +200,12 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['company_id', 'material_id']);
-        });
+            });
+        }
 
         // Production Schedule
-        Schema::create('cms_production_schedule', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_production_schedule')) {
+            Schema::create('cms_production_schedule', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('production_order_id')->constrained('cms_production_orders')->cascadeOnDelete();
@@ -201,7 +220,8 @@ return new class extends Migration
             
             $table->index(['company_id', 'scheduled_date']);
             $table->index(['production_order_id']);
-        });
+            });
+        }
     }
 
     public function down(): void
