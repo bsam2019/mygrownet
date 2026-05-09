@@ -36,7 +36,7 @@ return new class extends Migration
             $table->date('actual_start_date')->nullable();
             $table->date('actual_end_date')->nullable();
             $table->integer('progress_percentage')->default(0);
-            $table->foreignId('project_manager_id')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('project_manager_id')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
@@ -65,7 +65,7 @@ return new class extends Migration
         Schema::create('cms_site_diary_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
-            $table->foreignId('created_by')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('created_by')->constrained('cms_users')->onDelete('cascade');
             $table->date('entry_date');
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
@@ -87,7 +87,7 @@ return new class extends Migration
         Schema::create('cms_project_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained('cms_projects')->onDelete('cascade');
-            $table->foreignId('uploaded_by')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('uploaded_by')->constrained('cms_users')->onDelete('cascade');
             $table->string('document_type'); // drawing, contract, permit, photo, report
             $table->string('title');
             $table->text('description')->nullable();
@@ -173,7 +173,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('subcontractor_id')->constrained('cms_subcontractors')->onDelete('cascade');
             $table->foreignId('assignment_id')->constrained('cms_subcontractor_assignments')->onDelete('cascade');
-            $table->foreignId('rated_by')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('rated_by')->constrained('cms_users')->onDelete('cascade');
             $table->integer('quality_rating'); // 1-5
             $table->integer('timeliness_rating'); // 1-5
             $table->integer('communication_rating'); // 1-5
@@ -220,7 +220,7 @@ return new class extends Migration
         Schema::create('cms_equipment_maintenance', function (Blueprint $table) {
             $table->id();
             $table->foreignId('equipment_id')->constrained('cms_equipment')->onDelete('cascade');
-            $table->foreignId('performed_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('performed_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->date('maintenance_date');
             $table->enum('type', ['routine', 'repair', 'inspection', 'calibration'])->default('routine');
             $table->text('description');
@@ -239,7 +239,7 @@ return new class extends Migration
             $table->foreignId('equipment_id')->constrained('cms_equipment')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('job_id')->nullable()->constrained('cms_jobs')->onDelete('cascade');
-            $table->foreignId('assigned_to')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('assigned_to')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->time('start_time')->nullable();
@@ -280,7 +280,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->string('crew_name');
-            $table->foreignId('foreman_id')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('foreman_id')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->string('specialization')->nullable(); // general, electrical, plumbing, etc.
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->text('notes')->nullable();
@@ -292,7 +292,7 @@ return new class extends Migration
         Schema::create('cms_crew_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('crew_id')->constrained('cms_crews')->onDelete('cascade');
-            $table->foreignId('employee_id')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
             $table->string('role'); // foreman, skilled, semi_skilled, labourer
             $table->date('joined_date');
             $table->date('left_date')->nullable();
@@ -305,7 +305,7 @@ return new class extends Migration
 
         Schema::create('cms_labour_timesheets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
             $table->foreignId('project_id')->nullable()->constrained('cms_projects')->onDelete('cascade');
             $table->foreignId('job_id')->nullable()->constrained('cms_jobs')->onDelete('cascade');
             $table->foreignId('crew_id')->nullable()->constrained('cms_crews')->onDelete('set null');
@@ -319,7 +319,7 @@ return new class extends Migration
             $table->string('work_type')->nullable(); // installation, fabrication, finishing, etc.
             $table->text('work_description')->nullable();
             $table->enum('status', ['draft', 'submitted', 'approved', 'paid'])->default('draft');
-            $table->foreignId('approved_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('approved_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
             
@@ -331,7 +331,7 @@ return new class extends Migration
 
         Schema::create('cms_skill_matrix', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('cms_employees')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('cms_users')->onDelete('cascade');
             $table->string('skill_name');
             $table->enum('proficiency_level', ['beginner', 'intermediate', 'advanced', 'expert'])->default('beginner');
             $table->date('acquired_date')->nullable();
@@ -390,7 +390,7 @@ return new class extends Migration
             $table->decimal('grand_total', 15, 2)->default(0);
             $table->enum('status', ['draft', 'submitted', 'approved', 'active', 'completed'])->default('draft');
             $table->date('prepared_date')->nullable();
-            $table->foreignId('prepared_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('prepared_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->timestamps();
             
             $table->index(['company_id', 'status']);
@@ -426,7 +426,7 @@ return new class extends Migration
             $table->decimal('amount', 15, 2);
             $table->date('date_raised');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->foreignId('approved_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('approved_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->date('approved_date')->nullable();
             $table->text('approval_notes')->nullable();
             $table->timestamps();
@@ -471,8 +471,8 @@ return new class extends Migration
             $table->decimal('vat_amount', 15, 2)->default(0);
             $table->decimal('net_payment_due', 15, 2);
             $table->enum('status', ['draft', 'submitted', 'approved', 'paid'])->default('draft');
-            $table->foreignId('prepared_by')->constrained('cms_employees')->onDelete('cascade');
-            $table->foreignId('approved_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('prepared_by')->constrained('cms_users')->onDelete('cascade');
+            $table->foreignId('approved_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->date('approved_date')->nullable();
             $table->date('payment_date')->nullable();
             $table->text('notes')->nullable();
@@ -508,7 +508,7 @@ return new class extends Migration
             $table->decimal('amount_approved', 15, 2)->nullable();
             $table->enum('status', ['submitted', 'under_review', 'approved', 'rejected', 'paid'])->default('submitted');
             $table->text('supporting_documents')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('cms_employees')->onDelete('set null');
+            $table->foreignId('reviewed_by')->nullable()->constrained('cms_users')->onDelete('set null');
             $table->date('review_date')->nullable();
             $table->text('review_notes')->nullable();
             $table->timestamps();
