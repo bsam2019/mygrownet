@@ -12,8 +12,14 @@ class BizDocsTemplateSeeder extends Seeder
      */
     public function run(): void
     {
+        // Disable foreign key checks temporarily
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
         // Clear existing templates
         DB::table('bizdocs_document_templates')->truncate();
+        
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         
         $templates = [
             // Modern & Professional Templates
