@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_sync_log', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_sync_log')) {
+
+            Schema::create('cms_sync_log', function (Blueprint $table) {
             $table->id();
             $table->string('cms_entity_type', 50); // 'expense', 'budget', etc.
             $table->unsignedBigInteger('cms_entity_id');
@@ -32,6 +34,8 @@ return new class extends Migration
                   ->on('transactions')
                   ->onDelete('set null');
         });
+
+        }
     }
 
     /**

@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_measurement_items', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_measurement_items')) {
+
+            Schema::create('cms_measurement_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
             $table->foreignId('measurement_id')->constrained('cms_measurement_records')->onDelete('cascade');
@@ -40,6 +42,8 @@ return new class extends Migration
             $table->index(['company_id', 'measurement_id']);
             $table->index('type');
         });
+
+        }
     }
 
     /**

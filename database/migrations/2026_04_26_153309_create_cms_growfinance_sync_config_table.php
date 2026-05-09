@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_growfinance_sync_config', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_growfinance_sync_config')) {
+
+            Schema::create('cms_growfinance_sync_config', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('users')->cascadeOnDelete();
             $table->boolean('is_enabled')->default(false);
@@ -24,6 +26,8 @@ return new class extends Migration
             
             $table->unique('company_id');
         });
+
+        }
     }
 
     /**

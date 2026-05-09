@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_growfinance_sync_log', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_growfinance_sync_log')) {
+
+            Schema::create('cms_growfinance_sync_log', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('users')->cascadeOnDelete();
             $table->string('cms_entity_type', 50)->index();
@@ -25,6 +27,8 @@ return new class extends Migration
             
             $table->index(['cms_entity_type', 'cms_entity_id'], 'cms_entity_composite_idx');
         });
+
+        }
     }
 
     /**

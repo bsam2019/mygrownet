@@ -20,7 +20,10 @@ return new class extends Migration
             
             Schema::drop('cms_audit_trail');
             
-            Schema::create('cms_audit_trail', function (Blueprint $table) {
+            if (!Schema::hasTable('cms_audit_trail')) {
+
+            
+                Schema::create('cms_audit_trail', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
                 $table->foreignId('user_id')->constrained('cms_users');
@@ -51,6 +54,9 @@ return new class extends Migration
                 $table->index(['entity_type', 'entity_id'], 'idx_entity');
                 $table->index('user_id');
             });
+
+            
+            }
             
             // Restore data
             DB::statement('INSERT INTO cms_audit_trail SELECT * FROM cms_audit_trail_backup');
@@ -70,7 +76,10 @@ return new class extends Migration
             
             Schema::drop('cms_audit_trail');
             
-            Schema::create('cms_audit_trail', function (Blueprint $table) {
+            if (!Schema::hasTable('cms_audit_trail')) {
+
+            
+                Schema::create('cms_audit_trail', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('company_id')->constrained('cms_companies')->onDelete('cascade');
                 $table->foreignId('user_id')->constrained('cms_users');
@@ -86,6 +95,9 @@ return new class extends Migration
                 $table->index(['entity_type', 'entity_id'], 'idx_entity');
                 $table->index('user_id');
             });
+
+            
+            }
             
             // Restore data (excluding new action types)
             DB::statement("INSERT INTO cms_audit_trail SELECT * FROM cms_audit_trail_backup WHERE action IN ('created', 'updated', 'deleted', 'approved', 'rejected', 'locked', 'unlocked', 'sent', 'converted', 'cancelled', 'voided')");

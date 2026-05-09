@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cms_growfinance_account_mappings', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_growfinance_account_mappings')) {
+
+            Schema::create('cms_growfinance_account_mappings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('users')->cascadeOnDelete();
             $table->enum('cms_entity_type', ['invoice', 'expense', 'payment'])->index();
@@ -23,6 +25,8 @@ return new class extends Migration
             
             $table->unique(['company_id', 'cms_entity_type', 'cms_category', 'cms_payment_method'], 'unique_mapping');
         });
+
+        }
     }
 
     /**
