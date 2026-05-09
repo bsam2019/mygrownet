@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         // Installation Schedules
-        Schema::create('cms_installation_schedules', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_installation_schedules')) {
+            Schema::create('cms_installation_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('job_id')->constrained('cms_jobs')->cascadeOnDelete();
@@ -35,9 +36,11 @@ return new class extends Migration
             $table->index(['job_id']);
             $table->index(['status']);
         });
+        }
 
         // Installation Team Members
-        Schema::create('cms_installation_team_members', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_installation_team_members')) {
+            Schema::create('cms_installation_team_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('installation_schedule_id')->constrained('cms_installation_schedules')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users');
@@ -46,9 +49,11 @@ return new class extends Migration
             
             $table->unique(['installation_schedule_id', 'user_id']);
         });
+        }
 
         // Site Visits
-        Schema::create('cms_site_visits', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_site_visits')) {
+            Schema::create('cms_site_visits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('installation_schedule_id')->nullable()->constrained('cms_installation_schedules')->cascadeOnDelete();
@@ -70,9 +75,11 @@ return new class extends Migration
             $table->index(['company_id', 'visit_date']);
             $table->index(['job_id']);
         });
+        }
 
         // Installation Photos
-        Schema::create('cms_installation_photos', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_installation_photos')) {
+            Schema::create('cms_installation_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_visit_id')->constrained('cms_site_visits')->cascadeOnDelete();
             $table->enum('photo_type', ['before', 'during', 'after', 'issue', 'completion'])->default('during');
@@ -86,9 +93,11 @@ return new class extends Migration
             
             $table->index(['site_visit_id', 'photo_type']);
         });
+        }
 
         // Installation Checklists
-        Schema::create('cms_installation_checklists', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_installation_checklists')) {
+            Schema::create('cms_installation_checklists', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->string('checklist_name');
@@ -100,9 +109,11 @@ return new class extends Migration
             
             $table->index(['company_id', 'checklist_type']);
         });
+        }
 
         // Checklist Items
-        Schema::create('cms_checklist_items', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_checklist_items')) {
+            Schema::create('cms_checklist_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('checklist_id')->constrained('cms_installation_checklists')->cascadeOnDelete();
             $table->string('item_text');
@@ -113,9 +124,11 @@ return new class extends Migration
             
             $table->index(['checklist_id']);
         });
+        }
 
         // Installation Checklist Responses
-        Schema::create('cms_installation_checklist_responses', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_installation_checklist_responses')) {
+            Schema::create('cms_installation_checklist_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_visit_id')->constrained('cms_site_visits')->cascadeOnDelete();
             $table->foreignId('checklist_id')->constrained('cms_installation_checklists');
@@ -129,9 +142,11 @@ return new class extends Migration
             $table->index(['site_visit_id']);
             $table->index(['checklist_id']);
         });
+        }
 
         // Customer Sign-offs
-        Schema::create('cms_customer_signoffs', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_customer_signoffs')) {
+            Schema::create('cms_customer_signoffs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('site_visit_id')->constrained('cms_site_visits')->cascadeOnDelete();
             $table->string('customer_name');
@@ -146,9 +161,11 @@ return new class extends Migration
             
             $table->index(['site_visit_id']);
         });
+        }
 
         // Defects/Snag List
-        Schema::create('cms_defects', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_defects')) {
+            Schema::create('cms_defects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('cms_companies')->cascadeOnDelete();
             $table->foreignId('job_id')->constrained('cms_jobs')->cascadeOnDelete();
@@ -170,9 +187,11 @@ return new class extends Migration
             $table->index(['company_id', 'status']);
             $table->index(['job_id']);
         });
+        }
 
         // Defect Photos
-        Schema::create('cms_defect_photos', function (Blueprint $table) {
+        if (!Schema::hasTable('cms_defect_photos')) {
+            Schema::create('cms_defect_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('defect_id')->constrained('cms_defects')->cascadeOnDelete();
             $table->string('file_path');
@@ -182,6 +201,7 @@ return new class extends Migration
             
             $table->index(['defect_id']);
         });
+        }
     }
 
     public function down(): void
