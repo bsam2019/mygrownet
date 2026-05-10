@@ -108,9 +108,12 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
         
         if (swPath) {
             navigator.serviceWorker
-                .register(swPath)
+                .register(swPath, { updateViaCache: 'none' })
                 .then((registration) => {
                     console.log(`[${moduleName} PWA] Service Worker registered:`, registration.scope);
+                    
+                    // Force immediate update check
+                    registration.update();
                     
                     // Check for updates periodically
                     setInterval(() => {
@@ -123,10 +126,23 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
                         if (newWorker) {
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log(`[${moduleName} PWA] New version available`);
+                                    console.log(`[${moduleName} PWA] New version available - reloading...`);
+                                    // Tell the new service worker to skip waiting
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                                if (newWorker.state === 'activated') {
+                                    console.log(`[${moduleName} PWA] New version activated - reloading page...`);
+                                    // Reload the page to use the new service worker
+                                    window.location.reload();
                                 }
                             });
                         }
+                    });
+                    
+                    // Listen for controller change (new SW took over)
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log(`[${moduleName} PWA] Controller changed - reloading...`);
+                        window.location.reload();
                     });
                 })
                 .catch((error) => {
