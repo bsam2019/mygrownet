@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.6';
+const CACHE_VERSION = 'v1.0.7';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -74,6 +74,10 @@ const PAGE_NAMES = {
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   
+  // CRITICAL: Skip waiting immediately to activate ASAP
+  // This ensures admin route fixes are applied immediately
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Caching essential assets');
@@ -81,9 +85,6 @@ self.addEventListener('install', (event) => {
         console.warn('[SW] Some assets failed to cache:', error);
         // Don't fail install if some assets can't be cached
       });
-    }).then(() => {
-      // Force the waiting service worker to become the active service worker
-      return self.skipWaiting();
     })
   );
 });
