@@ -118,6 +118,7 @@ class ModuleService
         $configPath = config_path('modules.php');
         
         if (!file_exists($configPath)) {
+            \Log::error("Module config file not found: {$configPath}");
             return false;
         }
 
@@ -131,20 +132,51 @@ class ModuleService
         $pattern = "/('{$moduleKey}'\s*=>\s*\[[^\]]*'enabled'\s*=>\s*){$oppositeValue}/s";
         $replacement = '$1' . $enabledValue;
         
+        \Log::info("Attempting to update module: {$moduleKey}", [
+            'enabled' => $enabled,
+            'pattern' => $pattern,
+            'replacement' => $replacement,
+            'config_path' => $configPath,
+            'file_writable' => is_writable($configPath),
+        ]);
+        
         $newConfig = preg_replace($pattern, $replacement, $config, 1, $count);
         
         if ($count === 0) {
             // Pattern didn't match, try without quotes
             $pattern = "/(\"{$moduleKey}\"\s*=>\s*\[[^\]]*'enabled'\s*=>\s*){$oppositeValue}/s";
+            \Log::info("First pattern didn't match, trying alternative pattern", ['pattern' => $pattern]);
             $newConfig = preg_replace($pattern, $replacement, $config, 1, $count);
         }
         
+        \Log::info("Pattern match result", [
+            'count' => $count,
+            'config_changed' => $newConfig !== $config,
+            'old_length' => strlen($config),
+            'new_length' => strlen($newConfig),
+        ]);
+        
         if ($count > 0 && $newConfig !== $config) {
-            file_put_contents($configPath, $newConfig);
+            $writeResult = file_put_contents($configPath, $newConfig);
+            \Log::info("File write result", [
+                'bytes_written' => $writeResult,
+                'success' => $writeResult !== false,
+            ]);
+            
+            if ($writeResult === false) {
+                \Log::error("Failed to write to config file");
+                return false;
+            }
+            
             self::clearCache();
+            \Log::info("Module {$moduleKey} status updated successfully");
             return true;
         }
 
+        \Log::warning("Failed to update module {$moduleKey} status", [
+            'count' => $count,
+            'config_changed' => $newConfig !== $config,
+        ]);
         return false;
     }
 
