@@ -51,6 +51,10 @@ echo "🔧 Fixing permissions..."
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown -R www-data:www-data storage bootstrap/cache
 echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod -R 777 storage/logs bootstrap/cache
 
+# Fix config/modules.php permissions (needs to be writable by web server for module toggle)
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chown www-data:www-data config/modules.php
+echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod 664 config/modules.php
+
 # Optimize
 echo "🚀 Optimizing..."
 php artisan optimize
