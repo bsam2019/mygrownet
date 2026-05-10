@@ -129,7 +129,7 @@ class ModuleService
         
         // Pattern to match the module's enabled setting
         $pattern = "/('{$moduleKey}'\s*=>\s*\[[^\]]*'enabled'\s*=>\s*){$oppositeValue}/s";
-        $replacement = "${1}{$enabledValue}";
+        $replacement = '$1' . $enabledValue;
         
         $newConfig = preg_replace($pattern, $replacement, $config, 1, $count);
         
