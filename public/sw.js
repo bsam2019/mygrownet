@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.5';
+const CACHE_VERSION = 'v1.0.6';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -134,6 +134,12 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome extensions and other non-http(s) requests
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Skip admin routes - NEVER cache admin pages (always fetch fresh)
+  if (url.pathname.startsWith('/admin/')) {
+    event.respondWith(fetch(request));
     return;
   }
 
