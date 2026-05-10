@@ -126,23 +126,12 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
                         if (newWorker) {
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log(`[${moduleName} PWA] New version available - reloading...`);
+                                    console.log(`[${moduleName} PWA] New version available`);
                                     // Tell the new service worker to skip waiting
                                     newWorker.postMessage({ type: 'SKIP_WAITING' });
                                 }
-                                if (newWorker.state === 'activated') {
-                                    console.log(`[${moduleName} PWA] New version activated - reloading page...`);
-                                    // Reload the page to use the new service worker
-                                    window.location.reload();
-                                }
                             });
                         }
-                    });
-                    
-                    // Listen for controller change (new SW took over)
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        console.log(`[${moduleName} PWA] Controller changed - reloading...`);
-                        window.location.reload();
                     });
                 })
                 .catch((error) => {
