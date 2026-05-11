@@ -124,30 +124,21 @@ class ModuleService
 
         $config = file_get_contents($configPath);
         
-        // More robust pattern that handles multi-line module definitions
         $enabledValue = $enabled ? 'true' : 'false';
         $oppositeValue = $enabled ? 'false' : 'true';
         
-        // Pattern to match the module's enabled setting
-        $pattern = "/('{$moduleKey}'\s*=>\s*\[[^\]]*'enabled'\s*=>\s*){$oppositeValue}/s";
-        $replacement = '$1' . $enabledValue;
+        // Pattern to match: 'modulekey' => [ ... 'enabled' => true/false
+        // Use non-greedy match (.*?) to handle nested arrays
+        $pattern = "/('{$moduleKey}'\s*=>\s*\[.*?'enabled'\s*=>\s*){$oppositeValue}/s";
         
         \Log::info("Attempting to update module: {$moduleKey}", [
             'enabled' => $enabled,
             'pattern' => $pattern,
-            'replacement' => $replacement,
             'config_path' => $configPath,
             'file_writable' => is_writable($configPath),
         ]);
         
-        $newConfig = preg_replace($pattern, $replacement, $config, 1, $count);
-        
-        if ($count === 0) {
-            // Pattern didn't match, try without quotes
-            $pattern = "/(\"{$moduleKey}\"\s*=>\s*\[[^\]]*'enabled'\s*=>\s*){$oppositeValue}/s";
-            \Log::info("First pattern didn't match, trying alternative pattern", ['pattern' => $pattern]);
-            $newConfig = preg_replace($pattern, $replacement, $config, 1, $count);
-        }
+        $newConfig = preg_replace($pattern, '${1}' . $enabledValue, $config, 1, $count);
         
         \Log::info("Pattern match result", [
             'count' => $count,
