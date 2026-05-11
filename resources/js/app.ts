@@ -78,6 +78,21 @@ const isLocalDevelopment = window.location.hostname === 'localhost' ||
 if ('serviceWorker' in navigator && !isLocalDevelopment) {
     window.addEventListener('load', () => {
         const path = window.location.pathname;
+        
+        // CRITICAL: Unregister service worker for admin routes
+        if (path.startsWith('/admin')) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                registrations.forEach((registration) => {
+                    registration.unregister().then((success) => {
+                        if (success) {
+                            console.log('[Admin] Service Worker unregistered for admin area');
+                        }
+                    });
+                });
+            });
+            return; // Don't register any service worker for admin
+        }
+        
         let swPath: string | null = null;
         let moduleName = '';
         
