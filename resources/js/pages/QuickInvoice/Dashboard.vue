@@ -268,12 +268,13 @@ const formatNumber = (num: number) => num.toLocaleString();
                                     </div>
                                     <div class="text-right">
                                         <p class="font-semibold text-gray-900">{{ doc.formatted_total }}</p>
-                                        <Link 
+                                        <a 
                                             :href="route('quick-invoice.view', doc.id)"
+                                            target="_blank"
                                             class="text-xs text-blue-600 hover:text-blue-700"
                                         >
                                             View PDF
-                                        </Link>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
