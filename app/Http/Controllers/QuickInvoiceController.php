@@ -354,11 +354,6 @@ class QuickInvoiceController extends Controller
         // Increase execution time for PDF generation
         set_time_limit(120);
         
-        // Add cache-busting headers
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-        header('Cache-Control: post-check=0, pre-check=0', false);
-        header('Pragma: no-cache');
-        
         try {
             // For Quick Invoice, allow public download access via UUID
             $document = $this->documentService->findDocument($id);
@@ -444,7 +439,9 @@ class QuickInvoiceController extends Controller
                     
                     return response($mergedPdf)
                         ->header('Content-Type', 'application/pdf')
-                        ->header('Content-Disposition', 'attachment; filename="' . $document->documentNumber()->value() . '_with_attachments.pdf"');
+                        ->header('Content-Disposition', 'attachment; filename="' . $document->documentNumber()->value() . '_with_attachments.pdf"')
+                        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                        ->header('Pragma', 'no-cache');
                 } else {
                     \Log::warning('No attachment files loaded', [
                         'document_id' => $id,
@@ -455,7 +452,9 @@ class QuickInvoiceController extends Controller
             // No attachments, return main PDF
             return response($mainPdf)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="' . $document->documentNumber()->value() . '.pdf"');
+                ->header('Content-Disposition', 'attachment; filename="' . $document->documentNumber()->value() . '.pdf"')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
                 
         } catch (DocumentNotFoundException $e) {
             abort(404, 'Document not found');
@@ -472,11 +471,6 @@ class QuickInvoiceController extends Controller
     {
         // Increase execution time for PDF generation
         set_time_limit(120);
-        
-        // Add cache-busting headers
-        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-        header('Cache-Control: post-check=0, pre-check=0', false);
-        header('Pragma: no-cache');
         
         try {
             // For Quick Invoice, allow public view access via UUID
@@ -531,14 +525,18 @@ class QuickInvoiceController extends Controller
                     
                     return response($mergedPdf)
                         ->header('Content-Type', 'application/pdf')
-                        ->header('Content-Disposition', 'inline; filename="' . $document->documentNumber()->value() . '_with_attachments.pdf"');
+                        ->header('Content-Disposition', 'inline; filename="' . $document->documentNumber()->value() . '_with_attachments.pdf"')
+                        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                        ->header('Pragma', 'no-cache');
                 }
             }
             
             // No attachments, return main PDF
             return response($mainPdf)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="' . $document->documentNumber()->value() . '.pdf"');
+                ->header('Content-Disposition', 'inline; filename="' . $document->documentNumber()->value() . '.pdf"')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
                 
         } catch (DocumentNotFoundException $e) {
             abort(404, 'Document not found');
