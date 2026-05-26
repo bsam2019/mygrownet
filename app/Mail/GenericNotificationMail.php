@@ -8,8 +8,8 @@ class GenericNotificationMail extends BrandedMail
 {
     public function __construct(
         string $subject,
-        public string $greeting,
-        public string $message,
+        string $greeting,
+        string $message,
         public ?string $actionText = null,
         public ?string $actionUrl = null,
         public ?array $details = null,
@@ -19,6 +19,8 @@ class GenericNotificationMail extends BrandedMail
     ) {
         parent::__construct();
         $this->subject($subject);
+        $this->greeting = $greeting;
+        $this->message = $message;
     }
 
     public function content(): Content

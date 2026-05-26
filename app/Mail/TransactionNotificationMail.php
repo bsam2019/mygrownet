@@ -8,8 +8,8 @@ class TransactionNotificationMail extends BrandedMail
 {
     public function __construct(
         public string $title,
-        public string $greeting,
-        public string $message,
+        string $greeting,
+        string $message,
         public array $transactionDetails,
         public string $status = 'success',
         public ?string $statusMessage = null,
@@ -18,6 +18,8 @@ class TransactionNotificationMail extends BrandedMail
     ) {
         parent::__construct();
         $this->subject($title);
+        $this->greeting = $greeting;
+        $this->message = $message;
     }
 
     public function content(): Content
