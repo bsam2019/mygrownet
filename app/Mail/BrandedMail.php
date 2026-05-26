@@ -19,11 +19,6 @@ abstract class BrandedMail extends Mailable
     use Queueable, SerializesModels;
 
     /**
-     * Email subject line
-     */
-    public string $subject;
-
-    /**
      * Email greeting (e.g., "Hello John")
      */
     public ?string $greeting = null;
@@ -75,7 +70,7 @@ abstract class BrandedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->subject,
+            subject: $this->subject ?? 'MyGrowNet Notification',
         );
     }
 

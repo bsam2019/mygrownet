@@ -14,7 +14,7 @@ class LevelAdvancementMail extends BrandedMail
         public ?array $stats = null,
     ) {
         parent::__construct();
-        $this->subject = "Congratulations! You've Advanced to {$newLevel}";
+        $this->subject("Congratulations! You've Advanced to {$newLevel}");
     }
 
     public function content(): Content

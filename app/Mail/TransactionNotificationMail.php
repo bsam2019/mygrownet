@@ -17,7 +17,7 @@ class TransactionNotificationMail extends BrandedMail
         public ?string $actionText = null,
     ) {
         parent::__construct();
-        $this->subject = $title;
+        $this->subject($title);
     }
 
     public function content(): Content

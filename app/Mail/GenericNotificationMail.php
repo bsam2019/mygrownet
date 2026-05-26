@@ -18,7 +18,7 @@ class GenericNotificationMail extends BrandedMail
         public ?string $footerNote = null,
     ) {
         parent::__construct();
-        $this->subject = $subject;
+        $this->subject($subject);
     }
 
     public function content(): Content

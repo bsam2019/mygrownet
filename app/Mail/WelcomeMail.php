@@ -11,7 +11,7 @@ class WelcomeMail extends BrandedMail
         public User $user
     ) {
         parent::__construct();
-        $this->subject = 'Welcome to MyGrowNet!';
+        $this->subject('Welcome to MyGrowNet!');
     }
 
     public function content(): Content
