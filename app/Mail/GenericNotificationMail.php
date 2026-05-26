@@ -29,7 +29,7 @@ class GenericNotificationMail extends BrandedMail
             view: 'emails.generic',
             with: [
                 'greeting' => $this->greeting,
-                'message' => $this->message,
+                'emailMessage' => $this->message,
                 'actionText' => $this->actionText,
                 'actionUrl' => $this->actionUrl,
                 'details' => $this->details,

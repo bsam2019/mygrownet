@@ -5,9 +5,9 @@
     <h2 class="email-title">{{ $greeting }}</h2>
     @endif
 
-    @if(isset($message))
+    @if(isset($emailMessage))
     <div class="email-text">
-        {!! nl2br(e($message)) !!}
+        {!! nl2br(e($emailMessage)) !!}
     </div>
     @endif
 

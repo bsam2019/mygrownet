@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\GenericNotificationMail;
 
 try {
-    Mail::send(
+    Mail::to('samedulink@gmail.com')->send(
         new GenericNotificationMail(
             subject: 'MyGrowNet - Branded Email Test',
             greeting: 'Hello Samuel!',
