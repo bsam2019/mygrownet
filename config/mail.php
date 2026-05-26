@@ -60,6 +60,11 @@ return [
             'timeout' => null,
         ],
 
+        // Brevo API - Use this when SMTP ports are blocked
+        'brevo-api' => [
+            'transport' => 'brevo-api',
+        ],
+
         // Gmail SMTP - 500 emails/day free
         'gmail' => [
             'transport' => 'smtp',

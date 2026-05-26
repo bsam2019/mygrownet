@@ -4,7 +4,7 @@ namespace App\Domain\Tools\ValueObjects;
 
 use InvalidArgumentException;
 
-class BusinessPlanIdPlanId
+class BusinessPlanId
 {
     private function __construct(private readonly int $value)
     {

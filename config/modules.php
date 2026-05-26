@@ -70,7 +70,7 @@ return [
         ],
 
         'bizboost' => [
-            'enabled' => true,
+            'enabled' => false,
             'name' => 'BizBoost',
             'description' => 'Business management & marketing',
             'icon' => 'SparklesIcon',
@@ -82,7 +82,7 @@ return [
         ],
 
         'growbiz' => [
-            'enabled' => true,
+            'enabled' => false,
             'name' => 'GrowBiz',
             'description' => 'Team & employee management',
             'icon' => 'ClipboardDocumentCheckIcon',
@@ -116,7 +116,7 @@ return [
         ],
 
         'pos' => [
-            'enabled' => true,
+            'enabled' => false,
             'name' => 'Point of Sale',
             'description' => 'Point of sale system',
             'icon' => 'BuildingStorefrontIcon',

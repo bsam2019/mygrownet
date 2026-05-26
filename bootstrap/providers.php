@@ -2,6 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\BrevoMailServiceProvider::class,
     App\Providers\EmailMarketingServiceProvider::class,
     App\Providers\EmployeePortalServiceProvider::class,
     App\Providers\FinancialServiceProvider::class,
