@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Payment\Gateways\NOWPaymentsGateway;
-use App\Domain\Payment\DTOs\CollectionRequest;
+use App\Domain\Payment\DTOs\CryptoPaymentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +38,7 @@ class CryptoPaymentController extends Controller
         }
 
         try {
-            $response = $this->gateway->collect(new CollectionRequest(
+            $response = $this->gateway->createCryptoInvoice(new CryptoPaymentRequest(
                 amount: $validated['amount'],
                 currency: strtoupper($validated['currency']),
                 reference: "ORDER-{$validated['order_id']}",

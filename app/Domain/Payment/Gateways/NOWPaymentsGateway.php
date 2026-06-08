@@ -6,6 +6,7 @@ namespace App\Domain\Payment\Gateways;
 
 use App\Domain\Payment\DTOs\CollectionRequest;
 use App\Domain\Payment\DTOs\CollectionResponse;
+use App\Domain\Payment\DTOs\CryptoPaymentRequest;
 use App\Domain\Payment\DTOs\DisbursementRequest;
 use App\Domain\Payment\DTOs\DisbursementResponse;
 use App\Domain\Payment\Enums\TransactionStatus;
@@ -231,6 +232,152 @@ class NOWPaymentsGateway extends AbstractPaymentGateway
 
         } catch (\Exception $e) {
             Log::error('NOWPayments collection exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return new CollectionResponse(
+                success: false,
+                transactionId: $transactionId,
+                status: TransactionStatus::FAILED,
+                message: 'Payment gateway error: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Create a cryptocurrency payment invoice
+     * 
+     * This is a simplified method specifically for crypto payments
+     * that doesn't require phone numbers or mobile money providers
+     * 
+     * @param CryptoPaymentRequest $request
+     * @return CollectionResponse
+     */
+    public function createCryptoInvoice(CryptoPaymentRequest $request): CollectionResponse
+    {
+        $transactionId = $this->generateTransactionId();
+
+        try {
+            // Convert to USD if not already (NOWPayments works best with USD/EUR)
+            $amount = $request->amount;
+            $currency = strtoupper($request->currency);
+            
+            if (!in_array($currency, ['USD', 'EUR'])) {
+                // Convert to USD
+                $convertedAmount = $this->currencyService->convert($amount, $currency, 'USD');
+                
+                if ($convertedAmount === null) {
+                    Log::warning('Currency conversion failed, using original amount', [
+                        'from' => $currency,
+                        'to' => 'USD',
+                        'amount' => $amount,
+                    ]);
+                    // Fallback: use original amount with USD
+                    $convertedAmount = $amount;
+                }
+                
+                Log::info('Currency converted for NOWPayments', [
+                    'original' => "{$amount} {$currency}",
+                    'converted' => "{$convertedAmount} USD",
+                ]);
+                
+                $amount = $convertedAmount;
+                $currency = 'USD';
+            }
+            
+            // Get available currencies first
+            $availableCurrencies = $this->getAvailableCurrencies();
+            
+            if (empty($availableCurrencies)) {
+                return new CollectionResponse(
+                    success: false,
+                    transactionId: $transactionId,
+                    status: TransactionStatus::FAILED,
+                    message: 'Unable to fetch available cryptocurrencies'
+                );
+            }
+
+            // Determine payment currency (crypto) - default to USDT if available
+            $payCurrency = $this->determinePayCurrency($currency, $availableCurrencies);
+
+            // Create payment
+            $payload = [
+                'price_amount' => $amount,
+                'price_currency' => $currency,
+                'pay_currency' => $payCurrency,
+                'order_id' => $request->reference ?? $transactionId,
+                'order_description' => $request->description ?? 'Payment to MyGrowNet',
+                'ipn_callback_url' => route('webhooks.nowpayments'),
+            ];
+            
+            // Add optional URLs if routes exist
+            try {
+                $payload['success_url'] = route('payment.success');
+                $payload['cancel_url'] = route('payment.cancel');
+            } catch (\Exception $e) {
+                // Routes not defined, skip them
+                Log::info('NOWPayments: Success/cancel routes not defined, using defaults');
+            }
+
+            // Note: payer_email is not supported by NOWPayments invoice API
+            // Customer email is only collected during payment process
+
+            Log::info('NOWPayments crypto invoice request', [
+                'order_id' => $payload['order_id'],
+                'amount' => $amount,
+                'currency' => $currency,
+                'pay_currency' => $payCurrency,
+            ]);
+
+            $response = $this->request('POST', '/invoice', $payload);
+
+            if ($response['success'] && isset($response['data']['id'])) {
+                $data = $response['data'];
+                
+                Log::info('NOWPayments crypto invoice created', [
+                    'invoice_id' => $data['id'],
+                    'invoice_url' => $data['invoice_url'] ?? null,
+                    'pay_address' => $data['pay_address'] ?? null,
+                ]);
+
+                return new CollectionResponse(
+                    success: true,
+                    transactionId: $data['id'],
+                    status: $this->mapStatus($data['payment_status'] ?? 'waiting'),
+                    providerReference: $data['order_id'] ?? null,
+                    message: 'Crypto payment invoice created successfully.',
+                    rawResponse: [
+                        'invoice_url' => $data['invoice_url'] ?? null,
+                        'pay_address' => $data['pay_address'] ?? null,
+                        'pay_amount' => $data['pay_amount'] ?? null,
+                        'pay_currency' => $data['pay_currency'] ?? null,
+                        'price_amount' => $data['price_amount'] ?? null,
+                        'price_currency' => $data['price_currency'] ?? null,
+                        'original_amount' => $request->amount,
+                        'original_currency' => $request->currency,
+                        'created_at' => $data['created_at'] ?? null,
+                        'expiration_estimate_date' => $data['expiration_estimate_date'] ?? null,
+                    ]
+                );
+            }
+
+            $errorMessage = $response['data']['message'] ?? 'Failed to create crypto payment invoice';
+            
+            Log::error('NOWPayments crypto invoice creation failed', [
+                'error' => $errorMessage,
+                'response' => $response['data'],
+            ]);
+
+            return new CollectionResponse(
+                success: false,
+                transactionId: $transactionId,
+                status: TransactionStatus::FAILED,
+                message: $errorMessage
+            );
+
+        } catch (\Exception $e) {
+            Log::error('NOWPayments crypto invoice exception', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
