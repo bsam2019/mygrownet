@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { CreditCardIcon, PhoneIcon, BanknoteIcon, WalletIcon } from 'lucide-vue-next';
+import CurrencySelector from '@/Components/CurrencySelector.vue';
+import { CreditCardIcon, PhoneIcon, BanknoteIcon, WalletIcon, CoinsIcon } from 'lucide-vue-next';
+import axios from 'axios';
 
 interface PaymentContext {
     type: string;
@@ -24,8 +27,82 @@ const form = useForm({
     notes: props.paymentContext?.description || '',
 });
 
+const paymentMethod = ref<'mobile_money' | 'crypto'>('mobile_money');
+const selectedCurrency = ref('ZMW');
+const convertedAmount = ref<number | null>(null);
+const loading = ref(false);
+
+const handleCurrencyChange = async (currency: string) => {
+    selectedCurrency.value = currency;
+    
+    if (currency !== 'ZMW' && form.amount) {
+        loading.value = true;
+        try {
+            const response = await axios.post('/api/currency/convert', {
+                amount: parseFloat(form.amount),
+                from: 'ZMW',
+                to: currency
+            });
+            
+            if (response.data.success) {
+                convertedAmount.value = response.data.converted_amount;
+            }
+        } catch (error) {
+            console.error('Currency conversion failed:', error);
+        } finally {
+            loading.value = false;
+        }
+    } else {
+        convertedAmount.value = null;
+    }
+};
+
+const displayAmount = computed(() => {
+    if (!form.amount) return 'K 0.00';
+    
+    if (selectedCurrency.value === 'ZMW') {
+        return `K ${parseFloat(form.amount).toFixed(2)}`;
+    }
+    
+    if (convertedAmount.value !== null) {
+        const symbols: Record<string, string> = {
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'ZMW': 'K', 'ZAR': 'R',
+            'KES': 'KSh', 'NGN': '₦', 'GHS': '₵', 'CAD': 'C$', 'AUD': 'A$'
+        };
+        const symbol = symbols[selectedCurrency.value] || selectedCurrency.value;
+        return `${symbol} ${convertedAmount.value.toFixed(2)}`;
+    }
+    
+    return `K ${parseFloat(form.amount).toFixed(2)}`;
+});
+
 const submit = () => {
     form.post(route('mygrownet.payments.store'));
+};
+
+const initiateCryptoPayment = async () => {
+    if (!form.amount || parseFloat(form.amount) < 50) {
+        alert('Please enter a valid amount (minimum K50)');
+        return;
+    }
+    
+    loading.value = true;
+    try {
+        const response = await axios.post('/api/payments/crypto/create', {
+            order_id: `WALLET-${Date.now()}`,
+            amount: convertedAmount.value || parseFloat(form.amount),
+            currency: selectedCurrency.value
+        });
+        
+        if (response.data.success && response.data.invoice_url) {
+            window.location.href = response.data.invoice_url;
+        }
+    } catch (error) {
+        console.error('Failed to create crypto payment:', error);
+        alert('Failed to initiate cryptocurrency payment. Please try again.');
+    } finally {
+        loading.value = false;
+    }
 };
 </script>
 
@@ -33,29 +110,79 @@ const submit = () => {
     <AppLayout>
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-                <!-- Header -->
-                <div class="mb-6 text-center">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                        <WalletIcon class="h-8 w-8 text-blue-600" />
+                <!-- Header with Currency Selector -->
+                <div class="mb-6 flex items-start justify-between gap-4">
+                    <div class="text-center flex-1">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                            <WalletIcon class="h-8 w-8 text-blue-600" />
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                            {{ paymentContext?.type === 'starter_kit' ? 'Submit Starter Kit Payment' : 'Top Up Wallet' }}
+                        </h1>
+                        <p class="mt-2 text-sm text-gray-600">Choose your preferred payment method</p>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
-                        {{ paymentContext?.type === 'starter_kit' ? 'Submit Starter Kit Payment' : 'Top Up Wallet' }}
-                    </h1>
-                    <p class="mt-2 text-sm text-gray-600">Send money to the numbers below, then submit proof of payment</p>
+                    <CurrencySelector 
+                        :show-conversion="true"
+                        @currency-changed="handleCurrencyChange"
+                    />
+                </div>
+
+                <!-- Amount Display -->
+                <div class="mb-6 text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                    <p class="text-sm text-gray-600 mb-1">Amount to Pay</p>
+                    <p class="text-3xl font-bold text-blue-600">
+                        {{ loading ? 'Converting...' : displayAmount }}
+                    </p>
                 </div>
 
                 <!-- Starter Kit Context Alert -->
                 <div v-if="paymentContext?.type === 'starter_kit'" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 class="font-semibold text-green-900 mb-2">📦 MyGrowNet Starter Kit Purchase</h3>
                     <p class="text-sm text-green-700">
-                        Amount: <span class="font-bold">K{{ paymentContext.amount }}</span>
+                        Amount: <span class="font-bold">{{ displayAmount }}</span>
                     </p>
                     <p class="text-sm text-green-700 mt-1">
                         After verification, you'll receive instant access to all starter kit content and K100 shop credit.
                     </p>
                 </div>
 
-                <!-- Payment Instructions (Top) -->
+                <!-- Payment Method Selection -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-900 mb-3">Select Payment Method</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Mobile Money -->
+                        <button
+                            @click="paymentMethod = 'mobile_money'"
+                            class="p-4 border-2 rounded-lg transition-all"
+                            :class="paymentMethod === 'mobile_money' 
+                                ? 'border-blue-500 bg-blue-50' 
+                                : 'border-gray-200 hover:border-gray-300'"
+                        >
+                            <PhoneIcon class="h-6 w-6 mx-auto mb-2" 
+                                :class="paymentMethod === 'mobile_money' ? 'text-blue-600' : 'text-gray-400'" />
+                            <p class="font-semibold text-sm text-gray-900">Mobile Money</p>
+                            <p class="text-xs text-gray-500 mt-1">MTN, Airtel</p>
+                        </button>
+
+                        <!-- Cryptocurrency -->
+                        <button
+                            @click="paymentMethod = 'crypto'"
+                            class="p-4 border-2 rounded-lg transition-all"
+                            :class="paymentMethod === 'crypto' 
+                                ? 'border-indigo-500 bg-indigo-50' 
+                                : 'border-gray-200 hover:border-gray-300'"
+                        >
+                            <CoinsIcon class="h-6 w-6 mx-auto mb-2" 
+                                :class="paymentMethod === 'crypto' ? 'text-indigo-600' : 'text-gray-400'" />
+                            <p class="font-semibold text-sm text-gray-900">Cryptocurrency</p>
+                            <p class="text-xs text-gray-500 mt-1">BTC, ETH, USDT</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Money Section -->
+                <div v-if="paymentMethod === 'mobile_money'">
+                    <!-- Payment Instructions (Top) -->
                 <div class="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 shadow-md">
                     <h3 class="font-semibold text-blue-900 mb-4 flex items-center gap-2 text-lg">
                         <BanknoteIcon class="h-6 w-6" />
@@ -244,6 +371,87 @@ const submit = () => {
                         <span class="text-lg">✅</span>
                         <span>Your wallet will be credited within a few hours once payment is verified by our team.</span>
                     </p>
+                </div>
+                </div>
+
+                <!-- Cryptocurrency Section -->
+                <div v-else class="space-y-4">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4">Cryptocurrency Payment</h3>
+                        
+                        <div class="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
+                            <div class="flex items-start gap-3 mb-4">
+                                <CoinsIcon class="h-6 w-6 text-indigo-600 flex-shrink-0" />
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 mb-1">Pay with 240+ Cryptocurrencies</h4>
+                                    <p class="text-sm text-gray-600">
+                                        Bitcoin (BTC), Ethereum (ETH), USDT, Litecoin (LTC), and many more
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 text-sm text-gray-700 mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-600">✓</span>
+                                    <span>Instant payment confirmation</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-600">✓</span>
+                                    <span>Low transaction fees (0.5% - 1%)</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-600">✓</span>
+                                    <span>Secure blockchain transactions</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-green-600">✓</span>
+                                    <span>Global payment - works from anywhere</span>
+                                </div>
+                            </div>
+
+                            <!-- Amount Input for Crypto -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Amount to Top Up <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">K</span>
+                                    <input
+                                        v-model="form.amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="50"
+                                        class="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="0.00"
+                                        @input="handleCurrencyChange(selectedCurrency)"
+                                    />
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Minimum top-up amount is K50</p>
+                            </div>
+
+                            <div class="p-3 bg-white rounded-lg border border-indigo-200 mb-4">
+                                <p class="text-xs text-gray-600 mb-1">You will pay approximately:</p>
+                                <p class="text-lg font-bold text-indigo-600">{{ displayAmount }}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Final amount in crypto will be calculated at checkout
+                                </p>
+                            </div>
+
+                            <button 
+                                @click="initiateCryptoPayment"
+                                :disabled="loading || !form.amount || parseFloat(form.amount) < 50"
+                                class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
+                            >
+                                {{ loading ? 'Processing...' : 'Pay with Cryptocurrency' }}
+                            </button>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-sm text-blue-800">
+                                <strong>How it works:</strong> You'll be redirected to our secure payment processor where you can select your preferred cryptocurrency and complete the payment. Your wallet will be credited automatically once the payment is confirmed on the blockchain.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

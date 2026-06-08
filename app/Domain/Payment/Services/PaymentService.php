@@ -12,6 +12,7 @@ use App\Domain\Payment\DTOs\DisbursementResponse;
 use App\Domain\Payment\Enums\TransactionStatus;
 use App\Domain\Payment\Gateways\MoneyUnifyGateway;
 use App\Domain\Payment\Gateways\PawapayGateway;
+use App\Domain\Payment\Gateways\NOWPaymentsGateway;
 use Illuminate\Support\Facades\Log;
 
 class PaymentService
@@ -29,6 +30,7 @@ class PaymentService
     {
         $this->gateways['moneyunify'] = new MoneyUnifyGateway();
         $this->gateways['pawapay'] = new PawapayGateway();
+        $this->gateways['nowpayments'] = new NOWPaymentsGateway();
     }
 
     public function getGateway(?string $identifier = null): PaymentGatewayInterface

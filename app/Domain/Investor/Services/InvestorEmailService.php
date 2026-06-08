@@ -6,7 +6,8 @@ use App\Domain\Investor\Entities\InvestorEmailLog;
 use App\Domain\Investor\Repositories\InvestorAccountRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestorEmailLogRepositoryInterface;
 use App\Domain\Investor\Repositories\InvestorNotificationPreferenceRepositoryInterface;
-use Illuminate\Support\Facades\Mail;
+use App\Mail\BrandedMail;
+use App\Services\EmailService;
 use Illuminate\Support\Facades\Log;
 
 class InvestorEmailService
@@ -236,7 +237,7 @@ class InvestorEmailService
     }
 
     /**
-     * Send email using Laravel Mail
+     * Send email using EmailService (transactional for investor communications)
      */
     private function sendEmail(string $to, string $subject, string $template, array $data): void
     {
@@ -246,10 +247,11 @@ class InvestorEmailService
             return;
         }
 
-        Mail::send($template, $data, function ($message) use ($to, $subject) {
-            $message->to($to)
-                ->subject($subject)
-                ->from(config('mail.from.address'), config('mail.from.name'));
-        });
+        // Use EmailService for transactional emails (investor communications are critical)
+        $mailable = (new BrandedMail())
+            ->subject($subject)
+            ->view($template, $data);
+        
+        EmailService::sendTransactional($mailable, $to, $subject);
     }
 }

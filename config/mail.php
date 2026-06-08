@@ -49,6 +49,16 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Resend - Primary for transactional emails (3,000/month free)
+        'resend' => [
+            'transport' => 'resend',
+        ],
+
+        // Brevo API - For marketing emails (300/day free)
+        'brevo-api' => [
+            'transport' => 'brevo-api',
+        ],
+
         // Brevo (Sendinblue) - 300 emails/day free
         'brevo' => [
             'transport' => 'smtp',

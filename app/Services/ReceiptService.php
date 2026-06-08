@@ -6,8 +6,9 @@ use App\Models\User;
 use App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel;
 use App\Models\Transaction;
 use App\Models\Receipt;
+use App\Mail\BrandedMail;
+use App\Services\EmailService;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Mail;
 
 class ReceiptService
 {
@@ -160,7 +161,7 @@ class ReceiptService
     }
     
     /**
-     * Send receipt via email
+     * Send receipt via email using EmailService (transactional)
      */
     public function emailReceipt(User $user, string $receiptPath, string $subject): void
     {
@@ -174,11 +175,13 @@ class ReceiptService
         }
 
         try {
-            Mail::send('emails.receipt', ['user' => $user], function ($message) use ($user, $receiptPath, $subject) {
-                $message->to($user->email, $user->name)
-                    ->subject($subject)
-                    ->attach($receiptPath);
-            });
+            // Use EmailService for transactional emails (Resend - fast delivery)
+            $mailable = (new BrandedMail())
+                ->subject($subject)
+                ->view('emails.receipt', ['user' => $user])
+                ->attach($receiptPath);
+            
+            EmailService::sendTransactional($mailable, $user->email, $subject);
         } catch (\Throwable $e) {
             \Log::error('Failed to send receipt email', [
                 'user_id' => $user->id,

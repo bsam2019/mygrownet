@@ -56,6 +56,13 @@ class GeneralWalletController extends Controller
         // Get recent transactions using unified service
         $recentTransactions = $this->unifiedWalletService->getRecentTransactions($user, 15);
         
+        \Log::info('Wallet data being passed to view:', [
+            'user_id' => $user->id,
+            'user_currency' => $user->user_currency,
+            'preferred_currency' => $user->preferred_currency,
+            'balance' => $breakdown['balance'],
+        ]);
+        
         return Inertia::render('Wallet/Dashboard', [
             'balance' => $breakdown['balance'],
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
@@ -73,6 +80,7 @@ class GeneralWalletController extends Controller
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
             'policyAccepted' => (bool) ($user->wallet_policy_accepted ?? false),
             'accountType' => $user->getPrimaryAccountType()?->value ?? 'client',
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
         ]);
     }
 

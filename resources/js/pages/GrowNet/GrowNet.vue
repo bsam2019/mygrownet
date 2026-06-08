@@ -1367,6 +1367,7 @@
     <DepositModal
       :show="showDepositModal"
       :balance="walletBalance"
+      :user-currency="userCurrency"
       :recent-topups="recentTopups"
       @close="showDepositModal = false"
       @error="(msg) => showToastMessage(msg, 'error')"
@@ -1805,6 +1806,7 @@ const props = withDefaults(defineProps<{
   starterKit: any;
   notifications: any[];
   walletBalance: number;
+  userCurrency?: string;
   isMobileDashboard?: boolean; // Legacy flag, kept for compatibility
   verificationLimits?: any;
   remainingDailyLimit?: number;
@@ -1833,6 +1835,7 @@ const props = withDefaults(defineProps<{
   assetData: () => ({ summary: { total_assets: 0, active_assets: 0 }, assets: [] }),
   notifications: () => [],
   walletBalance: 0,
+  userCurrency: 'ZMW',
   announcements: () => [],
   messagingData: () => ({ unread_count: 0 }),
   networkGrowth: () => [],

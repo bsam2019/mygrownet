@@ -24,9 +24,15 @@ abstract class AbstractPaymentGateway implements PaymentGatewayInterface
         $url = rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/');
 
         try {
-            $response = Http::withHeaders($this->headers)
-                ->timeout($this->timeout)
-                ->$method($url, $data);
+            $http = Http::withHeaders($this->headers)
+                ->timeout($this->timeout);
+            
+            // Disable SSL verification in local development
+            if (config('app.env') === 'local' || config('app.env') === 'development') {
+                $http = $http->withoutVerifying();
+            }
+            
+            $response = $http->$method($url, $data);
 
             $body = $response->json() ?? [];
 

@@ -1408,6 +1408,9 @@ Route::middleware(['auth', 'verified'])->prefix('wallet')->name('wallet.')->grou
     Route::get('/history', [App\Http\Controllers\Wallet\GeneralWalletController::class, 'history'])->name('history');
 });
 
+// Currency System Test Page
+Route::middleware(['auth'])->get('/test-currency', fn() => Inertia::render('TestCurrency'))->name('test.currency');
+
 // Social Share Tracking Routes (for LGR activity tracking)
 Route::middleware(['auth', 'verified'])->prefix('social-shares')->name('social-shares.')->group(function () {
     Route::post('/record', [App\Http\Controllers\SocialShareController::class, 'recordShare'])->name('record');

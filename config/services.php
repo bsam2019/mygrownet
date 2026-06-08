@@ -96,6 +96,16 @@ return [
         'mock_mode' => env('PAWAPAY_MOCK_MODE', false), // Enable for testing without real API
     ],
 
+    'nowpayments' => [
+        'api_key' => env('NOWPAYMENTS_API_KEY'),
+        'ipn_secret' => env('NOWPAYMENTS_IPN_SECRET'), // For webhook signature verification
+        'sandbox' => env('NOWPAYMENTS_SANDBOX', false), // Use sandbox for testing
+    ],
+
+    'exchangerate' => [
+        'api_key' => env('EXCHANGERATE_API_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | AI Configuration (GrowBuilder AI Features)

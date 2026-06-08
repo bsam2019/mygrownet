@@ -2,6 +2,8 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import CurrencySelector from '@/Components/CurrencySelector.vue';
+import axios from 'axios';
 import { 
     WalletIcon, 
     ArrowLeftIcon,
@@ -11,6 +13,7 @@ import {
     BanknotesIcon,
     PhoneIcon,
 } from '@heroicons/vue/24/outline';
+import { CoinsIcon } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
 interface PaymentMethod {
@@ -30,6 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
     paymentMethods: () => [
         { id: 'mtn', name: 'MTN Mobile Money', type: 'mobile_money', provider: 'mtn' },
         { id: 'airtel', name: 'Airtel Money', type: 'mobile_money', provider: 'airtel' },
+        { id: 'crypto', name: 'Cryptocurrency', type: 'crypto', provider: 'nowpayments' },
     ],
 });
 
@@ -40,14 +44,70 @@ const automatedPaymentsEnabled = computed(() => (page.props as any).automatedPay
 const selectedMethod = ref('mtn');
 const quickAmounts = [50, 100, 200, 500, 1000, 2000];
 
+// Currency conversion
+const selectedCurrency = ref('ZMW');
+const convertedAmount = ref<number | null>(null);
+const loading = ref(false);
+
 const form = useForm({
     amount: '',
     payment_method: 'mtn',
     phone_number: '',
 });
 
+const displayAmount = computed(() => {
+    if (!form.amount) return 'K 0.00';
+    
+    const amount = parseFloat(form.amount);
+    if (isNaN(amount)) return 'K 0.00';
+    
+    if (selectedCurrency.value === 'ZMW') {
+        return `K ${amount.toFixed(2)}`;
+    }
+    
+    if (convertedAmount.value !== null) {
+        const symbols: Record<string, string> = {
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'ZMW': 'K', 'ZAR': 'R',
+            'KES': 'KSh', 'NGN': '₦', 'GHS': '₵', 'CAD': 'C$', 'AUD': 'A$'
+        };
+        const symbol = symbols[selectedCurrency.value] || selectedCurrency.value;
+        return `${symbol} ${convertedAmount.value.toFixed(2)}`;
+    }
+    
+    return `K ${amount.toFixed(2)}`;
+});
+
+const handleCurrencyChange = async (currency: string) => {
+    selectedCurrency.value = currency;
+    
+    const amount = parseFloat(form.amount);
+    if (currency !== 'ZMW' && form.amount && !isNaN(amount)) {
+        loading.value = true;
+        try {
+            const response = await axios.post('/api/currency/convert', {
+                amount: amount,
+                from: 'ZMW',
+                to: currency
+            });
+            
+            if (response.data.success) {
+                convertedAmount.value = response.data.converted_amount;
+            }
+        } catch (error) {
+            console.error('Currency conversion failed:', error);
+        } finally {
+            loading.value = false;
+        }
+    } else {
+        convertedAmount.value = null;
+    }
+};
+
 const selectQuickAmount = (amount: number) => {
     form.amount = amount.toString();
+    if (selectedCurrency.value !== 'ZMW') {
+        handleCurrencyChange(selectedCurrency.value);
+    }
 };
 
 // Automated payment submission
@@ -56,6 +116,39 @@ const submitAutomated = () => {
     form.post(route('wallet.topup.process'), {
         preserveScroll: true,
     });
+};
+
+// Crypto payment submission
+const submitCrypto = async () => {
+    const amount = parseFloat(form.amount);
+    if (isNaN(amount) || amount < 50) {
+        alert('Please enter a valid amount (minimum K50)');
+        return;
+    }
+
+    form.processing = true;
+    
+    try {
+        // For dual-currency system:
+        // - Zambians use ZMW (currency selector shows ZMW)
+        // - Foreigners use USD (currency selector shows USD)
+        // Wallet stores in the user's base currency (ZMW or USD)
+        const response = await axios.post('/api/payments/crypto/create', {
+            order_id: `WALLET-${Date.now()}`,
+            amount: convertedAmount.value || amount,
+            currency: selectedCurrency.value, // User's base currency (ZMW or USD)
+        });
+        
+        if (response.data.success && response.data.invoice_url) {
+            window.location.href = response.data.invoice_url;
+        } else {
+            alert(response.data.message || 'Failed to create crypto payment');
+            form.processing = false;
+        }
+    } catch (error: any) {
+        alert(error.response?.data?.message || 'Failed to initiate cryptocurrency payment');
+        form.processing = false;
+    }
 };
 
 const formatCurrency = (amount: number) => {
@@ -77,6 +170,9 @@ const isValidAmount = computed(() => {
 });
 
 const canSubmit = computed(() => {
+    if (selectedMethod.value === 'crypto') {
+        return isValidAmount.value && !form.processing && !loading.value;
+    }
     return isValidAmount.value && isValidPhone.value && selectedMethod.value;
 });
 
@@ -101,11 +197,12 @@ const goToManualPayment = () => {
                         <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
                         Back to Wallet
                     </Link>
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-green-100 rounded-lg">
-                            <WalletIcon class="h-8 w-8 text-green-600" aria-hidden="true" />
-                        </div>
-                        <div>
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <WalletIcon class="h-8 w-8 text-green-600" aria-hidden="true" />
+                            </div>
+                            <div>
                             <h1 class="text-2xl font-bold text-gray-900">Top Up Wallet</h1>
                             <p class="text-sm text-gray-600">Current balance: {{ formatCurrency(balance) }}</p>
                         </div>
@@ -187,7 +284,7 @@ const goToManualPayment = () => {
                                         :class="[
                                             'flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors',
                                             selectedMethod === method.id
-                                                ? 'border-green-500 bg-green-50'
+                                                ? method.id === 'crypto' ? 'border-indigo-500 bg-indigo-50' : 'border-green-500 bg-green-50'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         ]"
                                     >
@@ -197,19 +294,50 @@ const goToManualPayment = () => {
                                             v-model="selectedMethod"
                                             class="sr-only"
                                         />
-                                        <DevicePhoneMobileIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
-                                        <span class="font-medium text-gray-900">{{ method.name }}</span>
+                                        <CoinsIcon v-if="method.id === 'crypto'" class="h-6 w-6 text-indigo-600" />
+                                        <DevicePhoneMobileIcon v-else class="h-6 w-6 text-gray-600" aria-hidden="true" />
+                                        <div class="flex-1">
+                                            <span class="font-medium text-gray-900">{{ method.name }}</span>
+                                            <span v-if="method.id === 'crypto'" class="block text-xs text-gray-500">BTC, ETH, USDT +240</span>
+                                        </div>
                                         <CheckCircleIcon 
                                             v-if="selectedMethod === method.id"
-                                            class="h-5 w-5 text-green-600 ml-auto" 
+                                            :class="method.id === 'crypto' ? 'text-indigo-600' : 'text-green-600'"
+                                            class="h-5 w-5 ml-auto" 
                                             aria-hidden="true" 
                                         />
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Phone Number -->
-                            <div>
+                            <!-- Crypto Payment Info -->
+                            <div v-if="selectedMethod === 'crypto'" class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                                <div class="space-y-2 text-sm text-gray-700 mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Instant confirmation</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Low fees (0.5% - 1%)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>240+ cryptocurrencies</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Global payment</span>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">You will pay:</p>
+                                    <p class="text-lg font-bold text-indigo-600">{{ loading ? 'Converting...' : displayAmount }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number (only for mobile money) -->
+                            <div v-if="selectedMethod !== 'crypto'">
                                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
                                     Mobile Money Number
                                 </label>

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\StarterKitService;
 use App\Services\DefaultSponsorService;
 use App\Services\LgrActivityTrackingService;
+use App\Domain\Payment\Services\CurrencyDetectionService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +55,8 @@ class RegisteredUserController extends Controller
     public function store(
         Request $request, 
         DefaultSponsorService $defaultSponsorService,
-        LgrActivityTrackingService $lgrTrackingService
+        LgrActivityTrackingService $lgrTrackingService,
+        CurrencyDetectionService $currencyDetectionService
     ): RedirectResponse
     {
         // Normalize phone number BEFORE validation
@@ -109,6 +111,8 @@ class RegisteredUserController extends Controller
         // Find the best placement position in the 3x3 matrix (with spillover)
         $actualReferrerId = $originalReferrerId ? User::findMatrixPlacement($originalReferrerId) : null;
 
+        $userCurrency = $currencyDetectionService->detectCurrency($request->ip(), null);
+
         try {
             $user = User::create([
                 'name' => $request->name,
@@ -116,6 +120,8 @@ class RegisteredUserController extends Controller
                 'phone' => $normalizedPhone,
                 'password' => Hash::make($request->password),
                 'referrer_id' => $actualReferrerId,
+                'user_currency' => $userCurrency,
+                'preferred_currency' => $userCurrency,
             ]);
 
             event(new Registered($user));

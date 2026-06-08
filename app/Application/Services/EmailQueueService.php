@@ -5,7 +5,8 @@ namespace App\Application\Services;
 use App\Infrastructure\Persistence\Eloquent\EmailMarketing\EmailQueueModel;
 use App\Infrastructure\Persistence\Eloquent\EmailMarketing\EmailTrackingModel;
 use App\Infrastructure\Persistence\Eloquent\EmailMarketing\EmailTemplateModel;
-use Illuminate\Support\Facades\Mail;
+use App\Mail\BrandedMail;
+use App\Services\EmailService;
 use Illuminate\Support\Facades\Log;
 
 class EmailQueueService
@@ -56,12 +57,12 @@ class EmailQueueService
         $html = $this->templateService->renderTemplate($template, $user);
         $subject = $this->templateService->renderSubject($template->subject, $user);
 
-        // Send email
-        Mail::send([], [], function ($message) use ($user, $subject, $html) {
-            $message->to($user->email, $user->name)
-                ->subject($subject)
-                ->html($html);
-        });
+        // Send email using EmailService (marketing emails via Brevo)
+        $mailable = (new BrandedMail())
+            ->subject($subject)
+            ->html($html);
+        
+        EmailService::sendMarketing($mailable, $user->email, $subject);
 
         // Update queue item
         $queueItem->update([

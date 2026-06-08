@@ -501,6 +501,41 @@ class User extends Authenticatable
     }
 
     /**
+     * Get formatted wallet balance in user's base currency
+     * 
+     * IMPORTANT: This does NOT convert the balance.
+     * The balance is already stored in the user's base currency (ZMW or USD).
+     * This just adds the correct currency symbol for display.
+     * 
+     * @return string Formatted balance with currency symbol
+     */
+    public function getFormattedBalanceAttribute(): string
+    {
+        $currency = $this->user_currency ?? $this->preferred_currency ?? 'ZMW';
+        $balance = $this->balance ?? 0;
+        
+        $symbols = [
+            'ZMW' => 'K',
+            'USD' => '$',
+        ];
+        
+        $symbol = $symbols[$currency] ?? $currency;
+        
+        return $symbol . ' ' . number_format($balance, 2);
+    }
+
+    /**
+     * Get user's base currency (ZMW or USD)
+     * This is the currency their wallet is stored in.
+     * 
+     * @return string
+     */
+    public function getBaseCurrencyAttribute(): string
+    {
+        return $this->user_currency ?? $this->preferred_currency ?? 'ZMW';
+    }
+
+    /**
      * Accessor: Alias for loyalty_points_awarded_total
      */
     public function getLgrAwardedTotalAttribute()

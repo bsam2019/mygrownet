@@ -35,6 +35,7 @@ interface VerificationLimits {
 
 const props = withDefaults(defineProps<{
     balance?: number;
+    userCurrency?: string;
     bonusBalance?: number;
     loyaltyPoints?: number;
     lgrWithdrawable?: number;
@@ -68,6 +69,7 @@ const props = withDefaults(defineProps<{
     };
 }>(), {
     balance: 0,
+    userCurrency: 'ZMW',
     bonusBalance: 0,
     loyaltyPoints: 0,
     lgrWithdrawable: 0,
@@ -194,11 +196,12 @@ const getVerificationLabel = (level: string) => {
 
 const formatCurrency = (amount: number | undefined | null) => {
     const value = amount ?? 0;
-    return new Intl.NumberFormat('en-ZM', {
-        style: 'currency',
-        currency: 'ZMW',
-        minimumFractionDigits: 2,
-    }).format(value);
+    const currency = props.userCurrency || 'ZMW';
+    const symbol = currency === 'USD' ? '$' : 'K';
+    
+    console.log('formatCurrency called:', { amount: value, currency, symbol, propsUserCurrency: props.userCurrency });
+    
+    return `${symbol} ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
 </script>
 
@@ -472,8 +475,14 @@ const formatCurrency = (amount: number | undefined | null) => {
                             >
                                 {{ getVerificationLabel(verificationLevel) }}
                             </span>
+                            <span class="text-xs px-2 py-1 rounded-full bg-white/20 border border-white/30">
+                                {{ userCurrency === 'USD' ? '🇺🇸 USD' : '🇿🇲 ZMW' }}
+                            </span>
                         </div>
                         <h2 class="text-3xl sm:text-4xl font-bold mt-1">{{ formatCurrency(balance) }}</h2>
+                        <p class="text-xs text-blue-100 mt-1">
+                            {{ userCurrency === 'USD' ? 'Stored in US Dollars' : 'Stored in Zambian Kwacha' }}
+                        </p>
                     </div>
                     <BanknoteIcon class="h-12 w-12 text-blue-200" />
                 </div>

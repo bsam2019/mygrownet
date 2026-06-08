@@ -109,6 +109,7 @@ class WalletController extends Controller
         
         return Inertia::render('GrowNet/Wallet', [
             'balance' => $balance,
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'loyaltyPoints' => (float) ($user->loyalty_points ?? 0),
             'lgrWithdrawable' => $lgrWithdrawable,

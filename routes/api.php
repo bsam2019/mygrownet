@@ -46,10 +46,51 @@ Route::middleware(['web', 'auth'])->prefix('payments')->group(function () {
 });
 
 // Payment Webhooks (no auth - verified by signature)
-Route::prefix('webhooks/payments')->group(function () {
-    Route::post('/moneyunify', [PaymentWebhookController::class, 'moneyUnify']);
-    Route::post('/pawapay', [PaymentWebhookController::class, 'pawapay']);
-    Route::post('/sparco', [PaymentWebhookController::class, 'sparco']);
+Route::prefix('webhooks/payments')->name('webhooks.')->group(function () {
+    Route::post('/moneyunify', [PaymentWebhookController::class, 'moneyUnify'])->name('moneyunify');
+    Route::post('/pawapay', [PaymentWebhookController::class, 'pawapay'])->name('pawapay');
+    Route::post('/sparco', [PaymentWebhookController::class, 'sparco'])->name('sparco');
+    Route::post('/nowpayments', [\App\Http\Controllers\Webhooks\NOWPaymentsWebhookController::class, 'handle'])->name('nowpayments');
+});
+
+// Currency Routes (public and authenticated)
+Route::prefix('currency')->name('currency.')->group(function () {
+    Route::get('/detect', [\App\Http\Controllers\CurrencyController::class, 'detect'])->name('detect');
+    Route::get('/popular', [\App\Http\Controllers\CurrencyController::class, 'popular'])->name('popular');
+    Route::post('/convert', [\App\Http\Controllers\CurrencyController::class, 'convert'])->name('convert');
+    Route::get('/rate', [\App\Http\Controllers\CurrencyController::class, 'rate'])->name('rate');
+    
+    // Authenticated only
+    Route::middleware(['web', 'auth'])->group(function () {
+        Route::post('/set', [\App\Http\Controllers\CurrencyController::class, 'setCurrency'])->name('set');
+    });
+});
+
+// Set user currency for testing (uses web middleware for auth)
+Route::middleware(['web', 'auth'])->post('/set-user-currency', function(\Illuminate\Http\Request $request) {
+    $user = $request->user();
+    $currency = strtoupper($request->input('currency', 'ZMW'));
+    
+    if (!in_array($currency, ['ZMW', 'USD'])) {
+        return response()->json(['success' => false, 'message' => 'Invalid currency'], 400);
+    }
+    
+    $user->user_currency = $currency;
+    $user->preferred_currency = $currency;
+    $user->save();
+    
+    return response()->json([
+        'success' => true,
+        'currency' => $currency,
+        'balance' => $user->balance,
+        'message' => "Currency set to {$currency}"
+    ]);
+})->name('api.set-user-currency');
+
+// Crypto Payment Routes
+Route::middleware(['web', 'auth'])->prefix('payments/crypto')->name('payments.crypto.')->group(function () {
+    Route::post('/create', [\App\Http\Controllers\CryptoPaymentController::class, 'create'])->name('create');
+    Route::get('/status/{transactionId}', [\App\Http\Controllers\CryptoPaymentController::class, 'status'])->name('status');
 });
 
 // Benefits API Routes (using web auth for Inertia compatibility)

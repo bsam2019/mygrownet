@@ -341,6 +341,9 @@ class DashboardController extends Controller
             $data['walletBalance'] = 0;
         }
         
+        // Add user currency (ZMW for Zambians, USD for foreigners)
+        $data['userCurrency'] = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
+        
         // Get verification limits
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         $data['verificationLimits'] = $limits;

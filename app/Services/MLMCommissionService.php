@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 class MLMCommissionService
 {
     public function __construct(
-        private readonly CommissionSettingsService $commissionSettings
+        private readonly CommissionSettingsService $commissionSettings,
+        private readonly MultiCurrencyCommissionService $currencyService
     ) {}
 
     /**

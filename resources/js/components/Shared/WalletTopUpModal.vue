@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
+import CurrencySelector from '@/Components/CurrencySelector.vue';
+import axios from 'axios';
 import {
     XMarkIcon,
     CheckIcon,
@@ -10,6 +12,7 @@ import {
     PhoneIcon,
     CurrencyDollarIcon,
 } from '@heroicons/vue/24/outline';
+import { CoinsIcon } from 'lucide-vue-next';
 
 interface Props {
     show: boolean;
@@ -34,10 +37,15 @@ const automatedPaymentsEnabled = computed(() => (page.props as any).automatedPay
 
 const selectedAmount = ref<number | null>(null);
 const customAmount = ref('');
-const selectedMethod = ref<'mtn' | 'airtel'>('mtn');
+const selectedMethod = ref<'mtn' | 'airtel' | 'crypto'>('mtn');
 const phoneNumber = ref('');
 const processing = ref(false);
 const error = ref('');
+
+// Currency conversion
+const selectedCurrency = ref('ZMW');
+const convertedAmount = ref<number | null>(null);
+const loading = ref(false);
 
 const topUpAmount = computed(() => {
     if (selectedAmount.value) return selectedAmount.value;
@@ -45,18 +53,69 @@ const topUpAmount = computed(() => {
     return isNaN(custom) ? 0 : custom;
 });
 
+const displayAmount = computed(() => {
+    if (!topUpAmount.value) return 'K 0.00';
+    
+    if (selectedCurrency.value === 'ZMW') {
+        return `K ${topUpAmount.value.toFixed(2)}`;
+    }
+    
+    if (convertedAmount.value !== null) {
+        const symbols: Record<string, string> = {
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'ZMW': 'K', 'ZAR': 'R',
+            'KES': 'KSh', 'NGN': '₦', 'GHS': '₵', 'CAD': 'C$', 'AUD': 'A$'
+        };
+        const symbol = symbols[selectedCurrency.value] || selectedCurrency.value;
+        return `${symbol} ${convertedAmount.value.toFixed(2)}`;
+    }
+    
+    return `K ${topUpAmount.value.toFixed(2)}`;
+});
+
+const handleCurrencyChange = async (currency: string) => {
+    selectedCurrency.value = currency;
+    
+    if (currency !== 'ZMW' && topUpAmount.value) {
+        loading.value = true;
+        try {
+            const response = await axios.post('/api/currency/convert', {
+                amount: topUpAmount.value,
+                from: 'ZMW',
+                to: currency
+            });
+            
+            if (response.data.success) {
+                convertedAmount.value = response.data.converted_amount;
+            }
+        } catch (error) {
+            console.error('Currency conversion failed:', error);
+        } finally {
+            loading.value = false;
+        }
+    } else {
+        convertedAmount.value = null;
+    }
+};
+
 const isValidAmount = computed(() => topUpAmount.value >= 50);
 const isValidPhone = computed(() => /^(09[567]\d{7}|07[567]\d{7})$/.test(phoneNumber.value));
-const canSubmitAutomated = computed(() => isValidAmount.value && isValidPhone.value && !processing.value);
+const canSubmitAutomated = computed(() => isValidAmount.value && isValidPhone.value && !processing.value && selectedMethod.value !== 'crypto');
 const canSubmitManual = computed(() => isValidAmount.value && !processing.value);
+const canSubmitCrypto = computed(() => isValidAmount.value && !processing.value && !loading.value);
 
 const selectQuickAmount = (amount: number) => {
     selectedAmount.value = amount;
     customAmount.value = '';
+    if (selectedCurrency.value !== 'ZMW') {
+        handleCurrencyChange(selectedCurrency.value);
+    }
 };
 
 const onCustomAmountChange = () => {
     selectedAmount.value = null;
+    if (selectedCurrency.value !== 'ZMW') {
+        handleCurrencyChange(selectedCurrency.value);
+    }
 };
 
 const formatCurrency = (amount: number) => `K${amount.toLocaleString()}`;
@@ -92,6 +151,32 @@ const submitAutomatedPayment = async () => {
         );
     } catch (e) {
         error.value = 'An error occurred. Please try again.';
+        processing.value = false;
+    }
+};
+
+// Crypto payment submission
+const submitCryptoPayment = async () => {
+    if (!canSubmitCrypto.value) return;
+
+    processing.value = true;
+    error.value = '';
+
+    try {
+        const response = await axios.post('/api/payments/crypto/create', {
+            order_id: `WALLET-${Date.now()}`,
+            amount: convertedAmount.value || topUpAmount.value,
+            currency: selectedCurrency.value
+        });
+        
+        if (response.data.success && response.data.invoice_url) {
+            window.location.href = response.data.invoice_url;
+        } else {
+            error.value = response.data.message || 'Failed to create crypto payment';
+            processing.value = false;
+        }
+    } catch (e: any) {
+        error.value = e.response?.data?.message || 'Failed to initiate cryptocurrency payment';
         processing.value = false;
     }
 };
@@ -136,14 +221,20 @@ const close = () => {
                             </div>
                             <h3 class="text-xl font-bold text-gray-900">Top Up Wallet</h3>
                         </div>
-                        <button
-                            @click="close"
-                            :disabled="processing"
-                            class="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
-                            aria-label="Close modal"
-                        >
-                            <XMarkIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <CurrencySelector 
+                                :show-conversion="false"
+                                @currency-changed="handleCurrencyChange"
+                            />
+                            <button
+                                @click="close"
+                                :disabled="processing"
+                                class="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                                aria-label="Close modal"
+                            >
+                                <XMarkIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="p-6 space-y-5">
@@ -151,6 +242,9 @@ const close = () => {
                         <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-4 text-white">
                             <p class="text-sm text-emerald-100 mb-1">Current Balance</p>
                             <p class="text-3xl font-bold">{{ formatCurrency(balance) }}</p>
+                            <p v-if="topUpAmount > 0" class="text-sm text-emerald-100 mt-2">
+                                After top-up: {{ formatCurrency(balance + topUpAmount) }}
+                            </p>
                         </div>
 
                         <!-- Error Message -->
@@ -240,11 +334,33 @@ const close = () => {
                                             aria-hidden="true"
                                         />
                                     </button>
+                                    <button
+                                        @click="selectedMethod = 'crypto'"
+                                        :class="[
+                                            'w-full flex items-center gap-3 p-3 border-2 rounded-xl transition-all',
+                                            selectedMethod === 'crypto'
+                                                ? 'border-indigo-500 bg-indigo-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        ]"
+                                    >
+                                        <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                                            <CoinsIcon class="h-5 w-5 text-white" />
+                                        </div>
+                                        <div class="flex-1 text-left">
+                                            <span class="font-semibold text-gray-900 block">Cryptocurrency</span>
+                                            <span class="text-xs text-gray-500">BTC, ETH, USDT +240</span>
+                                        </div>
+                                        <CheckIcon
+                                            v-if="selectedMethod === 'crypto'"
+                                            class="h-5 w-5 text-indigo-600 ml-auto"
+                                            aria-hidden="true"
+                                        />
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Phone Number -->
-                            <div>
+                            <!-- Phone Number (only for mobile money) -->
+                            <div v-if="selectedMethod !== 'crypto'">
                                 <label class="text-sm font-semibold text-gray-700 mb-2 block">Phone Number</label>
                                 <input
                                     v-model="phoneNumber"
@@ -255,6 +371,32 @@ const close = () => {
                                 <p v-if="phoneNumber && !isValidPhone" class="text-xs text-red-500 mt-1">
                                     Enter a valid Zambian mobile number
                                 </p>
+                            </div>
+
+                            <!-- Crypto Payment Info -->
+                            <div v-if="selectedMethod === 'crypto'" class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200">
+                                <div class="space-y-2 text-sm text-gray-700">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Instant confirmation</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Low fees (0.5% - 1%)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>240+ cryptocurrencies</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-green-600">✓</span>
+                                        <span>Global payment</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 p-3 bg-white rounded-lg">
+                                    <p class="text-xs text-gray-600 mb-1">You will pay:</p>
+                                    <p class="text-lg font-bold text-indigo-600">{{ loading ? 'Converting...' : displayAmount }}</p>
+                                </div>
                             </div>
 
                             <!-- Summary -->
@@ -349,12 +491,21 @@ const close = () => {
                             </button>
                             <!-- Automated Payment Button -->
                             <button
-                                v-if="automatedPaymentsEnabled"
+                                v-if="automatedPaymentsEnabled && selectedMethod !== 'crypto'"
                                 @click="submitAutomatedPayment"
                                 :disabled="!canSubmitAutomated"
                                 class="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold hover:from-emerald-600 hover:to-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {{ processing ? 'Processing...' : `Pay ${formatCurrency(topUpAmount)}` }}
+                            </button>
+                            <!-- Crypto Payment Button -->
+                            <button
+                                v-else-if="selectedMethod === 'crypto'"
+                                @click="submitCryptoPayment"
+                                :disabled="!canSubmitCrypto"
+                                class="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                            >
+                                {{ processing ? 'Processing...' : loading ? 'Converting...' : `Pay with Crypto` }}
                             </button>
                             <!-- Manual Payment Button -->
                             <button

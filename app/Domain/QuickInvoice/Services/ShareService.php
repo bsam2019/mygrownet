@@ -6,7 +6,7 @@ namespace App\Domain\QuickInvoice\Services;
 
 use App\Domain\QuickInvoice\Entities\Document;
 use App\Mail\QuickInvoiceMail;
-use Illuminate\Support\Facades\Mail;
+use App\Services\EmailService;
 
 class ShareService
 {
@@ -62,7 +62,7 @@ class ShareService
     }
 
     /**
-     * Send email with PDF attachment (generated on-demand)
+     * Send email with PDF attachment (generated on-demand) using EmailService
      */
     public function sendEmail(Document $document, ?string $customMessage = null): bool
     {
@@ -76,7 +76,11 @@ class ShareService
             // Generate PDF on-demand for email attachment
             $pdfContent = $this->pdfGenerator->output($document);
             
-            Mail::to($clientEmail)->send(new QuickInvoiceMail($document, $pdfContent, $customMessage));
+            // Use EmailService for transactional emails (invoices/receipts)
+            $mailable = new QuickInvoiceMail($document, $pdfContent, $customMessage);
+            $subject = $document->type()->label() . ' #' . $document->documentNumber();
+            
+            EmailService::sendTransactional($mailable, $clientEmail, $subject);
             return true;
         } catch (\Exception $e) {
             report($e);

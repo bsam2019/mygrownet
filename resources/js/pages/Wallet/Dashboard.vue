@@ -51,6 +51,7 @@ const props = withDefaults(defineProps<{
     accountType?: string;
 }>(), {
     balance: 0,
+    userCurrency: 'ZMW',
     bonusBalance: 0,
     totalDeposits: 0,
     totalWithdrawals: 0,
@@ -138,11 +139,10 @@ const getStatusBadge = (status: string) => {
 
 const formatCurrency = (amount: number | undefined | null) => {
     const value = amount ?? 0;
-    return new Intl.NumberFormat('en-ZM', {
-        style: 'currency',
-        currency: 'ZMW',
-        minimumFractionDigits: 2,
-    }).format(value);
+    const currency = props.userCurrency || 'ZMW';
+    const symbol = currency === 'USD' ? '$' : 'K';
+    
+    return `${symbol} ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
 
 const accountTypeLabel = computed(() => {
@@ -152,6 +152,31 @@ const accountTypeLabel = computed(() => {
         default: return 'Personal Account';
     }
 });
+
+const switchCurrency = async (currency: 'ZMW' | 'USD') => {
+    try {
+        const response = await fetch('/api/set-user-currency', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            body: JSON.stringify({ currency }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Hard reload to get fresh data
+            window.location.reload();
+        } else {
+            alert('Failed to switch currency: ' + (data.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Currency switch error:', error);
+        alert('Failed to switch currency');
+    }
+};
 </script>
 
 <template>
@@ -239,7 +264,7 @@ const accountTypeLabel = computed(() => {
                 <!-- Balance Card -->
                 <div class="mb-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
                     <div class="flex items-center justify-between mb-4">
-                        <div>
+                        <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
                                 <p class="text-blue-100 text-sm">Available Balance</p>
                                 <span 
@@ -247,10 +272,41 @@ const accountTypeLabel = computed(() => {
                                 >
                                     {{ getVerificationLabel(verificationLevel) }}
                                 </span>
+                                <span class="text-xs px-2 py-1 rounded-full bg-white/20 border border-white/30">
+                                    {{ userCurrency === 'USD' ? '🇺🇸 USD' : '🇿🇲 ZMW' }}
+                                </span>
                             </div>
                             <h2 class="text-3xl sm:text-4xl font-bold mt-1">{{ formatCurrency(balance) }}</h2>
+                            <p class="text-xs text-blue-100 mt-1">
+                                {{ userCurrency === 'USD' ? 'Stored in US Dollars' : 'Stored in Zambian Kwacha' }}
+                            </p>
                         </div>
-                        <WalletIcon class="h-12 w-12 text-blue-200" aria-hidden="true" />
+                        <div class="flex flex-col items-end gap-2">
+                            <WalletIcon class="h-12 w-12 text-blue-200" aria-hidden="true" />
+                            <!-- Currency Test Switcher (DEV ONLY) -->
+                            <div class="flex gap-1">
+                                <button
+                                    @click="switchCurrency('ZMW')"
+                                    :class="[
+                                        'text-xs px-2 py-1 rounded',
+                                        userCurrency === 'ZMW' ? 'bg-white text-blue-600 font-bold' : 'bg-white/20 text-white hover:bg-white/30'
+                                    ]"
+                                    title="Test: Switch to ZMW"
+                                >
+                                    K
+                                </button>
+                                <button
+                                    @click="switchCurrency('USD')"
+                                    :class="[
+                                        'text-xs px-2 py-1 rounded',
+                                        userCurrency === 'USD' ? 'bg-white text-blue-600 font-bold' : 'bg-white/20 text-white hover:bg-white/30'
+                                    ]"
+                                    title="Test: Switch to USD"
+                                >
+                                    $
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Bonus Balance -->

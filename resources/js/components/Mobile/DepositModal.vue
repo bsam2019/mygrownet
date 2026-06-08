@@ -31,7 +31,7 @@
               <!-- Current Balance -->
               <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
                 <p class="text-xs text-blue-600 font-medium mb-1">Current Balance</p>
-                <p class="text-2xl font-bold text-blue-900">K{{ formatCurrency(balance) }}</p>
+                <p class="text-2xl font-bold text-blue-900">{{ currencySymbol }}{{ formatCurrency(balance) }}</p>
               </div>
 
               <!-- Amount Input -->
@@ -40,7 +40,7 @@
                   Top-up Amount
                 </label>
                 <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">K</span>
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">{{ currencySymbol }}</span>
                   <input
                     v-model="amount"
                     type="number"
@@ -54,7 +54,7 @@
               </div>
 
               <!-- Quick Amount Buttons -->
-              <div>
+              <div v-if="userCurrency === 'ZMW'">
                 <p class="text-xs font-medium text-gray-600 mb-2">Quick Select</p>
                 <div class="grid grid-cols-4 gap-2">
                   <button
@@ -64,6 +64,21 @@
                     class="py-3 px-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg transition-colors text-sm active:scale-95"
                   >
                     K{{ quickAmount }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Amount Buttons (USD) -->
+              <div v-if="userCurrency === 'USD'">
+                <p class="text-xs font-medium text-gray-600 mb-2">Quick Select</p>
+                <div class="grid grid-cols-4 gap-2">
+                  <button
+                    v-for="quickAmount in [10, 25, 50, 100]"
+                    :key="quickAmount"
+                    @click="amount = quickAmount"
+                    class="py-3 px-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg transition-colors text-sm active:scale-95"
+                  >
+                    ${{ quickAmount }}
                   </button>
                 </div>
               </div>
@@ -125,10 +140,17 @@
               <button
                 v-if="!showInstructions"
                 @click="showPaymentInstructions"
-                :disabled="!canSubmit"
-                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold text-center hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="!canSubmit || cryptoProcessing"
+                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold text-center hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Show Payment Instructions
+                <span v-if="!cryptoProcessing">{{ selectedMethod === 'cryptocurrency' ? 'Create Crypto Invoice' : 'Show Payment Instructions' }}</span>
+                <span v-else class="flex items-center gap-2">
+                  <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating Invoice...
+                </span>
               </button>
 
               <!-- Payment Instructions (Mobile Money) -->
@@ -162,7 +184,7 @@
                     <p>3. Choose Cash Out</p>
                     <p>4. Enter 1 to choose Agent Number</p>
                     <p>5. Enter Agent Number: <strong>0760491206</strong></p>
-                    <p>6. Enter amount: <strong>K{{ amount }}</strong></p>
+                    <p>6. Enter amount: <strong>{{ currencySymbol }}{{ formatAmount(amount) }}</strong></p>
                     <p>7. Enter your PIN</p>
                   </div>
                 </div>
@@ -180,7 +202,7 @@
                     <p>1. Dial *115#</p>
                     <p>2. Select "Send Money"</p>
                     <p>3. Enter: <strong>0979230669</strong></p>
-                    <p>4. Enter amount: <strong>K{{ amount }}</strong></p>
+                    <p>4. Enter amount: <strong>{{ currencySymbol }}{{ formatAmount(amount) }}</strong></p>
                     <p>5. Confirm transaction</p>
                   </div>
                 </div>
@@ -268,7 +290,7 @@
                   </svg>
                   <div>
                     <h4 class="font-bold text-green-900 mb-2">Bank Transfer Details</h4>
-                    <p class="text-sm text-green-800">Transfer K{{ amount }} to:</p>
+                    <p class="text-sm text-green-800">Transfer {{ currencySymbol }}{{ formatAmount(amount) }} to:</p>
                   </div>
                 </div>
                 
@@ -291,7 +313,7 @@
                     </div>
                   </div>
                   <p class="text-xs text-gray-500 mt-3">
-                    Amount to transfer: <span class="font-bold">K{{ amount }}</span>
+                    Amount to transfer: <span class="font-bold">{{ currencySymbol }}{{ formatAmount(amount) }}</span>
                   </p>
                 </div>
 
@@ -374,6 +396,100 @@
                 </div>
               </div>
 
+              <!-- Payment Instructions (Cryptocurrency) -->
+              <div v-if="showInstructions && selectedMethod === 'cryptocurrency'" class="bg-indigo-50 border-2 border-indigo-500 rounded-xl p-5 space-y-4">
+                <div class="flex items-start gap-3">
+                  <svg class="h-6 w-6 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h4 class="font-bold text-indigo-900 mb-2">Cryptocurrency Payment</h4>
+                    <p class="text-sm text-indigo-800">Pay {{ currencySymbol }}{{ formatAmount(amount) }} using crypto</p>
+                  </div>
+                </div>
+                
+                <div class="bg-white rounded-lg p-4">
+                  <div class="text-center mb-4">
+                    <svg class="h-16 w-16 text-indigo-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h5 class="font-bold text-gray-900 mb-2">Crypto Payment Invoice Created!</h5>
+                    <p class="text-sm text-gray-700 mb-4">
+                      A payment invoice has been created. Click the button below to complete your payment.
+                    </p>
+                  </div>
+
+                  <div class="space-y-3">
+                    <!-- Payment Details -->
+                    <div class="bg-indigo-50 rounded-lg p-3 text-sm">
+                      <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Amount:</span>
+                        <span class="font-bold text-gray-900">{{ currencySymbol }}{{ formatAmount(amount) }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-gray-600">Payment Method:</span>
+                        <span class="font-bold text-gray-900">Cryptocurrency</span>
+                      </div>
+                    </div>
+
+                    <!-- Open Invoice Button -->
+                    <a
+                      v-if="cryptoInvoiceUrl"
+                      :href="cryptoInvoiceUrl"
+                      target="_blank"
+                      class="block w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 rounded-xl font-semibold text-center hover:from-indigo-700 hover:to-indigo-800 transition-all"
+                    >
+                      Open Payment Invoice →
+                    </a>
+
+                    <!-- Instructions -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+                      <p class="font-semibold mb-1">📝 Instructions:</p>
+                      <ol class="space-y-1 ml-4 list-decimal">
+                        <li>Click "Open Payment Invoice" above</li>
+                        <li>Select your preferred cryptocurrency (BTC, ETH, USDT, etc.)</li>
+                        <li>Send the exact amount to the provided address</li>
+                        <li>Your wallet will be credited automatically after confirmation</li>
+                      </ol>
+                    </div>
+
+                    <!-- Supported Cryptocurrencies -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                      <p class="text-xs font-semibold text-gray-700 mb-2">Supported Cryptocurrencies:</p>
+                      <div class="flex flex-wrap gap-1">
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">BTC</span>
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">ETH</span>
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">USDT</span>
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">USDC</span>
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">LTC</span>
+                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">+240 more</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 mt-4">
+                  <button
+                    @click="showInstructions = false; cryptoInvoiceUrl = null"
+                    class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300"
+                  >
+                    Close
+                  </button>
+                  <button
+                    @click="emit('close')"
+                    class="flex-1 bg-gradient-to-r from-green-600 to-emerald-700 text-white py-3 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-800"
+                  >
+                    Done
+                  </button>
+                </div>
+
+                <!-- Info -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                  <p class="font-semibold mb-1">ℹ️ Note:</p>
+                  <p>Cryptocurrency payments are automatically confirmed once the blockchain transaction is verified. This usually takes 5-30 minutes depending on network congestion.</p>
+                </div>
+              </div>
+
               <!-- Recent Top-ups -->
               <div v-if="recentTopups.length > 0">
                 <h4 class="text-sm font-semibold text-gray-900 mb-3">Recent Top-ups</h4>
@@ -384,7 +500,7 @@
                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <p class="text-sm font-medium text-gray-900">K{{ formatCurrency(topup.amount) }}</p>
+                      <p class="text-sm font-medium text-gray-900">{{ currencySymbol }}{{ formatCurrency(topup.amount) }}</p>
                       <p class="text-xs text-gray-500">{{ topup.date }}</p>
                     </div>
                     <span
@@ -413,10 +529,12 @@ interface Props {
   show: boolean;
   balance: number;
   recentTopups?: any[];
+  userCurrency?: string;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   recentTopups: () => [],
+  userCurrency: 'ZMW',
 });
 
 const emit = defineEmits(['close', 'error']);
@@ -430,16 +548,28 @@ const paymentReference = ref('');
 const notes = ref('');
 const submitting = ref(false);
 const showSuccess = ref(false);
+const cryptoInvoiceUrl = ref<string | null>(null);
+const cryptoProcessing = ref(false);
 
-const paymentMethods = [
-  { value: 'mobile_money', label: 'Mobile Money (MTN/Airtel)' },
-  { value: 'bank_transfer', label: 'Bank Transfer' },
-];
+const paymentMethods = computed(() => [
+  { value: 'mobile_money', label: 'Mobile Money (MTN/Airtel)', availableFor: ['ZMW'] },
+  { value: 'bank_transfer', label: 'Bank Transfer', availableFor: ['ZMW', 'USD'] },
+  { value: 'cryptocurrency', label: 'Cryptocurrency', availableFor: ['ZMW', 'USD'] },
+].filter(method => method.availableFor.includes(props.userCurrency)));
 
 const selectedMethodLabel = computed(() => {
-  const method = paymentMethods.find(m => m.value === selectedMethod.value);
+  const method = paymentMethods.value.find(m => m.value === selectedMethod.value);
   return method?.label || 'Mobile Money';
 });
+
+// Currency symbol helper
+const currencySymbol = computed(() => props.userCurrency === 'USD' ? '$' : 'K');
+
+// Format currency based on user's currency
+const formatAmount = (value: number | null) => {
+  if (!value) return '0.00';
+  return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
 const canSubmit = computed(() => {
   if (!amount.value || amount.value < 10 || amountError.value) {
@@ -448,6 +578,10 @@ const canSubmit = computed(() => {
   
   if (selectedMethod.value === 'mobile_money' && !phoneNumber.value) {
     return false;
+  }
+  
+  if (selectedMethod.value === 'cryptocurrency') {
+    return true; // Crypto doesn't need additional info before creating invoice
   }
   
   return true;
@@ -460,16 +594,75 @@ const validateAmount = () => {
     return;
   }
   
-  if (amount.value < 10) {
-    amountError.value = 'Minimum top-up amount is K10';
-  } else if (amount.value > 100000) {
-    amountError.value = 'Maximum top-up amount is K100,000';
+  const minAmount = props.userCurrency === 'USD' ? 1 : 10;
+  const maxAmount = props.userCurrency === 'USD' ? 10000 : 100000;
+  
+  if (amount.value < minAmount) {
+    amountError.value = `Minimum top-up amount is ${currencySymbol.value}${minAmount}`;
+  } else if (amount.value > maxAmount) {
+    amountError.value = `Maximum top-up amount is ${currencySymbol.value}${maxAmount.toLocaleString()}`;
   }
 };
 
-const showPaymentInstructions = () => {
-  if (canSubmit.value) {
+const showPaymentInstructions = async () => {
+  if (!canSubmit.value) return;
+  
+  // For cryptocurrency, create invoice immediately
+  if (selectedMethod.value === 'cryptocurrency') {
+    await createCryptoInvoice();
+  } else {
     showInstructions.value = true;
+  }
+};
+
+const createCryptoInvoice = async () => {
+  if (!amount.value || cryptoProcessing.value) return;
+  
+  cryptoProcessing.value = true;
+  
+  try {
+    const response = await fetch(route('payments.crypto.create'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        order_id: `WALLET-TOPUP-${Date.now()}`,
+        amount: amount.value,
+        currency: props.userCurrency,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Crypto payment API error:', errorData);
+      emit('error', errorData.message || `HTTP Error ${response.status}: Failed to create payment invoice`);
+      cryptoProcessing.value = false;
+      return;
+    }
+    
+    const data = await response.json();
+    console.log('Crypto payment response:', data);
+    
+    if (data.success && data.invoice_url) {
+      cryptoInvoiceUrl.value = data.invoice_url;
+      
+      // Open invoice in new window
+      window.open(data.invoice_url, '_blank');
+      
+      // Show success message with instructions
+      showInstructions.value = true;
+    } else {
+      console.error('Crypto payment failed:', data);
+      emit('error', data.message || 'Failed to create cryptocurrency payment invoice');
+    }
+  } catch (error) {
+    console.error('Crypto invoice creation error:', error);
+    emit('error', `Failed to create cryptocurrency payment: ${error.message || 'Network error'}`);
+  } finally {
+    cryptoProcessing.value = false;
   }
 };
 
