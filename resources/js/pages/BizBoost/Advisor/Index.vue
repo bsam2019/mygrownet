@@ -2,6 +2,7 @@
 import { ref, computed, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     SparklesIcon,
     PaperAirplaneIcon,
@@ -248,7 +249,7 @@ const typeIcons: Record<string, any> = {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Sales (30 days)</span>
-                            <span class="font-medium">K{{ insights.total_sales_30d?.toLocaleString() }}</span>
+                            <span class="font-medium">{{ formatBizBoostPrice(insights.total_sales_30d ?? 0) }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Posts (30 days)</span>

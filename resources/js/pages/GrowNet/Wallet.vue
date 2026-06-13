@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { BanknoteIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, GiftIcon, TrophyIcon, ShieldCheckIcon, AlertCircleIcon, InfoIcon, XIcon } from 'lucide-vue-next';
 import { ref } from 'vue';
@@ -54,7 +54,9 @@ const props = withDefaults(defineProps<{
     workshopExpenses?: number;
     verificationLevel?: string;
     verificationLimits?: VerificationLimits;
+    verificationLimitsDisplay?: VerificationLimits;
     remainingDailyLimit?: number;
+    remainingDailyLimitDisplay?: number;
     policyAccepted?: boolean;
     loanSummary?: {
         has_loan: boolean;
@@ -88,7 +90,9 @@ const props = withDefaults(defineProps<{
     workshopExpenses: 0,
     verificationLevel: 'basic',
     verificationLimits: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
+    verificationLimitsDisplay: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
     remainingDailyLimit: 1000,
+    remainingDailyLimitDisplay: 1000,
     policyAccepted: false,
     loanSummary: () => ({
         has_loan: false,
@@ -194,12 +198,11 @@ const getVerificationLabel = (level: string) => {
     }
 };
 
+const page = usePage();
 const formatCurrency = (amount: number | undefined | null) => {
     const value = amount ?? 0;
-    const currency = props.userCurrency || 'ZMW';
-    const symbol = currency === 'USD' ? '$' : 'K';
-    
-    console.log('formatCurrency called:', { amount: value, currency, symbol, propsUserCurrency: props.userCurrency });
+    const cur = props.userCurrency || (page.props as any).userCurrency || 'ZMW';
+    const symbol = cur === 'USD' ? '$' : 'K';
     
     return `${symbol} ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
@@ -698,7 +701,7 @@ const formatCurrency = (amount: number | undefined | null) => {
             </div>
 
             <!-- Withdrawal Limits Info -->
-            <div v-if="verificationLimits" class="mb-6 bg-white rounded-lg shadow p-4">
+            <div v-if="verificationLimitsDisplay" class="mb-6 bg-white rounded-lg shadow p-4">
                 <div class="flex items-start gap-3">
                     <AlertCircleIcon class="h-5 w-5 text-blue-600 mt-0.5" />
                     <div class="flex-1">
@@ -706,16 +709,16 @@ const formatCurrency = (amount: number | undefined | null) => {
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                             <div>
                                 <p class="text-gray-600">Daily Limit</p>
-                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimits.daily_withdrawal) }}</p>
-                                <p class="text-xs text-gray-500 mt-1">Remaining: {{ formatCurrency(remainingDailyLimit) }}</p>
+                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimitsDisplay.daily_withdrawal) }}</p>
+                                <p class="text-xs text-gray-500 mt-1">Remaining: {{ formatCurrency(remainingDailyLimitDisplay) }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Monthly Limit</p>
-                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimits.monthly_withdrawal) }}</p>
+                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimitsDisplay.monthly_withdrawal) }}</p>
                             </div>
                             <div>
                                 <p class="text-gray-600">Per Transaction</p>
-                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimits.single_transaction) }}</p>
+                                <p class="font-semibold text-gray-900">{{ formatCurrency(verificationLimitsDisplay.single_transaction) }}</p>
                             </div>
                         </div>
                         <p v-if="verificationLevel === 'basic'" class="text-xs text-blue-600 mt-3">

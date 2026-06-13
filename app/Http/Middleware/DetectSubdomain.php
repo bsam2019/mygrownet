@@ -59,6 +59,15 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
+            // Handle GrowMart subdomain - set URL config and let standard routes handle it
+            if ($subdomain === 'growmart') {
+                $baseUrl = "https://{$subdomain}.mygrownet.com";
+                URL::forceRootUrl($baseUrl);
+                config(['app.url' => $baseUrl]);
+                config(['app.asset_url' => $baseUrl]);
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 

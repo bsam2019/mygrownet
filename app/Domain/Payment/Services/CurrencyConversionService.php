@@ -8,45 +8,24 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Currency Conversion Service
- * 
- * Uses ExchangeRate-API for real-time currency conversion
- * API: https://www.exchangerate-api.com
- * 
- * Features:
- * - Real-time exchange rates
- * - 1,500 requests/month free tier
- * - Caching to minimize API calls
- * - Support for 160+ currencies
- */
 class CurrencyConversionService
 {
     private ?string $apiKey;
     private string $baseUrl = 'https://v6.exchangerate-api.com/v6';
-    private int $cacheDuration = 3600; // 1 hour cache
 
     public function __construct()
     {
         $this->apiKey = config('services.exchangerate.api_key');
     }
 
-    /**
-     * Convert amount from one currency to another
-     * 
-     * @param float $amount Amount to convert
-     * @param string $from Source currency code (e.g., 'ZMW')
-     * @param string $to Target currency code (e.g., 'USD')
-     * @return float|null Converted amount or null on failure
-     */
     public function convert(float $amount, string $from, string $to): ?float
     {
         if ($from === $to) {
             return $amount;
         }
 
-        $rate = $this->getExchangeRate($from, $to);
-        
+        $rate = $this->getDailyRate($from, $to);
+
         if ($rate === null) {
             return null;
         }
@@ -54,14 +33,12 @@ class CurrencyConversionService
         return round($amount * $rate, 2);
     }
 
-    /**
-     * Get exchange rate between two currencies
-     * 
-     * @param string $from Source currency
-     * @param string $to Target currency
-     * @return float|null Exchange rate or null on failure
-     */
     public function getExchangeRate(string $from, string $to): ?float
+    {
+        return $this->getDailyRate($from, $to);
+    }
+
+    public function getDailyRate(string $from, string $to): ?float
     {
         $from = strtoupper($from);
         $to = strtoupper($to);
@@ -70,58 +47,126 @@ class CurrencyConversionService
             return 1.0;
         }
 
-        // Check cache first
-        $cacheKey = "exchange_rate_{$from}_{$to}";
-        
+        $today = now()->format('Y-m-d');
+        $cacheKey = "daily_rate_{$from}_{$to}_{$today}";
+
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
 
-        // Fetch from API
         $rate = $this->fetchExchangeRate($from, $to);
-        
+
         if ($rate !== null) {
-            // Cache for 1 hour
-            Cache::put($cacheKey, $rate, $this->cacheDuration);
+            $endOfDay = now()->endOfDay()->diffInSeconds(now());
+            Cache::put($cacheKey, $rate, $endOfDay);
+
+            Log::info('Daily exchange rate captured', [
+                'from' => $from,
+                'to' => $to,
+                'rate' => $rate,
+                'date' => $today,
+                'valid_until' => now()->endOfDay()->toDateTimeString(),
+            ]);
+
+            return $rate;
         }
 
-        return $rate;
+        $yesterdayKey = "daily_rate_{$from}_{$to}_" . now()->subDay()->format('Y-m-d');
+        if (Cache::has($yesterdayKey)) {
+            $yesterdayRate = Cache::get($yesterdayKey);
+            Log::warning('Using yesterday exchange rate as fallback', [
+                'from' => $from,
+                'to' => $to,
+                'rate' => $yesterdayRate,
+                'date' => $today,
+            ]);
+            return $yesterdayRate;
+        }
+
+        Log::error('Failed to fetch exchange rate and no cached rate available', [
+            'from' => $from,
+            'to' => $to,
+        ]);
+
+        return null;
     }
 
-    /**
-     * Get all exchange rates for a base currency
-     * 
-     * @param string $baseCurrency Base currency code
-     * @return array|null Array of rates or null on failure
-     */
     public function getAllRates(string $baseCurrency): ?array
     {
         $baseCurrency = strtoupper($baseCurrency);
-        
-        // Check cache
-        $cacheKey = "exchange_rates_{$baseCurrency}";
-        
+
+        $today = now()->format('Y-m-d');
+        $cacheKey = "daily_rates_{$baseCurrency}_{$today}";
+
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
 
-        // Fetch from API
         $rates = $this->fetchAllRates($baseCurrency);
-        
+
         if ($rates !== null) {
-            // Cache for 1 hour
-            Cache::put($cacheKey, $rates, $this->cacheDuration);
+            $endOfDay = now()->endOfDay()->diffInSeconds(now());
+            Cache::put($cacheKey, $rates, $endOfDay);
+
+            Log::info('Daily exchange rates captured', [
+                'base' => $baseCurrency,
+                'date' => $today,
+                'currencies_count' => count($rates),
+                'valid_until' => now()->endOfDay()->toDateTimeString(),
+            ]);
         }
 
         return $rates;
     }
 
-    /**
-     * Convert multiple amounts at once
-     * 
-     * @param array $conversions Array of ['amount' => float, 'from' => string, 'to' => string]
-     * @return array Results with converted amounts
-     */
+    public function refreshDailyRate(string $from, string $to): ?float
+    {
+        $today = now()->format('Y-m-d');
+        $cacheKey = "daily_rate_{$from}_{$to}_{$today}";
+
+        Cache::forget($cacheKey);
+
+        $rate = $this->fetchExchangeRate($from, $to);
+        if ($rate !== null) {
+            $endOfDay = now()->endOfDay()->diffInSeconds(now());
+            Cache::put($cacheKey, $rate, $endOfDay);
+        }
+
+        return $rate;
+    }
+
+    public function refreshAllDailyRates(string $baseCurrency = 'USD'): bool
+    {
+        $today = now()->format('Y-m-d');
+        $cacheKey = "daily_rates_{$baseCurrency}_{$today}";
+
+        Cache::forget($cacheKey);
+
+        $rates = $this->fetchAllRates($baseCurrency);
+        if ($rates !== null) {
+            $endOfDay = now()->endOfDay()->diffInSeconds(now());
+            Cache::put($cacheKey, $rates, $endOfDay);
+
+            foreach ($rates as $currency => $rate) {
+                $pairKey = "daily_rate_{$baseCurrency}_{$currency}_{$today}";
+                Cache::put($pairKey, $rate, $endOfDay);
+                $reverseKey = "daily_rate_{$currency}_{$baseCurrency}_{$today}";
+                $reverseRate = $rate > 0 ? round(1 / $rate, 6) : 0;
+                Cache::put($reverseKey, $reverseRate, $endOfDay);
+            }
+
+            Log::info('All daily exchange rates refreshed', [
+                'base' => $baseCurrency,
+                'date' => $today,
+                'currencies_count' => count($rates),
+            ]);
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function convertBatch(array $conversions): array
     {
         $results = [];
@@ -145,16 +190,10 @@ class CurrencyConversionService
         return $results;
     }
 
-    /**
-     * Get supported currencies
-     * 
-     * @return array List of supported currency codes
-     */
     public function getSupportedCurrencies(): array
     {
-        // Check cache
         $cacheKey = 'supported_currencies';
-        
+
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
@@ -169,13 +208,10 @@ class CurrencyConversionService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if (isset($data['supported_codes'])) {
                     $currencies = array_column($data['supported_codes'], 0);
-                    
-                    // Cache for 24 hours (currencies don't change often)
                     Cache::put($cacheKey, $currencies, 86400);
-                    
                     return $currencies;
                 }
             }
@@ -185,22 +221,42 @@ class CurrencyConversionService
             Log::error('Failed to fetch supported currencies', [
                 'error' => $e->getMessage(),
             ]);
-            
+
             return $this->getDefaultCurrencies();
         }
     }
 
-    /**
-     * Check if API is configured
-     */
     public function isConfigured(): bool
     {
         return !empty($this->apiKey);
     }
 
-    /**
-     * Fetch exchange rate from API
-     */
+    public function getTodayDate(): string
+    {
+        return now()->format('Y-m-d');
+    }
+
+    public function getDailyRateStatus(string $from, string $to): array
+    {
+        $from = strtoupper($from);
+        $to = strtoupper($to);
+        $today = now()->format('Y-m-d');
+        $cacheKey = "daily_rate_{$from}_{$to}_{$today}";
+
+        $cached = Cache::has($cacheKey);
+        $rate = $cached ? Cache::get($cacheKey) : null;
+
+        return [
+            'from' => $from,
+            'to' => $to,
+            'date' => $today,
+            'rate' => $rate,
+            'cached' => $cached,
+            'api_configured' => $this->isConfigured(),
+            'valid_until' => now()->endOfDay()->toDateTimeString(),
+        ];
+    }
+
     private function fetchExchangeRate(string $from, string $to): ?float
     {
         try {
@@ -214,14 +270,8 @@ class CurrencyConversionService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if (isset($data['conversion_rate'])) {
-                    Log::info('Exchange rate fetched', [
-                        'from' => $from,
-                        'to' => $to,
-                        'rate' => $data['conversion_rate'],
-                    ]);
-                    
                     return (float) $data['conversion_rate'];
                 }
             }
@@ -240,14 +290,11 @@ class CurrencyConversionService
                 'to' => $to,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
 
-    /**
-     * Fetch all exchange rates for a base currency
-     */
     private function fetchAllRates(string $baseCurrency): ?array
     {
         try {
@@ -260,7 +307,7 @@ class CurrencyConversionService
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if (isset($data['conversion_rates'])) {
                     return $data['conversion_rates'];
                 }
@@ -272,14 +319,11 @@ class CurrencyConversionService
                 'base' => $baseCurrency,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return null;
         }
     }
 
-    /**
-     * Get default currencies when API is not available
-     */
     private function getDefaultCurrencies(): array
     {
         return [
@@ -288,25 +332,17 @@ class CurrencyConversionService
         ];
     }
 
-    /**
-     * Clear exchange rate cache
-     */
     public function clearCache(): void
     {
-        Cache::flush();
         Log::info('Exchange rate cache cleared');
     }
 
-    /**
-     * Get cache statistics
-     */
     public function getCacheStats(): array
     {
-        // This is a simple implementation
-        // You can enhance it to track actual cache hits/misses
         return [
-            'cache_duration' => $this->cacheDuration,
+            'cache_duration' => 'end_of_day',
             'cache_enabled' => true,
+            'api_configured' => $this->isConfigured(),
         ];
     }
 }

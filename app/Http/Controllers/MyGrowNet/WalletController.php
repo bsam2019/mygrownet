@@ -29,8 +29,13 @@ class WalletController extends Controller
         // Note: starter_kits removed - already included in withdrawals
         
         // Get verification limits
+        $currency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         $remainingDailyLimit = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
+        $displayLimits = $this->getVerificationLimits($user->verification_level ?? 'basic', $currency);
+        $remainingDailyLimitDisplay = $currency === 'USD'
+            ? round(($displayLimits['daily_withdrawal'] / $limits['daily_withdrawal']) * max(0, $remainingDailyLimit), 2)
+            : max(0, $remainingDailyLimit);
         
         // Get recent transactions (combine commissions, profit shares, and wallet top-ups)
         $recentCommissions = $user->referralCommissions()
@@ -129,7 +134,9 @@ class WalletController extends Controller
             'starterKitExpenses' => 0, // Deprecated - now included in withdrawals
             'verificationLevel' => $user->verification_level ?? 'basic',
             'verificationLimits' => $limits,
+            'verificationLimitsDisplay' => $displayLimits,
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
+            'remainingDailyLimitDisplay' => max(0, $remainingDailyLimitDisplay),
             'policyAccepted' => (bool) ($user->wallet_policy_accepted ?? false),
             'loanSummary' => $loanSummary,
         ]);
@@ -153,30 +160,9 @@ class WalletController extends Controller
     /**
      * Get verification limits based on level
      */
-    private function getVerificationLimits(string $level): array
+    private function getVerificationLimits(string $level, string $currency = 'ZMW'): array
     {
-        return match($level) {
-            'basic' => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-            'enhanced' => [
-                'daily_withdrawal' => 5000,
-                'monthly_withdrawal' => 50000,
-                'single_transaction' => 2000,
-            ],
-            'premium' => [
-                'daily_withdrawal' => 20000,
-                'monthly_withdrawal' => 200000,
-                'single_transaction' => 10000,
-            ],
-            default => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-        };
+        return app(\App\Services\VerificationLimitService::class)->getLimits($level, $currency);
     }
     
     /**

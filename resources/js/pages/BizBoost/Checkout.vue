@@ -31,7 +31,7 @@ const submit = () => {
     form.post(route('bizboost.subscription.process'));
 };
 
-const formatPrice = (price: number) => `K${price.toLocaleString()}`;
+import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';
 </script>
 
 <template>

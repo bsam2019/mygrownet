@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
@@ -46,7 +46,9 @@ const props = withDefaults(defineProps<{
     pendingWithdrawals?: number;
     verificationLevel?: string;
     verificationLimits?: VerificationLimits;
+    verificationLimitsDisplay?: VerificationLimits;
     remainingDailyLimit?: number;
+    remainingDailyLimitDisplay?: number;
     policyAccepted?: boolean;
     accountType?: string;
 }>(), {
@@ -64,7 +66,9 @@ const props = withDefaults(defineProps<{
     pendingWithdrawals: 0,
     verificationLevel: 'basic',
     verificationLimits: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
+    verificationLimitsDisplay: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
     remainingDailyLimit: 1000,
+    remainingDailyLimitDisplay: 1000,
     policyAccepted: false,
     accountType: 'client',
 });
@@ -137,10 +141,11 @@ const getStatusBadge = (status: string) => {
     }
 };
 
+const page = usePage();
 const formatCurrency = (amount: number | undefined | null) => {
     const value = amount ?? 0;
-    const currency = props.userCurrency || 'ZMW';
-    const symbol = currency === 'USD' ? '$' : 'K';
+    const cur = props.userCurrency || (page.props as any).userCurrency || 'ZMW';
+    const symbol = cur === 'USD' ? '$' : 'K';
     
     return `${symbol} ${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 };
@@ -470,16 +475,16 @@ const switchCurrency = async (currency: 'ZMW' | 'USD') => {
                     <div class="grid grid-cols-3 gap-4 text-sm">
                         <div>
                             <p class="text-gray-500">Daily Limit</p>
-                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimits.daily_withdrawal) }}</p>
-                            <p class="text-xs text-green-600">{{ formatCurrency(remainingDailyLimit) }} remaining</p>
+                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimitsDisplay.daily_withdrawal) }}</p>
+                            <p class="text-xs text-green-600">{{ formatCurrency(remainingDailyLimitDisplay) }} remaining</p>
                         </div>
                         <div>
                             <p class="text-gray-500">Monthly Limit</p>
-                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimits.monthly_withdrawal) }}</p>
+                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimitsDisplay.monthly_withdrawal) }}</p>
                         </div>
                         <div>
                             <p class="text-gray-500">Per Transaction</p>
-                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimits.single_transaction) }}</p>
+                            <p class="font-medium text-gray-900">{{ formatCurrency(verificationLimitsDisplay.single_transaction) }}</p>
                         </div>
                     </div>
                 </div>

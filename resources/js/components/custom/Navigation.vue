@@ -279,6 +279,7 @@
             name: 'Services', 
             dropdown: [
               { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services', moduleKey: 'growmarket' },
+
               { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites', moduleKey: 'growbuilder' },
               { name: 'Quick Invoice', url: route('quick-invoice.index'), description: 'Create invoices & receipts', moduleKey: 'cms' },
               { name: 'Training', route: 'training', description: 'Learn new skills', moduleKey: 'library' },

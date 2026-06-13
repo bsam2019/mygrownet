@@ -1559,7 +1559,7 @@ Route::get('/{path}', function ($path) {
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory)[a-zA-Z0-9_-]+');
+})->where('path', '(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory|growmart)[a-zA-Z0-9_-]+');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder

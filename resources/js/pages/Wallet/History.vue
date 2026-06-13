@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
@@ -26,6 +26,7 @@ interface Transaction {
 interface Props {
     transactions?: Transaction[];
     balance?: number;
+    userCurrency?: string;
     totalDeposits?: number;
     totalWithdrawals?: number;
     filters?: {
@@ -39,6 +40,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     transactions: () => [],
     balance: 0,
+    userCurrency: 'ZMW',
     totalDeposits: 0,
     totalWithdrawals: 0,
     filters: () => ({}),
@@ -119,10 +121,12 @@ const isCredit = (type: string) => {
     return ['deposit', 'credit', 'topup', 'refund'].includes(type);
 };
 
+const page = usePage();
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', {
+    const cur = props.userCurrency || (page.props as any).userCurrency || 'ZMW';
+    return new Intl.NumberFormat(cur === 'USD' ? 'en-US' : 'en-ZM', {
         style: 'currency',
-        currency: 'ZMW',
+        currency: cur,
         minimumFractionDigits: 2,
     }).format(amount);
 };

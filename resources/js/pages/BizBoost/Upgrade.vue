@@ -83,10 +83,7 @@ const selectTier = (tierKey: string) => {
     });
 };
 
-const formatPrice = (price: number) => {
-    if (price === 0) return 'K0';
-    return `K${price.toLocaleString()}`;
-};
+import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';
 
 const formatLimit = (value: number) => {
     if (value === -1) return 'Unlimited';

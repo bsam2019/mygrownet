@@ -202,6 +202,8 @@ class PerformanceBonusService
     {
         DB::beginTransaction();
         try {
+            $userCurrency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
+
             // Create team volume bonus commission record
             if ($teamVolumeBonus > 0) {
                 ReferralCommission::create([
@@ -215,7 +217,10 @@ class PerformanceBonusService
                     'package_amount' => $user->getCurrentTeamVolume()?->team_volume ?? 0,
                     'team_volume' => $user->getCurrentTeamVolume()?->team_volume ?? 0,
                     'personal_volume' => $user->getCurrentTeamVolume()?->personal_volume ?? 0,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'currency' => $userCurrency,
+                    'original_amount' => $teamVolumeBonus,
+                    'original_currency' => $userCurrency,
                 ]);
             }
 
@@ -232,7 +237,10 @@ class PerformanceBonusService
                     'package_amount' => $user->getCurrentTeamVolume()?->team_volume ?? 0,
                     'team_volume' => $user->getCurrentTeamVolume()?->team_volume ?? 0,
                     'personal_volume' => $user->getCurrentTeamVolume()?->personal_volume ?? 0,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'currency' => $userCurrency,
+                    'original_amount' => $leadershipBonus,
+                    'original_currency' => $userCurrency,
                 ]);
             }
 
@@ -418,6 +426,8 @@ class PerformanceBonusService
             try {
                 $boostAmount = $commission->amount * 0.25; // 25% boost
 
+                $userCurrency = $commission->referrer?->user_currency ?? $commission->referrer?->preferred_currency ?? 'ZMW';
+
                 // Create boost bonus commission
                 ReferralCommission::create([
                     'referrer_id' => $commission->referrer_id,
@@ -430,7 +440,10 @@ class PerformanceBonusService
                     'package_amount' => $commission->package_amount,
                     'team_volume' => $commission->team_volume,
                     'personal_volume' => $commission->personal_volume,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'currency' => $userCurrency,
+                    'original_amount' => $boostAmount,
+                    'original_currency' => $userCurrency,
                 ]);
 
                 $processed[] = [

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { usePWA } from '@/composables/usePWA';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     SparklesIcon,
     UsersIcon,
@@ -404,7 +405,7 @@ const getPeriodText = (tier: PricingTier) => {
                                 v-if="billingCycle === 'annual' && tier.id !== 'free' && tier.price_annual > 0"
                                 :class="['text-xs mt-1', tier.popular ? 'text-violet-200' : 'text-slate-400 dark:text-slate-500']"
                             >
-                                K{{ Math.round(tier.price_annual / 12).toLocaleString() }}/month
+                                {{ formatBizBoostPrice(Math.round(tier.price_annual / 12)) }}/month
                             </div>
                         </div>
 

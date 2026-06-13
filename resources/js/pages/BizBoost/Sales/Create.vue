@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 interface Product {
@@ -116,7 +117,7 @@ const submit = () => {
                             >
                                 <option :value="null">Select a product...</option>
                                 <option v-for="product in products" :key="product.id" :value="product.id">
-                                    {{ product.name }} - K{{ (product.sale_price || product.price).toLocaleString() }}
+                                    {{ product.name }} - {{ formatBizBoostPrice(product.sale_price || product.price) }}
                                 </option>
                             </select>
                             <p v-if="form.errors.product_id" class="mt-1 text-sm text-red-600">{{ form.errors.product_id }}</p>
@@ -163,7 +164,7 @@ const submit = () => {
                             <div class="flex items-end">
                                 <div class="w-full p-3 bg-violet-50 dark:bg-violet-900/30 rounded-lg text-center">
                                     <p class="text-xs text-violet-600 dark:text-violet-400">Total</p>
-                                    <p class="text-lg font-bold text-violet-700 dark:text-violet-300">K{{ total.toLocaleString() }}</p>
+                                    <p class="text-lg font-bold text-violet-700 dark:text-violet-300">{{ formatBizBoostPrice(total) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -232,7 +233,7 @@ const submit = () => {
                         :disabled="form.processing || !canSubmit"
                         class="flex-1 rounded-lg bg-violet-600 px-4 py-3 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                        {{ form.processing ? 'Recording...' : `Record Sale - K${total.toLocaleString()}` }}
+                        {{ form.processing ? 'Recording...' : `Record Sale - ${formatBizBoostPrice(total)}` }}
                     </button>
                     <Link
                         href="/bizboost/sales"

@@ -131,6 +131,7 @@ const getModuleDescription = (slug: string): string => {
     'rewards': 'Loyalty points & member benefits',
     'lifeplus': 'Health, wellness & lifestyle companion',
     'growbackup': 'Secure cloud storage for your files',
+    'growmart': 'Online grocery supermarket with delivery',
   };
   return descriptions[slug] || '';
 };
@@ -146,6 +147,7 @@ const getPublicLandingRoute = (slug: string): string | null => {
     'mlm-dashboard': '/login', // MLM Dashboard requires login
     'lifeplus': '/lifeplus/welcome', // LifePlus public landing
     'growbackup': '/growbackup', // GrowBackup public landing
+    'growmart': '/growmart', // GrowMart public storefront
   };
   return publicRoutes[slug] || null;
 };
@@ -198,6 +200,12 @@ const handleModuleClick = (module: Module) => {
   // GrowBackup - Cloud Storage
   if (module.slug === 'growbackup') {
     router.visit(module.primary_route || '/growbackup/dashboard');
+    return;
+  }
+
+  // GrowMart - Online grocery supermarket
+  if (module.slug === 'growmart') {
+    router.visit('/growmart');
     return;
   }
   
@@ -262,6 +270,8 @@ const getModuleIcon = (slug: string) => {
     'wellness': HeartIcon,
     'growbackup': CloudArrowUpIcon, // GrowBackup - Cloud Storage
     'storage': CloudArrowUpIcon,
+    'growmart': ShoppingCartIcon, // GrowMart - Online Grocery
+    'grocery': ShoppingCartIcon,
   };
   return iconMap[slug] || CubeIcon;
 };

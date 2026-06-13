@@ -254,6 +254,7 @@ class DashboardController extends Controller
 
         return Inertia::render('GrowNet/Dashboard', [
             'user' => $user,
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             'subscription' => $currentSubscription,
             'starterKit' => $starterKitInfo,
             'membershipProgress' => $membershipProgress,
@@ -345,9 +346,15 @@ class DashboardController extends Controller
         $data['userCurrency'] = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         
         // Get verification limits
+        $currency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         $data['verificationLimits'] = $limits;
         $data['remainingDailyLimit'] = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
+        $displayLimits = $this->getVerificationLimits($user->verification_level ?? 'basic', $currency);
+        $data['verificationLimitsDisplay'] = $displayLimits;
+        $data['remainingDailyLimitDisplay'] = $currency === 'USD'
+            ? round(($displayLimits['daily_withdrawal'] / $limits['daily_withdrawal']) * max(0, $data['remainingDailyLimit']), 2)
+            : max(0, $data['remainingDailyLimit']);
         
         // Get pending withdrawals
         $data['pendingWithdrawals'] = \App\Models\WithdrawalRequest::where('user_id', $user->id)
@@ -2126,27 +2133,11 @@ class DashboardController extends Controller
     /**
      * Get verification limits based on user's verification level
      */
-    private function getVerificationLimits(string $level): array
+    private function getVerificationLimits(string $level, string $currency = 'ZMW'): array
     {
-        $limits = [
-            'basic' => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-            'verified' => [
-                'daily_withdrawal' => 5000,
-                'monthly_withdrawal' => 50000,
-                'single_transaction' => 2000,
-            ],
-            'premium' => [
-                'daily_withdrawal' => 20000,
-                'monthly_withdrawal' => 200000,
-                'single_transaction' => 10000,
-            ],
-        ];
-
-        return $limits[$level] ?? $limits['basic'];
+        // Map 'verified' (legacy key) to 'enhanced'
+        $normalized = $level === 'verified' ? 'enhanced' : $level;
+        return app(\App\Services\VerificationLimitService::class)->getLimits($normalized, $currency);
     }
 
     /**
@@ -2440,12 +2431,19 @@ class DashboardController extends Controller
         
         try {
             $walletBalance = $this->walletService->calculateBalance($user);
+            $currency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
             $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
+            $displayLimits = $this->getVerificationLimits($user->verification_level ?? 'basic', $currency);
+            $remainingDailyLimit = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
             
             $data = [
                 'walletBalance' => $walletBalance,
                 'verificationLimits' => $limits,
-                'remainingDailyLimit' => $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0),
+                'verificationLimitsDisplay' => $displayLimits,
+                'remainingDailyLimit' => max(0, $remainingDailyLimit),
+                'remainingDailyLimitDisplay' => $currency === 'USD'
+                    ? round(($displayLimits['daily_withdrawal'] / $limits['daily_withdrawal']) * max(0, $remainingDailyLimit), 2)
+                    : max(0, $remainingDailyLimit),
                 'pendingWithdrawals' => \App\Models\WithdrawalRequest::where('user_id', $user->id)
                     ->where('status', 'pending')
                     ->count()

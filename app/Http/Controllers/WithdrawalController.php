@@ -116,32 +116,11 @@ class WithdrawalController extends Controller
     }
     
     /**
-     * Get verification limits based on level
+     * Get verification limits based on level and currency
      */
-    private function getVerificationLimits(string $level): array
+    private function getVerificationLimits(string $level, string $currency = 'ZMW'): array
     {
-        return match($level) {
-            'basic' => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-            'enhanced' => [
-                'daily_withdrawal' => 5000,
-                'monthly_withdrawal' => 50000,
-                'single_transaction' => 2000,
-            ],
-            'premium' => [
-                'daily_withdrawal' => 20000,
-                'monthly_withdrawal' => 200000,
-                'single_transaction' => 10000,
-            ],
-            default => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-        };
+        return app(\App\Services\VerificationLimitService::class)->getLimits($level, $currency);
     }
     
     /**

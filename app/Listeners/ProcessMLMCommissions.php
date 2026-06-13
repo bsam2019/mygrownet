@@ -88,8 +88,7 @@ class ProcessMLMCommissions
             }
 
             if ($packageType) {
-                // For starter kit purchases, always use K500 as commission base
-                // even if they paid K1000 for premium (extra K500 is for content, not commissionable)
+                $userCurrency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
                 $commissionAmount = $packageType === 'starter_kit' ? 500.00 : $event->amount;
                 
                 Log::info("Processing {$packageType} commissions", [
@@ -97,7 +96,8 @@ class ProcessMLMCommissions
                     'payment_amount' => $event->amount,
                     'commission_amount' => $commissionAmount,
                     'payment_type' => $event->paymentType,
-                    'note' => $packageType === 'starter_kit' ? 'Commission based on K500 only' : null,
+                    'user_currency' => $userCurrency,
+                    'note' => $packageType === 'starter_kit' ? "Commission based on 500 {$userCurrency} only" : null,
                 ]);
 
                 $commissions = $this->mlmService->processMLMCommissions(

@@ -50,6 +50,9 @@ class MLMCommissionCalculationService
             $commissionAmount = $this->calculateCommissionAmount($packageAmount, $level);
             
             if ($commissionAmount > 0) {
+                $recipientCurrency = $referrer->user_currency ?? $referrer->preferred_currency ?? 'ZMW';
+                $sourceCurrency = $purchaser->user_currency ?? $purchaser->preferred_currency ?? 'ZMW';
+
                 $commissions->push([
                     'referrer_id' => $referrer->id,
                     'referred_id' => $purchaser->id,
@@ -59,7 +62,10 @@ class MLMCommissionCalculationService
                     'commission_type' => ReferralCommission::COMMISSION_TYPES['REFERRAL'],
                     'package_type' => $packageType,
                     'package_amount' => $packageAmount,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'currency' => $recipientCurrency,
+                    'original_amount' => $packageAmount,
+                    'original_currency' => $sourceCurrency,
                 ]);
             }
         }
@@ -99,6 +105,8 @@ class MLMCommissionCalculationService
             return null;
         }
         
+        $userCurrency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
+
         return ReferralCommission::create([
             'referrer_id' => $user->id,
             'referred_id' => $user->id, // Self-referencing for team volume bonus
@@ -110,7 +118,10 @@ class MLMCommissionCalculationService
             'package_amount' => $teamVolume->team_volume,
             'team_volume' => $teamVolume->team_volume,
             'personal_volume' => $teamVolume->personal_volume,
-            'status' => 'pending'
+            'status' => 'pending',
+            'currency' => $userCurrency,
+            'original_amount' => $bonusAmount,
+            'original_currency' => $userCurrency,
         ]);
     }
 
@@ -121,6 +132,8 @@ class MLMCommissionCalculationService
     {
         $bonuses = [];
         
+        $userCurrency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
+
         // Team volume performance bonus
         $teamVolumeBonus = $this->calculateTeamVolumePerformanceBonus($teamVolume->team_volume);
         if ($teamVolumeBonus > 0) {
@@ -135,7 +148,10 @@ class MLMCommissionCalculationService
                 'package_amount' => $teamVolume->team_volume,
                 'team_volume' => $teamVolume->team_volume,
                 'personal_volume' => $teamVolume->personal_volume,
-                'status' => 'pending'
+                'status' => 'pending',
+                'currency' => $userCurrency,
+                'original_amount' => $teamVolumeBonus,
+                'original_currency' => $userCurrency,
             ]);
         }
 
@@ -155,7 +171,10 @@ class MLMCommissionCalculationService
                     'package_amount' => $teamVolume->team_volume,
                     'team_volume' => $teamVolume->team_volume,
                     'personal_volume' => $teamVolume->personal_volume,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'currency' => $userCurrency,
+                    'original_amount' => $leadershipBonus,
+                    'original_currency' => $userCurrency,
                 ]);
             }
         }

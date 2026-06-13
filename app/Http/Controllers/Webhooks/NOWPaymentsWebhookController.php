@@ -9,36 +9,20 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Infrastructure\Persistence\Eloquent\Payment\MemberPaymentModel;
+use App\Models\GrowMart\GrowMartOrder;
 
-/**
- * NOWPayments IPN (Instant Payment Notification) Webhook Handler
- * 
- * Handles payment status updates from NOWPayments
- * 
- * Webhook Events:
- * - finished: Payment completed successfully
- * - confirmed: Payment confirmed on blockchain
- * - failed: Payment failed
- * - refunded: Payment refunded
- * - expired: Payment expired
- */
 class NOWPaymentsWebhookController extends Controller
 {
     public function __construct(
         private NOWPaymentsGateway $gateway
     ) {}
 
-    /**
-     * Handle NOWPayments IPN callback
-     */
     public function handle(Request $request): JsonResponse
     {
         try {
-            // Get raw payload for signature verification
             $payload = $request->getContent();
             $signature = $request->header('x-nowpayments-sig');
 
-            // Verify signature
             if (!$this->gateway->verifyIPNSignature($payload, $signature ?? '')) {
                 Log::warning('NOWPayments webhook signature verification failed', [
                     'ip' => $request->ip(),
@@ -56,7 +40,6 @@ class NOWPaymentsWebhookController extends Controller
                 'order_id' => $data['order_id'] ?? null,
             ]);
 
-            // Process the webhook
             $this->processWebhook($data);
 
             return response()->json(['status' => 'success']);
@@ -71,9 +54,6 @@ class NOWPaymentsWebhookController extends Controller
         }
     }
 
-    /**
-     * Process webhook data and update payment status
-     */
     private function processWebhook(array $data): void
     {
         $paymentId = $data['payment_id'] ?? null;
@@ -85,7 +65,13 @@ class NOWPaymentsWebhookController extends Controller
             return;
         }
 
-        // Find payment by order_id (transaction_id in our system)
+        // Check if this is a GrowMart order (prefix "GM-")
+        if (str_starts_with($orderId, 'GM-')) {
+            $this->processGrowMartOrder($orderId, $paymentId, $paymentStatus, $data);
+            return;
+        }
+
+        // Default: handle MemberPaymentModel (core system)
         $payment = MemberPaymentModel::where('transaction_id', $orderId)
             ->orWhere('provider_reference', $paymentId)
             ->first();
@@ -98,10 +84,8 @@ class NOWPaymentsWebhookController extends Controller
             return;
         }
 
-        // Map NOWPayments status to our internal status
         $status = $this->mapStatus($paymentStatus);
 
-        // Update payment status
         $payment->update([
             'status' => $status->value,
             'provider_reference' => $paymentId,
@@ -126,12 +110,9 @@ class NOWPaymentsWebhookController extends Controller
             'nowpayments_status' => $paymentStatus,
         ]);
 
-        // Fire events based on status
         if ($status === TransactionStatus::COMPLETED) {
-            // Payment completed - trigger success actions
             event(new \App\Domain\Payment\Events\PaymentVerified($payment));
         } elseif ($status === TransactionStatus::FAILED) {
-            // Payment failed - trigger failure actions
             Log::warning('NOWPayments payment failed', [
                 'payment_id' => $payment->id,
                 'order_id' => $orderId,
@@ -139,9 +120,59 @@ class NOWPaymentsWebhookController extends Controller
         }
     }
 
-    /**
-     * Map NOWPayments status to internal TransactionStatus
-     */
+    private function processGrowMartOrder(string $orderId, string $paymentId, ?string $paymentStatus, array $data): void
+    {
+        $growMartOrderId = (int) substr($orderId, 3); // Strip "GM-" prefix
+        $order = GrowMartOrder::find($growMartOrderId);
+
+        if (!$order) {
+            Log::warning('NOWPayments webhook: GrowMart order not found', [
+                'growmart_order_id' => $growMartOrderId,
+                'order_id' => $orderId,
+            ]);
+            return;
+        }
+
+        $status = $this->mapStatus($paymentStatus);
+
+        $nowpaymentsData = [
+            'nowpayments_status' => $paymentStatus,
+            'nowpayments_payment_id' => $paymentId,
+            'pay_amount' => $data['pay_amount'] ?? null,
+            'pay_currency' => $data['pay_currency'] ?? null,
+            'price_amount' => $data['price_amount'] ?? null,
+            'price_currency' => $data['price_currency'] ?? null,
+            'actually_paid' => $data['actually_paid'] ?? null,
+            'outcome_amount' => $data['outcome_amount'] ?? null,
+            'outcome_currency' => $data['outcome_currency'] ?? null,
+            'updated_at' => now()->toIso8601String(),
+        ];
+
+        $orderUpdates = [
+            'payment_details' => array_merge($order->payment_details ?? [], $nowpaymentsData),
+        ];
+
+        if ($status === TransactionStatus::COMPLETED) {
+            $orderUpdates['payment_status'] = 'paid';
+            $orderUpdates['paid_at'] = now();
+            $orderUpdates['status'] = 'pending';
+            $orderUpdates['payment_reference'] = $paymentId;
+            $orderUpdates['payment_submitted_at'] = now();
+        } elseif (in_array($status->value, ['failed', 'expired'])) {
+            $orderUpdates['payment_status'] = 'failed';
+        }
+
+        $order->update($orderUpdates);
+
+        Log::info('NOWPayments GrowMart order status updated', [
+            'growmart_order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'payment_status' => $paymentStatus,
+            'new_status' => $status->value,
+            'order_payment_status' => $orderUpdates['payment_status'] ?? 'unchanged',
+        ]);
+    }
+
     private function mapStatus(string $status): TransactionStatus
     {
         return match (strtolower($status)) {

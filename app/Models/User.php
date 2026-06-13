@@ -225,6 +225,9 @@ class User extends Authenticatable
         'loan_notes',
         // Multi-account type support
         'account_types',
+        // Currency fields
+        'user_currency',
+        'preferred_currency',
         // LifePlus fields
         'lifeplus_onboarded',
         'fcm_token',

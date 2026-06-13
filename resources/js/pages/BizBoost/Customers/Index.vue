@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -130,7 +131,7 @@ const deleteCustomer = (id: number) => {
                                 {{ customer.total_purchases }}
                             </td>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                K{{ customer.total_spent.toLocaleString() }}
+                                {{ formatBizBoostPrice(customer.total_spent) }}
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2">

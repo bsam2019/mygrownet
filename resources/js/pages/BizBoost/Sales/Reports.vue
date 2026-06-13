@@ -25,7 +25,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const formatPrice = (price: number) => `K${price.toLocaleString()}`;
+import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';
 
 const totalRevenue = props.salesByDay.reduce((sum, day) => sum + day.total, 0);
 const totalSales = props.salesByDay.reduce((sum, day) => sum + day.count, 0);

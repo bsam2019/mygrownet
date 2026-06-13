@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -194,7 +195,7 @@ const deleteProduct = (id: number) => {
                     <!-- Info -->
                     <h3 class="font-medium text-gray-900 dark:text-white truncate">{{ product.name }}</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ getProductCategory(product) }}</p>
-                    <p class="mt-1 text-lg font-semibold text-violet-600 dark:text-violet-400">K{{ product.price.toLocaleString() }}</p>
+                    <p class="mt-1 text-lg font-semibold text-violet-600 dark:text-violet-400">{{ formatBizBoostPrice(product.price, product.currency) }}</p>
 
                     <!-- Status -->
                     <span

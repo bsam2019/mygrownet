@@ -151,7 +151,7 @@
                   <dl>
                     <dt class="text-sm font-medium text-gray-500 truncate">Total Earnings</dt>
                     <dd class="text-lg font-medium text-gray-900">
-                      K{{ formatCurrency(stats.total_earnings) }}
+                      {{ formatCurrency(stats.total_earnings) }}
                     </dd>
                   </dl>
                 </div>
@@ -187,7 +187,7 @@
                   <dl>
                     <dt class="text-sm font-medium text-gray-500 truncate">Team Volume</dt>
                     <dd class="text-lg font-medium text-gray-900">
-                      K{{ formatCurrency(teamVolumeData.current_month.team_volume) }}
+                      {{ formatCurrency(teamVolumeData.current_month.team_volume) }}
                     </dd>
                   </dl>
                 </div>
@@ -262,10 +262,10 @@
                     </div>
                     <div class="text-right">
                       <div class="text-sm font-medium text-gray-900">
-                        K{{ formatCurrency(level.total_earnings) }}
+                        {{ formatCurrency(level.total_earnings) }}
                       </div>
                       <div class="text-sm text-gray-500">
-                        K{{ formatCurrency(level.this_month_earnings) }} this month
+                        {{ formatCurrency(level.this_month_earnings) }} this month
                       </div>
                     </div>
                   </div>
@@ -288,32 +288,32 @@
                       <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Personal Volume</span>
                         <span class="text-sm font-medium">
-                          K{{ formatCurrency(teamVolumeData.current_month.personal_volume) }}
+                          {{ formatCurrency(teamVolumeData.current_month.personal_volume) }}
                         </span>
                       </div>
                       <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Team Volume</span>
                         <span class="text-sm font-medium">
-                          K{{ formatCurrency(teamVolumeData.current_month.team_volume) }}
+                          {{ formatCurrency(teamVolumeData.current_month.team_volume) }}
                         </span>
                       </div>
                       <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Left Leg Volume</span>
                         <span class="text-sm font-medium">
-                          K{{ formatCurrency(teamVolumeData.current_month.left_leg_volume) }}
+                          {{ formatCurrency(teamVolumeData.current_month.left_leg_volume) }}
                         </span>
                       </div>
                       <div class="flex justify-between items-center">
                         <span class="text-sm text-gray-600">Right Leg Volume</span>
                         <span class="text-sm font-medium">
-                          K{{ formatCurrency(teamVolumeData.current_month.right_leg_volume) }}
+                          {{ formatCurrency(teamVolumeData.current_month.right_leg_volume) }}
                         </span>
                       </div>
                       <div class="border-t pt-3">
                         <div class="flex justify-between items-center">
                           <span class="text-sm font-medium text-gray-900">Total Volume</span>
                           <span class="text-sm font-bold text-blue-600">
-                            K{{ formatCurrency(teamVolumeData.current_month.total_volume) }}
+                            {{ formatCurrency(teamVolumeData.current_month.total_volume) }}
                           </span>
                         </div>
                       </div>
@@ -331,7 +331,7 @@
                         :style="{
                           height: `${Math.max((month.volume / maxVolume) * 100, 5)}%`
                         }"
-                        :title="`${month.month}: K${formatCurrency(month.volume)}`"
+                        :title="`${month.month}: ${formatCurrency(month.volume)}`"
                       ></div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500 mt-2">
@@ -358,11 +358,11 @@
                       <div class="text-sm text-gray-500">Total Assets</div>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                      <div class="text-2xl font-bold text-green-600">K{{ formatCurrency(assetData.summary.total_income_generated) }}</div>
+                      <div class="text-2xl font-bold text-green-600">{{ formatCurrency(assetData.summary.total_income_generated) }}</div>
                       <div class="text-sm text-gray-500">Total Income</div>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                      <div class="text-2xl font-bold text-blue-600">K{{ formatCurrency(assetData.summary.monthly_income_average) }}</div>
+                      <div class="text-2xl font-bold text-blue-600">{{ formatCurrency(assetData.summary.monthly_income_average) }}</div>
                       <div class="text-sm text-gray-500">Monthly Average</div>
                     </div>
                   </div>
@@ -398,7 +398,7 @@
                       </div>
                       <div class="text-right">
                         <div class="text-sm font-medium text-gray-900">
-                          K{{ formatCurrency(asset.total_income) }}
+                          {{ formatCurrency(asset.total_income) }}
                         </div>
                         <div
                           class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -426,7 +426,7 @@
                         :style="{
                           height: `${Math.max((trend.income / maxAssetIncome) * 100, 5)}%`
                         }"
-                        :title="`${trend.month}: K${formatCurrency(trend.income)}`"
+                        :title="`${trend.month}: ${formatCurrency(trend.income)}`"
                       ></div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500 mt-2">
@@ -476,11 +476,11 @@
                       <div class="text-sm text-gray-500">Total Projects</div>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                      <div class="text-2xl font-bold text-green-600">K{{ formatCurrency(communityProjectData.portfolio_summary.total_contributed) }}</div>
+                      <div class="text-2xl font-bold text-green-600">{{ formatCurrency(communityProjectData.portfolio_summary.total_contributed) }}</div>
                       <div class="text-sm text-gray-500">Total Invested</div>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
-                      <div class="text-2xl font-bold text-purple-600">K{{ formatCurrency(communityProjectData.portfolio_summary.total_returns_received) }}</div>
+                      <div class="text-2xl font-bold text-purple-600">{{ formatCurrency(communityProjectData.portfolio_summary.total_returns_received) }}</div>
                       <div class="text-sm text-gray-500">Returns Received</div>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -516,7 +516,7 @@
                         </div>
                         <div class="text-right">
                           <div class="text-sm font-medium text-gray-900">
-                            K{{ formatCurrency(contribution.amount) }}
+                            {{ formatCurrency(contribution.amount) }}
                           </div>
                           <div
                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
@@ -548,7 +548,7 @@
                           :style="{
                             height: `${Math.max((trend.returns / maxInvestmentAmount) * 60, 2)}px`
                           }"
-                          :title="`${trend.month} Returns: K${formatCurrency(trend.returns)}`"
+                          :title="`${trend.month} Returns: ${formatCurrency(trend.returns)}`"
                         ></div>
                         <!-- Contributions bar -->
                         <div
@@ -556,7 +556,7 @@
                           :style="{
                             height: `${Math.max((trend.contributions / maxInvestmentAmount) * 60, 2)}px`
                           }"
-                          :title="`${trend.month} Contributions: K${formatCurrency(trend.contributions)}`"
+                          :title="`${trend.month} Contributions: ${formatCurrency(trend.contributions)}`"
                         ></div>
                       </div>
                     </div>
@@ -608,7 +608,7 @@
                         </div>
                         <div class="flex items-center justify-between">
                           <div class="text-sm text-gray-500">
-                            Min: K{{ formatCurrency(project.minimum_contribution) }} • 
+                            Min: {{ formatCurrency(project.minimum_contribution) }} • 
                             {{ project.days_remaining }} days left
                           </div>
                           <button
@@ -918,7 +918,7 @@
                           Ready for ownership transfer
                         </div>
                         <div class="text-xs text-green-600 mt-1">
-                          Value: K{{ formatCurrency(opportunity.estimated_value) }}
+                          Value: {{ formatCurrency(opportunity.estimated_value) }}
                         </div>
                       </div>
                     </div>
@@ -1034,7 +1034,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AppLayout from '@/layouts/AppLayout.vue'
 import {
@@ -1058,6 +1058,7 @@ import {
 
 interface Props {
   user: any
+  userCurrency?: string
   subscription: any
   starterKit?: {
     received: boolean
@@ -1082,7 +1083,12 @@ interface Props {
   stats: any
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  userCurrency: 'ZMW',
+})
+
+const page = usePage()
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K')
 
 const loading = ref(false)
 
@@ -1111,10 +1117,10 @@ const maxInvestmentAmount = computed(() => {
 })
 
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
+  return `${currencySymbol.value}${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount || 0)
+  }).format(amount || 0)}`
 }
 
 const formatDate = (date: string): string => {

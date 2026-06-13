@@ -224,11 +224,14 @@ class HandleInertiaRequests extends Middleware
             'notifications' => $notifications,
             'company' => $company,
             'cmsUser' => $cmsUser,
+            // User's detected currency (USD/ZMW) - shared globally from session set by DetectUserCurrency middleware
+            'userCurrency' => fn () => $request->session()->get('user_currency', 'ZMW'),
             // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
             'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
             // Module configuration removed - now handled by ShareModulesData middleware
             // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes
             'growbiz' => fn () => $request->is('growbiz*') ? $this->getGrowBizData($request, $user) : null,
+
         ];
     }
 
@@ -369,4 +372,6 @@ class HandleInertiaRequests extends Middleware
             return array_unique($ids);
         });
     }
+
+
 }

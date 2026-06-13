@@ -197,7 +197,7 @@ MAIL_MAILER=resend
 RESEND_KEY=re_HndGkFb4_MdD2fCYdw3PU9kyN8eX97PPh
 
 # Brevo (Marketing)
-BREVO_API_KEY=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
+BREVO_API_KEY=xkeysib-your-api-key-here
 
 # Email From
 MAIL_FROM_ADDRESS=noreply@mygrownet.com

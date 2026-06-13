@@ -132,7 +132,7 @@ const confirmPurchase = () => {
     );
 };
 
-const formatCurrency = (amount: number) => `K${amount.toLocaleString()}`;
+import { formatBizBoostPriceShort as formatCurrency } from '@/composables/useBizBoostCurrency';
 
 const onTopUpSuccess = () => {
     router.reload({ only: ['walletBalance'] });

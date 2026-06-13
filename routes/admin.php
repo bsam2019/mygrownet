@@ -587,4 +587,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::post('/creators/{creator}/activate', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'activate'])->name('creators.activate');
     });
 
+    // Withdrawal Limits Settings
+    Route::prefix('settings/withdrawal-limits')->name('settings.withdrawal-limits.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'update'])->name('update');
+    });
 });

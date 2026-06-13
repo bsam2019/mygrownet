@@ -64,9 +64,7 @@ const formatDate = (date: string | null) => {
     });
 };
 
-const formatCurrency = (amount: number) => {
-    return `K${amount.toLocaleString('en-ZM', { minimumFractionDigits: 2 })}`;
-};
+import { formatBizBoostPrice as formatCurrency } from '@/composables/useBizBoostCurrency';
 
 const openWhatsApp = () => {
     if (props.customer.whatsapp) {

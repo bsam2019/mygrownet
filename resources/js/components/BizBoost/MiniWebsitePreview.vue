@@ -210,7 +210,8 @@ const fontClass = computed(() => {
     }
 });
 
-const formatPrice = (price: number) => `K${price.toLocaleString()}`;
+import { formatBizBoostPriceShort } from '@/composables/useBizBoostCurrency';
+const formatPrice = (price: number, currency?: string | null) => formatBizBoostPriceShort(price, currency);
 
 const whatsappLink = computed(() => {
     const phone = props.whatsapp || props.phone;
@@ -844,13 +845,13 @@ const aboutSectionImage = computed(() => {
                                     :class="isMobile ? 'text-base' : 'text-lg'"
                                     :style="{ color: theme.primary_color }"
                                 >
-                                    {{ formatPrice(product.sale_price || product.price) }}
+                                    {{ formatPrice(product.sale_price || product.price, product.currency) }}
                                 </span>
                                 <span 
                                     v-if="product.sale_price"
                                     class="text-gray-400 line-through text-sm"
                                 >
-                                    {{ formatPrice(product.price) }}
+                                    {{ formatPrice(product.price, product.currency) }}
                                 </span>
                             </div>
                         </div>

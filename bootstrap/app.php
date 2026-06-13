@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -54,6 +55,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')
                 ->group(base_path('routes/venture.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growmart-subdomain.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -109,5 +112,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // Handle GrowBiz domain exceptions
         $exceptions->render(function (\App\Domain\GrowBiz\Exceptions\GrowBizException $e, $request) {
             return \App\Domain\GrowBiz\Exceptions\Handler::render($e, $request);
+        });
+
+        // Handle 419 CSRF/session expiry — redirect to login with a message
+        $exceptions->render(function (TokenMismatchException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Session expired.'], 419);
+            }
+
+            if ($request->header('X-Inertia')) {
+                return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
+            }
+
+            return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
         });
     })->create();

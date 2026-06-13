@@ -33,7 +33,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
 
         $businessProfile = $this->buildBusinessProfile($invoice->company);
         $customer        = $this->buildCustomer($invoice->customer);
-        $document        = $this->buildDocument(
+        $currency      = $invoice->company->settings['currency'] ?? 'ZMW';
+        $document      = $this->buildDocument(
             businessId:   $invoice->company_id,
             customerId:   $invoice->customer_id,
             type:         'invoice',
@@ -43,7 +44,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $invoice->items,
             notes:        $invoice->notes,
             terms:        $invoice->terms,
-            templateId:   $invoice->company->getBizDocsTemplateId('invoice')
+            templateId:   $invoice->company->getBizDocsTemplateId('invoice'),
+            currency:     $currency
         );
 
         $storedTotals = [
@@ -65,7 +67,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
 
         $businessProfile = $this->buildBusinessProfile($quotation->company);
         $customer        = $this->buildCustomer($quotation->customer);
-        $document        = $this->buildDocument(
+        $currency      = $quotation->company->settings['currency'] ?? 'ZMW';
+        $document      = $this->buildDocument(
             businessId:   $quotation->company_id,
             customerId:   $quotation->customer_id,
             type:         'quotation',
@@ -75,7 +78,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $quotation->items,
             notes:        $quotation->notes,
             terms:        $quotation->terms,
-            templateId:   $quotation->company->getBizDocsTemplateId('quotation')
+            templateId:   $quotation->company->getBizDocsTemplateId('quotation'),
+            currency:     $currency
         );
 
         $storedTotals = [
@@ -121,6 +125,7 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             ]);
         }
 
+        $currency      = $payment->company->settings['currency'] ?? 'ZMW';
         $businessProfile = $this->buildBusinessProfile($payment->company);
         $customer        = $this->buildCustomer($payment->customer);
         $document        = $this->buildDocument(
@@ -133,7 +138,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $items,
             notes:        $payment->notes,
             terms:        null,
-            templateId:   $payment->company->getBizDocsTemplateId('receipt')
+            templateId:   $payment->company->getBizDocsTemplateId('receipt'),
+            currency:     $currency
         );
 
         return $this->generatePdfWithBizDocs($document, $businessProfile, $customer);
@@ -219,7 +225,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
         $items,
         ?string $notes,
         ?string $terms,
-        ?int $templateId
+        ?int $templateId,
+        string $currency = 'ZMW'
     ): Document {
         $document = Document::create(
             businessId:   $businessId,
@@ -227,7 +234,7 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             type:         DocumentType::fromString($type),
             number:       DocumentNumber::fromString($number),
             issueDate:    new \DateTimeImmutable($issueDate),
-            currency:     'ZMW',
+            currency:     $currency,
             templateId:   $templateId,
             dueDate:      $dueDate ? new \DateTimeImmutable($dueDate) : null,
             notes:        $notes,
@@ -251,9 +258,9 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             $document->addItem(DocumentItem::create(
                 description:     $desc,
                 quantity:        $effectiveQty,
-                unitPrice:       Money::fromAmount((int)((float)$unitPrice * 100), 'ZMW'),
+                unitPrice:       Money::fromAmount((int)((float)$unitPrice * 100), $currency),
                 taxRate:         (float)$taxRate,
-                discountAmount:  Money::fromAmount(0, 'ZMW'),
+                discountAmount:  Money::fromAmount(0, $currency),
                 sortOrder:       $index,
                 dimensions:      $dims,
                 dimensionsValue: $effectiveDimsVal

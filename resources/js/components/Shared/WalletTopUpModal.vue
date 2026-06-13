@@ -34,6 +34,10 @@ const emit = defineEmits<{
 // Check if automated payments are enabled (from backend config)
 const page = usePage();
 const automatedPaymentsEnabled = computed(() => (page.props as any).automatedPaymentsEnabled ?? false);
+const currencySymbol = computed(() => {
+    const userCurrency = (page.props as any).userCurrency || 'ZMW';
+    return userCurrency === 'USD' ? '$' : 'K';
+});
 
 const selectedAmount = ref<number | null>(null);
 const customAmount = ref('');
@@ -118,7 +122,7 @@ const onCustomAmountChange = () => {
     }
 };
 
-const formatCurrency = (amount: number) => `K${amount.toLocaleString()}`;
+const formatCurrency = (amount: number) => `${currencySymbol.value}${amount.toLocaleString()}`;
 
 // Automated payment submission (when PawaPay is enabled)
 const submitAutomatedPayment = async () => {
@@ -270,7 +274,7 @@ const close = () => {
                                                 : 'bg-gray-100 hover:bg-emerald-100 text-gray-900'
                                         ]"
                                     >
-                                        K{{ amount }}
+                                        {{ currencySymbol }}{{ amount }}
                                     </button>
                                 </div>
                             </div>
@@ -279,7 +283,7 @@ const close = () => {
                             <div>
                                 <label class="text-sm font-semibold text-gray-700 mb-2 block">Or Enter Custom Amount</label>
                                 <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">K</span>
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">{{ currencySymbol }}</span>
                                     <input
                                         v-model="customAmount"
                                         @input="onCustomAmountChange"
@@ -289,7 +293,7 @@ const close = () => {
                                         class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-0 text-lg font-semibold"
                                     />
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1">Minimum top-up: K50</p>
+                                <p class="text-xs text-gray-500 mt-1">Minimum top-up: {{ currencySymbol }}50</p>
                             </div>
 
                             <!-- Payment Method -->
@@ -348,7 +352,7 @@ const close = () => {
                                         </div>
                                         <div class="flex-1 text-left">
                                             <span class="font-semibold text-gray-900 block">Cryptocurrency</span>
-                                            <span class="text-xs text-gray-500">BTC, ETH, USDT +240</span>
+                                            <span class="text-xs text-gray-500">Pay with crypto from abroad</span>
                                         </div>
                                         <CheckIcon
                                             v-if="selectedMethod === 'crypto'"

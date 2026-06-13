@@ -27,6 +27,8 @@ class InvoiceModel extends Model
         'notes',
         'terms',
         'created_by',
+        'currency',
+        'exchange_rate',
     ];
 
     protected $casts = [

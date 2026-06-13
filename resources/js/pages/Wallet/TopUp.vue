@@ -14,7 +14,7 @@ import {
     PhoneIcon,
 } from '@heroicons/vue/24/outline';
 import { CoinsIcon } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 interface PaymentMethod {
     id: string;
@@ -42,7 +42,9 @@ const page = usePage();
 const automatedPaymentsEnabled = computed(() => (page.props as any).automatedPaymentsEnabled ?? false);
 
 const selectedMethod = ref('mtn');
-const quickAmounts = [50, 100, 200, 500, 1000, 2000];
+const zmwAmounts = [50, 100, 200, 500, 1000, 2000];
+const usdAmounts = [5, 10, 20, 50, 100, 200];
+const quickAmounts = computed(() => selectedCurrency.value === 'USD' ? usdAmounts : zmwAmounts);
 
 // Currency conversion
 const selectedCurrency = ref('ZMW');
@@ -118,11 +120,20 @@ const submitAutomated = () => {
     });
 };
 
+const handleSubmit = () => {
+    if (selectedMethod.value === 'crypto') {
+        submitCrypto();
+    } else {
+        submitAutomated();
+    }
+};
+
 // Crypto payment submission
 const submitCrypto = async () => {
     const amount = parseFloat(form.amount);
-    if (isNaN(amount) || amount < 50) {
-        alert('Please enter a valid amount (minimum K50)');
+    const min = selectedCurrency.value === 'USD' ? 5 : 10;
+    if (isNaN(amount) || amount < min) {
+        alert(`Please enter a valid amount (minimum ${selectedCurrency.value === 'USD' ? '$5' : 'K10'})`);
         return;
     }
 
@@ -152,9 +163,10 @@ const submitCrypto = async () => {
 };
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', {
+    const cur = (page.props as any).userCurrency || 'ZMW';
+    return new Intl.NumberFormat(cur === 'USD' ? 'en-US' : 'en-ZM', {
         style: 'currency',
-        currency: 'ZMW',
+        currency: cur,
         minimumFractionDigits: 2,
     }).format(amount);
 };
@@ -166,14 +178,31 @@ const isValidPhone = computed(() => {
 
 const isValidAmount = computed(() => {
     const amount = parseFloat(form.amount);
-    return !isNaN(amount) && amount >= 10 && amount <= 50000;
+    const min = selectedCurrency.value === 'USD' ? 5 : 10;
+    const max = selectedCurrency.value === 'USD' ? 500 : 50000;
+    return !isNaN(amount) && amount >= min && amount <= max;
 });
 
+const availableMethods = computed(() => {
+    if (selectedCurrency.value === 'USD') {
+        return props.paymentMethods.filter(m => m.id === 'crypto');
+    }
+    return props.paymentMethods;
+});
+
+// Auto-select crypto when USD is chosen
 const canSubmit = computed(() => {
     if (selectedMethod.value === 'crypto') {
         return isValidAmount.value && !form.processing && !loading.value;
     }
     return isValidAmount.value && isValidPhone.value && selectedMethod.value;
+});
+
+// Watch currency changes to auto-select crypto for USD
+watch(selectedCurrency, (cur) => {
+    if (cur === 'USD') {
+        selectedMethod.value = 'crypto';
+    }
 });
 
 // Redirect to manual payment submission page
@@ -184,7 +213,7 @@ const goToManualPayment = () => {
 
 <template>
     <AppLayout title="Top Up Wallet">
-        <Head title="Top Up Wallet" />
+        <Head title="Top Up Wallet"></Head>
 
         <div class="py-6 sm:py-8">
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
@@ -208,6 +237,7 @@ const goToManualPayment = () => {
                         </div>
                     </div>
                 </div>
+                </div>
 
                 <!-- Flash Messages -->
                 <div v-if="$page.props.flash?.success" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
@@ -227,14 +257,19 @@ const goToManualPayment = () => {
                 <!-- ========== AUTOMATED PAYMENT MODE ========== -->
                 <template v-if="automatedPaymentsEnabled">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                        <form @submit.prevent="submitAutomated" class="space-y-6">
+                        <form @submit.prevent="handleSubmit" class="space-y-6">
                             <!-- Amount Input -->
                             <div>
-                                <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Amount (ZMW)
-                                </label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label for="amount" class="block text-sm font-medium text-gray-700">
+                                        Amount
+                                    </label>
+                                    <CurrencySelector 
+                                        @currency-changed="handleCurrencyChange"
+                                    />
+                                </div>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">K</span>
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">{{ selectedCurrency === 'USD' ? '$' : 'K' }}</span>
                                     <input
                                         id="amount"
                                         v-model="form.amount"
@@ -248,7 +283,7 @@ const goToManualPayment = () => {
                                     />
                                 </div>
                                 <p v-if="form.errors.amount" class="mt-1 text-sm text-red-600">{{ form.errors.amount }}</p>
-                                <p class="mt-1 text-xs text-gray-500">Minimum: K10 | Maximum: K50,000</p>
+                                <p class="mt-1 text-xs text-gray-500">Minimum: {{ selectedCurrency === 'USD' ? '$5' : 'K10' }} | Maximum: {{ selectedCurrency === 'USD' ? '$500' : 'K50,000' }}</p>
                             </div>
 
                             <!-- Quick Amount Buttons -->
@@ -267,7 +302,7 @@ const goToManualPayment = () => {
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent'
                                         ]"
                                     >
-                                        K{{ amount }}
+                                        {{ selectedCurrency === 'USD' ? '$' : 'K' }}{{ amount }}
                                     </button>
                                 </div>
                             </div>
@@ -279,7 +314,7 @@ const goToManualPayment = () => {
                                 </label>
                                 <div class="space-y-2">
                                     <label
-                                        v-for="method in paymentMethods"
+                                        v-for="method in availableMethods"
                                         :key="method.id"
                                         :class="[
                                             'flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-colors',
@@ -298,7 +333,7 @@ const goToManualPayment = () => {
                                         <DevicePhoneMobileIcon v-else class="h-6 w-6 text-gray-600" aria-hidden="true" />
                                         <div class="flex-1">
                                             <span class="font-medium text-gray-900">{{ method.name }}</span>
-                                            <span v-if="method.id === 'crypto'" class="block text-xs text-gray-500">BTC, ETH, USDT +240</span>
+                                            <span v-if="method.id === 'crypto'" class="block text-xs text-gray-500">Pay with crypto from abroad</span>
                                         </div>
                                         <CheckCircleIcon 
                                             v-if="selectedMethod === method.id"
@@ -323,7 +358,7 @@ const goToManualPayment = () => {
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-green-600">✓</span>
-                                        <span>240+ cryptocurrencies</span>
+                                        <span>300+ cryptocurrencies</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-green-600">✓</span>
@@ -361,11 +396,11 @@ const goToManualPayment = () => {
                             <!-- Submit Button -->
                             <button
                                 type="submit"
-                                :disabled="form.processing || !canSubmit"
+                                :disabled="(form.processing || loading) || !canSubmit"
                                 class="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <span v-if="form.processing">Processing...</span>
-                                <span v-else>Top Up Wallet</span>
+                                <span v-if="form.processing || loading">Processing...</span>
+                                <span v-else>{{ selectedMethod === 'crypto' ? 'Pay with Crypto' : 'Top Up Wallet' }}</span>
                             </button>
                         </form>
                     </div>
@@ -373,7 +408,14 @@ const goToManualPayment = () => {
                     <!-- Info Card -->
                     <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h3 class="text-sm font-semibold text-blue-900 mb-2">How it works:</h3>
-                        <ul class="text-sm text-blue-800 space-y-1">
+                        <ul v-if="selectedMethod === 'crypto'" class="text-sm text-blue-800 space-y-1">
+                            <li>1. Enter the amount you want to add</li>
+                            <li>2. Select Cryptocurrency as payment method</li>
+                            <li>3. You will be redirected to our secure payment page</li>
+                             <li>4. Pay with your preferred cryptocurrency</li>
+                            <li>5. Funds are added instantly upon confirmation</li>
+                        </ul>
+                        <ul v-else class="text-sm text-blue-800 space-y-1">
                             <li>1. Enter the amount you want to add</li>
                             <li>2. Select your mobile money provider</li>
                             <li>3. Enter your mobile money number</li>

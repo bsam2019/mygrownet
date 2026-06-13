@@ -134,12 +134,20 @@ class MLMCommissionService
                     'referrer_has_kit' => $referrerHasKit,
                 ]);
                 
+                // Convert commission from purchaser's currency to recipient's currency
+                $sourceCurrency = $purchaser->user_currency ?? $purchaser->preferred_currency ?? 'ZMW';
+                $converted = $this->currencyService->convertCommission(
+                    recipient: $referrer,
+                    amount: $commissionAmount,
+                    sourceCurrency: $sourceCurrency
+                );
+                
                 // Create commission record with tracking fields
                 $commission = ReferralCommission::create([
                     'referrer_id' => $referrer->id,
                     'referred_id' => $purchaser->id,
                     'level' => $level,
-                    'amount' => $commissionAmount,
+                    'amount' => $converted['amount'],
                     'percentage' => $commissionRate,
                     'status' => 'pending',
                     'commission_type' => 'REFERRAL',
@@ -151,6 +159,10 @@ class MLMCommissionService
                     'referrer_has_kit' => $referrerHasKit,
                     'team_volume' => $referrer->current_team_volume ?? 0,
                     'personal_volume' => $referrer->current_personal_volume ?? 0,
+                    'currency' => $converted['currency'],
+                    'original_amount' => $converted['original_amount'],
+                    'original_currency' => $converted['original_currency'],
+                    'exchange_rate' => $converted['exchange_rate'],
                 ]);
                 
                 $commissions[] = $commission;
@@ -160,6 +172,7 @@ class MLMCommissionService
                 
                 // Send notification
                 try {
+                    $currencySymbol = $converted['currency'] === 'ZMW' ? 'K' : '$';
                     $notificationMessage = $referrerHasKit 
                         ? 'You earned a Level ' . $level . ' commission'
                         : 'You earned a Level ' . $level . ' commission (50% - purchase starter kit for full commissions!)';
@@ -170,7 +183,7 @@ class MLMCommissionService
                         data: [
                             'title' => 'Commission Earned',
                             'message' => $notificationMessage,
-                            'amount' => 'K' . number_format($commissionAmount, 2),
+                            'amount' => $currencySymbol . number_format($converted['amount'], 2),
                             'level' => (string)$level,
                             'from_user' => $purchaser->name,
                             'action_url' => route('mygrownet.earnings.index'),
@@ -318,11 +331,17 @@ class MLMCommissionService
             return null;
         }
         
+        $converted = $this->currencyService->convertCommission(
+            recipient: $user,
+            amount: $bonusAmount,
+            sourceCurrency: $user->user_currency ?? $user->preferred_currency ?? 'ZMW'
+        );
+
         $commission = ReferralCommission::create([
             'referrer_id' => $user->id,
-            'referred_id' => $user->id, // Self-referencing for performance bonus
-            'level' => 0, // Special level for performance bonuses
-            'amount' => $bonusAmount,
+            'referred_id' => $user->id,
+            'level' => 0,
+            'amount' => $converted['amount'],
             'percentage' => 0,
             'status' => 'pending',
             'commission_type' => 'PERFORMANCE',
@@ -330,6 +349,10 @@ class MLMCommissionService
             'package_amount' => $currentVolume->team_volume,
             'team_volume' => $currentVolume->team_volume,
             'personal_volume' => $currentVolume->personal_volume,
+            'currency' => $converted['currency'],
+            'original_amount' => $converted['original_amount'],
+            'original_currency' => $converted['original_currency'],
+            'exchange_rate' => $converted['exchange_rate'],
         ]);
         
         // Process payment immediately

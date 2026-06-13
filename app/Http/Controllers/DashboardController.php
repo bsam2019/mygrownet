@@ -97,6 +97,7 @@ class DashboardController extends Controller
             ->toArray();
         
         return Inertia::render('Dashboard/Index', [
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             // Wallet data
             'walletBalance' => $walletBreakdown['balance'],
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),

@@ -106,7 +106,7 @@
             <div class="flex-1 min-w-0">
               <h3 class="text-sm font-bold text-amber-900 mb-1">Loan Repayment Focus</h3>
               <p class="text-xs text-amber-800 mb-2 leading-relaxed">
-                Outstanding: <strong>K{{ formatCurrency(loanSummary.loan_balance) }}</strong>
+                Outstanding: <strong>{{ currencyFormat(loanSummary.loan_balance) }}</strong>
               </p>
               <div class="w-full bg-amber-200 rounded-full h-2 overflow-hidden mb-2">
                 <div 
@@ -139,7 +139,7 @@
             <div class="flex-1 min-w-0">
               <h3 class="text-sm font-bold text-amber-900 mb-1">Outstanding Loan</h3>
               <p class="text-xs text-amber-800 mb-3 leading-relaxed">
-                You have an outstanding loan of <strong class="font-bold">K{{ formatCurrency(loanSummary.loan_balance) }}</strong>. 
+                You have an outstanding loan of <strong class="font-bold">{{ currencyFormat(loanSummary.loan_balance) }}</strong>. 
                 All future earnings will automatically go towards loan repayment.
               </p>
               <div class="space-y-2">
@@ -156,11 +156,11 @@
                 <div class="grid grid-cols-2 gap-3 text-xs mt-3">
                   <div class="bg-white/50 rounded-lg p-2">
                     <span class="block text-amber-600 font-medium mb-0.5">Total Issued</span>
-                    <span class="font-bold text-amber-900">K{{ formatCurrency(loanSummary.total_issued) }}</span>
+                    <span class="font-bold text-amber-900">{{ currencyFormat(loanSummary.total_issued) }}</span>
                   </div>
                   <div class="bg-white/50 rounded-lg p-2">
                     <span class="block text-amber-600 font-medium mb-0.5">Repaid</span>
-                    <span class="font-bold text-amber-900">K{{ formatCurrency(loanSummary.total_repaid) }}</span>
+                    <span class="font-bold text-amber-900">{{ currencyFormat(loanSummary.total_repaid) }}</span>
                   </div>
                 </div>
                 <p v-if="loanSummary.notes" class="text-xs text-amber-700 italic mt-2 bg-white/30 rounded-lg p-2">
@@ -175,7 +175,7 @@
         <div class="grid grid-cols-2 gap-3 animate-fade-in" style="animation-delay: 0.2s; animation-fill-mode: both;">
           <StatCard
             label="Total Earnings"
-            :value="`K${formatCurrency(stats.total_earnings)}`"
+            :value="`${currencyFormat(stats.total_earnings)}`"
             :icon="CurrencyDollarIcon"
             iconBgClass="bg-gradient-to-br from-green-50 to-emerald-50"
             iconColorClass="text-green-600"
@@ -193,7 +193,7 @@
           />
           <StatCard
             label="This Month"
-            :value="`K${formatCurrency(stats.this_month_earnings || 0)}`"
+            :value="`${currencyFormat(stats.this_month_earnings || 0)}`"
             subtitle="Earnings"
             :icon="ChartBarIcon"
             iconBgClass="bg-gradient-to-br from-purple-50 to-pink-50"
@@ -397,8 +397,8 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-sm font-bold text-gray-900">K{{ formatCurrency(level.total_earnings) }}</p>
-                <p class="text-xs text-gray-500">K{{ formatCurrency(level.this_month_earnings) }} this month</p>
+                <p class="text-sm font-bold text-gray-900">{{ currencyFormat(level.total_earnings) }}</p>
+                <p class="text-xs text-gray-500">{{ currencyFormat(level.this_month_earnings) }} this month</p>
               </div>
             </div>
           </div>
@@ -423,15 +423,15 @@
           <div class="space-y-3 mt-3">
             <div class="flex justify-between items-center py-2">
               <span class="text-sm text-gray-600">Personal</span>
-              <span class="text-sm font-medium">K{{ formatCurrency(teamVolumeData.current_month.personal_volume || 0) }}</span>
+              <span class="text-sm font-medium">{{ currencyFormat(teamVolumeData.current_month.personal_volume || 0) }}</span>
             </div>
             <div class="flex justify-between items-center py-2">
               <span class="text-sm text-gray-600">Team</span>
-              <span class="text-sm font-medium">K{{ formatCurrency(teamVolumeData.current_month.team_volume) }}</span>
+              <span class="text-sm font-medium">{{ currencyFormat(teamVolumeData.current_month.team_volume) }}</span>
             </div>
             <div class="flex justify-between items-center py-2 border-t pt-3">
               <span class="text-sm font-medium text-gray-900">Total</span>
-              <span class="text-sm font-bold text-blue-600">K{{ formatCurrency(teamVolumeData.current_month.total_volume) }}</span>
+              <span class="text-sm font-bold text-blue-600">{{ currencyFormat(teamVolumeData.current_month.total_volume) }}</span>
             </div>
           </div>
         </CollapsibleSection>
@@ -468,7 +468,7 @@
                 </div>
               </div>
               <div class="text-right">
-                <p class="text-sm font-medium text-gray-900">K{{ formatCurrency(asset.total_income) }}</p>
+                <p class="text-sm font-medium text-gray-900">{{ currencyFormat(asset.total_income) }}</p>
                 <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                   {{ asset.status.replace('_', ' ') }}
                 </span>
@@ -634,7 +634,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                   <div class="text-right">
-                    <p class="text-sm font-bold text-gray-900">K{{ formatCurrency(level.total_earnings) }}</p>
+                    <p class="text-sm font-bold text-gray-900">{{ currencyFormat(level.total_earnings) }}</p>
                     <p class="text-xs text-gray-500">Total earned</p>
                   </div>
                   <ChevronDownIcon 
@@ -713,7 +713,7 @@
         <!-- Balance Overview -->
         <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
           <p class="text-sm opacity-90 mb-2">Available Balance</p>
-          <h2 class="text-4xl font-bold mb-6">K{{ formatCurrency(walletBalance) }}</h2>
+          <h2 class="text-4xl font-bold mb-6">{{ currencyFormat(walletBalance) }}</h2>
           
           <div class="grid grid-cols-2 gap-3 mb-3">
             <button 
@@ -746,6 +746,7 @@
           :lgrWithdrawable="lgrWithdrawable"
           :lgrPercentage="lgrWithdrawablePercentage"
           :lgrBlocked="lgrWithdrawalBlocked"
+          :userCurrency="userCurrency"
           @transfer-lgr="showLgrTransferModal = true"
         />
 
@@ -759,11 +760,11 @@
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-white rounded-xl shadow-sm p-4">
             <p class="text-xs text-gray-500 mb-1">Total Deposits</p>
-            <p class="text-lg font-bold text-gray-900">K{{ formatCurrency(stats.total_deposits || 0) }}</p>
+            <p class="text-lg font-bold text-gray-900">{{ currencyFormat(stats.total_deposits || 0) }}</p>
           </div>
           <div class="bg-white rounded-xl shadow-sm p-4">
             <p class="text-xs text-gray-500 mb-1">Total Withdrawals</p>
-            <p class="text-lg font-bold text-gray-900">K{{ formatCurrency(stats.total_withdrawals || 0) }}</p>
+            <p class="text-lg font-bold text-gray-900">{{ currencyFormat(stats.total_withdrawals || 0) }}</p>
           </div>
         </div>
 
@@ -825,7 +826,7 @@
                     <p class="text-sm font-bold"
                       :class="topup.status === 'verified' ? 'text-green-600' : 'text-gray-900'"
                     >
-                      +K{{ formatCurrency(topup.amount) }}
+                      +{{ currencyFormat(topup.amount) }}
                     </p>
                     <span
                       class="inline-block text-xs px-2 py-0.5 rounded-full mt-1"
@@ -853,7 +854,7 @@
           <!-- Pending Deposits Alert -->
           <div v-if="pendingWithdrawals > 0" class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
             <p class="text-sm text-yellow-800">
-              <span class="font-semibold">⏳ Pending:</span> K{{ formatCurrency(pendingWithdrawals) }} in pending deposits
+              <span class="font-semibold">⏳ Pending:</span> {{ currencyFormat(pendingWithdrawals) }} in pending deposits
             </p>
           </div>
         </div>
@@ -1013,7 +1014,7 @@
               <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p class="text-xs text-gray-600 mb-1">Monthly Projection</p>
                 <p class="text-2xl font-bold text-green-600">
-                  K{{ Math.floor(calcTeamSize * (calcActivePercent / 100) * 500 * 0.1).toLocaleString() }}
+                  {{ currencySymbol }}{{ Math.floor(calcTeamSize * (calcActivePercent / 100) * 500 * 0.1).toLocaleString() }}
                 </p>
               </div>
             </div>
@@ -1027,7 +1028,7 @@
               </div>
               <div v-else>
                 <div>
-                  <label class="block text-xs font-medium text-gray-700 mb-1">Quarterly Profit (K)</label>
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Quarterly Profit ({{ currencySymbol }})</label>
                   <input
                     v-model.number="calcLgrProfit"
                     type="number"
@@ -1039,7 +1040,7 @@
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
                   <p class="text-xs text-gray-600 mb-1">Your Monthly Share</p>
                   <p class="text-2xl font-bold text-purple-600">
-                    K{{ Math.floor((calcLgrProfit * 0.6) / 100 / 3).toLocaleString() }}
+                    {{ currencySymbol }}{{ Math.floor((calcLgrProfit * 0.6) / 100 / 3).toLocaleString() }}
                   </p>
                   <p class="text-xs text-gray-500 mt-1">Based on 100 qualified members</p>
                 </div>
@@ -1595,11 +1596,11 @@
             <div class="grid grid-cols-2 gap-3">
               <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
                 <p class="text-xs opacity-90">Monthly</p>
-                <p class="text-2xl font-bold mt-1">K{{ formatCalcCurrency(calcMonthlyProjection) }}</p>
+                <p class="text-2xl font-bold mt-1">{{ currencySymbol }}{{ formatCalcCurrency(calcMonthlyProjection) }}</p>
               </div>
               <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
                 <p class="text-xs opacity-90">Yearly</p>
-                <p class="text-2xl font-bold mt-1">K{{ formatCalcCurrency(calcYearlyProjection) }}</p>
+                <p class="text-2xl font-bold mt-1">{{ currencySymbol }}{{ formatCalcCurrency(calcYearlyProjection) }}</p>
               </div>
             </div>
 
@@ -1613,12 +1614,12 @@
                   <span class="font-medium text-gray-700">Level {{ result.level }}</span>
                   <div class="flex items-center gap-3">
                     <span class="text-gray-500">{{ result.activeMembers }} active</span>
-                    <span class="font-semibold text-green-600">K{{ formatCalcCurrency(result.levelTotal) }}</span>
+                    <span class="font-semibold text-green-600">{{ currencySymbol }}{{ formatCalcCurrency(result.levelTotal) }}</span>
                   </div>
                 </div>
                 <div class="px-4 py-2 flex items-center justify-between text-sm font-bold bg-green-50">
                   <span class="text-gray-900">Total Monthly</span>
-                  <span class="text-green-600">K{{ formatCalcCurrency(calcTotalCommission) }}</span>
+                  <span class="text-green-600">{{ currencySymbol }}{{ formatCalcCurrency(calcTotalCommission) }}</span>
                 </div>
               </div>
             </div>
@@ -2646,27 +2647,33 @@ const statTrends = computed(() => {
 // Commission levels with preview data
 const commissionLevelsSubtitle = computed(() => {
   const total = displayLevels.value.reduce((sum, level) => sum + level.total_earnings, 0);
-  return `K${formatCurrency(total)} total earned`;
+  return `${currencyFormat(total)} total earned`;
 });
 
 // Team volume with preview data  
 const teamVolumeSubtitle = computed(() => {
   if (!props.teamVolumeData?.current_month) return '';
-  return `K${formatCurrency(props.teamVolumeData.current_month.team_volume || 0)} this month`;
+  return `${currencyFormat(props.teamVolumeData.current_month.team_volume || 0)} this month`;
 });
 
 // Assets with preview data
 const assetsSubtitle = computed(() => {
   const count = props.assetData?.summary?.total_assets || 0;
   const income = props.assetData?.summary?.total_income_generated || 0;
-  return `${count} assets • K${formatCurrency(income)} earned`;
+  return `${count} assets • ${currencyFormat(income)} earned`;
 });
+
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K');
 
 const formatCurrency = (value: number | undefined | null) => {
   if (value === undefined || value === null || isNaN(value)) {
     return '0.00';
   }
   return Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const currencyFormat = (value: number | undefined | null) => {
+  return `${currencySymbol.value}${formatCurrency(value)}`;
 };
 
 // Verification badge for More tab

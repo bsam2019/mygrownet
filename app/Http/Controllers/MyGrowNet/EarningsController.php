@@ -65,6 +65,7 @@ class EarningsController extends Controller
             'lgrWithdrawnTotal' => $lgrWithdrawnTotal,
             'commissions' => $commissions,
             'profitShares' => $profitShares,
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
         ]);
     }
     
@@ -133,6 +134,7 @@ class EarningsController extends Controller
             'currentMonthBP' => $currentMonthBP,
             'currentMonthEarnings' => (float) ($currentMonthCommissions + $currentMonthProfits),
             'lifetimePoints' => $user->lifetime_points ?? 0,
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
         ]);
     }
 }
