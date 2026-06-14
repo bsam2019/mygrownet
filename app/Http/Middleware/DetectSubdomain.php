@@ -93,6 +93,17 @@ class DetectSubdomain
 
                 app()->instance('request', $rewrittenRequest);
 
+                // Listen for route matched event to confirm path
+                app()->make('events')->listen(\Illuminate\Routing\Events\RouteMatched::class, function ($event) {
+                    \Log::error('DetectSubdomain: RouteMatched event', [
+                        'route_name' => $event->route->getName(),
+                        'route_uri' => $event->route->uri(),
+                        'path' => $event->request->path(),
+                        'getPathInfo' => $event->request->getPathInfo(),
+                        'server_REQ_URI' => $event->request->server->get('REQUEST_URI'),
+                    ]);
+                });
+
                 return $next($rewrittenRequest);
             }
 
