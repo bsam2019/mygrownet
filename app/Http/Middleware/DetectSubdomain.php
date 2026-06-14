@@ -83,6 +83,18 @@ class DetectSubdomain
 
                 $request->server->set('REQUEST_URI', $newPath);
                 $request->server->set('PATH_INFO', $newPath);
+                $request->server->set('ORIG_PATH_INFO', $newPath);
+
+                // Re-initialize request so the router sees the rewritten path
+                $request->initialize(
+                    $request->query->all(),
+                    $request->request->all(),
+                    $request->attributes->all(),
+                    $request->cookies->all(),
+                    $request->files->all(),
+                    $request->server->all(),
+                    $request->getContent()
+                );
 
                 return $next($request);
             }
