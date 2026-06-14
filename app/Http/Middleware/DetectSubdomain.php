@@ -109,7 +109,20 @@ class DetectSubdomain
                     'request_path' => $request->path(),
                 ]);
 
-                return $next($request);
+                $response = $next($request);
+
+                // Check what route was matched
+                if ($route = $request->route()) {
+                    \Log::error('DetectSubdomain: route matched', [
+                        'route_name' => $route->getName(),
+                        'route_uri' => $route->uri(),
+                        'action' => $route->getActionName(),
+                    ]);
+                } else {
+                    \Log::error('DetectSubdomain: NO route matched');
+                }
+
+                return $response;
             }
 
             // Skip other reserved subdomains
