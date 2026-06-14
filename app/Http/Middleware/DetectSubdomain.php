@@ -107,6 +107,8 @@ class DetectSubdomain
                     'new_path' => $newPath,
                     'request_uri' => $request->getRequestUri(),
                     'request_path' => $request->path(),
+                    'getPathInfo' => $request->getPathInfo(),
+                    'server_REQUEST_URI' => $request->server->get('REQUEST_URI'),
                 ]);
 
                 $response = $next($request);
