@@ -61,7 +61,7 @@ class DetectSubdomain
             
             // Handle GrowMart subdomain - rewrite paths so existing growmart routes handle it
             if ($subdomain === 'growmart') {
-                \Log::info('DetectSubdomain: growmart subdomain detected', [
+                \Log::error('DetectSubdomain: growmart subdomain detected', [
                     'host' => $host,
                     'path' => $request->path(),
                     'method' => $request->method(),
@@ -102,7 +102,7 @@ class DetectSubdomain
                     $request->getContent()
                 );
 
-                \Log::info('DetectSubdomain: path rewritten', [
+                \Log::error('DetectSubdomain: path rewritten', [
                     'original_path' => $path,
                     'new_path' => $newPath,
                     'request_uri' => $request->getRequestUri(),
