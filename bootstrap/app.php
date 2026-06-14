@@ -55,8 +55,6 @@ return Application::configure(basePath: dirname(__DIR__))
             // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')
                 ->group(base_path('routes/venture.php'));
-            Route::middleware('web')
-                ->group(base_path('routes/growmart-subdomain.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController

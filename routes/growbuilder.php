@@ -365,6 +365,10 @@ Route::get('/sites/{subdomain}/product/{slug}', [SiteController::class, 'showPro
 Route::get('/sites/{subdomain}/checkout', [SiteController::class, 'checkout'])->name('site.checkout');
 
 // Local development site preview (must be last to avoid conflicts)
+// Exclude reserved subdomains (growmart, cms, geopamu, wowthem) from this catch-all
 Route::get('/sites/{subdomain}/{page?}', [SiteController::class, 'preview'])
-    ->where('page', '^(?!login|register|forgot-password|reset-password|dashboard|member|blog|product|checkout).*')
+    ->where([
+        'subdomain' => '^(?!growmart|cms|geopamu|wowthem).*$',
+        'page' => '^(?!login|register|forgot-password|reset-password|dashboard|member|blog|product|checkout).*'
+    ])
     ->name('growbuilder.preview');

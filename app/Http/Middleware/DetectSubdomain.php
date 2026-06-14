@@ -59,12 +59,31 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
-            // Handle GrowMart subdomain - set URL config and let standard routes handle it
+            // Handle GrowMart subdomain - rewrite paths so existing growmart routes handle it
             if ($subdomain === 'growmart') {
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
+
+                $path = '/' . ltrim($request->path(), '/');
+
+                // Already has the growmart prefix — pass through
+                if (str_starts_with($path, '/growmart') || str_starts_with($path, '/admin/growmart')) {
+                    return $next($request);
+                }
+
+                // Admin: /admin/* → /admin/growmart/*
+                if (str_starts_with($path, '/admin')) {
+                    $newPath = $path === '/admin' ? '/admin/growmart' : '/admin/growmart' . substr($path, 7);
+                } else {
+                    // Storefront: /* → /growmart/*
+                    $newPath = $path === '/' ? '/growmart' : '/growmart' . $path;
+                }
+
+                $request->server->set('REQUEST_URI', $newPath);
+                $request->server->set('PATH_INFO', $newPath);
+
                 return $next($request);
             }
 
