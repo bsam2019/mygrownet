@@ -61,70 +61,39 @@ class DetectSubdomain
             
             // Handle GrowMart subdomain - rewrite paths so existing growmart routes handle it
             if ($subdomain === 'growmart') {
-                \Log::error('DetectSubdomain: growmart subdomain detected', [
-                    'host' => $host,
-                    'path' => $request->path(),
-                    'method' => $request->method(),
-                ]);
-
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
-                $path = '/' . ltrim($request->path(), '/');
+                $currentPath = '/' . ltrim($request->path(), '/');
 
                 // Already has the growmart prefix — pass through
-                if (str_starts_with($path, '/growmart') || str_starts_with($path, '/admin/growmart')) {
+                if (str_starts_with($currentPath, '/growmart') || str_starts_with($currentPath, '/admin/growmart')) {
                     return $next($request);
                 }
 
                 // Admin: /admin/* → /admin/growmart/*
-                if (str_starts_with($path, '/admin')) {
-                    $newPath = $path === '/admin' ? '/admin/growmart' : '/admin/growmart' . substr($path, 7);
+                if (str_starts_with($currentPath, '/admin')) {
+                    $newPath = $currentPath === '/admin' ? '/admin/growmart' : '/admin/growmart' . substr($currentPath, 7);
                 } else {
                     // Storefront: /* → /growmart/*
-                    $newPath = $path === '/' ? '/growmart' : '/growmart' . $path;
+                    $newPath = $currentPath === '/' ? '/growmart' : '/growmart' . $currentPath;
                 }
 
-                $request->server->set('REQUEST_URI', $newPath);
-                $request->server->set('PATH_INFO', $newPath);
-                $request->server->set('ORIG_PATH_INFO', $newPath);
+                // Rewrite the request path via duplicate with updated server params
+                $server = $request->server->all();
+                $server['REQUEST_URI'] = $newPath;
+                $server['PATH_INFO'] = $newPath;
+                $server['ORIG_PATH_INFO'] = $newPath;
 
-                // Re-initialize request so the router sees the rewritten path
-                $request->initialize(
-                    $request->query->all(),
-                    $request->request->all(),
-                    $request->attributes->all(),
-                    $request->cookies->all(),
-                    $request->files->all(),
-                    $request->server->all(),
-                    $request->getContent()
+                $rewrittenRequest = $request->duplicate(
+                    null, null, null, null, null, $server
                 );
 
-                \Log::error('DetectSubdomain: path rewritten', [
-                    'original_path' => $path,
-                    'new_path' => $newPath,
-                    'request_uri' => $request->getRequestUri(),
-                    'request_path' => $request->path(),
-                    'getPathInfo' => $request->getPathInfo(),
-                    'server_REQUEST_URI' => $request->server->get('REQUEST_URI'),
-                ]);
+                app()->instance('request', $rewrittenRequest);
 
-                $response = $next($request);
-
-                // Check what route was matched
-                if ($route = $request->route()) {
-                    \Log::error('DetectSubdomain: route matched', [
-                        'route_name' => $route->getName(),
-                        'route_uri' => $route->uri(),
-                        'action' => $route->getActionName(),
-                    ]);
-                } else {
-                    \Log::error('DetectSubdomain: NO route matched');
-                }
-
-                return $response;
+                return $next($rewrittenRequest);
             }
 
             // Skip other reserved subdomains
