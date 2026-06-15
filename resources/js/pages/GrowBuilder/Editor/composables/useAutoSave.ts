@@ -2,7 +2,7 @@
  * Auto-Save Composable
  * Automatically saves changes at intervals with debouncing
  */
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, onUnmounted } from 'vue';
 
 export type AutoSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 

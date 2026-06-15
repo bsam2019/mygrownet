@@ -59,52 +59,35 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
-            // Handle GrowMart subdomain - rewrite paths so existing growmart routes handle it
+            // Handle GrowMart subdomain - rewrite paths internally
             if ($subdomain === 'growmart') {
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
-                $currentPath = '/' . ltrim($request->path(), '/');
+                // Rewrite request URI so / maps to /growmart routes
+                $path = $request->getPathInfo();
+                if (!str_starts_with($path, '/growmart') && !str_starts_with($path, '/admin/growmart')) {
+                    $newPath = $path === '/' ? '/growmart' : '/growmart' . $path;
+                    $qs = $request->getQueryString();
+                    $newUri = $qs ? $newPath . '?' . $qs : $newPath;
 
-                // Already has the growmart prefix — pass through
-                if (str_starts_with($currentPath, '/growmart') || str_starts_with($currentPath, '/admin/growmart')) {
-                    return $next($request);
+                    $server = array_merge($request->server->all(), ['REQUEST_URI' => $newUri]);
+                    $rewritten = $request->duplicate(
+                        $request->query->all(),
+                        $request->request->all(),
+                        $request->attributes->all(),
+                        $request->cookies->all(),
+                        $request->files->all(),
+                        $server
+                    );
+                    app()->instance('request', $rewritten);
+                    \Illuminate\Support\Facades\Request::swap($rewritten);
+                    return $next($rewritten);
                 }
 
-                // Admin: /admin/* → /admin/growmart/*
-                if (str_starts_with($currentPath, '/admin')) {
-                    $newPath = $currentPath === '/admin' ? '/admin/growmart' : '/admin/growmart' . substr($currentPath, 7);
-                } else {
-                    // Storefront: /* → /growmart/*
-                    $newPath = $currentPath === '/' ? '/growmart' : '/growmart' . $currentPath;
-                }
-
-                // Rewrite the request path via duplicate with updated server params
-                $server = $request->server->all();
-                $server['REQUEST_URI'] = $newPath;
-                $server['PATH_INFO'] = $newPath;
-                $server['ORIG_PATH_INFO'] = $newPath;
-
-                $rewrittenRequest = $request->duplicate(
-                    null, null, null, null, null, $server
-                );
-
-                app()->instance('request', $rewrittenRequest);
-
-                // Listen for route matched event to confirm path
-                app()->make('events')->listen(\Illuminate\Routing\Events\RouteMatched::class, function ($event) {
-                    \Log::error('DetectSubdomain: RouteMatched event', [
-                        'route_name' => $event->route->getName(),
-                        'route_uri' => $event->route->uri(),
-                        'path' => $event->request->path(),
-                        'getPathInfo' => $event->request->getPathInfo(),
-                        'server_REQ_URI' => $event->request->server->get('REQUEST_URI'),
-                    ]);
-                });
-
-                return $next($rewrittenRequest);
+                return $next($request);
             }
 
             // Skip other reserved subdomains

@@ -1,0 +1,19 @@
+import { defineConfig } from 'vitest/config';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'path';
+
+export default defineConfig({
+    plugins: [vue()],
+    test: {
+        environment: 'jsdom',
+        globals: true,
+        include: ['resources/js/**/*.test.ts', 'resources/js/**/*.test.tsx'],
+        setupFiles: [],
+    },
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, 'resources/js'),
+            'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
+        },
+    },
+});
