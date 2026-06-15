@@ -59,33 +59,13 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
-            // Handle GrowMart subdomain - rewrite paths internally
+            // Handle GrowMart subdomain - set URL config only
+            // Routes are defined via Route::domain('growmart.mygrownet.com') in growmart.php
             if ($subdomain === 'growmart') {
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
-
-                // Rewrite request URI so / maps to /growmart routes
-                $path = $request->getPathInfo();
-                if (!str_starts_with($path, '/growmart') && !str_starts_with($path, '/admin/growmart')) {
-                    $newPath = $path === '/' ? '/growmart' : '/growmart' . $path;
-                    $qs = $request->getQueryString();
-                    $newUri = $qs ? $newPath . '?' . $qs : $newPath;
-
-                    $server = array_merge($request->server->all(), ['REQUEST_URI' => $newUri]);
-                    $rewritten = $request->duplicate(
-                        $request->query->all(),
-                        $request->request->all(),
-                        $request->attributes->all(),
-                        $request->cookies->all(),
-                        $request->files->all(),
-                        $server
-                    );
-                    app()->instance('request', $rewritten);
-                    \Illuminate\Support\Facades\Request::swap($rewritten);
-                    return $next($rewritten);
-                }
 
                 return $next($request);
             }
