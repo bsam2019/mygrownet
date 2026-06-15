@@ -30,9 +30,9 @@ use App\Http\Controllers\GrowMart\PaymentController;
 |
 */
 
-$registerGrowMartRoutes = function (string $customerPrefix, string $adminPrefix, string $namePrefix) {
+$registerGrowMartRoutes = function (string $customerPrefix, string $adminPrefix, string $customerNamePrefix, string $adminNamePrefix, bool $includeAdmin = true) {
     // Customer frontend (public)
-    Route::prefix($customerPrefix)->name($namePrefix)->group(function () {
+    Route::prefix($customerPrefix)->name($customerNamePrefix)->group(function () {
         Route::get('/', [HomeController::class, 'index'])->name('home');
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
         Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
@@ -43,7 +43,7 @@ $registerGrowMartRoutes = function (string $customerPrefix, string $adminPrefix,
     });
 
     // Customer frontend (authenticated)
-    Route::prefix($customerPrefix)->name($namePrefix)->middleware('auth')->group(function () {
+    Route::prefix($customerPrefix)->name($customerNamePrefix)->middleware('auth')->group(function () {
         Route::get('/cart', [CartController::class, 'index'])->name('cart');
         Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
         Route::put('/cart/update', [CartController::class, 'update'])->name('cart.update');
@@ -78,10 +78,11 @@ $registerGrowMartRoutes = function (string $customerPrefix, string $adminPrefix,
         });
     });
 
-    // Admin routes
+    // Admin routes (only on main domain — subdomain is customer-facing only)
+    if ($includeAdmin) {
     Route::middleware(['auth', 'admin'])
         ->prefix($adminPrefix)
-        ->name($namePrefix . 'admin.')
+        ->name($adminNamePrefix)
         ->group(function () {
             Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -130,6 +131,7 @@ $registerGrowMartRoutes = function (string $customerPrefix, string $adminPrefix,
             Route::post('/reviews/{review}/respond', [AdminReviewController::class, 'respond'])->name('reviews.respond');
             Route::delete('/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('reviews.destroy');
         });
+    }
 };
 
 // 1. Main domain routes (mygrownet.com) — served under /growmart prefix
@@ -137,16 +139,19 @@ Route::prefix('growmart')->group(function () use ($registerGrowMartRoutes) {
     $registerGrowMartRoutes(
         customerPrefix: '',
         adminPrefix: 'admin/growmart',
-        namePrefix: 'growmart.'
+        customerNamePrefix: 'growmart.main.',
+        adminNamePrefix: 'admin.growmart.'
     );
 });
 
-// 2. Subdomain routes (growmart.mygrownet.com) — served at root
-// Registered LAST so route() generates clean URLs for the subdomain
+// 2. Subdomain routes (growmart.mygrownet.com) — served at root (customer-facing only)
+// Registered LAST so route() generates clean URLs (existing code uses growmart.* names)
 Route::domain('growmart.mygrownet.com')->group(function () use ($registerGrowMartRoutes) {
     $registerGrowMartRoutes(
         customerPrefix: '',
         adminPrefix: 'admin',
-        namePrefix: 'growmart.'
+        customerNamePrefix: 'growmart.',
+        adminNamePrefix: 'admin.growmart.',
+        includeAdmin: false
     );
 });
