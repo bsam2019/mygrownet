@@ -8,11 +8,18 @@ use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
+            // GrowMart routes FIRST so subdomain routes match before web.php
+            Route::middleware('web')
+                ->group(base_path('routes/growmart.php'));
+
+            // Main web routes
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+
             // Load BOTH CMS route files with different name prefixes
             // This ensures Ziggy has all routes available regardless of environment
             Route::middleware('web')

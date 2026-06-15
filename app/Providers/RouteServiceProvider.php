@@ -27,6 +27,11 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
+            // GrowMart routes loaded BEFORE web.php so domain-specific routes
+            // (growmart.mygrownet.com) match before web.php's root / route
+            Route::middleware('web')
+                ->group(base_path('routes/growmart.php'));
+
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
                 
@@ -80,9 +85,6 @@ class RouteServiceProvider extends ServiceProvider
                 
             Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
-                
-            Route::middleware('web')
-                ->group(base_path('routes/growmart.php'));
                 
             // GrowBuilder subdomain routes - must be loaded for subdomain handling
             Route::middleware('web')
