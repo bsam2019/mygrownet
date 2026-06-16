@@ -12,6 +12,15 @@ Artisan::command('inspire', function () {
 // Points System Scheduled Tasks
 use Illuminate\Support\Facades\Schedule;
 
+// Database Backups
+Schedule::command('backup:clean')
+    ->dailyAt('01:00')
+    ->description('Clean up old backup files');
+
+Schedule::command('backup:run --only-db')
+    ->dailyAt('02:00')
+    ->description('Backup database to Wasabi daily');
+
 Schedule::command('points:reset-monthly')
     ->monthlyOn(1, '00:00')
     ->description('Reset monthly activity points');
