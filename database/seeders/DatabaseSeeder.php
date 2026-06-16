@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             StoragePlanSeeder::class,          // Storage plans
             ProfessionalLevelSeeder::class,    // Professional levels
             
-            // Skip NotificationTemplateSeeder - table structure incomplete
+            ZamStayPropertySeeder::class,          // ZamStay module seed data
         ]);
     }
 }
