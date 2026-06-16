@@ -151,7 +151,7 @@ Route::domain('growmart.mygrownet.com')->group(function () use ($registerGrowMar
     );
 
     // Dedicated GrowMart auth routes (guest-only)
-    Route::middleware('guest')->group(function () {
+    Route::middleware('guest')->name('growmart.')->group(function () {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [AuthController::class, 'login']);
         Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -159,7 +159,7 @@ Route::domain('growmart.mygrownet.com')->group(function () use ($registerGrowMar
     });
 
     // Logout (authenticated)
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('growmart.logout')->middleware('auth');
 });
 
 // ── Admin routes — main domain only ──
