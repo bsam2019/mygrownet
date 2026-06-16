@@ -17,6 +17,7 @@ use App\Http\Controllers\GrowMart\CheckoutController;
 use App\Http\Controllers\GrowMart\OrderController;
 use App\Http\Controllers\GrowMart\ReviewController;
 use App\Http\Controllers\GrowMart\WishlistController;
+use App\Http\Controllers\GrowMart\AuthController;
 use App\Http\Controllers\GrowMart\PaymentController;
 
 /*
@@ -148,6 +149,17 @@ Route::domain('growmart.mygrownet.com')->group(function () use ($registerGrowMar
         prefix: '',
         namePrefix: 'growmart.'
     );
+
+    // Dedicated GrowMart auth routes (guest-only)
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+    });
+
+    // Logout (authenticated)
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 });
 
 // ── Admin routes — main domain only ──

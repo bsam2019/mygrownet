@@ -59,13 +59,28 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
-            // Handle GrowMart subdomain - set URL config only
+            // Handle GrowMart subdomain
             // Routes are defined via Route::domain('growmart.mygrownet.com') in growmart.php
             if ($subdomain === 'growmart') {
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
+
+                // Block main-site routes from leaking onto the subdomain.
+                // Only allow routes with name prefix "growmart." (e.g. growmart.home, growmart.products.index).
+                // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
+                $route = $request->route();
+                if ($route) {
+                    $name = $route->getName();
+                    if ($name) {
+                        $isGrowmartSubdomain = str_starts_with($name, 'growmart.')
+                            && !str_starts_with($name, 'growmart.main.');
+                        if (!$isGrowmartSubdomain) {
+                            abort(404);
+                        }
+                    }
+                }
 
                 return $next($request);
             }

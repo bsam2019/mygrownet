@@ -38,6 +38,17 @@
                             <ClipboardDocumentListIcon class="h-5 w-5" />
                             Orders
                         </Link>
+                        <template v-if="$page.props.auth.user">
+                            <div class="hidden sm:flex items-center gap-2 pl-2 border-l border-gray-200">
+                                <span class="text-sm text-gray-500">{{ $page.props.auth.user.name }}</span>
+                                <button @click="logout" class="text-sm text-gray-400 hover:text-red-500 transition-colors">Sign Out</button>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <Link :href="route('growmart.login')" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                                Sign In
+                            </Link>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -117,5 +128,9 @@ const search = () => {
     if (searchQuery.value.trim()) {
         router.get(route('growmart.products.index', { q: searchQuery.value }));
     }
+};
+
+const logout = () => {
+    router.post(route('growmart.logout'));
 };
 </script>
