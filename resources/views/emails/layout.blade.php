@@ -232,7 +232,7 @@
             <!-- Header -->
             <div class="email-header">
                 <div class="logo-container">
-                    <img src="{{ config('app.url') }}/logo.png" alt="MyGrowNet Logo" class="logo">
+                    <img src="https://mygrownet.com/logo.png" alt="MyGrowNet Logo" class="logo">
                 </div>
                 <h1 class="brand-text">MyGrowNet</h1>
                 <p class="tagline">Learn • Earn • Grow</p>
