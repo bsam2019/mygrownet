@@ -567,6 +567,18 @@ PROMPT;
         // Get section schemas from template service
         $sectionSchemas = SectionTemplateService::generateAISchemaDoc();
         
+        // Get site-wide page structure for full awareness
+        $siteStructure = '';
+        if (!empty($context['sitePagesWithSections'])) {
+            $lines = [];
+            foreach ($context['sitePagesWithSections'] as $p) {
+                $sections = !empty($p['sections']) ? ' [' . implode(', ', $p['sections']) . ']' : ' (empty)';
+                $home = !empty($p['is_homepage']) ? ' ★ HOME' : '';
+                $lines[] = "  - {$p['title']}{$home}{$sections}";
+            }
+            $siteStructure = "COMPLETE SITE PAGES & THEIR SECTIONS:\n" . implode("\n", $lines);
+        }
+
         $mygrowNetKnowledge = <<<'KNOWLEDGE'
 ═══════════════════════════════════════════════════════════════
 MYGROWNET PLATFORM KNOWLEDGE
@@ -596,6 +608,20 @@ Your personality:
 {$mygrowNetKnowledge}
 
 ═══════════════════════════════════════════════════════════════
+SITE STRUCTURE — HOW PAGES & SECTIONS WORK
+═══════════════════════════════════════════════════════════════
+
+A GrowBuilder website is made of PAGES. Each page has SECTIONS stacked vertically.
+
+PAGES are the main navigation items (e.g., Home, About, Services, Contact).
+SECTIONS are content blocks on each page (e.g., hero, about, services, testimonials).
+
+When generating content, ALWAYS specify which sectionType you're targeting.
+The sectionType MUST match one of the AVAILABLE SECTION TYPES listed below.
+
+{$siteStructure}
+
+═══════════════════════════════════════════════════════════════
 CURRENT SITE CONTEXT
 ═══════════════════════════════════════════════════════════════
 - Site: {$siteName} ({$businessType})
@@ -610,7 +636,36 @@ CURRENT SITE CONTEXT
 ═══════════════════════════════════════════════════════════════
 AVAILABLE SECTION TYPES & SCHEMAS
 ═══════════════════════════════════════════════════════════════
+
+Each section type below has required fields (MUST include), optional fields, and layout options. Use the exact field names.
+
 {$sectionSchemas}
+
+═══════════════════════════════════════════════════════════════
+HOW TO GENERATE CONTENT FOR ANY SECTION TYPE
+═══════════════════════════════════════════════════════════════
+
+When the user asks you to create content for a section:
+1. Identify which section type matches their request (hero, about, services, features, testimonials, pricing, team, faq, cta, contact, stats, etc.)
+2. Generate ALL required fields with high-quality, professional content
+3. Include optional fields when they add value
+4. Use the correct layout names from the schema
+5. For items-based sections (services, features, testimonials, pricing, team, faq, stats), generate the right number of items (see itemCount in schema)
+6. Use Zambian names, Kwacha pricing, +260 phone numbers when relevant
+7. NEVER use lorem ipsum — always generate real, specific content
+
+EXAMPLES by section type:
+- hero: compelling headline + subtitle + CTA button text
+- about: company story with mission, values, what makes them unique
+- services: 3-6 service cards with icon, benefit-focused title, description
+- features: 3-8 feature items explaining why customers should choose them
+- testimonials: 2-6 realistic testimonials with Zambian names, specific results
+- pricing: 2-4 pricing plans with Kwacha pricing, feature lists
+- team: 2-8 team members with Zambian names, roles, bios
+- faq: 3-10 relevant questions with helpful answers
+- cta: compelling call-to-action with urgent, benefit-driven language
+- stats: 3-4 impressive but realistic statistics
+- contact: welcoming description, email, phone (+260), address
 
 ═══════════════════════════════════════════════════════════════
 DESIGN & CONTENT GUIDELINES
@@ -664,11 +719,15 @@ A) **The user is making conversation / asking a question / needs advice**
    → data can include suggestions or be empty, just be helpful
 
 B) **The user wants to create/modify content or structure**
-   → Use action "generate_content", "create_page", "change_style", etc.
-   → Generate complete, high-quality content matching the section schema
+   → Use action "generate_content" — generate section content matching the schema
+   → data.sectionType = the section type name (from AVAILABLE SECTION TYPES above)
+   → data.content = object with all required + optional fields filled in
+   → data.style = { backgroundColor, textColor } matching site palette
 
 C) **The user wants feedback or improvements**
    → Use action "analyze_page" — list specific suggestions with priorities
+   → Include suggestions for sections missing from current page
+   → Include suggestions for improving existing sections
    → DO NOT auto-generate content; let them choose
 
 D) **The user is vague and you need more info**
@@ -681,18 +740,20 @@ E) **The user says "surprise me" or "be creative"**
 RESPONSE FORMAT
 ═══════════════════════════════════════════════════════════════
 
-Return ONLY valid JSON:
+Return ONLY valid JSON — no other text before or after:
 
 {
     "action": "chat|generate_content|create_page|change_style|update_navigation|update_footer|generate_seo|analyze_page|clarify",
     "message": "Your natural, conversational response to the user. Explain what you're doing or answer their question in a friendly way. Use markdown for formatting if helpful.",
     "data": {
         // FOR chat: can include optional suggestions array or be empty
-        // FOR generate_content: see section schemas above
-        // "sectionType": "...", "content": { ... }, "style": { ... },
-        // FOR create_page: "pageType": "...", "sections": [ ... ]
+        // FOR generate_content: 
+        //   "sectionType": "hero|about|services|features|testimonials|pricing|team|faq|cta|contact|stats|gallery",
+        //   "content": { ... all required + optional fields for that section type ... },
+        //   "style": { "backgroundColor": "#...", "textColor": "#..." }
+        // FOR create_page: "pageType": "...", "title": "...", "sections": [ ... ]
         // FOR change_style: "sectionType": "...", "styleChanges": { ... }
-        // FOR analyze_page: "suggestions": [ { "type": "...", "description": "...", "priority": "..." } ]
+        // FOR analyze_page: "suggestions": [ { "type": "add_section|improve_content|change_style", "description": "...", "priority": "high|medium|low" } ]
     }
 }
 
@@ -708,7 +769,8 @@ PRINCIPLES
 6. Explain your choices naturally in the message
 7. GUIDELINES are flexible — the user's preference always wins
 8. The user can always manually adjust anything — your job is to help, not control
-9. Return ONLY valid JSON — nothing before or after
+9. When user says "create content for [section]" — generate ALL fields for that section type, not just text
+10. Return ONLY valid JSON — nothing before or after
 PROMPT;
     }
     

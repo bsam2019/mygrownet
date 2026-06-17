@@ -50,7 +50,7 @@ class TierRestrictionService
     ];
 
     private const DEFAULT_AI_PROMPTS_LIMIT = [
-        'free' => 5,
+        'free' => 50,
         'starter' => 100,
         'business' => -1,
         'agency' => -1,
@@ -261,9 +261,14 @@ class TierRestrictionService
      */
     private function getAIPromptsLimitForTier(string $tier, ?array $tierConfig): int
     {
-        // Check database config first
-        if ($tierConfig && isset($tierConfig['limits']['ai_prompts'])) {
-            return (int) $tierConfig['limits']['ai_prompts'];
+        // Check database config first (supports both 'ai_prompts' and 'ai_prompts_limit' keys)
+        if ($tierConfig) {
+            if (isset($tierConfig['limits']['ai_prompts'])) {
+                return (int) $tierConfig['limits']['ai_prompts'];
+            }
+            if (isset($tierConfig['limits']['ai_prompts_limit'])) {
+                return (int) $tierConfig['limits']['ai_prompts_limit'];
+            }
         }
         // Check for ai_unlimited feature
         if ($tierConfig && isset($tierConfig['features']['ai_unlimited'])) {

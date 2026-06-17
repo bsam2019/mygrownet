@@ -21,15 +21,8 @@
                     />
                 </div>
                 <div class="min-w-0">
-                    <h2 class="text-sm font-semibold flex items-center gap-2" :class="darkMode ? 'text-white' : 'text-gray-900'">
+                    <h2 class="text-sm font-semibold" :class="darkMode ? 'text-white' : 'text-gray-900'">
                         AI Assistant
-                        <span 
-                            v-if="provider"
-                            class="text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-wide"
-                            :class="darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'"
-                        >
-                            {{ provider }}
-                        </span>
                     </h2>
                     <p class="text-[11px] truncate max-w-[180px]" :class="darkMode ? 'text-gray-500' : 'text-gray-500'">
                         {{ contextSummary || (isAvailable ? 'Ready to help' : 'Not configured') }}

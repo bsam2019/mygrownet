@@ -192,7 +192,6 @@ class AIController extends Controller
      * The AI understands intent AND generates content in one call
      */
     public function smartChat(Request $request, int $siteId)
-        
     {
         $site = $this->validateSiteAccess($request, $siteId);
         if (!$site) {
@@ -209,14 +208,92 @@ class AIController extends Controller
             'context' => 'nullable|array',
         ]);
         
-        // Add site info to context
+        // Build rich context from session and site data
         $context = $validated['context'] ?? [];
         $context['siteName'] = $site->getName();
+        
+        // Enrich with session context if available
+        try {
+            $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+            if (!$sessionContext->isInitialized()) {
+                $sessionContext->initialize($site, $request->user());
+            }
+            
+            // Pull site pages and their sections for full site awareness
+            $sitePages = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::where('site_id', $siteId)
+                ->where('status', '!=', 'deleted')
+                ->orderBy('sort_order')
+                ->get();
+            
+            $pagesData = [];
+            foreach ($sitePages as $page) {
+                $pageSections = [];
+                $pageContent = $page->content ?? [];
+                if (is_string($pageContent)) {
+                    $pageContent = json_decode($pageContent, true) ?? [];
+                }
+                foreach ($pageContent as $section) {
+                    $pageSections[] = $section['type'] ?? 'unknown';
+                }
+                $pagesData[] = [
+                    'id' => $page->id,
+                    'title' => $page->title,
+                    'slug' => $page->slug,
+                    'is_homepage' => $page->is_homepage ?? false,
+                    'sections' => $pageSections,
+                    'section_count' => count($pageSections),
+                ];
+            }
+            $context['sitePages'] = array_map(fn($p) => $p['title'], $pagesData);
+            $context['sitePagesWithSections'] = $pagesData;
+            
+            // Get site colors from theme
+            $theme = $sessionContext->get('theme', []);
+            if (!empty($theme)) {
+                $context['siteColors'] = [
+                    'primary' => $theme['primaryColor'] ?? $theme['primary'] ?? '#2563eb',
+                    'secondary' => $theme['secondaryColor'] ?? $theme['secondary'] ?? '#1e40af',
+                    'accent' => $theme['accentColor'] ?? $theme['accent'] ?? '#f59e0b',
+                    'background' => $theme['backgroundColor'] ?? $theme['background'] ?? '#ffffff',
+                ];
+            }
+            
+            // Add conversation history for continuity
+            $conversation = $sessionContext->getConversation();
+            if (!empty($conversation)) {
+                $context['conversationHistory'] = $conversation;
+            }
+            
+            $context['businessType'] = $sessionContext->get('business_type', 'business');
+            $context['location'] = $sessionContext->get('location', 'Zambia');
+            
+            // Log the enriched context
+            \Illuminate\Support\Facades\Log::debug('smartChat enriched context', [
+                'site_id' => $siteId,
+                'page_count' => count($pagesData),
+                'has_conversation' => !empty($conversation),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to enrich AI context', [
+                'error' => $e->getMessage(),
+                'site_id' => $siteId,
+            ]);
+        }
         
         $result = $this->aiService->smartChat(
             $validated['message'],
             $context
         );
+        
+        // Record AI response in session context
+        try {
+            $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+            $aiMessage = $result['message'] ?? $result['response'] ?? '';
+            $sessionContext->addToConversation('user', $validated['message']);
+            $sessionContext->addToConversation('assistant', $aiMessage);
+        } catch (\Exception $e) {
+            // Non-critical
+        }
         
         // Record usage to database
         $this->recordUsage($request, 'smart_chat', $validated['message'], 0, $siteId);
