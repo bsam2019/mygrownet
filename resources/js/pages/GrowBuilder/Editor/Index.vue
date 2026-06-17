@@ -17,7 +17,6 @@ import { EditorToolbar } from './components/sidebar';
 
 // Lazy-loaded (only on user interaction)
 const OnboardingTutorial = defineAsyncComponent(() => import('./components/OnboardingTutorial.vue'));
-const OnboardingTutorial = defineAsyncComponent(() => import('./components/OnboardingTutorial.vue'));
 const EditorPreview = defineAsyncComponent(() => import('./components/EditorPreview.vue'));
 const KeyboardShortcutsModal = defineAsyncComponent(() => import('./components/KeyboardShortcutsModal.vue'));
 const CreatePageModal = defineAsyncComponent(() => import('./components/modals/CreatePageModal.vue'));
@@ -26,12 +25,6 @@ const ApplyTemplateModal = defineAsyncComponent(() => import('./components/modal
 const MediaLibraryModal = defineAsyncComponent(() => import('./components/modals/MediaLibraryModal.vue'));
 const AIAssistantModal = defineAsyncComponent(() => import('./components/modals/AIAssistantModal.vue'));
 const AIFloatingButton = defineAsyncComponent(() => import('./components/ai/AIFloatingButton.vue'));
-
-const CreatePageModal = defineAsyncComponent(() => import('./components/modals/CreatePageModal.vue'));
-const EditPageModal = defineAsyncComponent(() => import('./components/modals/EditPageModal.vue'));
-const ApplyTemplateModal = defineAsyncComponent(() => import('./components/modals/ApplyTemplateModal.vue'));
-const MediaLibraryModal = defineAsyncComponent(() => import('./components/modals/MediaLibraryModal.vue'));
-const AIAssistantModal = defineAsyncComponent(() => import('./components/modals/AIAssistantModal.vue'));
 
 // Config
 import { sectionBlocks } from './config/sectionBlocks';
@@ -71,9 +64,6 @@ import { useClipboard } from './composables/useClipboard';
 import { useAIContext } from './composables/useAIContext';
 import { useImageOptimization } from './composables/useImageOptimization';
 import { useAIActions } from './composables/useAIActions';
-
-// AI Components
-const AIFloatingButton = defineAsyncComponent(() => import('./components/ai/AIFloatingButton.vue'));
 
 interface AIUsage {
     limit: number;

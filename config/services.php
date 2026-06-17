@@ -111,33 +111,39 @@ return [
     | AI Configuration (GrowBuilder AI Features)
     |--------------------------------------------------------------------------
     | Supports multiple providers:
+    | - nvidia: DeepSeek models via NVIDIA API (fast, quality results)
     | - openai: OpenAI GPT models (paid)
     | - groq: Groq Cloud with Llama models (FREE tier available)
     | - gemini: Google Gemini (FREE tier available)
     | - ollama: Local Ollama server (FREE, runs locally)
     |
-    | To use Groq (recommended for free testing):
-    | 1. Sign up at https://console.groq.com
-    | 2. Get your API key
-    | 3. Set AI_PROVIDER=groq and AI_GROQ_KEY in .env
+    | To use NVIDIA/DeepSeek (recommended):
+    | 1. Get your NVIDIA API key
+    | 2. Set AI_PROVIDER=nvidia and AI_NVIDIA_KEY in .env
+    | 3. Users can select between deepseek-v4-pro and deepseek-v4-flash
     */
 
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'openai'), // openai, groq, gemini, ollama
-        
+        'provider' => env('AI_PROVIDER', 'nvidia'), // nvidia, openai, groq, gemini, ollama
+
+        // NVIDIA (DeepSeek via NVIDIA API - recommended)
+        'nvidia_key' => env('AI_NVIDIA_KEY'),
+        'nvidia_model' => env('AI_NVIDIA_MODEL', 'deepseek-ai/deepseek-v4-pro'),
+        'nvidia_url' => 'https://integrate.api.nvidia.com/v1',
+
         // OpenAI (paid)
         'openai_key' => env('OPENAI_API_KEY'),
         'openai_model' => env('OPENAI_MODEL', 'gpt-3.5-turbo'),
         'openai_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-        
+
         // Groq (FREE tier - recommended for testing)
         'groq_key' => env('AI_GROQ_KEY'),
         'groq_model' => env('AI_GROQ_MODEL', 'llama-3.3-70b-versatile'),
-        
+
         // Google Gemini (FREE tier)
         'gemini_key' => env('AI_GEMINI_KEY'),
         'gemini_model' => env('AI_GEMINI_MODEL', 'gemini-pro'),
-        
+
         // Ollama (FREE - local)
         'ollama_url' => env('AI_OLLAMA_URL', 'http://localhost:11434/api'),
         'ollama_model' => env('AI_OLLAMA_MODEL', 'llama3'),

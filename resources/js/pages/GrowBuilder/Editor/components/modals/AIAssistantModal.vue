@@ -29,6 +29,45 @@
                     @update:creativity-level="updateCreativityLevel"
                 />
 
+                <!-- Model Selector -->
+                <div v-if="availableModels.length > 0" class="px-3 py-1.5 border-b" :class="darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">Model:</span>
+                        <div class="relative flex-1">
+                            <button
+                                @click="showModelSelector = !showModelSelector"
+                                class="w-full text-xs px-2 py-1 rounded text-left flex items-center justify-between gap-1"
+                                :class="darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'"
+                            >
+                                <span>{{ availableModels.find(m => m.id === selectedModel)?.name || selectedModel || 'Select model' }}</span>
+                                <svg class="w-3 h-3" :class="showModelSelector ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div
+                                v-if="showModelSelector"
+                                class="absolute top-full left-0 right-0 mt-1 rounded shadow-lg z-10 overflow-hidden"
+                                :class="darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'"
+                            >
+                                <button
+                                    v-for="m in availableModels"
+                                    :key="m.id"
+                                    @click="selectedModel = m.id; showModelSelector = false; localStorage.setItem('ai_selected_model', m.id)"
+                                    class="w-full text-left px-3 py-2 text-xs"
+                                    :class="[
+                                        selectedModel === m.id
+                                            ? (darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-700')
+                                            : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-50'),
+                                        'border-b last:border-b-0',
+                                        darkMode ? 'border-gray-700' : 'border-gray-100'
+                                    ]"
+                                >
+                                    <div class="font-medium">{{ m.name }}</div>
+                                    <div class="opacity-70 mt-0.5">{{ m.description }}</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Main Content Area -->
                 <div class="flex-1 flex flex-col overflow-hidden">
                     <!-- Chat View -->
@@ -207,6 +246,12 @@ const providerName = ref('');
 const generatedContent = ref<any>(null);
 const feedbackStats = ref<any>(null);
 const messageListRef = ref<any>(null);
+
+// Model selection
+const availableModels = ref<Array<{ id: string; name: string; description: string }>>([]);
+const storedModel = localStorage.getItem('ai_selected_model');
+const selectedModel = ref(storedModel || '');
+const showModelSelector = ref(false);
 
 // Creativity level state with localStorage persistence
 type CreativityLevel = 'guided' | 'balanced' | 'creative';
@@ -513,7 +558,7 @@ const processUserMessage = async (input: string): Promise<{ content: string; typ
     try {
         const richContext = buildRichContext();
         console.log('Calling smartChat with:', { input, contextKeys: Object.keys(richContext) });
-        const result = await smartChat(input, richContext);
+        const result = await smartChat(input, richContext, selectedModel.value || undefined);
         console.log('SmartChat result:', result);
         
         if (result && result.action) {
@@ -2261,9 +2306,15 @@ onMounted(async () => {
     // Load conversation history from localStorage
     loadConversation();
     
-    await checkStatus();
+    const statusResult = await checkStatus() as any;
     providerName.value = provider.value;
-    console.log('After checkStatus:', { isAvailable: isAvailable.value, provider: provider.value, providerName: providerName.value });
+    if (statusResult?.available_models) {
+        availableModels.value = statusResult.available_models;
+    }
+    if (statusResult?.model && !selectedModel.value) {
+        selectedModel.value = statusResult.model;
+    }
+    console.log('After checkStatus:', { isAvailable: isAvailable.value, provider: provider.value, availableModels: availableModels.value });
     // Load feedback stats from database
     await loadFeedbackStats();
 });

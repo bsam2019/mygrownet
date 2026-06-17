@@ -27,9 +27,19 @@ class AIController extends Controller
         $user = $request->user();
         $usageStats = $this->aiUsageService->getUsageStats($user);
         
+        $availableModels = [];
+        if ($this->aiService->getProvider() === 'nvidia') {
+            $availableModels = [
+                ['id' => 'deepseek-ai/deepseek-v4-pro', 'name' => 'DeepSeek V4 Pro', 'description' => 'Best for complex tasks, higher quality'],
+                ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast with thinking/reasoning'],
+            ];
+        }
+        
         return response()->json([
             'available' => $this->aiService->isConfigured(),
             'provider' => $this->aiService->getProvider(),
+            'model' => $this->aiService->getModel(),
+            'available_models' => $availableModels,
             'usage' => $usageStats,
             'can_use' => $this->aiUsageService->canUseAI($user),
         ]);
@@ -902,7 +912,13 @@ class AIController extends Controller
             'message' => 'required|string|max:2000',
             'current_page_id' => 'nullable|integer',
             'current_sections' => 'nullable|array',
+            'model' => 'nullable|string',
         ]);
+        
+        // Allow frontend to override the model
+        if (!empty($validated['model'])) {
+            $this->aiService->setModel($validated['model']);
+        }
         
         // Get or initialize session context
         $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);

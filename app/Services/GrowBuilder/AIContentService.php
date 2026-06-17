@@ -22,14 +22,20 @@ class AIContentService
     private string $model;
     private string $baseUrl;
     private string $provider;
+    private array $extraBody = [];
     
     public function __construct()
     {
         // Determine provider from config
-        $this->provider = config('services.ai.provider', 'openai');
+        $this->provider = config('services.ai.provider', 'nvidia');
         
         // Set API key and base URL based on provider
         switch ($this->provider) {
+            case 'nvidia':
+                $this->apiKey = config('services.ai.nvidia_key', '');
+                $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-pro');
+                $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
+                break;
             case 'groq':
                 $this->apiKey = config('services.ai.groq_key', '');
                 $this->model = config('services.ai.groq_model', 'llama-3.3-70b-versatile');
@@ -59,6 +65,49 @@ class AIContentService
     }
     
     /**
+     * Override the model for this request (allows user selection).
+     * Automatically configures NVIDIA-specific params (thinking/reasoning) for flash model.
+     */
+    public function setModel(string $model): void
+    {
+        $this->model = $model;
+        
+        // Auto-configure NVIDIA-specific params
+        if ($this->provider === 'nvidia') {
+            if (str_contains($model, 'flash')) {
+                $this->extraBody = [
+                    'chat_template_kwargs' => [
+                        'thinking' => true,
+                        'reasoning_effort' => 'high',
+                    ],
+                ];
+            } else {
+                $this->extraBody = [
+                    'chat_template_kwargs' => [
+                        'thinking' => false,
+                    ],
+                ];
+            }
+        }
+    }
+    
+    /**
+     * Get the current provider name
+     */
+    public function getProvider(): string
+    {
+        return $this->provider;
+    }
+    
+    /**
+     * Get the current model name
+     */
+    public function getModel(): string
+    {
+        return $this->model;
+    }
+    
+    /**
      * Check if AI service is configured
      */
     public function isConfigured(): bool
@@ -68,14 +117,6 @@ class AIContentService
             return true;
         }
         return !empty($this->apiKey);
-    }
-    
-    /**
-     * Get current provider name
-     */
-    public function getProvider(): string
-    {
-        return $this->provider;
     }
     
     /**
@@ -2190,33 +2231,41 @@ PROMPT;
     }
     
     /**
-     * Call OpenAI-compatible API (OpenAI, Groq, etc.)
+     * Call OpenAI-compatible API (OpenAI, Groq, NVIDIA, etc.)
      */
     private function callOpenAICompatible(string $systemPrompt, string $userPrompt): string
     {
         $request = Http::withHeaders([
             'Authorization' => "Bearer {$this->apiKey}",
             'Content-Type' => 'application/json',
-        ])->timeout(30);
+        ])->timeout(60);
         
         // Bypass SSL verification in development (for Windows SSL certificate issues)
         if (app()->environment('local', 'development')) {
             $request = $request->withoutVerifying();
         }
         
-        $response = $request->post("{$this->baseUrl}/chat/completions", [
+        $payload = [
             'model' => $this->model,
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt],
                 ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.7,
-            'max_tokens' => 4096, // Increased for longer, more detailed responses
-        ]);
+            'max_tokens' => 16384, // Support DeepSeek's 16k output
+        ];
+        
+        // Add NVIDIA-specific extra_body for chat_template_kwargs (thinking/reasoning)
+        if ($this->provider === 'nvidia' && !empty($this->extraBody)) {
+            $payload['extra_body'] = $this->extraBody;
+        }
+        
+        $response = $request->post("{$this->baseUrl}/chat/completions", $payload);
         
         if (!$response->successful()) {
             Log::error('AI API request failed', [
                 'provider' => $this->provider,
+                'model' => $this->model,
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
