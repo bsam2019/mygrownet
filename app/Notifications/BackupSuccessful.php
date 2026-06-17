@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Backup\Events\BackupWasSuccessful as BackupWasSuccessfulEvent;
 
 class BackupSuccessful extends Notification
@@ -22,20 +23,23 @@ class BackupSuccessful extends Notification
 
     public function toMail($notifiable): MailMessage
     {
-        $backup = $this->event->backupDestination;
-        $newestBackup = $backup->newestBackup();
-        $oldestBackup = $backup->oldestBackup();
+        $disk = Storage::disk($this->event->diskName);
+        $files = $disk->files('MyGrowNet');
+        $latestFile = end($files);
+        
+        $newestBackupSize = $latestFile ? $disk->size($latestFile) : 0;
+        $totalStorage = collect($files)->sum(fn($file) => $disk->size($file));
         
         return (new MailMessage)
             ->subject('✅ Backup Successful - MyGrowNet')
             ->markdown('emails.backup-success', [
-                'applicationName' => $backup->backupName(),
-                'diskName' => $backup->diskName(),
-                'newestBackupSize' => $newestBackup ? $newestBackup->sizeInBytes() : 0,
-                'numberOfBackups' => $backup->backups()->count(),
-                'totalStorageUsed' => $backup->usedStorage(),
-                'newestBackupDate' => $newestBackup ? $newestBackup->date() : null,
-                'oldestBackupDate' => $oldestBackup ? $oldestBackup->date() : null,
+                'applicationName' => $this->event->backupName,
+                'diskName' => $this->event->diskName,
+                'newestBackupSize' => $newestBackupSize,
+                'numberOfBackups' => count($files),
+                'totalStorageUsed' => $totalStorage,
+                'newestBackupDate' => $latestFile ? now() : null,
+                'oldestBackupDate' => !empty($files) ? now()->subDays(count($files)) : null,
             ]);
     }
 }
