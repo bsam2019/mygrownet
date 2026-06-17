@@ -27,14 +27,14 @@ class SectionTemplateService
                 'layouts' => ['centered', 'split-right', 'split-left', 'video', 'slideshow'],
                 'defaults' => [
                     'layout' => 'centered',
-                    'title' => 'Welcome to Our Business',
-                    'subtitle' => 'We help you grow and succeed',
-                    'buttonText' => 'Get Started',
+                    'title' => 'We Build Your Digital Success',
+                    'subtitle' => 'Professional websites, powerful tools, and the support you need to grow your business online',
+                    'buttonText' => 'Get Started Today',
                     'buttonLink' => '#contact',
                     'textPosition' => 'center',
                 ],
                 'style' => ['backgroundColor' => '#1e40af', 'textColor' => '#ffffff'],
-                'aiHints' => 'Create compelling, action-oriented headline. Subtitle expands value proposition. Include clear CTA. Layout options: centered (default), split-right, split-left, video, slideshow.',
+                'aiHints' => 'Create a compelling, benefit-driven headline that grabs attention. Subtitle should expand the value proposition with specific benefits. Include a clear, action-oriented CTA button. Modern hero designs use bold typography, subtle gradients, and strong contrast. Layout options: centered (default), split-right, split-left, video, slideshow.',
                 'imageRequirements' => [
                     'backgroundImage' => [
                         'width' => 1920,
@@ -85,9 +85,9 @@ class SectionTemplateService
                 'category' => 'structure',
                 'required' => ['title'],
                 'optional' => ['subtitle', 'backgroundImage', 'textPosition'],
-                'defaults' => ['title' => 'Page Title', 'textPosition' => 'center'],
+                'defaults' => ['title' => 'Page Title', 'subtitle' => 'Learn more about what we do and how we can help your business grow', 'textPosition' => 'center'],
                 'style' => ['backgroundColor' => '#1e40af', 'textColor' => '#ffffff'],
-                'aiHints' => 'Keep title concise. Subtitle optional but provides context.',
+                'aiHints' => 'Keep title concise and impactful. Include a descriptive subtitle that provides context and engages the reader. Use the site\'s primary color scheme for consistency.',
                 'imageRequirements' => [
                     'backgroundImage' => [
                         'width' => 1920,
@@ -110,11 +110,11 @@ class SectionTemplateService
                 'layouts' => ['image-right', 'image-left', 'image-top'],
                 'defaults' => [
                     'layout' => 'image-right',
-                    'title' => 'About Us',
-                    'description' => 'Tell your company story here.',
+                    'title' => 'Our Story',
+                    'description' => 'We are a passionate team dedicated to helping businesses thrive in the digital age. With years of experience and a commitment to excellence, we deliver solutions that drive real results for our clients across Zambia and beyond.',
                 ],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
-                'aiHints' => 'Write authentic company story. Focus on mission, values, unique selling points. Layout options: image-right (default), image-left, image-top.',
+                'aiHints' => 'Write an authentic company story that connects emotionally. Focus on mission, values, unique selling points, and what makes this business special. Use professional but warm language. Include specific details about the team, experience, or impact. Layout options: image-right (default), image-left, image-top.',
                 'imageRequirements' => [
                     'image' => [
                         'width' => 600,
@@ -139,16 +139,16 @@ class SectionTemplateService
                 'itemCount' => ['min' => 3, 'max' => 6, 'default' => 3],
                 'defaults' => [
                     'layout' => 'grid',
-                    'title' => 'Our Services',
+                    'title' => 'What We Offer',
                     'columns' => 3,
                     'items' => [
-                        ['icon' => 'chart', 'title' => 'Service 1', 'description' => 'Description'],
-                        ['icon' => 'users', 'title' => 'Service 2', 'description' => 'Description'],
-                        ['icon' => 'cog', 'title' => 'Service 3', 'description' => 'Description'],
+                        ['icon' => 'chart', 'title' => 'Strategic Planning', 'description' => 'Data-driven strategies tailored to your business goals, helping you navigate market challenges and seize growth opportunities.'],
+                        ['icon' => 'users', 'title' => 'Expert Consultation', 'description' => 'One-on-one guidance from industry experts who understand your unique challenges and deliver practical, actionable solutions.'],
+                        ['icon' => 'cog', 'title' => 'Digital Solutions', 'description' => 'Cutting-edge technology and digital tools designed to streamline operations, enhance customer experience, and boost revenue.'],
                     ],
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
-                'aiHints' => 'Create 3-6 services with benefit-focused titles. Each needs icon, title, description. Layout options: grid (default), list, cards-images, alternating.',
+                'aiHints' => 'Create 3-6 services with benefit-focused, action-oriented titles. Each service needs an icon, a compelling title that emphasizes value, and a description that explains the benefit — not just what it is, but why it matters. Use professional, polished language. Layout options: grid (default), list, cards-images, alternating.',
                 'imageRequirements' => [
                     'items.image' => [
                         'width' => 500,
@@ -175,12 +175,14 @@ class SectionTemplateService
                     'layout' => 'grid',
                     'title' => 'Why Choose Us',
                     'items' => [
-                        ['icon' => 'check', 'title' => 'Feature 1', 'description' => 'Benefit description'],
-                        ['icon' => 'check', 'title' => 'Feature 2', 'description' => 'Benefit description'],
+                        ['icon' => 'star', 'title' => 'Proven Track Record', 'description' => 'Years of experience delivering exceptional results for businesses across multiple industries in Zambia and beyond.'],
+                        ['icon' => 'heart', 'title' => 'Client-First Approach', 'description' => 'Your success is our priority. We take time to understand your unique needs and craft solutions that truly work for you.'],
+                        ['icon' => 'zap', 'title' => 'Fast & Reliable', 'description' => 'We move quickly without compromising quality. Our streamlined processes ensure timely delivery every single time.'],
+                        ['icon' => 'shield', 'title' => 'Dedicated Support', 'description' => 'You are never alone. Our support team is always ready to help, guide, and ensure your business runs smoothly.'],
                     ],
                 ],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
-                'aiHints' => 'Focus on benefits, not just features. Use action-oriented language. Layout options: grid (default), checklist, steps.',
+                'aiHints' => 'Focus on benefits, not just features. Each feature should clearly communicate value to the customer. Use professional, benefit-driven language. Layout options: grid (default), checklist, steps.',
             ],
 
             'testimonials' => [
@@ -197,11 +199,13 @@ class SectionTemplateService
                     'layout' => 'grid',
                     'title' => 'What Our Clients Say',
                     'items' => [
-                        ['name' => 'John Banda', 'role' => 'CEO', 'text' => 'Great service!', 'rating' => 5],
+                        ['name' => 'Mwila Banda', 'role' => 'CEO, Lusaka Tech Solutions', 'text' => 'Working with this team transformed our online presence completely. Our website traffic has increased by 200% and our customers love the new design. Highly recommended!', 'rating' => 5],
+                        ['name' => 'Chanda Phiri', 'role' => 'Owner, Kitwe Fresh Mart', 'text' => 'The professionalism and attention to detail is outstanding. They took our vision and created something even better than we imagined. A true partner in our growth journey.', 'rating' => 5],
+                        ['name' => 'Thandiwe Zulu', 'role' => 'Director, Ndola Community Health', 'text' => 'From the initial consultation to the final launch, the experience was seamless. Our new website has made it so much easier for patients to find and connect with us.', 'rating' => 5],
                     ],
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
-                'aiHints' => 'Create realistic testimonials with specific details. Use Zambian names. Include role/company. Layout options: grid (default), carousel, single, photos.',
+                'aiHints' => 'Create realistic, detailed testimonials with specific results and details. Use Zambian names (Banda, Phiri, Zulu, Mwale, Tembo, Mulenga, Banda). Include real-sounding company names and roles. Each testimonial should have a specific benefit or result mentioned. Layout options: grid (default), carousel, single, photos.',
                 'imageRequirements' => [
                     'items.image' => [
                         'width' => 200,
@@ -226,14 +230,15 @@ class SectionTemplateService
                 'itemCount' => ['min' => 2, 'max' => 4, 'default' => 3],
                 'defaults' => [
                     'layout' => 'cards',
-                    'title' => 'Pricing Plans',
+                    'title' => 'Choose Your Plan',
                     'plans' => [
-                        ['name' => 'Basic', 'price' => 'K99/mo', 'features' => "Feature 1\nFeature 2", 'buttonText' => 'Get Started'],
-                        ['name' => 'Pro', 'price' => 'K199/mo', 'features' => "All Basic\nFeature 3", 'popular' => true, 'buttonText' => 'Get Started'],
+                        ['name' => 'Starter', 'price' => 'K299/mo', 'description' => 'Perfect for small businesses getting started online', 'features' => "Professional website\n5 pages\nContact form\nMobile responsive\nBasic analytics", 'buttonText' => 'Get Started', 'popular' => false],
+                        ['name' => 'Business', 'price' => 'K599/mo', 'description' => 'Ideal for growing businesses ready to scale', 'features' => "Everything in Starter\nUnlimited pages\nBlog integration\nSEO optimization\nSocial media integration\nPriority support", 'buttonText' => 'Get Started', 'popular' => true],
+                        ['name' => 'Enterprise', 'price' => 'K1,299/mo', 'description' => 'For established businesses needing full solutions', 'features' => "Everything in Business\nCustom integrations\nE-commerce ready\nDedicated account manager\nAdvanced analytics\n24/7 phone support", 'buttonText' => 'Contact Us', 'popular' => false],
                     ],
                 ],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
-                'aiHints' => 'Create 2-4 pricing tiers. Use K (Kwacha) for Zambian businesses. Mark one as popular. Layout options: cards (default), table, toggle.',
+                'aiHints' => 'Create 2-4 pricing tiers with clear value progression. Use K (Kwacha) for Zambian businesses. Mark one plan as popular (recommended). Each plan should have a clear name, price with period, description of who it\'s for, and feature list as a string with newlines for bullet points. Layout options: cards (default), table, toggle.',
             ],
 
             'contact' => [
@@ -246,13 +251,16 @@ class SectionTemplateService
                 'layouts' => ['stacked', 'side-by-side', 'with-map'],
                 'defaults' => [
                     'layout' => 'stacked',
-                    'title' => 'Contact Us',
+                    'title' => 'Get In Touch',
+                    'description' => 'We would love to hear from you. Whether you have a question, need a quote, or want to discuss your project — reach out and let us help bring your vision to life.',
                     'email' => 'hello@example.com',
                     'phone' => '+260 97 123 4567',
+                    'address' => 'Lusaka, Zambia',
                     'showForm' => true,
+                    'textPosition' => 'center',
                 ],
                 'style' => ['backgroundColor' => '#ffffff', 'textColor' => '#111827'],
-                'aiHints' => 'Include realistic contact details. Use +260 format for Zambian phones. Layout options: stacked (default), side-by-side, with-map.',
+                'aiHints' => 'Create a welcoming contact section with a warm description. Use Zambian phone format (+260). Include business address. Make it easy for visitors to reach out. Layout options: stacked (default), side-by-side, with-map.',
             ],
 
             'faq' => [
@@ -290,11 +298,14 @@ class SectionTemplateService
                     'layout' => 'grid',
                     'title' => 'Meet Our Team',
                     'items' => [
-                        ['name' => 'John Banda', 'role' => 'CEO', 'bio' => 'Founder with 10+ years experience'],
+                        ['name' => 'John Banda', 'role' => 'CEO & Founder', 'bio' => 'Visionary leader with over 15 years of experience in digital transformation and business strategy. Passionate about helping Zambian businesses thrive online.'],
+                        ['name' => 'Mary Phiri', 'role' => 'Head of Design', 'bio' => 'Award-winning designer who brings creativity and precision to every project. Specializes in creating beautiful, user-friendly digital experiences.'],
+                        ['name' => 'David Tembo', 'role' => 'Technical Lead', 'bio' => 'Full-stack developer with deep expertise in modern web technologies. Ensures every website is fast, secure, and built to last.'],
+                        ['name' => 'Sarah Mulenga', 'role' => 'Client Success Manager', 'bio' => 'Dedicated to ensuring every client gets the support they need. With a background in customer experience, she makes sure your voice is always heard.'],
                     ],
                 ],
                 'style' => ['backgroundColor' => '#f9fafb', 'textColor' => '#111827'],
-                'aiHints' => 'Use realistic Zambian names. Include role and brief bio. Layout options: grid (default), social, compact.',
+                'aiHints' => 'Create a professional team section with realistic Zambian names (Banda, Phiri, Tembo, Mulenga, Zulu, Mwale, Kasonde, Mwansa). Each member should have a role/title, and a bio that highlights their expertise, experience, and what they bring to the team. Layout options: grid (default), social, compact.',
                 'imageRequirements' => [
                     'items.image' => [
                         'width' => 400,
@@ -339,13 +350,13 @@ class SectionTemplateService
                 'layouts' => ['banner', 'split', 'minimal'],
                 'defaults' => [
                     'layout' => 'banner',
-                    'title' => 'Ready to Get Started?',
-                    'description' => 'Contact us today',
-                    'buttonText' => 'Contact Us',
+                    'title' => 'Ready to Transform Your Business?',
+                    'description' => 'Let us help you build a powerful online presence that drives real results. Your digital success story starts here.',
+                    'buttonText' => 'Start Your Journey',
                     'buttonLink' => '#contact',
                 ],
                 'style' => ['backgroundColor' => '#2563eb', 'textColor' => '#ffffff'],
-                'aiHints' => 'Create urgency with action-oriented language. Clear, compelling CTA. Layout options: banner (default), split, minimal.',
+                'aiHints' => 'Create urgency with compelling, benefit-driven language. The CTA should inspire action. Use strong, confident copy that motivates visitors to take the next step. Layout options: banner (default), split, minimal.',
                 'imageRequirements' => [
                     'image' => [
                         'width' => 800,
