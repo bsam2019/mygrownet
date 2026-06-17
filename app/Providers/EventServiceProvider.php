@@ -55,6 +55,11 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\CMS\InventoryUpdated::class => [
             \App\Listeners\CMS\SyncInventoryToGrowMarket::class,
         ],
+        
+        // Backup Events
+        \Spatie\Backup\Events\BackupWasSuccessful::class => [
+            \App\Listeners\SendBackupSuccessNotification::class,
+        ],
     ];
 
     public function boot(): void
