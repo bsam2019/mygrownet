@@ -23,17 +23,19 @@ class BackupSuccessful extends Notification
     public function toMail($notifiable): MailMessage
     {
         $backup = $this->event->backupDestination;
+        $newestBackup = $backup->newestBackup();
+        $oldestBackup = $backup->oldestBackup();
         
         return (new MailMessage)
             ->subject('✅ Backup Successful - MyGrowNet')
             ->markdown('emails.backup-success', [
                 'applicationName' => $backup->backupName(),
                 'diskName' => $backup->diskName(),
-                'newestBackupSize' => $backup->newestBackup()?->size() ?? 0,
+                'newestBackupSize' => $newestBackup ? $newestBackup->sizeInBytes() : 0,
                 'numberOfBackups' => $backup->backups()->count(),
                 'totalStorageUsed' => $backup->usedStorage(),
-                'newestBackupDate' => $backup->newestBackup()?->date(),
-                'oldestBackupDate' => $backup->oldestBackup()?->date(),
+                'newestBackupDate' => $newestBackup ? $newestBackup->date() : null,
+                'oldestBackupDate' => $oldestBackup ? $oldestBackup->date() : null,
             ]);
     }
 }
