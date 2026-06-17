@@ -33,7 +33,7 @@ class AIContentService
         switch ($this->provider) {
             case 'nvidia':
                 $this->apiKey = config('services.ai.nvidia_key', '');
-                $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-pro');
+                $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash');
                 $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
                 break;
             case 'grok':
@@ -69,7 +69,7 @@ class AIContentService
         
         // Auto-configure NVIDIA-specific params
         if ($this->provider === 'nvidia') {
-            if (str_contains($model, 'flash')) {
+            if (str_contains($model, 'flash') || str_contains($model, 'Flash')) {
                 $this->extraBody = [
                     'chat_template_kwargs' => [
                         'thinking' => true,
@@ -2203,11 +2203,21 @@ PROMPT;
         $request = Http::withHeaders([
             'Authorization' => "Bearer {$this->apiKey}",
             'Content-Type' => 'application/json',
-        ])->timeout(60);
+        ])->timeout(120); // DeepSeek V4 can be slow, allow 2 minutes
         
         // Bypass SSL verification in development (for Windows SSL certificate issues)
         if (app()->environment('local', 'development')) {
             $request = $request->withoutVerifying();
+        }
+        
+        // Explicit CA bundle path for Guzzle on Windows
+        $caInfo = ini_get('curl.cainfo');
+        if ($caInfo) {
+            $request = $request->withOptions([
+                'curl' => [
+                    CURLOPT_CAINFO => $caInfo,
+                ],
+            ]);
         }
         
         $payload = [

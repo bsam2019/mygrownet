@@ -30,8 +30,7 @@ class AIController extends Controller
         $availableModels = [];
         if ($this->aiService->getProvider() === 'nvidia') {
             $availableModels = [
-                ['id' => 'deepseek-ai/deepseek-v4-pro', 'name' => 'DeepSeek V4 Pro', 'description' => 'Best for complex tasks, higher quality'],
-                ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast with thinking/reasoning'],
+                ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast AI with advanced reasoning capabilities'],
             ];
         }
         

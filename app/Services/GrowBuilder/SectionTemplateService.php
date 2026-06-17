@@ -62,20 +62,6 @@ class SectionTemplateService
                         'description' => 'Slideshow images',
                     ],
                 ],
-                        'aspectRatio' => 1.33,
-                        'minWidth' => 600,
-                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
-                        'description' => 'Split layout side image',
-                    ],
-                    'slides' => [
-                        'width' => 1920,
-                        'height' => 800,
-                        'aspectRatio' => 2.4,
-                        'minWidth' => 1280,
-                        'formats' => ['jpg', 'jpeg', 'png', 'webp'],
-                        'description' => 'Slideshow images',
-                    ],
-                ],
             ],
 
             'page-header' => [

@@ -127,7 +127,7 @@ return [
 
         // NVIDIA (DeepSeek via NVIDIA API - recommended)
         'nvidia_key' => env('AI_NVIDIA_KEY'),
-        'nvidia_model' => env('AI_NVIDIA_MODEL', 'deepseek-ai/deepseek-v4-pro'),
+        'nvidia_model' => env('AI_NVIDIA_MODEL', 'deepseek-ai/deepseek-v4-flash'),
         'nvidia_url' => 'https://integrate.api.nvidia.com/v1',
 
         // OpenAI (paid)
