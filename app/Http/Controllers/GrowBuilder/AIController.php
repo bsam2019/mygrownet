@@ -975,6 +975,7 @@ class AIController extends Controller
         
         return response()->json([
             'success' => true,
+            'result' => $result,
             'message' => $aiMessage,
             'actions' => $actions,
             'context' => $sessionContext->all(),
