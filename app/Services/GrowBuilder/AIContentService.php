@@ -36,11 +36,6 @@ class AIContentService
                 $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-pro');
                 $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
                 break;
-            case 'groq':
-                $this->apiKey = config('services.ai.groq_key', '');
-                $this->model = config('services.ai.groq_model', 'llama-3.3-70b-versatile');
-                $this->baseUrl = 'https://api.groq.com/openai/v1';
-                break;
             case 'grok':
             case 'xai':
                 $this->apiKey = config('services.ai.grok_key', config('services.ai.xai_key', ''));

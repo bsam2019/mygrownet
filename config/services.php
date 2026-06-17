@@ -113,7 +113,6 @@ return [
     | Supports multiple providers:
     | - nvidia: DeepSeek models via NVIDIA API (fast, quality results)
     | - openai: OpenAI GPT models (paid)
-    | - groq: Groq Cloud with Llama models (FREE tier available)
     | - gemini: Google Gemini (FREE tier available)
     | - ollama: Local Ollama server (FREE, runs locally)
     |
@@ -124,7 +123,7 @@ return [
     */
 
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'nvidia'), // nvidia, openai, groq, gemini, ollama
+        'provider' => env('AI_PROVIDER', 'nvidia'), // nvidia, openai, gemini, ollama
 
         // NVIDIA (DeepSeek via NVIDIA API - recommended)
         'nvidia_key' => env('AI_NVIDIA_KEY'),
@@ -135,10 +134,6 @@ return [
         'openai_key' => env('OPENAI_API_KEY'),
         'openai_model' => env('OPENAI_MODEL', 'gpt-3.5-turbo'),
         'openai_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-
-        // Groq (FREE tier - recommended for testing)
-        'groq_key' => env('AI_GROQ_KEY'),
-        'groq_model' => env('AI_GROQ_MODEL', 'llama-3.3-70b-versatile'),
 
         // Google Gemini (FREE tier)
         'gemini_key' => env('AI_GEMINI_KEY'),
