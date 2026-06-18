@@ -563,6 +563,10 @@ const processUserMessage = async (input: string): Promise<{ content: string; typ
         
         if (result && result.action) {
             // Map AI action to message type and format response
+            // If backend says to use frontend fallback, skip to keyword matching
+            if (result.data?.frontend_fallback) {
+                throw new Error('frontend_fallback');
+            }
             const response = mapSmartChatResponse(result, ctx);
             // Include usage in response
             return { ...response, usage: result.usage };
@@ -1096,7 +1100,7 @@ const processWithKeywordMatching = async (
         const styleChange = parseStyleRequest(lowerInput);
         
         // Check if they want content improvement too
-        const wantsContentImprovement = lowerInput.includes('word') || lowerInput.includes('text') || lowerInput.includes('content') || lowerInput.includes('correct') || lowerInput.includes('better') || lowerInput.includes('empty') || lowerInput.includes('fill');
+        const wantsContentImprovement = lowerInput.includes('word') || lowerInput.includes('text') || lowerInput.includes('content') || lowerInput.includes('correct') || lowerInput.includes('better') || lowerInput.includes('empty') || lowerInput.includes('fill') || lowerInput.includes('paragraph');
         
         // Determine target section type - expanded list
         let targetSection = ctx?.selectedSection?.type;
@@ -1201,7 +1205,7 @@ const processWithKeywordMatching = async (
     // ============================================
     // 3. CONTENT GENERATION - Generate content for sections
     // ============================================
-    if (lowerInput.includes('generate') || lowerInput.includes('create') || lowerInput.includes('write')) {
+    if (lowerInput.includes('generate') || lowerInput.includes('create') || lowerInput.includes('write') || lowerInput.includes('paragraph') || lowerInput.includes('content') || lowerInput.includes('text')) {
         // Check for specific content types
         if (lowerInput.includes('testimonial')) {
             const testimonials = await generateTestimonials(ctx?.site.businessType, 3);
@@ -1924,38 +1928,39 @@ const detectSectionType = (input: string): string | null => {
 
 const buildContextAwareHelp = (): { content: string; type: Message['type'] } => {
     const ctx = props.aiContext;
-    let help = `I can help you with:\n\n`;
+    const sections = ctx?.currentPage?.sections || [];
+    const pageTitle = ctx?.currentPage?.title || 'this page';
+    const siteName = props.siteName || 'your website';
 
-    // Context-specific suggestions
-    if (ctx?.selectedSection) {
-        help += `**For your ${ctx.selectedSection.type} section:**\n`;
-        help += `• "Make the background blue"\n`;
-        help += `• "Improve the headline"\n`;
-        help += `• "Make it taller"\n\n`;
+    // Show actual section content if available
+    if (sections.length > 0) {
+        let help = `Here are the sections on **${pageTitle}**:\n\n`;
+        sections.forEach((s: any) => {
+            const content = s.content || {};
+            const title = content.title || s.type;
+            const status = content.title ? '✓ has content' : '✗ empty';
+            const items = content.items ? ` (${content.items.length} items)` : '';
+            help += `• **${s.type}**: ${status}${items}\n`;
+        });
+        help += `\nWhat would you like to work on? Try:\n`;
+        help += `• "Improve the hero section"\n`;
+        help += `• "Show me the about content"\n`;
+        help += `• "Make the services section better"\n`;
+        if (ctx?.selectedSection) {
+            help += `• "Edit ${ctx.selectedSection.type} text"\n`;
+        }
+        return { content: help, type: 'text' };
     }
 
-    help += `**Content Generation:**\n`;
-    help += `• "Generate testimonials"\n`;
-    help += `• "Write FAQ questions"\n`;
-    help += `• "Create pricing plans"\n\n`;
-
-    help += `**Add Sections:**\n`;
+    // No sections - generic help
+    let help = `Welcome to the AI assistant for **${siteName}**!\n\n`;
+    help += `You can ask me to:\n`;
     help += `• "Add a hero section"\n`;
-    help += `• "Add testimonials"\n`;
-    help += `• "Add a contact form"\n\n`;
-
-    help += `**Style Changes:**\n`;
-    help += `• "Make it darker/lighter"\n`;
-    help += `• "Center the text"\n`;
-    help += `• "Add more spacing"\n\n`;
-
-    help += `**Navigation & Footer:**\n`;
-    help += `• "Make nav sticky"\n`;
-    help += `• "Change footer to dark"\n\n`;
-
-    help += `**SEO & Colors:**\n`;
-    help += `• "Generate meta description"\n`;
+    help += `• "Generate testimonials"\n`;
+    help += `• "Create a contact page"\n`;
     help += `• "Suggest a color palette"\n`;
+    help += `• "Improve the about section"\n\n`;
+    help += `What would you like to do?`;
 
     return { content: help, type: 'text' };
 };

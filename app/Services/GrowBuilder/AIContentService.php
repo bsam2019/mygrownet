@@ -358,19 +358,21 @@ PROMPT;
                 }
             }
             
-            // If parsing failed, return as conversational response
+            // If JSON parsing failed, return response as chat
+            Log::warning('SmartChat JSON parse failed', ['response_preview' => substr($response, 0, 200)]);
             return [
                 'action' => 'chat',
                 'message' => $response,
                 'data' => null
             ];
         } catch (\Exception $e) {
-            Log::error('Smart chat failed', ['error' => $e->getMessage()]);
-            return [
-                'action' => 'error',
-                'message' => 'I encountered an issue processing your request. Could you try rephrasing it?',
-                'data' => null
-            ];
+            Log::error('Smart chat AI call failed', [
+                'error' => $e->getMessage(),
+                'userMessage' => substr($userMessage, 0, 100),
+            ]);
+            
+            // FALLBACK: Use server-side keyword matching when AI fails
+            return $this->fallbackSmartChat($userMessage, $context);
         }
     }
     
@@ -1067,11 +1069,98 @@ PROMPT;
     /**
      * Build section content analysis for AI to understand existing content
      */
+    /**
+     * Fallback when AI smartChat fails: use keyword matching to return a helpful response
+     */
+    private function fallbackSmartChat(string $userMessage, array $context): array
+    {
+        $lower = strtolower($userMessage);
+        $selectedSection = $context['selectedSection'] ?? '';
+        $allContent = $context['allSectionsContent'] ?? [];
+        $currentPage = $context['currentPage'] ?? '';
+        
+        // Find content for mentioned section
+        $mentionedSection = '';
+        $sectionContent = null;
+        $sectionNames = ['hero', 'about', 'services', 'features', 'testimonials', 'pricing', 'faq', 'contact', 'cta', 'team', 'gallery', 'stats'];
+        
+        foreach ($sectionNames as $name) {
+            if (str_contains($lower, $name)) {
+                $mentionedSection = $name;
+                break;
+            }
+        }
+        if (empty($mentionedSection)) {
+            $mentionedSection = $selectedSection;
+        }
+        
+        // Find section content from allSectionsContent
+        if (!empty($mentionedSection) && !empty($allContent)) {
+            foreach ($allContent as $section) {
+                if (($section['type'] ?? '') === $mentionedSection) {
+                    $sectionContent = $section['content'] ?? [];
+                    break;
+                }
+            }
+        }
+        
+        // If user asks about content/show/see, return actual content
+        $wantsToSee = str_contains($lower, 'see') || str_contains($lower, 'show') || str_contains($lower, 'view') || str_contains($lower, 'content') || str_contains($lower, 'tell') || str_contains($lower, 'what');
+        
+        if (!empty($mentionedSection) && $wantsToSee && !empty($sectionContent)) {
+            $contentStr = is_string($sectionContent) ? $sectionContent : json_encode($sectionContent, JSON_PRETTY_PRINT);
+            return [
+                'action' => 'chat',
+                'message' => "Here's the current content of your **{$mentionedSection}** section on **{$currentPage}**:\n\n```json\n{$contentStr}\n```\n\nWould you like me to improve or change anything?",
+                'data' => null,
+            ];
+        }
+        
+        // If user mentions a section with improve/edit/make, generate content
+        $wantsChange = str_contains($lower, 'improve') || str_contains($lower, 'edit') || str_contains($lower, 'make') || str_contains($lower, 'change') || str_contains($lower, 'update') || str_contains($lower, 'rewrite') || str_contains($lower, 'paragraph');
+        
+        if (!empty($mentionedSection) && $wantsChange) {
+            return [
+                'action' => 'generate_content',
+                'message' => "Let me improve the {$mentionedSection} section with fresh, compelling content.",
+                'data' => [
+                    'sectionType' => $mentionedSection,
+                    'content' => null, // Will be generated
+                    'style' => null,
+                ],
+            ];
+        }
+        
+        if (!empty($mentionedSection) && !empty($sectionContent)) {
+            $title = $sectionContent['title'] ?? '(no title)';
+            $items = isset($sectionContent['items']) ? count($sectionContent['items']) . ' items' : '';
+            return [
+                'action' => 'chat',
+                'message' => "I can see the **{$mentionedSection}** section on **{$currentPage}**. It has the title \"{$title}\" {$items}. What would you like me to do with it?",
+                'data' => null,
+            ];
+        }
+        
+        if (!empty($mentionedSection)) {
+            return [
+                'action' => 'chat',
+                'message' => "I see you're asking about the **{$mentionedSection}** section on **{$currentPage}**. It exists on the page. What specific changes would you like to make?",
+                'data' => null,
+            ];
+        }
+        
+        // Generic fallback - let the frontend handle it
+        return [
+            'action' => 'chat',
+            'message' => '',
+            'data' => ['frontend_fallback' => true],
+        ];
+    }
+
     private function buildSectionContentAnalysis(array $context): string
     {
         $analysis = [];
         
-        // Analyze selected section content quality
         if (!empty($context['selectedSectionContent'])) {
             $content = $context['selectedSectionContent'];
             $sectionType = $context['selectedSection'] ?? 'unknown';
@@ -1082,15 +1171,14 @@ PROMPT;
             
             $analysis[] = "SELECTED SECTION ({$sectionType}):";
             if ($isEmpty) {
-                $analysis[] = "- Status: EMPTY or nearly empty - needs content generation";
+                $analysis[] = "- Status: EMPTY or nearly empty";
             } elseif ($isMinimal) {
-                $analysis[] = "- Status: MINIMAL content - could be expanded";
+                $analysis[] = "- Status: MINIMAL content";
             } else {
-                $analysis[] = "- Status: Has content - can be improved or modified";
+                $analysis[] = "- Status: Has content";
             }
         }
         
-        // Analyze all page sections — just quality summary
         if (!empty($context['allSectionsContent']) && is_array($context['allSectionsContent'])) {
             $analysis[] = "PAGE SECTIONS OVERVIEW:";
             foreach ($context['allSectionsContent'] as $section) {
@@ -1108,12 +1196,12 @@ PROMPT;
                         $preview .= " ({$itemType} items: " . count($contentData['items']) . ")";
                     }
                 }
-                $analysis[] = "- {$type}: " . ($hasContent ? "✓ Has content {$preview}" : "✗ Empty");
+                $analysis[] = "- {$type}: " . ($hasContent ? "Has content {$preview}" : "Empty");
             }
         }
         
         if (empty($analysis)) {
-            return "SECTION ANALYSIS: No section content available for analysis.";
+            return "No section content available for analysis.";
         }
         
         return "SECTION CONTENT ANALYSIS:\n" . implode("\n", $analysis);
@@ -2317,17 +2405,25 @@ PROMPT;
         $response = $request->post("{$this->baseUrl}/chat/completions", $payload);
         
         if (!$response->successful()) {
+            $errorBody = $response->body();
             Log::error('AI API request failed', [
                 'provider' => $this->provider,
                 'model' => $this->model,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $errorBody,
             ]);
-            throw new \Exception('AI API request failed: ' . $response->body());
+            throw new \Exception("AI API request failed (HTTP {$response->status()}): " . substr($errorBody, 0, 500));
         }
         
         $data = $response->json();
-        return $data['choices'][0]['message']['content'] ?? '';
+        $content = $data['choices'][0]['message']['content'] ?? '';
+        
+        if (empty($content)) {
+            Log::warning('AI returned empty content', ['response' => json_encode($data)]);
+            throw new \Exception('AI returned empty response');
+        }
+        
+        return $content;
     }
     
     /**
