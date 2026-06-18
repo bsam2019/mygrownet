@@ -37,12 +37,12 @@ export default defineConfig({
         manifest: '.vite/manifest.json',
     },
     resolve: {
-        alias: {
-            '@/Layouts': path.resolve(__dirname, './resources/js/layouts'),
-            '@/Components': path.resolve(__dirname, './resources/js/components'),
-            '@': path.resolve(__dirname, './resources/js'),
-            'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
-        },
+        alias: [
+            { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },
+            { find: '@/Components', replacement: path.resolve(__dirname, './resources/js/components') },
+            { find: '@', replacement: path.resolve(__dirname, './resources/js') },
+            { find: 'ziggy-js', replacement: resolve(__dirname, 'vendor/tightenco/ziggy') },
+        ],
     },
     css: {
         postcss: {
