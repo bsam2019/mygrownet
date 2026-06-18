@@ -234,19 +234,33 @@ PROMPT;
             $info[] = "Current page: {$context['currentPage']}";
         }
         
-        // Selected section context
+        // Selected section content — full, not truncated
         if (!empty($context['selectedSection'])) {
             $info[] = "Selected section: {$context['selectedSection']}";
         }
         if (!empty($context['selectedSectionContent'])) {
-            $preview = substr($context['selectedSectionContent'], 0, 200);
-            $info[] = "Section content preview: {$preview}...";
+            $full = is_string($context['selectedSectionContent']) 
+                ? $context['selectedSectionContent'] 
+                : json_encode($context['selectedSectionContent'], JSON_PRETTY_PRINT);
+            $info[] = "Selected section FULL content:\n{$full}";
         }
         
-        // Existing page sections
+        // All sections with full content
+        if (!empty($context['allSectionsContent']) && is_array($context['allSectionsContent'])) {
+            $info[] = "ALL PAGE SECTIONS WITH CONTENT:";
+            foreach ($context['allSectionsContent'] as $section) {
+                $type = $section['type'] ?? 'unknown';
+                $content = !empty($section['content']) 
+                    ? (is_string($section['content']) ? $section['content'] : json_encode($section['content'], JSON_PRETTY_PRINT))
+                    : '(empty)';
+                $info[] = "--- {$type} ---\n{$content}";
+            }
+        }
+        
+        // Existing page sections summary
         if (!empty($context['pageSections']) && is_array($context['pageSections'])) {
             $sections = implode(', ', $context['pageSections']);
-            $info[] = "Page sections: {$sections}";
+            $info[] = "Page sections list (types only): {$sections}";
         }
         
         // Site pages
@@ -713,10 +727,10 @@ A) **The user wants to create/modify content or structure**
    → data.sectionType = the section type name (from AVAILABLE SECTION TYPES above)
    → data.content = object with all required + optional fields filled in
    → data.style = { backgroundColor, textColor } matching site palette
-   
-   If the user mentions ANY section name (hero, welcome, about, services, etc.), assume
-   they want you to generate content for it — ask what specifically they want, or suggest
-   options for that section. NEVER list all your capabilities.
+    
+   If the user mentions ANY section name (hero, welcome, about, services, etc.), SHOW
+   the current content in your message (title, subtitle, items, etc.) then offer to
+   improve it. NEVER list all your capabilities.
 
 B) **The user is making conversation / asking a question / needs advice**
    → Use action "chat" — respond conversationally in the message field
@@ -727,6 +741,10 @@ B) **The user is making conversation / asking a question / needs advice**
    - "What should I do next?" → Suggest next steps
    - "What's the difference between hero and page-header?" → Explain
    → data can include suggestions or be empty, just be helpful
+   
+   IMPORTANT: When a user asks about a section or wants to see its content, DO
+   include the actual content values in your message. Reference the CURRENT CONTENT
+   and ALL PAGE SECTIONS WITH CONTENT sections above to quote real values.
 
 C) **The user wants feedback or improvements**
    → Use action "analyze_page" — list specific suggestions with priorities
@@ -777,6 +795,8 @@ PRINCIPLES
 10. Return ONLY valid JSON — nothing before or after
 11. NEVER list your capabilities or options unless the user explicitly asks "What can you do?" or similar
 12. If a user mentions a section type name (hero, about, services, etc.), directly address that section — do not list other options
+13. When a user asks about a section or wants to see its content, quote the ACTUAL content values (title, subtitle, button text, items) from the CONTEXT section — don't say things like "(present, but I don't have the exact text here)"
+14. Always show real data from the context provided — never guess or make up content values
 PROMPT;
     }
     
@@ -1051,12 +1071,11 @@ PROMPT;
     {
         $analysis = [];
         
-        // Analyze selected section content
+        // Analyze selected section content quality
         if (!empty($context['selectedSectionContent'])) {
             $content = $context['selectedSectionContent'];
             $sectionType = $context['selectedSection'] ?? 'unknown';
             
-            // Check if content is empty or minimal
             $contentLength = strlen(is_string($content) ? $content : json_encode($content));
             $isEmpty = $contentLength < 50;
             $isMinimal = $contentLength < 200;
@@ -1069,35 +1088,27 @@ PROMPT;
             } else {
                 $analysis[] = "- Status: Has content - can be improved or modified";
             }
-            
-            // Include actual content preview for AI to analyze
-            $preview = is_string($content) ? $content : json_encode($content);
-            $preview = substr($preview, 0, 500);
-            $analysis[] = "- Current content: {$preview}";
         }
         
-        // Analyze all page sections
+        // Analyze all page sections — just quality summary
         if (!empty($context['allSectionsContent']) && is_array($context['allSectionsContent'])) {
-            $analysis[] = "\nPAGE SECTIONS OVERVIEW:";
+            $analysis[] = "PAGE SECTIONS OVERVIEW:";
             foreach ($context['allSectionsContent'] as $section) {
                 $type = $section['type'] ?? 'unknown';
                 $hasContent = !empty($section['content']);
-                $contentPreview = '';
+                $contentData = $section['content'] ?? [];
                 
+                $preview = '';
                 if ($hasContent) {
-                    $contentData = $section['content'];
-                    // Extract key content for preview
                     if (isset($contentData['title'])) {
-                        $contentPreview = "Title: \"{$contentData['title']}\"";
+                        $preview = "title=\"{$contentData['title']}\"";
                     }
                     if (isset($contentData['items']) && is_array($contentData['items'])) {
-                        $itemCount = count($contentData['items']);
-                        $contentPreview .= " ({$itemCount} items)";
+                        $itemType = isset($contentData['type']) ? $contentData['type'] : '';
+                        $preview .= " ({$itemType} items: " . count($contentData['items']) . ")";
                     }
                 }
-                
-                $status = $hasContent ? "✓ Has content" : "✗ Empty";
-                $analysis[] = "- {$type}: {$status}" . ($contentPreview ? " - {$contentPreview}" : "");
+                $analysis[] = "- {$type}: " . ($hasContent ? "✓ Has content {$preview}" : "✗ Empty");
             }
         }
         
