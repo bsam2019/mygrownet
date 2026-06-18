@@ -32,6 +32,7 @@ class AIController extends Controller
         
         if ($provider === 'nvidia') {
             $availableModels = [
+                ['id' => 'deepseek-ai/deepseek-v4-pro', 'name' => 'DeepSeek V4 Pro', 'description' => 'Most capable model with superior reasoning'],
                 ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast AI with advanced reasoning capabilities'],
             ];
         } elseif ($provider === 'groq') {
