@@ -128,25 +128,11 @@ if ('serviceWorker' in navigator && !isLocalDevelopment) {
                 .then((registration) => {
                     console.log(`[${moduleName} PWA] Service Worker registered:`, registration.scope);
                     
-                    // Force immediate update check
-                    registration.update();
-                    
-                    // Check for updates periodically
-                    setInterval(() => {
-                        registration.update();
-                    }, 60 * 60 * 1000); // Check every hour
-                    
-                    // Listen for updates
+                    // Listen for updates (browser will check periodically on its own)
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         if (newWorker) {
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log(`[${moduleName} PWA] New version available`);
-                                    // Tell the new service worker to skip waiting
-                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                }
-                            });
+                            console.log(`[${moduleName} PWA] New version available`);
                         }
                     });
                 })

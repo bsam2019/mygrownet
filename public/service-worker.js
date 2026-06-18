@@ -17,7 +17,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_ASSETS))
-      .then(() => self.skipWaiting())
+      // Waits for user approval before activating (SKIP_WAITING message from client)
   );
 });
 

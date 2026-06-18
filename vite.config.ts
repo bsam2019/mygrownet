@@ -22,6 +22,16 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '127.0.0.1',
+        port: 5173,
+        hmr: {
+            host: '127.0.0.1',
+        },
+        watch: {
+            usePolling: false,
+        },
+    },
     base: '/build/',
     build: {
         manifest: '.vite/manifest.json',

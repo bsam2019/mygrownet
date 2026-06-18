@@ -74,9 +74,7 @@ const PAGE_NAMES = {
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   
-  // CRITICAL: Skip waiting immediately to activate ASAP
-  // This ensures admin route fixes are applied immediately
-  self.skipWaiting();
+  // Wait for user approval before activating (sent via SKIP_WAITING message from client)
   
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
