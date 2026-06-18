@@ -28,15 +28,23 @@ class AIController extends Controller
         $usageStats = $this->aiUsageService->getUsageStats($user);
         
         $availableModels = [];
-        if ($this->aiService->getProvider() === 'nvidia') {
+        $provider = $this->aiService->getProvider();
+        
+        if ($provider === 'nvidia') {
             $availableModels = [
                 ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast AI with advanced reasoning capabilities'],
+            ];
+        } elseif ($provider === 'groq') {
+            $availableModels = [
+                ['id' => 'llama-3.3-70b-versatile', 'name' => 'Llama 3.3 70B', 'description' => 'Fast and versatile AI model'],
+                ['id' => 'llama-3.1-70b-versatile', 'name' => 'Llama 3.1 70B', 'description' => 'Balanced performance and speed'],
+                ['id' => 'mixtral-8x7b-32768', 'name' => 'Mixtral 8x7B', 'description' => 'Expert mixture model'],
             ];
         }
         
         return response()->json([
             'available' => $this->aiService->isConfigured(),
-            'provider' => $this->aiService->getProvider(),
+            'provider' => $provider,
             'model' => $this->aiService->getModel(),
             'available_models' => $availableModels,
             'usage' => $usageStats,
