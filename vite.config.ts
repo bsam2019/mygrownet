@@ -40,6 +40,7 @@ export default defineConfig({
         alias: [
             { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },
             { find: '@/Components', replacement: path.resolve(__dirname, './resources/js/components') },
+            { find: '@/Composables', replacement: path.resolve(__dirname, './resources/js/composables') },
             { find: '@', replacement: path.resolve(__dirname, './resources/js') },
             { find: 'ziggy-js', replacement: resolve(__dirname, 'vendor/tightenco/ziggy') },
         ],
