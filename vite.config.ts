@@ -38,6 +38,8 @@ export default defineConfig({
     },
     resolve: {
         alias: {
+            '@/Layouts': path.resolve(__dirname, './resources/js/layouts'),
+            '@/Components': path.resolve(__dirname, './resources/js/components'),
             '@': path.resolve(__dirname, './resources/js'),
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
