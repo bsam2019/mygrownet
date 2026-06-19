@@ -13,6 +13,7 @@ class CmsUserModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'user_id',
         'role_id',
         'employee_number',
@@ -27,6 +28,11 @@ class CmsUserModel extends Model
         'tour_completed' => 'boolean',
         'tour_progress' => 'array',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -71,6 +77,11 @@ class CmsUserModel extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopeForBranch(Builder $query, ?int $branchId): Builder
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function scopeForCompany(Builder $query, int $companyId): Builder

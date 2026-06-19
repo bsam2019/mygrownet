@@ -19,18 +19,25 @@ class EquipmentController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
 
         $equipment = EquipmentModel::where('company_id', $companyId)
+            ->forBranch($request->branch_id)
             ->when($request->search, fn($q) => $q->where(function($query) use ($request) {
                 $query->where('name', 'like', "%{$request->search}%")
                     ->orWhere('equipment_code', 'like', "%{$request->search}%");
             }))
             ->when($request->type, fn($q) => $q->where('type', $request->type))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->with('branch')
             ->orderBy('name')
             ->paginate(20);
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Equipment/Index', [
             'equipment' => $equipment,
-            'filters' => $request->only(['search', 'type', 'status']),
+            'filters' => $request->only(['search', 'type', 'status', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 

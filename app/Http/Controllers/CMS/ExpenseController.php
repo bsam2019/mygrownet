@@ -22,8 +22,9 @@ class ExpenseController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
 
-        $query = ExpenseModel::with(['category', 'job', 'recordedBy.user'])
-            ->where('company_id', $companyId);
+        $query = ExpenseModel::with(['category', 'job', 'recordedBy.user', 'branch'])
+            ->where('company_id', $companyId)
+            ->forBranch($request->branch_id);
 
         // Filters
         if ($request->filled('category_id')) {
@@ -62,11 +63,16 @@ class ExpenseController extends Controller
                 ->sum('amount'),
         ];
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
             'summary' => $summary,
-            'filters' => $request->only(['category_id', 'approval_status', 'search']),
+            'filters' => $request->only(['category_id', 'approval_status', 'search', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 

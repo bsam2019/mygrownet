@@ -12,6 +12,7 @@ class QuotationModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'customer_id',
         'measurement_id',
         'quotation_number',
@@ -39,6 +40,11 @@ class QuotationModel extends Model
         'total_amount' => 'decimal:2',
         'approved_at' => 'datetime',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -88,5 +94,10 @@ class QuotationModel extends Model
     public function isConverted(): bool
     {
         return $this->converted_to_job_id !== null;
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 }

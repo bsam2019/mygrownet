@@ -29,6 +29,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/vue/24/solid';
 import SplashScreen from '@/components/GrowBuilder/SplashScreens.vue';
+import ChatbotWidget from '@/components/ChatbotWidget.vue';
 
 interface Section {
     id: string;
@@ -94,6 +95,7 @@ interface Settings {
         style?: 'none' | 'minimal' | 'pulse' | 'wave' | 'gradient' | 'particles' | 'elegant';
         tagline?: string;
     };
+    chatbot_enabled?: boolean;
 }
 
 interface Product {
@@ -2658,6 +2660,9 @@ const getElementTransform = (section: Section, elementKey: string): string => {
             </div>
         </Transition>
     </div>
+
+    <!-- AI Site Chatbot -->
+    <ChatbotWidget :site-id="site.id" :site-name="site.name" :enabled="settings?.chatbot_enabled !== false" />
 </template>
 
 <style scoped>

@@ -13,6 +13,7 @@ use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
 use App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
@@ -146,6 +147,40 @@ class BizDocsAdapter implements DocumentGeneratorInterface
     }
 
     /**
+     * Generate PDF for a purchase order using BizDocs PdfGenerationService.
+     */
+    public function generatePurchaseOrderPdf(MaterialPurchaseOrderModel $purchaseOrder): string
+    {
+        $purchaseOrder->loadMissing(['company', 'items']);
+
+        $businessProfile = $this->buildBusinessProfile($purchaseOrder->company);
+        $customer        = $this->buildCustomerFromSupplier($purchaseOrder);
+        $currency        = $purchaseOrder->company->settings['currency'] ?? 'ZMW';
+        $document        = $this->buildDocument(
+            businessId:   $purchaseOrder->company_id,
+            customerId:   0,
+            type:         'purchase_order',
+            number:       $purchaseOrder->po_number,
+            issueDate:    $purchaseOrder->order_date->format('Y-m-d'),
+            dueDate:      $purchaseOrder->expected_delivery_date?->format('Y-m-d'),
+            items:        $purchaseOrder->items,
+            notes:        $purchaseOrder->notes,
+            terms:        $purchaseOrder->terms,
+            templateId:   $purchaseOrder->company->getBizDocsTemplateId('purchase_order'),
+            currency:     $currency
+        );
+
+        $storedTotals = [
+            'subtotal'  => (float) $purchaseOrder->subtotal,
+            'tax'       => (float) $purchaseOrder->tax_amount,
+            'discount'  => 0,
+            'grand'     => (float) $purchaseOrder->total_amount,
+        ];
+
+        return $this->generatePdfWithBizDocs($document, $businessProfile, $customer, $storedTotals);
+    }
+
+    /**
      * Generate print stationery (delegates to BizDocs stationery service).
      */
     public function generateStationery(array $config): string
@@ -208,6 +243,23 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             phone:      $cmsCustomer->phone,
             email:      $cmsCustomer->email,
             tpin:       $cmsCustomer->tax_number ?? null,
+            notes:      null
+        );
+    }
+
+    /**
+     * Build a BizDocs Customer from a Purchase Order's supplier info.
+     */
+    private function buildCustomerFromSupplier(MaterialPurchaseOrderModel $purchaseOrder): Customer
+    {
+        return Customer::fromPersistence(
+            id:         0,
+            businessId: $purchaseOrder->company_id,
+            name:       $purchaseOrder->supplier_name,
+            address:    $purchaseOrder->supplier_address,
+            phone:      $purchaseOrder->supplier_contact,
+            email:      null,
+            tpin:       null,
             notes:      null
         );
     }

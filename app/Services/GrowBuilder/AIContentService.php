@@ -2651,4 +2651,20 @@ PROMPT;
         
         return $palettes[$businessType] ?? $palettes['default'];
     }
+
+    /**
+     * Smart chat with custom system prompt (public wrapper for chatbot)
+     */
+    public function smartChatWithPrompt(string $systemPrompt, string $userMessage): string
+    {
+        return $this->callAI($systemPrompt, $userMessage);
+    }
+
+    /**
+     * Raw prompt for analysis (returns AI response text)
+     */
+    public function chatWithRawPrompt(string $prompt): string
+    {
+        return $this->callAI('You are a helpful website analysis assistant.', $prompt);
+    }
 }

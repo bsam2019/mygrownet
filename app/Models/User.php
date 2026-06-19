@@ -228,6 +228,8 @@ class User extends Authenticatable
         // Currency fields
         'user_currency',
         'preferred_currency',
+        // CMS default company preference
+        'default_company_id',
         // LifePlus fields
         'lifeplus_onboarded',
         'fcm_token',
@@ -290,6 +292,8 @@ class User extends Authenticatable
         // LifePlus casts
         'lifeplus_onboarded' => 'boolean',
         'lifeplus_notifications_enabled' => 'boolean',
+        // CMS
+        'default_company_id' => 'integer',
     ];
 
     // ==========================================
@@ -2132,6 +2136,7 @@ class User extends Authenticatable
      */
     public function getCmsUserAttribute(): ?\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel
     {
+        // 1. Session-set company (highest priority — active working session)
         $activeCompanyId = session('active_cms_company_id');
 
         if ($activeCompanyId) {
@@ -2142,7 +2147,19 @@ class User extends Authenticatable
             if ($record) return $record;
         }
 
-        // Fall back to first active membership
+        // 2. User's default company preference (persistent across sessions)
+        if ($this->default_company_id) {
+            $record = $this->cmsUsers()
+                ->where('company_id', $this->default_company_id)
+                ->where('status', 'active')
+                ->first();
+            if ($record) {
+                session(['active_cms_company_id' => $this->default_company_id]);
+                return $record;
+            }
+        }
+
+        // 3. Fall back to first active membership
         return $this->cmsUsers()->where('status', 'active')->first();
     }
 
@@ -2279,5 +2296,15 @@ class User extends Authenticatable
         }
         
         return $currentAgency->owner_user_id === $this->id;
+    }
+
+    public function portalCustomers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel::class,
+            'portal_user_customers',
+            'user_id',
+            'customer_id'
+        )->withPivot('company_id', 'is_active', 'last_login_at')->withTimestamps();
     }
 }

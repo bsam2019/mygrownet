@@ -20,7 +20,8 @@ class ProjectController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
 
         $projects = ProjectModel::where('company_id', $companyId)
-            ->with(['customer', 'projectManager', 'jobs'])
+            ->with(['customer', 'projectManager', 'jobs', 'branch'])
+            ->forBranch($request->branch_id)
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->search, fn($q) => $q->where(function($query) use ($request) {
                 $query->where('name', 'like', "%{$request->search}%")
@@ -29,9 +30,14 @@ class ProjectController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Projects/Index', [
             'projects' => $projects,
-            'filters' => $request->only(['status', 'search']),
+            'filters' => $request->only(['status', 'search', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 

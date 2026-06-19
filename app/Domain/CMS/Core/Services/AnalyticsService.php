@@ -8,6 +8,12 @@ use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InventoryItemModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAttendanceModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\VendorModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\PurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\AssetModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\AssetDepreciationModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -44,6 +50,110 @@ class AnalyticsService
             'profit_margin_trend' => $this->getProfitMarginTrend($companyId, $startDate),
             'revenue_expense_trend' => $this->getRevenueExpenseTrend($companyId, $startDate),
         ];
+    }
+
+    public function getProcurementMetrics(int $companyId, ?string $period = 'month'): array
+    {
+        $startDate = $this->getStartDate($period);
+
+        return [
+            'total_vendors' => VendorModel::forCompany($companyId)->active()->count(),
+            'total_purchase_orders' => PurchaseOrderModel::forCompany($companyId)
+                ->where('po_date', '>=', $startDate)->count(),
+            'pending_pos' => PurchaseOrderModel::forCompany($companyId)
+                ->where('po_date', '>=', $startDate)->byStatus('pending')->count(),
+            'approved_pos' => PurchaseOrderModel::forCompany($companyId)
+                ->where('po_date', '>=', $startDate)->byStatus('approved')->count(),
+            'completed_pos' => PurchaseOrderModel::forCompany($companyId)
+                ->where('po_date', '>=', $startDate)->byStatus('completed')->count(),
+            'total_po_value' => PurchaseOrderModel::forCompany($companyId)
+                ->where('po_date', '>=', $startDate)->sum('total_amount'),
+            'spend_by_vendor' => $this->getSpendByVendor($companyId, $startDate),
+            'po_by_status' => $this->getPurchaseOrdersByStatus($companyId),
+        ];
+    }
+
+    public function getContractMetrics(int $companyId): array
+    {
+        return [
+            'total_contracts' => ContractModel::forCompany($companyId)->count(),
+            'active_contracts' => ContractModel::forCompany($companyId)->active()->count(),
+            'expiring_soon' => ContractModel::forCompany($companyId)->expiringSoon()->count(),
+            'overdue_renewals' => ContractModel::forCompany($companyId)->overdue()->count(),
+        ];
+    }
+
+    public function getAssetMetrics(int $companyId): array
+    {
+        $assets = AssetModel::forCompany($companyId)->get();
+        $totalCost = $assets->sum('purchase_cost');
+        $totalDepreciation = AssetDepreciationModel::forCompany($companyId)->sum('depreciation_amount');
+        
+        return [
+            'total_assets' => $assets->count(),
+            'total_cost' => $totalCost,
+            'total_depreciation' => $totalDepreciation,
+            'current_value' => $totalCost - $totalDepreciation,
+            'by_status' => $assets->groupBy('status')->map->count()->toArray(),
+        ];
+    }
+
+    public function getOverviewMetrics(int $companyId): array
+    {
+        $finance = $this->getFinanceMetrics($companyId, 'month');
+        $operations = $this->getOperationsMetrics($companyId, 'month');
+        $procurement = $this->getProcurementMetrics($companyId, 'month');
+
+        $totalCustomers = CustomerModel::forCompany($companyId)->count();
+        $totalInvoices = InvoiceModel::where('company_id', $companyId)->count();
+        $paidInvoices = InvoiceModel::where('company_id', $companyId)->where('status', 'paid')->count();
+        $invoicePaidRate = $totalInvoices > 0 ? round(($paidInvoices / $totalInvoices) * 100, 1) : 0;
+
+        return [
+            'revenue' => $finance['revenue'],
+            'profit' => $finance['profit'],
+            'expenses' => $finance['expenses'],
+            'outstanding' => $finance['outstanding_invoices']['total_outstanding'],
+            'job_completion_rate' => $operations['job_completion_rate'],
+            'active_jobs' => $operations['jobs_by_status']['in_progress'] ?? 0,
+            'total_vendors' => $procurement['total_vendors'],
+            'pending_pos' => $procurement['pending_pos'],
+            'total_customers' => $totalCustomers,
+            'invoice_paid_rate' => $invoicePaidRate,
+            'period' => 'month',
+        ];
+    }
+
+    public function exportFinanceCsv(int $companyId, ?string $period = 'month'): string
+    {
+        $startDate = $this->getStartDate($period);
+        $payments = PaymentModel::where('company_id', $companyId)
+            ->where('payment_date', '>=', $startDate)
+            ->where('is_voided', false)
+            ->with('customer')
+            ->orderBy('payment_date')
+            ->get();
+
+        $expenses = ExpenseModel::where('company_id', $companyId)
+            ->where('expense_date', '>=', $startDate)
+            ->where('approval_status', 'approved')
+            ->with('category')
+            ->orderBy('expense_date')
+            ->get();
+
+        $csv = "Type,Date,Description,Category/Customer,Amount\n";
+
+        foreach ($payments as $p) {
+            $customerName = $p->customer ? $p->customer->name : 'N/A';
+            $csv .= "Revenue,{$p->payment_date},{$p->description},{$customerName},{$p->amount}\n";
+        }
+
+        foreach ($expenses as $e) {
+            $categoryName = $e->category ? $e->category->name : 'Uncategorized';
+            $csv .= "Expense,{$e->expense_date},{$e->description},{$categoryName},{$e->amount}\n";
+        }
+
+        return $csv;
     }
 
     private function getStartDate(string $period): Carbon
@@ -311,6 +421,37 @@ class AnalyticsService
         }
         
         return $months;
+    }
+
+    private function getSpendByVendor(int $companyId, Carbon $startDate): array
+    {
+        return PurchaseOrderModel::forCompany($companyId)
+            ->where('po_date', '>=', $startDate)
+            ->with('vendor')
+            ->get()
+            ->groupBy('vendor_id')
+            ->map(function ($orders) {
+                $vendor = $orders->first()->vendor;
+                return [
+                    'vendor_name' => $vendor ? $vendor->name : 'Unknown',
+                    'total_spend' => $orders->sum('total_amount'),
+                    'order_count' => $orders->count(),
+                ];
+            })
+            ->sortByDesc('total_spend')
+            ->take(10)
+            ->values()
+            ->toArray();
+    }
+
+    private function getPurchaseOrdersByStatus(int $companyId): array
+    {
+        return PurchaseOrderModel::forCompany($companyId)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->mapWithKeys(fn($item) => [$item->status => $item->count])
+            ->toArray();
     }
 
     private function getRevenueExpenseTrend(int $companyId, Carbon $startDate): array

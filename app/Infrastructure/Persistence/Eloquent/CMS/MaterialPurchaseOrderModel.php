@@ -11,8 +11,14 @@ class MaterialPurchaseOrderModel extends Model
 {
     protected $table = 'cms_material_purchase_orders';
 
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
+
     protected $fillable = [
         'company_id',
+        'branch_id',
         'job_id',
         'po_number',
         'supplier_name',
@@ -100,6 +106,16 @@ class MaterialPurchaseOrderModel extends Model
         $this->update(['status' => 'cancelled']);
     }
 
+    public function markAsApproved(): void
+    {
+        $this->update(['status' => 'sent']);
+    }
+
+    public function markAsRejected(?string $reason = null): void
+    {
+        $this->update(['status' => 'draft']);
+    }
+
     public function isDraft(): bool
     {
         return $this->status === 'draft';
@@ -113,6 +129,11 @@ class MaterialPurchaseOrderModel extends Model
     public function isReceived(): bool
     {
         return $this->status === 'received';
+    }
+
+    public function scopeForBranch(Builder $query, ?int $branchId): Builder
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function scopeForCompany(Builder $query, int $companyId): Builder

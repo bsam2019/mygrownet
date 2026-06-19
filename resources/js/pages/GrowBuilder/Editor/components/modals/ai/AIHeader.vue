@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { SparklesIcon, XMarkIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, WrenchScrewdriverIcon, ArrowPathIcon, ChevronDownIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, LightBulbIcon } from '@heroicons/vue/24/outline';
+import { SparklesIcon, XMarkIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, WrenchScrewdriverIcon, PhotoIcon, ArrowPathIcon, ChevronDownIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, LightBulbIcon } from '@heroicons/vue/24/outline';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 type CreativityLevel = 'guided' | 'balanced' | 'creative';
@@ -195,7 +195,7 @@ const props = defineProps<{
     darkMode?: boolean;
     isAvailable: boolean;
     provider?: string;
-    activeView: 'chat' | 'generate' | 'tools';
+    activeView: 'chat' | 'generate' | 'tools' | 'media';
     contextSummary?: string;
     aiUsage?: AIUsage;
     creativityLevel?: CreativityLevel;
@@ -203,7 +203,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     close: [];
-    'change-view': [view: 'chat' | 'generate' | 'tools'];
+    'change-view': [view: 'chat' | 'generate' | 'tools' | 'media'];
     'new-chat': [];
     'update:creativityLevel': [level: CreativityLevel];
 }>();
@@ -276,6 +276,7 @@ const statusColor = computed(() => {
 const views = [
     { id: 'chat', label: 'Chat', icon: ChatBubbleLeftRightIcon },
     { id: 'generate', label: 'Generate', icon: DocumentTextIcon },
+    { id: 'media', label: 'Media', icon: PhotoIcon },
     { id: 'tools', label: 'Tools', icon: WrenchScrewdriverIcon },
 ];
 </script>

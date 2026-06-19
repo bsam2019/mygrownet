@@ -7,6 +7,9 @@ use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use App\Domain\CMS\Core\Services\IndustryPresetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,21 +30,64 @@ class CompanyController extends Controller
     {
         $user = $request->user();
 
-        $companies = $user->cmsUsers()
+        $memberships = $user->cmsUsers()
             ->with('company', 'role')
             ->where('status', 'active')
-            ->get()
-            ->map(fn ($cu) => [
-                'company_id'   => $cu->company_id,
-                'company_name' => $cu->company->name,
-                'industry'     => $cu->company->industry_type,
-                'logo'         => $cu->company->logo_path,
-                'role'         => $cu->role?->name,
-                'status'       => $cu->company->status,
-            ]);
+            ->get();
+
+        $companyIds = $memberships->pluck('company_id')->toArray();
+
+        $activeJobs = JobModel::whereIn('company_id', $companyIds)
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->groupBy('company_id')
+            ->selectRaw('company_id, count(*) as count')
+            ->pluck('count', 'company_id');
+
+        $pendingInvoices = InvoiceModel::whereIn('company_id', $companyIds)
+            ->whereIn('status', ['sent', 'partial'])
+            ->groupBy('company_id')
+            ->selectRaw('company_id, count(*) as count')
+            ->pluck('count', 'company_id');
+
+        $outstanding = InvoiceModel::whereIn('company_id', $companyIds)
+            ->where('status', '!=', 'paid')
+            ->groupBy('company_id')
+            ->selectRaw('company_id, coalesce(sum(amount_due), 0) as total')
+            ->pluck('total', 'company_id');
+
+        $monthlyRevenue = JobModel::whereIn('company_id', $companyIds)
+            ->where('status', 'completed')
+            ->whereMonth('completed_at', now()->month)
+            ->whereYear('completed_at', now()->year)
+            ->groupBy('company_id')
+            ->selectRaw('company_id, coalesce(sum(actual_value), 0) as total')
+            ->pluck('total', 'company_id');
+
+        $customerCount = CustomerModel::whereIn('company_id', $companyIds)
+            ->where('status', 'active')
+            ->groupBy('company_id')
+            ->selectRaw('company_id, count(*) as count')
+            ->pluck('count', 'company_id');
+
+        $companies = $memberships->map(fn ($cu) => [
+            'company_id'   => $cu->company_id,
+            'company_name' => $cu->company->name,
+            'industry'     => $cu->company->industry_type,
+            'logo'         => $cu->company->logo_path,
+            'role'         => $cu->role?->name,
+            'status'       => $cu->company->status,
+            'metrics'      => [
+                'active_jobs'      => $activeJobs->get($cu->company_id, 0),
+                'pending_invoices' => $pendingInvoices->get($cu->company_id, 0),
+                'outstanding'      => (float) $outstanding->get($cu->company_id, 0),
+                'monthly_revenue'  => (float) $monthlyRevenue->get($cu->company_id, 0),
+                'total_customers'  => $customerCount->get($cu->company_id, 0),
+            ],
+        ]);
 
         return Inertia::render('CMS/Companies/Hub', [
             'companies' => $companies,
+            'defaultCompanyId' => $user->default_company_id,
         ]);
     }
 
@@ -150,6 +196,37 @@ class CompanyController extends Controller
         session(['active_cms_company_id' => $companyId]);
 
         return redirect()->route('cms.dashboard');
+    }
+
+    /**
+     * Set or clear the user's default company preference.
+     */
+    public function setDefault(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'nullable|integer',
+        ]);
+
+        $user = $request->user();
+        $companyId = $validated['company_id'] ?? null;
+
+        if ($companyId) {
+            // Verify the user belongs to this company
+            $membership = $user->cmsUsers()
+                ->where('company_id', $companyId)
+                ->where('status', 'active')
+                ->first();
+
+            if (!$membership) {
+                return back()->withErrors(['error' => 'Company not found.']);
+            }
+
+            $user->update(['default_company_id' => $companyId]);
+        } else {
+            $user->update(['default_company_id' => null]);
+        }
+
+        return back()->with('success', $companyId ? 'Default company updated.' : 'Default company cleared.');
     }
 
     /**

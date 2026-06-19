@@ -244,6 +244,23 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
     Route::post('/sites/{siteId}/ai/feedback', [AIController::class, 'recordFeedback'])->name('ai.feedback');
     Route::get('/sites/{siteId}/ai/feedback-stats', [AIController::class, 'getFeedbackStats'])->name('ai.feedback-stats');
     
+    // AI Image & Logo Generation (NEW)
+    Route::post('/ai/generate-image', [AIController::class, 'generateImage'])->name('ai.generate-image');
+    Route::post('/ai/generate-logo', [AIController::class, 'generateLogo'])->name('ai.generate-logo');
+
+    // AI Multi-Page Generation (NEW)
+    Route::post('/ai/generate-multi-page', [AIController::class, 'generateMultiPageWebsite'])->name('ai.generate-multi-page');
+
+    // AI Reference Site Import (NEW)
+    Route::post('/ai/analyze-reference', [AIController::class, 'analyzeReferenceSite'])->name('ai.analyze-reference');
+    Route::post('/ai/convert-reference', [AIController::class, 'convertReferenceSite'])->name('ai.convert-reference');
+
+    // AI Site Chatbot (NEW)
+    Route::post('/sites/{siteId}/ai/chatbot/ask', [AIController::class, 'chatbotAsk'])->name('ai.chatbot.ask');
+    Route::post('/sites/{siteId}/ai/chatbot/capture-lead', [AIController::class, 'chatbotCaptureLead'])->name('ai.chatbot.capture-lead');
+    Route::get('/sites/{siteId}/ai/chatbot/leads', [AIController::class, 'chatbotLeads'])->name('ai.chatbot.leads');
+    Route::post('/sites/{siteId}/ai/chatbot/toggle', [AIController::class, 'chatbotToggle'])->name('ai.chatbot.toggle');
+
     // Legacy AI endpoints (kept for backwards compatibility)
     Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');
     Route::post('/sites/{siteId}/ai/classify-intent', [AIController::class, 'classifyIntent'])->name('ai.classify-intent');
@@ -265,6 +282,10 @@ Route::prefix('gb-api/{subdomain}')->name('growbuilder.api.')->group(function ()
     Route::get('/orders/{orderId}/payment-status', [CheckoutController::class, 'checkPaymentStatus'])->name('payment-status');
     Route::post('/contact', [SiteContactController::class, 'store'])->name('contact');
 });
+
+// Public Chatbot API (no auth required — called from visitor widgets)
+Route::post('/gb-chatbot/{siteId}/ask', [AIController::class, 'chatbotAsk'])->name('growbuilder.chatbot.ask');
+Route::post('/gb-chatbot/{siteId}/capture-lead', [AIController::class, 'chatbotCaptureLead'])->name('growbuilder.chatbot.capture-lead');
 
 /*
 |--------------------------------------------------------------------------

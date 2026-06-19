@@ -14,6 +14,17 @@ class AnalyticsController extends Controller
         private AnalyticsService $analyticsService
     ) {}
 
+    public function overview(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $metrics = $this->analyticsService->getOverviewMetrics($companyId);
+
+        return Inertia::render('CMS/Analytics/Overview', [
+            'metrics' => $metrics,
+        ]);
+    }
+
     public function operations(Request $request): Response
     {
         $companyId = $request->user()->cmsUser->company_id;
@@ -37,6 +48,37 @@ class AnalyticsController extends Controller
         return Inertia::render('CMS/Analytics/Finance', [
             'metrics' => $metrics,
             'period' => $period,
+        ]);
+    }
+
+    public function procurement(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $period = $request->get('period', 'month');
+
+        $metrics = $this->analyticsService->getProcurementMetrics($companyId, $period);
+        $contracts = $this->analyticsService->getContractMetrics($companyId);
+        $assets = $this->analyticsService->getAssetMetrics($companyId);
+
+        return Inertia::render('CMS/Analytics/Procurement', [
+            'metrics' => $metrics,
+            'contracts' => $contracts,
+            'assets' => $assets,
+            'period' => $period,
+        ]);
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+        $period = $request->get('period', 'month');
+
+        $csv = $this->analyticsService->exportFinanceCsv($companyId, $period);
+        $filename = 'finance-export-' . now()->format('Y-m-d') . '.csv';
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }
 }

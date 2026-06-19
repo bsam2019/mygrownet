@@ -179,6 +179,11 @@ class EmailSettingsController extends Controller
                 'body_html' => file_get_contents(resource_path('views/emails/cms/overdue-notice.blade.php')),
                 'variables' => ['company_name', 'customer_name', 'invoice_number', 'due_date', 'balance_due', 'days_overdue'],
             ],
+            'contract_signing' => [
+                'subject' => 'Contract {{contract_number}} ready for signing - {{company_name}}',
+                'body_html' => file_get_contents(resource_path('views/emails/cms/contract-signing-request.blade.php')),
+                'variables' => ['company_name', 'customer_name', 'contract_number', 'contract_title', 'total_value', 'currency', 'signing_url'],
+            ],
         ];
 
         return Inertia::render('CMS/Settings/EmailTemplates', [

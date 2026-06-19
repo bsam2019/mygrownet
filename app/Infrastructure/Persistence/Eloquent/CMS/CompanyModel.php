@@ -42,6 +42,11 @@ class CompanyModel extends Model{
 
     protected $appends = ['logo_url', 'has_bizdocs_module', 'bizdocs_features'];
 
+    public function branches(): HasMany
+    {
+        return $this->hasMany(BranchModel::class, 'company_id');
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(CmsUserModel::class, 'company_id');

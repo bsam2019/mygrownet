@@ -62,6 +62,8 @@ return Application::configure(basePath: dirname(__DIR__))
             // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')
                 ->group(base_path('routes/venture.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/portal.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -98,6 +100,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
             'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
+            'portal.auth' => \App\Http\Middleware\RedirectIfNotPortalUser::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

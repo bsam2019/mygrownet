@@ -12,6 +12,7 @@ class InvoiceModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'customer_id',
         'job_id',
         'recurring_invoice_id',
@@ -42,6 +43,11 @@ class InvoiceModel extends Model
     ];
 
     // Relationships
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
+
     public function company(): BelongsTo
     {
         return $this->belongsTo(CompanyModel::class, 'company_id');
@@ -78,6 +84,11 @@ class InvoiceModel extends Model
     }
 
     // Scopes
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
+    }
+
     public function scopeForCompany($query, int $companyId)
     {
         return $query->where('company_id', $companyId);

@@ -129,6 +129,14 @@
                             @apply-colors="$emit('applyColors', $event)"
                         />
                     </div>
+
+                    <!-- Media View (Image & Logo Generation) -->
+                    <div v-else-if="activeView === 'media'" class="flex-1 overflow-y-auto">
+                        <AIImagePanel
+                            @use-image="handleUseImage"
+                            @import-site="handleImportSite"
+                        />
+                    </div>
                 </div>
             </div>
         </Transition>
@@ -145,6 +153,7 @@ import AIQuickActions from './ai/AIQuickActions.vue';
 import AIChatInput from './ai/AIChatInput.vue';
 import AIGeneratePanel from './ai/AIGeneratePanel.vue';
 import AIToolsPanel from './ai/AIToolsPanel.vue';
+import AIImagePanel from './ai/AIImagePanel.vue';
 
 interface Message {
     id: string;
@@ -217,6 +226,8 @@ const emit = defineEmits<{
     createPage: [template: string, title?: string];
     createAIPage: [pageType: string, pageData: any];
     updateUsage: [usage: any];
+    addImage: [url: string];
+    importSite: [structure: any];
 }>();
 
 const {
@@ -238,7 +249,7 @@ const {
 } = useAI(props.siteId);
 
 // State
-const activeView = ref<'chat' | 'generate' | 'tools'>('chat');
+const activeView = ref<'chat' | 'generate' | 'tools' | 'media'>('chat');
 const messages = ref<Message[]>([]);
 const userInput = ref('');
 const isTyping = ref(false);
@@ -2304,6 +2315,23 @@ const handleSEO = async (title: string, content: string) => {
 
 const handleColors = async (businessType: string, mood: string) => {
     return await suggestColors(businessType, mood);
+};
+
+// Handle using a generated image in the editor
+const handleUseImage = (url: string) => {
+    addMessage('assistant', `I'll add this image to your media library. You can then drag it into any section.`, 'text');
+    emit('addImage', url);
+};
+
+// Handle importing a reference site structure
+const handleImportSite = (structure: any) => {
+    if (structure?.suggested_pages || structure?.pages) {
+        const pages = structure.suggested_pages || structure.pages || [];
+        addMessage('assistant', `I've analyzed the reference site. Found ${pages.length} pages ready to import.`, 'text');
+        emit('importSite', structure);
+    } else {
+        addMessage('assistant', 'Analysis complete, but no pages were detected. Try a different URL.', 'text');
+    }
 };
 
 // Initialize

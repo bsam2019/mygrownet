@@ -3,6 +3,7 @@
 namespace App\Domain\CMS\BizDocs\Contracts;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 
@@ -31,6 +32,11 @@ interface DocumentGeneratorInterface
      * @return string PDF content
      */
     public function generateReceiptPdf(PaymentModel $payment): string;
+
+    /**
+     * Generate PDF for a purchase order
+     */
+    public function generatePurchaseOrderPdf(MaterialPurchaseOrderModel $purchaseOrder): string;
 
     /**
      * Generate print stationery

@@ -1589,6 +1589,11 @@ Route::fallback(function (Illuminate\Http\Request $request) {
     abort(404);
 });
 
+// Public contract signing routes (token-authenticated, no login required)
+Route::get('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'showSigningPage'])->name('public.contracts.sign');
+Route::post('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'submitCustomerSignature'])->name('public.contracts.submit-signature');
+Route::get('/contracts/signed/{contract}', [\App\Http\Controllers\CMS\ContractController::class, 'signedConfirmation'])->name('public.contracts.signed');
+
 // Quick Invoice Admin Routes
 require __DIR__.'/admin-quick-invoice.php';
 

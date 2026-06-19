@@ -17,6 +17,7 @@ import {
     XMarkIcon,
     FolderIcon,
     ShoppingBagIcon,
+    ChatBubbleLeftEllipsisIcon,
 } from '@heroicons/vue/24/outline';
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
@@ -69,6 +70,7 @@ interface Site {
             style?: 'none' | 'minimal' | 'pulse' | 'wave' | 'gradient' | 'particles' | 'elegant';
             tagline?: string;
         };
+        chatbot_enabled?: boolean;
     } | null;
 }
 
@@ -108,6 +110,7 @@ const form = useForm({
     splash_enabled: props.site.settings?.splash?.enabled !== false,
     splash_style: props.site.settings?.splash?.style || 'minimal',
     splash_tagline: props.site.settings?.splash?.tagline || '',
+    chatbot_enabled: props.site.settings?.chatbot_enabled ?? true,
     // SEO
     meta_title: props.site.seoSettings?.metaTitle || '',
     meta_description: props.site.seoSettings?.metaDescription || '',
@@ -148,10 +151,42 @@ const tabs = [
     { id: 'seo', name: 'SEO', icon: MagnifyingGlassIcon },
     { id: 'social', name: 'Social & Contact', icon: ShareIcon },
     { id: 'marketplace', name: 'Marketplace', icon: ShoppingBagIcon },
+    { id: 'chatbot', name: 'Chatbot', icon: ChatBubbleLeftEllipsisIcon },
 ];
 
 const submit = () => {
     form.put(route('growbuilder.sites.update', props.site.id));
+};
+
+// Chatbot leads
+const leads = ref<any[]>([]);
+const leadsLoading = ref(false);
+const leadsPage = ref(1);
+const leadsPagination = ref<any>(null);
+
+const fetchLeads = async () => {
+    leadsLoading.value = true;
+    try {
+        const res = await axios.get(route('growbuilder.ai.chatbot.leads', props.site.id), {
+            params: { page: leadsPage.value }
+        });
+        leads.value = res.data.data || [];
+        leadsPagination.value = res.data;
+    } catch {
+        leads.value = [];
+    } finally {
+        leadsLoading.value = false;
+    }
+};
+
+const toggleChatbot = async () => {
+    try {
+        await axios.post(route('growbuilder.ai.chatbot.toggle', props.site.id), {
+            enabled: form.chatbot_enabled,
+        });
+    } catch {
+        form.chatbot_enabled = !form.chatbot_enabled;
+    }
 };
 
 const canDelete = computed(() => deleteConfirmation.value === props.site.subdomain);
@@ -1602,6 +1637,86 @@ const adjustColor = (hex: string, amount: number): string => {
                                     Manage Marketplace Integration
                                     <ChevronRightIcon class="h-4 w-4" aria-hidden="true" />
                                 </Link>
+                            </div>
+                        </div>
+
+                        <!-- Chatbot Tab -->
+                        <div v-show="activeTab === 'chatbot'" class="space-y-6">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">AI Chatbot</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Let visitors ask questions about your site content</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" v-model="form.chatbot_enabled" class="sr-only peer" @change="toggleChatbot" />
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        <span class="ms-3 text-sm font-medium text-gray-700">{{ form.chatbot_enabled ? 'Enabled' : 'Disabled' }}</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-200 pt-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-base font-medium text-gray-900">Captured Leads</h4>
+                                    <button
+                                        type="button"
+                                        @click="fetchLeads"
+                                        :disabled="leadsLoading"
+                                        class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                    >
+                                        {{ leadsLoading ? 'Refreshing...' : 'Refresh' }}
+                                    </button>
+                                </div>
+
+                                <div v-if="leadsLoading" class="text-center py-8">
+                                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <p class="mt-2 text-sm text-gray-500">Loading leads...</p>
+                                </div>
+
+                                <div v-else-if="leads.length === 0" class="text-center py-8 bg-gray-50 rounded-xl">
+                                    <ChatBubbleLeftEllipsisIcon class="h-12 w-12 text-gray-300 mx-auto mb-3" aria-hidden="true" />
+                                    <p class="text-gray-500">No leads captured yet</p>
+                                    <p class="text-xs text-gray-400 mt-1">Leads appear here when visitors ask questions the chatbot can't answer</p>
+                                </div>
+
+                                <div v-else class="space-y-3">
+                                    <div v-for="lead in leads" :key="lead.id" class="bg-white border border-gray-200 rounded-xl p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-medium text-gray-900 truncate">{{ lead.email }}</p>
+                                                <p v-if="lead.question" class="text-sm text-gray-500 mt-1 line-clamp-2">{{ lead.question }}</p>
+                                            </div>
+                                            <span class="text-xs text-gray-400 whitespace-nowrap ml-2">{{ lead.created_at }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div v-if="leadsPagination && leadsPagination.last_page > 1" class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                                    <button
+                                        type="button"
+                                        @click="leadsPage = leadsPagination.current_page - 1; fetchLeads()"
+                                        :disabled="leadsPagination.current_page <= 1"
+                                        class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span class="text-sm text-gray-500">
+                                        Page {{ leadsPagination.current_page }} of {{ leadsPagination.last_page }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        @click="leadsPage = leadsPagination.current_page + 1; fetchLeads()"
+                                        :disabled="leadsPagination.current_page >= leadsPagination.last_page"
+                                        class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

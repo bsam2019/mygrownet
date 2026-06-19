@@ -10,12 +10,10 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Mail\CMS\PaymentReceivedMail;
 use App\Notifications\CMS\PaymentReceivedNotification;
 use App\Services\CMS\EmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 

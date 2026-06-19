@@ -144,6 +144,26 @@ return [
         'ollama_model' => env('AI_OLLAMA_MODEL', 'llama3'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI Image Generation
+    |--------------------------------------------------------------------------
+    */
+
+    'image' => [
+        'provider' => env('IMAGE_PROVIDER', 'huggingface'), // huggingface or replicate
+    ],
+
+    'replicate' => [
+        'api_key' => env('REPLICATE_API_KEY'),
+        'model' => env('REPLICATE_MODEL', 'black-forest-labs/flux-dev'),
+    ],
+
+    'huggingface' => [
+        'api_key' => env('HUGGINGFACE_API_KEY'),
+        'model' => env('HUGGINGFACE_MODEL', 'black-forest-labs/FLUX.1-dev'),
+    ],
+
     // Legacy OpenAI config (for backward compatibility)
     'openai' => [
         'key' => env('OPENAI_API_KEY'),

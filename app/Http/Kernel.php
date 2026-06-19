@@ -71,5 +71,7 @@ class Kernel extends HttpKernel
         'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
         'marketplaceAdmin' => \App\Http\Middleware\MarketplaceAdmin::class,
         'pwa.redirect' => \App\Http\Middleware\DashboardRedirect::class,
+        'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
+        'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
     ];
 }

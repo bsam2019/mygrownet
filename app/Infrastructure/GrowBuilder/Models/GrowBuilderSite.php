@@ -121,6 +121,11 @@ class GrowBuilderSite extends Model
         return $this->belongsTo(MarketplaceSeller::class, 'marketplace_seller_id');
     }
 
+    public function chatbotLeads(): HasMany
+    {
+        return $this->hasMany(ChatbotLead::class, 'site_id');
+    }
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published');

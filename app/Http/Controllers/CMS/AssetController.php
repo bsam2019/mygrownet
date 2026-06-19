@@ -18,11 +18,59 @@ class AssetController extends Controller
         private AssetService $assetService
     ) {}
 
+    public function depreciationRegister(Request $request): Response
+    {
+        $companyId = $request->user()->cmsUser->company_id;
+
+        $assets = AssetModel::forCompany($companyId)
+            ->with('depreciation')
+            ->orderBy('name')
+            ->paginate(20);
+
+        $totalCost = AssetModel::forCompany($companyId)->sum('purchase_cost');
+        $totalCurrentValue = AssetModel::forCompany($companyId)->sum('current_value');
+        $totalAccumulatedDep = 0;
+        foreach (AssetModel::forCompany($companyId)->with('depreciation')->get() as $a) {
+            $totalAccumulatedDep += $this->assetService->getAccumulatedDepreciation($a);
+        }
+
+        return Inertia::render('CMS/Assets/DepreciationRegister', [
+            'assets' => $assets,
+            'summary' => [
+                'total_cost' => $totalCost,
+                'total_current_value' => $totalCurrentValue,
+                'total_accumulated_depreciation' => $totalAccumulatedDep,
+            ],
+        ]);
+    }
+
+    public function setupDepreciation(Request $request, AssetModel $asset)
+    {
+        $validated = $request->validate([
+            'method' => 'required|in:straight_line,declining_balance,sum_of_years_digits',
+            'useful_life_years' => 'required|integer|min:1|max:100',
+            'salvage_value' => 'required|numeric|min:0',
+            'depreciation_start_date' => 'nullable|date',
+        ]);
+
+        $this->assetService->calculateDepreciation($asset, $validated);
+
+        return back()->with('success', 'Depreciation configured successfully.');
+    }
+
+    public function applyDepreciation(Request $request, AssetModel $asset)
+    {
+        $this->assetService->updateAssetValue($asset);
+
+        return back()->with('success', 'Depreciation applied. Current value updated.');
+    }
+
     public function index(Request $request): Response
     {
         $companyId = $request->user()->cmsUser->company_id;
 
         $assets = AssetModel::forCompany($companyId)
+            ->forBranch($request->branch_id)
             ->when($request->search, fn($q, $search) => 
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('asset_number', 'like', "%{$search}%")
@@ -31,7 +79,7 @@ class AssetController extends Controller
             ->when($request->category, fn($q) => $q->byCategory($request->category))
             ->when($request->status, fn($q) => $q->byStatus($request->status))
             ->when($request->assigned_to, fn($q) => $q->assignedTo($request->assigned_to))
-            ->with(['assignedTo.user', 'createdBy.user'])
+            ->with(['assignedTo.user', 'createdBy.user', 'branch'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -45,11 +93,16 @@ class AssetController extends Controller
             ->with('user')
             ->get();
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Assets/Index', [
             'assets' => $assets,
             'categories' => $categories,
             'staff' => $staff,
-            'filters' => $request->only(['search', 'category', 'status', 'assigned_to']),
+            'filters' => $request->only(['search', 'category', 'status', 'assigned_to', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 

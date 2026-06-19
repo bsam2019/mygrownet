@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
 use App\Domain\CMS\Core\Services\QuotationService;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
@@ -11,16 +12,18 @@ use Inertia\Inertia;
 
 class QuotationController extends Controller
 {
+    use HasCmsAccess;
     public function __construct(
         private QuotationService $quotationService
     ) {}
 
     public function index(Request $request)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
 
-        $query = QuotationModel::with(['customer', 'createdBy.user'])
-            ->where('company_id', $companyId);
+        $query = QuotationModel::with(['customer', 'createdBy.user', 'branch'])
+            ->where('company_id', $companyId)
+            ->forBranch($request->branch_id);
 
         // Filters
         if ($request->filled('status')) {
@@ -65,16 +68,21 @@ class QuotationController extends Controller
             'total_value' => QuotationModel::where('company_id', $companyId)->sum('total_amount'),
         ];
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Quotations/Index', [
             'quotations' => $quotations,
             'summary' => $summary,
-            'filters' => $request->only(['status', 'search']),
+            'filters' => $request->only(['status', 'search', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 
     public function create(Request $request)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
 
         $customers = CustomerModel::where('company_id', $companyId)
             ->where('status', 'active')
@@ -113,7 +121,7 @@ class QuotationController extends Controller
             'terms'                    => 'nullable|string',
         ]);
 
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
         $userId = $request->user()->cmsUser->id;
 
         $quotation = $this->quotationService->createQuotation($validated, $companyId, $userId);
@@ -124,7 +132,7 @@ class QuotationController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
 
         $quotation = QuotationModel::with([
             'customer', 'items', 'createdBy.user',
@@ -296,7 +304,7 @@ class QuotationController extends Controller
      */
     public function downloadPdf(Request $request, int $id)
     {
-        $companyId  = $request->user()->cmsUser->company_id;
+        $companyId  = $this->getCompanyId($request);
         $quotation  = QuotationModel::with(['customer', 'items', 'company'])
             ->where('company_id', $companyId)->findOrFail($id);
         $pdfContent = $this->generateQuotationPdf($quotation);
@@ -311,7 +319,7 @@ class QuotationController extends Controller
      */
     public function previewPdf(Request $request, int $id)
     {
-        $companyId  = $request->user()->cmsUser->company_id;
+        $companyId  = $this->getCompanyId($request);
         $quotation  = QuotationModel::with(['customer', 'items', 'company'])
             ->where('company_id', $companyId)->findOrFail($id);
         $pdfContent = $this->generateQuotationPdf($quotation);

@@ -42,6 +42,10 @@ interface Props {
             quotation_auto_approve_limit: number;
             payment_approval_required: boolean;
             payment_auto_approve_limit: number;
+            contract_approval_required: boolean;
+            contract_auto_approve_limit: number;
+            purchase_order_approval_required: boolean;
+            purchase_order_auto_approve_limit: number;
         };
         invoice: {
             prefix: string;
@@ -521,7 +525,7 @@ function toggleOperationsModule() {
             <div v-if="activeTab === 'approval'" class="space-y-6">
                 <FormSection
                     title="Approval Thresholds"
-                    description="Set automatic approval limits for expenses, quotations, and payments"
+                    description="Set automatic approval limits for expenses, quotations, payments, contracts, and purchase orders"
                 >
                     <form @submit.prevent="updateApprovalThresholds" class="space-y-6">
                         <!-- Expenses -->
@@ -578,7 +582,7 @@ function toggleOperationsModule() {
                         </div>
 
                         <!-- Payments -->
-                        <div class="pb-6">
+                        <div class="border-b border-gray-200 pb-6">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Payments</h3>
                             
                             <div class="flex items-center mb-4">
@@ -600,6 +604,58 @@ function toggleOperationsModule() {
                                 label="Auto-approve payments below (K)"
                                 placeholder="10000"
                                 :error="approvalForm.errors['approval_thresholds.payment_auto_approve_limit']"
+                            />
+                        </div>
+
+                        <!-- Contracts -->
+                        <div class="border-b border-gray-200 pb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Contracts</h3>
+                            
+                            <div class="flex items-center mb-4">
+                                <input
+                                    type="checkbox"
+                                    v-model="approvalForm.approval_thresholds.contract_approval_required"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label class="ml-2 block text-sm text-gray-900">
+                                    Require approval for contracts
+                                </label>
+                            </div>
+
+                            <FormInput
+                                v-if="approvalForm.approval_thresholds.contract_approval_required"
+                                v-model.number="approvalForm.approval_thresholds.contract_auto_approve_limit"
+                                type="number"
+                                step="0.01"
+                                label="Auto-approve contracts below (K)"
+                                placeholder="50000"
+                                :error="approvalForm.errors['approval_thresholds.contract_auto_approve_limit']"
+                            />
+                        </div>
+
+                        <!-- Purchase Orders -->
+                        <div class="pb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Purchase Orders</h3>
+                            
+                            <div class="flex items-center mb-4">
+                                <input
+                                    type="checkbox"
+                                    v-model="approvalForm.approval_thresholds.purchase_order_approval_required"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label class="ml-2 block text-sm text-gray-900">
+                                    Require approval for purchase orders
+                                </label>
+                            </div>
+
+                            <FormInput
+                                v-if="approvalForm.approval_thresholds.purchase_order_approval_required"
+                                v-model.number="approvalForm.approval_thresholds.purchase_order_auto_approve_limit"
+                                type="number"
+                                step="0.01"
+                                label="Auto-approve purchase orders below (K)"
+                                placeholder="10000"
+                                :error="approvalForm.errors['approval_thresholds.purchase_order_auto_approve_limit']"
                             />
                         </div>
 

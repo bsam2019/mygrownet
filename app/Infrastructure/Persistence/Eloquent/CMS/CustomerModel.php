@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Eloquent\CMS;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -85,6 +86,16 @@ class CustomerModel extends Model
     public function canTakeMoreCredit(float $amount): bool
     {
         return ($this->outstanding_balance + $amount) <= $this->credit_limit;
+    }
+
+    public function portalUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\User::class,
+            'portal_user_customers',
+            'customer_id',
+            'user_id'
+        )->withPivot('company_id', 'is_active', 'last_login_at')->withTimestamps();
     }
 
     public function scopeActive(Builder $query): Builder

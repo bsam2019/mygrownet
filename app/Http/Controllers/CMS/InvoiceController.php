@@ -8,13 +8,10 @@ use App\Domain\CMS\Core\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Mail\CMS\InvoiceSentMail;
 use App\Notifications\CMS\InvoiceSentNotification;
 use App\Services\CMS\EmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -81,7 +78,8 @@ class InvoiceController extends Controller
         $companyId = $cmsUser->company_id;
 
         $query = InvoiceModel::where('company_id', $companyId)
-            ->with(['customer', 'items']);
+            ->with(['customer', 'items', 'branch'])
+            ->forBranch($request->branch_id);
 
         // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
@@ -104,14 +102,20 @@ class InvoiceController extends Controller
         // Get summary stats
         $summary = $this->invoiceService->getInvoiceSummary($companyId);
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Invoices/Index', [
             'invoices' => $invoices,
             'summary' => $summary,
             'filters' => [
                 'status' => $request->status ?? 'all',
                 'search' => $request->search ?? '',
+                'branch_id' => $request->branch_id ?? '',
             ],
             'statuses' => InvoiceStatus::all(),
+            'branches' => $branches,
         ]);
     }
 

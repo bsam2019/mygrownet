@@ -30,6 +30,10 @@ class CompanySettingsService
             'quotation_auto_approve_limit' => 5000,
             'payment_approval_required' => false,
             'payment_auto_approve_limit' => 10000,
+            'contract_approval_required' => false,
+            'contract_auto_approve_limit' => 50000,
+            'purchase_order_approval_required' => false,
+            'purchase_order_auto_approve_limit' => 10000,
         ],
         'invoice' => [
             'prefix' => 'INV',
