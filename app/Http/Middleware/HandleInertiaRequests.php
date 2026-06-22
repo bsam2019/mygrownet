@@ -226,6 +226,7 @@ class HandleInertiaRequests extends Middleware
             'cmsUser' => $cmsUser,
             // User's detected currency (USD/ZMW) - shared globally from session set by DetectUserCurrency middleware
             'userCurrency' => fn () => $request->session()->get('user_currency', 'ZMW'),
+            'whatsappPhone' => config('services.whatsapp.business_phone', '260965896512'),
             // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
             'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
             // Module configuration removed - now handled by ShareModulesData middleware

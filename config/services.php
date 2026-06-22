@@ -170,6 +170,7 @@ return [
         'waba_id' => env('WHATSAPP_WABA_ID'),
         'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'mygrownet_verify'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v22.0'),
+        'business_phone' => env('WHATSAPP_BUSINESS_PHONE', '260965896512'),
     ],
 
     // Legacy OpenAI config (for backward compatibility)
