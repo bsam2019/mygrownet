@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\User;
+use App\Models\ZamStayAgent;
+
+class ZamStayAgentPolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    public function view(User $user, ZamStayAgent $agent): bool
+    {
+        return $user->id === $agent->user_id;
+    }
+
+    public function create(User $user): bool
+    {
+        return ZamStayAgent::where('user_id', $user->id)->doesntExist();
+    }
+
+    public function update(User $user, ZamStayAgent $agent): bool
+    {
+        return $user->id === $agent->user_id;
+    }
+
+    public function approve(User $user): bool
+    {
+        return $user->can('manage-zamstay');
+    }
+}

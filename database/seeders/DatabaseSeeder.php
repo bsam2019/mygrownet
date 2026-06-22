@@ -32,12 +32,15 @@ class DatabaseSeeder extends Seeder
             ProfessionalLevelSeeder::class,    // Professional levels
             
             // Skip NotificationTemplateSeeder - table structure incomplete
-            
+
             // Withdrawal Limits
             WithdrawalLimitsSeeder::class,
 
             // GrowMart Module
             GrowMartModuleSeeder::class,
+
+            // ZamStay Module
+            ZamStayPropertySeeder::class,
         ]);
     }
 }

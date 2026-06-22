@@ -89,6 +89,10 @@ class RouteServiceProvider extends ServiceProvider
             // GrowBuilder subdomain routes - must be loaded for subdomain handling
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));
+
+            // ZamStay module
+            Route::middleware('web')
+                ->group(base_path('routes/zamstay.php'));
         });
     }
 }
