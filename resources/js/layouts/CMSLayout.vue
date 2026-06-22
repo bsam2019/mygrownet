@@ -914,7 +914,7 @@
           </div>
 
           <!-- HR Management Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.branches', 'cms.departments', 'cms.leave', 'cms.shifts', 'cms.attendance', 'cms.overtime', 'cms.recruitment', 'cms.hrms-onboarding', 'cms.performance', 'cms.training', 'cms.hr-reports'])">
+          <div v-if="isSectionVisible(['cms.branches', 'cms.departments', 'cms.org-chart', 'cms.leave', 'cms.shifts', 'cms.attendance', 'cms.overtime', 'cms.recruitment', 'cms.hrms-onboarding', 'cms.performance', 'cms.training', 'cms.hr-reports'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('hr')"
@@ -950,6 +950,15 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.departments')"
                 @click="navigateTo('cms.departments.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.org-chart')"
+                icon="UserGroupIcon"
+                label="Org Chart"
+                route-name="cms.org-chart"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.org-chart')"
+                @click="navigateTo('cms.org-chart.index')"
               />
 
               <NavItem
@@ -1781,6 +1790,7 @@ const allNavItems = ref([
   // HR Management
   { label: 'Branches', route: 'cms.branches', keywords: ['locations', 'offices', 'branches', 'sites'] },
   { label: 'Departments', route: 'cms.departments', keywords: ['divisions', 'units'] },
+  { label: 'Org Chart', route: 'cms.org-chart', keywords: ['organizational', 'hierarchy', 'reporting', 'structure', 'tree'] },
   { label: 'Leave Management', route: 'cms.leave', keywords: ['vacation', 'time off', 'absence'] },
   { label: 'Shifts', route: 'cms.shifts', keywords: ['schedule', 'roster', 'timing'] },
   { label: 'Attendance', route: 'cms.attendance', keywords: ['clock in', 'presence', 'tracking'] },

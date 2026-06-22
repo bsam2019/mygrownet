@@ -164,6 +164,14 @@ return [
         'model' => env('HUGGINGFACE_MODEL', 'black-forest-labs/FLUX.1-dev'),
     ],
 
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'waba_id' => env('WHATSAPP_WABA_ID'),
+        'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'mygrownet_verify'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v22.0'),
+    ],
+
     // Legacy OpenAI config (for backward compatibility)
     'openai' => [
         'key' => env('OPENAI_API_KEY'),

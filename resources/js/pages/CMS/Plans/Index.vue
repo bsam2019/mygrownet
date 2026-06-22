@@ -49,57 +49,6 @@ const statusColors: Record<string, string> = {
 function hasChildren(plan: Plan): boolean {
     return plan.children && plan.children.length > 0;
 }
-
-function renderPlan(plan: Plan, depth = 0) {
-    return (
-        <div key={plan.id}>
-            <div
-                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-100"
-                style={{ paddingLeft: `${16 + depth * 24}px` }}
-            >
-                <button
-                    onClick={() => toggle(plan.id)}
-                    class="flex-shrink-0 w-5 h-5 flex items-center justify-center"
-                >
-                    {hasChildren(plan) ? (
-                        expanded.value.has(plan.id)
-                            ? <ChevronDownIcon class="h-4 w-4 text-gray-400" />
-                            : <ChevronRightIcon class="h-4 w-4 text-gray-400" />
-                    ) : (
-                        <span class="w-4" />
-                    )}
-                </button>
-
-                <Link href={route('cms.plans.show', plan.id)} class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">{plan.title}</p>
-                    {plan.description && (
-                        <p class="text-xs text-gray-500 truncate">{plan.description}</p>
-                    )}
-                </Link>
-
-                <span class={`px-2 py-0.5 text-xs font-medium rounded-full ${typeColors[plan.type] || 'bg-gray-100 text-gray-600'}`}>
-                    {plan.type}
-                </span>
-
-                <span class={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[plan.status] || 'bg-gray-100 text-gray-600'}`}>
-                    {plan.status}
-                </span>
-
-                <div class="flex items-center gap-2">
-                    <Link
-                        href={route('cms.plans.edit', plan.id)}
-                        class="text-xs text-indigo-600 hover:text-indigo-800"
-                    >
-                        Edit
-                    </Link>
-                </div>
-            </div>
-            {hasChildren(plan) && expanded.value.has(plan.id) && (
-                plan.children.map(child => renderPlan(child, depth + 1))
-            )}
-        </div>
-    );
-}
 </script>
 
 <template>

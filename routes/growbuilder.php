@@ -261,6 +261,11 @@ Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(
     Route::get('/sites/{siteId}/ai/chatbot/leads', [AIController::class, 'chatbotLeads'])->name('ai.chatbot.leads');
     Route::post('/sites/{siteId}/ai/chatbot/toggle', [AIController::class, 'chatbotToggle'])->name('ai.chatbot.toggle');
 
+    // WhatsApp Settings (dashboard)
+    Route::get('/whatsapp/status', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'status'])->name('whatsapp.status');
+    Route::post('/sites/{siteId}/whatsapp/toggle', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'toggle'])->name('whatsapp.toggle');
+    Route::post('/sites/{siteId}/whatsapp/test', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'testMessage'])->name('whatsapp.test');
+
     // Legacy AI endpoints (kept for backwards compatibility)
     Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');
     Route::post('/sites/{siteId}/ai/classify-intent', [AIController::class, 'classifyIntent'])->name('ai.classify-intent');
@@ -286,6 +291,12 @@ Route::prefix('gb-api/{subdomain}')->name('growbuilder.api.')->group(function ()
 // Public Chatbot API (no auth required — called from visitor widgets)
 Route::post('/gb-chatbot/{siteId}/ask', [AIController::class, 'chatbotAsk'])->name('growbuilder.chatbot.ask');
 Route::post('/gb-chatbot/{siteId}/capture-lead', [AIController::class, 'chatbotCaptureLead'])->name('growbuilder.chatbot.capture-lead');
+
+// WhatsApp Cloud API Webhook (public, called by Meta)
+Route::name('growbuilder.whatsapp.')->prefix('api/whatsapp')->group(function () {
+    Route::get('/webhook', [\App\Http\Controllers\GrowBuilder\WhatsAppWebhookController::class, 'verify']);
+    Route::post('/webhook', [\App\Http\Controllers\GrowBuilder\WhatsAppWebhookController::class, 'handle']);
+});
 
 /*
 |--------------------------------------------------------------------------
