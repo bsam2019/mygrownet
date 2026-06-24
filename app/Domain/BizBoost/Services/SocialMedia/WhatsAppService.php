@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService implements SocialMediaServiceInterface
 {
-    private const API_VERSION = 'v18.0';
+    private const API_VERSION = 'v25.0';
     private const BASE_URL = 'https://graph.facebook.com';
 
     public function __construct(

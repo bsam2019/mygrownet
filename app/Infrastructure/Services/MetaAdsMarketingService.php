@@ -16,7 +16,7 @@ class MetaAdsMarketingService implements AdsMarketingServiceInterface
     public function __construct()
     {
         $this->baseUrl = 'https://graph.facebook.com';
-        $this->apiVersion = config('services.meta.marketing_api_version', 'v21.0');
+        $this->apiVersion = config('services.meta.marketing_api_version', 'v25.0');
         $this->accessToken = config('services.meta.system_user_token', '');
         $this->adAccountId = config('services.meta.ad_account_id', '');
     }

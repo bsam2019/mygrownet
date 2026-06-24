@@ -86,7 +86,7 @@ class IntegrationController extends Controller
             'timestamp' => now()->timestamp,
         ]));
 
-        $url = "https://www.facebook.com/v18.0/dialog/oauth?" . http_build_query([
+        $url = "https://www.facebook.com/v25.0/dialog/oauth?" . http_build_query([
             'client_id' => $appId,
             'redirect_uri' => $redirectUri,
             'scope' => $scopes,
@@ -113,7 +113,7 @@ class IntegrationController extends Controller
             }
 
             // Exchange code for access token
-            $response = Http::get('https://graph.facebook.com/v18.0/oauth/access_token', [
+            $response = Http::get('https://graph.facebook.com/v25.0/oauth/access_token', [
                 'client_id' => config('services.facebook.client_id'),
                 'client_secret' => config('services.facebook.client_secret'),
                 'redirect_uri' => route('bizboost.integrations.facebook.callback'),
@@ -128,7 +128,7 @@ class IntegrationController extends Controller
             $accessToken = $tokenData['access_token'];
 
             // Get long-lived token
-            $longLivedResponse = Http::get('https://graph.facebook.com/v18.0/oauth/access_token', [
+            $longLivedResponse = Http::get('https://graph.facebook.com/v25.0/oauth/access_token', [
                 'grant_type' => 'fb_exchange_token',
                 'client_id' => config('services.facebook.client_id'),
                 'client_secret' => config('services.facebook.client_secret'),
@@ -142,7 +142,7 @@ class IntegrationController extends Controller
             }
 
             // Get user's pages
-            $pagesResponse = Http::get('https://graph.facebook.com/v18.0/me/accounts', [
+            $pagesResponse = Http::get('https://graph.facebook.com/v25.0/me/accounts', [
                 'access_token' => $accessToken,
                 'fields' => 'id,name,access_token,instagram_business_account',
             ]);

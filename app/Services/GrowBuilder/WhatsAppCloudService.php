@@ -17,7 +17,7 @@ class WhatsAppCloudService
         $this->token = config('services.whatsapp.token', '');
         $this->phoneNumberId = config('services.whatsapp.phone_number_id', '');
         $this->wabaId = config('services.whatsapp.waba_id', '');
-        $this->apiVersion = config('services.whatsapp.api_version', 'v22.0');
+        $this->apiVersion = config('services.whatsapp.api_version', 'v25.0');
     }
 
     public function isConfigured(): bool

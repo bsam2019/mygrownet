@@ -70,7 +70,7 @@ return [
         ],
 
         'bizboost' => [
-            'enabled' => false,
+            'enabled' => true,
             'name' => 'BizBoost',
             'description' => 'Business management & marketing',
             'icon' => 'SparklesIcon',

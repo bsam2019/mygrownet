@@ -15,7 +15,7 @@ return [
     'category' => 'marketing',
     'status' => 'active',
     'version' => '1.0.0',
-    'account_types' => ['sme'],
+    'account_types' => ['member', 'business'],
     'requires_subscription' => false, // Has free tier
     'icon' => 'MegaphoneIcon',
     'color' => 'violet',
