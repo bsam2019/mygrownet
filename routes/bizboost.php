@@ -385,4 +385,12 @@ Route::middleware(['auth', 'verified'])
         Route::get('/', [App\Http\Controllers\BizBoost\OmnichannelController::class, 'index'])->name('index');
         Route::post('/send', [App\Http\Controllers\BizBoost\OmnichannelController::class, 'send'])->name('send');
     });
+
+    // ========================================
+    // Guides / Help
+    // ========================================
+    Route::prefix('guides')->name('guides.')->group(function () {
+        Route::get('/', [App\Http\Controllers\BizBoost\GuideController::class, 'index'])->name('index');
+        Route::get('/{slug}', [App\Http\Controllers\BizBoost\GuideController::class, 'show'])->name('show');
+    });
 });

@@ -43,6 +43,7 @@ import {
     PaintBrushIcon,
     MagnifyingGlassIcon,
     CommandLineIcon,
+    BookOpenIcon,
     WalletIcon,
     ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/vue/24/outline';
@@ -93,7 +94,8 @@ const isToolsNavActive = computed(() =>
     route().current('bizboost.omnichannel.*') ||
     route().current('bizboost.whatsapp.*') ||
     route().current('bizboost.advisor.*') ||
-    route().current('bizboost.reminders.*')
+    route().current('bizboost.reminders.*') ||
+    route().current('bizboost.guides.*')
 );
 
 // Auto-expand tools if active
@@ -149,6 +151,7 @@ const toolsNavigation = [
     { name: 'WhatsApp', href: '/bizboost/whatsapp/broadcasts', icon: ChatBubbleLeftRightIcon },
     { name: 'AI Advisor', href: '/bizboost/advisor', icon: LightBulbIcon },
     { name: 'Reminders', href: '/bizboost/reminders', icon: ClockIcon },
+    { name: 'Guides', href: '/bizboost/guides', icon: BookOpenIcon, current: route().current('bizboost.guides.*') },
 ];
 
 const advancedNavigation = [
