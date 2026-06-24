@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import { ref } from 'vue';
 
 interface Category {
     id: number;
@@ -21,13 +22,27 @@ const form = useForm({
     funding_target: '',
     minimum_investment: '1000',
     maximum_investment: '',
+    share_price: '',
     funding_start_date: '',
     funding_end_date: '',
     expected_launch_date: '',
     risk_factors: '',
     expected_roi_months: '',
     is_featured: false,
+    featured_image: null as File | null,
 });
+
+const imagePreview = ref<string | null>(null);
+
+const onImageChange = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        form.featured_image = file;
+        const reader = new FileReader();
+        reader.onload = (e) => { imagePreview.value = e.target?.result as string; };
+        reader.readAsDataURL(file);
+    }
+};
 
 const submit = () => {
     form.post(route('admin.ventures.store'));
@@ -214,6 +229,29 @@ const submit = () => {
                                 </p>
                             </div>
 
+                            <!-- Share Price -->
+                            <div>
+                                <label for="share_price" class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Share Price (ZMW)
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">K</span>
+                                    <input
+                                        id="share_price"
+                                        v-model="form.share_price"
+                                        type="number"
+                                        step="0.01"
+                                        min="1"
+                                        class="block w-full rounded-lg border-gray-300 bg-white pl-8 pr-4 py-3 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Default: K100 per share"
+                                    />
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Price per share. Leave empty for default K100/share calculation.</p>
+                                <p v-if="form.errors.share_price" class="mt-2 text-sm text-red-600">
+                                    {{ form.errors.share_price }}
+                                </p>
+                            </div>
+
                             <!-- Expected ROI Months -->
                             <div>
                                 <label for="expected_roi_months" class="block text-sm font-semibold text-gray-900 mb-2">
@@ -312,6 +350,18 @@ const submit = () => {
                             <p v-if="form.errors.risk_factors" class="mt-2 text-sm text-red-600">
                                 {{ form.errors.risk_factors }}
                             </p>
+                        </div>
+                    </div>
+
+                    <!-- Featured Image -->
+                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                        <h2 class="mb-6 text-lg font-semibold text-gray-900">Featured Image</h2>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-2">Upload Image</label>
+                            <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" @change="onImageChange" class="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100" />
+                            <p class="mt-1 text-xs text-gray-500">Recommended: 1200x630px. Max 2MB. JPEG, PNG, or WebP.</p>
+                            <img v-if="imagePreview" :src="imagePreview" class="mt-4 h-48 w-full rounded-lg object-cover shadow" />
+                            <p v-if="form.errors.featured_image" class="mt-2 text-sm text-red-600">{{ form.errors.featured_image }}</p>
                         </div>
                     </div>
 

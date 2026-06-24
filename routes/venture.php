@@ -26,9 +26,10 @@ Route::middleware(['module:venture_builder'])->prefix('ventures')->name('venture
 // Member Routes (MyGrowNet) - Requires authentication
 Route::middleware(['auth', 'verified', 'module:venture_builder'])->prefix('mygrownet')->name('mygrownet.')->group(function () {
     
-    // Investment
+    // Investment (with rate limiting: 3 attempts per 5 minutes per user)
     Route::get('/ventures/{venture}/invest', [VentureController::class, 'showInvestForm'])->name('ventures.invest');
-    Route::post('/ventures/{venture}/invest', [VentureController::class, 'invest'])->name('ventures.invest.submit');
+    Route::post('/ventures/{venture}/invest', [VentureController::class, 'invest'])->name('ventures.invest.submit')
+        ->middleware('throttle:3,5');
     Route::get('/ventures/investment-success/{investment}', [VentureController::class, 'investmentSuccess'])->name('ventures.investment-success');
     Route::get('/my-investments', [VentureController::class, 'myInvestments'])->name('ventures.my-investments');
     Route::get('/my-investments/{investment}', [VentureController::class, 'investmentDetails'])->name('ventures.investment-details');
@@ -40,6 +41,19 @@ Route::middleware(['auth', 'verified', 'module:venture_builder'])->prefix('mygro
     // Portfolio
     Route::get('/portfolio', [VentureController::class, 'portfolio'])->name('ventures.portfolio');
     Route::get('/dividends', [VentureController::class, 'dividends'])->name('ventures.dividends');
+
+    // Withdrawal
+    Route::post('/investments/{investment}/withdraw', [VentureController::class, 'withdraw'])->name('ventures.withdraw')
+        ->middleware('throttle:2,5');
+
+    // Share Transfers
+    Route::post('/ventures/{venture}/transfers', [VentureController::class, 'requestTransfer'])->name('ventures.transfers.request');
+    Route::get('/transfers', [VentureController::class, 'myTransfers'])->name('ventures.transfers');
+
+    // Voting
+    Route::get('/ventures/{venture}/resolutions', [VentureController::class, 'resolutions'])->name('ventures.resolutions');
+    Route::get('/ventures/{venture}/resolutions/{resolution}', [VentureController::class, 'showResolution'])->name('ventures.resolutions.show');
+    Route::post('/resolutions/{resolution}/vote', [VentureController::class, 'castVote'])->name('ventures.resolutions.vote');
 });
 
 // Admin Routes
@@ -61,6 +75,8 @@ Route::middleware(['auth', 'admin', 'module:venture_builder'])->prefix('admin/ve
     Route::post('/{venture}/launch-funding', [VentureAdminController::class, 'launchFunding'])->name('launch-funding');
     Route::post('/{venture}/close-funding', [VentureAdminController::class, 'closeFunding'])->name('close-funding');
     Route::post('/{venture}/activate', [VentureAdminController::class, 'activate'])->name('activate');
+    Route::post('/{venture}/register-company', [VentureAdminController::class, 'registerCompany'])->name('register-company')
+        ->middleware('throttle:5,1');
     
     // Investment Management
     Route::get('/investments', [VentureAdminController::class, 'allInvestments'])->name('investments.index');
@@ -90,9 +106,23 @@ Route::middleware(['auth', 'admin', 'module:venture_builder'])->prefix('admin/ve
     
     // Categories
     Route::get('/categories', [VentureAdminController::class, 'categories'])->name('categories');
-    Route::post('/categories', [VentureAdminController::class, 'storeCategory'])->name('categories.store');
-    Route::put('/categories/{category}', [VentureAdminController::class, 'updateCategory'])->name('categories.update');
+    Route::post('/categories', [VentureAdminController::class, 'storeCategory'])->name('categories.store')
+        ->middleware('throttle:10,1');
+    Route::put('/categories/{category}', [VentureAdminController::class, 'updateCategory'])->name('categories.update')
+        ->middleware('throttle:10,1');
     
+    // Share Transfer Management
+    Route::get('/transfers', [VentureAdminController::class, 'allTransfers'])->name('transfers');
+    Route::get('/{venture}/transfers', [VentureAdminController::class, 'transfers'])->name('transfers.show');
+    Route::post('/transfers/{transfer}/approve', [VentureAdminController::class, 'approveTransfer'])->name('transfers.approve');
+    Route::post('/transfers/{transfer}/reject', [VentureAdminController::class, 'rejectTransfer'])->name('transfers.reject');
+
+    // Resolution Management
+    Route::get('/{venture}/resolutions', [VentureAdminController::class, 'resolutions'])->name('resolutions');
+    Route::post('/{venture}/resolutions', [VentureAdminController::class, 'createResolution'])->name('resolutions.create');
+    Route::post('/resolutions/{resolution}/open-voting', [VentureAdminController::class, 'openVoting'])->name('resolutions.open-voting');
+    Route::post('/resolutions/{resolution}/tally', [VentureAdminController::class, 'tallyResults'])->name('resolutions.tally');
+
     // Analytics
     Route::get('/analytics', [VentureAdminController::class, 'analytics'])->name('analytics');
 });

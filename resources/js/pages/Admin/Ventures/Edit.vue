@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import { ref } from 'vue';
 
 interface Category {
     id: number;
@@ -18,6 +19,7 @@ interface Venture {
     funding_target: number;
     minimum_investment: number;
     maximum_investment: number | null;
+    share_price: number | null;
     funding_start_date: string | null;
     funding_end_date: string | null;
     expected_launch_date: string | null;
@@ -42,13 +44,27 @@ const form = useForm({
     funding_target: props.venture.funding_target,
     minimum_investment: props.venture.minimum_investment,
     maximum_investment: props.venture.maximum_investment || '',
+    share_price: props.venture.share_price || '',
     funding_start_date: props.venture.funding_start_date || '',
     funding_end_date: props.venture.funding_end_date || '',
     expected_launch_date: props.venture.expected_launch_date || '',
     risk_factors: props.venture.risk_factors || '',
     expected_roi_months: props.venture.expected_roi_months || '',
     is_featured: props.venture.is_featured,
+    featured_image: null as File | null,
 });
+
+const imagePreview = ref<string | null>(null);
+
+const onImageChange = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        form.featured_image = file;
+        const reader = new FileReader();
+        reader.onload = (e) => { imagePreview.value = e.target?.result as string; };
+        reader.readAsDataURL(file);
+    }
+};
 
 const submit = () => {
     form.put(route('admin.ventures.update', props.venture.id));
@@ -270,6 +286,29 @@ const formatCurrency = (amount: number) => {
                                 </p>
                             </div>
 
+                            <!-- Share Price -->
+                            <div>
+                                <label for="share_price" class="block text-sm font-medium text-gray-700">
+                                    Share Price (ZMW)
+                                </label>
+                                <div class="relative mt-1">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">K</span>
+                                    <input
+                                        id="share_price"
+                                        v-model="form.share_price"
+                                        type="number"
+                                        step="0.01"
+                                        min="1"
+                                        class="block w-full rounded-md border-gray-300 pl-8 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Default: K100 per share"
+                                    />
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Leave empty for default K100/share.</p>
+                                <p v-if="form.errors.share_price" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.share_price }}
+                                </p>
+                            </div>
+
                             <!-- Expected ROI Months -->
                             <div>
                                 <label for="expected_roi_months" class="block text-sm font-medium text-gray-700">
@@ -341,6 +380,19 @@ const formatCurrency = (amount: number) => {
                                     {{ form.errors.expected_launch_date }}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Featured Image -->
+                    <div class="rounded-lg bg-white p-6 shadow">
+                        <h2 class="mb-4 text-lg font-medium text-gray-900">Featured Image</h2>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Upload Image</label>
+                            <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" @change="onImageChange" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100" />
+                            <p class="mt-1 text-xs text-gray-500">Max 2MB. JPEG, PNG, or WebP. Leave empty to keep current.</p>
+                            <img v-if="imagePreview" :src="imagePreview" class="mt-4 h-48 w-full rounded-lg object-cover shadow" />
+                            <img v-else-if="venture.featured_image" :src="`/storage/${venture.featured_image}`" class="mt-4 h-48 w-full rounded-lg object-cover shadow" />
+                            <p v-if="form.errors.featured_image" class="mt-1 text-sm text-red-600">{{ form.errors.featured_image }}</p>
                         </div>
                     </div>
 

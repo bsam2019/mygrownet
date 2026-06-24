@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { BriefcaseIcon, UsersIcon, CurrencyDollarIcon, ArrowTrendingUpIcon } from '@heroicons/vue/24/outline';
+import { BriefcaseIcon, UsersIcon, CurrencyDollarIcon, ArrowTrendingUpIcon, ArrowPathIcon, CheckBadgeIcon } from '@heroicons/vue/24/outline';
 
 interface Stats {
     total_ventures: number;
@@ -9,6 +9,8 @@ interface Stats {
     total_raised: number;
     total_investors: number;
     pending_investments: number;
+    pending_transfers: number;
+    open_resolutions: number;
 }
 
 interface Venture {
@@ -90,7 +92,7 @@ const getStatusColor = (status: string) => {
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                     <!-- Total Ventures -->
                     <div class="overflow-hidden rounded-lg bg-white shadow">
                         <div class="p-5">
@@ -163,12 +165,42 @@ const getStatusColor = (status: string) => {
                                 </div>
                                 <div class="ml-5 w-0 flex-1">
                                     <dl>
-                                        <dt class="truncate text-sm font-medium text-gray-500">
-                                            Total Investors
-                                        </dt>
-                                        <dd class="text-2xl font-semibold text-gray-900">
-                                            {{ stats.total_investors }}
-                                        </dd>
+                                        <dt class="truncate text-sm font-medium text-gray-500">Total Investors</dt>
+                                        <dd class="text-2xl font-semibold text-gray-900">{{ stats.total_investors }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Transfers -->
+                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <ArrowPathIcon class="h-6 w-6 text-yellow-600" />
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="truncate text-sm font-medium text-gray-500">Pending Transfers</dt>
+                                        <dd class="text-2xl font-semibold text-gray-900">{{ stats.pending_transfers }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open Resolutions -->
+                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                        <div class="p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <CheckBadgeIcon class="h-6 w-6 text-purple-600" />
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="truncate text-sm font-medium text-gray-500">Open Resolutions</dt>
+                                        <dd class="text-2xl font-semibold text-gray-900">{{ stats.open_resolutions }}</dd>
                                     </dl>
                                 </div>
                             </div>
@@ -177,19 +209,13 @@ const getStatusColor = (status: string) => {
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="mb-8 flex gap-4">
-                    <Link
-                        :href="route('admin.ventures.create')"
-                        class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
-                    >
-                        Create New Venture
+                <div class="mb-8 flex flex-wrap gap-4">
+                    <Link :href="route('admin.ventures.create')" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">Create New Venture</Link>
+                    <Link :href="route('admin.ventures.index')" class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">View All Ventures</Link>
+                    <Link :href="route('admin.ventures.transfers')" class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Transfers <span v-if="stats.pending_transfers" class="ml-2 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">{{ stats.pending_transfers }}</span>
                     </Link>
-                    <Link
-                        :href="route('admin.ventures.index')"
-                        class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    >
-                        View All Ventures
-                    </Link>
+                    <Link :href="route('admin.ventures.analytics')" class="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Analytics</Link>
                 </div>
 
                 <!-- Two Column Layout -->

@@ -55,6 +55,20 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\CMS\InventoryUpdated::class => [
             \App\Listeners\CMS\SyncInventoryToGrowMarket::class,
         ],
+
+        // Venture Builder Events
+        \App\Events\VentureBuilder\VentureInvestmentConfirmed::class => [
+            \App\Listeners\VentureBuilder\SendInvestmentConfirmationNotification::class,
+        ],
+        \App\Events\VentureBuilder\VentureStatusChanged::class => [
+            \App\Listeners\VentureBuilder\SendVentureStatusNotification::class,
+        ],
+        \App\Events\VentureBuilder\VentureFundingCompleted::class => [
+            \App\Listeners\VentureBuilder\NotifyVentureFundingComplete::class,
+        ],
+        \App\Events\VentureBuilder\VentureDividendPaid::class => [
+            \App\Listeners\VentureBuilder\SendDividendPaymentNotification::class,
+        ],
     ];
 
     public function boot(): void

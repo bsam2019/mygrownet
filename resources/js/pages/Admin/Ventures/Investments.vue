@@ -7,7 +7,7 @@ import { MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@h
 interface Investment {
     id: number;
     amount: number;
-    shares: number;
+    shares_allocated: number;
     status: string;
     payment_method: string;
     payment_reference: string | null;
@@ -223,7 +223,7 @@ const getStatusIcon = (status: string) => {
                                     {{ formatCurrency(investment.amount) }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                                    {{ investment.shares }}
+                                    {{ investment.shares_allocated || 0 }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4">
                                     <span :class="getStatusColor(investment.status)" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">

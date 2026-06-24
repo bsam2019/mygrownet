@@ -24,6 +24,17 @@ class AuditLog extends Model
     const EVENT_LOGIN_ATTEMPT = 'login_attempt';
     const EVENT_PASSWORD_CHANGED = 'password_changed';
 
+    // Venture Builder Events
+    const EVENT_VENTURE_CREATED = 'venture_created';
+    const EVENT_VENTURE_STATUS_CHANGED = 'venture_status_changed';
+    const EVENT_VENTURE_FUNDED = 'venture_funded';
+    const EVENT_VENTURE_INVESTMENT_PENDING = 'venture_investment_pending';
+    const EVENT_VENTURE_INVESTMENT_CONFIRMED = 'venture_investment_confirmed';
+    const EVENT_VENTURE_INVESTMENT_REFUNDED = 'venture_investment_refunded';
+    const EVENT_VENTURE_DIVIDEND_DECLARED = 'venture_dividend_declared';
+    const EVENT_VENTURE_DIVIDEND_PAID = 'venture_dividend_paid';
+    const EVENT_VENTURE_COMPANY_REGISTERED = 'venture_company_registered';
+
     protected $fillable = [
         'user_id',
         'event_type',

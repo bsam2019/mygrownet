@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Persistence\Eloquent\VentureBuilder;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class VentureModel extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $table = 'ventures';
@@ -24,6 +26,7 @@ class VentureModel extends Model
         'funding_target',
         'minimum_investment',
         'maximum_investment',
+        'share_price',
         'total_raised',
         'investor_count',
         'funding_start_date',
@@ -49,6 +52,7 @@ class VentureModel extends Model
         'funding_target' => 'decimal:2',
         'minimum_investment' => 'decimal:2',
         'maximum_investment' => 'decimal:2',
+        'share_price' => 'decimal:2',
         'total_raised' => 'decimal:2',
         'investor_count' => 'integer',
         'funding_start_date' => 'date',
@@ -102,6 +106,16 @@ class VentureModel extends Model
     public function dividends(): HasMany
     {
         return $this->hasMany(VentureDividendModel::class, 'venture_id');
+    }
+
+    public function shareTransfers(): HasMany
+    {
+        return $this->hasMany(VentureShareTransferModel::class, 'venture_id');
+    }
+
+    public function resolutions(): HasMany
+    {
+        return $this->hasMany(VentureResolutionModel::class, 'venture_id');
     }
 
     // Scopes

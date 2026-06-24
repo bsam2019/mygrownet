@@ -13,6 +13,7 @@ interface Venture {
     funding_target: number;
     total_raised: number;
     minimum_investment: number;
+    share_price: number | null;
     investor_count: number;
     is_featured: boolean;
     featured_image: string | null;
@@ -167,7 +168,8 @@ const truncateText = (text: string, length: number = 150) => {
                         class="overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-lg"
                     >
                         <!-- Image/Icon -->
-                        <div class="relative h-48 bg-gradient-to-br from-blue-500 to-blue-600">
+                        <div class="relative h-48" :class="venture.featured_image ? '' : 'bg-gradient-to-br from-blue-500 to-blue-600'">
+                            <img v-if="venture.featured_image" :src="`/storage/${venture.featured_image}`" :alt="venture.title" class="h-full w-full object-cover" />
                             <div v-if="venture.is_featured" class="absolute right-2 top-2">
                                 <span class="inline-flex items-center rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-yellow-900">
                                     Featured
@@ -233,6 +235,12 @@ const truncateText = (text: string, length: number = 150) => {
                                             {{ venture.investor_count }}
                                         </span>
                                     </div>
+                                </div>
+                                <div v-if="venture.share_price" class="text-sm">
+                                    <span class="text-gray-600">Share Price:</span>
+                                    <span class="ml-1 font-semibold text-gray-900">
+                                        {{ formatCurrency(venture.share_price) }}
+                                    </span>
                                 </div>
 
                                 <!-- ROI -->
