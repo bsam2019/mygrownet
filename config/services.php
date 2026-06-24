@@ -164,11 +164,17 @@ return [
         'model' => env('HUGGINGFACE_MODEL', 'black-forest-labs/FLUX.1-dev'),
     ],
 
+    'meta' => [
+        'system_user_token' => env('META_MASTER_PERMANENT_TOKEN'),
+        'ad_account_id' => env('META_SANDBOX_AD_ACCOUNT_ID'),
+        'marketing_api_version' => env('META_MARKETING_API_VERSION', 'v21.0'),
+    ],
+
     'whatsapp' => [
-        'token' => env('WHATSAPP_TOKEN'),
+        'token' => env('META_MASTER_PERMANENT_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'waba_id' => env('WHATSAPP_WABA_ID'),
-        'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'mygrownet_verify'),
+        'verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', 'mygrownet_verify'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v22.0'),
         'business_phone' => env('WHATSAPP_BUSINESS_PHONE', '260965896512'),
     ],

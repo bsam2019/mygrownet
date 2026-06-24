@@ -129,6 +129,7 @@ const financeNavItems: NavItem[] = [
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
     { title: 'Loan Management', href: safeRoute('admin.loans.index'), icon: CreditCard },
+    { title: 'BizBoost Billing', href: safeRoute('admin.bizboost.billing'), icon: CreditCard },
 ];
 
 const investorRelationsNavItems: NavItem[] = [

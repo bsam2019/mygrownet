@@ -112,6 +112,11 @@ Schedule::command('bizboost:refresh-tokens')
     ->dailyAt('03:00')
     ->description('Refresh expiring social media access tokens');
 
+// Pause ad campaigns when wallet balance reaches zero - runs every 15 minutes
+Schedule::job(new \App\Jobs\BizBoost\PauseCampaignOnZeroBalanceJob)
+    ->everyFifteenMinutes()
+    ->description('Pause active ad campaigns whose wallets are depleted');
+
 // ========================================
 // Life+ Scheduled Tasks
 // ========================================

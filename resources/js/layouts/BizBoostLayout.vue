@@ -43,6 +43,8 @@ import {
     PaintBrushIcon,
     MagnifyingGlassIcon,
     CommandLineIcon,
+    WalletIcon,
+    ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -86,6 +88,9 @@ const isToolsNavActive = computed(() =>
     route().current('bizboost.ai.*') ||
     route().current('bizboost.templates.*') ||
     route().current('bizboost.campaigns.*') ||
+    route().current('bizboost.ad-campaigns.*') ||
+    route().current('bizboost.wallet.*') ||
+    route().current('bizboost.omnichannel.*') ||
     route().current('bizboost.whatsapp.*') ||
     route().current('bizboost.advisor.*') ||
     route().current('bizboost.reminders.*')
@@ -138,6 +143,9 @@ const toolsNavigation = [
     { name: 'AI Content', href: '/bizboost/ai', icon: SparklesIcon, current: route().current('bizboost.ai.*') },
     { name: 'Templates', href: '/bizboost/templates', icon: PhotoIcon, current: route().current('bizboost.templates.*') },
     { name: 'Campaigns', href: '/bizboost/campaigns', icon: RocketLaunchIcon, current: route().current('bizboost.campaigns.*') },
+    { name: 'Ad Campaigns', href: '/bizboost/ad-campaigns', icon: CurrencyDollarIcon, current: route().current('bizboost.ad-campaigns.*') },
+    { name: 'Wallet', href: '/bizboost/wallet', icon: WalletIcon, current: route().current('bizboost.wallet.*') },
+    { name: 'Omnichannel', href: '/bizboost/omnichannel', icon: ChatBubbleBottomCenterTextIcon, current: route().current('bizboost.omnichannel.*') },
     { name: 'WhatsApp', href: '/bizboost/whatsapp/broadcasts', icon: ChatBubbleLeftRightIcon },
     { name: 'AI Advisor', href: '/bizboost/advisor', icon: LightBulbIcon },
     { name: 'Reminders', href: '/bizboost/reminders', icon: ClockIcon },

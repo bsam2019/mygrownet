@@ -496,6 +496,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
             Route::delete('/{id}', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'toggleActive'])->name('toggle-active');
         });
+
+        // Billing Ledger (admin view)
+        Route::get('/billing', [\App\Http\Controllers\Admin\BizBoostBillingController::class, 'index'])->name('billing');
     });
 
     // Module Subscription Management (Admin manages app subscriptions)

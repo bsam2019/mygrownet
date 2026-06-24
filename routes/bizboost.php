@@ -355,4 +355,34 @@ Route::middleware(['auth', 'verified'])
         Route::post('/{id}/read', [App\Http\Controllers\BizBoost\MessageController::class, 'markAsRead'])->name('read');
         Route::delete('/{id}', [App\Http\Controllers\BizBoost\MessageController::class, 'destroy'])->name('destroy');
     });
+
+    // ========================================
+    // Wallet (Pre-funded Escrow System)
+    // ========================================
+    Route::prefix('wallet')->name('wallet.')->group(function () {
+        Route::get('/', [App\Http\Controllers\BizBoost\WalletController::class, 'index'])->name('index');
+        Route::post('/deposit', [App\Http\Controllers\BizBoost\WalletController::class, 'deposit'])->name('deposit');
+        Route::get('/balance', [App\Http\Controllers\BizBoost\WalletController::class, 'balance'])->name('balance');
+    });
+
+    // ========================================
+    // Paid Ad Campaigns (Meta Marketing API)
+    // ========================================
+    Route::prefix('ad-campaigns')->name('ad-campaigns.')->group(function () {
+        Route::get('/', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'show'])->name('show');
+        Route::post('/{id}/launch', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'launch'])->name('launch');
+        Route::post('/{id}/pause', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'pause'])->name('pause');
+        Route::post('/{id}/resume', [App\Http\Controllers\BizBoost\AdCampaignController::class, 'resume'])->name('resume');
+    });
+
+    // ========================================
+    // Omnichannel Messaging (WhatsApp + SMS)
+    // ========================================
+    Route::prefix('omnichannel')->name('omnichannel.')->group(function () {
+        Route::get('/', [App\Http\Controllers\BizBoost\OmnichannelController::class, 'index'])->name('index');
+        Route::post('/send', [App\Http\Controllers\BizBoost\OmnichannelController::class, 'send'])->name('send');
+    });
 });
