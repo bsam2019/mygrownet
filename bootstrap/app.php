@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/growmart.php'));
 
+            // Load BizBoost BEFORE web routes that have domain-less root `/` route
+            // so subdomain routes (Route::domain('bizboost.mygrownet.com')) match first
+            Route::middleware('web')
+                ->group(base_path('routes/bizboost.php'));
+
             // Main web routes
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
@@ -39,8 +44,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growbiz.php'));
             Route::middleware('web')
                 ->group(base_path('routes/growfinance.php'));
-            Route::middleware('web')
-                ->group(base_path('routes/bizboost.php'));
             Route::middleware('web')
                 ->group(base_path('routes/pos.php'));
             Route::middleware('web')
