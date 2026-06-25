@@ -42,6 +42,11 @@ class HandleInertiaRequests extends Middleware
             return 'growbiz';
         }
 
+        // Use BizBoost standalone blade for bizboost subdomain
+        if ($request->getHost() === 'bizboost.mygrownet.com') {
+            return 'bizboost';
+        }
+
         return $this->rootView;
     }
 
