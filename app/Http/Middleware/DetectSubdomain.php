@@ -24,6 +24,8 @@ class DetectSubdomain
     {
         $host = $request->getHost();
         
+        file_put_contents('/tmp/bizboost_debug.log', 'DetectSubdomain: host=' . $host . ' path=' . $request->path() . "\n", FILE_APPEND);
+        
         // First, check if this is a custom domain
         $customDomainSite = $this->findSiteByCustomDomain($host);
         if ($customDomainSite) {
@@ -96,6 +98,8 @@ class DetectSubdomain
                 URL::useAssetOrigin($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
+
+                file_put_contents('/tmp/bizboost_debug.log', 'BizBoost handler: route=' . ($request->route()?->getName() ?? 'null') . "\n", FILE_APPEND);
 
                 return $next($request);
             }
