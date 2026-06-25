@@ -23,6 +23,10 @@ use App\Http\Controllers\BizBoost\WelcomeController;
 
 // ── BizBoost routes served on both main domain (mygrownet.com/bizboost) ──
 // ── and subdomain (bizboost.mygrownet.com) with standalone blade template ──
+
+// Root redirect for subdomain — bizboost.mygrownet.com/ → /bizboost/welcome
+Route::domain('bizboost.mygrownet.com')->name('bizboost.root')->redirect('/', '/bizboost/welcome');
+
 Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(function () {
 
 // Public Welcome/Landing Page (no auth required)
