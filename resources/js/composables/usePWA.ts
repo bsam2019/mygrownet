@@ -7,18 +7,17 @@ export function usePWA() {
     const deferredPrompt = ref<any>(null);
     const registration = ref<ServiceWorkerRegistration | null>(null);
 
+    // Computed for standalone mode
+    const isStandalone = ref(false);
+
     // Check if app is installed
     const checkInstalled = () => {
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+        if (standalone) {
             isInstalled.value = true;
+            isStandalone.value = true;
             return true;
         }
-        
-        if ((navigator as any).standalone === true) {
-            isInstalled.value = true;
-            return true;
-        }
-        
         return false;
     };
 
@@ -83,6 +82,17 @@ export function usePWA() {
 
         deferredPrompt.value = null;
         return outcome === 'accepted';
+    };
+
+    // Alias for component compatibility
+    const promptInstall = showInstallPrompt;
+
+    // Get iOS install instructions
+    const getIOSInstallInstructions = () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        return {
+            show: isIOS && !isStandalone.value && 'serviceWorker' in navigator,
+        };
     };
 
     // Request notification permission
@@ -231,9 +241,12 @@ export function usePWA() {
     return {
         isInstallable,
         isInstalled,
+        isStandalone,
         isOnline,
         registration,
         showInstallPrompt,
+        promptInstall,
+        getIOSInstallInstructions,
         requestNotificationPermission,
         subscribeToPush,
         cacheUrls,
