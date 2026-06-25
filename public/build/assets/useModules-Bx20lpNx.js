@@ -1,0 +1,1 @@
+import{J as n,z as a}from"./app-CLPabOLb.js";function d(){const o=n(),s=a(()=>o.props.modules||{});return{modules:s,isModuleEnabled:u=>{const e=s.value[u];return(e==null?void 0:e.is_enabled)??!1}}}export{d as u};
