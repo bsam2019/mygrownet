@@ -156,6 +156,29 @@ class TierConfigurationService
     }
 
     /**
+     * Get pricing for a specific tier in the requested currency.
+     * Returns USD prices from config if available, otherwise falls back to ZMW base pricing.
+     */
+    public function getPricingForCurrency(string $moduleId, string $tier, string $currency = 'ZMW'): array
+    {
+        $tierConfig = $this->getTierConfig($moduleId, $tier);
+
+        if ($currency === 'USD') {
+            $monthly = $tierConfig['price_monthly_usd'] ?? $tierConfig['price_monthly'] ?? 0;
+            $annual = $tierConfig['price_annual_usd'] ?? $tierConfig['price_annual'] ?? 0;
+        } else {
+            $monthly = $tierConfig['price_monthly'] ?? $tierConfig['price'] ?? 0;
+            $annual = $tierConfig['price_annual'] ?? (($tierConfig['price'] ?? 0) * 10);
+        }
+
+        return [
+            'monthly' => (float) $monthly,
+            'annual' => (float) $annual,
+            'currency' => $currency,
+        ];
+    }
+
+    /**
      * Get a specific limit value for a tier
      * Returns -1 for unlimited, 0 for not available
      */
@@ -283,6 +306,8 @@ class TierConfigurationService
                 'description' => $tierConfig['description'] ?? '',
                 'price_monthly' => $monthlyPrice,
                 'price_annual' => $annualPrice,
+                'price_monthly_usd' => $tierConfig['price_monthly_usd'] ?? null,
+                'price_annual_usd' => $tierConfig['price_annual_usd'] ?? null,
                 'discounted_monthly' => $discountedMonthly,
                 'discounted_annual' => $discountedAnnual,
                 'has_discount' => $activeDiscount !== null,

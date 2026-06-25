@@ -28,7 +28,10 @@ interface PricingTier {
     name: string;
     price: number;
     price_annual: number;
+    price_monthly_usd: number | null;
+    price_annual_usd: number | null;
     currency: string;
+    user_currency: string;
     period: string;
     description: string;
     features: string[];
@@ -39,6 +42,7 @@ interface PricingTier {
 interface Props {
     features: Feature[];
     pricingTiers: PricingTier[];
+    userCurrency: string;
 }
 
 const props = defineProps<Props>();
@@ -92,10 +96,14 @@ const showInstallButton = computed(() => {
 // Billing cycle toggle
 const billingCycle = ref<'monthly' | 'annual'>('monthly');
 
-// Get display price based on billing cycle
+// Get display price based on billing cycle and user currency
 const getDisplayPrice = (tier: PricingTier) => {
     if (tier.id === 'free') return 0;
-    return billingCycle.value === 'annual' ? tier.price_annual : tier.price;
+    const isUSD = props.userCurrency === 'USD';
+    if (billingCycle.value === 'annual') {
+        return isUSD ? (tier.price_annual_usd ?? tier.price_annual) : tier.price_annual;
+    }
+    return isUSD ? (tier.price_monthly_usd ?? tier.price) : tier.price;
 };
 
 // Get period text based on billing cycle
@@ -394,7 +402,7 @@ const getPeriodText = (tier: PricingTier) => {
                             </p>
                             <div class="mt-4">
                                 <span :class="['text-4xl font-bold', tier.popular ? 'text-white' : 'text-slate-900 dark:text-white']">
-                                    {{ tier.currency }}{{ getDisplayPrice(tier).toLocaleString() }}
+                                    {{ formatBizBoostPrice(getDisplayPrice(tier), props.userCurrency) }}
                                 </span>
                                 <span :class="['text-sm', tier.popular ? 'text-violet-200' : 'text-slate-500 dark:text-slate-400']">
                                     /{{ getPeriodText(tier) }}
@@ -405,7 +413,7 @@ const getPeriodText = (tier: PricingTier) => {
                                 v-if="billingCycle === 'annual' && tier.id !== 'free' && tier.price_annual > 0"
                                 :class="['text-xs mt-1', tier.popular ? 'text-violet-200' : 'text-slate-400 dark:text-slate-500']"
                             >
-                                {{ formatBizBoostPrice(Math.round(tier.price_annual / 12)) }}/month
+                                {{ formatBizBoostPrice(Math.round(getDisplayPrice(tier) / 12), props.userCurrency) }}/month
                             </div>
                         </div>
 

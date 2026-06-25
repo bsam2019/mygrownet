@@ -7,6 +7,7 @@ interface Props {
     objectives: { value: string; label: string; description: string }[];
     wallet_balance: number;
     markup_percentage: number;
+    userCurrency: string;
 }
 
 const props = defineProps<Props>();
@@ -22,7 +23,8 @@ const submit = () => {
 };
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    const locale = props.userCurrency === 'ZMW' ? 'en-ZM' : 'en-US';
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: props.userCurrency }).format(amount);
 };
 
 const metaBudget = () => {
@@ -71,7 +73,7 @@ const metaBudget = () => {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Total Budget (what you pay)</label>
                             <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{{ userCurrency === 'USD' ? '$' : 'K' }}</span>
                                 <input v-model="form.client_budget" type="number" step="0.01" min="0" class="w-full pl-8 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="0.00" />
                             </div>
                             <p v-if="form.client_budget && parseFloat(form.client_budget) > 0" class="mt-1 text-xs text-gray-500">

@@ -13,20 +13,15 @@ use Illuminate\Support\Facades\Log;
 
 class AdCampaignController extends Controller
 {
-    private WalletService $wallet;
-    private BillingLedgerService $ledger;
-    private MetaAdsMarketingService $meta;
-
-    private const MARKUP_PERCENTAGE = 20;
-
     public function __construct(
-        WalletService $wallet,
-        BillingLedgerService $ledger,
-        MetaAdsMarketingService $meta,
-    ) {
-        $this->wallet = $wallet;
-        $this->ledger = $ledger;
-        $this->meta = $meta;
+        private WalletService $wallet,
+        private BillingLedgerService $ledger,
+        private MetaAdsMarketingService $meta,
+    ) {}
+
+    private function getMarkupPercentage(): int
+    {
+        return (int) config('modules.bizboost.markup_percentage', 20);
     }
 
     public function index()
@@ -40,6 +35,7 @@ class AdCampaignController extends Controller
 
         return Inertia::render('BizBoost/AdCampaigns/Index', [
             'campaigns' => $campaigns,
+            'userCurrency' => $user->user_currency ?? 'ZMW',
             'stats' => [
                 'total' => (clone $all)->count(),
                 'active' => (clone $all)->where('status', 'active')->count(),
@@ -59,7 +55,8 @@ class AdCampaignController extends Controller
         $user = auth()->user();
         return Inertia::render('BizBoost/AdCampaigns/Create', [
             'wallet_available' => $this->wallet->getAvailableBalance($user->id),
-            'markup_percentage' => self::MARKUP_PERCENTAGE,
+            'markup_percentage' => $this->getMarkupPercentage(),
+            'userCurrency' => $user->user_currency ?? 'ZMW',
             'objectives' => [
                 ['value' => 'OUTCOME_TRAFFIC', 'label' => 'Traffic', 'description' => 'Drive visitors to your website or app'],
                 ['value' => 'OUTCOME_ENGAGEMENT', 'label' => 'Engagement', 'description' => 'Get more likes, comments, and shares'],
@@ -89,7 +86,7 @@ class AdCampaignController extends Controller
         $durationDays = now()->diffInDays($endDate) + 1;
 
         $clientBudget = $validated['client_budget'];
-        $metaBudget = $clientBudget / (1 + self::MARKUP_PERCENTAGE / 100);
+        $metaBudget = $clientBudget / (1 + $this->getMarkupPercentage() / 100);
         $markup = $clientBudget - $metaBudget;
 
         if (!$this->wallet->hasSufficientFunds($user->id, $clientBudget)) {
@@ -183,6 +180,7 @@ class AdCampaignController extends Controller
         return Inertia::render('BizBoost/AdCampaigns/Show', [
             'campaign' => $campaign,
             'insights' => $insights,
+            'userCurrency' => $user->user_currency ?? 'ZMW',
         ]);
     }
 

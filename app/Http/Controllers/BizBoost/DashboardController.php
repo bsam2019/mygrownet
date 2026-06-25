@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\BizBoost;
 
+use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
 use Illuminate\Http\Request;
@@ -11,6 +12,10 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private SubscriptionService $subscriptionService
+    ) {}
+
     public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
@@ -27,7 +32,7 @@ class DashboardController extends Controller
         }
 
         // Get dashboard stats
-        $stats = $this->getDashboardStats($business);
+        $stats = $this->getDashboardStats($business, $user);
         $recentPosts = $this->getRecentPosts($business);
         $upcomingPosts = $this->getUpcomingPosts($business);
         $recentSales = $this->getRecentSales($business);
@@ -72,7 +77,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function getDashboardStats(BizBoostBusinessModel $business): array
+    private function getDashboardStats(BizBoostBusinessModel $business, $user): array
     {
         $startOfMonth = now()->startOfMonth();
         $endOfMonth = now()->endOfMonth();
@@ -135,8 +140,8 @@ class DashboardController extends Controller
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->sum('credits_used');
 
-        // Get limit from subscription (default to free tier)
-        $aiCreditsLimit = 10; // Free tier default
+        // Get limit from subscription (admins get unlimited)
+        $aiCreditsLimit = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost')['limit'] ?? 10;
 
         return [
             // Flat structure for stat cards with previous values for trends

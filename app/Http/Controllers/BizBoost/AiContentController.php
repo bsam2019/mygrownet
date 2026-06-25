@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
 use App\Infrastructure\Persistence\Eloquent\BizBoostAiUsageLogModel;
+use App\Services\BizBoost\AIContentSuggestionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,7 +14,8 @@ use Inertia\Response;
 class AiContentController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private AIContentSuggestionService $aiService,
     ) {}
 
     public function index(Request $request): Response
@@ -78,23 +80,17 @@ class AiContentController extends Controller
         }
 
         try {
-            // Build the prompt
-            $prompt = $this->buildPrompt($validated, $business);
-            
-            // In production, this would call OpenAI API
-            // For now, return a placeholder response
-            $generatedContent = $this->generateMockContent($validated);
+            $generatedContent = $this->aiService->generateContentForParams($validated, $business);
 
-            // Log the usage
             BizBoostAiUsageLogModel::create([
                 'business_id' => $business->id,
                 'user_id' => $user->id,
                 'content_type' => $validated['content_type'],
-                'model' => 'gpt-4o-mini',
-                'input_tokens' => strlen($prompt),
-                'output_tokens' => strlen($generatedContent),
+                'model' => config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash'),
+                'input_tokens' => 0,
+                'output_tokens' => 0,
                 'credits_used' => 1,
-                'prompt' => $prompt,
+                'prompt' => $validated['context'],
                 'response' => $generatedContent,
                 'was_successful' => true,
             ]);
@@ -106,7 +102,6 @@ class AiContentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Log failed attempt
             BizBoostAiUsageLogModel::create([
                 'business_id' => $business->id,
                 'user_id' => $user->id,
@@ -118,61 +113,9 @@ class AiContentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to generate content. Please try again.',
+                'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    private function buildPrompt(array $params, BizBoostBusinessModel $business): string
-    {
-        $type = $params['content_type'];
-        $context = $params['context'];
-        $tone = $params['tone'] ?? 'friendly';
-        $language = $params['language'] ?? 'en';
-        
-        $languageNames = [
-            'en' => 'English',
-            'bem' => 'Bemba',
-            'nya' => 'Nyanja',
-            'ton' => 'Tonga',
-            'loz' => 'Lozi',
-        ];
-
-        $prompt = "You are a marketing assistant for a {$business->industry} business in Zambia called '{$business->name}'.\n\n";
-        $prompt .= "Generate a {$type} with a {$tone} tone in {$languageNames[$language]}.\n\n";
-        $prompt .= "Context: {$context}\n\n";
-        
-        if (!empty($params['product_name'])) {
-            $prompt .= "Product/Service: {$params['product_name']}\n";
-        }
-        
-        $prompt .= "Requirements:\n";
-        if ($params['include_emoji'] ?? false) {
-            $prompt .= "- Include relevant emojis\n";
-        }
-        if ($params['include_hashtags'] ?? false) {
-            $prompt .= "- Include 3-5 relevant hashtags\n";
-        }
-        if ($params['include_cta'] ?? false) {
-            $prompt .= "- Include a clear call-to-action\n";
-        }
-
-        return $prompt;
-    }
-
-    private function generateMockContent(array $params): string
-    {
-        // Mock responses for development
-        $mockResponses = [
-            'caption' => "✨ New arrivals just dropped! Come check out our latest collection - you won't want to miss this! 🛍️\n\nVisit us today or DM for more info.\n\n#NewArrivals #ShopLocal #ZambianBusiness #QualityProducts",
-            'ad' => "🎉 SPECIAL OFFER! 🎉\n\nGet 20% OFF on all items this weekend only!\n\n✅ Quality products\n✅ Great prices\n✅ Excellent service\n\nDon't miss out - offer ends Sunday!\n\n📍 Visit us today\n📱 WhatsApp: [Your Number]",
-            'description' => "Discover our premium quality products, carefully selected to meet your needs. Made with the finest materials and designed for lasting satisfaction. Perfect for everyday use or special occasions.",
-            'idea' => "Here are 5 marketing ideas for your business:\n\n1. Run a 'Customer of the Week' feature on social media\n2. Create a loyalty program with rewards\n3. Partner with complementary local businesses\n4. Host a live product demonstration\n5. Share behind-the-scenes content",
-            'whatsapp' => "Hi! 👋\n\nThank you for your interest in our products!\n\nWe have some amazing deals available right now. Would you like me to share our latest catalog with you?\n\nFeel free to ask any questions - we're here to help! 😊",
-            'promo' => "🔥 FLASH SALE ALERT! 🔥\n\nFor the next 48 hours only:\n\n💰 Up to 30% OFF selected items\n🚚 FREE delivery on orders over K500\n🎁 FREE gift with every purchase\n\nHurry - limited stock available!\n\nShop now: [Link]",
-        ];
-
-        return $mockResponses[$params['content_type']] ?? $mockResponses['caption'];
     }
 
     private function getRemainingCredits($user): int

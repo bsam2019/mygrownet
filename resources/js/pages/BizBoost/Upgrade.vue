@@ -29,6 +29,8 @@ interface TierConfig {
     description: string;
     price_monthly: number;
     price_annual: number;
+    price_monthly_usd?: number | null;
+    price_annual_usd?: number | null;
     popular?: boolean;
     features: string[];
     labeled_features: LabeledFeature[];
@@ -47,6 +49,7 @@ interface Props {
     tiers: Record<string, TierConfig>;
     usageSummary: Record<string, UsageItem>;
     moduleId: string;
+    userCurrency: string;
 }
 
 const props = defineProps<Props>();
@@ -84,6 +87,13 @@ const selectTier = (tierKey: string) => {
 };
 
 import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';
+
+const getTierPrice = (config: TierConfig, monthly: boolean = true): number => {
+    if (props.userCurrency === 'USD') {
+        return monthly ? (config.price_monthly_usd ?? config.price_monthly) : (config.price_annual_usd ?? config.price_annual);
+    }
+    return monthly ? config.price_monthly : config.price_annual;
+};
 
 const formatLimit = (value: number) => {
     if (value === -1) return 'Unlimited';
@@ -244,7 +254,7 @@ const keyLimits = ['posts_per_month', 'ai_credits_per_month', 'customers', 'team
                             <div class="mb-4">
                                 <div class="flex items-baseline gap-1">
                                     <span class="text-4xl font-bold text-gray-900">
-                                        {{ formatPrice(billingCycle === 'monthly' ? config.price_monthly : config.price_annual) }}
+                                        {{ formatPrice(getTierPrice(config, billingCycle === 'monthly'), props.userCurrency) }}
                                     </span>
                                     <span class="text-gray-500 text-sm">
                                         /{{ billingCycle === 'monthly' ? 'month' : 'year' }}

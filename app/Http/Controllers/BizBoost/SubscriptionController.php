@@ -37,11 +37,13 @@ class SubscriptionController extends Controller
             ->first();
 
         // Get dynamic tiers from admin-configured database or config fallback
+        $currency = $user->user_currency ?? 'ZMW';
         $tiers = $this->tierConfigService->getAllTiersForDisplay(self::MODULE_ID);
 
         return Inertia::render('BizBoost/Settings/Subscription', [
             'walletBalance' => $this->walletService->calculateBalance($user),
             'currentTier' => $currentTier ?: 'free',
+            'userCurrency' => $currency,
             'tiers' => $tiers,
             'subscription' => $subscription ? [
                 'tier' => $subscription->subscription_tier,

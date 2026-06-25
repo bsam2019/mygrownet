@@ -8,6 +8,7 @@ use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
 use App\Infrastructure\Persistence\Eloquent\BizBoostCampaignModel;
 use App\Infrastructure\Persistence\Eloquent\BizBoostPostModel;
 use App\Jobs\BizBoost\CampaignSequenceJob;
+use App\Services\BizBoost\AIContentSuggestionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,8 @@ use Inertia\Response;
 class CampaignController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private AIContentSuggestionService $aiService,
     ) {}
 
     public function index(Request $request): Response
@@ -285,6 +287,62 @@ class CampaignController extends Controller
     {
         $postTemplates = $this->getPostTemplatesForObjective($campaign->objective, $campaign->duration_days);
 
+        // Try AI-generated content, fall back to static templates
+        try {
+            $objectiveLabels = [
+                'increase_sales' => 'increase sales with promotional offers and discounts',
+                'promote_stock' => 'showcase new products and fresh arrivals',
+                'announce_discount' => 'announce special offers and limited-time discounts',
+                'bring_back_customers' => 're-engage inactive customers with personalized messages',
+                'grow_followers' => 'grow social media following with engaging content',
+            ];
+            $objectiveLabel = $objectiveLabels[$campaign->objective] ?? 'promote the business';
+            $platforms = implode(' and ', $campaign->target_platforms ?? ['facebook', 'instagram']);
+            $postCount = $campaign->duration_days;
+
+            $systemPrompt = <<<PROMPT
+You are a marketing specialist for {$business->name}, a {$business->industry} business in Zambia.
+Generate exactly {$postCount} social media posts for a {$campaign->duration_days}-day campaign on {$platforms}.
+Objective: {$objectiveLabel}
+Campaign name: {$campaign->name}
+Description: {$campaign->description}
+
+For each post, provide:
+- "title": A short engaging headline (max 60 chars)
+- "caption": The full post body (2-4 sentences, include relevant emojis and hashtags)
+- "type": One of: intro, engagement, reminder, cta
+
+Return ONLY a valid JSON array of objects, each with title, caption, and type keys.
+PROMPT;
+
+            $userPrompt = "Generate {$postCount} posts for day 1 through day {$postCount}.";
+            $response = $this->aiService->generateContent($systemPrompt, $userPrompt);
+
+            // Try to parse JSON from response
+            $response = trim($response);
+            // Remove markdown code fences if present
+            if (preg_match('/```(?:json)?\s*([\s\S]*?)```/', $response, $matches)) {
+                $response = trim($matches[1]);
+            }
+            $aiTemplates = json_decode($response, true);
+
+            if (is_array($aiTemplates) && count($aiTemplates) > 0) {
+                $postTemplates = [];
+                foreach ($aiTemplates as $i => $t) {
+                    $day = $i + 1;
+                    $postTemplates[$day] = [
+                        'title' => $t['title'] ?? "Day {$day}",
+                        'caption' => $t['caption'] ?? '',
+                        'type' => $t['type'] ?? 'engagement',
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('AI campaign generation failed, using static templates', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         foreach ($postTemplates as $day => $template) {
             $post = $business->posts()->create([
                 'title' => $template['title'],
@@ -294,7 +352,6 @@ class CampaignController extends Controller
                 'campaign_id' => $campaign->id,
             ]);
 
-            // Link to campaign with sequence info
             DB::table('bizboost_campaign_posts')->insert([
                 'campaign_id' => $campaign->id,
                 'post_id' => $post->id,

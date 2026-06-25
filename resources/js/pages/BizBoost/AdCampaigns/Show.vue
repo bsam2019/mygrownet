@@ -37,12 +37,14 @@ interface AdInsight {
 interface Props {
     campaign: AdCampaign;
     insights: AdInsight | null;
+    userCurrency: string;
 }
 
 const props = defineProps<Props>();
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    const locale = props.userCurrency === 'ZMW' ? 'en-ZM' : 'en-US';
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: props.userCurrency }).format(amount);
 };
 
 const statusBadge = (status: string) => {

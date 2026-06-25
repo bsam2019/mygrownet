@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
-import { SparklesIcon, ClipboardDocumentIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/vue/24/outline';
+import Card from '@/Components/BizBoost/UI/Card.vue';
+import Button from '@/Components/BizBoost/UI/Button.vue';
+import FormInput from '@/Components/BizBoost/Form/FormInput.vue';
+import FormTextarea from '@/Components/BizBoost/Form/FormTextarea.vue';
+import FormSelect from '@/Components/BizBoost/Form/FormSelect.vue';
+import FormCheckbox from '@/Components/BizBoost/Form/FormCheckbox.vue';
+import {
+    SparklesIcon,
+    ClipboardDocumentIcon,
+    LockClosedIcon,
+} from '@heroicons/vue/24/outline';
 
 interface Generation {
     id: number;
@@ -54,21 +64,30 @@ const languages = [
     { value: 'loz', label: 'Lozi' },
 ];
 
+const contentTypeOptions = computed(() =>
+    Object.entries(props.contentTypes).map(([value, label]) => ({ value, label }))
+);
+
+const toneOptions = tones.map(t => ({ value: t.value, label: t.label }));
+const languageOptions = languages.map(l => ({ value: l.value, label: l.label }));
+
+const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedContent.value);
+};
+
 const generate = async () => {
     if (!context.value.trim()) {
         error.value = 'Please provide some context for the content.';
         return;
     }
-    
     isGenerating.value = true;
     error.value = '';
-    
     try {
         const response = await fetch(route('bizboost.ai.generate'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
             },
             body: JSON.stringify({
                 content_type: selectedType.value,
@@ -81,23 +100,17 @@ const generate = async () => {
                 include_cta: includeCta.value,
             }),
         });
-        
         const data = await response.json();
-        
         if (data.success) {
             generatedContent.value = data.content;
         } else {
             error.value = data.error || 'Failed to generate content.';
         }
-    } catch (e) {
+    } catch {
         error.value = 'An error occurred. Please try again.';
     } finally {
         isGenerating.value = false;
     }
-};
-
-const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedContent.value);
 };
 </script>
 
@@ -107,142 +120,133 @@ const copyToClipboard = () => {
     <BizBoostLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Header -->
                 <div class="mb-6">
-                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <SparklesIcon class="h-7 w-7 text-purple-600" aria-hidden="true" />
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <SparklesIcon class="h-7 w-7 text-violet-600" aria-hidden="true" />
                         AI Content Generator
                     </h1>
-                    <p class="mt-1 text-sm text-gray-600">Generate marketing content powered by AI</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Generate marketing content powered by AI</p>
                 </div>
 
                 <!-- Feature Gate -->
-                <div v-if="!hasFeature" class="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
+                <Card v-if="!hasFeature" variant="bordered" padding="lg">
                     <div class="flex items-center gap-4">
-                        <LockClosedIcon class="h-10 w-10 text-purple-600" aria-hidden="true" />
+                        <div class="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-xl ring-1 ring-violet-200/50 dark:ring-violet-700/30">
+                            <LockClosedIcon class="h-8 w-8 text-violet-600 dark:text-violet-400" aria-hidden="true" />
+                        </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-purple-900">Upgrade to Access AI Content</h3>
-                            <p class="text-purple-700">AI content generation is available on Professional and Business plans.</p>
-                            <Link :href="route('bizboost.subscription.index')" class="mt-2 inline-block text-purple-600 hover:text-purple-800 font-medium">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upgrade to Access AI Content</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">AI content generation is available on Professional and Business plans.</p>
+                            <Link :href="route('bizboost.subscription.index')" class="mt-2 inline-block text-sm font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
                                 Upgrade Now →
                             </Link>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Generator Form -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Generate Content</h2>
-                        
+                    <Card>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Generate Content</h2>
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Content Type</label>
-                                <select v-model="selectedType" class="w-full rounded-md border-gray-300">
-                                    <option v-for="(label, key) in contentTypes" :key="key" :value="key">{{ label }}</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Context / Description</label>
-                                <textarea
-                                    v-model="context"
-                                    rows="3"
-                                    class="w-full rounded-md border-gray-300"
-                                    placeholder="Describe what you want to promote or communicate..."
-                                ></textarea>
-                            </div>
-
+                            <FormSelect
+                                v-model="selectedType"
+                                label="Content Type"
+                                :options="contentTypeOptions"
+                            />
+                            <FormTextarea
+                                v-model="context"
+                                label="Context / Description"
+                                placeholder="Describe what you want to promote or communicate..."
+                                :rows="3"
+                            />
                             <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tone</label>
-                                    <select v-model="tone" class="w-full rounded-md border-gray-300">
-                                        <option v-for="t in tones" :key="t.value" :value="t.value">{{ t.label }}</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                                    <select v-model="language" class="w-full rounded-md border-gray-300">
-                                        <option v-for="l in languages" :key="l.value" :value="l.value">{{ l.label }}</option>
-                                    </select>
-                                </div>
+                                <FormSelect
+                                    v-model="tone"
+                                    label="Tone"
+                                    :options="toneOptions"
+                                />
+                                <FormSelect
+                                    v-model="language"
+                                    label="Language"
+                                    :options="languageOptions"
+                                />
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Product/Service Name (optional)</label>
-                                <input v-model="productName" type="text" class="w-full rounded-md border-gray-300" placeholder="e.g., Summer Collection" />
-                            </div>
-
+                            <FormInput
+                                v-model="productName"
+                                label="Product/Service Name (optional)"
+                                placeholder="e.g., Summer Collection"
+                            />
                             <div class="flex flex-wrap gap-4">
-                                <label class="flex items-center gap-2">
-                                    <input v-model="includeEmoji" type="checkbox" class="rounded border-gray-300 text-blue-600" />
-                                    <span class="text-sm text-gray-700">Include Emojis</span>
-                                </label>
-                                <label class="flex items-center gap-2">
-                                    <input v-model="includeHashtags" type="checkbox" class="rounded border-gray-300 text-blue-600" />
-                                    <span class="text-sm text-gray-700">Include Hashtags</span>
-                                </label>
-                                <label class="flex items-center gap-2">
-                                    <input v-model="includeCta" type="checkbox" class="rounded border-gray-300 text-blue-600" />
-                                    <span class="text-sm text-gray-700">Include CTA</span>
-                                </label>
+                                <FormCheckbox
+                                    v-model="includeEmoji"
+                                    label="Include Emojis"
+                                />
+                                <FormCheckbox
+                                    v-model="includeHashtags"
+                                    label="Include Hashtags"
+                                />
+                                <FormCheckbox
+                                    v-model="includeCta"
+                                    label="Include CTA"
+                                />
                             </div>
-
-                            <div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
-
-                            <button
-                                @click="generate"
+                            <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+                            <Button
+                                type="button"
+                                full-width
+                                :loading="isGenerating"
                                 :disabled="isGenerating || !canUseAi.allowed"
-                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                                @click="generate"
                             >
-                                <ArrowPathIcon v-if="isGenerating" class="h-5 w-5 animate-spin" aria-hidden="true" />
-                                <SparklesIcon v-else class="h-5 w-5" aria-hidden="true" />
+                                <SparklesIcon class="h-5 w-5" aria-hidden="true" />
                                 {{ isGenerating ? 'Generating...' : 'Generate Content' }}
-                            </button>
-
-                            <p class="text-sm text-gray-500 text-center">
+                            </Button>
+                            <p class="text-xs text-center text-gray-500 dark:text-gray-400">
                                 Credits remaining: {{ canUseAi.remaining ?? 0 }}
                             </p>
                         </div>
-                    </div>
+                    </Card>
 
                     <!-- Generated Content -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">Generated Content</h2>
-                            <button
-                                v-if="generatedContent"
-                                @click="copyToClipboard"
-                                class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-                            >
-                                <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
-                                Copy
-                            </button>
-                        </div>
-
-                        <div v-if="generatedContent" class="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-gray-800">
-                            {{ generatedContent }}
-                        </div>
-                        <div v-else class="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
-                            <SparklesIcon class="h-12 w-12 mx-auto mb-2 text-gray-300" aria-hidden="true" />
-                            <p>Your generated content will appear here</p>
-                        </div>
+                    <div class="space-y-6">
+                        <Card>
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Generated Content</h2>
+                                <Button
+                                    v-if="generatedContent"
+                                    variant="ghost"
+                                    size="sm"
+                                    @click="copyToClipboard"
+                                >
+                                    <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
+                                    Copy
+                                </Button>
+                            </div>
+                            <div v-if="generatedContent" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 whitespace-pre-wrap text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
+                                {{ generatedContent }}
+                            </div>
+                            <div v-else class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-8 text-center">
+                                <SparklesIcon class="h-12 w-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" aria-hidden="true" />
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Your generated content will appear here</p>
+                            </div>
+                        </Card>
 
                         <!-- Recent Generations -->
-                        <div v-if="recentGenerations.length > 0" class="mt-6">
-                            <h3 class="text-sm font-medium text-gray-700 mb-3">Recent Generations</h3>
+                        <Card v-if="recentGenerations.length > 0">
+                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Generations</h3>
                             <div class="space-y-2 max-h-64 overflow-y-auto">
                                 <div
                                     v-for="gen in recentGenerations"
                                     :key="gen.id"
-                                    class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                                    class="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
                                     @click="generatedContent = gen.response"
                                 >
-                                    <div class="text-xs text-gray-500 mb-1">{{ gen.content_type }}</div>
-                                    <div class="text-sm text-gray-700 line-clamp-2">{{ gen.response }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 capitalize">{{ gen.content_type }}</div>
+                                    <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{{ gen.response }}</div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     </div>
                 </div>
             </div>

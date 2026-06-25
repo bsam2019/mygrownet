@@ -19,7 +19,7 @@ class AdvisorTest extends BizBoostTestCase
             ->component('BizBoost/Advisor/Index')
             ->has('business')
             ->has('recommendations')
-            ->has('stats')
+            ->has('insights')
         );
     }
 
@@ -32,8 +32,8 @@ class AdvisorTest extends BizBoostTestCase
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'response',
-            'suggestions',
+            'message',
+            'timestamp',
         ]);
     }
 
@@ -88,9 +88,9 @@ class AdvisorTest extends BizBoostTestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->has('stats.total_sales')
-            ->has('stats.total_customers')
-            ->has('stats.total_posts')
+            ->has('insights.total_sales_30d')
+            ->has('insights.total_customers')
+            ->has('insights.posts_30d')
         );
     }
 

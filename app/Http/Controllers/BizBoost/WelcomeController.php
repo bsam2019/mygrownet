@@ -19,9 +19,12 @@ class WelcomeController extends Controller
      */
     public function index(): Response
     {
+        $currency = session('user_currency', 'ZMW');
+
         return Inertia::render('BizBoost/Welcome', [
             'features' => $this->getFeatures(),
-            'pricingTiers' => $this->getPricingTiers(),
+            'pricingTiers' => $this->getPricingTiers($currency),
+            'userCurrency' => $currency,
         ]);
     }
 
@@ -67,7 +70,7 @@ class WelcomeController extends Controller
     /**
      * Get the pricing tiers for BizBoost subscriptions from centralized config.
      */
-    private function getPricingTiers(): array
+    private function getPricingTiers(string $currency = 'ZMW'): array
     {
         $tiers = $this->tierConfigService->getTiers('bizboost');
         $pricingTiers = [];
@@ -137,7 +140,10 @@ class WelcomeController extends Controller
                 'name' => $tierConfig['name'],
                 'price' => $tierConfig['price_monthly'],
                 'price_annual' => $tierConfig['price_annual'],
-                'currency' => 'K',
+                'price_monthly_usd' => $tierConfig['price_monthly_usd'] ?? null,
+                'price_annual_usd' => $tierConfig['price_annual_usd'] ?? null,
+                'currency' => $currency === 'USD' ? '$' : 'K',
+                'user_currency' => $currency,
                 'period' => $tierKey === 'free' ? 'forever' : 'month',
                 'description' => $tierConfig['description'],
                 'features' => $tierFeatureDescriptions[$tierKey] ?? [],

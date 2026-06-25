@@ -486,6 +486,20 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
     // BizBoost Administration
     Route::prefix('bizboost')->name('bizboost.')->group(function () {
+        // Dashboard
+        Route::get('/', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'dashboard']);
+
+        // Business Management
+        Route::prefix('businesses')->name('businesses.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'businesses'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'showBusiness'])->name('show');
+            Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'toggleBusinessActive'])->name('toggle-active');
+        });
+
+        // AI Usage
+        Route::get('/ai-usage', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'aiUsage'])->name('ai-usage');
+
         // Template Management
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'index'])->name('index');

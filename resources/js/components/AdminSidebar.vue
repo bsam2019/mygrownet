@@ -45,7 +45,8 @@ import {
     PlusCircle as PlusCircleIcon,
     ReceiptText as ReceiptRefundIcon,
     Video as VideoIcon,
-    Play as PlayIcon
+    Play as PlayIcon,
+    Sparkles as SparklesIcon
 } from 'lucide-vue-next';
 import { useModules } from '@/composables/useModules';
 
@@ -129,7 +130,6 @@ const financeNavItems: NavItem[] = [
     { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
     { title: 'Loan Management', href: safeRoute('admin.loans.index'), icon: CreditCard },
-    { title: 'BizBoost Billing', href: safeRoute('admin.bizboost.billing'), icon: CreditCard },
 ];
 
 const investorRelationsNavItems: NavItem[] = [
@@ -193,6 +193,14 @@ const growStreamNavItems: NavItem[] = [
     { title: 'Videos', href: safeRoute('growstream.admin.videos'), icon: VideoIcon },
     { title: 'Creators', href: safeRoute('growstream.admin.creators'), icon: Users },
     { title: 'Starter Kit Integration', href: safeRoute('admin.growstream.starter-kit-integration'), icon: BookOpen },
+];
+
+const bizBoostNavItems: NavItem[] = [
+    { title: 'Dashboard', href: safeRoute('admin.bizboost.dashboard'), icon: LayoutGrid },
+    { title: 'Businesses', href: safeRoute('admin.bizboost.businesses.index'), icon: Store },
+    { title: 'Templates', href: safeRoute('admin.bizboost.templates.index'), icon: FileText },
+    { title: 'Billing', href: safeRoute('admin.bizboost.billing'), icon: CreditCard },
+    { title: 'AI Usage', href: safeRoute('admin.bizboost.ai-usage'), icon: SparklesIcon },
 ];
 
 const reportsNavItems: NavItem[] = [
@@ -803,6 +811,40 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.growStream" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in growStreamNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- BizBoost Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('bizBoost')"
+                        :class="[
+                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
+                            'text-gray-700 dark:text-gray-300'
+                        ]"
+                        @mouseenter="showItemTooltip($event, 'BizBoost')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <SparklesIcon class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">BizBoost</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.bizBoost }" />
+                    </button>
+
+                    <div v-if="showSubmenu.bizBoost" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in bizBoostNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

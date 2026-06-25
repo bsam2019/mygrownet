@@ -85,6 +85,30 @@ class DetectSubdomain
                 return $next($request);
             }
 
+            // Handle BizBoost subdomain
+            if ($subdomain === 'bizboost') {
+                // Use BizBoost standalone blade template
+                \Inertia\Inertia::setRootView('bizboost');
+
+                $baseUrl = "https://{$subdomain}.mygrownet.com";
+                URL::forceRootUrl($baseUrl);
+                config(['app.url' => $baseUrl]);
+                config(['app.asset_url' => $baseUrl]);
+
+                // Block main-site routes from leaking onto the subdomain.
+                // Only allow routes with name prefix "bizboost." (e.g. bizboost.dashboard, bizboost.products.index).
+                // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
+                $route = $request->route();
+                if ($route) {
+                    $name = $route->getName();
+                    if ($name && !str_starts_with($name, 'bizboost.')) {
+                        abort(404);
+                    }
+                }
+
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 

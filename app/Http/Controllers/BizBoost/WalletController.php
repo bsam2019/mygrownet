@@ -19,7 +19,8 @@ class WalletController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $wallet = $this->wallet->getOrCreateWallet($user->id);
+        $currency = $user->user_currency ?? $user->preferred_currency ?? session('user_currency', 'ZMW');
+        $wallet = $this->wallet->getOrCreateWallet($user->id, $currency);
         $transactions = $this->wallet->getTransactions($user->id);
 
         return Inertia::render('BizBoost/Wallet/Index', [
@@ -30,6 +31,17 @@ class WalletController extends Controller
                 'currency' => $wallet->currency,
             ],
             'transactions' => $transactions,
+            'userCurrency' => $currency,
+            'manualPayment' => [
+                'mtn' => [
+                    'number' => config('payment.manual_payment.mtn.number', '0760491206'),
+                    'name' => config('payment.manual_payment.mtn.name', 'Rockshield Investments Ltd'),
+                ],
+                'airtel' => [
+                    'number' => config('payment.manual_payment.airtel.number', '0979230669'),
+                    'name' => config('payment.manual_payment.airtel.name', 'Kafula Mbulo'),
+                ],
+            ],
         ]);
     }
 

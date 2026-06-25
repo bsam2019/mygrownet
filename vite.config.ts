@@ -32,9 +32,7 @@ export default defineConfig({
         },
     },
     base: '/build/',
-    build: {
-        manifest: '.vite/manifest.json',
-    },
+    build: {},
     resolve: {
         alias: [
             { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },

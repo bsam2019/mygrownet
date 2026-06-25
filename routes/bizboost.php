@@ -21,6 +21,10 @@ use App\Http\Controllers\BizBoost\WelcomeController;
 |
 */
 
+// ── BizBoost routes served on both main domain (mygrownet.com/bizboost) ──
+// ── and subdomain (bizboost.mygrownet.com) with standalone blade template ──
+Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(function () {
+
 // Public Welcome/Landing Page (no auth required)
 Route::get('/bizboost/welcome', [WelcomeController::class, 'index'])->name('bizboost.welcome');
 
@@ -261,6 +265,9 @@ Route::middleware(['auth', 'verified'])
     Route::get('/settings/subscription', [SubscriptionController::class, 'settings'])->name('settings.subscription');
     Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
 
+    // Logout (works on both main domain and subdomain; on subdomain the auth.php route is blocked)
+    Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
     // Feature upgrade required page
     Route::get('/feature-upgrade', function (\Illuminate\Http\Request $request) {
         return \Inertia\Inertia::render('BizBoost/FeatureUpgradeRequired', [
@@ -393,4 +400,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/', [App\Http\Controllers\BizBoost\GuideController::class, 'index'])->name('index');
         Route::get('/{slug}', [App\Http\Controllers\BizBoost\GuideController::class, 'show'])->name('show');
     });
+});
+
+// ── End BizBoost standalone middleware group ──
 });
