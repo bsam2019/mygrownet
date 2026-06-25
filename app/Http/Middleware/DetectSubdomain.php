@@ -24,10 +24,6 @@ class DetectSubdomain
     {
         $host = $request->getHost();
         
-        if (is_writable('/tmp')) {
-            file_put_contents('/tmp/bizboost_debug.log', 'DetectSubdomain: host=' . $host . ' path=' . $request->path() . "\n", FILE_APPEND);
-        }
-        
         // First, check if this is a custom domain
         $customDomainSite = $this->findSiteByCustomDomain($host);
         if ($customDomainSite) {
@@ -91,8 +87,8 @@ class DetectSubdomain
             }
 
             // Handle BizBoost subdomain
+            // Routes are defined via Route::domain('bizboost.mygrownet.com') in bizboost.php
             if ($subdomain === 'bizboost') {
-                // Use BizBoost standalone blade template
                 \Inertia\Inertia::setRootView('bizboost');
 
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
@@ -100,10 +96,6 @@ class DetectSubdomain
                 URL::useAssetOrigin($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
-
-                if (is_writable('/tmp')) {
-                    file_put_contents('/tmp/bizboost_debug.log', 'BizBoost handler: route=' . ($request->route()?->getName() ?? 'null') . ' path=' . $request->path() . "\n", FILE_APPEND);
-                }
 
                 return $next($request);
             }

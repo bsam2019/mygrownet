@@ -400,10 +400,6 @@ $registerBizBoostAuthRoutes(
 // 2. SUBDOMAIN ROUTES (bizboost.mygrownet.com/)
 // ============================================================
 
-Route::domain('bizboost.mygrownet.com')->name('bizboost.sub.test')->get('/test-subdomain-route', function () {
-    dd('TEST ROUTE REACHED: ' . request()->getHost() . ' | ' . request()->fullUrl());
-});
-
 Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoostAuthRoutes) {
 
     // Public routes — served at root of subdomain
