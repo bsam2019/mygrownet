@@ -97,20 +97,6 @@ class DetectSubdomain
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
-                // Block main-site routes from leaking onto the subdomain.
-                // The Route::domain('bizboost.mygrownet.com') group in bizboost.php
-                // handles root URL routing (welcome at /, not /bizboost/welcome).
-                // This check prevents /dashboard, /login, /admin, etc. from matching web.php routes.
-                // Route names: bizboost.main.* (main domain) or bizboost.sub.* (subdomain) — both start with 'bizboost.'
-                // Auth routes (login, register, etc.) are exceptions since they're shared routes.
-                $route = $request->route();
-                if ($route) {
-                    $name = $route->getName();
-                    if ($name && !str_starts_with($name, 'bizboost.') && !in_array($name, ['login', 'register', 'password.request', 'password.email', 'password.reset', 'password.update', 'verification.notice', 'verification.send', 'verification.verify'])) {
-                        abort(404);
-                    }
-                }
-
                 return $next($request);
             }
 
