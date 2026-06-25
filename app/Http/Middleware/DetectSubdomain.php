@@ -95,6 +95,11 @@ class DetectSubdomain
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
+                // Redirect root URL to the welcome page
+                if ($request->getRequestUri() === '/' || $request->getRequestUri() === '') {
+                    return redirect('/bizboost/welcome');
+                }
+
                 // Block main-site routes from leaking onto the subdomain.
                 // Only allow routes with name prefix "bizboost." (e.g. bizboost.dashboard, bizboost.products.index).
                 // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
