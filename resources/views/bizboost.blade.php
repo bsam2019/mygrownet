@@ -159,6 +159,19 @@
         @inertia
 
         <script>
+            // Route name remapping for BizBoost subdomain
+            // On bizboost.mygrownet.com, the main-domain bizboost.* routes have wrong URLs
+            // (still pointing to /bizboost/ prefix). We override them with the subdomain
+            // route definitions (bizboost.sub.*) which have the correct {uri} without prefix.
+            if (window.location.hostname === 'bizboost.mygrownet.com') {
+                for (const [name, route] of Object.entries(window.Ziggy.routes)) {
+                    if (name.startsWith('bizboost.sub.')) {
+                        const mainName = 'bizboost.' + name.substring('bizboost.sub.'.length);
+                        window.Ziggy.routes[mainName] = route;
+                    }
+                }
+            }
+
             let loaded = false;
             let minTime = false;
 
