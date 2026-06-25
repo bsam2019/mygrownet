@@ -1,5 +1,7 @@
 <?php
 
+file_put_contents('/tmp/bizboost_debug.log', 'BIZBOOST_PHP_LOADED at ' . microtime(true) . "\n", FILE_APPEND);
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BizBoost\DashboardController;
 use App\Http\Controllers\BizBoost\SetupController;
@@ -401,7 +403,7 @@ $registerBizBoostAuthRoutes(
 // ============================================================
 
 Route::domain('bizboost.mygrownet.com')->name('bizboost.sub.test')->get('/test-subdomain-route', function () {
-    \Log::debug('TEST ROUTE HIT - prefix');
+    file_put_contents('/tmp/bizboost_debug.log', 'TEST ROUTE HIT at ' . microtime(true) . "\n", FILE_APPEND);
     dd('TEST ROUTE REACHED: ' . request()->getHost() . ' | ' . request()->fullUrl());
 });
 
