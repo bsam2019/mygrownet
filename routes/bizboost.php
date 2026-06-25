@@ -401,8 +401,9 @@ $registerBizBoostAuthRoutes(
 // ============================================================
 
 Route::domain('bizboost.mygrownet.com')->name('bizboost.sub.test')->get('/test-subdomain-route', function () {
-    return 'bizboost subdomain route works: ' . request()->path() . ' | route: ' . request()->route()->getName();
-});
+    Log::info('BizBoost test route HIT', ['host' => request()->getHost(), 'url' => request()->fullUrl(), 'route' => request()->route()?->getName()]);
+    return response('bizboost test OK: ' . request()->getHost());
+})->withoutMiddleware([\App\Http\Middleware\DetectSubdomain::class]);
 
 Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoostAuthRoutes) {
 
