@@ -64,6 +64,7 @@ class DetectSubdomain
             if ($subdomain === 'growmart') {
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
+                URL::useAssetOrigin($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
@@ -92,6 +93,7 @@ class DetectSubdomain
 
                 $baseUrl = "https://{$subdomain}.mygrownet.com";
                 URL::forceRootUrl($baseUrl);
+                URL::useAssetOrigin($baseUrl);
                 config(['app.url' => $baseUrl]);
                 config(['app.asset_url' => $baseUrl]);
 
@@ -588,6 +590,7 @@ class DetectSubdomain
     {
         // Set the asset URL for Vite assets
         URL::forceRootUrl($baseUrl);
+        URL::useAssetOrigin($baseUrl);
         config(['app.url' => $baseUrl]);
         
         // CRITICAL: Force asset URL for Vite to use subdomain
