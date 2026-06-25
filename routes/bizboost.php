@@ -25,7 +25,9 @@ use App\Http\Controllers\BizBoost\WelcomeController;
 // ── and subdomain (bizboost.mygrownet.com) with standalone blade template ──
 
 // Root redirect for subdomain — bizboost.mygrownet.com/ → /bizboost/welcome
-Route::domain('bizboost.mygrownet.com')->name('bizboost.root')->redirect('/', '/bizboost/welcome');
+Route::domain('bizboost.mygrownet.com')->get('/', function () {
+    return redirect('/bizboost/welcome');
+})->name('bizboost.root');
 
 Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(function () {
 
