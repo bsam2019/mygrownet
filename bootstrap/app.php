@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/bizboost.php'));
 
+            // Load ZamStay subdomain routes before web.php so domain routes match first
+            Route::middleware('web')
+                ->group(base_path('routes/zamstay.php'));
+
             // Main web routes
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));

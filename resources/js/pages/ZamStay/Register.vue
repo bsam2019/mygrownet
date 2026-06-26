@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import ZamStayLayout from '@/layouts/ZamStayLayout.vue';
+
+const isSubdomain = computed(() => window.location.hostname === 'zamstay.mygrownet.com');
+const loginRoute = computed(() => isSubdomain.value ? 'zamstay.sub.login' : 'zamstay.login');
+const registerRoute = computed(() => isSubdomain.value ? 'zamstay.sub.register' : 'zamstay.register');
+const homeRoute = computed(() => isSubdomain.value ? 'zamstay.sub.home' : 'zamstay.home');
 
 const form = useForm({
   name: '',
@@ -10,7 +16,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('zamstay.register'), {
+  form.post(route(registerRoute.value), {
     onError: () => form.reset('password', 'password_confirmation'),
   });
 };
@@ -23,7 +29,7 @@ const submit = () => {
     <div class="w-full max-w-md">
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div class="text-center mb-8">
-          <Link :href="route('zamstay.home')" class="text-2xl font-bold text-emerald-600">ZamStay</Link>
+          <Link :href="route(homeRoute)" class="text-2xl font-bold text-emerald-600">ZamStay</Link>
           <p class="text-gray-500 text-sm mt-1">Create your ZamStay account</p>
         </div>
 
@@ -78,7 +84,7 @@ const submit = () => {
 
         <p class="text-center text-sm text-gray-500 mt-6">
           Already have an account?
-          <Link :href="route('zamstay.login')" class="text-emerald-600 hover:text-emerald-700 font-medium">Sign in</Link>
+          <Link :href="route(loginRoute)" class="text-emerald-600 hover:text-emerald-700 font-medium">Sign in</Link>
         </p>
       </div>
     </div>

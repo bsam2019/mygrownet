@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import {
@@ -16,16 +16,18 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const mobileMenuOpen = ref(false);
 const searchQuery = ref('');
+const isSubdomain = computed(() => window.location.hostname === 'zamstay.mygrownet.com');
 
+const r = (name: string) => isSubdomain.value ? name.replace('zamstay.', 'zamstay.sub.') : name;
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
-    router.get(route('zamstay.search'), { location: searchQuery.value });
+    router.get(route(r('zamstay.search')), { location: searchQuery.value });
     searchQuery.value = '';
   }
 };
 
 const handleLogout = () => {
-  router.post(route('logout'));
+  router.post(isSubdomain.value ? route(r('zamstay.logout')) : route('logout'));
 };
 
 const getInitials = (name: string) => {
@@ -44,7 +46,7 @@ const getInitials = (name: string) => {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <Link :href="route('zamstay.home')" class="flex items-center gap-2">
+          <Link :href="route(r('zamstay.home'))" class="flex items-center gap-2">
             <div class="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 shadow-lg">
               <HomeModernIcon class="size-6 text-white" />
             </div>
@@ -79,20 +81,20 @@ const getInitials = (name: string) => {
 
             <!-- Desktop Nav -->
             <div class="hidden md:flex items-center gap-1">
-              <Link :href="route('zamstay.home')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+              <Link :href="route(r('zamstay.home'))" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                 Home
               </Link>
-              <Link :href="route('zamstay.search')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+              <Link :href="route(r('zamstay.search'))" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                 Browse
               </Link>
               <template v-if="user">
-                <Link :href="route('zamstay.host.dashboard')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                <Link :href="route(r('zamstay.host.dashboard'))" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                   Host
                 </Link>
-                <Link :href="route('zamstay.bookings.index')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                <Link :href="route(r('zamstay.bookings.index'))" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                   My Bookings
                 </Link>
-                <Link :href="route('zamstay.agent.dashboard')" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                <Link :href="route(r('zamstay.agent.dashboard'))" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                   Agent
                 </Link>
               </template>
@@ -109,10 +111,10 @@ const getInitials = (name: string) => {
             </div>
 
             <template v-else>
-              <Link :href="route('login')" class="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+              <Link :href="isSubdomain ? route(r('zamstay.login')) : route('login')" class="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
                 Sign In
               </Link>
-              <Link :href="route('register')" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+              <Link :href="isSubdomain ? route(r('zamstay.register')) : route('register')" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
                 Join
               </Link>
             </template>
@@ -141,17 +143,17 @@ const getInitials = (name: string) => {
                 />
               </div>
             </form>
-            <Link :href="route('zamstay.home')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Home</Link>
-            <Link :href="route('zamstay.search')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Browse Properties</Link>
+            <Link :href="route(r('zamstay.home'))" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Home</Link>
+            <Link :href="route(r('zamstay.search'))" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Browse Properties</Link>
             <template v-if="user">
-              <Link :href="route('zamstay.host.dashboard')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Host Dashboard</Link>
-              <Link :href="route('zamstay.bookings.index')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">My Bookings</Link>
-              <Link :href="route('zamstay.agent.dashboard')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Agent Dashboard</Link>
+              <Link :href="route(r('zamstay.host.dashboard'))" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Host Dashboard</Link>
+              <Link :href="route(r('zamstay.bookings.index'))" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">My Bookings</Link>
+              <Link :href="route(r('zamstay.agent.dashboard'))" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Agent Dashboard</Link>
               <button @click="handleLogout" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">Sign Out</button>
             </template>
             <template v-else>
-              <Link :href="route('login')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Sign In</Link>
-              <Link :href="route('register')" class="block px-4 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg">Join</Link>
+              <Link :href="isSubdomain ? route(r('zamstay.login')) : route('login')" class="block px-4 py-2 text-gray-700 hover:bg-emerald-50 rounded-lg">Sign In</Link>
+              <Link :href="isSubdomain ? route(r('zamstay.register')) : route('register')" class="block px-4 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg">Join</Link>
             </template>
           </div>
         </Transition>
@@ -170,33 +172,33 @@ const getInitials = (name: string) => {
           <div>
             <h3 class="font-semibold mb-4">Explore</h3>
             <ul class="space-y-2 text-sm text-emerald-300">
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">Home</Link></li>
-              <li><Link :href="route('zamstay.search')" class="hover:text-white">Browse Stays</Link></li>
-              <li><Link :href="route('zamstay.agents.index')" class="hover:text-white">Tour Agents</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">Home</Link></li>
+              <li><Link :href="route(r('zamstay.search'))" class="hover:text-white">Browse Stays</Link></li>
+              <li><Link :href="route(r('zamstay.agents.index'))" class="hover:text-white">Tour Agents</Link></li>
             </ul>
           </div>
           <div>
             <h3 class="font-semibold mb-4">Host</h3>
             <ul class="space-y-2 text-sm text-emerald-300">
-              <li><Link :href="route('zamstay.host.dashboard')" class="hover:text-white">Host Dashboard</Link></li>
-              <li><Link :href="route('zamstay.host.properties.create')" class="hover:text-white">List Your Property</Link></li>
-              <li><Link :href="route('zamstay.host.properties')" class="hover:text-white">Manage Properties</Link></li>
+              <li><Link :href="route(r('zamstay.host.dashboard'))" class="hover:text-white">Host Dashboard</Link></li>
+              <li><Link :href="route(r('zamstay.host.properties.create'))" class="hover:text-white">List Your Property</Link></li>
+              <li><Link :href="route(r('zamstay.host.properties'))" class="hover:text-white">Manage Properties</Link></li>
             </ul>
           </div>
           <div>
             <h3 class="font-semibold mb-4">Support</h3>
             <ul class="space-y-2 text-sm text-emerald-300">
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">FAQ</Link></li>
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">Cancellation Policy</Link></li>
-              <li><Link :href="route('zamstay.agent.register-form')" class="hover:text-white">Become an Agent</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">FAQ</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">Cancellation Policy</Link></li>
+              <li><Link :href="route(r('zamstay.agent.register-form'))" class="hover:text-white">Become an Agent</Link></li>
             </ul>
           </div>
           <div>
             <h3 class="font-semibold mb-4">About</h3>
             <ul class="space-y-2 text-sm text-emerald-300">
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">About ZamStay</Link></li>
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">Privacy Policy</Link></li>
-              <li><Link :href="route('zamstay.home')" class="hover:text-white">Terms of Service</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">About ZamStay</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">Privacy Policy</Link></li>
+              <li><Link :href="route(r('zamstay.home'))" class="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
@@ -207,3 +209,6 @@ const getInitials = (name: string) => {
     </footer>
   </div>
 </template>
+
+
+

@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import ZamStayLayout from '@/layouts/ZamStayLayout.vue';
+
+const isSubdomain = computed(() => window.location.hostname === 'zamstay.mygrownet.com');
+const loginRoute = computed(() => isSubdomain.value ? 'zamstay.sub.login' : 'zamstay.login');
+const registerRoute = computed(() => isSubdomain.value ? 'zamstay.sub.register' : 'zamstay.register');
+const homeRoute = computed(() => isSubdomain.value ? 'zamstay.sub.home' : 'zamstay.home');
 
 const form = useForm({
   email: '',
@@ -9,7 +15,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('zamstay.login'), {
+  form.post(route(loginRoute.value), {
     onError: () => form.reset('password'),
   });
 };
@@ -22,7 +28,7 @@ const submit = () => {
     <div class="w-full max-w-md">
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div class="text-center mb-8">
-          <Link :href="route('zamstay.home')" class="text-2xl font-bold text-emerald-600">ZamStay</Link>
+          <Link :href="route(homeRoute)" class="text-2xl font-bold text-emerald-600">ZamStay</Link>
           <p class="text-gray-500 text-sm mt-1">Sign in to your account</p>
         </div>
 
@@ -68,7 +74,7 @@ const submit = () => {
 
         <p class="text-center text-sm text-gray-500 mt-6">
           Don't have an account?
-          <Link :href="route('zamstay.register')" class="text-emerald-600 hover:text-emerald-700 font-medium">Create one</Link>
+          <Link :href="route(registerRoute)" class="text-emerald-600 hover:text-emerald-700 font-medium">Create one</Link>
         </p>
       </div>
     </div>
