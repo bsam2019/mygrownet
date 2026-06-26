@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { usePWA } from '@/composables/usePWA';
 import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
+
+const user = computed(() => usePage().props.auth?.user);
 import {
     SparklesIcon,
     UsersIcon,
@@ -183,18 +185,28 @@ const getPeriodText = (tier: PricingTier) => {
 
                     <!-- Auth Buttons -->
                     <div class="flex items-center gap-3">
-                        <Link
-                            href="/login?redirect=/bizboost"
-                            class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            href="/register?redirect=/bizboost"
-                            class="px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors shadow-lg shadow-violet-500/30"
-                        >
-                            Get Started
-                        </Link>
+                        <template v-if="user">
+                            <Link
+                                href="/dashboard"
+                                class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                            >
+                                Dashboard
+                            </Link>
+                        </template>
+                        <template v-else>
+                            <Link
+                                href="/login?redirect=/bizboost"
+                                class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                            >
+                                Log in
+                            </Link>
+                            <Link
+                                href="/register?redirect=/bizboost"
+                                class="px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors shadow-lg shadow-violet-500/30"
+                            >
+                                Get Started
+                            </Link>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -230,6 +242,15 @@ const getPeriodText = (tier: PricingTier) => {
                         <!-- CTA Buttons -->
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             <Link
+                                v-if="user"
+                                href="/dashboard"
+                                class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
+                            >
+                                Go to Dashboard
+                                <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                            </Link>
+                            <Link
+                                v-else
                                 href="/register?redirect=/bizboost"
                                 class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
                             >
@@ -503,10 +524,18 @@ const getPeriodText = (tier: PricingTier) => {
                                 </div>
 
                                 <Link
+                                    v-if="!user"
                                     href="/register?redirect=/bizboost"
                                     class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
                                 >
                                     Get Started First
+                                </Link>
+                                <Link
+                                    v-else
+                                    href="/dashboard"
+                                    class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
+                                >
+                                    Go to Dashboard
                                 </Link>
                             </div>
                         </div>
@@ -633,8 +662,9 @@ const getPeriodText = (tier: PricingTier) => {
                         <ul class="space-y-2 text-slate-400">
                             <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#pricing" class="hover:text-white transition-colors">Pricing</a></li>
-                            <li><Link href="/login?redirect=/bizboost" class="hover:text-white transition-colors">Log in</Link></li>
-                            <li><Link href="/register?redirect=/bizboost" class="hover:text-white transition-colors">Sign up</Link></li>
+                            <li v-if="user"><Link href="/dashboard" class="hover:text-white transition-colors">Dashboard</Link></li>
+                            <li v-else><Link href="/login?redirect=/bizboost" class="hover:text-white transition-colors">Log in</Link></li>
+                            <li v-if="!user"><Link href="/register?redirect=/bizboost" class="hover:text-white transition-colors">Sign up</Link></li>
                         </ul>
                     </div>
 
