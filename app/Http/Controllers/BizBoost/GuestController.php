@@ -23,6 +23,21 @@ class GuestController extends Controller
         ]);
     }
 
+    public function forgotPassword()
+    {
+        return Inertia::render('BizBoost/Auth/ForgotPassword', [
+            'status' => session('status'),
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        return Inertia::render('BizBoost/Auth/ResetPassword', [
+            'token' => $request->route('token'),
+            'email' => $request->email,
+        ]);
+    }
+
     public function terms()
     {
         return Inertia::render('BizBoost/Terms');

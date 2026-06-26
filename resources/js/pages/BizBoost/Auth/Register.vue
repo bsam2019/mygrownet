@@ -22,6 +22,7 @@ const form = useForm({
     email: '',
     phone: '',
     password: '',
+    password_confirmation: '',
     referral_code: '',
 });
 
@@ -133,6 +134,19 @@ const submit = () => {
                             </div>
                             <PasswordStrengthIndicator :password="form.password" class="mt-2" />
                             <InputError :message="form.errors.password" class="mt-1" />
+                        </div>
+
+                        <div>
+                            <Label for="password_confirmation">Confirm Password</Label>
+                            <Input
+                                id="password_confirmation"
+                                type="password"
+                                autocomplete="new-password"
+                                v-model="form.password_confirmation"
+                                placeholder="Confirm your password"
+                                class="mt-1"
+                            />
+                            <InputError :message="form.errors.password_confirmation" class="mt-1" />
                         </div>
 
                         <Button

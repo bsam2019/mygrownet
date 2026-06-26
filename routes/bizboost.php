@@ -445,5 +445,11 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
         Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
         Route::get('/register', [\App\Http\Controllers\BizBoost\GuestController::class, 'register'])->name('bizboost.sub.register');
         Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+
+        // Password reset
+        Route::get('/forgot-password', [\App\Http\Controllers\BizBoost\GuestController::class, 'forgotPassword'])->name('bizboost.sub.password.request');
+        Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('bizboost.sub.password.email');
+        Route::get('/reset-password/{token}', [\App\Http\Controllers\BizBoost\GuestController::class, 'resetPassword'])->name('bizboost.sub.password.reset');
+        Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('bizboost.sub.password.update');
     });
 });

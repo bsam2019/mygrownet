@@ -78,7 +78,7 @@ const submit = () => {
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <Label for="password">Password</Label>
-                                <Link :href="route('password.request')" class="text-xs text-purple-600 hover:text-purple-700 font-medium">
+                                <Link :href="route('bizboost.sub.password.request')" class="text-xs text-purple-600 hover:text-purple-700 font-medium">
                                     Forgot?
                                 </Link>
                             </div>
