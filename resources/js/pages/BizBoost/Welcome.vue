@@ -213,102 +213,180 @@ const getPeriodText = (tier: PricingTier) => {
         </header>
 
         <!-- Hero Section -->
-        <section class="relative overflow-hidden py-16 sm:py-24 lg:py-32">
+        <section class="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center py-6 sm:py-10 lg:py-14">
             <!-- Background decoration -->
             <div class="absolute inset-0 -z-10">
                 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-to-r from-violet-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
             </div>
 
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
                     <!-- Content -->
                     <div class="text-center lg:text-left">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium mb-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium mb-4 sm:mb-5">
                             <SparklesSolidIcon class="h-4 w-4" aria-hidden="true" />
                             AI-Powered Marketing
                         </div>
 
-                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white leading-tight">
+                        <h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-slate-900 dark:text-white leading-tight">
                             Grow Your Business
                             <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
                                 Smarter
                             </span>
                         </h1>
 
-                        <p class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0">
-                            BizBoost helps SMEs create engaging content, manage customers, and track sales — all powered by AI. Start growing today.
+                        <p class="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0">
+                            BizBoost helps SMEs create engaging content, manage customers, and track sales &mdash; all powered by AI. Start growing today.
                         </p>
 
                         <!-- CTA Buttons -->
-                        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <div class="mt-6 sm:mt-7 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                             <Link
                                 v-if="user"
                                 href="/dashboard"
-                                class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
                             >
                                 Go to Dashboard
-                                <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                                <SparklesIcon class="h-4 w-4" aria-hidden="true" />
                             </Link>
                             <Link
                                 v-else
                                 href="/register?redirect=/bizboost"
-                                class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
                             >
                                 Get Started Free
-                                <SparklesIcon class="h-5 w-5" aria-hidden="true" />
+                                <SparklesIcon class="h-4 w-4" aria-hidden="true" />
                             </Link>
 
                             <button
                                 v-if="showInstallButton"
                                 @click="handleInstall"
                                 :disabled="isInstalling"
-                                class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 rounded-xl transition-colors disabled:opacity-50"
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-violet-700 dark:text-violet-300 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 rounded-xl transition-colors disabled:opacity-50"
                             >
-                                <ArrowDownTrayIcon class="h-5 w-5" aria-hidden="true" />
+                                <ArrowDownTrayIcon class="h-4 w-4" aria-hidden="true" />
                                 {{ isInstalling ? 'Installing...' : 'Install App' }}
                             </button>
                         </div>
 
                         <!-- Trust badges -->
-                        <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start text-sm text-slate-500 dark:text-slate-400">
-                            <div class="flex items-center gap-2">
-                                <CheckIcon class="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                        <div class="mt-8 flex items-center gap-5 justify-center lg:justify-start text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                            <div class="flex items-center gap-1.5">
+                                <CheckIcon class="h-4 w-4 text-emerald-500" aria-hidden="true" />
                                 Free to start
                             </div>
-                            <div class="flex items-center gap-2">
-                                <CheckIcon class="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                            <div class="flex items-center gap-1.5">
+                                <CheckIcon class="h-4 w-4 text-emerald-500" aria-hidden="true" />
                                 No credit card
                             </div>
-                            <div class="flex items-center gap-2">
-                                <CheckIcon class="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                            <div class="flex items-center gap-1.5">
+                                <CheckIcon class="h-4 w-4 text-emerald-500" aria-hidden="true" />
                                 Cancel anytime
                             </div>
                         </div>
                     </div>
 
                     <!-- App Preview -->
-                    <div class="mt-12 lg:mt-0 relative">
-                        <div class="relative mx-auto max-w-md lg:max-w-none">
+                    <div class="mt-8 lg:mt-0 relative flex justify-center">
+                        <div class="relative mx-auto max-w-xs lg:max-w-none">
                             <!-- Phone mockup -->
-                            <div class="relative mx-auto w-64 sm:w-72">
-                                <div class="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-[3rem] blur-2xl opacity-30"></div>
-                                <div class="relative bg-slate-900 rounded-[2.5rem] p-2 shadow-2xl">
-                                    <div class="bg-white dark:bg-slate-800 rounded-[2rem] overflow-hidden aspect-[9/19]">
-                                        <!-- App screenshot placeholder -->
-                                        <div class="h-full bg-gradient-to-b from-violet-50 to-white dark:from-slate-800 dark:to-slate-900 p-4">
-                                            <div class="flex items-center gap-2 mb-4">
-                                                <div class="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center">
-                                                    <SparklesSolidIcon class="h-4 w-4 text-white" aria-hidden="true" />
+                            <div class="relative mx-auto w-56 sm:w-64">
+                                <!-- Glow -->
+                                <div class="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-[2.5rem] blur-2xl opacity-25"></div>
+                                <!-- Phone body -->
+                                <div class="relative bg-slate-900 rounded-[2.2rem] p-2 shadow-2xl">
+                                    <!-- Screen -->
+                                    <div class="bg-white rounded-[1.8rem] overflow-hidden">
+                                        <!-- App UI -->
+                                        <div class="bg-gradient-to-b from-violet-50 to-white">
+                                            <!-- Status bar -->
+                                            <div class="flex items-center justify-between px-5 pt-3 pb-1">
+                                                <span class="text-[10px] font-semibold text-slate-800">9:41</span>
+                                                <div class="flex items-center gap-1">
+                                                    <svg class="w-3 h-3 text-slate-800" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                                                    <svg class="w-3 h-3 text-slate-800" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
                                                 </div>
-                                                <span class="font-semibold text-slate-900 dark:text-white text-sm">BizBoost</span>
                                             </div>
-                                            <div class="space-y-3">
-                                                <div class="h-20 bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 rounded-xl"></div>
-                                                <div class="grid grid-cols-2 gap-2">
-                                                    <div class="h-16 bg-slate-100 dark:bg-slate-700 rounded-lg"></div>
-                                                    <div class="h-16 bg-slate-100 dark:bg-slate-700 rounded-lg"></div>
+
+                                            <!-- App header -->
+                                            <div class="flex items-center justify-between px-4 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="w-6 h-6 rounded-lg bg-violet-500 flex items-center justify-center">
+                                                        <SparklesSolidIcon class="h-3 w-3 text-white" aria-hidden="true" />
+                                                    </div>
+                                                    <span class="text-xs font-bold text-slate-900">BizBoost</span>
                                                 </div>
-                                                <div class="h-24 bg-slate-100 dark:bg-slate-700 rounded-xl"></div>
+                                                <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                </div>
+                                            </div>
+
+                                            <!-- Content area -->
+                                            <div class="px-4 pb-4 space-y-2.5">
+                                                <!-- Greeting card -->
+                                                <div class="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-3">
+                                                    <p class="text-[10px] text-violet-200 font-medium">Welcome back! 👋</p>
+                                                    <p class="text-sm font-bold text-white mt-0.5">Your AI Assistant</p>
+                                                    <div class="flex items-center gap-1.5 mt-2">
+                                                        <div class="flex-1 h-1.5 bg-violet-500/50 rounded-full overflow-hidden">
+                                                            <div class="h-full w-3/4 bg-white rounded-full"></div>
+                                                        </div>
+                                                        <span class="text-[10px] text-violet-200 font-medium">75%</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Stats row -->
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <div class="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100">
+                                                        <p class="text-[10px] text-slate-400">Revenue</p>
+                                                        <p class="text-sm font-bold text-slate-900">ZMW 12.4K</p>
+                                                        <p class="text-[10px] text-emerald-600 font-medium">+12.5%</p>
+                                                    </div>
+                                                    <div class="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100">
+                                                        <p class="text-[10px] text-slate-400">Customers</p>
+                                                        <p class="text-sm font-bold text-slate-900">248</p>
+                                                        <p class="text-[10px] text-emerald-600 font-medium">+8 new</p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Mini chart -->
+                                                <div class="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100">
+                                                    <div class="flex items-center justify-between mb-1.5">
+                                                        <p class="text-[10px] text-slate-400 font-medium">Posts this week</p>
+                                                        <span class="text-[10px] text-violet-600 font-semibold">+5</span>
+                                                    </div>
+                                                    <div class="flex items-end gap-1 h-10">
+                                                        <div class="flex-1 bg-violet-200 rounded-t-sm h-3/5"></div>
+                                                        <div class="flex-1 bg-violet-300 rounded-t-sm h-4/5"></div>
+                                                        <div class="flex-1 bg-violet-400 rounded-t-sm h-2/5"></div>
+                                                        <div class="flex-1 bg-violet-200 rounded-t-sm h-3/5"></div>
+                                                        <div class="flex-1 bg-violet-500 rounded-t-sm h-full"></div>
+                                                        <div class="flex-1 bg-violet-300 rounded-t-sm h-3/5"></div>
+                                                        <div class="flex-1 bg-violet-200 rounded-t-sm h-1/5"></div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Recent activity -->
+                                                <div class="bg-white rounded-xl p-2.5 shadow-sm border border-slate-100">
+                                                    <p class="text-[10px] text-slate-400 font-medium mb-1.5">Recent Activity</p>
+                                                    <div class="space-y-1.5">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                                            <p class="text-[10px] text-slate-700 flex-1 truncate">New post published</p>
+                                                            <span class="text-[9px] text-slate-400">2m ago</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                                                            <p class="text-[10px] text-slate-700 flex-1 truncate">3 new customers</p>
+                                                            <span class="text-[9px] text-slate-400">15m ago</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                                                            <p class="text-[10px] text-slate-700 flex-1 truncate">Review reply needed</p>
+                                                            <span class="text-[9px] text-slate-400">1h ago</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -45,11 +45,22 @@ const submit = () => {
                         </svg>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Welcome back</h2>
-                    <p class="text-gray-600 mt-1">Sign in to your BizBoost account</p>
+                    <p class="text-gray-600 mt-1">Sign in with your MyGrowNet account</p>
                 </div>
 
                 <!-- Card -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
+                    <!-- Shared account notice -->
+                    <div class="mb-5 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <p class="text-xs text-purple-800 leading-relaxed">
+                            BizBoost uses your <strong>MyGrowNet</strong> account.
+                            Already have one? Sign in below.
+                            New here?
+                            <Link :href="route(&#39;bizboost.sub.register&#39;)" class="text-purple-700 font-medium hover:underline">Create an account</Link>
+                            &mdash; it&#39;s shared across all MyGrowNet services.
+                        </p>
+                    </div>
+
                     <!-- Status Message -->
                     <div v-if="status" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                         {{ status }}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import {
     BuildingStorefrontIcon, SparklesIcon, CheckCircleIcon, ArrowRightIcon, ArrowLeftIcon,
@@ -23,6 +23,42 @@ interface Business {
     social_links: Record<string, string> | null;
 }
 
+const STORAGE_KEY = 'bizboost_setup_draft';
+
+function loadDraft<T>(key: string, fallback: T): T {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return fallback;
+        const parsed = JSON.parse(saved);
+        return parsed[key] ?? fallback;
+    } catch { return fallback; }
+}
+
+function saveDraft() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            business: { ...businessForm.data() },
+            location: { ...locationForm.data() },
+            hours: { ...hoursForm.data() },
+            social: { ...socialForm.data() },
+        }));
+    } catch { /* storage full or unavailable */ }
+}
+
+function clearDraft(key?: string) {
+    if (key) {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            const parsed = JSON.parse(saved);
+            delete parsed[key];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        } catch { /* ignore */ }
+    } else {
+        try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    }
+}
+
 const props = defineProps<{ step: number; business: Business | null; industries: string[] }>();
 
 const currentStep = ref(props.step);
@@ -30,18 +66,18 @@ const logoPreview = ref<string | null>(props.business?.logo_path ? `/storage/${p
 const isUploading = ref(false);
 
 const businessForm = useForm({
-    name: props.business?.name ?? '',
-    industry: props.business?.industry ?? '',
-    description: props.business?.description ?? '',
-    phone: props.business?.phone ?? '',
-    whatsapp: props.business?.whatsapp ?? '',
-    email: props.business?.email ?? '',
+    name: loadDraft('business', {}).name ?? props.business?.name ?? '',
+    industry: loadDraft('business', {}).industry ?? props.business?.industry ?? '',
+    description: loadDraft('business', {}).description ?? props.business?.description ?? '',
+    phone: loadDraft('business', {}).phone ?? props.business?.phone ?? '',
+    whatsapp: loadDraft('business', {}).whatsapp ?? props.business?.whatsapp ?? '',
+    email: loadDraft('business', {}).email ?? props.business?.email ?? '',
 });
 
 const locationForm = useForm({
-    address: props.business?.address ?? '',
-    city: props.business?.city ?? '',
-    province: props.business?.province ?? 'Lusaka',
+    address: loadDraft('location', {}).address ?? props.business?.address ?? '',
+    city: loadDraft('location', {}).city ?? props.business?.city ?? '',
+    province: loadDraft('location', {}).province ?? props.business?.province ?? 'Lusaka',
 });
 
 const defaultHours = {
@@ -54,13 +90,14 @@ const defaultHours = {
     sunday: { open: '09:00', close: '13:00', closed: true },
 };
 
-const hoursForm = useForm({ business_hours: props.business?.business_hours ?? defaultHours });
+const savedHours = loadDraft('hours', {}).business_hours;
+const hoursForm = useForm({ business_hours: savedHours ?? props.business?.business_hours ?? defaultHours });
 
 const socialForm = useForm({
-    facebook: props.business?.social_links?.facebook ?? '',
-    instagram: props.business?.social_links?.instagram ?? '',
-    tiktok: props.business?.social_links?.tiktok ?? '',
-    website: props.business?.social_links?.website ?? '',
+    facebook: loadDraft('social', {}).facebook ?? props.business?.social_links?.facebook ?? '',
+    instagram: loadDraft('social', {}).instagram ?? props.business?.social_links?.instagram ?? '',
+    tiktok: loadDraft('social', {}).tiktok ?? props.business?.social_links?.tiktok ?? '',
+    website: loadDraft('social', {}).website ?? props.business?.social_links?.website ?? '',
 });
 
 const industryOptions = [
@@ -95,16 +132,29 @@ const canProceed = computed(() => currentStep.value === 1 ? businessForm.name.tr
 const progressPercentage = computed(() => Math.round((currentStep.value / steps.length) * 100));
 
 const submitStep = () => {
-    if (currentStep.value === 1) businessForm.post(route('bizboost.setup.business'), { preserveScroll: true, onSuccess: () => currentStep.value = 2 });
-    else if (currentStep.value === 2) locationForm.post(route('bizboost.setup.location'), { preserveScroll: true, onSuccess: () => currentStep.value = 3 });
-    else if (currentStep.value === 3) hoursForm.post(route('bizboost.setup.hours'), { preserveScroll: true, onSuccess: () => currentStep.value = 4 });
-    else if (currentStep.value === 4) socialForm.post(route('bizboost.setup.social'), { preserveScroll: true, onSuccess: () => currentStep.value = 5 });
+    const onSuccess = () => {
+        if (currentStep.value === 1) { clearDraft('business'); currentStep.value = 2; }
+        else if (currentStep.value === 2) { clearDraft('location'); currentStep.value = 3; }
+        else if (currentStep.value === 3) { clearDraft('hours'); currentStep.value = 4; }
+        else if (currentStep.value === 4) { clearDraft('social'); currentStep.value = 5; }
+        else if (currentStep.value === 5) currentStep.value = 6;
+    };
+    if (currentStep.value === 1) businessForm.post(route('bizboost.setup.business'), { preserveScroll: true, onSuccess });
+    else if (currentStep.value === 2) locationForm.post(route('bizboost.setup.location'), { preserveScroll: true, onSuccess });
+    else if (currentStep.value === 3) hoursForm.post(route('bizboost.setup.hours'), { preserveScroll: true, onSuccess });
+    else if (currentStep.value === 4) socialForm.post(route('bizboost.setup.social'), { preserveScroll: true, onSuccess });
     else if (currentStep.value === 5) currentStep.value = 6;
 };
 
 const skipStep = () => { if (currentStep.value < 6) currentStep.value++; };
 const goBack = () => { if (currentStep.value > 1) currentStep.value--; };
 const completeSetup = () => router.post(route('bizboost.setup.complete'));
+const skipSetup = () => {
+    if (confirm('Skip the setup wizard? You can complete your business profile later in Settings.')) {
+        clearDraft();
+        router.post(route('bizboost.setup.skip'));
+    }
+};
 
 const handleLogoUpload = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -120,6 +170,20 @@ const handleLogoUpload = (event: Event) => {
 
 const toggleDayClosed = (day: string) => { hoursForm.business_hours[day].closed = !hoursForm.business_hours[day].closed; };
 watch(() => businessForm.phone, (p) => { if (p && !businessForm.whatsapp) businessForm.whatsapp = p; });
+
+// Auto-save drafts with debounce
+watch(() => businessForm.data(), saveDraft, { deep: true });
+watch(() => locationForm.data(), saveDraft, { deep: true });
+watch(() => hoursForm.data(), saveDraft, { deep: true });
+watch(() => socialForm.data(), saveDraft, { deep: true });
+
+onMounted(() => {
+    // Show restored data indicator
+    const draft = localStorage.getItem(STORAGE_KEY);
+    if (draft) {
+        // Data restored silently from localStorage
+    }
+});
 </script>
 
 <template>
@@ -137,9 +201,14 @@ watch(() => businessForm.phone, (p) => { if (p && !businessForm.whatsapp) busine
                         <p class="text-sm text-gray-500">Setup your business</p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-sm font-medium text-violet-600">{{ progressPercentage }}%</p>
-                    <p class="text-xs text-gray-500">Step {{ currentStep }}/{{ steps.length }}</p>
+                <div class="flex items-center gap-4">
+                    <button @click="skipSetup" class="text-sm text-gray-500 hover:text-violet-600 font-medium transition-colors">
+                        Skip setup
+                    </button>
+                    <div class="text-right">
+                        <p class="text-sm font-medium text-violet-600">{{ progressPercentage }}%</p>
+                        <p class="text-xs text-gray-500">Step {{ currentStep }}/{{ steps.length }}</p>
+                    </div>
                 </div>
             </div>
         </div>

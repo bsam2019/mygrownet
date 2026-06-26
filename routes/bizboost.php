@@ -38,6 +38,7 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
         Route::post('/setup/social', [SetupController::class, 'storeSocial'])->name('setup.social');
         Route::post('/setup/logo', [SetupController::class, 'uploadLogo'])->name('setup.logo');
         Route::post('/setup/complete', [SetupController::class, 'completeSetup'])->name('setup.complete');
+        Route::post('/setup/skip', [SetupController::class, 'skip'])->name('setup.skip');
 
         // Dashboard
         Route::get($dashboardPath, [DashboardController::class, 'index'])->name('dashboard');
