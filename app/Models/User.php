@@ -625,6 +625,11 @@ class User extends Authenticatable
         return $this->hasOne(UserProfile::class);
     }
 
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
     // Professional Level relationship (MyGrowNet 7-level system)
     // Uses current_professional_level (1-7) to determine tier
     public function membershipTier(): BelongsTo

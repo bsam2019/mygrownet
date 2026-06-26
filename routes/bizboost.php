@@ -452,5 +452,8 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
         Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('bizboost.sub.password.email');
         Route::get('/reset-password/{token}', [\App\Http\Controllers\BizBoost\GuestController::class, 'resetPassword'])->name('bizboost.sub.password.reset');
         Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('bizboost.sub.password.update');
+
+        // Social Login - Google (subdomain)
+        Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('bizboost.sub.auth.google');
     });
 });
