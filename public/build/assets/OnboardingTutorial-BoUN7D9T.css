@@ -1,1 +1,0 @@
-.tour-highlight{position:relative;z-index:10000!important}@keyframes ping-slow{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.05);opacity:.3}to{transform:scale(1);opacity:.5}}.animate-ping-slow{animation:ping-slow 2s ease-in-out infinite}

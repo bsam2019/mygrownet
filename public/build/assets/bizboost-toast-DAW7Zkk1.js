@@ -1,1 +1,0 @@
-const o=(s,t,n)=>{const e=typeof t=="string"?{type:s,title:t,message:n}:{type:s,...t};window.dispatchEvent(new CustomEvent("bizboost:toast",{detail:e}))},r={success:(s,t)=>o("success",s,t),error:(s,t)=>o("error",s,t),warning:(s,t)=>o("warning",s,t),info:(s,t)=>o("info",s,t),custom:(s,t)=>o(s,t)};export{r as t};
