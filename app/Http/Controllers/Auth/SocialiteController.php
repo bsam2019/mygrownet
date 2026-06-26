@@ -10,14 +10,22 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
 {
-    public function redirectToGoogle()
+    public function redirectToGoogle(Request $request)
     {
-        session(['socialite_redirect' => url()->previous()]);
+        $domain = $request->getHost();
+        $callbackUrl = match ($domain) {
+            'bizboost.mygrownet.com' => route('bizboost.sub.auth.google.callback', [], true),
+            'cms.mygrownet.com' => route('cms.subdomain.auth.google.callback', [], true),
+            'growmart.mygrownet.com' => route('growmart.auth.google.callback', [], true),
+            default => route('auth.google.callback', [], true),
+        };
 
-        return Socialite::driver('google')->redirect();
+        session(['socialite_redirect' => $request->input('redirect', url()->previous())]);
+
+        return Socialite::driver('google')->redirectUrl($callbackUrl)->redirect();
     }
 
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -59,6 +67,6 @@ class SocialiteController extends Controller
 
         $redirect = session()->pull('socialite_redirect', '/dashboard');
 
-        return redirect()->intended($redirect);
+        return redirect($redirect);
     }
 }

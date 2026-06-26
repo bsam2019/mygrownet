@@ -455,5 +455,6 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
 
         // Social Login - Google (subdomain)
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('bizboost.sub.auth.google');
+        Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('bizboost.sub.auth.google.callback');
     });
 });
