@@ -1,1 +1,0 @@
-import{k as o,c as s,h as t,o as a}from"./app-CLPabOLb.js";const n={class:"p-6"},l=o({__name:"Demo",setup(r){return(m,e)=>(a(),s("div",n,[...e[0]||(e[0]=[t("h1",{class:"text-2xl font-semibold text-gray-800"},"Site Builder Demo",-1),t("p",{class:"text-gray-600 mt-2"},"Coming soon.",-1)])]))}});export{l as default};

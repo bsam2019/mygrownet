@@ -1,1 +1,0 @@
-import{k as o,c as a,h as n,o as s}from"./app-CLPabOLb.js";const r=o({__name:"Index",setup(m){return(t,e)=>(s(),a("div",null,[...e[0]||(e[0]=[n("h1",null,"Commission Management",-1),n("p",null,"Commission management page coming soon...",-1)])]))}});export{r as default};

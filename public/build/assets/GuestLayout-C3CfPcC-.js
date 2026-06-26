@@ -1,1 +1,0 @@
-import{N as o,F as s}from"./Footer-Dhwq26bC.js";import{c as t,a as e,h as r,G as n,o as c}from"./app-CLPabOLb.js";const _={class:"min-h-screen bg-gray-50"},u={__name:"GuestLayout",setup(i){return(a,l)=>(c(),t("div",_,[e(o),r("main",null,[n(a.$slots,"default")]),e(s)]))}};export{u as _};

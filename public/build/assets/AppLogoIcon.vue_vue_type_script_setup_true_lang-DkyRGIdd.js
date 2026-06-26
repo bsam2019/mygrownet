@@ -1,1 +1,0 @@
-import{k as t,z as a,c,K as n,o as r}from"./app-CLPabOLb.js";const l=["src"],i=t({inheritAttrs:!1,__name:"AppLogoIcon",props:{className:{}},setup(o){const s=a(()=>"/logo.png");return(e,p)=>(r(),c("img",n({src:s.value,alt:"MyGrowNet Logo",class:o.className},e.$attrs,{class:"object-contain w-auto"}),null,16,l))}});export{i as _};

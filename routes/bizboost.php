@@ -425,6 +425,11 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
 
         // QR code redirect
         Route::get('/qr/{code}', [App\Http\Controllers\BizBoost\QrCodeController::class, 'redirect'])->name('bizboost.sub.qr.redirect');
+
+        // Footer / legal pages
+        Route::get('/terms', [\App\Http\Controllers\BizBoost\GuestController::class, 'terms'])->name('bizboost.sub.terms');
+        Route::get('/privacy', [\App\Http\Controllers\BizBoost\GuestController::class, 'privacy'])->name('bizboost.sub.privacy');
+        Route::get('/about', [\App\Http\Controllers\BizBoost\GuestController::class, 'about'])->name('bizboost.sub.about');
     });
 
     // Authenticated routes — served at root (no prefix)
@@ -434,9 +439,11 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
         dashboardPath: '/dashboard'
     );
 
-    // Subdomain-specific auth routes (guest-only)
+    // Subdomain-specific guest-only auth routes
     Route::middleware(['guest', \App\Http\Middleware\BizBoostStandalone::class])->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('bizboost.sub.login');
+        Route::get('/login', [\App\Http\Controllers\BizBoost\GuestController::class, 'login'])->name('bizboost.sub.login');
         Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
+        Route::get('/register', [\App\Http\Controllers\BizBoost\GuestController::class, 'register'])->name('bizboost.sub.register');
+        Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
     });
 });
