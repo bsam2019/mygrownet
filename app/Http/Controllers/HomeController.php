@@ -32,6 +32,11 @@ class HomeController extends Controller
         return Inertia::render('Welcome', [
             'categories' => Category::all(),
             'featuredApps' => array_values($featuredModules),
+            'stats' => [
+                'courses' => 100,
+                'mentors' => 50,
+                'products' => 500,
+            ],
         ]);
     }
 

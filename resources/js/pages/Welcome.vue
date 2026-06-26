@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
     <Navigation />
-    <Hero />
+    <Hero :stats="stats" />
     <FeaturedApps v-if="featuredApps && featuredApps.length > 0" :apps="featuredApps" />
     <FeatureHighlights />
     <HowItWorks />
@@ -25,6 +25,10 @@ defineProps({
   featuredApps: {
     type: Array,
     default: () => []
+  },
+  stats: {
+    type: Object,
+    default: () => ({})
   }
 });
 </script>

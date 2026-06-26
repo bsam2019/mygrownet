@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="py-16 sm:py-20 bg-gradient-to-b from-white to-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Section Header -->
@@ -53,7 +53,7 @@
           </ul>
 
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-indigo-600">Get Started →</span>
+            <span class="text-sm font-medium text-indigo-600">Get Started â†’</span>
             <ArrowRightIcon class="w-5 h-5 text-indigo-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" aria-hidden="true" />
           </div>
         </Link>
@@ -94,7 +94,7 @@
           </ul>
 
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-emerald-600">Join Now →</span>
+            <span class="text-sm font-medium text-emerald-600">Join Now â†’</span>
             <ArrowRightIcon class="w-5 h-5 text-emerald-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" aria-hidden="true" />
           </div>
         </Link>
@@ -115,7 +115,7 @@
         <Link
           v-for="app in apps"
           :key="app.id"
-          :href="getPublicRoute(app)"
+          :href="app.primary_route || getPublicRoute(app)"
           class="group relative bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
         >
           <!-- Icon -->
@@ -132,15 +132,7 @@
 
           <!-- Content -->
           <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ app.name }}</h3>
-          <p class="text-sm text-gray-600 mb-4">{{ getAppDescription(app.slug) }}</p>
-
-          <!-- Features -->
-          <ul class="space-y-2">
-            <li v-for="feature in getAppFeatures(app.slug)" :key="feature" class="flex items-center gap-2 text-xs text-gray-500">
-              <CheckCircleIcon class="w-4 h-4 text-blue-500 flex-shrink-0" aria-hidden="true" />
-              {{ feature }}
-            </li>
-          </ul>
+          <p class="text-sm text-gray-600 mb-4">{{ app.description || getAppDescription(app.slug) }}</p>
 
           <!-- Status Badge -->
           <span 
@@ -160,7 +152,7 @@
       <!-- CTA -->
       <div class="text-center">
         <Link
-          href="/apps"
+          :href="route('apps.index')"
           class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-full hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
         >
           <CubeIcon class="w-5 h-5" aria-hidden="true" />
@@ -180,7 +172,6 @@ import {
   ArrowRightIcon,
   CubeIcon,
   ClipboardDocumentCheckIcon,
-  ChartBarIcon,
   ShoppingCartIcon,
   BanknotesIcon,
   GlobeAltIcon,
@@ -221,17 +212,6 @@ const getAppDescription = (slug: string): string => {
   return descriptions[slug] || 'Business tool';
 };
 
-const getAppFeatures = (slug: string): string[] => {
-  const features: Record<string, string[]> = {
-    'bizboost': ['Marketing automation', 'CRM & leads', 'Business analytics'],
-    'growfinance': ['Invoicing & billing', 'Expense tracking', 'Financial reports'],
-    'growbiz': ['Employee management', 'Task tracking', 'Performance reviews'],
-    'marketplace': ['Product catalog', 'Secure checkout', 'Order tracking'],
-  };
-  return features[slug] || [];
-};
-
-// Get public landing page route for each app
 const getPublicRoute = (app: App): string => {
   const publicRoutes: Record<string, string> = {
     'bizboost': '/bizboost/welcome',
@@ -242,3 +222,4 @@ const getPublicRoute = (app: App): string => {
   return publicRoutes[app.slug] || app.primary_route || '/apps';
 };
 </script>
+
