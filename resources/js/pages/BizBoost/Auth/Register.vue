@@ -16,6 +16,7 @@ defineProps<{
 
 const showPassword = ref(false);
 const contactInput = ref('');
+const currentUrl = encodeURIComponent(window.location.href);
 
 const form = useForm({
     name: '',
@@ -167,7 +168,7 @@ const submit = () => {
                                 <span class="bg-white px-3 text-gray-500">or sign up with</span>
                             </div>
                         </div>
-                        <a :href="`/auth/google?redirect=${encodeURIComponent(window.location.href)}`"
+                        <a :href="`/auth/google?redirect=${currentUrl}`"
                            class="flex items-center justify-center gap-3 w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all">
                             <svg class="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
