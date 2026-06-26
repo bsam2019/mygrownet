@@ -5,6 +5,7 @@ import { usePWA } from '@/composables/usePWA';
 import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 
 const user = computed(() => usePage().props.auth?.user);
+const isSubdomain = computed(() => window.location.hostname === 'bizboost.mygrownet.com');
 import {
     SparklesIcon,
     UsersIcon,
@@ -195,13 +196,13 @@ const getPeriodText = (tier: PricingTier) => {
                         </template>
                         <template v-else>
                             <Link
-                                href="/login?redirect=/bizboost"
+                                :href="isSubdomain ? route('bizboost.sub.login') : '/login?redirect=/bizboost'"
                                 class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                             >
                                 Log in
                             </Link>
                             <Link
-                                href="/register?redirect=/bizboost"
+                                :href="isSubdomain ? route('bizboost.sub.register') : '/register?redirect=/bizboost'"
                                 class="px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors shadow-lg shadow-violet-500/30"
                             >
                                 Get Started
@@ -251,7 +252,7 @@ const getPeriodText = (tier: PricingTier) => {
                             </Link>
                             <Link
                                 v-else
-                                href="/register?redirect=/bizboost"
+                                :href="isSubdomain ? route('bizboost.sub.register') : '/register?redirect=/bizboost'"
                                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
                             >
                                 Get Started Free
@@ -533,7 +534,7 @@ const getPeriodText = (tier: PricingTier) => {
                         </ul>
 
                         <Link
-                            :href="tier.id === 'business' ? '/contact' : `/register?redirect=/bizboost&plan=${tier.id}&billing=${billingCycle}`"
+                            :href="tier.id === 'business' ? '/contact' : (isSubdomain ? route('bizboost.sub.register') : `/register?redirect=/bizboost&plan=${tier.id}&billing=${billingCycle}`)"
                             :class="[
                                 'block w-full py-3 px-4 text-center text-sm font-semibold rounded-xl transition-colors',
                                 tier.popular
@@ -603,7 +604,7 @@ const getPeriodText = (tier: PricingTier) => {
 
                                 <Link
                                     v-if="!user"
-                                    href="/register?redirect=/bizboost"
+                                    :href="isSubdomain ? route('bizboost.sub.register') : '/register?redirect=/bizboost'"
                                     class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
                                 >
                                     Get Started First
@@ -741,8 +742,8 @@ const getPeriodText = (tier: PricingTier) => {
                             <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#pricing" class="hover:text-white transition-colors">Pricing</a></li>
                             <li v-if="user"><Link href="/dashboard" class="hover:text-white transition-colors">Dashboard</Link></li>
-                            <li v-else><Link href="/login?redirect=/bizboost" class="hover:text-white transition-colors">Log in</Link></li>
-                            <li v-if="!user"><Link href="/register?redirect=/bizboost" class="hover:text-white transition-colors">Sign up</Link></li>
+                            <li v-else><Link :href="isSubdomain ? route('bizboost.sub.login') : '/login?redirect=/bizboost'" class="hover:text-white transition-colors">Log in</Link></li>
+                            <li v-if="!user"><Link :href="isSubdomain ? route('bizboost.sub.register') : '/register?redirect=/bizboost'" class="hover:text-white transition-colors">Sign up</Link></li>
                         </ul>
                     </div>
 
