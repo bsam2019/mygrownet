@@ -40,7 +40,7 @@ const handleContactInput = (event: Event) => {
 };
 
 const submit = () => {
-    form.post(route('register'), {
+    form.post(route('bizboost.sub.register'), {
         onFinish: () => {
             form.reset('password');
         },

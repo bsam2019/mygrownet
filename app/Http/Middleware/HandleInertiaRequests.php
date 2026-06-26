@@ -26,8 +26,13 @@ class HandleInertiaRequests extends Middleware
     public function handle($request, \Closure $next)
     {
         // Skip Inertia for auth routes on main domain only (they use Blade templates)
-        // BizBoost subdomain auth pages use Inertia
-        if ($request->getHost() !== 'bizboost.mygrownet.com'
+        // Subdomain auth pages use Inertia, so keep processing for those hosts
+        $subdomainsUsingInertiaAuth = [
+            'bizboost.mygrownet.com',
+            'zamstay.mygrownet.com',
+            'growmart.mygrownet.com',
+        ];
+        if (!in_array($request->getHost(), $subdomainsUsingInertiaAuth)
             && $request->is('login', 'register', 'forgot-password', 'reset-password/*', 'auth/*')) {
             return $next($request);
         }

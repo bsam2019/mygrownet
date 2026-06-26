@@ -378,7 +378,53 @@
         }
         
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
+        /* Social Login Buttons */
+        .social-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+        .social-divider::before,
+        .social-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-200);
+        }
+        .social-divider-text {
+            font-size: 0.8125rem;
+            color: var(--gray-400);
+            white-space: nowrap;
+        }
+        .btn-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.8125rem 1rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-700);
+            background: white;
+        }
+        .btn-social:hover {
+            border-color: var(--gray-300);
+            background: var(--gray-50);
+        }
+        .social-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            flex-shrink: 0;
+        }
+
         /* Password Toggle */
         .password-wrapper { position: relative; }
         
