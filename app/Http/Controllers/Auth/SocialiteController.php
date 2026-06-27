@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\DefaultSponsorService;
+use App\Services\LgrActivityTrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -22,6 +24,11 @@ class SocialiteController extends Controller
         };
 
         session(['socialite_redirect' => $request->input('redirect', url()->previous())]);
+
+        // Preserve referral code through the OAuth flow
+        if ($request->has('ref')) {
+            session(['socialite_referral_code' => $request->input('ref')]);
+        }
 
         return Socialite::driver('google')->redirectUrl($callbackUrl)->redirect();
     }
@@ -50,10 +57,31 @@ class SocialiteController extends Controller
                     'avatar' => $googleUser->getAvatar(),
                 ]);
             } else {
+                // Find referrer from session (set during redirectToGoogle)
+                $referralCode = session()->pull('socialite_referral_code');
+                $referrerId = null;
+
+                if ($referralCode) {
+                    $referrer = User::where('referral_code', $referralCode)->first();
+                    if ($referrer) {
+                        // Use the same 3x3 matrix placement logic as regular registration
+                        $referrerId = User::findMatrixPlacement($referrer->id);
+                    }
+                }
+
+                if (!$referrerId) {
+                    // Fallback to default sponsor
+                    $defaultSponsor = app(DefaultSponsorService::class)->getDefaultSponsor();
+                    if ($defaultSponsor) {
+                        $referrerId = $defaultSponsor->id;
+                    }
+                }
+
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
                     'password' => bcrypt(\Str::random(32)),
+                    'referrer_id' => $referrerId,
                 ]);
 
                 $user->socialAccounts()->create([
@@ -61,6 +89,19 @@ class SocialiteController extends Controller
                     'provider_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(),
                 ]);
+
+                // Record LGR activity for referrer
+                if ($referrerId) {
+                    try {
+                        app(LgrActivityTrackingService::class)->recordReferralRegistration(
+                            $referrerId,
+                            $user->id,
+                            $user->name
+                        );
+                    } catch (\Exception $e) {
+                        // Non-critical failure
+                    }
+                }
             }
         }
 
