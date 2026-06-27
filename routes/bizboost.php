@@ -352,6 +352,16 @@ $registerBizBoostAuthRoutes = function (string $prefix, string $namePrefix, stri
             Route::post('/send', [App\Http\Controllers\BizBoost\OmnichannelController::class, 'send'])->name('send');
         });
 
+        // Shop / Orders Management
+        Route::prefix('shop')->name('shop.')->group(function () {
+            Route::get('/orders', [App\Http\Controllers\BizBoost\ShopController::class, 'orders'])->name('orders');
+            Route::post('/orders/{id}/status', [App\Http\Controllers\BizBoost\ShopController::class, 'updateOrderStatus'])->name('orders.update-status');
+            Route::get('/catalog', [App\Http\Controllers\BizBoost\ShopController::class, 'catalogSettings'])->name('catalog');
+            Route::post('/catalog/create', [App\Http\Controllers\BizBoost\ShopController::class, 'createCatalog'])->name('catalog.create');
+            Route::post('/catalog/sync', [App\Http\Controllers\BizBoost\ShopController::class, 'syncCatalog'])->name('catalog.sync');
+            Route::post('/catalog/disconnect', [App\Http\Controllers\BizBoost\ShopController::class, 'disconnectCatalog'])->name('catalog.disconnect');
+        });
+
         // Guides / Help
         Route::prefix('guides')->name('guides.')->group(function () {
             Route::get('/', [App\Http\Controllers\BizBoost\GuideController::class, 'index'])->name('index');
@@ -376,6 +386,17 @@ Route::middleware(\App\Http\Middleware\BizBoostStandalone::class)->group(functio
         Route::get('/{slug}/products', [BusinessController::class, 'publicProducts'])->name('products');
         Route::get('/{slug}/product/{productId}', [BusinessController::class, 'publicProduct'])->name('product');
         Route::post('/{slug}/contact', [BusinessController::class, 'publicContact'])->name('contact');
+    });
+
+    // Public shop (storefront + checkout)
+    Route::prefix('shop')->name('bizboost.public.')->group(function () {
+        Route::get('/{slug}', [\App\Http\Controllers\BizBoost\ShopController::class, 'shopPage'])->name('shop');
+        Route::get('/{slug}/product/{productId}', [\App\Http\Controllers\BizBoost\ShopController::class, 'productDetail'])->name('shop.product');
+        Route::post('/{slug}/cart/add', [\App\Http\Controllers\BizBoost\ShopController::class, 'addToCart'])->name('shop.cart.add');
+        Route::post('/{slug}/cart/update', [\App\Http\Controllers\BizBoost\ShopController::class, 'updateCart'])->name('shop.cart.update');
+        Route::get('/{slug}/checkout', [\App\Http\Controllers\BizBoost\ShopController::class, 'checkoutPage'])->name('shop.checkout');
+        Route::post('/{slug}/checkout', [\App\Http\Controllers\BizBoost\ShopController::class, 'placeOrder'])->name('shop.checkout.store');
+        Route::get('/{slug}/order/{order}', [\App\Http\Controllers\BizBoost\ShopController::class, 'orderConfirmation'])->name('shop.order-confirmation');
     });
 
     // Public Marketplace
@@ -415,6 +436,17 @@ Route::domain('bizboost.mygrownet.com')->group(function () use ($registerBizBoos
             Route::get('/{slug}/products', [BusinessController::class, 'publicProducts'])->name('products');
             Route::get('/{slug}/product/{productId}', [BusinessController::class, 'publicProduct'])->name('product');
             Route::post('/{slug}/contact', [BusinessController::class, 'publicContact'])->name('contact');
+        });
+
+        // Public shop (storefront + checkout)
+        Route::prefix('shop')->name('bizboost.sub.public.')->group(function () {
+            Route::get('/{slug}', [\App\Http\Controllers\BizBoost\ShopController::class, 'shopPage'])->name('shop');
+            Route::get('/{slug}/product/{productId}', [\App\Http\Controllers\BizBoost\ShopController::class, 'productDetail'])->name('shop.product');
+            Route::post('/{slug}/cart/add', [\App\Http\Controllers\BizBoost\ShopController::class, 'addToCart'])->name('shop.cart.add');
+            Route::post('/{slug}/cart/update', [\App\Http\Controllers\BizBoost\ShopController::class, 'updateCart'])->name('shop.cart.update');
+            Route::get('/{slug}/checkout', [\App\Http\Controllers\BizBoost\ShopController::class, 'checkoutPage'])->name('shop.checkout');
+            Route::post('/{slug}/checkout', [\App\Http\Controllers\BizBoost\ShopController::class, 'placeOrder'])->name('shop.checkout.store');
+            Route::get('/{slug}/order/{order}', [\App\Http\Controllers\BizBoost\ShopController::class, 'orderConfirmation'])->name('shop.order-confirmation');
         });
 
         // Public Marketplace

@@ -23,6 +23,8 @@ class BizBoostIntegrationModel extends Model
         'token_expires_at',
         'scopes',
         'meta',
+        'catalog_id',
+        'whatsapp_catalog_settings',
         'status',
         'connected_at',
         'last_used_at',
@@ -34,6 +36,7 @@ class BizBoostIntegrationModel extends Model
         'last_used_at' => 'datetime',
         'scopes' => 'array',
         'meta' => 'array',
+        'whatsapp_catalog_settings' => 'array',
     ];
 
     protected $hidden = ['access_token', 'refresh_token'];

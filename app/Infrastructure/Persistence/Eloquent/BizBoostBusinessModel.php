@@ -139,6 +139,11 @@ class BizBoostBusinessModel extends Model
         return $this->hasMany(BizBoostQrCodeModel::class, 'business_id');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(BizBoostOrderModel::class, 'business_id');
+    }
+
     public function customerTags(): HasMany
     {
         return $this->hasMany(BizBoostCustomerTagModel::class, 'business_id');
