@@ -32,7 +32,29 @@ export default defineConfig({
         },
     },
     base: '/build/',
-    build: {},
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('vue') || id.includes('@vue') || id.includes('@inertiajs')) {
+                            return 'vendor-core';
+                        }
+                        if (id.includes('heroicons') || id.includes('lucide-vue') || id.includes('@heroicons')) {
+                            return 'vendor-icons';
+                        }
+                        if (id.includes('ziggy') || id.includes('axios')) {
+                            return 'vendor-http';
+                        }
+                        if (id.includes('tailwindcss') || id.includes('postcss') || id.includes('autoprefixer')) {
+                            return 'vendor-styles';
+                        }
+                        return 'vendor';
+                    }
+                },
+            },
+        },
+    },
     resolve: {
         alias: [
             { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },
