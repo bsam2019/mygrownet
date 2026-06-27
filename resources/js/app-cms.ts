@@ -3,13 +3,11 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
 import { bootInertia, registerModuleSW } from './modules/createApp';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+registerModuleSW('/service-worker.js', 'CMS');
 
-registerModuleSW('/sw.js', 'MyGrowNet');
-
-bootInertia(appName, (name: string) => {
+bootInertia('CMS', (name: string) => {
     return resolvePageComponent(
         `./pages/${name}.vue`,
-        import.meta.glob<DefineComponent>('./pages/**/*.vue')
+        import.meta.glob<DefineComponent>('./pages/CMS/**/*.vue')
     );
 });

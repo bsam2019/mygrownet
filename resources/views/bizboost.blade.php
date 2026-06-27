@@ -139,7 +139,7 @@
         </style>
 
         @routes
-        @vite(['resources/js/app.ts'])
+        @vite(['resources/js/app-bizboost.ts'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

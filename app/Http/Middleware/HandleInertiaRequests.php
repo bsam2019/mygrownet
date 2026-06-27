@@ -42,20 +42,19 @@ class HandleInertiaRequests extends Middleware
 
     /**
      * Determine the root view based on the request.
+     * Each module has its own Blade template that loads only that module's JS bundle.
      */
     public function rootView(Request $request): string
     {
-        // Use GrowBiz PWA template for GrowBiz routes
-        if ($request->is('growbiz*')) {
-            return 'growbiz';
-        }
-
-        // Use BizBoost standalone blade for bizboost subdomain
-        if ($request->getHost() === 'bizboost.mygrownet.com') {
-            return 'bizboost';
-        }
-
-        return $this->rootView;
+        return match (true) {
+            $request->is('growbiz*')                            => 'growbiz',
+            $request->is('growfinance*')                         => 'growfinance',
+            $request->getHost() === 'bizboost.mygrownet.com'     => 'bizboost',
+            $request->getHost() === 'growmart.mygrownet.com'     => 'growmart',
+            $request->getHost() === 'zamstay.mygrownet.com'      => 'zamstay',
+            $request->getHost() === 'cms.mygrownet.com'          => 'cms',
+            default                                              => $this->rootView,
+        };
     }
 
     /**

@@ -9,7 +9,13 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.ts'],
+            input: [
+                'resources/js/app.ts',
+                'resources/js/app-bizboost.ts',
+                'resources/js/app-growmart.ts',
+                'resources/js/app-zamstay.ts',
+                'resources/js/app-cms.ts',
+            ],
             refresh: true,
         }),
         vue({
