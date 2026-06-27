@@ -6,16 +6,29 @@ import tailwindcss from 'tailwindcss';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
+const MODULE = process.env.MODULE;
+
+const ALL_INPUTS: Record<string, string[]> = {
+    all: [
+        'resources/js/app.ts',
+        'resources/js/app-bizboost.ts',
+        'resources/js/app-growmart.ts',
+        'resources/js/app-zamstay.ts',
+        'resources/js/app-cms.ts',
+    ],
+    main: ['resources/js/app.ts'],
+    bizboost: ['resources/js/app-bizboost.ts'],
+    growmart: ['resources/js/app-growmart.ts'],
+    zamstay: ['resources/js/app-zamstay.ts'],
+    cms: ['resources/js/app-cms.ts'],
+};
+
+const inputs = MODULE && MODULE !== 'all' ? ALL_INPUTS[MODULE] ?? ALL_INPUTS.all : ALL_INPUTS.all;
+
 export default defineConfig({
     plugins: [
         laravel({
-            input: [
-                'resources/js/app.ts',
-                'resources/js/app-bizboost.ts',
-                'resources/js/app-growmart.ts',
-                'resources/js/app-zamstay.ts',
-                'resources/js/app-cms.ts',
-            ],
+            input: inputs,
             refresh: true,
         }),
         vue({

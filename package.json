@@ -2,8 +2,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "build:ssr": "vite build && vite build --ssr",
+        "build": "set NODE_OPTIONS=--max-old-space-size=4096 && vite build",
+        "build:ssr": "set NODE_OPTIONS=--max-old-space-size=4096 && vite build && vite build --ssr",
+        "build:module": "set NODE_OPTIONS=--max-old-space-size=4096 && set MODULE=%npm_config_module% && vite build",
         "dev": "vite",
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
