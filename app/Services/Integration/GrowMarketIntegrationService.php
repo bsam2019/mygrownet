@@ -3,8 +3,8 @@
 namespace App\Services\Integration;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\ProductModel as CMSProduct;
-use App\Models\MarketplaceProduct;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceSeller;
 use App\Events\CMS\ProductSynced;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

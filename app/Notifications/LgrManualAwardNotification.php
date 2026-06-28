@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\LgrManualAward;
+use App\Models\LGR\LGRManualAward;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

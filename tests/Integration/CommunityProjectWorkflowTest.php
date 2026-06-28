@@ -12,7 +12,7 @@ use App\Domain\Community\Repositories\ContributionRepository;
 use App\Domain\Community\Repositories\ProfitDistributionRepository;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\ProjectVote;
 use App\Models\ProjectProfitDistribution;

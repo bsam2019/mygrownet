@@ -9,7 +9,7 @@ use App\Models\ReferralCommission;
 use App\Models\TeamVolume;
 use App\Models\UserNetwork;
 use App\Models\Achievement;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 

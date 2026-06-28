@@ -3,7 +3,7 @@
 namespace App\Notifications\ZamStay;
 
 use App\Mail\GenericNotificationMail;
-use App\Models\ZamStayBooking;
+use App\Models\ZamStay\ZamStayBooking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;

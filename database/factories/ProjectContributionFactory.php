@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\ProjectContribution;
 use App\Models\User;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProjectContributionFactory extends Factory

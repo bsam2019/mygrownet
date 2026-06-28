@@ -9,7 +9,7 @@ use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\ContributionAmount;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Models\ProjectContribution;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 

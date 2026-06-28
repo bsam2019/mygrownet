@@ -3,7 +3,7 @@
 namespace App\Services\GrowBuilder;
 
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 

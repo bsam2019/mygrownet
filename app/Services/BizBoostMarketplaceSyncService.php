@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
 use App\Infrastructure\Persistence\Eloquent\BizBoostProductModel;
-use App\Models\MarketplaceSeller;
-use App\Models\MarketplaceProduct;
-use App\Models\MarketplaceCategory;
+use App\Models\Marketplace\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 

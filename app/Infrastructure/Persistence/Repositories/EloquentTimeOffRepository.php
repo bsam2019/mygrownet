@@ -8,7 +8,7 @@ use App\Domain\Employee\Entities\TimeOffRequest;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\ValueObjects\TimeOffType;
 use App\Domain\Employee\Repositories\TimeOffRepositoryInterface;
-use App\Models\EmployeeTimeOffRequest as TimeOffModel;
+use App\Models\Employee\EmployeeTimeOffRequest as TimeOffModel;
 use App\Models\Employee;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ZamStayProperty;
+use App\Models\ZamStay\ZamStayProperty;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 

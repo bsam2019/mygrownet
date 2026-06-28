@@ -2,7 +2,7 @@
 
 namespace App\Services\Delivery;
 
-use App\Models\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceOrder;
 use Illuminate\Support\Facades\Log;
 
 /**

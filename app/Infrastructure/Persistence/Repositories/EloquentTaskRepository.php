@@ -10,7 +10,7 @@ use App\Domain\Employee\ValueObjects\TaskPriority;
 use App\Domain\Employee\ValueObjects\TaskStatus;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\TaskRepositoryInterface;
-use App\Models\EmployeeTask;
+use App\Models\Employee\EmployeeTask;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 

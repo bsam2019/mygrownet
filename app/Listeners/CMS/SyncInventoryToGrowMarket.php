@@ -3,7 +3,7 @@
 namespace App\Listeners\CMS;
 
 use App\Events\CMS\InventoryUpdated;
-use App\Models\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceProduct;
 use Illuminate\Support\Facades\Log;
 
 class SyncInventoryToGrowMarket

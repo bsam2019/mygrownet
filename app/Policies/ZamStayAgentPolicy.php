@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\ZamStayAgent;
+use App\Models\ZamStay\ZamStayAgent;
 
 class ZamStayAgentPolicy
 {
