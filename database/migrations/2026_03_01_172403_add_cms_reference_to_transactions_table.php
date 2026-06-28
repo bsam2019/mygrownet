@@ -31,18 +31,12 @@ return new class extends Migration
             // Add indexes if columns were added
             if (Schema::hasColumn('transactions', 'cms_expense_id')) {
                 Schema::table('transactions', function (Blueprint $table) {
-                    $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('transactions');
-                    if (!isset($indexes['idx_cms_expense'])) {
-                        $table->index('cms_expense_id', 'idx_cms_expense');
-                    }
+                    $table->index('cms_expense_id', 'idx_cms_expense');
                 });
             }
             if (Schema::hasColumn('transactions', 'cms_reference_type') && Schema::hasColumn('transactions', 'cms_reference_id')) {
                 Schema::table('transactions', function (Blueprint $table) {
-                    $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('transactions');
-                    if (!isset($indexes['idx_cms_reference'])) {
-                        $table->index(['cms_reference_type', 'cms_reference_id'], 'idx_cms_reference');
-                    }
+                    $table->index(['cms_reference_type', 'cms_reference_id'], 'idx_cms_reference');
                 });
             }
         }
