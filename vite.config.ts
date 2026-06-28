@@ -52,22 +52,20 @@ export default defineConfig({
     },
     base: '/build/',
     build: {
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
                 manualChunks(id) {
                     if (id.includes('node_modules')) {
-                        if (id.includes('vue') || id.includes('@vue') || id.includes('@inertiajs')) {
-                            return 'vendor-core';
-                        }
-                        if (id.includes('heroicons') || id.includes('lucide-vue') || id.includes('@heroicons')) {
-                            return 'vendor-icons';
-                        }
-                        if (id.includes('ziggy') || id.includes('axios')) {
-                            return 'vendor-http';
-                        }
-                        if (id.includes('tailwindcss') || id.includes('postcss') || id.includes('autoprefixer')) {
-                            return 'vendor-styles';
-                        }
+                        const m = id.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
+                        if (!m) return 'vendor';
+                        const pkg = m[1];
+                        if (pkg.includes('firebase')) return 'vendor-firebase';
+                        if (pkg.includes('inertiajs')) return 'vendor-inertia';
+                        if (pkg.includes('heroicons') || pkg.includes('lucide')) return 'vendor-icons';
+                        if (pkg.includes('ziggy') || pkg === 'axios') return 'vendor-http';
+                        if (pkg.includes('chart.js')) return 'vendor-chart';
+                        if (pkg.includes('jspdf') || pkg.includes('html2canvas')) return 'vendor-print';
                         return 'vendor';
                     }
                 },
