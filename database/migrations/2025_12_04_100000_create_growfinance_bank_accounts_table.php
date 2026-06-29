@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('growfinance_bank_accounts', function (Blueprint $table) {
+        if (!Schema::hasTable('growfinance_bank_accounts')) {
+            Schema::create('growfinance_bank_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->constrained('users')->cascadeOnDelete();
             $table->string('account_name');
@@ -30,6 +31,7 @@ return new class extends Migration
 
             $table->index(['business_id', 'is_active']);
         });
+        }
 
         // Also create invoice_templates table if referenced
         if (!Schema::hasTable('growfinance_invoice_templates')) {
