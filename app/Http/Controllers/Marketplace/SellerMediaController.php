@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
-use App\Models\MarketplaceSeller;
-use App\Models\MarketplaceSellerMedia;
+use App\Models\Marketplace\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSellerMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

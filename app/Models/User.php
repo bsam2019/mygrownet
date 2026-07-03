@@ -14,6 +14,12 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureInvestmentModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareholderModel;
 use App\Enums\AccountType;
+use App\Models\BGF\BgfApplication;
+use App\Models\BGF\BgfContract;
+use App\Models\BGF\BgfDisbursement;
+use App\Models\BGF\BgfProject;
+use App\Models\BGF\BgfRepayment;
+use App\Models\Community\CommunityProject;
 
 class User extends Authenticatable
 {

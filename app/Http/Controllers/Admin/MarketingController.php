@@ -8,6 +8,7 @@ use App\Models\ReferralProgram;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class MarketingController extends Controller
@@ -126,7 +127,7 @@ class MarketingController extends Controller
     private function getMonthlyReferralStats()
     {
         return User::selectRaw('
-                DATE_FORMAT(created_at, "%Y-%m") as month,
+                ' . (DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')") . ' as month,
                 COUNT(*) as referral_count,
                 SUM(referral_earnings) as total_earnings
             ')

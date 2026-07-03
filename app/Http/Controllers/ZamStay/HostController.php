@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\ZamStay;
 
 use App\Http\Controllers\Controller;
-use App\Models\ZamStayProperty;
-use App\Models\ZamStayBooking;
+use App\Models\ZamStay\ZamStayProperty;
+use App\Models\ZamStay\ZamStayBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;

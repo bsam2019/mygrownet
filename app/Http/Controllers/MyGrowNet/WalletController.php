@@ -16,7 +16,7 @@ class WalletController extends Controller
         $this->resetDailyWithdrawalIfNeeded($user);
         
         // Use WalletService for consistent balance calculation
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         $breakdown = $walletService->getWalletBreakdown($user);
         
         $balance = $breakdown['balance'];
@@ -90,7 +90,7 @@ class WalletController extends Controller
         // Calculate LGR withdrawable amount
         // Use custom percentage if set, otherwise use global setting
         $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
-            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+            ?? \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         
         $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
@@ -107,7 +107,7 @@ class WalletController extends Controller
         $loanService = app(\App\Domain\Financial\Services\LoanService::class);
         $loanSummary = $loanService->getLoanSummary($user);
         
-        return Inertia::render('MyGrowNet/Wallet', [
+        return Inertia::render('GrowNet/Wallet', [
             'balance' => $balance,
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'loyaltyPoints' => (float) ($user->loyalty_points ?? 0),

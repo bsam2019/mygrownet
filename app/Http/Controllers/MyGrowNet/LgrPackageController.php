@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\MyGrowNet;
 
 use App\Http\Controllers\Controller;
-use App\Models\LgrPackage;
+use App\Models\LGR\LgrPackage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;

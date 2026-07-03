@@ -3,7 +3,7 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\EmployeeExpense;
+use App\Models\Employee\EmployeeExpense;
 use Illuminate\Support\Collection;
 
 class ExpenseService

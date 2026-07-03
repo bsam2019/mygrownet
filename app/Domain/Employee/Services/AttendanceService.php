@@ -6,7 +6,7 @@ namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\AttendanceRepositoryInterface;
-use App\Models\EmployeeAttendance;
+use App\Models\Employee\EmployeeAttendance;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 

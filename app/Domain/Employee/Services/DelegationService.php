@@ -4,9 +4,9 @@ namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\Constants\DelegatedPermissions;
 use App\Models\DelegationApprovalRequest;
-use App\Models\Employee;
-use App\Models\EmployeeDelegation;
-use App\Models\EmployeeDelegationLog;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeDelegation;
+use App\Models\Employee\EmployeeDelegationLog;
 use App\Models\User;
 use App\Notifications\DelegationApprovalNeededNotification;
 use App\Notifications\DelegationGrantedNotification;

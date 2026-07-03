@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Marketplace;
 
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Illuminate\Database\Eloquent\Model;

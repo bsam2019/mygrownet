@@ -42,7 +42,7 @@ class EnhancedDashboardTest extends TestCase
             ->get(route('mygrownet.dashboard'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('MyGrowNet/Dashboard')
+                ->component('GrowNet/GrowNet')
                 ->has('referralStats.levels')
                 ->has('teamVolumeData.current_month')
                 ->has('networkData.direct_referrals')

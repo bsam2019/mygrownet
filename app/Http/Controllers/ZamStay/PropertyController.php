@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\ZamStay;
 
 use App\Http\Controllers\Controller;
-use App\Models\ZamStayProperty;
+use App\Models\ZamStay\ZamStayProperty;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

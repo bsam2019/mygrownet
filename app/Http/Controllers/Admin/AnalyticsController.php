@@ -183,9 +183,12 @@ class AnalyticsController extends Controller
             ->count();
         
         // Member growth trend (last 12 months)
+        $driver = DB::connection()->getDriverName();
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
         $memberGrowth = User::select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
                 DB::raw('COUNT(*) as new_members')
             )
             ->where('created_at', '>=', now()->subMonths(12))
@@ -266,10 +269,13 @@ class AnalyticsController extends Controller
             ->get();
         
         // Monthly revenue trend
+        $driver = DB::connection()->getDriverName();
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
         $revenueTrend = DB::table('package_subscriptions')
             ->select(
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
                 DB::raw('SUM(amount) as revenue')
             )
             ->where('created_at', '>=', now()->subMonths(12))

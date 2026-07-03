@@ -37,7 +37,7 @@ class InvestmentReportController extends Controller
             ->get();
 
         $monthlyInvestments = Investment::select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month" : "DATE_FORMAT(created_at, '%Y-%m') as month"),
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(amount) as total_amount')
             )

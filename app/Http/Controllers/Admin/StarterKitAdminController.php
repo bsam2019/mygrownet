@@ -198,7 +198,7 @@ class StarterKitAdminController extends Controller
     {
         return StarterKitPurchaseModel::where('status', 'completed')
             ->where('created_at', '>=', now()->subMonths(12))
-            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as revenue, COUNT(*) as count')
+            ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month, SUM(amount) as revenue, COUNT(*) as count" : "DATE_FORMAT(created_at, '%Y-%m') as month, SUM(amount) as revenue, COUNT(*) as count")
             ->groupBy('month')
             ->orderBy('month')
             ->get()

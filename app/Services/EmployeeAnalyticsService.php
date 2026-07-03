@@ -24,7 +24,7 @@ class EmployeeAnalyticsService
             $startDate = now()->subMonths($months);
             
             $hires = EmployeeModel::where('hire_date', '>=', $startDate)
-                ->selectRaw('DATE_FORMAT(hire_date, "%Y-%m") as month, COUNT(*) as count')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', hire_date) as month, COUNT(*) as count" : "DATE_FORMAT(hire_date, '%Y-%m') as month, COUNT(*) as count")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get()
@@ -33,7 +33,7 @@ class EmployeeAnalyticsService
 
             $terminations = EmployeeModel::where('termination_date', '>=', $startDate)
                 ->whereNotNull('termination_date')
-                ->selectRaw('DATE_FORMAT(termination_date, "%Y-%m") as month, COUNT(*) as count')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', termination_date) as month, COUNT(*) as count" : "DATE_FORMAT(termination_date, '%Y-%m') as month, COUNT(*) as count")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get()
@@ -138,13 +138,19 @@ class EmployeeAnalyticsService
             $startDate = now()->subMonths($months);
             
             $monthlyCommissions = EmployeeCommissionModel::where('calculation_date', '>=', $startDate)
-                ->selectRaw('
-                    DATE_FORMAT(calculation_date, "%Y-%m") as month,
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
+                    strftime('%Y-%m', calculation_date) as month,
                     SUM(commission_amount) as total_amount,
                     COUNT(*) as transaction_count,
                     AVG(commission_amount) as avg_amount,
                     commission_type
-                ')
+                " : "
+                    DATE_FORMAT(calculation_date, '%Y-%m') as month,
+                    SUM(commission_amount) as total_amount,
+                    COUNT(*) as transaction_count,
+                    AVG(commission_amount) as avg_amount,
+                    commission_type
+                ")
                 ->groupBy('month', 'commission_type')
                 ->orderBy('month')
                 ->get();
@@ -275,10 +281,13 @@ class EmployeeAnalyticsService
         return Cache::remember($cacheKey, self::CACHE_TTL, function () {
             // Historical hiring data for the last 24 months
             $historicalData = EmployeeModel::where('hire_date', '>=', now()->subMonths(24))
-                ->selectRaw('
-                    DATE_FORMAT(hire_date, "%Y-%m") as month,
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
+                    strftime('%Y-%m', hire_date) as month,
                     COUNT(*) as hires
-                ')
+                " : "
+                    DATE_FORMAT(hire_date, '%Y-%m') as month,
+                    COUNT(*) as hires
+                ")
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();

@@ -4,7 +4,7 @@ namespace App\Application\UseCases\Community;
 
 use App\Domain\Community\Repositories\ProjectRepository;
 use App\Domain\Community\Repositories\ProfitDistributionRepository;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\ProjectProfitDistribution;
 use App\Models\User;

@@ -73,7 +73,7 @@ class CommunityProjectDashboardTest extends TestCase
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('MyGrowNet/Dashboard')
+                ->component('GrowNet/GrowNet')
                 ->has('communityProjectData.portfolio_summary')
                 ->has('communityProjectData.recent_contributions')
                 ->has('communityProjectData.recent_distributions')

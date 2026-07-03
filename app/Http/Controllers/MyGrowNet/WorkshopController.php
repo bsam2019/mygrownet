@@ -52,7 +52,7 @@ class WorkshopController extends Controller
                 ];
             });
 
-        return Inertia::render('MyGrowNet/Workshops/Index', [
+        return Inertia::render('GrowNet/Workshops/Index', [
             'workshops' => $workshops,
             'filters' => $request->only(['category', 'format']),
         ]);
@@ -88,7 +88,7 @@ class WorkshopController extends Controller
             $walletBalance = $totalEarnings - $totalWithdrawals - $workshopExpenses;
         }
 
-        return Inertia::render('MyGrowNet/Workshops/Show', [
+        return Inertia::render('GrowNet/Workshops/Show', [
             'workshop' => [
                 'id' => $workshop->id,
                 'title' => $workshop->title,
@@ -200,7 +200,7 @@ class WorkshopController extends Controller
                 ];
             });
 
-        return Inertia::render('MyGrowNet/Workshops/MyWorkshops', [
+        return Inertia::render('GrowNet/Workshops/MyWorkshops', [
             'registrations' => $registrations,
         ]);
     }

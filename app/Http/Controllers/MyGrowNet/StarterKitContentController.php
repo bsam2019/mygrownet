@@ -65,7 +65,7 @@ class StarterKitContentController extends Controller
             });
         }
         
-        return Inertia::render('MyGrowNet/StarterKitContent', [
+        return Inertia::render('GrowNet/StarterKitContent', [
             'contentItems' => $formattedContent,
             'userTier' => $user->starter_kit_tier,
             'totalValue' => $query->sum('estimated_value'),
@@ -90,7 +90,7 @@ class StarterKitContentController extends Controller
         // Track access
         $this->trackAccess($user->id, $content->id);
         
-        return Inertia::render('MyGrowNet/StarterKitContentView', [
+        return Inertia::render('GrowNet/StarterKitContentView', [
             'content' => [
                 'id' => $content->id,
                 'title' => $content->title,

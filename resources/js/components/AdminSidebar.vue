@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLogo from './AppLogo.vue';
 import CustomNavUser from './CustomNavUser.vue';
@@ -271,6 +271,23 @@ const checkMobile = () => {
     }
 };
 
+// Scroll active nav link into view
+const scrollActiveIntoView = async () => {
+    await nextTick();
+    const nav = document.querySelector('.custom-scrollbar');
+    if (!nav) return;
+    const active = nav.querySelector('.text-blue-600.border-l-4');
+    if (active) {
+        active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+};
+
+watch(() => page.url, () => scrollActiveIntoView());
+
+onMounted(() => {
+    scrollActiveIntoView();
+});
+
 const isUrlActive = (urlPattern: string | string[]) => {
     const currentRoute = page.url;
     if (!currentRoute) return false;
@@ -484,6 +501,23 @@ onMounted(() => {
         <!-- Navigation Links -->
         <div class="py-4 overflow-y-auto flex-grow custom-scrollbar">
             <nav>
+                <!-- Dashboard Link -->
+                <div class="px-2 mb-2">
+                    <Link
+                        :href="safeRoute('admin.dashboard')"
+                        :class="[
+                            'flex items-center px-4 py-2 transition-colors duration-200 text-sm rounded-lg',
+                            'hover:bg-gray-100 dark:hover:bg-gray-800',
+                            isUrlActive('/admin/dashboard') || isUrlActive('/admin')
+                                ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600'
+                                : 'text-gray-700 dark:text-gray-300'
+                        ]"
+                    >
+                        <LayoutGrid class="h-5 w-5" />
+                        <span v-show="!isCollapsed || isMobile" class="ml-3">Dashboard</span>
+                    </Link>
+                </div>
+
                 <!-- User Management Section -->
                 <div class="pt-2">
                     <button @click="toggleSubmenu('userManagement')"

@@ -28,7 +28,7 @@ class EarningsController extends Controller
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         
         // Calculate LGR withdrawable amount
-        $lgrWithdrawablePercentage = \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+        $lgrWithdrawablePercentage = \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
         $lgrWithdrawable = min($lgrRewards, max(0, $lgrMaxWithdrawable));
         
@@ -54,7 +54,7 @@ class EarningsController extends Controller
             ->where('status', 'pending')
             ->sum('amount');
         
-        return Inertia::render('MyGrowNet/MyEarnings', [
+        return Inertia::render('GrowNet/MyEarnings', [
             'totalEarnings' => $totalEarnings,
             'thisMonth' => $thisMonth,
             'pending' => $pending,
@@ -126,7 +126,7 @@ class EarningsController extends Controller
             ->whereMonth('created_at', date('m'))
             ->sum('amount') ?? 0;
         
-        return Inertia::render('MyGrowNet/Earnings', [
+        return Inertia::render('GrowNet/Earnings', [
             'earningsByType' => $earningsByType,
             'totalEarnings' => (float) array_sum($earningsByType),
             'monthlyEarnings' => $monthlyEarnings,

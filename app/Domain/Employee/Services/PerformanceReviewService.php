@@ -3,7 +3,7 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\EmployeePerformanceReview;
+use App\Models\Employee\EmployeePerformanceReview;
 use Illuminate\Support\Collection;
 
 class PerformanceReviewService

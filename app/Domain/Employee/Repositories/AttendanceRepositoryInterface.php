@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Employee\Repositories;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\EmployeeAttendance;
+use App\Models\Employee\EmployeeAttendance;
 use Illuminate\Support\Collection;
 
 interface AttendanceRepositoryInterface

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <nav class="bg-slate-800 bg-opacity-95 sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
@@ -80,6 +80,13 @@
               >
                 Dashboard
               </Link>
+              <button
+                v-else-if="useModalLogin"
+                @click="$emit('login-click')"
+                class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
+              >
+                Login
+              </button>
               <Link
                 v-else
                 :href="route('login')"
@@ -102,13 +109,29 @@
               </Link>
             </template>
             <template v-else>
+              <button
+                v-if="useModalLogin"
+                @click="$emit('register-click')"
+                class="hidden sm:inline-block px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Register
+              </button>
               <Link
+                v-else
                 :href="route('register')"
                 class="hidden sm:inline-block px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
               >
                 Register
               </Link>
+              <button
+                v-if="useModalLogin"
+                @click="$emit('login-click')"
+                class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Login
+              </button>
               <Link
+                v-else
                 :href="route('login')"
                 class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
               >
@@ -217,13 +240,29 @@
               </Link>
             </template>
             <template v-else>
+              <button
+                v-if="useModalLogin"
+                @click="$emit('register-click')"
+                class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-300"
+              >
+                Register
+              </button>
               <Link
+                v-else
                 :href="route('register')"
                 class="flex-1 text-center px-4 py-2 rounded-md text-base font-medium text-blue-400 hover:text-blue-300 hover:bg-gray-700 transition-all duration-300"
               >
                 Register
               </Link>
+              <button
+                v-if="useModalLogin"
+                @click="$emit('login-click')"
+                class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              >
+                Login
+              </button>
               <Link
+                v-else
                 :href="route('login')"
                 class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
               >
@@ -247,7 +286,13 @@
       Logo
     },
 
-    setup() {
+    props: {
+      useModalLogin: { type: Boolean, default: false }
+    },
+
+    emits: ['login-click', 'register-click'],
+
+    setup(props, { emit }) {
       const page = usePage();
       const isMobileMenuOpen = ref(false);
       const activeDropdown = ref(null);
@@ -274,21 +319,28 @@
         const items = [
           { name: 'Home', route: 'welcome' },
           { name: 'About', route: 'about' },
-          { name: 'Our Apps', route: 'apps.index' },
           { 
-            name: 'Services', 
+            name: 'Solutions', 
             dropdown: [
-              { name: 'GrowMarket', url: '/growmarket', description: 'Browse products & services', moduleKey: 'growmarket' },
-
-              { name: 'GrowBuilder', url: '/growbuilder', description: 'Build professional websites', moduleKey: 'growbuilder' },
-              { name: 'Quick Invoice', url: route('quick-invoice.index'), description: 'Create invoices & receipts', moduleKey: 'cms' },
-              { name: 'Training', route: 'training', description: 'Learn new skills', moduleKey: 'library' },
-              { name: 'Venture Builder', route: 'ventures.about', description: 'Co-invest in businesses', moduleKey: 'venture_builder' },
-              { name: 'Business Growth Fund', route: 'bgf.about', description: 'Funding for your business', moduleKey: 'grownet' },
-            ].filter(item => !item.moduleKey || isModuleEnabled(item.moduleKey))
+              { name: 'Business Growth', route: 'solutions.business-growth', description: 'Websites, marketing & business management' },
+              { name: 'Online Selling', route: 'solutions.online-selling', description: 'Online stores & marketplace' },
+              { name: 'Investment & Wealth', route: 'solutions.investment-wealth', description: 'Ventures, partnerships & referrals' },
+              { name: 'Hospitality & Travel', route: 'solutions.hospitality-travel', description: 'Property listings & reservations' },
+              { name: 'Cloud Workspace', route: 'solutions.cloud-workspace', description: 'Storage, backup & document sharing' },
+              { name: 'AI Solutions', route: 'solutions.ai-solutions', description: 'AI marketing & automation' },
+            ]
           },
-          { name: 'Rewards & Loyalty', route: 'loyalty-reward.index' },
-          { name: 'Referral Program', route: 'referral-program' },
+          { name: 'Products', route: 'platform.products' },
+          { 
+            name: 'Resources', 
+            dropdown: [
+              { name: 'Training', route: 'training', description: 'Courses & skill development' },
+              { name: 'Rewards', route: 'rewards', description: 'Loyalty & rewards program' },
+              { name: 'Roadmap', route: 'roadmap', description: 'Platform development roadmap' },
+              { name: 'FAQ', route: 'faq', description: 'Frequently asked questions' },
+              { name: 'Referral Program', route: 'referral-program', description: 'Refer friends & earn' },
+            ]
+          },
           { name: 'Contact', route: 'contact' },
         ];
         

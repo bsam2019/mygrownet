@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\LGR\LGRPackage;
+use App\Models\LGR\LgrPackage;
 
 class LgrPackagesSeeder extends Seeder
 {

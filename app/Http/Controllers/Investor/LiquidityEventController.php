@@ -7,7 +7,7 @@ use App\Http\Controllers\Investor\Concerns\RequiresInvestorAuth;
 use App\Domain\Investor\Services\LiquidityEventService;
 use App\Models\LiquidityEvent;
 use App\Models\LiquidityEventParticipation;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

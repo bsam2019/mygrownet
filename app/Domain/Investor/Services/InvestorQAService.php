@@ -2,8 +2,8 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\InvestorQuestion;
-use App\Models\InvestorQuestionAnswer;
+use App\Models\Investor\InvestorQuestion;
+use App\Models\Investor\InvestorQuestionAnswer;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class InvestorQAService

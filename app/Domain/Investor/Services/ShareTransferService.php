@@ -3,7 +3,7 @@
 namespace App\Domain\Investor\Services;
 
 use App\Models\ShareTransferRequest;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Support\Collection;
 
 /**

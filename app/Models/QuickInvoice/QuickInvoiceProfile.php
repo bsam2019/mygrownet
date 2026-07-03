@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\QuickInvoice;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,7 +22,6 @@ class QuickInvoiceProfile extends Model
         'default_discount_rate',
         'default_notes',
         'default_terms',
-        // Numbering settings
         'invoice_prefix',
         'invoice_next_number',
         'invoice_number_padding',
@@ -34,7 +34,6 @@ class QuickInvoiceProfile extends Model
         'delivery_note_prefix',
         'delivery_note_next_number',
         'delivery_note_number_padding',
-        // Template preferences
         'default_template',
         'default_color',
     ];
@@ -52,21 +51,15 @@ class QuickInvoiceProfile extends Model
         'delivery_note_number_padding' => 'integer',
     ];
 
-    /**
-     * Generate next document number for the given type
-     */
     public function generateDocumentNumber(string $type): string
     {
         $prefix = $this->{$type . '_prefix'} ?? strtoupper(substr($type, 0, 3));
         $nextNumber = $this->{$type . '_next_number'} ?? 1;
         $padding = $this->{$type . '_number_padding'} ?? 4;
-        
+
         return $prefix . '-' . str_pad($nextNumber, $padding, '0', STR_PAD_LEFT);
     }
 
-    /**
-     * Increment document number for the given type
-     */
     public function incrementDocumentNumber(string $type): void
     {
         $field = $type . '_next_number';

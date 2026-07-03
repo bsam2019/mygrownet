@@ -82,15 +82,42 @@ Route::get('/growbiz', function () {
     return Inertia::render('GrowBiz/Welcome');
 })->name('growbiz.welcome');
 
+Route::prefix('solutions')->name('solutions.')->group(function () {
+    Route::get('/', function () { return Inertia::render('Solutions'); })->name('index');
+    Route::get('/business-growth', function () { return Inertia::render('Solutions/BusinessGrowth'); })->name('business-growth');
+    Route::get('/online-selling', function () { return Inertia::render('Solutions/OnlineSelling'); })->name('online-selling');
+    Route::get('/investment-wealth', function () { return Inertia::render('Solutions/InvestmentWealth'); })->name('investment-wealth');
+    Route::get('/hospitality-travel', function () { return Inertia::render('Solutions/HospitalityTravel'); })->name('hospitality-travel');
+    Route::get('/cloud-workspace', function () { return Inertia::render('Solutions/CloudWorkspace'); })->name('cloud-workspace');
+    Route::get('/ai-solutions', function () { return Inertia::render('Solutions/AiSolutions'); })->name('ai-solutions');
+});
+
+Route::permanentRedirect('/services', '/solutions');
+
+Route::get('/products', function () {
+    return Inertia::render('Products');
+})->name('platform.products');
+
+Route::get('/grownet', function () {
+    return Inertia::render('GrowNet/Welcome');
+})->name('grownet.welcome');
+
+Route::get('/bizdocs', function () {
+    return Inertia::render('BizDocs/Welcome');
+})->name('bizdocs.welcome');
+
+Route::get('/growbuilder', function () {
+    return Inertia::render('GrowBuilder/Welcome');
+})->name('growbuilder.welcome');
+
 // 301 Redirects for old URLs (maintain SEO and bookmarks)
 Route::permanentRedirect('/investment', '/starter-kits');
 Route::permanentRedirect('/join', '/starter-kits');
 Route::permanentRedirect('/packages', '/starter-kits');
 Route::permanentRedirect('/shop', '/marketplace');
 
-// Blade-based auth pages (fallback for when Vue/Inertia fails)
-// These work without JavaScript and serve as reliable fallback
-Route::middleware('guest')->prefix('auth')->name('blade.')->group(function () {
+// Blade-based auth pages (primary — work without JavaScript, include Google login)
+Route::middleware('guest')->group(function () {
     Route::get('/login', [BladeAuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [BladeAuthController::class, 'login']);
     Route::get('/register', [BladeAuthController::class, 'showRegister'])->name('register');
@@ -105,7 +132,7 @@ Route::permanentRedirect('/home-hub', '/apps');
 
 // Test API endpoints (remove in production)
 Route::prefix('api/test')->group(function () {
-    Route::get('/ticket/{ticket}', function (\App\Models\EmployeeSupportTicket $ticket) {
+    Route::get('/ticket/{ticket}', function (\App\Models\Employee\EmployeeSupportTicket $ticket) {
         return response()->json([
             'id' => $ticket->id,
             'ticket_number' => $ticket->ticket_number,
@@ -1080,7 +1107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/library/{resource}/complete', [App\Http\Controllers\MyGrowNet\LibraryController::class, 'markCompleted'])->name('library.complete');
         
         // Benefits Routes
-        Route::get('/benefits', fn() => inertia('MyGrowNet/Benefits'))->name('benefits.index');
+        Route::get('/benefits', fn() => inertia('GrowNet/Benefits'))->name('benefits.index');
         
         // Starter Kit Content Routes (NO middleware - check in controller)
         Route::get('/content', [App\Http\Controllers\MyGrowNet\StarterKitContentController::class, 'index'])->name('content.index');
@@ -1559,7 +1586,7 @@ Route::get('/{path}', function ($path) {
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '^(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory|growmart|zamstay)[a-zA-Z0-9_-]+$');
+})->where('path', '^(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions)[a-zA-Z0-9\/_-]+$');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder

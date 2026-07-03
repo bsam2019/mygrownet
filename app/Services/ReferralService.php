@@ -298,7 +298,7 @@ class ReferralService
     public function getMonthlyReferralStats()
     {
         return ReferralCommission::selectRaw('
-                DATE_FORMAT(created_at, "%Y-%m") as month,
+                ' . (DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')") . ' as month,
                 COUNT(*) as total_transactions,
                 SUM(amount) as total_amount,
                 COUNT(DISTINCT referrer_id) as unique_referrers

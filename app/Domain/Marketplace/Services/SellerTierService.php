@@ -2,9 +2,9 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplaceSeller;
-use App\Models\MarketplaceOrder;
-use App\Models\MarketplaceDispute;
+use App\Models\Marketplace\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceDispute;
 use Illuminate\Support\Facades\DB;
 
 class SellerTierService

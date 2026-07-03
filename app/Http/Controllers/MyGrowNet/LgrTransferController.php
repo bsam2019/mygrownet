@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\MyGrowNet;
 
 use App\Http\Controllers\Controller;
-use App\Models\LgrSetting;
+use App\Models\LGR\LgrSetting;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
 use App\Services\IdempotencyService;
 use Illuminate\Http\Request;

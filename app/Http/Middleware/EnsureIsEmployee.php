@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Employee;
+use App\Models\Employee\Employee;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

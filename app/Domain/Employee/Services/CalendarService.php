@@ -3,8 +3,8 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\EmployeeCalendarEvent;
-use App\Models\EmployeeTimeOffRequest;
+use App\Models\Employee\EmployeeCalendarEvent;
+use App\Models\Employee\EmployeeTimeOffRequest;
 use Illuminate\Support\Collection;
 use DateTimeImmutable;
 

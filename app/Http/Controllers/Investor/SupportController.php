@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Support\SupportTicketModel;
 use App\Infrastructure\Persistence\Eloquent\Support\TicketCommentModel;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use App\Events\Investor\InvestorSupportMessage;
 use App\Events\Support\UnifiedTicketCreated;
 use Illuminate\Http\Request;

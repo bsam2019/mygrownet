@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsSeller

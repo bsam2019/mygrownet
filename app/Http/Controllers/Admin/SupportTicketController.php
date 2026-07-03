@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\EmployeeSupportTicket;
-use App\Models\EmployeeSupportTicketComment;
-use App\Models\Employee;
+use App\Models\Employee\EmployeeSupportTicket;
+use App\Models\Employee\EmployeeSupportTicketComment;
+use App\Models\Employee\Employee;
 use App\Events\Employee\LiveChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

@@ -328,7 +328,7 @@ class SubscriptionController extends Controller
         $monthlyRevenue = Transaction::where('transactions.transaction_type', 'subscription')
             ->where('transactions.status', 'completed')
             ->where('transactions.created_at', '>=', now()->subMonths(12))
-            ->selectRaw('YEAR(transactions.created_at) as year, MONTH(transactions.created_at) as month, SUM(transactions.amount) as total')
+            ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', transactions.created_at) as year, strftime('%m', transactions.created_at) as month, SUM(transactions.amount) as total" : 'YEAR(transactions.created_at) as year, MONTH(transactions.created_at) as month, SUM(transactions.amount) as total')
             ->groupBy('year', 'month')
             ->orderBy('year')
             ->orderBy('month')

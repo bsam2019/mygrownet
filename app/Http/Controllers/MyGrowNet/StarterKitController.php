@@ -46,7 +46,7 @@ class StarterKitController extends Controller
                     ->get()
                     ->groupBy('category');
                 
-                return Inertia::render('MyGrowNet/StarterKit', [
+                return Inertia::render('GrowNet/StarterKit', [
                     'hasStarterKit' => false,
                     'hasPendingPayment' => true,
                     'pendingPayment' => [
@@ -75,7 +75,7 @@ class StarterKitController extends Controller
                 ->get()
                 ->groupBy('category');
             
-            return Inertia::render('MyGrowNet/StarterKit', [
+            return Inertia::render('GrowNet/StarterKit', [
                 'hasStarterKit' => false,
                 'hasPendingPayment' => false,
                 'tiers' => [
@@ -113,7 +113,7 @@ class StarterKitController extends Controller
             ->orderByDesc('earned_at')
             ->get();
         
-        return Inertia::render('MyGrowNet/StarterKit', [
+        return Inertia::render('GrowNet/StarterKit', [
             'hasStarterKit' => true,
             'purchase' => [
                 'invoice_number' => $purchase->invoice_number,
@@ -195,7 +195,7 @@ class StarterKitController extends Controller
         }
         
         // Calculate wallet balance using WalletService for consistency
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         $walletBalance = $walletService->calculateBalance($user);
         
         // Load content items from database
@@ -204,7 +204,7 @@ class StarterKitController extends Controller
             ->get()
             ->groupBy('category');
         
-        return Inertia::render('MyGrowNet/StarterKitPurchase', [
+        return Inertia::render('GrowNet/StarterKitPurchase', [
             'tiers' => [
                 'basic' => [
                     'name' => 'Basic Starter Kit',
@@ -316,7 +316,7 @@ class StarterKitController extends Controller
         
         $upgradeCost = StarterKitService::PRICE_PREMIUM - StarterKitService::PRICE_BASIC; // K500
         
-        return Inertia::render('MyGrowNet/StarterKitUpgrade', [
+        return Inertia::render('GrowNet/StarterKitUpgrade', [
             'currentTier' => 'basic',
             'upgradeCost' => $upgradeCost,
             'walletBalance' => $walletBalance,

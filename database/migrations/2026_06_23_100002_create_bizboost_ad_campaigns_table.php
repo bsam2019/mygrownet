@@ -30,7 +30,6 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamps();
             $table->index(['user_id', 'status']);
-            $table->index('meta_campaign_id');
         });
     }
 

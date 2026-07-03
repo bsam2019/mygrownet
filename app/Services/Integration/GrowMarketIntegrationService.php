@@ -231,11 +231,11 @@ class GrowMarketIntegrationService
             return null;
         }
 
-        $category = \App\Models\MarketplaceCategory::where('name', $categoryName)->first();
+        $category = \App\Models\Marketplace\MarketplaceCategory::where('name', $categoryName)->first();
         
         if (!$category) {
             // Try to find similar category
-            $category = \App\Models\MarketplaceCategory::where('name', 'like', "%{$categoryName}%")->first();
+            $category = \App\Models\Marketplace\MarketplaceCategory::where('name', 'like', "%{$categoryName}%")->first();
         }
 
         return $category?->id;

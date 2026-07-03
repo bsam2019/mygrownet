@@ -40,7 +40,7 @@ class NetworkAnalyticsController extends Controller
             ];
         }
         
-        return Inertia::render('MyGrowNet/NetworkAnalytics', [
+        return Inertia::render('GrowNet/NetworkAnalytics', [
             'directReferrals' => $directReferrals,
             'totalNetwork' => $totalNetwork,
             'activeMembers' => $activeMembers,

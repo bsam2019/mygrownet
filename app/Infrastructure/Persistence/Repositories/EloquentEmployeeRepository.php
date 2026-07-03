@@ -6,7 +6,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Employee\Repositories\EmployeeRepositoryInterface;
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\Employee;
+use App\Models\Employee\Employee;
 use Illuminate\Support\Collection;
 
 class EloquentEmployeeRepository implements EmployeeRepositoryInterface

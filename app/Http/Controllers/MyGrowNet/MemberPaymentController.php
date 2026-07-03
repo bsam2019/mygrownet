@@ -38,7 +38,7 @@ class MemberPaymentController extends Controller
             ];
         }, $payments);
 
-        return Inertia::render('MyGrowNet/PaymentHistory', [
+        return Inertia::render('GrowNet/PaymentHistory', [
             'payments' => $paymentsData,
         ]);
     }
@@ -48,7 +48,7 @@ class MemberPaymentController extends Controller
         // Get payment context from session (e.g., from starter kit purchase)
         $paymentContext = session('payment_context');
         
-        return Inertia::render('MyGrowNet/SubmitPayment', [
+        return Inertia::render('GrowNet/SubmitPayment', [
             'userPhone' => auth()->user()->phone ?? '',
             'paymentContext' => $paymentContext,
         ]);

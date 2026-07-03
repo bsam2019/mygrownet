@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\GrowBuilder\Models;
 
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

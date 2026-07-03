@@ -15,7 +15,7 @@ use App\Http\Requests\QuickInvoice\UploadLogoRequest;
 use App\Models\QuickInvoice\AdminSetting;
 use App\Models\QuickInvoice\UsageTracking;
 use App\Models\QuickInvoice\UserSubscription;
-use App\Models\QuickInvoiceProfile;
+use App\Models\QuickInvoice\QuickInvoiceProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -207,7 +207,7 @@ class QuickInvoiceController extends Controller
                 ]);
                 
                 // Get library attachments for this user
-                $libraryAttachments = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+                $libraryAttachments = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                     ->whereIn('id', $libraryIds)
                     ->get();
                 
@@ -722,7 +722,7 @@ class QuickInvoiceController extends Controller
             return response()->json(['success' => false, 'message' => 'Authentication required'], 401);
         }
 
-        $attachments = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+        $attachments = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
             ->orderBy('name')
             ->get()
             ->map(function ($attachment) {
@@ -757,7 +757,7 @@ class QuickInvoiceController extends Controller
         }
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             // Get file from S3
@@ -804,7 +804,7 @@ class QuickInvoiceController extends Controller
             $path = $file->store('quick-invoice/library/' . auth()->id(), 's3');
             
             // Create library entry
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::create([
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::create([
                 'user_id' => auth()->id(),
                 'name' => $request->name,
                 'original_filename' => $file->getClientOriginalName(),
@@ -852,7 +852,7 @@ class QuickInvoiceController extends Controller
         }
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             // Delete from S3
@@ -893,7 +893,7 @@ class QuickInvoiceController extends Controller
         ]);
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             $attachment->update([

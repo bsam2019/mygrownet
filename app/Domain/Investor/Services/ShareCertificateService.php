@@ -6,7 +6,7 @@ use App\Domain\Investor\Entities\ShareCertificate;
 use App\Domain\Investor\Repositories\ShareCertificateRepositoryInterface;
 use App\Domain\Investor\ValueObjects\CertificateNumber;
 use App\Domain\Investor\ValueObjects\ShareQuantity;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use App\Models\VentureInvestment;
 use App\Models\VentureProject;
 use Barryvdh\DomPDF\Facade\Pdf;

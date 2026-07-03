@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Investor\Concerns\RequiresInvestorAuth;
 use App\Domain\Investor\Services\ShareholderCommunityService;
-use App\Models\ShareholderForumTopic;
-use App\Models\ShareholderContactRequest;
-use App\Models\InvestorAccount;
+use App\Models\Shareholder\ShareholderForumTopic;
+use App\Models\Shareholder\ShareholderContactRequest;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\MarketplaceSeller;
-use App\Models\MarketplaceProduct;
-use App\Models\MarketplaceOrder;
-use App\Models\MarketplaceDispute;
-use App\Models\MarketplaceReview;
-use App\Models\MarketplaceCategory;
+use App\Models\Marketplace\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceDispute;
+use App\Models\Marketplace\MarketplaceReview;
+use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,7 +22,7 @@ class MarketplaceAdminController extends Controller
         $stats = [
             'pending_sellers' => MarketplaceSeller::where('kyc_status', 'pending')->count(),
             'pending_products' => MarketplaceProduct::where('status', 'pending')->count(),
-            'pending_payouts' => \App\Models\MarketplacePayout::where('status', 'pending')->count(),
+            'pending_payouts' => \App\Models\Marketplace\MarketplacePayout::where('status', 'pending')->count(),
             'active_sellers' => MarketplaceSeller::where('is_active', true)->count(),
             'total_products' => MarketplaceProduct::count(),
             'total_orders' => MarketplaceOrder::count(),

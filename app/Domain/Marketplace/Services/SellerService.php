@@ -5,7 +5,7 @@ namespace App\Domain\Marketplace\Services;
 use App\Domain\Marketplace\Entities\Seller;
 use App\Domain\Marketplace\ValueObjects\TrustLevel;
 use App\Domain\Marketplace\ValueObjects\KycStatus;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 

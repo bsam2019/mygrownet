@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Department;
 use App\Models\Position;
-use App\Models\Employee;
+use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeTask;
 use App\Models\Employee\EmployeeGoal;
 use App\Models\Employee\EmployeeTimeOffRequest;

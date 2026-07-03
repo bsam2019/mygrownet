@@ -173,7 +173,7 @@ const formatCurrency = (amount: number) => {
                     </div>
 
                     <div class="p-4 border-t">
-                        <Pagination :data="transactions" />
+                        <Pagination :links="transactions.links" />
                     </div>
                 </div>
             </div>

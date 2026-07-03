@@ -5,8 +5,8 @@ namespace App\Domain\Employee\Services;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Events\Employee\SupportTicketCreated;
 use App\Events\Employee\LiveChatMessage;
-use App\Models\EmployeeSupportTicket;
-use App\Models\EmployeeSupportTicketComment;
+use App\Models\Employee\EmployeeSupportTicket;
+use App\Models\Employee\EmployeeSupportTicketComment;
 use Illuminate\Support\Collection;
 
 class SupportTicketService

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\ZamStay;
 
 use App\Http\Controllers\Controller;
-use App\Models\ZamStayBooking;
-use App\Models\ZamStayReview;
+use App\Models\ZamStay\ZamStayBooking;
+use App\Models\ZamStay\ZamStayReview;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller

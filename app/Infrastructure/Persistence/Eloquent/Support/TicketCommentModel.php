@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Support;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 
 class TicketCommentModel extends Model
 {

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Marketplace;
 use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\SellerService;
-use App\Models\MarketplaceCategory;
+use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

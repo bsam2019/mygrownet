@@ -2,7 +2,7 @@
 
 namespace App\Events\Employee;
 
-use App\Models\EmployeeTask;
+use App\Models\Employee\EmployeeTask;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;

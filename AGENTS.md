@@ -19,3 +19,6 @@
 ## Routes
 - Auth: `GET|HEAD auth/google` and `GET|HEAD auth/google/callback` — no prefix, no subdomain
 - Each subdomain needs its own callback URL registered in Google Cloud Console
+
+## Removed Files
+- `resources/js/Pages/GrowNet/Dashboard.vue` — classic desktop GrowNet dashboard, replaced by `GrowNet/GrowNet.vue` (modern mobile SPA)

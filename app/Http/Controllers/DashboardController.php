@@ -8,7 +8,6 @@ use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\InvestmentCategory;
 use App\Models\InvestmentOpportunity;
-use App\Models\InvestmentTier;
 use App\Models\ActivityLog;
 use App\Models\ReferralCommission;
 use App\Models\ProfitShare;
@@ -53,12 +52,6 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Route to appropriate dashboard based on user role
-        // Check for Administrator role (Spatie)
-        if ($user->hasRole('Administrator') || $user->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-        
         // Check if user has manager role (using a simple field or method)
         if ($user->rank === 'manager' || $this->isManager($user)) {
             return redirect()->route('manager.dashboard');
@@ -66,7 +59,7 @@ class DashboardController extends Controller
         
         // Check if user is an employee - redirect to employee portal
         if ($user->hasRole('employee')) {
-            $employee = \App\Models\Employee::where('user_id', $user->id)
+            $employee = \App\Models\Employee\Employee::where('user_id', $user->id)
                 ->where('employment_status', 'active')
                 ->first();
             
@@ -83,10 +76,23 @@ class DashboardController extends Controller
             return redirect()->route('mygrownet.classic-dashboard');
         }
         
-        // Default: Forward to MyGrowNet mobile dashboard controller
-        // This renders the mobile dashboard at /dashboard (no redirect)
-        $mobileController = app(\App\Http\Controllers\MyGrowNet\DashboardController::class);
-        return $mobileController->mobileIndex($request ?? request());
+        // Default: Render the user apps dashboard
+        $walletBalance = app(\App\Services\WalletService::class)->calculateBalance($user);
+        $referralCommissions = $user->referralCommissions()
+            ->where('status', 'paid')
+            ->sum('amount');
+        
+        return Inertia::render('Dashboard/Index', [
+            'walletBalance' => (float) $walletBalance,
+            'bonusBalance' => (float) ($user->bonus_balance ?? 0),
+            'totalDeposits' => (float) ($user->total_deposits ?? 0),
+            'totalWithdrawals' => (float) ($user->total_withdrawals ?? 0),
+            'commissions' => (float) $referralCommissions,
+            'profitShares' => (float) ProfitShare::where('user_id', $user->id)->sum('amount'),
+            'user' => $user,
+            'accountType' => $user->account_type ?? 'member',
+            'isAdmin' => $user->is_admin,
+        ]);
     }
 
     /**

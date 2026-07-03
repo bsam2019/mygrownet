@@ -9,6 +9,7 @@ use App\Domain\Ubumi\ValueObjects\PersonName;
 use App\Domain\Ubumi\ValueObjects\ApproximateAge;
 use App\Domain\Ubumi\ValueObjects\Slug;
 use App\Infrastructure\Ubumi\Eloquent\PersonModel;
+use Illuminate\Support\Facades\DB;
 
 class EloquentPersonRepository implements PersonRepositoryInterface
 {
@@ -96,7 +97,9 @@ class EloquentPersonRepository implements PersonRepositoryInterface
         // Age similarity if provided
         if ($age !== null) {
             $query->where(function($q) use ($age) {
-                $q->whereRaw('ABS(YEAR(CURDATE()) - YEAR(date_of_birth) - ?) <= 5', [$age])
+                $yearExpr = DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', 'now')" : 'YEAR(CURDATE())';
+                $yearOfBirthExpr = DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date_of_birth)" : 'YEAR(date_of_birth)';
+                $q->whereRaw("ABS({$yearExpr} - {$yearOfBirthExpr} - ?) <= 5", [$age])
                   ->orWhereRaw('ABS(approximate_age - ?) <= 5', [$age]);
             });
         }

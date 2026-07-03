@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MyGrowNet;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\InvestmentTier;
@@ -12,7 +13,7 @@ use App\Models\ReferralCommission;
 use App\Models\TeamVolume;
 use App\Models\UserNetwork;
 use App\Models\Achievement;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\PhysicalReward;
 use App\Models\Course;
 use App\Services\MLMCommissionService;
@@ -36,7 +37,7 @@ class DashboardController extends Controller
     protected MyGrowNetTierAdvancementService $tierAdvancementService;
     protected AssetIncomeTrackingService $assetIncomeTrackingService;
     protected CommunityProjectService $communityProjectService;
-    protected \App\Services\WalletService $walletService;
+    protected \App\Domain\Wallet\Services\WalletService $walletService;
     protected \App\Services\EarningsService $earningsService;
     protected GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase;
     protected MessagingService $messagingService;
@@ -47,7 +48,7 @@ class DashboardController extends Controller
         MyGrowNetTierAdvancementService $tierAdvancementService,
         AssetIncomeTrackingService $assetIncomeTrackingService,
         CommunityProjectService $communityProjectService,
-        \App\Services\WalletService $walletService,
+        \App\Domain\Wallet\Services\WalletService $walletService,
         \App\Services\EarningsService $earningsService,
         GetUserAnnouncementsUseCase $getUserAnnouncementsUseCase,
         MessagingService $messagingService,
@@ -256,7 +257,7 @@ class DashboardController extends Controller
         // Get messaging data
         $messagingData = $this->getMessagingData($user);
 
-        return Inertia::render('MyGrowNet/Dashboard', [
+        return Inertia::render('GrowNet/GrowNet', [
             'user' => $user,
             'subscription' => $currentSubscription,
             'starterKit' => $starterKitInfo,
@@ -404,7 +405,7 @@ class DashboardController extends Controller
         
         // Add LGR data for mobile
         $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
-            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+            ?? \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
@@ -440,21 +441,14 @@ class DashboardController extends Controller
         
         // DEBUG: Add a flag to identify mobile dashboard
         $data['isMobileDashboard'] = true;
-        $data['debugInfo'] = [
-            'component' => 'MyGrowNet/MobileDashboard',
-            'timestamp' => now()->toDateTimeString(),
-            'user' => $user->name,
-            'walletBalance' => $data['walletBalance']
-        ];
-        
         \Log::info('Rendering Mobile Dashboard', [
-            'component' => 'MyGrowNet/MobileDashboard',
+            'component' => 'GrowNet/GrowNet',
             'data_keys' => array_keys($data),
             'walletBalance' => $data['walletBalance']
         ]);
         
-        // Render the mobile dashboard component instead
-        return Inertia::render('MyGrowNet/MobileDashboard', $data);
+        // Render the modern mobile SPA dashboard
+        return Inertia::render('GrowNet/GrowNet', $data);
     }
 
     /**
@@ -609,7 +603,7 @@ class DashboardController extends Controller
         }
 
         // Get team volume visualization data
-        $teamVolumeData = $this->getTeamVolumeData($request);
+        $teamVolumeData = $this->getTeamVolumeVisualization($user);
         
         // Get network data (use direct method, not API endpoint)
         $networkData = $this->getNetworkStructureData($user);
@@ -792,11 +786,11 @@ class DashboardController extends Controller
         
         return [
             'current_month' => [
-                'personal_volume' => $teamVolume->personal_volume ?? 0,
-                'team_volume' => $teamVolume->team_volume ?? 0,
-                'left_leg_volume' => $teamVolume->left_leg_volume ?? 0,
-                'right_leg_volume' => $teamVolume->right_leg_volume ?? 0,
-                'total_volume' => $teamVolume->total_volume ?? 0
+                'personal_volume' => $teamVolume?->personal_volume ?? 0,
+                'team_volume' => $teamVolume?->team_volume ?? 0,
+                'left_leg_volume' => $teamVolume?->left_leg_volume ?? 0,
+                'right_leg_volume' => $teamVolume?->right_leg_volume ?? 0,
+                'total_volume' => $teamVolume?->total_volume ?? 0
             ],
             'monthly_trend' => $this->getMonthlyVolumeHistory($user, 6),
             'volume_breakdown' => [
@@ -2253,7 +2247,7 @@ class DashboardController extends Controller
         try {
             // Get network growth for last 6 months
             $networkGrowth = UserNetwork::where('referrer_id', $user->id)
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month, COUNT(*) as count" : "DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count")
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->groupBy('month')
                 ->orderBy('month')
@@ -2301,7 +2295,7 @@ class DashboardController extends Controller
             // Get earnings from referral commissions for last 6 months
             $earningsTrend = ReferralCommission::where('user_id', $user->id)
                 ->where('status', 'paid')
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as amount')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month, SUM(amount) as amount" : "DATE_FORMAT(created_at, '%Y-%m') as month, SUM(amount) as amount")
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->groupBy('month')
                 ->orderBy('month')

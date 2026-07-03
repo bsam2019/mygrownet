@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\Marketplace\Services\SellerTierService;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use Illuminate\Console\Command;
 
 class RecalculateSellerTiers extends Command

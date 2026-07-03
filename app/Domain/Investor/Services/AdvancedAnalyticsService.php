@@ -6,7 +6,7 @@ use App\Models\CompanyValuation;
 use App\Models\RiskAssessment;
 use App\Models\ScenarioModel;
 use App\Models\ExitProjection;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Support\Collection;
 
 class AdvancedAnalyticsService

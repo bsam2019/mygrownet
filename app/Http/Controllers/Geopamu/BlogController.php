@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Geopamu;
 
 use App\Http\Controllers\Controller;
-use App\Models\GeopamuBlogPost;
+use App\Models\Geopamu\GeopamuBlogPost;
 use Inertia\Inertia;
 use Inertia\Response;
 

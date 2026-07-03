@@ -22,7 +22,7 @@ class VotingController extends Controller
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\InvestorAccount::find($investorId);
+        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
         
         if (!$investorAccount) {
             abort(403, 'Investor account not found.');
@@ -74,7 +74,7 @@ class VotingController extends Controller
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\InvestorAccount::find($investorId);
+        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);
@@ -109,7 +109,7 @@ class VotingController extends Controller
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\InvestorAccount::find($investorId);
+        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);
@@ -138,7 +138,7 @@ class VotingController extends Controller
             return redirect()->route('investor.login');
         }
 
-        $investorAccount = \App\Models\InvestorAccount::find($investorId);
+        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
 
         if (!$investorAccount) {
             return back()->withErrors(['error' => 'Investor account not found.']);

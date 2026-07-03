@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
-use App\Models\MarketplaceSeller;
-use App\Models\MarketplaceSellerFollower;
-use App\Models\MarketplaceReview;
+use App\Models\Marketplace\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSellerFollower;
+use App\Models\Marketplace\MarketplaceReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

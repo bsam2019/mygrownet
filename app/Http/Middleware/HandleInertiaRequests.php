@@ -30,7 +30,7 @@ class HandleInertiaRequests extends Middleware
         if (file_exists(public_path('build/manifest.json'))) {
             return md5_file(public_path('build/manifest.json'));
         }
-        
+
         return parent::version($request);
     }
 
@@ -80,13 +80,13 @@ class HandleInertiaRequests extends Middleware
         $supportStats = null;
         if ($authUser && in_array('admin', $authUser['roles'] ?? [])) {
             $supportStats = cache()->remember('admin_support_stats', 60, function () {
-                if (!class_exists(\App\Models\EmployeeSupportTicket::class)) {
+                if (!class_exists(\App\Models\Employee\EmployeeSupportTicket::class)) {
                     return null;
                 }
                 return [
-                    'open' => \App\Models\EmployeeSupportTicket::where('status', 'open')->count(),
-                    'in_progress' => \App\Models\EmployeeSupportTicket::where('status', 'in_progress')->count(),
-                    'urgent' => \App\Models\EmployeeSupportTicket::where('priority', 'urgent')
+                    'open' => \App\Models\Employee\EmployeeSupportTicket::where('status', 'open')->count(),
+                    'in_progress' => \App\Models\Employee\EmployeeSupportTicket::where('status', 'in_progress')->count(),
+                    'urgent' => \App\Models\Employee\EmployeeSupportTicket::where('priority', 'urgent')
                         ->whereIn('status', ['open', 'in_progress'])->count(),
                 ];
             });
@@ -95,7 +95,7 @@ class HandleInertiaRequests extends Middleware
         // Get employee data if user has an employee record
         $employee = null;
         if ($user) {
-            $employee = \App\Models\Employee::where('user_id', $user->id)
+            $employee = \App\Models\Employee\Employee::where('user_id', $user->id)
                 ->where('employment_status', 'active')
                 ->first();
         }

@@ -58,7 +58,7 @@ class MembershipController extends Controller
             'total_network' => $totalNetworkSize,
         ]);
         
-        return Inertia::render('MyGrowNet/MyMembership', [
+        return Inertia::render('GrowNet/MyMembership', [
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
@@ -109,7 +109,7 @@ class MembershipController extends Controller
                 : 100; // Associate level (0 LP required) is always 100%
         }
         
-        return Inertia::render('MyGrowNet/ProfessionalLevels', [
+        return Inertia::render('GrowNet/ProfessionalLevels', [
             'levels' => $levels,
             'currentLevel' => $currentLevel,
             'lifetimePoints' => (int) $lifetimePoints,

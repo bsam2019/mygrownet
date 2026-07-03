@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Community\CommunityInvestmentDistribution;
+use App\Models\Community\CommunityProject;
 
 class InvestmentOpportunity extends Model
 {

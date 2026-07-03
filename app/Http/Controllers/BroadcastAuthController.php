@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use App\Infrastructure\Persistence\Eloquent\Support\SupportTicketModel;
 
 class BroadcastAuthController extends Controller

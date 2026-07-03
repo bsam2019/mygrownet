@@ -71,7 +71,7 @@ class BizBoostBusinessModel extends Model
 
     public function marketplaceSeller(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\MarketplaceSeller::class, 'marketplace_seller_id');
+        return $this->belongsTo(\App\Models\Marketplace\MarketplaceSeller::class, 'marketplace_seller_id');
     }
 
     public function profile(): HasOne

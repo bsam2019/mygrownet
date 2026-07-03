@@ -12,31 +12,19 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store']);
-
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
-
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
-
-    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-        ->name('password.request');
-
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
-        ->name('password.email');
-
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-        ->name('password.reset');
-
-    Route::post('reset-password', [NewPasswordController::class, 'store'])
-        ->name('password.store');
-
-    // Social Login - Google
+    // Social Login - Google (always needed)
     Route::get('/auth/google', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
     Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+    // Inertia-based auth routes — COMMENTED OUT: Blade auth pages (routes/web.php) are used instead
+    // Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    // Route::post('register', [RegisteredUserController::class, 'store']);
+    // Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    // Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    // Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    // Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    // Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    // Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
 
 Route::middleware('auth')->group(function () {

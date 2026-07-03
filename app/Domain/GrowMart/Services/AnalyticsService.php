@@ -21,7 +21,7 @@ class AnalyticsService
         $data = GrowMartOrder::where('status', 'delivered')
             ->where('created_at', '>=', now()->subDays($days))
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$format}') as period"),
+                DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('{$format}', created_at) as period" : "DATE_FORMAT(created_at, '{$format}') as period"),
                 DB::raw('SUM(total) as revenue'),
                 DB::raw('COUNT(*) as count')
             )

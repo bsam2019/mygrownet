@@ -148,7 +148,7 @@ class AnalyticsManagementController extends Controller
     protected function getTopPerformers(): array
     {
         return User::select('users.*')
-            ->selectRaw('(SELECT SUM(amount) FROM transactions WHERE user_id = users.id AND type = "credit") as total_earnings')
+            ->selectRaw('(SELECT SUM(amount) FROM transactions WHERE user_id = users.id AND transaction_type = "credit") as total_earnings')
             ->orderByDesc('total_earnings')
             ->limit(10)
             ->get()

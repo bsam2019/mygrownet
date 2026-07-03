@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
-use App\Models\MarketplaceReview;
-use App\Models\MarketplaceReviewVote;
-use App\Models\MarketplaceOrder;
-use App\Models\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceReview;
+use App\Models\Marketplace\MarketplaceReviewVote;
+use App\Models\Marketplace\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceProduct;
 use Illuminate\Http\Request;
 
 class ReviewController extends Controller
@@ -159,7 +159,7 @@ class ReviewController extends Controller
             ->where('is_approved', true)
             ->avg('rating');
 
-        \App\Models\MarketplaceSeller::where('id', $sellerId)->update([
+        \App\Models\Marketplace\MarketplaceSeller::where('id', $sellerId)->update([
             'rating' => $averageRating ?? 0,
         ]);
     }

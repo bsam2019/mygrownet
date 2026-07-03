@@ -2,8 +2,8 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplaceProduct;
-use App\Models\MarketplaceCategory;
+use App\Models\Marketplace\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceCategory;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination\LengthAwarePaginator;

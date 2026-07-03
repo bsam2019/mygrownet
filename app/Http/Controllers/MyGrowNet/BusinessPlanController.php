@@ -36,7 +36,7 @@ class BusinessPlanController extends Controller
                 ->first();
         }
         
-        return Inertia::render('MyGrowNet/Tools/BusinessPlanGenerator', [
+        return Inertia::render('GrowNet/Tools/BusinessPlanGenerator', [
             'existingPlan' => $existingPlan,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -271,7 +271,7 @@ class BusinessPlanController extends Controller
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return Inertia::render('MyGrowNet/Tools/BusinessPlanView', [
+        return Inertia::render('GrowNet/Tools/BusinessPlanView', [
             'plan' => $plan,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -285,7 +285,7 @@ class BusinessPlanController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return Inertia::render('MyGrowNet/Tools/BusinessPlanList', [
+        return Inertia::render('GrowNet/Tools/BusinessPlanList', [
             'plans' => $plans,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);

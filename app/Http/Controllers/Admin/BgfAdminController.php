@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\BgfApplication;
-use App\Models\BgfProject;
-use App\Models\BgfDisbursement;
-use App\Models\BgfRepayment;
-use App\Models\BgfEvaluation;
-use App\Models\BgfContract;
+use App\Models\BGF\BgfApplication;
+use App\Models\BGF\BgfProject;
+use App\Models\BGF\BgfDisbursement;
+use App\Models\BGF\BgfRepayment;
+use App\Models\BGF\BgfEvaluation;
+use App\Models\BGF\BgfContract;
 use App\Services\BgfScoringService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
