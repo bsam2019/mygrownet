@@ -8,7 +8,7 @@ const products = [
     { name: 'GrowBuilder', tagline: 'Website Builder', description: 'Build professional websites with our drag-and-drop builder. No coding required, stunning results.', url: 'https://growbuilder.mygrownet.com' },
     { name: 'GrowMarket', tagline: 'Digital Marketplace', description: 'A vibrant online marketplace connecting buyers and sellers. List products, reach customers, and grow sales.', url: '/growmarket' },
     { name: 'GrowMart', tagline: 'E-Commerce Platform', description: 'Full online grocery and e-commerce platform with product management, payments, and order tracking.', url: 'https://growmart.mygrownet.com' },
-    { name: 'GrowNet', tagline: 'Referral & Network Platform', description: 'Build your network marketing business with our 3x7 forced matrix system. Earn commissions and grow your team.', url: 'https://grownet.mygrownet.com' },
+    { name: 'GrowNet', tagline: 'Digital Learning Platform', description: 'Access online lessons, video streaming, e-books, and cloud storage. Learn, grow, and earn rewards.', url: 'https://grownet.mygrownet.com' },
     { name: 'Venture Builder', tagline: 'Investment Platform', description: 'Co-invest in promising business ventures and projects. Participate in Zambia\'s growing business ecosystem.', url: 'https://venture.mygrownet.com' },
     { name: 'CMS', tagline: 'Business Management', description: 'Company management system for invoicing, quotations, customer management, and business administration.', url: '/cms' },
     { name: 'GrowStorage', tagline: 'Cloud Storage', description: 'Secure cloud storage and file backup. Store, share, and access your files from anywhere.', url: 'https://growstorage.mygrownet.com' },

@@ -2,12 +2,13 @@
 import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import {
-    UserGroupIcon,
-    CurrencyDollarIcon,
-    ChartBarIcon,
-    ShareIcon,
+    BookOpenIcon,
+    PlayCircleIcon,
+    DocumentTextIcon,
+    CloudArrowUpIcon,
     CheckIcon,
     ArrowRightIcon,
+    AcademicCapIcon,
     GlobeAltIcon,
     StarIcon,
     UsersIcon,
@@ -15,51 +16,51 @@ import {
 
 const features = [
     {
-        icon: UserGroupIcon,
-        title: '3x7 Forced Matrix',
-        description: 'Build your team with our proven matrix system. Earn commissions from your entire downline, not just direct referrals.',
+        icon: BookOpenIcon,
+        title: 'Online Lessons',
+        description: 'Access a growing library of interactive lessons and courses. Learn at your own pace with structured educational content.',
     },
     {
-        icon: CurrencyDollarIcon,
-        title: 'Multi-Level Commissions',
-        description: 'Earn from multiple levels of referrals with transparent, automated commission payouts directly to your wallet.',
+        icon: PlayCircleIcon,
+        title: 'Video Streaming',
+        description: 'Watch local movies, comedy shows, and content from Zambian creators. Entertainment at your fingertips.',
     },
     {
-        icon: ChartBarIcon,
-        title: 'Real-Time Analytics',
-        description: 'Track your network growth, commission earnings, and team performance with live dashboards and reports.',
+        icon: DocumentTextIcon,
+        title: 'E-books & Resources',
+        description: 'Download and read digital books, guides, and reference materials covering business, technology, and personal development.',
     },
     {
-        icon: ShareIcon,
-        title: 'Referral Tracking',
-        description: 'Unique referral codes and links for every member. Track exactly where your referrals come from.',
+        icon: CloudArrowUpIcon,
+        title: 'Cloud Storage',
+        description: 'Store, organize, and access your files securely from anywhere. Share documents with your network seamlessly.',
+    },
+    {
+        icon: AcademicCapIcon,
+        title: 'Skill Development',
+        description: 'Track your learning progress, earn certificates, and build valuable skills through curated educational paths.',
     },
     {
         icon: GlobeAltIcon,
-        title: 'Sponsor Management',
-        description: 'Manage your sponsorship tree, view downline activity, and support your team members as they grow.',
-    },
-    {
-        icon: StarIcon,
-        title: 'Rewards & Recognition',
-        description: 'Unlock achievements, bonuses, and recognition as you hit milestones in your network growth journey.',
+        title: 'Community Network',
+        description: 'Connect with fellow members, share content, and grow together in a supportive digital community.',
     },
 ];
 
 const benefits = [
-    'Automated commission calculations',
-    'Real-time network visualization',
-    'Customizable referral links & codes',
-    'Mobile-friendly dashboard',
-    'Secure wallet integration',
-    '24/7 support team',
+    'Unlimited access to lessons and courses',
+    'Watch local movies, comedy, and content',
+    'Download e-books for offline reading',
+    'Secure cloud file storage included',
+    'Track progress across all content',
+    'Earn rewards as you learn and participate',
 ];
 </script>
 
 <template>
     <Head>
-        <title>GrowNet - Network Marketing & Referral Platform | MyGrowNet</title>
-        <meta name="description" content="Build your network marketing business with GrowNet. 3x7 forced matrix, multi-level commissions, real-time analytics, and referral tracking." />
+        <title>GrowNet - Digital Content Platform | MyGrowNet</title>
+        <meta name="description" content="GrowNet is a digital content platform offering online lessons, local video streaming, e-books, and cloud storage. Learn, watch, and earn rewards." />
     </Head>
 
     <div class="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white">
@@ -68,12 +69,12 @@ const benefits = [
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-2">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                            <UsersIcon class="h-6 w-6 text-white" />
+                            <BookOpenIcon class="h-6 w-6 text-white" />
                         </div>
                         <span class="text-xl font-bold text-slate-900">GrowNet</span>
                     </div>
                     <nav class="hidden md:flex items-center gap-6">
-                        <a href="#features" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Features</a>
+                        <a href="#features" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Products</a>
                         <a href="#benefits" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Benefits</a>
                         <Link href="/contact" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">Contact</Link>
                     </nav>
@@ -93,23 +94,23 @@ const benefits = [
                 <div class="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
                     <div class="text-center lg:text-left">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium mb-6">
-                            <UsersIcon class="h-4 w-4" />
-                            Network Marketing
+                            <BookOpenIcon class="h-4 w-4" />
+                            Digital Content Platform
                         </div>
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-                            Build Your
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Network</span>
-                            <br />Earn Together
+                            Learn, Watch,
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Grow</span>
+                            <br />with GrowNet
                         </h1>
                         <p class="mt-6 text-lg sm:text-xl text-slate-600 max-w-xl mx-auto lg:mx-0">
-                            GrowNet is MyGrowNet's community referral and network marketing platform. Build your team, earn commissions, and grow your income with our proven 3x7 forced matrix system.
+                            GrowNet is a digital content platform offering online lessons, local video streaming, e-books, and cloud storage. Learn, watch, and earn rewards along the way.
                         </p>
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             <Link href="/register" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-lg shadow-indigo-500/30">
                                 Join GrowNet
                                 <ArrowRightIcon class="h-5 w-5" />
                             </Link>
-                            <a href="#features" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-xl transition-colors">Learn More</a>
+                            <a href="#features" class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-xl transition-colors">Explore Products</a>
                         </div>
                         <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start text-sm text-slate-500">
                             <div class="flex items-center gap-2">
@@ -118,7 +119,7 @@ const benefits = [
                             </div>
                             <div class="flex items-center gap-2">
                                 <CheckIcon class="h-5 w-5 text-indigo-500" />
-                                Instant commissions
+                                Instant access
                             </div>
                         </div>
                     </div>
@@ -127,23 +128,23 @@ const benefits = [
                             <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl blur-2xl opacity-20"></div>
                             <div class="relative bg-white rounded-2xl shadow-2xl p-6 border border-slate-200">
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="font-semibold text-slate-900">Network Overview</h3>
-                                    <span class="text-xs text-slate-500">Your Team</span>
+                                    <h3 class="font-semibold text-slate-900">Your Content Hub</h3>
+                                    <span class="text-xs text-slate-500">Activity</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 mb-6">
                                     <div class="bg-indigo-50 rounded-xl p-4">
-                                        <p class="text-xs text-indigo-600 font-medium">Team Members</p>
-                                        <p class="text-2xl font-bold text-indigo-700">156</p>
-                                        <p class="text-xs text-indigo-600">+12 this week</p>
+                                        <p class="text-xs text-indigo-600 font-medium">Lessons Completed</p>
+                                        <p class="text-2xl font-bold text-indigo-700">24</p>
+                                        <p class="text-xs text-indigo-600">+5 this week</p>
                                     </div>
                                     <div class="bg-emerald-50 rounded-xl p-4">
-                                        <p class="text-xs text-emerald-600 font-medium">Commissions</p>
-                                        <p class="text-2xl font-bold text-emerald-700">K12,450</p>
+                                        <p class="text-xs text-emerald-600 font-medium">E-books Downloaded</p>
+                                        <p class="text-2xl font-bold text-emerald-700">12</p>
                                         <p class="text-xs text-emerald-600">This month</p>
                                     </div>
                                 </div>
                                 <div class="space-y-3">
-                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg" v-for="(item, i) in [{n:'Direct Referrals',v:24,c:'indigo'},{n:'Matrix Level 2',v:89,c:'violet'},{n:'Matrix Level 3',v:43,c:'purple'}]" :key="i">
+                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg" v-for="(item, i) in [{n:'Videos Watched',v:18,c:'indigo'},{n:'Files Stored',v:47,c:'violet'},{n:'Rewards Earned',v:K350,c:'purple'}]" :key="i">
                                         <div class="flex items-center gap-3">
                                             <div class="w-2 h-2 rounded-full" :class="`bg-${item.c}-500`"></div>
                                             <span class="text-sm text-slate-600">{{ item.n }}</span>
@@ -162,10 +163,10 @@ const benefits = [
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl sm:text-4xl font-bold text-slate-900">
-                        Powerful Tools for
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Network Building</span>
+                        Everything You Need to
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Learn & Grow</span>
                     </h2>
-                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">Everything you need to build, manage, and grow your referral network.</p>
+                    <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">A complete ecosystem of digital content designed to educate, entertain, and empower you.</p>
                 </div>
                 <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <div v-for="feature in features" :key="feature.title" class="group relative p-6 bg-slate-50 rounded-2xl hover:bg-white transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10">
@@ -187,7 +188,7 @@ const benefits = [
                             Why Choose
                             <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">GrowNet?</span>
                         </h2>
-                        <p class="mt-4 text-lg text-slate-600">Built specifically for network marketers who want transparency, automation, and real results.</p>
+                        <p class="mt-4 text-lg text-slate-600">A complete digital learning platform with content, storage, and rewards built in.</p>
                         <ul class="mt-8 space-y-4">
                             <li v-for="benefit in benefits" :key="benefit" class="flex items-center gap-3">
                                 <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -206,24 +207,24 @@ const benefits = [
                     <div class="mt-12 lg:mt-0">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
+                                <BookOpenIcon class="h-8 w-8 text-indigo-600 mb-3" />
+                                <p class="text-3xl font-bold text-slate-900">100+</p>
+                                <p class="text-sm text-slate-600">Lessons & Courses</p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
+                                <PlayCircleIcon class="h-8 w-8 text-indigo-600 mb-3" />
+                                <p class="text-3xl font-bold text-slate-900">500+</p>
+                                <p class="text-sm text-slate-600">Local Videos & Movies</p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
+                                <DocumentTextIcon class="h-8 w-8 text-indigo-600 mb-3" />
+                                <p class="text-3xl font-bold text-slate-900">50+</p>
+                                <p class="text-sm text-slate-600">E-books Available</p>
+                            </div>
+                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
                                 <UsersIcon class="h-8 w-8 text-indigo-600 mb-3" />
                                 <p class="text-3xl font-bold text-slate-900">5,000+</p>
                                 <p class="text-sm text-slate-600">Active Members</p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
-                                <CurrencyDollarIcon class="h-8 w-8 text-indigo-600 mb-3" />
-                                <p class="text-3xl font-bold text-slate-900">K2M+</p>
-                                <p class="text-sm text-slate-600">Commissions Paid</p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
-                                <ChartBarIcon class="h-8 w-8 text-indigo-600 mb-3" />
-                                <p class="text-3xl font-bold text-slate-900">12</p>
-                                <p class="text-sm text-slate-600">Commission Levels</p>
-                            </div>
-                            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
-                                <StarIcon class="h-8 w-8 text-indigo-600 mb-3" />
-                                <p class="text-3xl font-bold text-slate-900">99%</p>
-                                <p class="text-sm text-slate-600">Member Satisfaction</p>
                             </div>
                         </div>
                     </div>
@@ -239,8 +240,8 @@ const benefits = [
                         <div class="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
                     </div>
                     <div class="relative">
-                        <h2 class="text-3xl sm:text-4xl font-bold text-white">Ready to Grow Your Network?</h2>
-                        <p class="mt-4 text-lg text-indigo-100 max-w-2xl mx-auto">Join thousands of members building their income through GrowNet's proven network marketing system.</p>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-white">Ready to Get Started?</h2>
+                        <p class="mt-4 text-lg text-indigo-100 max-w-2xl mx-auto">Join thousands of members learning, watching, and earning rewards through GrowNet.</p>
                         <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                             <Link href="/register" class="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold text-indigo-700 bg-white hover:bg-indigo-50 rounded-xl transition-colors">
                                 Create Your Account
@@ -258,7 +259,7 @@ const benefits = [
                 <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-                            <UsersIcon class="h-5 w-5 text-white" />
+                            <BookOpenIcon class="h-5 w-5 text-white" />
                         </div>
                         <span class="text-lg font-bold text-white">GrowNet</span>
                         <span class="text-slate-500 text-sm ml-2">by MyGrowNet</span>

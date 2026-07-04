@@ -52,7 +52,7 @@ const registerUrl = computed(() => isSubdomain.value ? route('grownet.sub.regist
                             </div>
                             <span class="text-white font-bold">GrowNet</span>
                         </div>
-                        <p class="text-sm leading-relaxed">Build your referral network and earn with the 3x7 forced matrix system. Powered by MyGrowNet.</p>
+                        <p class="text-sm leading-relaxed">Access online lessons, video streaming, e-books, and cloud storage. Powered by MyGrowNet.</p>
                     </div>
                     <div>
                         <h3 class="text-white text-sm font-semibold uppercase tracking-wider mb-4">Get Started</h3>

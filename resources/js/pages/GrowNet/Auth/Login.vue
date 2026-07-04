@@ -33,7 +33,7 @@ const submit = () => {
                         </svg>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Welcome back</h2>
-                    <p class="text-gray-600 mt-1">Build your network and earn with GrowNet</p>
+                    <p class="text-gray-600 mt-1">Access lessons, videos, e-books, and more</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
                     <div class="mb-5 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">

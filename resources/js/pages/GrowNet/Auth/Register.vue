@@ -46,7 +46,7 @@ const submit = () => {
                         </svg>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900">Create your account</h2>
-                    <p class="text-gray-600 mt-1">Build your network and earn with GrowNet</p>
+                    <p class="text-gray-600 mt-1">Start learning with lessons, videos, e-books, and more</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
                     <div v-if="form.hasErrors" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

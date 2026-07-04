@@ -206,7 +206,7 @@
             // Register Service Worker and handle PWA install prompt
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/service-worker.js')
+                    navigator.serviceWorker.register('/sw.js')
                         .then(function(registration) {
                             console.log('ServiceWorker registered:', registration.scope);
                         })

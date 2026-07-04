@@ -109,7 +109,7 @@ Route::middleware(['auth', 'admin', 'module:venture_builder'])->prefix('admin/ve
 Route::domain('venture.mygrownet.com')->group(function () use ($registerVentureMemberRoutes) {
 
     // Public welcome page at root
-    Route::get('/', fn() => Inertia::render('Ventures/About'))->name('venture.sub.welcome');
+    Route::get('/', fn() => Inertia::render('Ventures/Welcome'))->name('venture.sub.welcome');
 
     // Public venture browsing
     Route::middleware(['module:venture_builder'])->group(function () {

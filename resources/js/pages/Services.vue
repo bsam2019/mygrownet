@@ -46,7 +46,7 @@ const categories = [
         items: ['Venture investment', 'Business partnerships', 'Referral network', 'Member rewards'],
         apps: [
             { name: 'Venture Builder', url: '/ventures/about' },
-            { name: 'GrowNet', url: '/grownet' },
+            { name: 'GrowNet', url: 'https://grownet.mygrownet.com' },
         ],
         gradient: 'from-violet-600 to-purple-600',
         light: 'bg-violet-50',
