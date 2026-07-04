@@ -23,14 +23,30 @@
             :root { --sat: env(safe-area-inset-top); --sar: env(safe-area-inset-right); --sab: env(safe-area-inset-bottom); --sal: env(safe-area-inset-left); }
             html { background-color: #fff7ed; -webkit-tap-highlight-color: transparent; }
             body { overscroll-behavior-y: none; -webkit-overflow-scrolling: touch; }
+            #venture-splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.4s ease-out; }
+            #venture-splash.hidden { opacity: 0; pointer-events: none; }
+            .splash-icon { width: 100px; height: 100px; background: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.25); }
+            .splash-icon svg { width: 56px; height: 56px; }
+            .splash-title { color: white; font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+            .splash-tagline { color: rgba(255,255,255,0.85); font-size: 15px; font-weight: 500; text-align: center; max-width: 280px; }
         </style>
         @routes
         @vite(['resources/js/app.ts'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        <div id="venture-splash">
+            <div class="splash-icon">
+                <svg class="w-14 h-14 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+            </div>
+            <div class="splash-title">Venture Builder</div>
+            <div class="splash-tagline">Investment Platform</div>
+        </div>
         @inertia
         <script>
+            (function() { var s = document.getElementById('venture-splash'); if (s) { document.addEventListener('inertia:start', function() { s.classList.add('hidden'); }); } })();
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/venture-sw.js')

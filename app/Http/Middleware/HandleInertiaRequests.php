@@ -18,6 +18,24 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
+    public function rootView(Request $request): string
+    {
+        $host = $request->getHost();
+        $map = [
+            'bizboost.mygrownet.com'    => 'bizboost',
+            'bizdocs.mygrownet.com'     => 'bizdocs',
+            'growbuilder.mygrownet.com' => 'growbuilder',
+            'venture.mygrownet.com'     => 'venture',
+            'grownet.mygrownet.com'     => 'grownet',
+            'growstorage.mygrownet.com' => 'growstorage',
+            'growmart.mygrownet.com'    => 'growmart',
+            'zamstay.mygrownet.com'     => 'zamstay',
+            'cms.mygrownet.com'         => 'cms',
+        ];
+
+        return $map[$host] ?? $this->rootView;
+    }
+
     /**
      * Determines the current asset version.
      *

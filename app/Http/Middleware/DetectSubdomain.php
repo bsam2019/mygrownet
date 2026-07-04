@@ -88,42 +88,36 @@ class DetectSubdomain
 
             // Handle BizBoost subdomain
             if ($subdomain === 'bizboost') {
-                \Inertia\Inertia::setRootView('bizboost');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
 
             // Handle BizDocs subdomain
             if ($subdomain === 'bizdocs') {
-                \Inertia\Inertia::setRootView('bizdocs');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
 
             // Handle GrowBuilder subdomain
             if ($subdomain === 'growbuilder') {
-                \Inertia\Inertia::setRootView('growbuilder');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
 
             // Handle Venture subdomain
             if ($subdomain === 'venture') {
-                \Inertia\Inertia::setRootView('venture');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
 
             // Handle GrowNet subdomain
             if ($subdomain === 'grownet') {
-                \Inertia\Inertia::setRootView('grownet');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
 
             // Handle GrowStorage subdomain
             if ($subdomain === 'growstorage') {
-                \Inertia\Inertia::setRootView('growstorage');
                 $this->configureSubdomainUrl($subdomain);
                 return $next($request);
             }
