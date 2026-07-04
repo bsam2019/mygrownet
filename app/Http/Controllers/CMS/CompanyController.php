@@ -123,7 +123,7 @@ class CompanyController extends Controller
 
         $user = $request->user();
 
-        DB::transaction(function () use ($validated, $user) {
+        $companyId = DB::transaction(function () use ($validated, $user) {
             // Create company
             $company = CompanyModel::create([
                 'name'          => $validated['name'],
@@ -169,9 +169,18 @@ class CompanyController extends Controller
             // Set default BizDocs templates
             $this->setDefaultBizDocsTemplates($company);
 
-            // Set as active company in session
-            session(['active_cms_company_id' => $company->id]);
+            return $company->id;
         });
+
+        // CRITICAL: Set session AFTER transaction commits and BEFORE redirect
+        // This ensures the cms.access middleware finds the active company
+        session([
+            'active_cms_company_id' => $companyId,
+            'cms_company_id' => $companyId,
+        ]);
+        
+        // Save session explicitly
+        $request->session()->save();
 
         return redirect()->route('cms.dashboard')
             ->with('success', "Welcome to {$validated['name']}! Your company is ready.");

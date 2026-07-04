@@ -13,8 +13,8 @@ class EnsureCmsAccess
         $user = $request->user();
 
         if (!$user) {
-            // Not authenticated - redirect to main login
-            return redirect()->route('login');
+            // Not authenticated - redirect to CMS login (not main site login)
+            return redirect()->route('cms.login');
         }
 
         // Resolve active CMS user via the accessor (session-aware)
