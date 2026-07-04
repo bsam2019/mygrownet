@@ -12,9 +12,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
-import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon, Smartphone as SmartphoneIcon, Download as DownloadIcon } from 'lucide-vue-next';
+import { User as UserIcon, Settings as SettingsIcon, Moon as MoonIcon, LogOut as LogOutIcon, Download as DownloadIcon } from 'lucide-vue-next';
 import type { BreadcrumbItemType } from '@/types';
-import axios from 'axios';
 import { usePWA } from '@/composables/usePWA';
 
 defineProps<{
@@ -28,7 +27,6 @@ const canInstall = computed(() => isInstallable.value && !isInstalled.value && !
 // Derive current user name from Inertia props if available
 const page = usePage();
 const userName = (page?.props as any)?.auth?.user?.name ?? 'User';
-const userDashboardPreference = ref((page?.props as any)?.auth?.user?.dashboard_preference ?? 'auto');
 
 // Simple dark mode toggle with persistence
 const isDark = ref(false);
@@ -51,25 +49,6 @@ onMounted(() => {
 
 const goto = (href: string) => router.visit(href);
 const logout = () => router.post('/logout');
-
-// Dashboard preference toggle - now just refreshes the dashboard
-const toggleGrowNetDashboard = async () => {
-  try {
-    const isCurrentlyMobile = userDashboardPreference.value === 'mobile';
-    const newPreference = isCurrentlyMobile ? 'desktop' : 'mobile';
-    
-    console.log('Toggling dashboard preference:', { from: userDashboardPreference.value, to: newPreference });
-    
-    await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: newPreference });
-    userDashboardPreference.value = newPreference;
-    
-    // Use Inertia router for smooth navigation (no flash screen)
-    console.log('Redirecting to dashboard...');
-    router.visit('/dashboard');
-  } catch (error) {
-    console.error('Failed to update dashboard preference:', error);
-  }
-};
 </script>
 
 <template>
@@ -137,17 +116,6 @@ const toggleGrowNetDashboard = async () => {
             <MoonIcon class="mr-2 h-4 w-4" />
             <span>Dark mode</span>
           </DropdownMenuCheckboxItem>
-          <DropdownMenuItem as-child>
-            <button 
-              type="button"
-              class="w-full"
-              @click.prevent="toggleGrowNetDashboard"
-            >
-              <SmartphoneIcon class="mr-2 h-4 w-4" />
-              <span>Mobile Dashboard</span>
-              <span v-if="userDashboardPreference === 'mobile'" class="ml-auto text-primary">✓</span>
-            </button>
-          </DropdownMenuItem>
           <DropdownMenuItem v-if="canInstall" as-child>
             <button 
               type="button"

@@ -25,6 +25,18 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/zamstay.php'));
 
+            // Subdomain route files — loaded BEFORE web.php so Route::domain() matches first
+            Route::middleware('web')
+                ->group(base_path('routes/bizdocs.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growbuilder.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/venture.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/grownet.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growstorage.php'));
+
             // Main web routes
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
@@ -59,16 +71,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/lifeplus.php'));
             Route::middleware('web')
-                ->group(base_path('routes/growbuilder.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
             Route::middleware('web')
-                ->group(base_path('routes/bizdocs.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
-            // CMS routes moved to conditional loading above based on hostname
-            Route::middleware('web')
-                ->group(base_path('routes/venture.php'));
             Route::middleware('web')
                 ->group(base_path('routes/portal.php'));
         },

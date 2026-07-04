@@ -127,8 +127,8 @@
                     <div class="ml-3">
                       <h3 class="text-lg font-medium text-gray-900">Phone</h3>
                       <div class="mt-1 space-y-1">
-                        <p class="text-gray-500">+260 977 563 730</p>
-                        <p class="text-gray-500">+260 961 144 812</p>
+                        <p class="text-gray-500">+260972129767</p>
+                        <p class="text-gray-500">+260965896512</p>
                       </div>
                     </div>
                   </div>

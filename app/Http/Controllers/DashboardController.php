@@ -21,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -68,12 +69,12 @@ class DashboardController extends Controller
             }
         }
         
-        // Check user preference for dashboard type
-        $preference = $user->preferred_dashboard ?? 'mobile';
+        // Check user preference for landing dashboard
+        $preference = $user->preferred_dashboard;
         
-        if ($preference === 'classic' || $preference === 'desktop') {
-            // User prefers classic dashboard
-            return redirect()->route('mygrownet.classic-dashboard');
+        if ($preference && !in_array($preference, ['mobile', 'desktop', 'auto', 'classic'], true) && Route::has($preference)) {
+            // User has a valid module dashboard route preference
+            return redirect()->route($preference);
         }
         
         // Default: Render the user apps dashboard

@@ -103,6 +103,9 @@ Route::get('/grownet', function () {
 })->name('grownet.welcome');
 
 Route::get('/bizdocs', function () {
+    if (auth()->check()) {
+        return redirect()->route('bizdocs.dashboard');
+    }
     return Inertia::render('BizDocs/Welcome');
 })->name('bizdocs.welcome');
 

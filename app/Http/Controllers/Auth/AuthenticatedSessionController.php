@@ -39,7 +39,10 @@ class AuthenticatedSessionController extends Controller
             $user->initializeLoanLimit();
         }
 
-        return redirect()->intended(route('home', absolute: false));
+        // Persist session before redirect so auth middleware on next request finds it
+        $request->session()->save();
+
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**

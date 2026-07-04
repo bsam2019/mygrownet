@@ -4,17 +4,21 @@
 
 @if ($isInertia)
     @php
-        // For Inertia requests, redirect to login
+        $version = null;
+        if (file_exists(public_path('build/manifest.json'))) {
+            $version = md5_file(public_path('build/manifest.json'));
+        }
+        header('X-Inertia: true');
         header('X-Inertia-Location: ' . url('/login'));
         http_response_code(200);
         echo json_encode([
-            'component' => 'Auth/Login',
+            'component' => 'auth/Login',
             'props' => [
                 'errors' => ['session' => 'Your session has expired. Please log in again.'],
                 'flash' => ['warning' => 'Session expired. Please log in again.'],
             ],
             'url' => '/login',
-            'version' => (function_exists('inertia_version') ? inertia_version() : null),
+            'version' => $version,
         ]);
         exit;
     @endphp

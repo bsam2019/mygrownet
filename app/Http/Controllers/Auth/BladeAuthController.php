@@ -64,6 +64,9 @@ class BladeAuthController extends Controller
             $user->initializeLoanLimit();
         }
 
+        // Persist session before redirect so auth middleware on next request finds it
+        $request->session()->save();
+
         // Check for pending GrowBiz invitation
         if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
             return redirect()->route('growbiz.invitation.pending');
@@ -193,13 +196,15 @@ class BladeAuthController extends Controller
 
             event(new Registered($user));
             Auth::login($user);
+            $request->session()->regenerate();
+            $request->session()->save();
 
             // Check for pending GrowBiz invitation
             if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
                 return to_route('growbiz.invitation.pending');
             }
 
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->route('dashboard');
 
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
@@ -250,7 +255,7 @@ class BladeAuthController extends Controller
         $accountType = $user->getPrimaryAccountType();
 
         if ($accountType === \App\Enums\AccountType::MEMBER) {
-            return route('grownet.dashboard', absolute: false);
+            return route('dashboard', absolute: false);
         }
 
         return route('dashboard', absolute: false);

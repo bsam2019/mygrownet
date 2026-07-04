@@ -259,7 +259,7 @@
               </div>
               <p class="text-sm text-slate-600 leading-relaxed italic">"MyGrowNet transformed how we manage our online presence. Having ads, store, and bookings in one place saves us hours every day."</p>
               <div class="mt-6 pt-5 border-t border-slate-100">
-                <div class="text-sm font-semibold text-slate-900">Maria Santos</div>
+                <div class="text-sm font-semibold text-slate-900">Mutale Banda</div>
                 <div class="text-xs text-slate-400">Small Business Owner</div>
               </div>
             </div>
@@ -270,7 +270,7 @@
               </div>
               <p class="text-sm text-slate-600 leading-relaxed italic">"The integrated ecosystem is a game-changer. I can track ad performance, manage orders, and check my commission payouts from the same screen."</p>
               <div class="mt-6 pt-5 border-t border-slate-100">
-                <div class="text-sm font-semibold text-slate-900">Juan dela Cruz</div>
+                <div class="text-sm font-semibold text-slate-900">Chilufya Mwila</div>
                 <div class="text-xs text-slate-400">Online Seller</div>
               </div>
             </div>
@@ -281,7 +281,7 @@
               </div>
               <p class="text-sm text-slate-600 leading-relaxed italic">"Setting up my store and first ad campaign took less than an hour. The network marketing tools are incredibly powerful for growing a team."</p>
               <div class="mt-6 pt-5 border-t border-slate-100">
-                <div class="text-sm font-semibold text-slate-900">Ana Gonzales</div>
+                <div class="text-sm font-semibold text-slate-900">Mwansa Tembo</div>
                 <div class="text-xs text-slate-400">Entrepreneur</div>
               </div>
             </div>
