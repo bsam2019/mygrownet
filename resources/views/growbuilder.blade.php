@@ -46,7 +46,7 @@
         </div>
         @inertia
         <script>
-            (function() { var s = document.getElementById('growbuilder-splash'); if (s) { document.addEventListener('inertia:start', function() { s.classList.add('hidden'); }); } })();
+            (function() { var s = document.getElementById('growbuilder-splash'); if (!s) return; var l = false, m = false; setTimeout(function() { m = true; if (l) { s.classList.add('hidden'); setTimeout(function() { s.remove(); }, 400); } }, 600); document.addEventListener('DOMContentLoaded', function() { var c = setInterval(function() { if (document.querySelector('[data-page]')) { clearInterval(c); l = true; if (m) { s.classList.add('hidden'); setTimeout(function() { s.remove(); }, 400); } } }, 50); setTimeout(function() { clearInterval(c); s.classList.add('hidden'); setTimeout(function() { s.remove(); }, 400); }, 2500); }); })();
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/growbuilder-sw.js')
