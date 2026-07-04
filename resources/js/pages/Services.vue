@@ -111,7 +111,7 @@ const categories = [
                     <div class="lg:flex lg:gap-12">
                         <div class="lg:w-2/5">
                             <div class="flex items-center gap-4 mb-4">
-                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br" :class="cat.gradient" class="flex items-center justify-center shadow-lg">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" :class="cat.gradient">
                                     <component :is="cat.icon" class="h-7 w-7 text-white" />
                                 </div>
                                 <span class="text-xs font-semibold uppercase tracking-widest" :class="cat.text">{{ cat.title.split(' ')[0] }}</span>
