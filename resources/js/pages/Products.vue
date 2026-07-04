@@ -4,16 +4,16 @@ import Navigation from '@/components/custom/Navigation.vue';
 import Footer from '@/components/custom/Footer.vue';
 
 const products = [
-    { name: 'BizBoost', tagline: 'AI Marketing Platform', description: 'Grow your business with AI-powered content creation, customer management, and social media advertising tools.', url: '/bizboost/welcome' },
-    { name: 'GrowBuilder', tagline: 'Website Builder', description: 'Build professional websites with our drag-and-drop builder. No coding required, stunning results.', url: '/growbuilder' },
+    { name: 'BizBoost', tagline: 'AI Marketing Platform', description: 'Grow your business with AI-powered content creation, customer management, and social media advertising tools.', url: 'https://bizboost.mygrownet.com' },
+    { name: 'GrowBuilder', tagline: 'Website Builder', description: 'Build professional websites with our drag-and-drop builder. No coding required, stunning results.', url: 'https://growbuilder.mygrownet.com' },
     { name: 'GrowMarket', tagline: 'Digital Marketplace', description: 'A vibrant online marketplace connecting buyers and sellers. List products, reach customers, and grow sales.', url: '/growmarket' },
-    { name: 'GrowMart', tagline: 'E-Commerce Platform', description: 'Full online grocery and e-commerce platform with product management, payments, and order tracking.', url: '/growmart' },
-    { name: 'GrowNet', tagline: 'Referral & Network Platform', description: 'Build your network marketing business with our 3x7 forced matrix system. Earn commissions and grow your team.', url: '/grownet' },
-    { name: 'Venture Builder', tagline: 'Investment Platform', description: 'Co-invest in promising business ventures and projects. Participate in Zambia\'s growing business ecosystem.', url: '/ventures/about' },
+    { name: 'GrowMart', tagline: 'E-Commerce Platform', description: 'Full online grocery and e-commerce platform with product management, payments, and order tracking.', url: 'https://growmart.mygrownet.com' },
+    { name: 'GrowNet', tagline: 'Referral & Network Platform', description: 'Build your network marketing business with our 3x7 forced matrix system. Earn commissions and grow your team.', url: 'https://grownet.mygrownet.com' },
+    { name: 'Venture Builder', tagline: 'Investment Platform', description: 'Co-invest in promising business ventures and projects. Participate in Zambia\'s growing business ecosystem.', url: 'https://venture.mygrownet.com' },
     { name: 'CMS', tagline: 'Business Management', description: 'Company management system for invoicing, quotations, customer management, and business administration.', url: '/cms' },
-    { name: 'GrowStorage', tagline: 'Cloud Storage', description: 'Secure cloud storage and file backup. Store, share, and access your files from anywhere.', url: '/growbackup' },
-    { name: 'BizDocs', tagline: 'Document Management', description: 'Professional document management. Create, store, organize, and share business documents securely.', url: '/bizdocs' },
-    { name: 'ZamStay', tagline: 'Booking Platform', description: 'Accommodation and booking management. List properties, manage reservations, and grow your hospitality business.', url: '/zamstay' },
+    { name: 'GrowStorage', tagline: 'Cloud Storage', description: 'Secure cloud storage and file backup. Store, share, and access your files from anywhere.', url: 'https://growstorage.mygrownet.com' },
+    { name: 'BizDocs', tagline: 'Document Management', description: 'Professional document management. Create, store, organize, and share business documents securely.', url: 'https://bizdocs.mygrownet.com' },
+    { name: 'ZamStay', tagline: 'Booking Platform', description: 'Accommodation and booking management. List properties, manage reservations, and grow your hospitality business.', url: 'https://zamstay.mygrownet.com' },
 ];
 </script>
 

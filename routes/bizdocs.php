@@ -3,6 +3,7 @@
 use App\Http\Controllers\BizDocs\BusinessProfileController;
 use App\Http\Controllers\BizDocs\CustomerController;
 use App\Http\Controllers\BizDocs\DocumentController;
+use App\Http\Controllers\BizDocs\GuestController;
 use App\Http\Controllers\BizDocs\SettingsController;
 use App\Http\Controllers\BizDocs\StationeryController;
 use Illuminate\Support\Facades\Route;
@@ -93,15 +94,15 @@ Route::domain('bizdocs.mygrownet.com')->group(function () use ($registerBizDocsA
 
     // Guest-only auth routes
     Route::middleware(['guest'])->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('bizdocs.sub.login');
+        Route::get('/login', [GuestController::class, 'login'])->name('bizdocs.sub.login');
         Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])->name('bizdocs.sub.register');
+        Route::get('/register', [GuestController::class, 'register'])->name('bizdocs.sub.register');
         Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
 
         // Password reset
-        Route::get('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'create'])->name('bizdocs.sub.password.request');
+        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('bizdocs.sub.password.request');
         Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('bizdocs.sub.password.email');
-        Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'create'])->name('bizdocs.sub.password.reset');
+        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('bizdocs.sub.password.reset');
         Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('bizdocs.sub.password.update');
 
         // Social Login - Google

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\VentureAdminController;
 use App\Http\Controllers\MyGrowNet\VentureController;
+use App\Http\Controllers\Ventures\GuestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -119,16 +120,21 @@ Route::domain('venture.mygrownet.com')->group(function () use ($registerVentureM
     // Member routes (served at root, under /my portal)
     $registerVentureMemberRoutes('', 'venture.sub.');
 
+    // Dashboard redirect
+    Route::middleware(['auth'])->get('/dashboard', function () {
+        return redirect()->route('venture.sub.ventures.portfolio');
+    })->name('venture.sub.dashboard');
+
     // Guest-only auth routes
     Route::middleware(['guest'])->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('venture.sub.login');
+        Route::get('/login', [GuestController::class, 'login'])->name('venture.sub.login');
         Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])->name('venture.sub.register');
+        Route::get('/register', [GuestController::class, 'register'])->name('venture.sub.register');
         Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
 
-        Route::get('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'create'])->name('venture.sub.password.request');
+        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('venture.sub.password.request');
         Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('venture.sub.password.email');
-        Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'create'])->name('venture.sub.password.reset');
+        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('venture.sub.password.reset');
         Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('venture.sub.password.update');
 
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('venture.sub.auth.google');

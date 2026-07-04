@@ -102,7 +102,21 @@ class RegisteredUserController extends Controller
 
             Auth::login($user);
 
-            return to_route('dashboard');
+            // Determine redirect based on subdomain
+            $host = $request->getHost();
+            $redirectMap = [
+                'bizboost.mygrownet.com'     => 'bizboost.sub.dashboard',
+                'growmart.mygrownet.com'     => 'growmart.sub.dashboard',
+                'zamstay.mygrownet.com'      => 'zamstay.sub.dashboard',
+                'bizdocs.mygrownet.com'      => 'bizdocs.sub.dashboard',
+                'growbuilder.mygrownet.com'  => 'growbuilder.sub.dashboard',
+                'venture.mygrownet.com'      => 'venture.sub.dashboard',
+                'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
+                'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
+            ];
+            $fallback = $redirectMap[$host] ?? 'dashboard';
+
+            return to_route($fallback);
             
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle any database errors gracefully

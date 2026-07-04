@@ -5,6 +5,7 @@ use App\Http\Controllers\GrowBuilder\CheckoutController;
 use App\Http\Controllers\GrowBuilder\CustomDomainController;
 use App\Http\Controllers\GrowBuilder\EditorController;
 use App\Http\Controllers\GrowBuilder\FormSubmissionController;
+use App\Http\Controllers\GrowBuilder\GuestController;
 use App\Http\Controllers\GrowBuilder\ManifestController;
 use App\Http\Controllers\GrowBuilder\MediaController;
 use App\Http\Controllers\GrowBuilder\OrderController;
@@ -420,14 +421,14 @@ Route::domain('growbuilder.mygrownet.com')->group(function () use ($registerGrow
 
     // Guest-only auth routes
     Route::middleware(['guest'])->group(function () {
-        Route::get('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('growbuilder.sub.login');
+        Route::get('/login', [GuestController::class, 'login'])->name('growbuilder.sub.login');
         Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        Route::get('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])->name('growbuilder.sub.register');
+        Route::get('/register', [GuestController::class, 'register'])->name('growbuilder.sub.register');
         Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
 
-        Route::get('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'create'])->name('growbuilder.sub.password.request');
+        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('growbuilder.sub.password.request');
         Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('growbuilder.sub.password.email');
-        Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'create'])->name('growbuilder.sub.password.reset');
+        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('growbuilder.sub.password.reset');
         Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('growbuilder.sub.password.update');
 
         Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('growbuilder.sub.auth.google');

@@ -39,10 +39,24 @@ class AuthenticatedSessionController extends Controller
             $user->initializeLoanLimit();
         }
 
+        // Determine redirect based on subdomain
+        $host = $request->getHost();
+        $redirectMap = [
+            'bizboost.mygrownet.com'     => 'bizboost.sub.dashboard',
+            'growmart.mygrownet.com'     => 'growmart.sub.dashboard',
+            'zamstay.mygrownet.com'      => 'zamstay.sub.dashboard',
+            'bizdocs.mygrownet.com'      => 'bizdocs.sub.dashboard',
+            'growbuilder.mygrownet.com'  => 'growbuilder.sub.dashboard',
+            'venture.mygrownet.com'      => 'venture.sub.dashboard',
+            'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
+            'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
+        ];
+        $fallback = $redirectMap[$host] ?? 'dashboard';
+
         // Persist session before redirect so auth middleware on next request finds it
         $request->session()->save();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route($fallback, absolute: false));
     }
 
     /**
@@ -55,6 +69,20 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Determine redirect based on subdomain
+        $host = $request->getHost();
+        $redirectMap = [
+            'bizboost.mygrownet.com'     => 'bizboost.sub.welcome',
+            'growmart.mygrownet.com'     => 'growmart.sub.welcome',
+            'zamstay.mygrownet.com'      => 'zamstay.sub.welcome',
+            'bizdocs.mygrownet.com'      => 'bizdocs.sub.welcome',
+            'growbuilder.mygrownet.com'  => 'growbuilder.sub.welcome',
+            'venture.mygrownet.com'      => 'venture.sub.welcome',
+            'grownet.mygrownet.com'      => 'grownet.sub.welcome',
+            'growstorage.mygrownet.com'  => 'growstorage.sub.welcome',
+        ];
+        $fallback = $redirectMap[$host] ?? '/';
+
+        return redirect($fallback === '/' ? '/' : route($fallback, absolute: false));
     }
 }
