@@ -117,14 +117,28 @@ const close = () => emit('close');
 const submitLogin = async () => {
   loginLoading.value = true;
   errorMsg.value = '';
-  router.post(route('login'), loginForm.value, {
-    preserveState: true,
-    onSuccess: () => close(),
+  
+  const loginRoute = route('login');
+  console.log('[LoginModal] Submitting login to:', loginRoute);
+  console.log('[LoginModal] Form data:', { email: loginForm.value.email, remember: loginForm.value.remember });
+  
+  router.post(loginRoute, loginForm.value, {
+    preserveScroll: true,
+    onSuccess: () => {
+      console.log('[LoginModal] Login successful');
+      close();
+      // Force full page reload to refresh auth state
+      window.location.href = route('dashboard');
+    },
     onError: (errors) => {
+      console.error('[LoginModal] Login failed:', errors);
       errorMsg.value = Object.values(errors).flat().join(', ');
       loginLoading.value = false;
     },
-    onFinish: () => { loginLoading.value = false; },
+    onFinish: () => { 
+      console.log('[LoginModal] Login request finished');
+      loginLoading.value = false; 
+    },
   });
 };
 
@@ -132,10 +146,14 @@ const submitRegister = async () => {
   registerLoading.value = true;
   errorMsg.value = '';
   router.post(route('register'), registerForm.value, {
-    preserveState: true,
+    preserveScroll: true,
     onSuccess: () => {
       successMsg.value = 'Account created! Redirecting...';
-      setTimeout(() => close(), 1500);
+      setTimeout(() => {
+        close();
+        // Force full page reload to refresh auth state
+        window.location.href = route('dashboard');
+      }, 1500);
     },
     onError: (errors) => {
       errorMsg.value = Object.values(errors).flat().join(', ');

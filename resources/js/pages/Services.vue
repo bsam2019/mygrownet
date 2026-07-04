@@ -126,7 +126,7 @@ const categories = [
                             </ul>
                         </div>
                         <div class="mt-8 lg:mt-0 lg:w-3/5">
-                            <div class="h-full rounded-2xl" :class="cat.light" class="p-6">
+                            <div class="h-full rounded-2xl p-6" :class="cat.light">
                                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">Supporting apps</p>
                                 <div class="grid sm:grid-cols-2 gap-3">
                                     <Link
