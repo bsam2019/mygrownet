@@ -142,6 +142,17 @@ class MLMCommissionService
                     sourceCurrency: $sourceCurrency
                 );
                 
+                if (isset($converted['error'])) {
+                    Log::warning('Commission currency conversion failed, using original amounts', [
+                        'referrer_id' => $referrer->id,
+                        'purchaser_id' => $purchaser->id,
+                        'source_currency' => $sourceCurrency,
+                        'recipient_currency' => $referrer->user_currency ?? $referrer->preferred_currency ?? 'ZMW',
+                        'original_amount' => $commissionAmount,
+                        'error' => $converted['error'],
+                    ]);
+                }
+                
                 // Create commission record with tracking fields
                 $commission = ReferralCommission::create([
                     'referrer_id' => $referrer->id,

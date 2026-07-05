@@ -303,6 +303,14 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/export-network-analysis', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'exportNetworkAnalysis'])->name('export-network-analysis');
     });
 
+    // GrowNet Administration Routes
+    Route::prefix('grownet')->name('grownet.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\GrowNet\GrowNetDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/earnings', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'index'])->name('earnings');
+        Route::get('/earnings/{user}', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'show'])->name('earnings.show');
+        Route::post('/earnings/{user}/adjust-bonus', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'adjustBonusBalance'])->name('earnings.adjust-bonus');
+    });
+
     // Asset Management Administration Routes
     Route::prefix('assets')->name('assets.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\AssetManagementController::class, 'index'])->name('dashboard');

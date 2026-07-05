@@ -20,10 +20,10 @@ class WalletController extends Controller
         $breakdown = $walletService->getWalletBreakdown($user);
         
         $balance = $breakdown['balance'];
-        $totalEarnings = $breakdown['credits']['earnings']['total'];
-        $commissionEarnings = $breakdown['credits']['earnings']['commissions'];
-        $profitEarnings = $breakdown['credits']['earnings']['profit_shares'];
         $walletTopups = $breakdown['credits']['deposits'];
+        $commissionEarnings = $breakdown['credits']['commissions'] ?? 0;
+        $profitEarnings = $breakdown['credits']['profit_shares'] ?? 0;
+        $totalEarnings = $breakdown['credits']['total'];
         $totalWithdrawals = $breakdown['debits']['withdrawals'];
         $workshopExpenses = $breakdown['debits']['expenses'];
         // Note: starter_kits removed - already included in withdrawals

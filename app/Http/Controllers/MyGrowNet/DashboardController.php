@@ -2081,7 +2081,7 @@ class DashboardController extends Controller
         $breakdown = $this->earningsService->getEarningsBreakdown($user);
         
         // Team performance (purchases and subscriptions from team)
-        // This includes commissions from team member purchases and subscriptions
+        // This is a subset of total commissions — excludes direct referral commissions
         $teamPerformance = \DB::table('referral_commissions')
             ->where('referrer_id', $user->id)
             ->where('status', 'paid')
@@ -2094,8 +2094,12 @@ class DashboardController extends Controller
         // Get LGR info from service
         $lgrInfo = $this->earningsService->getLgrWithdrawableInfo($user);
 
+        // Deduct team_performance from referral_commissions to avoid double-counting
+        // referral_commissions = everything; team_performance = a subset broken out separately
+        $referralCommissions = max(0, (float) $breakdown['commissions'] - $teamPerformance);
+
         return [
-            'referral_commissions' => (float) $breakdown['commissions'],
+            'referral_commissions' => $referralCommissions,
             'profit_shares' => (float) $breakdown['profit_shares'],
             'team_performance' => (float) $teamPerformance,
             'pending_earnings' => (float) $pendingEarnings,
@@ -2103,7 +2107,7 @@ class DashboardController extends Controller
             'lgr_withdrawable' => (float) $lgrInfo['withdrawable'],
             'lgr_percentage' => (float) $lgrInfo['percentage'],
             'lgr_blocked' => (bool) $lgrInfo['blocked'],
-            'total_earnings' => (float) ($breakdown['commissions'] + $breakdown['profit_shares'] + $teamPerformance),
+            'total_earnings' => (float) ($referralCommissions + $breakdown['profit_shares'] + $teamPerformance),
         ];
     }
 

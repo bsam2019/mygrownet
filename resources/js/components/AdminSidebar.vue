@@ -82,25 +82,43 @@ const userManagementNavItems: NavItem[] = [
 ];
 
 const growNetNavItems: NavItem[] = [
+    // Core
+    { title: 'Dashboard', href: safeRoute('admin.grownet.dashboard'), icon: LayoutGrid },
+    { title: 'Earnings Management', href: safeRoute('admin.grownet.earnings'), icon: DollarSign },
+
+    // Network / MLM
+    { title: 'MLM Administration', href: safeRoute('admin.mlm.dashboard'), icon: Activity },
+    { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
+    { title: 'Network Management', href: safeRoute('admin.network.index'), icon: Activity },
+    { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
+    { title: 'Commission Settings', href: safeRoute('admin.commission-settings.index'), icon: Settings },
+
+    // Points
+    { title: 'Points Management', href: '/admin/points', icon: Target },
+    { title: 'Bonus Points Settings', href: safeRoute('admin.settings.bp.index'), icon: Target },
+
+    // LGR
+    { title: 'LGR Overview', href: safeRoute('admin.lgr.index'), icon: LayoutGrid },
+    { title: 'LGR Manual Awards', href: safeRoute('admin.lgr.awards.index'), icon: Star },
+    { title: 'LGR Activity Report', href: safeRoute('admin.lgr.activity-report'), icon: Activity },
+    { title: 'LGR Cycles', href: safeRoute('admin.lgr.cycles'), icon: Activity },
+    { title: 'LGR Qualifications', href: safeRoute('admin.lgr.qualifications'), icon: Target },
+    { title: 'LGR Pool Management', href: safeRoute('admin.lgr.pool'), icon: DollarSign },
+    { title: 'LGR Settings', href: safeRoute('admin.lgr.settings'), icon: Shield },
+
+    // Promotional & Rewards
+    { title: 'Promotional Cards', href: safeRoute('admin.promotional-cards.index'), icon: MessageSquare },
+    { title: 'Reward Analytics', href: safeRoute('admin.reward-analytics.index'), icon: ChartBarIcon },
+
+    // Profit Sharing & Payments
+    { title: 'Payment Approvals', href: safeRoute('admin.payments.index'), icon: DollarSign },
+    { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
+    { title: 'Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
+
+    // Content / Kits
     { title: 'Starter Kits', href: safeRoute('admin.starter-kit.dashboard'), icon: BookOpen },
     { title: 'Starter Kit Tiers', href: safeRoute('admin.starter-kit-tiers.index'), icon: Settings },
     { title: 'Content Management', href: safeRoute('admin.content-management.index'), icon: Folder },
-    { title: 'Referral System', href: safeRoute('admin.referrals.index'), icon: Users },
-    { title: 'Matrix Management', href: safeRoute('admin.matrix.index'), icon: LayoutGrid },
-    { title: 'Network Management', href: safeRoute('admin.network.index'), icon: Activity },
-    { title: 'Commission Settings', href: safeRoute('admin.commission-settings.index'), icon: Settings },
-    { title: 'Points Management', href: '/admin/points', icon: Target },
-];
-
-const lgrNavItems: NavItem[] = [
-    { title: 'Overview', href: safeRoute('admin.lgr.index'), icon: LayoutGrid },
-    { title: 'Manual Awards', href: safeRoute('admin.lgr.awards.index'), icon: Star },
-    { title: 'Activity Report', href: safeRoute('admin.lgr.activity-report'), icon: Activity },
-    { title: 'Cycles', href: safeRoute('admin.lgr.cycles'), icon: Activity },
-    { title: 'Qualifications', href: safeRoute('admin.lgr.qualifications'), icon: Target },
-    { title: 'Pool Management', href: safeRoute('admin.lgr.pool'), icon: DollarSign },
-    { title: 'Promotional Cards', href: safeRoute('admin.promotional-cards.index'), icon: MessageSquare },
-    { title: 'Settings', href: safeRoute('admin.lgr.settings'), icon: Shield }, // Temporarily using Shield icon
 ];
 
 const financeNavItems: NavItem[] = [
@@ -124,10 +142,7 @@ const financeNavItems: NavItem[] = [
         external: true
     },
     
-    { title: 'Payment Approvals', href: safeRoute('admin.payments.index'), icon: DollarSign },
     { title: 'Receipts', href: safeRoute('admin.receipts.index'), icon: FileText },
-    { title: 'Community Profit Sharing', href: safeRoute('admin.profit-sharing.index'), icon: Activity },
-    { title: 'Investment Profit Distribution', href: safeRoute('admin.profit-distribution.index'), icon: Activity },
     { title: 'Withdrawals', href: safeRoute('admin.withdrawals.index'), icon: Activity },
     { title: 'Loan Management', href: safeRoute('admin.loans.index'), icon: CreditCard },
 ];
@@ -204,7 +219,6 @@ const bizBoostNavItems: NavItem[] = [
 ];
 
 const reportsNavItems: NavItem[] = [
-    { title: 'Reward Analytics', href: safeRoute('admin.reward-analytics.index'), icon: ChartBarIcon },
     { title: 'Points Analytics', href: safeRoute('admin.analytics.points'), icon: Target },
     { title: 'Matrix Analytics', href: safeRoute('admin.analytics.matrix'), icon: LayoutGrid },
     { title: 'Member Analytics', href: safeRoute('admin.analytics.members'), icon: Users },
@@ -238,7 +252,6 @@ const systemNavItems: NavItem[] = [
     { title: 'Module Management', href: safeRoute('admin.modules.index'), icon: Settings },
     { title: 'Module Subscriptions', href: safeRoute('admin.module-subscriptions.index'), icon: CreditCard },
     { title: 'GrowSuite Companies', href: safeRoute('admin.cms-companies.index'), icon: Building2 },
-    { title: 'Bonus Points Settings', href: safeRoute('admin.settings.bp.index'), icon: Target },
     { title: 'Roles', href: safeRoute('admin.role-management.roles.index'), icon: Shield },
     { title: 'Permissions', href: safeRoute('admin.role-management.permissions.index'), icon: Key },
     { title: 'User Roles', href: safeRoute('admin.role-management.users.index'), icon: Users },
@@ -375,14 +388,24 @@ onMounted(() => {
         showSubmenu.value.userManagement = true;
     }
     
-    // GrowNet
-    if (currentUrl.includes('/admin/starter-kit') || 
+    // GrowNet (includes LGR, MLM, profit sharing, rewards, bonuses)
+    if (currentUrl.includes('/admin/grownet') ||
+        currentUrl.includes('/admin/mlm') ||
+        currentUrl.includes('/admin/starter-kit') || 
         currentUrl.includes('/admin/content-management') || 
         currentUrl.includes('/admin/referrals') ||
         currentUrl.includes('/admin/matrix') ||
         currentUrl.includes('/admin/network') ||
         currentUrl.includes('/admin/commission-settings') ||
-        currentUrl.includes('/admin/points')) {
+        currentUrl.includes('/admin/points') ||
+        currentUrl.includes('/admin/lgr') || 
+        currentUrl.includes('/admin/promotional-cards') ||
+        currentUrl.includes('/admin/profit-sharing') ||
+        currentUrl.includes('/admin/profit-distribution') ||
+        currentUrl.includes('/admin/payments') ||
+        currentUrl.includes('/admin/reward-analytics') ||
+        currentUrl.includes('/admin/settings/bonus-points') ||
+        currentUrl.includes('/admin/settings/bp')) {
         showSubmenu.value.growNet = true;
     }
     
@@ -390,12 +413,6 @@ onMounted(() => {
     if (currentUrl.includes('/admin/growstream') || 
         currentUrl.includes('/growstream/admin')) {
         showSubmenu.value.growStream = true;
-    }
-    
-    // LGR
-    if (currentUrl.includes('/admin/lgr') || 
-        currentUrl.includes('/admin/promotional-cards')) {
-        showSubmenu.value.lgr = true;
     }
     
     // Employees
@@ -573,40 +590,6 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.growNet" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in growNetNavItems" :key="item.title"
-                            :href="item.href"
-                            :class="[
-                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
-                                'hover:bg-gray-100 dark:hover:bg-gray-800',
-                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            <component :is="item.icon" class="h-4 w-4" />
-                            <span class="ml-3">{{ item.title }}</span>
-                        </Link>
-                    </div>
-                </div>
-
-                <!-- LGR Management Section -->
-                <div class="pt-2">
-                    <button @click="toggleSubmenu('lgr')"
-                        :class="[
-                            'w-full flex items-center justify-between px-4 py-2 transition-colors duration-200',
-                            'hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none',
-                            'text-gray-700 dark:text-gray-300'
-                        ]"
-                        @mouseenter="showItemTooltip($event, 'LGR Management')"
-                        @mouseleave="hideTooltip"
-                    >
-                        <div class="flex items-center">
-                            <Star class="h-5 w-5" />
-                            <span v-show="!isCollapsed || isMobile" class="ml-3">LGR Management</span>
-                        </div>
-                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
-                            :class="{ 'rotate-180': showSubmenu.lgr }" />
-                    </button>
-
-                    <div v-if="showSubmenu.lgr" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
-                        <Link v-for="item in lgrNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

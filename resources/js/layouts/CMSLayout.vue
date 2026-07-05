@@ -611,7 +611,7 @@
               <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-cyan-50 to-transparent rounded-lg hover:from-cyan-100 transition-colors">
                 <div class="flex items-center gap-2">
                   <div class="w-1 h-4 bg-gradient-to-b from-cyan-500 to-cyan-600 rounded-full"></div>
-                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Inventory Management</p>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Inventory</p>
                 </div>
                 <ChevronDownIcon 
                   :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.inventoryMgmt ? '-rotate-90' : '']"

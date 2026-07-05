@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class ReferralCommission extends Model
 {
@@ -275,6 +276,16 @@ class ReferralCommission extends Model
     public function processPayment(): bool
     {
         if (!$this->isEligibleForPayment()) {
+            Log::warning('Commission payment skipped - not eligible', [
+                'commission_id' => $this->id,
+                'referrer_id' => $this->referrer_id,
+                'referred_id' => $this->referred_id,
+                'amount' => $this->amount,
+                'status' => $this->status,
+                'package_type' => $this->package_type,
+                'referrer_status' => $this->referrer?->status,
+                'referrer_has_subscription' => $this->referrer?->hasActiveSubscription(),
+            ]);
             return false;
         }
 

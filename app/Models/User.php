@@ -1081,9 +1081,19 @@ class User extends Authenticatable
             return false;
         }
         
-        // Double-check: User must have at least one verified payment
-        return $this->memberPayments()
+        // Check legacy member_payments table (pre-Phase 3 records)
+        $hasLegacyPayment = $this->memberPayments()
             ->where('status', 'verified')
+            ->exists();
+
+        if ($hasLegacyPayment) {
+            return true;
+        }
+
+        // Check transactions table (Phase 3+ records - all verified payments migrated here)
+        return $this->transactions()
+            ->whereIn('transaction_type', ['wallet_topup', 'starter_kit_purchase', 'subscription_payment'])
+            ->where('status', 'completed')
             ->exists();
     }
 
