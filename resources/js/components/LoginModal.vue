@@ -125,10 +125,9 @@ const submitLogin = async () => {
   router.post(loginRoute, loginForm.value, {
     preserveScroll: true,
     onSuccess: () => {
-      console.log('[LoginModal] Login successful');
+      console.log('[LoginModal] Login successful, server will redirect');
       close();
-      // Force full page reload to refresh auth state
-      window.location.href = route('dashboard');
+      // Server handles redirect via BladeAuthController, don't force reload here
     },
     onError: (errors) => {
       console.error('[LoginModal] Login failed:', errors);
@@ -149,11 +148,8 @@ const submitRegister = async () => {
     preserveScroll: true,
     onSuccess: () => {
       successMsg.value = 'Account created! Redirecting...';
-      setTimeout(() => {
-        close();
-        // Force full page reload to refresh auth state
-        window.location.href = route('dashboard');
-      }, 1500);
+      // Server handles redirect via BladeAuthController, don't force reload here
+      setTimeout(() => close(), 1500);
     },
     onError: (errors) => {
       errorMsg.value = Object.values(errors).flat().join(', ');
