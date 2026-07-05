@@ -13,6 +13,7 @@ import {
   ChartBarIcon,
   ScissorsIcon,
   ClipboardDocumentCheckIcon,
+  LightBulbIcon,
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
@@ -283,6 +284,23 @@ const getStatusClass = (status: string) => {
             <div class="flex-1">
               <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 transition">View Reports</h3>
               <p class="text-sm text-gray-500">Financial insights</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          :href="route('cms.business-plans.index')"
+          class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-yellow-500 transition-all shadow-sm hover:shadow-md text-left"
+        >
+          <div class="flex items-center gap-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-500 transition">
+                <LightBulbIcon class="h-6 w-6 text-yellow-600 group-hover:text-white transition" aria-hidden="true" />
+              </div>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold text-gray-900 group-hover:text-yellow-600 transition">Business Plan</h3>
+              <p class="text-sm text-gray-500">20-module generator</p>
             </div>
           </div>
         </Link>

@@ -57,7 +57,7 @@ const statusClass = (s: string) => s === 'completed' ? 'bg-green-100 text-green-
                                 <div><p class="text-xs text-gray-500">Industry</p><p class="font-medium text-gray-800">{{ plan.industry || 'N/A' }}</p></div>
                                 <div><p class="text-xs text-gray-500">Structure</p><p class="font-medium text-gray-800">{{ plan.legal_structure || 'N/A' }}</p></div>
                                 <div><p class="text-xs text-gray-500">Created</p><p class="font-medium text-gray-800">{{ formatDate(plan.created_at) }}</p></div>
-                                <div><p class="text-xs text-gray-500">Step</p><p class="font-medium text-gray-800">{{ plan.current_step || 1 }}/10</p></div>
+                                <div><p class="text-xs text-gray-500">Step</p><p class="font-medium text-gray-800">{{ plan.current_step || 1 }}/20</p></div>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 ml-4">
