@@ -267,7 +267,7 @@
           </div>
 
           <!-- Planning Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.plans', 'cms.plans.command-center', 'cms.kpis'])">
+          <div v-if="isSectionVisible(['cms.plans', 'cms.plans.command-center', 'cms.kpis', 'cms.business-plans'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('planning')"
@@ -312,6 +312,15 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.plans')"
                 @click="navigateTo('cms.plans.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.business-plans')"
+                icon="DocumentTextIcon"
+                label="Business Plans"
+                route-name="cms.business-plans"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.business-plans')"
+                @click="navigateTo('cms.business-plans.index')"
               />
             </div>
           </div>
@@ -1749,6 +1758,7 @@ const allNavItems = ref([
   { label: 'Payments', route: 'cms.payments', keywords: ['transactions', 'money'] },
   { label: 'Reports', route: 'cms.reports', keywords: ['analytics', 'statistics'] },
   { label: 'Budgets', route: 'cms.budgets', keywords: ['budget', 'planning', 'forecast'] },
+  { label: 'Business Plans', route: 'cms.business-plans', keywords: ['strategy', 'planning', 'forecast', 'growth', 'business plan'] },
   // Analytics
   { label: 'CEO Overview', route: 'cms.analytics.overview', keywords: ['analytics', 'overview', 'dashboard', 'kpi', 'executive'] },
   { label: 'Operations Analytics', route: 'cms.analytics.operations', keywords: ['analytics', 'performance', 'operations'] },

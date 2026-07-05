@@ -146,6 +146,18 @@ Route::prefix('cms')
             Route::get('/entity-fields', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'availableFields'])->name('entity-fields');
         });
 
+        // Business Plans
+        Route::prefix('business-plans')->name('business-plans.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'create'])->name('create');
+            Route::post('/save', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'save'])->name('save');
+            Route::post('/complete', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'complete'])->name('complete');
+            Route::get('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'show'])->name('show');
+            Route::post('/generate-ai', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'generateAI'])->name('generate-ai');
+            Route::post('/export', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'export'])->name('export');
+            Route::delete('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'delete'])->name('delete');
+        });
+
         // Measurements (Aluminium Fabrication)
         Route::prefix('measurements')->name('measurements.')->group(function () {
             Route::get('/', [MeasurementController::class, 'index'])->name('index');
