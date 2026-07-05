@@ -122,6 +122,12 @@ class DetectSubdomain
                 return $next($request);
             }
 
+            // Handle ZamStay subdomain
+            if ($subdomain === 'zamstay') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 

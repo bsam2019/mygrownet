@@ -90,9 +90,7 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));
 
-            // ZamStay module
-            Route::middleware('web')
-                ->group(base_path('routes/zamstay.php'));
+            // ZamStay module - loaded in bootstrap/app.php
         });
     }
 }
