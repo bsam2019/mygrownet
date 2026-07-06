@@ -309,7 +309,7 @@ const sendChatMessage = async () => {
         const resp = await fetch(route('cms.business-plans.chat').url(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
-            body: JSON.stringify({ message: msg, context: { business_name: form.value.business_name, industry: form.value.industry, ...form.value } }),
+            body: JSON.stringify({ message: msg, context: { business_name: form.value.business_name, industry: form.value.industry, current_step: currentStep.value, current_step_label: steps[currentStep.value - 1]?.label || '', total_steps: totalSteps, ...form.value } }),
         });
         const data = await resp.json();
         if (data.type === 'field' && data.field && data.content) {
@@ -367,18 +367,6 @@ watch(chatMessages, () => {
                 <div class="mt-3 flex gap-1 overflow-x-auto pb-1">
                     <div v-for="s in steps" :key="s.num" @click="goToStep(s.num)" class="flex-shrink-0 w-5 h-1.5 rounded-full cursor-pointer transition-colors"
                         :class="currentStep > s.num ? 'bg-green-400' : currentStep === s.num ? 'bg-blue-600' : 'bg-gray-200'" :title="`${s.num}. ${s.label}`"></div>
-                </div>
-            </div>
-
-            <!-- AI Customization Prompt -->
-            <div class="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div class="flex items-center justify-between mb-1">
-                    <label class="text-xs font-semibold text-purple-700 uppercase tracking-wider">AI Instructions <span class="text-purple-400 font-normal normal-case">(optional)</span></label>
-                    <span class="text-[10px] text-purple-400">Tell the AI what to focus on</span>
-                </div>
-                <div class="flex gap-2">
-                    <input v-model="form.user_ai_instructions" type="text" class="flex-1 px-3 py-2 text-sm border border-purple-200 rounded-lg focus:border-purple-400 focus:ring-1 focus:ring-purple-400" placeholder="e.g. Focus on youth market, include sustainability, emphasize local impact..." />
-                    <button v-if="form.user_ai_instructions" @click="form.user_ai_instructions = ''" class="px-2 text-xs text-purple-500 hover:text-purple-700">Clear</button>
                 </div>
             </div>
 

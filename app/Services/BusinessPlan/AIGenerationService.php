@@ -61,20 +61,35 @@ class AIGenerationService
         $businessName = $context['business_name'] ?? 'the business';
         $industry = $context['industry'] ?? '';
         $country = $context['country'] ?? 'Zambia';
+        $currentStep = $context['current_step'] ?? 'unknown';
+        $stepLabel = $context['current_step_label'] ?? '';
 
         $fieldsList = '';
+        $filledFields = [];
+        $emptyFields = [];
         foreach ($prompts as $key => $label) {
             $fieldsList .= "- {$key}: {$label}\n";
+            $val = $context[$key] ?? '';
+            if (!empty($val)) {
+                $filledFields[] = $key;
+            } else {
+                $emptyFields[] = $key;
+            }
         }
 
         $systemPrompt = "You are a business plan writing assistant embedded in the form itself. "
             . "You help entrepreneurs in {$country} create a business plan for \"{$businessName}\" in the {$industry} industry.\n\n"
+            . "CURRENT PROGRESS: Step {$currentStep} of 20 — {$stepLabel}\n"
+            . "FILLED FIELDS: " . (count($filledFields) > 0 ? implode(', ', $filledFields) : 'none yet') . "\n"
+            . "EMPTY FIELDS: " . (count($emptyFields) > 0 ? implode(', ', $emptyFields) : 'none') . "\n\n"
             . "AVAILABLE FIELDS (field_key: description):\n{$fieldsList}\n"
             . "RULES:\n"
             . "1. When the user asks to generate, write, create, improve, rewrite, or fix content for a section — respond with a field value.\n"
             . "2. When the user is just chatting or asking advice — respond conversationally.\n"
             . "3. Always write content specific to {$country} and the {$industry} industry.\n"
-            . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n\n"
+            . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n"
+            . "5. If the user says something generic like 'write my mission statement', fill the mission_statement field.\n"
+            . "6. Prioritize fields in the current step ({$stepLabel}) when the user is vague.\n\n"
             . "RESPONSE FORMAT (output ONLY valid JSON, no markdown, no backticks):\n"
             . "- For generating content: {\"type\":\"field\",\"field\":\"field_key\",\"content\":\"the generated content\"}\n"
             . "- For chatting: {\"type\":\"chat\",\"content\":\"your helpful response\"}\n"
