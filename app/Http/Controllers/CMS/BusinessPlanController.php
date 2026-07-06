@@ -290,12 +290,12 @@ class BusinessPlanController extends Controller
 
         try {
             $result = $this->aiService->chat($validated['message'], $validated['context']);
-            return response()->json($result);
+            return back()->with('chatResponse', $result);
         } catch (\Exception $e) {
-            return response()->json([
+            return back()->with('chatResponse', [
                 'type' => 'chat',
                 'content' => 'Sorry, I ran into an error. Please try again.',
-            ], 500);
+            ]);
         }
     }
 
