@@ -55,6 +55,59 @@ class AIGenerationService
         return $this->generateFallbackContent($field, $context);
     }
 
+    public function chat(string $message, array $context): array
+    {
+        $prompts = $this->getPrompts();
+        $businessName = $context['business_name'] ?? 'the business';
+        $industry = $context['industry'] ?? '';
+        $country = $context['country'] ?? 'Zambia';
+
+        $fieldsList = '';
+        foreach ($prompts as $key => $label) {
+            $fieldsList .= "- {$key}: {$label}\n";
+        }
+
+        $systemPrompt = "You are a business plan writing assistant embedded in the form itself. "
+            . "You help entrepreneurs in {$country} create a business plan for \"{$businessName}\" in the {$industry} industry.\n\n"
+            . "AVAILABLE FIELDS (field_key: description):\n{$fieldsList}\n"
+            . "RULES:\n"
+            . "1. When the user asks to generate, write, create, improve, rewrite, or fix content for a section — respond with a field value.\n"
+            . "2. When the user is just chatting or asking advice — respond conversationally.\n"
+            . "3. Always write content specific to {$country} and the {$industry} industry.\n"
+            . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n\n"
+            . "RESPONSE FORMAT (output ONLY valid JSON, no markdown, no backticks):\n"
+            . "- For generating content: {\"type\":\"field\",\"field\":\"field_key\",\"content\":\"the generated content\"}\n"
+            . "- For chatting: {\"type\":\"chat\",\"content\":\"your helpful response\"}\n"
+            . "- If the user's request is ambiguous, ask for clarification via the chat type.";
+
+        $userMessage = "User says: {$message}";
+
+        $attempts = 0;
+        $maxAttempts = 3;
+        $lastException = null;
+        while ($attempts < $maxAttempts) {
+            try {
+                $raw = $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
+                $parsed = json_decode($raw, true);
+                if (is_array($parsed) && isset($parsed['type'])) {
+                    return $parsed;
+                }
+                return ['type' => 'chat', 'content' => $raw];
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempts++;
+                if ($attempts < $maxAttempts) {
+                    usleep($attempts * 1000000);
+                }
+            }
+        }
+        \Illuminate\Support\Facades\Log::warning('AI chat failed after retries', [
+            'message' => $message,
+            'error' => $lastException?->getMessage(),
+        ]);
+        return ['type' => 'chat', 'content' => 'Sorry, I had trouble processing that. Could you try again?'];
+    }
+
     private function getPrompts(): array
     {
         return [

@@ -154,6 +154,7 @@ Route::prefix('cms')
             Route::post('/complete', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'complete'])->name('complete');
             Route::get('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'show'])->name('show');
             Route::post('/generate-ai', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'generateAI'])->name('generate-ai');
+            Route::post('/chat', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'chat'])->name('chat');
             Route::post('/export', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'export'])->name('export');
             Route::delete('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'delete'])->name('delete');
         });

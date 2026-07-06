@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
 import CMSLayout from '@/Layouts/CMSLayout.vue';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps<{ existingPlan: any | null; userTier: string }>();
 const page = usePage();
@@ -291,6 +291,51 @@ const applyGenerated = (field: string) => {
 };
 
 const formatCurrency = (v: number | null) => v != null ? `K${Number(v).toLocaleString()}` : '-';
+
+const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+const chatMessages = ref<{role: string, content: string, field?: string}[]>([]);
+const chatInput = ref('');
+const chatLoading = ref(false);
+const showChat = ref(false);
+
+const sendChatMessage = async () => {
+    if (!chatInput.value.trim() || chatLoading.value) return;
+    const msg = chatInput.value.trim();
+    chatInput.value = '';
+    chatMessages.value.push({ role: 'user', content: msg });
+    chatLoading.value = true;
+    try {
+        const resp = await fetch(route('cms.business-plans.chat').url(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
+            body: JSON.stringify({ message: msg, context: { business_name: form.value.business_name, industry: form.value.industry, ...form.value } }),
+        });
+        const data = await resp.json();
+        if (data.type === 'field' && data.field && data.content) {
+            chatMessages.value.push({ role: 'assistant', content: data.content, field: data.field });
+        } else {
+            chatMessages.value.push({ role: 'assistant', content: data.content || 'Could you be more specific?' });
+        }
+    } catch {
+        chatMessages.value.push({ role: 'assistant', content: 'Connection error. Please try again.' });
+    }
+    chatLoading.value = false;
+};
+
+const applyChatField = (field: string, content: string) => {
+    (form.value as any)[field] = content;
+    chatMessages.value.push({ role: 'assistant', content: `Applied to "${field.replace(/_/g, ' ')}"!`, field: undefined });
+};
+
+const handleChatKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+};
+
+const chatListRef = ref<HTMLElement | null>(null);
+watch(chatMessages, () => {
+    nextTick(() => { chatListRef.value?.scrollTo({ top: chatListRef.value.scrollHeight, behavior: 'smooth' }); });
+}, { deep: true });
 </script>
 
 <template>
@@ -802,6 +847,42 @@ const formatCurrency = (v: number | null) => v != null ? `K${Number(v).toLocaleS
                 <button @click="prevStep" v-if="currentStep > 1" class="px-5 py-2.5 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50">&larr; Previous</button>
                 <div v-else></div>
                 <button @click="nextStep" v-if="currentStep < totalSteps" class="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Next &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Chat toggle button -->
+        <button @click="showChat = !showChat" class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 flex items-center justify-center text-2xl" :title="showChat ? 'Close AI Chat' : 'Open AI Chat'">
+            <span v-if="!showChat">&#x1F4AC;</span>
+            <span v-else>&times;</span>
+        </button>
+
+        <!-- Chat panel -->
+        <div v-if="showChat" class="fixed bottom-24 right-6 z-50 w-96 h-[500px] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            <div class="bg-purple-600 text-white px-4 py-3 flex items-center justify-between">
+                <span class="font-semibold text-sm">AI Business Plan Assistant</span>
+                <button @click="showChat = false" class="text-white/80 hover:text-white">&times;</button>
+            </div>
+            <div ref="chatListRef" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm">
+                <div v-if="chatMessages.length === 0" class="text-gray-400 text-center mt-10">
+                    <p class="text-lg mb-1">&#x1F4AC;</p>
+                    <p>Ask me to write anything for your plan.</p>
+                    <p class="text-xs mt-2 text-gray-300">e.g. "Write a mission statement about youth"</p>
+                </div>
+                <div v-for="(m, i) in chatMessages" :key="i" :class="m.role === 'user' ? 'text-right' : 'text-left'">
+                    <div :class="m.role === 'user' ? 'bg-blue-100 text-blue-900 inline-block rounded-lg px-3 py-2 max-w-xs text-left' : 'bg-gray-100 text-gray-800 inline-block rounded-lg px-3 py-2 max-w-xs text-left'">
+                        <div class="whitespace-pre-wrap">{{ m.content }}</div>
+                        <div v-if="m.field" class="mt-2 pt-2 border-t border-gray-200 flex gap-2">
+                            <button @click="applyChatField(m.field!, m.content)" class="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">Apply to {{ m.field.replace(/_/g, ' ') }}</button>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="chatLoading" class="text-left">
+                    <div class="bg-gray-100 text-gray-500 inline-block rounded-lg px-3 py-2 text-xs italic">Thinking...</div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 p-3 flex gap-2">
+                <input v-model="chatInput" @keydown="handleChatKeydown" type="text" placeholder="Ask AI to write something..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-purple-400 focus:ring-1 focus:ring-purple-400" :disabled="chatLoading" />
+                <button @click="sendChatMessage" :disabled="chatLoading || !chatInput.trim()" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50">Send</button>
             </div>
         </div>
     </CMSLayout>
