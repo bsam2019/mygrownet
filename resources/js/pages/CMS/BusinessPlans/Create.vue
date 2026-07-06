@@ -9,9 +9,12 @@ const page = usePage();
 const totalSteps = 20;
 const currentStep = ref(props.existingPlan?.current_step || 1);
 const saving = ref(false);
+const autoSaving = ref(false);
+const lastSavedAt = ref<string | null>(null);
 const generating = ref(false);
 const generatedContent = ref<string | null>(null);
 const currentAIField = ref<string | null>(null);
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 const industries = ['Agriculture', 'Construction', 'Education', 'Energy', 'Fashion', 'Finance', 'Food & Beverage', 'Healthcare', 'Hospitality', 'Information Technology', 'Manufacturing', 'Media & Entertainment', 'Mining', 'Real Estate', 'Retail', 'Telecommunications', 'Transportation & Logistics', 'Tourism', 'Other'];
 
@@ -166,6 +169,30 @@ watch(() => (page.props as any).flash?.generatedContent, (val: string | null) =>
     if (val) { generatedContent.value = val; }
 });
 
+watch(() => (page.props as any).flash?.businessPlan, (val: any | null) => {
+    if (val?.id) form.value.id = val.id;
+});
+
+const triggerAutoSave = () => {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        if (!form.value.business_name) return;
+        autoSaving.value = true;
+        form.value.current_step = currentStep.value;
+        router.post(route('cms.business-plans.save'), form.value, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (res: any) => {
+                if (res.props?.flash?.businessPlan?.id) form.value.id = res.props.flash.businessPlan.id;
+                lastSavedAt.value = new Date().toLocaleTimeString();
+            },
+            onFinish: () => { autoSaving.value = false; },
+        });
+    }, 2000);
+};
+
+watch(form, triggerAutoSave, { deep: true });
+
 const goToStep = (step: number) => {
     if (step >= 1 && step <= totalSteps) currentStep.value = step;
 };
@@ -232,11 +259,14 @@ const formatCurrency = (v: number | null) => v != null ? `K${Number(v).toLocaleS
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Business Plan Generator</h1>
-                    <p class="text-sm text-gray-500 mt-1">Create a comprehensive 20-module business plan</p>
+                    <p class="text-sm text-gray-500 mt-1">Create a comprehensive 20-module business plan <span v-if="lastSavedAt" class="text-xs text-green-600 ml-2">&middot; Saved {{ lastSavedAt }}</span></p>
                 </div>
-                <button v-if="form.id" @click="saveDraft" :disabled="saving" class="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-50">
-                    {{ saving ? 'Saving...' : 'Save Draft' }}
-                </button>
+                <div class="flex items-center gap-2">
+                    <span v-if="autoSaving" class="text-xs text-gray-400">Auto-saving...</span>
+                    <button v-if="form.id" @click="saveDraft" :disabled="saving" class="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 disabled:opacity-50">
+                        {{ saving ? 'Saving...' : 'Save Draft' }}
+                    </button>
+                </div>
             </div>
 
             <!-- Step Navigator -->
