@@ -16,6 +16,35 @@ const generatedContent = ref<string | null>(null);
 const currentAIField = ref<string | null>(null);
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
+const STORAGE_KEY = 'bizplan_draft_' + (props.existingPlan?.id || 'new');
+
+const saveToLocalStorage = () => {
+    try {
+        const data = { ...form.value, _savedAt: Date.now() };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {}
+};
+
+const loadFromLocalStorage = () => {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const stored = JSON.parse(raw);
+        if (!stored || !stored.business_name) return;
+        const serverTime = props.existingPlan?.updated_at ? new Date(props.existingPlan.updated_at).getTime() : 0;
+        if (stored._savedAt > serverTime) {
+            Object.assign(form.value, stored);
+            if (stored.current_step) currentStep.value = stored.current_step;
+        }
+    } catch {}
+};
+
+const clearLocalStorage = () => {
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+};
+
+loadFromLocalStorage();
+
 const industries = ['Agriculture', 'Construction', 'Education', 'Energy', 'Fashion', 'Finance', 'Food & Beverage', 'Healthcare', 'Hospitality', 'Information Technology', 'Manufacturing', 'Media & Entertainment', 'Mining', 'Real Estate', 'Retail', 'Telecommunications', 'Transportation & Logistics', 'Tourism', 'Other'];
 
 const steps = [
@@ -170,10 +199,18 @@ watch(() => (page.props as any).flash?.generatedContent, (val: string | null) =>
 });
 
 watch(() => (page.props as any).flash?.businessPlan, (val: any | null) => {
-    if (val?.id) form.value.id = val.id;
+    if (val?.id) {
+        form.value.id = val.id;
+        const newKey = 'bizplan_draft_' + val.id;
+        if (STORAGE_KEY !== newKey) {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) { localStorage.setItem(newKey, raw); localStorage.removeItem(STORAGE_KEY); }
+        }
+    }
 });
 
 const triggerAutoSave = () => {
+    saveToLocalStorage();
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     autoSaveTimer = setTimeout(() => {
         if (!form.value.business_name) return;
@@ -199,6 +236,7 @@ const goToStep = (step: number) => {
 
 const saveDraft = async () => {
     saving.value = true;
+    saveToLocalStorage();
     form.value.current_step = currentStep.value;
     router.post(route('cms.business-plans.save'), form.value, {
         preserveScroll: true,
@@ -223,6 +261,7 @@ const prevStep = () => {
 
 const completePlan = () => {
     if (!form.value.id) return;
+    clearLocalStorage();
     router.post(route('cms.business-plans.complete'), { id: form.value.id });
 };
 
