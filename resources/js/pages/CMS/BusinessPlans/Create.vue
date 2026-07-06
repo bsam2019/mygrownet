@@ -297,6 +297,8 @@ const formatCurrency = (v: number | null) => v != null ? `K${Number(v).toLocaleS
     <Head title="Business Plan Generator" />
     <CMSLayout>
         <div class="p-6 max-w-5xl mx-auto">
+            <div v-if="$page.props.flash?.error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ $page.props.flash.error }}</div>
+            <div v-if="$page.props.flash?.success" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">{{ $page.props.flash.success }}</div>
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Business Plan Generator</h1>

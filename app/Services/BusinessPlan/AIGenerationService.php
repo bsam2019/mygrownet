@@ -34,11 +34,25 @@ class AIGenerationService
             . ($userPrompt ? "Additional instructions from the user: {$userPrompt}\n\n" : "")
             . "Provide specific, detailed content that a business in {$country} can use directly.";
 
-        try {
-            return $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
-        } catch (\Exception $e) {
-            return $this->generateFallbackContent($field, $context);
+        $attempts = 0;
+        $maxAttempts = 3;
+        $lastException = null;
+        while ($attempts < $maxAttempts) {
+            try {
+                return $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempts++;
+                if ($attempts < $maxAttempts) {
+                    usleep($attempts * 1000000);
+                }
+            }
         }
+        \Illuminate\Support\Facades\Log::warning('AI generation failed after retries', [
+            'field' => $field,
+            'error' => $lastException?->getMessage(),
+        ]);
+        return $this->generateFallbackContent($field, $context);
     }
 
     private function getPrompts(): array
