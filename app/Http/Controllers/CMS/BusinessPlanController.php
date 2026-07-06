@@ -240,6 +240,7 @@ class BusinessPlanController extends Controller
 
     public function generateAI(Request $request)
     {
+        set_time_limit(120);
         $this->getCmsUserOrFail($request);
         $user = $request->user();
 
@@ -279,6 +280,7 @@ class BusinessPlanController extends Controller
 
     public function chat(Request $request)
     {
+        set_time_limit(120);
         $this->getCmsUserOrFail($request);
 
         $validated = $request->validate([

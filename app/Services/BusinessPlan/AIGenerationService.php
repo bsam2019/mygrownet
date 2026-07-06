@@ -35,7 +35,7 @@ class AIGenerationService
             . "Provide specific, detailed content that a business in {$country} can use directly.";
 
         $attempts = 0;
-        $maxAttempts = 3;
+        $maxAttempts = 5;
         $lastException = null;
         while ($attempts < $maxAttempts) {
             try {
@@ -44,7 +44,7 @@ class AIGenerationService
                 $lastException = $e;
                 $attempts++;
                 if ($attempts < $maxAttempts) {
-                    usleep($attempts * 1000000);
+                    sleep($attempts * 2);
                 }
             }
         }
@@ -98,7 +98,7 @@ class AIGenerationService
         $userMessage = "User says: {$message}";
 
         $attempts = 0;
-        $maxAttempts = 3;
+        $maxAttempts = 5;
         $lastException = null;
         while ($attempts < $maxAttempts) {
             try {
@@ -112,7 +112,7 @@ class AIGenerationService
                 $lastException = $e;
                 $attempts++;
                 if ($attempts < $maxAttempts) {
-                    usleep($attempts * 1000000);
+                    sleep($attempts * 2);
                 }
             }
         }
@@ -120,7 +120,7 @@ class AIGenerationService
             'message' => $message,
             'error' => $lastException?->getMessage(),
         ]);
-        return ['type' => 'chat', 'content' => 'Sorry, I had trouble processing that. Could you try again?'];
+        return ['type' => 'chat', 'content' => 'Sorry, the AI service is busy. Please try again in a moment.'];
     }
 
     private function getPrompts(): array

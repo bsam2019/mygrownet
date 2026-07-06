@@ -311,14 +311,18 @@ const sendChatMessage = async () => {
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
             body: JSON.stringify({ message: msg, context: { business_name: form.value.business_name, industry: form.value.industry, current_step: currentStep.value, current_step_label: steps[currentStep.value - 1]?.label || '', total_steps: totalSteps, ...form.value } }),
         });
+        if (!resp.ok) {
+            const errText = await resp.text().catch(() => '');
+            throw new Error(`HTTP ${resp.status}: ${errText.slice(0, 200)}`);
+        }
         const data = await resp.json();
         if (data.type === 'field' && data.field && data.content) {
             chatMessages.value.push({ role: 'assistant', content: data.content, field: data.field });
         } else {
             chatMessages.value.push({ role: 'assistant', content: data.content || 'Could you be more specific?' });
         }
-    } catch {
-        chatMessages.value.push({ role: 'assistant', content: 'Connection error. Please try again.' });
+    } catch (e: any) {
+        chatMessages.value.push({ role: 'assistant', content: e?.message?.includes('HTTP') ? `Server error: ${e.message}` : 'Connection error. Check console for details.' });
     }
     chatLoading.value = false;
 };
