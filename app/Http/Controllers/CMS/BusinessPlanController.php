@@ -243,10 +243,6 @@ class BusinessPlanController extends Controller
         $this->getCmsUserOrFail($request);
         $user = $request->user();
 
-        if ($user->starter_kit_tier === 'basic') {
-            return back()->with('error', 'AI generation is a premium feature.');
-        }
-
         $validated = $request->validate([
             'business_plan_id' => 'nullable|exists:user_business_plans,id',
             'field' => 'required|string',
