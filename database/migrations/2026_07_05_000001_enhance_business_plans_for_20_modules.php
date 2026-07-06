@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Idempotent: skip if already applied (check one key column)
+        if (Schema::hasColumn('user_business_plans', 'tagline')) {
+            return;
+        }
+
         Schema::table('user_business_plans', function (Blueprint $table) {
             // Module 1: Business Profile — additions
             $table->string('tagline')->nullable()->after('business_name');
