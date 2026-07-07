@@ -278,6 +278,14 @@ const generateAIContent = (field: string) => {
     }, {
         preserveScroll: true,
         preserveState: true,
+        onSuccess: (res: any) => {
+            generating.value = false;
+            const val = res.props?.flash?.generatedContent;
+            if (val) {
+                generatedContent.value = val;
+            }
+        },
+        onError: () => { generating.value = false; },
         onFinish: () => { generating.value = false; },
     });
 };
@@ -306,18 +314,23 @@ const sendChatMessage = () => {
     router.post(route('cms.business-plans.chat'), {
         message: msg,
         context: { business_name: form.value.business_name, industry: form.value.industry, current_step: currentStep.value, current_step_label: steps[currentStep.value - 1]?.label || '', total_steps: totalSteps, ...form.value },
-    }, { preserveScroll: true, preserveState: true });
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (res: any) => {
+            chatLoading.value = false;
+            const val = res.props?.flash?.chatResponse;
+            if (!val) return;
+            if (val.type === 'field' && val.field && val.content) {
+                chatMessages.value.push({ role: 'assistant', content: val.content, field: val.field });
+            } else {
+                chatMessages.value.push({ role: 'assistant', content: val.content || 'Could you be more specific?' });
+            }
+        },
+        onError: () => { chatLoading.value = false; chatMessages.value.push({ role: 'assistant', content: 'Request failed. Please try again.' }); },
+        onFinish: () => { chatLoading.value = false; },
+    });
 };
-
-watch(() => (page.props as any).flash?.chatResponse, (val: any | null) => {
-    if (!val) return;
-    chatLoading.value = false;
-    if (val.type === 'field' && val.field && val.content) {
-        chatMessages.value.push({ role: 'assistant', content: val.content, field: val.field });
-    } else {
-        chatMessages.value.push({ role: 'assistant', content: val.content || 'Could you be more specific?' });
-    }
-});
 
 const applyChatField = (field: string, content: string) => {
     (form.value as any)[field] = content;
