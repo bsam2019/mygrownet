@@ -26,7 +26,7 @@ const hasVal = (v: any) => v != null && v !== '';
             <div class="flex items-center justify-between mb-6">
                 <Link :href="route('cms.business-plans.index')" class="text-sm text-blue-600 hover:text-blue-800 font-medium">&larr; Back to Plans</Link>
                 <div class="flex items-center gap-2">
-                    <Link :href="route('cms.business-plans.create', { plan: plan.id })" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Edit</Link>
+                    <Link :href="route('cms.business-plans.edit', plan.id)" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Edit</Link>
                     <button @click="exportPlan('pdf')" :disabled="exporting" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ exporting ? 'Exporting...' : 'Export PDF' }}</button>
                 </div>
             </div>

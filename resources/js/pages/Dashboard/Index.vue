@@ -218,8 +218,8 @@ const handleModuleClick = (module: Module) => {
 
 const handleBusinessManagerClick = () => {
     if (props.cmsCompanies.length === 0) {
-        // No companies - go to create
-        router.visit('/cms/companies/create');
+        // No companies - go to CMS companies hub
+        router.visit(route('cms.companies.hub'));
     } else if (props.cmsCompanies.length === 1) {
         // One company - go directly to dashboard
         router.post('/cms/switch-company', { company_id: props.cmsCompanies[0].id }, {
@@ -228,8 +228,8 @@ const handleBusinessManagerClick = () => {
             }
         });
     } else {
-        // Multiple companies - show selector
-        showCompanySelector.value = true;
+        // Multiple companies - go to hub
+        router.visit(route('cms.companies.hub'));
     }
 };
 </script>

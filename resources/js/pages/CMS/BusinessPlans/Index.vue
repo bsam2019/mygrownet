@@ -12,7 +12,7 @@ const props = defineProps<{ plans: { data: Plan[]; meta?: any }; userTier: strin
 
 const createNew = () => router.get(route('cms.business-plans.create'));
 const viewPlan = (id: number) => router.get(route('cms.business-plans.show', id));
-const editPlan = (id: number) => router.get(route('cms.business-plans.create', { plan: id }));
+const editPlan = (id: number) => router.get(route('cms.business-plans.edit', id));
 const deletePlan = (id: number, name: string) => {
     if (confirm(`Delete "${name}"? This cannot be undone.`)) {
         router.delete(route('cms.business-plans.delete', id));

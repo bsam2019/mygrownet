@@ -41,6 +41,8 @@ class BusinessPlan extends Model
         'long_term_goals',
         'success_factors',
         'background',
+        'business_description',
+        'wizard_completed',
         'logo_path',
         'problem_statement',
         'existing_alternatives',
@@ -188,6 +190,7 @@ class BusinessPlan extends Model
         'date_established' => 'datetime',
         'current_step' => 'integer',
         'is_premium' => 'boolean',
+        'wizard_completed' => 'boolean',
         'completed_at' => 'datetime',
     ];
 

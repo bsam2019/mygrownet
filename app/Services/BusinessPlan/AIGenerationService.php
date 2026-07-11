@@ -13,7 +13,7 @@ class AIGenerationService
         $this->ai = $ai;
     }
 
-    public function generate(string $field, array $context): string
+    public function generate(string $field, array $context, ?string $tone = null, ?string $refinement = null): string
     {
         $prompts = $this->getPrompts();
 
@@ -21,25 +21,45 @@ class AIGenerationService
         $businessName = $context['business_name'] ?? 'the business';
         $industry = $context['industry'] ?? '';
         $country = $context['country'] ?? 'Zambia';
-        $userPrompt = $context['user_ai_instructions'] ?? '';
+
+        // Build context from other filled fields
+        $otherContent = '';
+        foreach ($prompts as $key => $label) {
+            if ($key === $field) continue;
+            $val = $context[$key] ?? '';
+            if (!empty($val) && is_string($val)) {
+                $otherContent .= "- {$label}: {$val}\n";
+            }
+        }
+
+        $toneInstructions = match ($tone) {
+            'short' => 'Keep it very concise — 1-2 sentences maximum.',
+            'detailed' => 'Write a thorough, comprehensive response — 5-7 sentences with details.',
+            'formal' => 'Write in a formal, corporate tone suitable for investors.',
+            default => 'Write in professional but accessible language (3-5 sentences).',
+        };
 
         $systemPrompt = "You are a professional business plan writer and strategic advisor for entrepreneurs in {$country}. "
             . "You write clear, specific, and actionable business content. "
-            . "Keep responses concise (3-5 sentences unless asked for more detail). "
+            . "{$toneInstructions} "
             . "Be specific to the {$industry} industry. "
-            . "Write in professional but accessible language.";
+            . "IMPORTANT: Output plain text only. Do NOT use any markdown formatting — no bold (**), no italics (*), no headings (#), no horizontal rules (--- or ___), no markdown-style lists with asterisks. Use simple paragraphs and numbered lines (1., 2.) instead.";
 
         $userMessage = "For the business \"{$businessName}\" in the {$industry} industry:\n\n"
+            . "Here is what has already been filled in the business plan:\n{$otherContent}\n"
             . "Generate content for: {$fieldLabel}\n\n"
-            . ($userPrompt ? "Additional instructions from the user: {$userPrompt}\n\n" : "")
-            . "Provide specific, detailed content that a business in {$country} can use directly.";
+            . ($refinement ? "Additional refinement request: {$refinement}\n\n" : '')
+            . "CRITICAL: Do NOT restate or repeat the section name or heading — just provide the content directly with no preamble. "
+            . "For example, if asked for a mission statement, respond with \"Our mission is…\" not \"Mission Statement: Our mission is…\" "
+            . "Provide specific, detailed content that a business in {$country} can use directly. "
+            . "Ensure it is consistent with and builds upon the existing content above.";
 
         $attempts = 0;
         $maxAttempts = 5;
         $lastException = null;
         while ($attempts < $maxAttempts) {
             try {
-                return $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
+                return $this->stripMarkdown($this->ai->smartChatWithPrompt($systemPrompt, $userMessage));
             } catch (\Exception $e) {
                 $lastException = $e;
                 $attempts++;
@@ -65,13 +85,13 @@ class AIGenerationService
         $stepLabel = $context['current_step_label'] ?? '';
 
         $fieldsList = '';
-        $filledFields = [];
+        $filledContent = '';
         $emptyFields = [];
         foreach ($prompts as $key => $label) {
             $fieldsList .= "- {$key}: {$label}\n";
             $val = $context[$key] ?? '';
-            if (!empty($val)) {
-                $filledFields[] = $key;
+            if (!empty($val) && is_string($val)) {
+                $filledContent .= "- {$label}: {$val}\n";
             } else {
                 $emptyFields[] = $key;
             }
@@ -80,16 +100,17 @@ class AIGenerationService
         $systemPrompt = "You are a business plan writing assistant embedded in the form itself. "
             . "You help entrepreneurs in {$country} create a business plan for \"{$businessName}\" in the {$industry} industry.\n\n"
             . "CURRENT PROGRESS: Step {$currentStep} of 20 — {$stepLabel}\n"
-            . "FILLED FIELDS: " . (count($filledFields) > 0 ? implode(', ', $filledFields) : 'none yet') . "\n"
+            . "CURRENTLY FILLED CONTENT:\n{$filledContent}\n"
             . "EMPTY FIELDS: " . (count($emptyFields) > 0 ? implode(', ', $emptyFields) : 'none') . "\n\n"
             . "AVAILABLE FIELDS (field_key: description):\n{$fieldsList}\n"
             . "RULES:\n"
             . "1. When the user asks to generate, write, create, improve, rewrite, or fix content for a section — respond with a field value.\n"
             . "2. When the user is just chatting or asking advice — respond conversationally.\n"
             . "3. Always write content specific to {$country} and the {$industry} industry.\n"
-            . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n"
-            . "5. If the user says something generic like 'write my mission statement', fill the mission_statement field.\n"
-            . "6. Prioritize fields in the current step ({$stepLabel}) when the user is vague.\n\n"
+             . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n"
+             . "5. If the user says something generic like 'write my mission statement', fill the mission_statement field.\n"
+             . "6. Prioritize fields in the current step ({$stepLabel}) when the user is vague.\n"
+             . "7. When generating field content, do NOT restate the section name or heading — just provide the content directly with no preamble.\n\n"
             . "RESPONSE FORMAT (output ONLY valid JSON, no markdown, no backticks):\n"
             . "- For generating content: {\"type\":\"field\",\"field\":\"field_key\",\"content\":\"the generated content\"}\n"
             . "- For chatting: {\"type\":\"chat\",\"content\":\"your helpful response\"}\n"
@@ -105,9 +126,12 @@ class AIGenerationService
                 $raw = $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
                 $parsed = json_decode($raw, true);
                 if (is_array($parsed) && isset($parsed['type'])) {
+                    if (isset($parsed['content'])) {
+                        $parsed['content'] = $this->stripMarkdown($parsed['content']);
+                    }
                     return $parsed;
                 }
-                return ['type' => 'chat', 'content' => $raw];
+                return ['type' => 'chat', 'content' => $this->stripMarkdown($raw)];
             } catch (\Exception $e) {
                 $lastException = $e;
                 $attempts++;
@@ -127,6 +151,7 @@ class AIGenerationService
     {
         return [
             'tagline' => 'A short, memorable tagline or slogan',
+            'business_description' => 'Quick overview / snapshot of the business (captured during Quick Start wizard)',
             'mission_statement' => 'A mission statement',
             'vision_statement' => 'A vision statement',
             'core_values' => 'Core values as a JSON array of strings',
@@ -218,5 +243,29 @@ class AIGenerationService
         ];
 
         return $templates[$field] ?? "Content for {$field} will be generated based on your business context.";
+    }
+
+    private function stripMarkdown(string $text): string
+    {
+        $text = preg_replace('/^#{1,6}\s*/m', '', $text);
+        $text = preg_replace('/\*{1,3}(.+?)\*{1,3}/', '$1', $text);
+        $text = preg_replace('/^[-*_]{3,}\s*$/m', '', $text);
+        $text = preg_replace('/^[\s]*[-*+]\s+(.+)$/m', '• $1', $text);
+        $text = str_replace(['**', '__'], '', $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", trim($text));
+        // Strip leading line if it looks like a repeated heading (short, ends with colon, matches a known key label)
+        $lines = explode("\n", $text, 2);
+        $first = trim($lines[0] ?? '');
+        $firstClean = rtrim($first, " \t\n\r\0\x0B.:-");
+        if ($firstClean !== '' && strlen($firstClean) < 60 && isset($lines[1])) {
+            $keys = array_keys($this->getPrompts());
+            foreach ($keys as $key) {
+                $keyLabel = str_replace('_', ' ', $key);
+                if (strcasecmp($firstClean, $keyLabel) === 0 || stripos($firstClean, $keyLabel) !== false) {
+                    return trim($lines[1]);
+                }
+            }
+        }
+        return $text;
     }
 }

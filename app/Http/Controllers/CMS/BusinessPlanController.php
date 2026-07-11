@@ -42,16 +42,22 @@ class BusinessPlanController extends Controller
         $this->getCmsUserOrFail($request);
         $user = $request->user();
 
-        $planId = $request->query('plan');
-        if ($planId) {
-            $existingPlan = BusinessPlan::where('id', $planId)
-                ->where('user_id', $user->id)
-                ->first();
-        } else {
-            $existingPlan = BusinessPlan::where('user_id', $user->id)
-                ->latest()
-                ->first();
-        }
+        $existingPlan = null;
+
+        return Inertia::render('CMS/BusinessPlans/Create', [
+            'existingPlan' => $existingPlan,
+            'userTier' => $user->starter_kit_tier ?? 'basic',
+        ]);
+    }
+
+    public function edit(Request $request, int $planId)
+    {
+        $this->getCmsUserOrFail($request);
+        $user = $request->user();
+
+        $existingPlan = BusinessPlan::where('id', $planId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
         return Inertia::render('CMS/BusinessPlans/Create', [
             'existingPlan' => $existingPlan,
@@ -90,6 +96,8 @@ class BusinessPlanController extends Controller
             'long_term_goals' => 'nullable|string',
             'success_factors' => 'nullable|string',
             'background' => 'nullable|string',
+            'business_description' => 'nullable|string',
+            'wizard_completed' => 'nullable|boolean',
             'problem_statement' => 'nullable|string',
             'existing_alternatives' => 'nullable|string',
             'why_existing_fail' => 'nullable|string',
@@ -194,9 +202,10 @@ class BusinessPlanController extends Controller
             ]);
         }
 
-        return back()->with([
-            'success' => 'Business plan saved successfully!',
-            'businessPlan' => $plan,
+        return response()->json([
+            'success' => true,
+            'business_plan_id' => $plan->id,
+            'business_plan' => $plan,
         ]);
     }
 
@@ -248,33 +257,45 @@ class BusinessPlanController extends Controller
             'business_plan_id' => 'nullable|exists:user_business_plans,id',
             'field' => 'required|string',
             'context' => 'required|array',
+            'tone' => 'nullable|string|in:short,detailed,formal',
+            'refinement' => 'nullable|string|max:500',
         ]);
 
         try {
             $generatedContent = $this->aiService->generate(
                 $validated['field'],
-                $validated['context']
+                $validated['context'],
+                $validated['tone'] ?? null,
+                $validated['refinement'] ?? null
             );
 
             if ($validated['business_plan_id']) {
-                DB::table('business_plan_ai_generations')->insert([
-                    'business_plan_id' => $validated['business_plan_id'],
-                    'user_id' => $user->id,
-                    'section' => $validated['field'],
-                    'prompt' => json_encode($validated['context']),
-                    'generated_content' => $generatedContent,
-                    'was_accepted' => false,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                try {
+                    DB::table('business_plan_ai_generations')->insert([
+                        'business_plan_id' => $validated['business_plan_id'],
+                        'user_id' => $user->id,
+                        'section' => $validated['field'],
+                        'prompt' => json_encode($validated['context']),
+                        'generated_content' => $generatedContent,
+                        'was_accepted' => false,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    // Table may not exist yet
+                }
             }
 
-            return back()->with([
-                'success' => 'Content generated successfully!',
-                'generatedContent' => $generatedContent,
+            return response()->json([
+                'success' => true,
+                'content' => $generatedContent,
+                'field' => $validated['field'],
             ]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to generate content. Please try again.');
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -290,12 +311,13 @@ class BusinessPlanController extends Controller
 
         try {
             $result = $this->aiService->chat($validated['message'], $validated['context']);
-            return back()->with('chatResponse', $result);
+            return response()->json($result);
         } catch (\Exception $e) {
-            return back()->with('chatResponse', [
+            return response()->json([
                 'type' => 'chat',
-                'content' => 'Sorry, I ran into an error. Please try again.',
-            ]);
+                'content' => 'Sorry, I ran into an error.',
+                '_debug' => $e->getMessage(),
+            ], 500);
         }
     }
 

@@ -69,20 +69,11 @@ class AIContentService
         
         // Auto-configure NVIDIA-specific params
         if ($this->provider === 'nvidia') {
-            if (str_contains($model, 'flash') || str_contains($model, 'Flash')) {
-                $this->extraBody = [
-                    'chat_template_kwargs' => [
-                        'thinking' => true,
-                        'reasoning_effort' => 'high',
-                    ],
-                ];
-            } else {
-                $this->extraBody = [
-                    'chat_template_kwargs' => [
-                        'thinking' => false,
-                    ],
-                ];
-            }
+            $this->extraBody = [
+                'chat_template_kwargs' => [
+                    'thinking' => false,
+                ],
+            ];
         }
     }
     
@@ -2394,7 +2385,7 @@ PROMPT;
                 ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.7,
-            'max_tokens' => 16384, // Support DeepSeek's 16k output
+            'max_tokens' => 1024, // Responses are 3-5 sentences, no need for 16K
         ];
         
         // Add NVIDIA-specific extra_body for chat_template_kwargs (thinking/reasoning)

@@ -150,6 +150,7 @@ Route::prefix('cms')
         Route::prefix('business-plans')->name('business-plans.')->group(function () {
             Route::get('/', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'create'])->name('create');
+            Route::get('/{planId}/edit', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'edit'])->name('edit');
             Route::post('/save', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'save'])->name('save');
             Route::post('/complete', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'complete'])->name('complete');
             Route::get('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'show'])->name('show');

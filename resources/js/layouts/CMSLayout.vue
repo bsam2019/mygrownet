@@ -1613,10 +1613,11 @@
     </TransitionRoot>
     </div>
   </div>
+  <ToastContainer />
 </template>
 
 <script setup lang="ts">
-import { ref, provide, computed, onMounted, onUnmounted } from 'vue'
+import { ref, provide, computed, watch, onMounted, onUnmounted } from 'vue'
 import { router, usePage, Link, Head } from '@inertiajs/vue3'
 import { Menu, MenuButton, MenuItem, MenuItems, Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -1672,6 +1673,8 @@ import InvoiceForm from '@/components/CMS/Forms/InvoiceForm.vue'
 import ExpenseForm from '@/components/CMS/Forms/ExpenseForm.vue'
 import NavItem from '@/components/CMS/NavItem.vue'
 import { useCMSSlideOver } from '@/composables/useCMSSlideOver'
+import { useToast } from '@/composables/useToast'
+import ToastContainer from '@/components/GrowBiz/ToastContainer.vue'
 
 interface Notification {
   id: number
@@ -1696,6 +1699,15 @@ const page = usePage()
 const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 const slideOver = useCMSSlideOver()
+
+const { toast } = useToast()
+const flash = computed(() => (page.props as any).flash)
+watch(flash, (f) => {
+    if (f?.success) toast.success(f.success)
+    if (f?.error) toast.error(f.error)
+    if (f?.warning) toast.warning(f.warning)
+    if (f?.info) toast.info(f.info)
+}, { immediate: true, deep: true })
 
 // Collapsible sections state - persisted in localStorage
 const STORAGE_KEY = 'cms_sidebar_sections'
