@@ -35,5 +35,81 @@
 - **Blade view**: `primeedge.mygrownet.com` → `primeedge` already mapped in `HandleInertiaRequests.php`
 - **Note**: Subdomain routes use `primeedge.sub.*` name prefix to avoid collisions with main domain `primeedge.*` routes. Controllers that redirect (login, logout) currently use `primeedge.*` names. If activating subdomain, update redirect targets to detect current domain and use `primeedge.sub.*` names.
 
+## StockFlow Module (DDD Architecture)
+
+Domain-Driven Design module under `/stock-audit` prefix. Uses `sa_` prefixed tables with `sa_company_id` for tenant isolation.
+
+### Architecture Layers
+
+```
+app/Domain/StockFlow/           ← Domain Layer (pure PHP, zero Laravel deps)
+├── ValueObjects/               Typed IDs (CompanyId, ItemId, ...), enums (MovementType, PaymentMethod, ...), Money
+├── Entities/                   Rich domain models (Item, Sale, PurchaseOrder, Audit, CashRegister, ...)
+│   Each entity: private constructor, create()/reconstitute(), behavior methods, toArray()
+├── Repositories/               Interface contracts (11 interfaces)
+├── Services/                   Domain services orchestrating entities + repositories
+│   ├── InventoryService        Create/update items, adjust stock
+│   ├── SalesService            Create sale, auto-deduct stock, update register
+│   ├── PurchasingService       Create PO, receive stock, supplier management
+│   ├── PhysicalCountService    Create/complete count, generate audit
+│   ├── AuditService            Finalize audit with recorded sales
+│   ├── CashRegisterService     Open/close/verify register, add movements
+│   ├── DashboardService        Stats and company listing
+│   └── DepartmentBinService    Department and bin CRUD
+└── Exceptions/                 StockFlowException, OperationFailedException, InsufficientStockException
+
+app/Infrastructure/
+├── Persistence/Eloquent/StockFlow/     ← Eloquent models (thin, table + fillable + casts + relations)
+└── Persistence/Repositories/StockFlow/ ← Repository implementations (EloqueNT → Domain mapping)
+
+app/Http/Controllers/StockAudit/         ← Controllers (thin — validation + service delegation)
+routes/stock-audit.php                   ← 56 routes
+app/Providers/StockAuditServiceProvider  ← DI bindings (interfaces → implementations)
+```
+
+### Repository Bindings
+
+| Interface | Implementation |
+|---|---|
+| `CompanyRepositoryInterface` | `EloquentCompanyRepository` |
+| `DepartmentRepositoryInterface` | `EloquentDepartmentRepository` |
+| `BinRepositoryInterface` | `EloquentBinRepository` |
+| `ItemRepositoryInterface` | `EloquentItemRepository` |
+| `SupplierRepositoryInterface` | `EloquentSupplierRepository` |
+| `PurchaseOrderRepositoryInterface` | `EloquentPurchaseOrderRepository` |
+| `SaleRepositoryInterface` | `EloquentSaleRepository` |
+| `StockMovementRepositoryInterface` | `EloquentStockMovementRepository` |
+| `PhysicalCountRepositoryInterface` | `EloquentPhysicalCountRepository` |
+| `AuditRepositoryInterface` | `EloquentAuditRepository` |
+| `CashRegisterRepositoryInterface` | `EloquentCashRegisterRepository` |
+
+### Layer Rules
+- **Domain** — No Laravel dependencies. Pure PHP 8.1+ with typed properties, named constructors, `DateTimeImmutable`
+- **Infrastructure** — Only implements Domain contracts. Eloquent models are thin data mappers
+- **Controllers** — Only handle HTTP (validation, session, Inertia responses). All business logic in Domain services
+
+### Tables (17 + extras)
+`sa_companies`, `sa_departments`, `sa_bins`, `sa_items`, `sa_suppliers`, `sa_purchase_orders`, `sa_purchase_order_items`, `sa_sales`, `sa_sale_items`, `sa_stock_movements`, `sa_physical_counts`, `sa_count_items`, `sa_audits`, `sa_audit_items`, `sa_audit_reconciliations`, `sa_cash_registers`, `sa_cash_movements`, `sa_expiry_checks`, `sa_expiry_check_items`, `sa_subscription_plans`, `sa_company_subscriptions`
+
+### Workflows
+
+**Daily Operations**: Items → Purchases (PO → receive → stock+) → Sales (record → stock− → register+) → Cash (open → expenses/banking → close → verify) → Adjustments
+
+**Audit**: Items → Physical Count (auto-populates all items) → Enter physical qty → Complete (updates system qty) → Generate Audit (reconciliations, variance) → Finalize (recorded sales → unaccounted) → Export CSV
+
+**Key invariants**:
+- `StockMovement` records `quantity_before` / `quantity_after` for every qty change
+- `Item::adjustStock()` ensures `system_quantity ≥ 0`
+- `CashRegister::recordSale()/addExpense()/addBanking()` auto-recalculates `expected_closing`
+- `Audit::finalize()` computes `unaccountedValue = totalVariance − totalRecordedSales`
+- All DB mutations inside `DB::transaction()` in domain services
+
+### Artisan Commands
+- `php artisan stock-audit:import-items {company} {file}` — CSV import
+- `php artisan stock-audit:import-sample {company?}` — Sample Taradasi data
+
+### Seeded Client
+Taradasi Dental Clinic (run `StockAuditSeeder`)
+
 ## Removed Files
 - `resources/js/Pages/GrowNet/Dashboard.vue` — classic desktop GrowNet dashboard, replaced by `GrowNet/GrowNet.vue` (modern mobile SPA)

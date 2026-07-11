@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Providers;
+
+use App\Domain\StockFlow\Repositories\AuditRepositoryInterface;
+use App\Domain\StockFlow\Repositories\BinRepositoryInterface;
+use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
+use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
+use App\Domain\StockFlow\Repositories\CompanyRoleRepositoryInterface;
+use App\Domain\StockFlow\Repositories\CompanyUserRepositoryInterface;
+use App\Domain\StockFlow\Repositories\DepartmentRepositoryInterface;
+use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
+use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
+use App\Domain\StockFlow\Repositories\PurchaseOrderRepositoryInterface;
+use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
+use App\Domain\StockFlow\Repositories\StockMovementRepositoryInterface;
+use App\Domain\StockFlow\Repositories\SupplierRepositoryInterface;
+use App\Domain\StockFlow\Services\CompanyRoleService;
+use App\Domain\StockFlow\Services\CompanyUserService;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentAuditRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBinRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCashRegisterRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRoleRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyUserRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentDepartmentRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentItemRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPhysicalCountRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPurchaseOrderRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSaleRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentStockMovementRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSupplierRepository;
+use Illuminate\Support\ServiceProvider;
+
+class StockAuditServiceProvider extends ServiceProvider
+{
+    public function boot(): void
+    {
+        $this->loadMigrationsFrom(database_path('migrations'));
+    }
+
+    public function register(): void
+    {
+        $this->app->bind(CompanyRepositoryInterface::class, EloquentCompanyRepository::class);
+        $this->app->bind(DepartmentRepositoryInterface::class, EloquentDepartmentRepository::class);
+        $this->app->bind(BinRepositoryInterface::class, EloquentBinRepository::class);
+        $this->app->bind(ItemRepositoryInterface::class, EloquentItemRepository::class);
+        $this->app->bind(SupplierRepositoryInterface::class, EloquentSupplierRepository::class);
+        $this->app->bind(PurchaseOrderRepositoryInterface::class, EloquentPurchaseOrderRepository::class);
+        $this->app->bind(SaleRepositoryInterface::class, EloquentSaleRepository::class);
+        $this->app->bind(StockMovementRepositoryInterface::class, EloquentStockMovementRepository::class);
+        $this->app->bind(PhysicalCountRepositoryInterface::class, EloquentPhysicalCountRepository::class);
+        $this->app->bind(AuditRepositoryInterface::class, EloquentAuditRepository::class);
+        $this->app->bind(CashRegisterRepositoryInterface::class, EloquentCashRegisterRepository::class);
+        
+        // Employee/Role repositories
+        $this->app->bind(CompanyRoleRepositoryInterface::class, EloquentCompanyRoleRepository::class);
+        $this->app->bind(CompanyUserRepositoryInterface::class, EloquentCompanyUserRepository::class);
+
+        // Services
+        $this->app->singleton(CompanyRoleService::class);
+        $this->app->singleton(CompanyUserService::class);
+    }
+}

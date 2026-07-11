@@ -74,6 +74,23 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\VentureBuilder\VentureDividendPaid::class => [
             \App\Listeners\VentureBuilder\SendDividendPaymentNotification::class,
         ],
+
+        // StockFlow Domain Events
+        \App\Domain\StockFlow\Events\SaleCompleted::class => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onSaleCompleted'],
+        ],
+        \App\Domain\StockFlow\Events\StockAdjusted::class => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockAdjusted'],
+        ],
+        \App\Domain\StockFlow\Events\PurchaseOrderReceived::class => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onPurchaseOrderReceived'],
+        ],
+        \App\Domain\StockFlow\Events\StockCountFinalized::class => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onStockCountFinalized'],
+        ],
+        \App\Domain\StockFlow\Events\CashDiscrepancyDetected::class => [
+            [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onCashDiscrepancyDetected'],
+        ],
     ];
 
     public function boot(): void

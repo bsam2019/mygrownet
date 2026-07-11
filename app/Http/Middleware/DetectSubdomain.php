@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
+use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 class DetectSubdomain
 {
     public function __construct(
-        private SiteRepositoryInterface $siteRepository
+        private SiteRepositoryInterface $siteRepository,
+        private CompanyRepositoryInterface $companyRepository,
     ) {}
 
     /**
@@ -134,6 +136,12 @@ class DetectSubdomain
                 return $next($request);
             }
 
+            // Handle StockFlow subdomain
+            if ($subdomain === 'stockflow') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
@@ -142,6 +150,15 @@ class DetectSubdomain
             ];
             
             if (in_array($subdomain, $reserved)) {
+                return $next($request);
+            }
+            
+            // Check if it's a StockFlow company subdomain
+            $company = $this->companyRepository->findBySubdomain($subdomain);
+            if ($company && $company->getStatus() === 'active') {
+                $this->configureSubdomainUrl($subdomain);
+                // Set the company in session so controllers can access it
+                $request->session()->put('stock_audit_company_id', $company->id());
                 return $next($request);
             }
             

@@ -63,5 +63,6 @@ class Kernel extends HttpKernel
         'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
         'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
         'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
+        'stockflow.permission' => \App\Http\Middleware\StockFlowPermission::class,
     ];
 }

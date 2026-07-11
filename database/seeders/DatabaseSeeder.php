@@ -41,6 +41,9 @@ class DatabaseSeeder extends Seeder
 
             // ZamStay Module
             ZamStayPropertySeeder::class,
+
+            // Stock Audit Module — first client
+            StockAuditSeeder::class,
         ]);
     }
 }
