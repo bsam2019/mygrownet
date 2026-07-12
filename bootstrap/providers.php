@@ -16,6 +16,7 @@ return [
     App\Providers\ProfitSharingServiceProvider::class,
     App\Providers\GrowBizServiceProvider::class,
     App\Providers\GrowBuilderServiceProvider::class,
+    App\Providers\GrowStartServiceProvider::class,
     App\Providers\StarterKitServiceProvider::class,
     App\Providers\StorageServiceProvider::class,
     App\Providers\SupportServiceProvider::class,
