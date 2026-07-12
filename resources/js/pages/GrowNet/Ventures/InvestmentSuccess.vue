@@ -6,7 +6,7 @@ import { CheckCircleIcon, DocumentTextIcon, ArrowRightIcon } from '@heroicons/vu
 interface Investment {
     id: number;
     amount: number;
-    shares: number;
+    shares_allocated: number;
     payment_method: string;
     payment_reference: string;
     status: string;
@@ -76,7 +76,7 @@ const formatDate = (date: string) => {
                         </div>
                         <div>
                             <div class="text-sm text-green-700">Shares Allocated</div>
-                            <div class="text-xl font-bold text-green-900">{{ investment.shares.toLocaleString() }}</div>
+                            <div class="text-xl font-bold text-green-900">{{ (investment.shares_allocated || 0).toLocaleString() }}</div>
                         </div>
                         <div>
                             <div class="text-sm text-green-700">Payment Method</div>

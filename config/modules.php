@@ -47,7 +47,7 @@ return [
         ],
 
         'venture_builder' => [
-            'enabled' => false, // DISABLED - Not ready for production
+            'enabled' => true, // Enabled for production
             'name' => 'Venture Builder',
             'description' => 'Co-invest in vetted business projects',
             'icon' => 'BriefcaseIcon',

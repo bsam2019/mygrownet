@@ -22,6 +22,8 @@ interface Venture {
     total_raised: number;
     minimum_investment: number;
     maximum_investment: number | null;
+    share_price: number | null;
+    featured_image: string | null;
     investor_count: number;
     status: string;
     expected_roi_months: number | null;
@@ -81,6 +83,11 @@ const formatDate = (date: string | null) => {
                     Back to Marketplace
                 </Link>
 
+                <!-- Hero Image -->
+                <div v-if="venture.featured_image" class="mb-8 overflow-hidden rounded-xl shadow">
+                    <img :src="`/storage/${venture.featured_image}`" :alt="venture.title" class="h-72 w-full object-cover" />
+                </div>
+
                 <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
                     <!-- Main Content -->
                     <div class="lg:col-span-2 space-y-6">
@@ -126,7 +133,14 @@ const formatDate = (date: string | null) => {
                                         <div class="text-gray-600">{{ venture.investor_count }} members</div>
                                     </div>
                                 </div>
-                                <div v-if="venture.expected_launch_date" class="flex items-start gap-3">
+                                <div v-if="venture.share_price" class="flex items-start gap-3">
+                                    <CheckCircleIcon class="h-6 w-6 text-green-600 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Share Price</div>
+                                        <div class="text-gray-600">{{ formatCurrency(venture.share_price) }}</div>
+                                    </div>
+                                </div>
+                            <div v-if="venture.expected_launch_date" class="flex items-start gap-3">
                                     <CheckCircleIcon class="h-6 w-6 text-green-600 flex-shrink-0 mt-1" />
                                     <div>
                                         <div class="font-semibold text-gray-900">Expected Launch</div>

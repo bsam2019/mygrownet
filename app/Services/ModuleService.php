@@ -185,6 +185,60 @@ class ModuleService
     }
 
     /**
+     * Filter modules to only those that are enabled (with slug-to-config-key mapping)
+     */
+    public static function filterEnabledModules(array $modules): array
+    {
+        $enabledModules = self::getEnabledModules();
+        $enabledSlugs = array_keys($enabledModules);
+
+        $slugToConfigKey = [
+            'grownet' => 'grownet',
+            'mygrownet-core' => 'grownet',
+            'mlm-dashboard' => 'grownet',
+            'growbuilder' => 'growbuilder',
+            'bizboost' => 'bizboost',
+            'growfinance' => 'growfinance',
+            'growbiz' => 'growbiz',
+            'cms' => 'cms',
+            'marketplace' => 'growmarket',
+            'shop' => 'growmarket',
+            'growmarket' => 'growmarket',
+            'learning' => 'library',
+            'education' => 'library',
+            'library' => 'library',
+            'lifeplus' => 'lifeplus',
+            'health' => 'lifeplus',
+            'wellness' => 'lifeplus',
+            'ubumi' => 'ubumi',
+            'mygrow-save' => 'wallet',
+            'wallet' => 'wallet',
+            'messaging' => 'messaging',
+            'announcements' => 'announcements',
+            'community' => 'community',
+            'support' => 'support',
+            'workshops' => 'workshops',
+            'profit-sharing' => 'profit_sharing',
+            'inventory' => 'inventory',
+            'pos' => 'pos',
+            'bgf' => 'bgf',
+            'ventures' => 'venture_builder',
+            'venture-builder' => 'venture_builder',
+        ];
+
+        return array_values(array_filter($modules, function ($module) use ($enabledSlugs, $slugToConfigKey) {
+            $slug = $module['slug'] ?? '';
+            $configKey = $slugToConfigKey[$slug] ?? $slug;
+
+            if ($slug === 'dashboard' || $configKey === 'dashboard') {
+                return true;
+            }
+
+            return in_array($configKey, $enabledSlugs);
+        }));
+    }
+
+    /**
      * Get module configuration
      */
     public static function getModule(string $moduleKey): ?array

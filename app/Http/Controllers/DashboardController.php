@@ -53,9 +53,96 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Check if user has manager role (using a simple field or method)
-        if ($user->rank === 'manager' || $this->isManager($user)) {
+        // Check if user has manager role - redirect early
+        $isManager = $user->rank === 'manager' || $this->isManager($user) || in_array($user->rank, ['manager', 'regional_manager']);
+        if ($isManager) {
             return redirect()->route('manager.dashboard');
+        }
+
+        // Get modules using the use case directly
+        $getUserModulesUseCase = app(\App\Application\UseCases\Module\GetUserModulesUseCase::class);
+        $moduleDTOs = $getUserModulesUseCase->execute($user);
+        
+        $modules = array_map(function($dto) {
+            return $dto->toArray();
+        }, $moduleDTOs);
+        
+        // Filter modules by enabled status
+        $modules = $this->filterEnabledModules($modules);
+        
+        // Get wallet data
+        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
+        $walletBreakdown = $walletService->getWalletBreakdown($user);
+        $recentTransactions = $walletService->getRecentTransactions($user, 5);
+        
+        // Check user roles
+        $isAdmin = $user->hasRole(['Administrator', 'admin', 'superadmin']);
+        
+        // Check if user has active GrowNet package or is admin or has GrowNet module access
+        $hasGrowNetModule = collect($modules)->contains(function ($module) {
+            return $module['slug'] === 'grownet' && $module['has_access'];
+        });
+        $hasActiveGrowNetPackage = !is_null($user->lgr_package_id) || $isAdmin || $hasGrowNetModule;
+        
+        // Get CMS companies for Business Manager module
+        $cmsCompanies = $user->cmsUsers()
+            ->with('company')
+            ->whereHas('company', function($q) {
+                $q->where('status', 'active');
+            })
+            ->get()
+            ->map(function($cmsUser) {
+                return [
+                    'id' => $cmsUser->company->id,
+                    'name' => $cmsUser->company->name,
+                    'industry' => $cmsUser->company->industry,
+                    'role' => $cmsUser->role,
+                ];
+            })
+            ->toArray();
+        
+        return Inertia::render('Dashboard/Index', [
+            'walletBalance' => $walletBreakdown['balance'],
+            'bonusBalance' => (float) ($user->bonus_balance ?? 0),
+            'totalDeposits' => $walletBreakdown['credits']['deposits'],
+            'totalWithdrawals' => $walletBreakdown['debits']['withdrawals'],
+            'commissions' => $walletBreakdown['credits']['commissions'] ?? 0,
+            'profitShares' => $walletBreakdown['credits']['profit_shares'] ?? 0,
+            'recentTransactions' => $recentTransactions,
+            'modules' => $modules,
+            'cmsCompanies' => $cmsCompanies,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+            ],
+            'isAdmin' => $isAdmin,
+            'isManager' => $isManager,
+            'accountType' => $user->getPrimaryAccountType()?->value ?? 'client',
+            'hasActiveGrowNetPackage' => $hasActiveGrowNetPackage,
+        ]);
+    }
+    
+    private function filterEnabledModules(array $modules): array
+    {
+        return \App\Services\ModuleService::filterEnabledModules($modules);
+    }
+    
+    private function redirectToPreferredApp(string $app)
+    {
+        $appRoutes = [
+            'grownet' => 'grownet.dashboard',
+            'bizboost' => 'bizboost.dashboard',
+            'growfinance' => 'growfinance.dashboard',
+            'growbiz' => 'growbiz.dashboard',
+            'home' => 'home-hub.index',
+        ];
+        
+        $routeName = $appRoutes[$app] ?? 'home-hub.index';
+        
+        if (\Route::has($routeName)) {
+            return redirect()->route($routeName);
         }
         
         // Check if user is an employee - redirect to employee portal

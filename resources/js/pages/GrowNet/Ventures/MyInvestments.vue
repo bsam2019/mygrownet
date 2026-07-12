@@ -6,7 +6,7 @@ import { BuildingOffice2Icon, ChartBarIcon, DocumentTextIcon } from '@heroicons/
 interface Investment {
     id: number;
     amount: number;
-    shares: number;
+    shares_allocated: number;
     status: string;
     payment_method: string;
     created_at: string;
@@ -71,7 +71,7 @@ const getVentureStatusColor = (status: string) => {
 };
 
 const totalInvested = props.investments.data.reduce((sum, inv) => sum + inv.amount, 0);
-const totalShares = props.investments.data.reduce((sum, inv) => sum + inv.shares, 0);
+const totalShares = props.investments.data.reduce((sum, inv) => sum + (inv.shares_allocated || 0), 0);
 </script>
 
 <template>
@@ -180,7 +180,7 @@ const totalShares = props.investments.data.reduce((sum, inv) => sum + inv.shares
                                         </div>
                                         <div>
                                             <div class="text-xs text-gray-500">Shares</div>
-                                            <div class="font-semibold text-gray-900">{{ investment.shares.toLocaleString() }}</div>
+                                            <div class="font-semibold text-gray-900">{{ (investment.shares_allocated || 0).toLocaleString() }}</div>
                                         </div>
                                         <div>
                                             <div class="text-xs text-gray-500">Payment Method</div>
