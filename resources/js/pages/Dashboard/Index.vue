@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import PWAInstallPrompt from '@/Components/PWAInstallPrompt.vue';
@@ -138,7 +138,7 @@ const businessModules = computed(() => {
 
 // Retail & Sales modules
 const retailModules = computed(() => {
-    const retailSlugs = ['inventory', 'pos', 'growmarket'];
+    const retailSlugs = ['inventory', 'pos', 'growmarket', 'growmart'];
     return props.modules.filter(m => retailSlugs.includes(m.slug) && m.has_access);
 });
 
@@ -150,12 +150,12 @@ const personalModules = computed(() => {
 
 // Other modules not categorized
 const otherModules = computed(() => {
-    const categorizedSlugs = ['growbuilder', 'grownet', 'growfinance', 'growbiz', 'bizboost', 'inventory', 'pos', 'growmarket', 'lifeplus'];
+    const categorizedSlugs = ['growbuilder', 'grownet', 'growfinance', 'growbiz', 'bizboost', 'inventory', 'pos', 'growmarket', 'growmart', 'lifeplus'];
     return props.modules.filter(m => !categorizedSlugs.includes(m.slug) && m.has_access);
 });
 
 // Filter primary modules (legacy - for backward compatibility)
-const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'growmarket', 'growbuilder', 'grownet', 'lifeplus'];
+const primaryModuleSlugs = ['bizboost', 'growfinance', 'growbiz', 'growmarket', 'growmart', 'growbuilder', 'grownet', 'lifeplus'];
 const primaryModules = computed(() => {
     return props.modules
         .filter(m => primaryModuleSlugs.includes(m.slug) && m.has_access)
@@ -166,11 +166,14 @@ const additionalModules = computed(() => {
     return props.modules.filter(m => !primaryModuleSlugs.includes(m.slug) && m.has_access);
 });
 
+const page = usePage();
+const userCurrency = computed(() => (page.props as any).userCurrency || 'ZMW');
 const formatCurrency = (amount: number | undefined | null) => {
     const value = amount ?? 0;
-    return new Intl.NumberFormat('en-ZM', {
+    const cur = userCurrency.value === 'USD' ? 'USD' : 'ZMW';
+    return new Intl.NumberFormat(cur === 'USD' ? 'en-US' : 'en-ZM', {
         style: 'currency',
-        currency: 'ZMW',
+        currency: cur,
         minimumFractionDigits: 2,
     }).format(value);
 };
@@ -182,6 +185,7 @@ const getModuleIcon = (slug: string) => {
         'growfinance': BanknotesIcon,
         'bizboost': SparklesIcon,
         'growmarket': ShoppingCartIcon,
+        'growmart': ShoppingCartIcon,
         'growbuilder': GlobeAltIcon,
         'lifeplus': HeartIcon,
         'inventory': CubeIcon,
@@ -197,6 +201,7 @@ const getModuleDescription = (slug: string): string => {
         'growfinance': 'Accounting & financial management',
         'growbiz': 'Team & employee management',
         'growmarket': 'Shop products & services',
+        'growmart': 'Online grocery supermarket',
         'growbuilder': 'Build professional websites',
         'grownet': 'Community & referral rewards',
         'lifeplus': 'Health & wellness companion',
@@ -213,8 +218,8 @@ const handleModuleClick = (module: Module) => {
 
 const handleBusinessManagerClick = () => {
     if (props.cmsCompanies.length === 0) {
-        // No companies - go to create
-        router.visit('/cms/companies/create');
+        // No companies - go to CMS companies hub
+        router.visit(route('cms.companies.hub'));
     } else if (props.cmsCompanies.length === 1) {
         // One company - go directly to dashboard
         router.post('/cms/switch-company', { company_id: props.cmsCompanies[0].id }, {
@@ -223,8 +228,8 @@ const handleBusinessManagerClick = () => {
             }
         });
     } else {
-        // Multiple companies - show selector
-        showCompanySelector.value = true;
+        // Multiple companies - go to hub
+        router.visit(route('cms.companies.hub'));
     }
 };
 </script>

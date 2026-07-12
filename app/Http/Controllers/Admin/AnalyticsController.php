@@ -182,44 +182,26 @@ class AnalyticsController extends Controller
             ->whereYear('created_at', now()->year)
             ->count();
         
-        // Member growth trend (last 12 months) - SQLite compatible
+        // Member growth trend (last 12 months)
         $driver = DB::connection()->getDriverName();
-        
-        if ($driver === 'sqlite') {
-            $memberGrowth = User::select(
-                    DB::raw("strftime('%Y', created_at) as year"),
-                    DB::raw("strftime('%m', created_at) as month"),
-                    DB::raw('COUNT(*) as new_members')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
-                        'new_members' => $item->new_members
-                    ];
-                });
-        } else {
-            $memberGrowth = User::select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('COUNT(*) as new_members')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
-                        'new_members' => $item->new_members
-                    ];
-                });
-        }
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+        $memberGrowth = User::select(
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
+                DB::raw('COUNT(*) as new_members')
+            )
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
+                    'new_members' => $item->new_members
+                ];
+            });
         
         // Member activity levels
         $activityLevels = [
@@ -286,48 +268,28 @@ class AnalyticsController extends Controller
             ->orderByDesc('revenue')
             ->get();
         
-        // Monthly revenue trend - SQLite compatible
+        // Monthly revenue trend
         $driver = DB::connection()->getDriverName();
-        
-        if ($driver === 'sqlite') {
-            $revenueTrend = DB::table('package_subscriptions')
-                ->select(
-                    DB::raw("strftime('%Y', created_at) as year"),
-                    DB::raw("strftime('%m', created_at) as month"),
-                    DB::raw('SUM(amount) as revenue')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->where('status', 'active')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
-                        'revenue' => $item->revenue
-                    ];
-                });
-        } else {
-            $revenueTrend = DB::table('package_subscriptions')
-                ->select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('SUM(amount) as revenue')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->where('status', 'active')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
-                        'revenue' => $item->revenue
-                    ];
-                });
-        }
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+        $revenueTrend = DB::table('package_subscriptions')
+            ->select(
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
+                DB::raw('SUM(amount) as revenue')
+            )
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->where('status', 'active')
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'date' => Carbon::create($item->year, $item->month, 1)->format('M Y'),
+                    'revenue' => $item->revenue
+                ];
+            });
         
         return Inertia::render('Admin/Analytics/Financial', [
             'stats' => [

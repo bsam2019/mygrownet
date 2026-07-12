@@ -5,10 +5,10 @@ namespace App\Domain\Employee\Services;
 use App\Events\Employee\EmployeeNotificationCreated;
 use App\Events\Employee\TaskStatusUpdated;
 use App\Events\Employee\TimeOffRequestUpdated;
-use App\Models\Employee;
-use App\Models\EmployeeNotification;
-use App\Models\EmployeeTask;
-use App\Models\EmployeeTimeOffRequest;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeNotification;
+use App\Models\Employee\EmployeeTask;
+use App\Models\Employee\EmployeeTimeOffRequest;
 
 class NotificationService
 {

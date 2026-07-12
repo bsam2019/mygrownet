@@ -447,23 +447,15 @@
                       <p class="font-semibold mb-1">📝 Instructions:</p>
                       <ol class="space-y-1 ml-4 list-decimal">
                         <li>Click "Open Payment Invoice" above</li>
-                        <li>Select your preferred cryptocurrency (BTC, ETH, USDT, etc.)</li>
+                        <li>Select your preferred cryptocurrency</li>
                         <li>Send the exact amount to the provided address</li>
                         <li>Your wallet will be credited automatically after confirmation</li>
                       </ol>
                     </div>
 
-                    <!-- Supported Cryptocurrencies -->
                     <div class="bg-gray-50 rounded-lg p-3">
-                      <p class="text-xs font-semibold text-gray-700 mb-2">Supported Cryptocurrencies:</p>
-                      <div class="flex flex-wrap gap-1">
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">BTC</span>
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">ETH</span>
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">USDT</span>
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">USDC</span>
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">LTC</span>
-                        <span class="text-xs bg-white px-2 py-1 rounded border border-gray-200">+240 more</span>
-                      </div>
+                      <p class="text-xs font-semibold text-gray-700 mb-2">Supports 300+ cryptocurrencies:</p>
+                      <p class="text-xs text-gray-500">Including BTC, ETH, USDT, USDC, LTC, and many more</p>
                     </div>
                   </div>
                 </div>
@@ -522,7 +514,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { XMarkIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -563,7 +555,8 @@ const selectedMethodLabel = computed(() => {
 });
 
 // Currency symbol helper
-const currencySymbol = computed(() => props.userCurrency === 'USD' ? '$' : 'K');
+const page = usePage();
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K');
 
 // Format currency based on user's currency
 const formatAmount = (value: number | null) => {

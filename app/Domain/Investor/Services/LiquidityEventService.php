@@ -4,7 +4,7 @@ namespace App\Domain\Investor\Services;
 
 use App\Models\LiquidityEvent;
 use App\Models\LiquidityEventParticipation;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Support\Collection;
 
 /**

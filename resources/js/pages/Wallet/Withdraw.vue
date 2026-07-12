@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     WalletIcon, 
@@ -26,17 +26,23 @@ interface WithdrawalMethod {
 
 interface Props {
     balance?: number;
+    userCurrency?: string;
     remainingDailyLimit?: number;
+    remainingDailyLimitDisplay?: number;
     verificationLevel?: string;
     verificationLimits?: VerificationLimits;
+    verificationLimitsDisplay?: VerificationLimits;
     withdrawalMethods?: WithdrawalMethod[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     balance: 0,
+    userCurrency: 'ZMW',
     remainingDailyLimit: 1000,
+    remainingDailyLimitDisplay: 1000,
     verificationLevel: 'basic',
     verificationLimits: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
+    verificationLimitsDisplay: () => ({ daily_withdrawal: 1000, monthly_withdrawal: 10000, single_transaction: 500 }),
     withdrawalMethods: () => [
         { id: 'mtn', name: 'MTN Mobile Money', type: 'mobile_money' },
         { id: 'airtel', name: 'Airtel Money', type: 'mobile_money' },
@@ -106,10 +112,12 @@ const submitWithdrawal = () => {
     });
 };
 
+const page = usePage();
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', {
+    const cur = props.userCurrency || (page.props as any).userCurrency || 'ZMW';
+    return new Intl.NumberFormat(cur === 'USD' ? 'en-US' : 'en-ZM', {
         style: 'currency',
-        currency: 'ZMW',
+        currency: cur,
         minimumFractionDigits: 2,
     }).format(amount);
 };
@@ -210,16 +218,16 @@ const getVerificationBadgeColor = (level: string) => {
                             <div class="grid grid-cols-3 gap-4 text-sm">
                                 <div>
                                     <p class="text-amber-700">Daily</p>
-                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimits.daily_withdrawal) }}</p>
-                                    <p class="text-xs text-amber-600">{{ formatCurrency(remainingDailyLimit) }} left</p>
+                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimitsDisplay.daily_withdrawal) }}</p>
+                                    <p class="text-xs text-amber-600">{{ formatCurrency(remainingDailyLimitDisplay) }} left</p>
                                 </div>
                                 <div>
                                     <p class="text-amber-700">Per Transaction</p>
-                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimits.single_transaction) }}</p>
+                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimitsDisplay.single_transaction) }}</p>
                                 </div>
                                 <div>
                                     <p class="text-amber-700">Monthly</p>
-                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimits.monthly_withdrawal) }}</p>
+                                    <p class="font-medium text-amber-900">{{ formatCurrency(verificationLimitsDisplay.monthly_withdrawal) }}</p>
                                 </div>
                             </div>
                         </div>

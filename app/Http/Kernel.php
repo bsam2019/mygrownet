@@ -14,7 +14,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        \App\Http\Middleware\DetectSubdomain::class,
+        // ...existing middleware...
     ];
 
     /**
@@ -31,7 +31,6 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\RefreshCsrfToken::class, // Refresh CSRF token on every request for PWA
-            \App\Http\Middleware\ShareModulesData::class, // Automatically share modules data with all Inertia pages
             // \App\Http\Middleware\DetectFraudulentActivity::class, // DISABLED - potential circular dependency
             // \App\Http\Middleware\PerformanceMonitoring::class, // DISABLED - constructor injection causing early service resolution
         ],
@@ -64,11 +63,5 @@ class Kernel extends HttpKernel
         'compliance.check' => \App\Http\Middleware\ComplianceCheckMiddleware::class,
         'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
         'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
-        'module.access' => \App\Presentation\Http\Middleware\CheckModuleAccess::class,
-        'account.type' => \App\Presentation\Http\Middleware\CheckAccountType::class,
-        'site.auth' => \App\Http\Middleware\SiteUserAuth::class,
-        'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
-        'marketplaceAdmin' => \App\Http\Middleware\MarketplaceAdmin::class,
-        'pwa.redirect' => \App\Http\Middleware\DashboardRedirect::class,
     ];
 }

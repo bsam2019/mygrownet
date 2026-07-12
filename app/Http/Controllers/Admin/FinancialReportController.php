@@ -3,107 +3,248 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\BalanceSheetService;
-use App\Services\CashFlowStatementService;
-use App\Services\ProfitLossTrackingService;
+use App\Domain\Investor\Services\FinancialReportingService;
+use App\Domain\Investor\ValueObjects\ReportType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Inertia\Response;
-use Carbon\Carbon;
 
 class FinancialReportController extends Controller
 {
     public function __construct(
-        private BalanceSheetService $balanceSheetService,
-        private CashFlowStatementService $cashFlowService,
-        private ProfitLossTrackingService $profitLossService
+        private readonly FinancialReportingService $reportingService
     ) {}
 
     /**
-     * Show balance sheet report
+     * Display a listing of financial reports
      */
-    public function balanceSheet(Request $request): Response
+    public function index()
     {
-        $asOfDate = $request->query('as_of_date') 
-            ? Carbon::parse($request->query('as_of_date'))
-            : now();
-        
-        $balanceSheet = $this->balanceSheetService->getBalanceSheet($asOfDate);
-        $summary = $this->balanceSheetService->getSummary($asOfDate);
-        
-        return Inertia::render('Admin/Financial/BalanceSheet', [
-            'balanceSheet' => $balanceSheet,
-            'summary' => $summary,
-            'asOfDate' => $asOfDate->format('Y-m-d'),
+        $reports = $this->reportingService->getAllReports();
+        $stats = $this->reportingService->getReportingStats();
+
+        return Inertia::render('Admin/Investor/FinancialReports/Index', [
+            'reports' => array_map(fn($report) => $report->toArray(), $reports),
+            'stats' => $stats,
         ]);
     }
 
     /**
-     * Show cash flow statement
+     * Show the form for creating a new financial report
      */
-    public function cashFlow(Request $request): Response
+    public function create()
     {
-        $period = $request->query('period', 'month');
-        $customStartDate = $request->query('start_date');
-        $customEndDate = $request->query('end_date');
-        
-        if ($period === 'custom' && $customStartDate && $customEndDate) {
-            $startDate = Carbon::parse($customStartDate);
-            $endDate = Carbon::parse($customEndDate);
-        } else {
-            $startDate = $this->getPeriodStartDate($period);
-            $endDate = now();
+        $reportTypes = ReportType::all();
+
+        return Inertia::render('Admin/Investor/FinancialReports/Create', [
+            'reportTypes' => array_map(fn($type) => [
+                'value' => $type->value,
+                'label' => $type->label(),
+            ], $reportTypes),
+        ]);
+    }
+
+    /**
+     * Store a newly created financial report
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'report_type' => 'required|string|in:monthly,quarterly,annual',
+            'report_period' => 'required|string|max:50',
+            'report_date' => 'required|date',
+            'total_revenue' => 'required|numeric|min:0',
+            'total_expenses' => 'required|numeric|min:0',
+            'gross_margin' => 'nullable|numeric',
+            'operating_margin' => 'nullable|numeric',
+            'net_margin' => 'nullable|numeric',
+            'cash_flow' => 'nullable|numeric',
+            'total_members' => 'nullable|integer|min:0',
+            'active_members' => 'nullable|integer|min:0',
+            'monthly_recurring_revenue' => 'nullable|numeric|min:0',
+            'customer_acquisition_cost' => 'nullable|numeric|min:0',
+            'lifetime_value' => 'nullable|numeric|min:0',
+            'churn_rate' => 'nullable|numeric|min:0|max:100',
+            'growth_rate' => 'nullable|numeric',
+            'notes' => 'nullable|string|max:2000',
+            'revenue_breakdown' => 'nullable|array',
+            'revenue_breakdown.*.source' => 'required_with:revenue_breakdown|string',
+            'revenue_breakdown.*.amount' => 'required_with:revenue_breakdown|numeric|min:0',
+            'revenue_breakdown.*.percentage' => 'required_with:revenue_breakdown|numeric|min:0|max:100',
+            'revenue_breakdown.*.growth_rate' => 'nullable|numeric',
+        ]);
+
+        try {
+            $additionalData = [
+                'gross_margin' => $validated['gross_margin'] ?? null,
+                'operating_margin' => $validated['operating_margin'] ?? null,
+                'net_margin' => $validated['net_margin'] ?? null,
+                'cash_flow' => $validated['cash_flow'] ?? null,
+                'total_members' => $validated['total_members'] ?? null,
+                'active_members' => $validated['active_members'] ?? null,
+                'monthly_recurring_revenue' => $validated['monthly_recurring_revenue'] ?? null,
+                'customer_acquisition_cost' => $validated['customer_acquisition_cost'] ?? null,
+                'lifetime_value' => $validated['lifetime_value'] ?? null,
+                'churn_rate' => $validated['churn_rate'] ?? null,
+                'growth_rate' => $validated['growth_rate'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ];
+
+            $revenueBreakdown = $validated['revenue_breakdown'] ?? [];
+
+            $report = $this->reportingService->createReport(
+                title: $validated['title'],
+                reportType: ReportType::from($validated['report_type']),
+                reportPeriod: $validated['report_period'],
+                reportDate: new \DateTimeImmutable($validated['report_date']),
+                totalRevenue: $validated['total_revenue'],
+                totalExpenses: $validated['total_expenses'],
+                additionalData: $additionalData,
+                revenueBreakdown: $revenueBreakdown
+            );
+
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('success', 'Financial report created successfully.');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
         }
-        
-        $cashFlow = $this->cashFlowService->getCashFlowStatement($startDate, $endDate);
-        $summary = $this->cashFlowService->getSummary($startDate, $endDate);
-        
-        return Inertia::render('Admin/Financial/CashFlow', [
-            'cashFlow' => $cashFlow,
-            'summary' => $summary,
-            'period' => $period,
-            'startDate' => $startDate->format('Y-m-d'),
-            'endDate' => $endDate->format('Y-m-d'),
+    }
+
+    /**
+     * Display the specified financial report
+     */
+    public function show(int $id)
+    {
+        $report = $this->reportingService->getReportById($id);
+
+        if (!$report) {
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('error', 'Financial report not found.');
+        }
+
+        return Inertia::render('Admin/Investor/FinancialReports/Show', [
+            'report' => $report->toArray(),
         ]);
     }
 
     /**
-     * Financial dashboard overview
+     * Show the form for editing the specified financial report
      */
-    public function dashboard(Request $request): Response
+    public function edit(int $id)
     {
-        $period = $request->query('period', 'month');
-        
-        // Get P&L
-        $profitLoss = $this->profitLossService->getProfitLossStatement($period);
-        
-        // Get Balance Sheet
-        $balanceSheet = $this->balanceSheetService->getSummary();
-        
-        // Get Cash Flow
-        $startDate = $this->getPeriodStartDate($period);
-        $cashFlow = $this->cashFlowService->getSummary($startDate, now());
-        
-        return Inertia::render('Admin/Financial/Dashboard', [
-            'profitLoss' => $profitLoss,
-            'balanceSheet' => $balanceSheet,
-            'cashFlow' => $cashFlow,
-            'period' => $period,
+        $report = $this->reportingService->getReportById($id);
+
+        if (!$report) {
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('error', 'Financial report not found.');
+        }
+
+        $reportTypes = ReportType::all();
+
+        return Inertia::render('Admin/Investor/FinancialReports/Edit', [
+            'report' => $report->toArray(),
+            'reportTypes' => array_map(fn($type) => [
+                'value' => $type->value,
+                'label' => $type->label(),
+            ], $reportTypes),
         ]);
     }
 
     /**
-     * Get period start date
+     * Update the specified financial report
      */
-    private function getPeriodStartDate(string $period): Carbon
+    public function update(Request $request, int $id)
     {
-        return match($period) {
-            'today' => now()->startOfDay(),
-            'week' => now()->startOfWeek(),
-            'month' => now()->startOfMonth(),
-            'quarter' => now()->startOfQuarter(),
-            'year' => now()->startOfYear(),
-            default => now()->startOfMonth()
-        };
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'report_period' => 'required|string|max:50',
+            'report_date' => 'required|date',
+            'total_revenue' => 'required|numeric|min:0',
+            'total_expenses' => 'required|numeric|min:0',
+            'gross_margin' => 'nullable|numeric',
+            'operating_margin' => 'nullable|numeric',
+            'net_margin' => 'nullable|numeric',
+            'cash_flow' => 'nullable|numeric',
+            'total_members' => 'nullable|integer|min:0',
+            'active_members' => 'nullable|integer|min:0',
+            'monthly_recurring_revenue' => 'nullable|numeric|min:0',
+            'customer_acquisition_cost' => 'nullable|numeric|min:0',
+            'lifetime_value' => 'nullable|numeric|min:0',
+            'churn_rate' => 'nullable|numeric|min:0|max:100',
+            'growth_rate' => 'nullable|numeric',
+            'notes' => 'nullable|string|max:2000',
+            'revenue_breakdown' => 'nullable|array',
+        ]);
+
+        try {
+            $this->reportingService->updateReport($id, $validated);
+            
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('success', 'Financial report updated successfully.');
+
+        } catch (\Exception $e) {
+            return back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified financial report
+     */
+    public function destroy(int $id)
+    {
+        try {
+            $this->reportingService->deleteReport($id);
+
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('success', 'Financial report deleted successfully.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Publish the specified financial report
+     */
+    public function publish(int $id)
+    {
+        try {
+            $this->reportingService->publishReport($id);
+
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('success', 'Financial report published successfully.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Unpublish the specified financial report
+     */
+    public function unpublish(int $id)
+    {
+        try {
+            $this->reportingService->unpublishReport($id);
+
+            return redirect()
+                ->route('admin.financial-reports.index')
+                ->with('success', 'Financial report unpublished successfully.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

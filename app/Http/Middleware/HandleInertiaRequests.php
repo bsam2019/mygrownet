@@ -18,31 +18,22 @@ class HandleInertiaRequests extends Middleware
      */
     protected $rootView = 'app';
 
-    /**
-     * Handle the incoming request.
-     * Skip Inertia processing for Blade-only auth routes.
-     */
-    public function handle($request, \Closure $next)
-    {
-        // Skip Inertia for auth routes (they use pure Blade templates)
-        if ($request->is('login', 'register', 'forgot-password', 'reset-password/*', 'auth/*')) {
-            return $next($request);
-        }
-
-        return parent::handle($request, $next);
-    }
-
-    /**
-     * Determine the root view based on the request.
-     */
     public function rootView(Request $request): string
     {
-        // Use GrowBiz PWA template for GrowBiz routes
-        if ($request->is('growbiz*')) {
-            return 'growbiz';
-        }
+        $host = $request->getHost();
+        $map = [
+            'bizboost.mygrownet.com'    => 'bizboost',
+            'bizdocs.mygrownet.com'     => 'bizdocs',
+            'growbuilder.mygrownet.com' => 'growbuilder',
+            'venture.mygrownet.com'     => 'venture',
+            'grownet.mygrownet.com'     => 'grownet',
+            'growstorage.mygrownet.com' => 'growstorage',
+            'growmart.mygrownet.com'    => 'growmart',
+            'zamstay.mygrownet.com'     => 'zamstay',
+            'cms.mygrownet.com'         => 'cms',
+        ];
 
-        return $this->rootView;
+        return $map[$host] ?? $this->rootView;
     }
 
     /**
@@ -57,7 +48,7 @@ class HandleInertiaRequests extends Middleware
         if (file_exists(public_path('build/manifest.json'))) {
             return md5_file(public_path('build/manifest.json'));
         }
-        
+
         return parent::version($request);
     }
 
@@ -107,92 +98,24 @@ class HandleInertiaRequests extends Middleware
         $supportStats = null;
         if ($authUser && in_array('admin', $authUser['roles'] ?? [])) {
             $supportStats = cache()->remember('admin_support_stats', 60, function () {
-                if (!class_exists(\App\Models\EmployeeSupportTicket::class)) {
+                if (!class_exists(\App\Models\Employee\EmployeeSupportTicket::class)) {
                     return null;
                 }
                 return [
-                    'open' => \App\Models\EmployeeSupportTicket::where('status', 'open')->count(),
-                    'in_progress' => \App\Models\EmployeeSupportTicket::where('status', 'in_progress')->count(),
-                    'urgent' => \App\Models\EmployeeSupportTicket::where('priority', 'urgent')
+                    'open' => \App\Models\Employee\EmployeeSupportTicket::where('status', 'open')->count(),
+                    'in_progress' => \App\Models\Employee\EmployeeSupportTicket::where('status', 'in_progress')->count(),
+                    'urgent' => \App\Models\Employee\EmployeeSupportTicket::where('priority', 'urgent')
                         ->whereIn('status', ['open', 'in_progress'])->count(),
                 ];
             });
         }
 
-        // Get employee data if user has an employee record - CACHED
+        // Get employee data if user has an employee record
         $employee = null;
         if ($user) {
-            $employee = cache()->remember("employee_record_{$user->id}", 300, function () use ($user) {
-                return \App\Models\Employee::where('user_id', $user->id)
-                    ->where('employment_status', 'active')
-                    ->first();
-            });
-        }
-
-        // Get recent notifications for CMS users - CACHED for 60 seconds
-        $notifications = null;
-        if ($user && $request->is('cms*')) {
-            $notifications = cache()->remember("cms_notifications_{$user->id}", 60, function () use ($user) {
-                return $user->notifications()
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get()
-                    ->map(function ($notification) {
-                        return [
-                            'id' => $notification->id,
-                            'title' => $notification->data['title'] ?? 'Notification',
-                            'message' => $notification->data['message'] ?? '',
-                            'type' => $notification->data['type'] ?? 'system',
-                            'read_at' => $notification->read_at?->toISOString(),
-                            'created_at' => $notification->created_at->toISOString(),
-                            'data' => $notification->data,
-                        ];
-                    })
-                    ->toArray();
-            });
-        }
-
-        // Get CMS company and user data - CACHED for 5 minutes
-        $company = null;
-        $cmsUser = null;
-        if ($user && $request->is('cms*')) {
-            $cmsUser = cache()->remember("cms_user_{$user->id}", 300, function () use ($user) {
-                $cmsUserRecord = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)
-                    ->with('role')
-                    ->first();
-                
-                if (!$cmsUserRecord) {
-                    return null;
-                }
-
-                return [
-                    'id' => $cmsUserRecord->id,
-                    'company_id' => $cmsUserRecord->company_id,
-                    'role' => $cmsUserRecord->role ? [
-                        'id' => $cmsUserRecord->role->id,
-                        'name' => $cmsUserRecord->role->name,
-                        'slug' => $cmsUserRecord->role->slug,
-                    ] : null,
-                ];
-            });
-
-            if ($cmsUser && $cmsUser['company_id']) {
-                $company = cache()->remember("cms_company_{$cmsUser['company_id']}", 300, function () use ($cmsUser) {
-                    $companyRecord = \App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::find($cmsUser['company_id']);
-                    
-                    if (!$companyRecord) {
-                        return null;
-                    }
-
-                    return [
-                        'id' => $companyRecord->id,
-                        'name' => $companyRecord->name,
-                        'email' => $companyRecord->email,
-                        'phone' => $companyRecord->phone,
-                        'logo_url' => $companyRecord->logo_url,
-                    ];
-                });
-            }
+            $employee = \App\Models\Employee\Employee::where('user_id', $user->id)
+                ->where('employment_status', 'active')
+                ->first();
         }
 
         return [
@@ -216,157 +139,13 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'downloadUrl' => fn () => $request->session()->get('downloadUrl'),
-                'invitation_code' => fn () => $request->session()->get('invitation_code'),
+                'generatedContent' => fn () => $request->session()->get('generatedContent'),
+                'businessPlan' => fn () => $request->session()->get('businessPlan'),
+                'chatResponse' => fn () => $request->session()->get('chatResponse'),
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'supportStats' => $supportStats,
             'employee' => $employee,
-            'notifications' => $notifications,
-            'company' => $company,
-            'cmsUser' => $cmsUser,
-            // Payment mode flag - when true, uses automated payments (PawaPay), when false uses manual payments
-            'automatedPaymentsEnabled' => config('payment.automated_payments_enabled', false),
-            // Module configuration removed - now handled by ShareModulesData middleware
-            // GrowBiz PWA data - LAZY LOADED only for GrowBiz routes
-            'growbiz' => fn () => $request->is('growbiz*') ? $this->getGrowBizData($request, $user) : null,
         ];
-    }
-
-    /**
-     * Get GrowBiz data - only called for GrowBiz routes (lazy loaded)
-     */
-    private function getGrowBizData(Request $request, $user): array
-    {
-        return [
-            'isPwa' => $this->isPwaMode($request),
-            'userRole' => $this->getGrowBizUserRole($user),
-            'unreadNotificationCount' => $user ? $this->getGrowBizUnreadNotifications($user) : 0,
-            'unreadMessageCount' => $user ? $this->getGrowBizUnreadMessages($user) : 0,
-        ];
-    }
-
-    /**
-     * Detect if running in PWA standalone mode.
-     */
-    private function isPwaMode(Request $request): bool
-    {
-        return $request->header('X-PWA-Mode') === 'standalone' 
-            || $request->query('pwa') === '1';
-    }
-
-    /**
-     * Get user's role in GrowBiz (owner, supervisor, or employee) - CACHED
-     */
-    private function getGrowBizUserRole($user): string
-    {
-        if (!$user) {
-            return 'none';
-        }
-
-        return cache()->remember("growbiz_role_{$user->id}", 300, function () use ($user) {
-            // Check if user is a business owner (has employees under them)
-            $isOwner = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)->exists();
-            if ($isOwner) {
-                return 'owner';
-            }
-
-            // Check if user is an employee
-            $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->first();
-
-            if ($employeeRecord) {
-                // Check if they have direct reports (supervisor)
-                if ($employeeRecord->hasSupervisorRole()) {
-                    return 'supervisor';
-                }
-                return 'employee';
-            }
-
-            return 'none';
-        });
-    }
-
-    /**
-     * Get unread GrowBiz notifications count - CACHED for 60 seconds
-     */
-    private function getGrowBizUnreadNotifications($user): int
-    {
-        return cache()->remember("growbiz_notifications_{$user->id}", 60, function () use ($user) {
-            return $user->unreadNotifications()
-                ->where(function ($query) {
-                    $query->where('type', 'like', '%GrowBiz%')
-                        ->orWhere('data->type', 'like', 'growbiz_%');
-                })
-                ->count();
-        });
-    }
-
-    /**
-     * Get unread GrowBiz messages count - CACHED for 60 seconds
-     */
-    private function getGrowBizUnreadMessages($user): int
-    {
-        return cache()->remember("growbiz_messages_{$user->id}", 60, function () use ($user) {
-            // Check if messaging table exists
-            if (!\Schema::hasTable('messages')) {
-                return 0;
-            }
-
-            // Get team member IDs for this user
-            $teamMemberIds = $this->getGrowBizTeamMemberIds($user);
-            
-            if (empty($teamMemberIds)) {
-                // No team members, just count [GrowBiz] prefixed messages
-                return \DB::table('messages')
-                    ->where('recipient_id', $user->id)
-                    ->where('is_read', false)
-                    ->where('subject', 'like', '[GrowBiz]%')
-                    ->count();
-            }
-
-            return \DB::table('messages')
-                ->where('recipient_id', $user->id)
-                ->where('is_read', false)
-                ->where(function ($query) use ($teamMemberIds) {
-                    // Messages from team members OR with [GrowBiz] prefix
-                    $query->whereIn('sender_id', $teamMemberIds)
-                        ->orWhere('subject', 'like', '[GrowBiz]%');
-                })
-                ->count();
-        });
-    }
-
-    /**
-     * Get team member IDs for GrowBiz messaging - CACHED
-     */
-    private function getGrowBizTeamMemberIds($user): array
-    {
-        return cache()->remember("growbiz_team_{$user->id}", 300, function () use ($user) {
-            $ids = [];
-            
-            // Get employees managed by this user
-            $employeeIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $user->id)
-                ->whereNotNull('user_id')
-                ->pluck('user_id')
-                ->toArray();
-            $ids = array_merge($ids, $employeeIds);
-            
-            // Get manager if user is an employee
-            $employeeRecord = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('user_id', $user->id)->first();
-            if ($employeeRecord && $employeeRecord->manager_id) {
-                $ids[] = $employeeRecord->manager_id;
-                
-                // Get colleagues (other employees under same manager)
-                $colleagueIds = \App\Infrastructure\Persistence\Eloquent\GrowBizEmployeeModel::where('manager_id', $employeeRecord->manager_id)
-                    ->whereNotNull('user_id')
-                    ->where('user_id', '!=', $user->id)
-                    ->pluck('user_id')
-                    ->toArray();
-                $ids = array_merge($ids, $colleagueIds);
-            }
-            
-            return array_unique($ids);
-        });
     }
 }

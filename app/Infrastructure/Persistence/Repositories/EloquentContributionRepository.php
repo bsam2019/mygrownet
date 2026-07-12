@@ -9,7 +9,7 @@ use App\Domain\Community\ValueObjects\ProjectId;
 use App\Domain\Community\ValueObjects\ContributionAmount;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Models\ProjectContribution;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -213,11 +213,15 @@ class EloquentContributionRepository implements ContributionRepository
         $totalAmount = ProjectContribution::confirmed()->sum('amount');
         $avgContribution = $totalContributions > 0 ? $totalAmount / $totalContributions : 0;
 
-        $monthlyStats = ProjectContribution::selectRaw('
-            DATE_FORMAT(contributed_at, "%Y-%m") as month,
+        $monthlyStats = ProjectContribution::selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
+            strftime('%Y-%m', contributed_at) as month,
             COUNT(*) as count,
             SUM(amount) as amount
-        ')
+        " : "
+            DATE_FORMAT(contributed_at, '%Y-%m') as month,
+            COUNT(*) as count,
+            SUM(amount) as amount
+        ")
         ->confirmed()
         ->where('contributed_at', '>=', now()->subMonths(12))
         ->groupBy('month')

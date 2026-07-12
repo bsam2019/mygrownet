@@ -14,7 +14,7 @@ class AIUsageService
 
     // Fallback AI limits per tier (used if not in database)
     private const DEFAULT_TIER_LIMITS = [
-        'free' => 5,
+        'free' => 50,
         'starter' => 100,
         'business' => -1, // unlimited
         'agency' => -1,   // unlimited
@@ -44,9 +44,14 @@ class AIUsageService
         if ($this->tierConfigService) {
             $tierConfig = $this->tierConfigService->getTierConfig(self::MODULE_ID, $tier);
             
-            // Check for ai_prompts limit
-            if ($tierConfig && isset($tierConfig['limits']['ai_prompts'])) {
-                return (int) $tierConfig['limits']['ai_prompts'];
+            // Check for ai_prompts limit (supports both 'ai_prompts' and 'ai_prompts_limit' keys)
+            if ($tierConfig) {
+                if (isset($tierConfig['limits']['ai_prompts'])) {
+                    return (int) $tierConfig['limits']['ai_prompts'];
+                }
+                if (isset($tierConfig['limits']['ai_prompts_limit'])) {
+                    return (int) $tierConfig['limits']['ai_prompts_limit'];
+                }
             }
             
             // Check for ai_unlimited feature

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

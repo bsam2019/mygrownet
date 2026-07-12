@@ -2,9 +2,9 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplaceOrder;
-use App\Models\MarketplaceOrderItem;
-use App\Models\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceOrderItem;
+use App\Models\Marketplace\MarketplaceProduct;
 use App\Domain\Marketplace\Services\EscrowService;
 use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\SellerService;

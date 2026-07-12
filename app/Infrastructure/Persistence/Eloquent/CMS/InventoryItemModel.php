@@ -12,6 +12,7 @@ class InventoryItemModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'item_code',
         'name',
         'description',
@@ -36,6 +37,11 @@ class InventoryItemModel extends Model
         'reorder_quantity' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -65,6 +71,11 @@ class InventoryItemModel extends Model
     public function isLowStock(): bool
     {
         return $this->current_stock <= $this->minimum_stock;
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function scopeForCompany($query, int $companyId)

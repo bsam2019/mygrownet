@@ -6,11 +6,29 @@ import tailwindcss from 'tailwindcss';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
+const MODULE = process.env.MODULE;
+
+const ALL_INPUTS: Record<string, string[]> = {
+    all: [
+        'resources/js/app.ts',
+        'resources/js/app-bizboost.ts',
+        'resources/js/app-growmart.ts',
+        'resources/js/app-zamstay.ts',
+        'resources/js/app-cms.ts',
+    ],
+    main: ['resources/js/app.ts'],
+    bizboost: ['resources/js/app-bizboost.ts'],
+    growmart: ['resources/js/app-growmart.ts'],
+    zamstay: ['resources/js/app-zamstay.ts'],
+    cms: ['resources/js/app-cms.ts'],
+};
+
+const inputs = MODULE && MODULE !== 'all' ? ALL_INPUTS[MODULE] ?? ALL_INPUTS.all : ALL_INPUTS.all;
+
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.ts'],
-            ssr: 'resources/js/ssr.ts',
+            input: inputs,
             refresh: true,
         }),
         vue({
@@ -22,15 +40,46 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '127.0.0.1',
+        port: 5173,
+        hmr: {
+            host: '127.0.0.1',
+        },
+        watch: {
+            usePolling: false,
+        },
+    },
     base: '/build/',
     build: {
-        manifest: '.vite/manifest.json',
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        const m = id.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
+                        if (!m) return 'vendor';
+                        const pkg = m[1];
+                        if (pkg.includes('firebase')) return 'vendor-firebase';
+                        if (pkg.includes('inertiajs')) return 'vendor-inertia';
+                        if (pkg.includes('heroicons') || pkg.includes('lucide')) return 'vendor-icons';
+                        if (pkg.includes('ziggy') || pkg === 'axios') return 'vendor-http';
+                        if (pkg.includes('chart.js')) return 'vendor-chart';
+                        if (pkg.includes('jspdf') || pkg.includes('html2canvas')) return 'vendor-print';
+                        return 'vendor';
+                    }
+                },
+            },
+        },
     },
     resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './resources/js'),
-            'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
-        },
+        alias: [
+            { find: '@/Layouts', replacement: path.resolve(__dirname, './resources/js/layouts') },
+            { find: '@/Components', replacement: path.resolve(__dirname, './resources/js/components') },
+            { find: '@/Composables', replacement: path.resolve(__dirname, './resources/js/composables') },
+            { find: '@', replacement: path.resolve(__dirname, './resources/js') },
+            { find: 'ziggy-js', replacement: resolve(__dirname, 'vendor/tightenco/ziggy') },
+        ],
     },
     css: {
         postcss: {

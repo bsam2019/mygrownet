@@ -268,16 +268,12 @@ const iconMap: Record<string, string> = {
                         </button>
                     </div>
 
-                    <div class="flex gap-3">
-                        <button type="button" @click="form.preset_code = ''; submit()"
-                            class="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition text-sm">
-                            Skip for now
-                        </button>
-                        <button type="submit" :disabled="form.processing"
-                            class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition shadow-lg text-sm">
-                            {{ form.processing ? 'Creating…' : '🚀 Create Company' }}
-                        </button>
-                    </div>
+                    <p class="text-xs text-gray-400 mb-4 text-center">No selection needed — Create Company will use default settings. You can configure industry details later.</p>
+
+                    <button type="submit" :disabled="form.processing"
+                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition shadow-lg text-sm">
+                        {{ form.processing ? 'Creating…' : '🚀 Create Company' }}
+                    </button>
                 </div>
             </form>
 

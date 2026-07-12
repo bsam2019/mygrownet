@@ -3,9 +3,9 @@
 namespace App\Domain\Employee\Services;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
-use App\Models\EmployeeTrainingCourse;
-use App\Models\EmployeeCourseEnrollment;
-use App\Models\EmployeeCertification;
+use App\Models\Employee\EmployeeTrainingCourse;
+use App\Models\Employee\EmployeeCourseEnrollment;
+use App\Models\Employee\EmployeeCertification;
 use Illuminate\Support\Collection;
 
 class TrainingService

@@ -113,7 +113,7 @@ class EloquentProfitDistributionRepository implements ProfitDistributionReposito
         DateTimeImmutable $periodStart,
         DateTimeImmutable $periodEnd
     ): array {
-        $project = \App\Models\CommunityProject::find($projectId->value());
+        $project = \App\Models\Community\CommunityProject::find($projectId->value());
         if (!$project) {
             return [];
         }

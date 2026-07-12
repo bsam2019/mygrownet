@@ -14,7 +14,7 @@ use App\Domain\QuickInvoice\ValueObjects\DocumentNumber;
 use App\Domain\QuickInvoice\ValueObjects\DocumentType;
 use App\Domain\QuickInvoice\ValueObjects\TemplateStyle;
 use App\Domain\QuickInvoice\ValueObjects\ThemeColors;
-use App\Models\QuickInvoiceDocument;
+use App\Models\QuickInvoice\QuickInvoiceDocument;
 use Carbon\Carbon;
 
 class EloquentDocumentRepository implements DocumentRepositoryInterface

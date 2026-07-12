@@ -11,13 +11,12 @@
 import { defineAsyncComponent, type Component } from 'vue';
 import type { SectionType } from '../../types';
 
-// Eagerly loaded core sections (most commonly used)
-import HeroSection from './HeroSection.vue';
-import AboutSection from './AboutSection.vue';
-import ServicesSection from './ServicesSection.vue';
-import CtaSection from './CtaSection.vue';
-
-// Lazy-loaded sections (less common, loaded on demand)
+// All sections are lazy-loaded to reduce initial bundle size.
+// Components are loaded on first render via defineAsyncComponent.
+const HeroSection = defineAsyncComponent(() => import('./HeroSection.vue'));
+const AboutSection = defineAsyncComponent(() => import('./AboutSection.vue'));
+const ServicesSection = defineAsyncComponent(() => import('./ServicesSection.vue'));
+const CtaSection = defineAsyncComponent(() => import('./CtaSection.vue'));
 const FeaturesSection = defineAsyncComponent(() => import('./FeaturesSection.vue'));
 const TestimonialsSection = defineAsyncComponent(() => import('./TestimonialsSection.vue'));
 const PricingSection = defineAsyncComponent(() => import('./PricingSection.vue'));
@@ -36,8 +35,6 @@ const ProductsSection = defineAsyncComponent(() => import('./ProductsSection.vue
 const MemberCtaSection = defineAsyncComponent(() => import('./MemberCtaSection.vue'));
 const WhatsAppSection = defineAsyncComponent(() => import('./WhatsAppSection.vue'));
 const MarketplaceProductsSection = defineAsyncComponent(() => import('./MarketplaceProductsSection.vue'));
-
-// Phase 1 New Sections
 const TimelineSection = defineAsyncComponent(() => import('./TimelineSection.vue'));
 const CtaBannerSection = defineAsyncComponent(() => import('./CtaBannerSection.vue'));
 const LogoCloudSection = defineAsyncComponent(() => import('./LogoCloudSection.vue'));

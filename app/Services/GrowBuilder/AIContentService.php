@@ -22,18 +22,19 @@ class AIContentService
     private string $model;
     private string $baseUrl;
     private string $provider;
+    private array $extraBody = [];
     
     public function __construct()
     {
         // Determine provider from config
-        $this->provider = config('services.ai.provider', 'openai');
+        $this->provider = config('services.ai.provider', 'nvidia');
         
         // Set API key and base URL based on provider
         switch ($this->provider) {
-            case 'groq':
-                $this->apiKey = config('services.ai.groq_key', '');
-                $this->model = config('services.ai.groq_model', 'llama-3.3-70b-versatile');
-                $this->baseUrl = 'https://api.groq.com/openai/v1';
+            case 'nvidia':
+                $this->apiKey = config('services.ai.nvidia_key', '');
+                $this->model = config('services.ai.nvidia_model', 'deepseek-ai/deepseek-v4-flash');
+                $this->baseUrl = config('services.ai.nvidia_url', 'https://integrate.api.nvidia.com/v1');
                 break;
             case 'grok':
             case 'xai':
@@ -59,6 +60,40 @@ class AIContentService
     }
     
     /**
+     * Override the model for this request (allows user selection).
+     * Automatically configures NVIDIA-specific params (thinking/reasoning) for flash model.
+     */
+    public function setModel(string $model): void
+    {
+        $this->model = $model;
+        
+        // Auto-configure NVIDIA-specific params
+        if ($this->provider === 'nvidia') {
+            $this->extraBody = [
+                'chat_template_kwargs' => [
+                    'thinking' => false,
+                ],
+            ];
+        }
+    }
+    
+    /**
+     * Get the current provider name
+     */
+    public function getProvider(): string
+    {
+        return $this->provider;
+    }
+    
+    /**
+     * Get the current model name
+     */
+    public function getModel(): string
+    {
+        return $this->model;
+    }
+    
+    /**
      * Check if AI service is configured
      */
     public function isConfigured(): bool
@@ -68,14 +103,6 @@ class AIContentService
             return true;
         }
         return !empty($this->apiKey);
-    }
-    
-    /**
-     * Get current provider name
-     */
-    public function getProvider(): string
-    {
-        return $this->provider;
     }
     
     /**
@@ -198,19 +225,33 @@ PROMPT;
             $info[] = "Current page: {$context['currentPage']}";
         }
         
-        // Selected section context
+        // Selected section content — full, not truncated
         if (!empty($context['selectedSection'])) {
             $info[] = "Selected section: {$context['selectedSection']}";
         }
         if (!empty($context['selectedSectionContent'])) {
-            $preview = substr($context['selectedSectionContent'], 0, 200);
-            $info[] = "Section content preview: {$preview}...";
+            $full = is_string($context['selectedSectionContent']) 
+                ? $context['selectedSectionContent'] 
+                : json_encode($context['selectedSectionContent'], JSON_PRETTY_PRINT);
+            $info[] = "Selected section FULL content:\n{$full}";
         }
         
-        // Existing page sections
+        // All sections with full content
+        if (!empty($context['allSectionsContent']) && is_array($context['allSectionsContent'])) {
+            $info[] = "ALL PAGE SECTIONS WITH CONTENT:";
+            foreach ($context['allSectionsContent'] as $section) {
+                $type = $section['type'] ?? 'unknown';
+                $content = !empty($section['content']) 
+                    ? (is_string($section['content']) ? $section['content'] : json_encode($section['content'], JSON_PRETTY_PRINT))
+                    : '(empty)';
+                $info[] = "--- {$type} ---\n{$content}";
+            }
+        }
+        
+        // Existing page sections summary
         if (!empty($context['pageSections']) && is_array($context['pageSections'])) {
             $sections = implode(', ', $context['pageSections']);
-            $info[] = "Page sections: {$sections}";
+            $info[] = "Page sections list (types only): {$sections}";
         }
         
         // Site pages
@@ -308,19 +349,21 @@ PROMPT;
                 }
             }
             
-            // If parsing failed, return as conversational response
+            // If JSON parsing failed, return response as chat
+            Log::warning('SmartChat JSON parse failed', ['response_preview' => substr($response, 0, 200)]);
             return [
                 'action' => 'chat',
                 'message' => $response,
                 'data' => null
             ];
         } catch (\Exception $e) {
-            Log::error('Smart chat failed', ['error' => $e->getMessage()]);
-            return [
-                'action' => 'error',
-                'message' => 'I encountered an issue processing your request. Could you try rephrasing it?',
-                'data' => null
-            ];
+            Log::error('Smart chat AI call failed', [
+                'error' => $e->getMessage(),
+                'userMessage' => substr($userMessage, 0, 100),
+            ]);
+            
+            // FALLBACK: Use server-side keyword matching when AI fails
+            return $this->fallbackSmartChat($userMessage, $context);
         }
     }
     
@@ -531,11 +574,62 @@ PROMPT;
         // Get section schemas from template service
         $sectionSchemas = SectionTemplateService::generateAISchemaDoc();
         
+        // Get site-wide page structure for full awareness
+        $siteStructure = '';
+        if (!empty($context['sitePagesWithSections'])) {
+            $lines = [];
+            foreach ($context['sitePagesWithSections'] as $p) {
+                $sections = !empty($p['sections']) ? ' [' . implode(', ', $p['sections']) . ']' : ' (empty)';
+                $home = !empty($p['is_homepage']) ? ' ★ HOME' : '';
+                $lines[] = "  - {$p['title']}{$home}{$sections}";
+            }
+            $siteStructure = "COMPLETE SITE PAGES & THEIR SECTIONS:\n" . implode("\n", $lines);
+        }
+
+        $mygrowNetKnowledge = <<<'KNOWLEDGE'
+═══════════════════════════════════════════════════════════════
+MYGROWNET PLATFORM KNOWLEDGE
+═══════════════════════════════════════════════════════════════
+
+MyGrowNet is a digital growth platform based in Zambia that combines:
+- **Website Builder (GrowBuilder)** — What you are currently using to build this site
+- **Digital Marketplace** — Buy/sell digital services
+- **Network/Membership System** — Affiliate/MLM structure with commissions
+- **Investment Platform** — Various investment plans
+
+IMPORTANT: Your PRIMARY role is the GrowBuilder website assistant. You help users build, edit, and improve their business websites. However, you can also answer general questions about MyGrowNet platform features.
+
+If a user asks about platform features beyond website building (membership, commissions, marketplace, investments), provide a brief helpful answer and let them know to contact support for detailed account-specific questions.
+KNOWLEDGE;
+
         return <<<PROMPT
-You are an EXPERT website builder AI assistant for "{$siteName}", a {$businessType} business. You create PROFESSIONAL, POLISHED websites through intelligent conversation.
+You are the MyGrowNet AI Assistant — an intelligent, conversational website builder expert for "{$siteName}" (a {$businessType} business). 
+
+Your personality:
+- Warm, professional, and genuinely helpful
+- You explain things clearly without being robotic
+- You anticipate needs and make smart suggestions
+- You create MODERN, POLISHED websites with professional content
+- You can have natural conversations while also doing actions
+
+{$mygrowNetKnowledge}
 
 ═══════════════════════════════════════════════════════════════
-CURRENT CONTEXT
+SITE STRUCTURE — HOW PAGES & SECTIONS WORK
+═══════════════════════════════════════════════════════════════
+
+A GrowBuilder website is made of PAGES. Each page has SECTIONS stacked vertically.
+
+PAGES are the main navigation items (e.g., Home, About, Services, Contact).
+SECTIONS are content blocks on each page (e.g., hero, about, services, testimonials).
+
+When generating content, ALWAYS specify which sectionType you're targeting.
+The sectionType MUST match one of the AVAILABLE SECTION TYPES listed below.
+
+{$siteStructure}
+
+═══════════════════════════════════════════════════════════════
+CURRENT SITE CONTEXT
 ═══════════════════════════════════════════════════════════════
 - Site: {$siteName} ({$businessType})
 - Current page: {$currentPage}
@@ -547,162 +641,155 @@ CURRENT CONTEXT
 {$pageAwareness}
 
 ═══════════════════════════════════════════════════════════════
-{$sectionSchemas}
-═══════════════════════════════════════════════════════════════
-GUIDELINES (flexible, not strict rules)
+AVAILABLE SECTION TYPES & SCHEMAS
 ═══════════════════════════════════════════════════════════════
 
-TYPICAL SECTION ORDER (can be changed if user wants):
-1. page-header or hero (usually first)
+Each section type below has required fields (MUST include), optional fields, and layout options. Use the exact field names.
+
+{$sectionSchemas}
+
+═══════════════════════════════════════════════════════════════
+HOW TO GENERATE CONTENT FOR ANY SECTION TYPE
+═══════════════════════════════════════════════════════════════
+
+When the user asks you to create content for a section:
+1. Identify which section type matches their request (hero, about, services, features, testimonials, pricing, team, faq, cta, contact, stats, etc.)
+2. Generate ALL required fields with high-quality, professional content
+3. Include optional fields when they add value
+4. Use the correct layout names from the schema
+5. For items-based sections (services, features, testimonials, pricing, team, faq, stats), generate the right number of items (see itemCount in schema)
+6. Use Zambian names, Kwacha pricing, +260 phone numbers when relevant
+7. NEVER use lorem ipsum — always generate real, specific content
+
+EXAMPLES by section type:
+- hero: compelling headline + subtitle + CTA button text
+- about: company story with mission, values, what makes them unique
+- services: 3-6 service cards with icon, benefit-focused title, description
+- features: 3-8 feature items explaining why customers should choose them
+- testimonials: 2-6 realistic testimonials with Zambian names, specific results
+- pricing: 2-4 pricing plans with Kwacha pricing, feature lists
+- team: 2-8 team members with Zambian names, roles, bios
+- faq: 3-10 relevant questions with helpful answers
+- cta: compelling call-to-action with urgent, benefit-driven language
+- stats: 3-4 impressive but realistic statistics
+- contact: welcoming description, email, phone (+260), address
+
+═══════════════════════════════════════════════════════════════
+DESIGN & CONTENT GUIDELINES
+═══════════════════════════════════════════════════════════════
+
+TYPICAL SECTION ORDER (flexible — user preference wins):
+1. page-header or hero (first — sets the tone)
 2. about/services/features (main content)
 3. stats/testimonials (social proof)
 4. pricing/products (if applicable)
 5. faq (if applicable)
 6. cta (call to action)
-7. contact/map (often last)
+7. contact/map (last)
 
-HOWEVER: If user explicitly requests a different order, RESPECT their choice.
-Examples of when to break typical order:
-- "Put contact form at the top" → Do it
-- "I want testimonials first" → Do it
-- "Surprise me with something different" → Be creative!
-- "Create an unconventional layout" → Experiment!
+MODERN DESIGN PRINCIPLES:
+- Clean, uncluttered layouts with generous whitespace
+- Bold typography hierarchy (large headlines, clear subtext)
+- Subtle gradients and shadows for depth
+- Consistent spacing and alignment
+- Mobile-first thinking — content should work on any screen
+- Use the site's color palette but don't be afraid of accent colors
+- Alternating light/dark backgrounds for visual rhythm
+- Professional photography or high-quality illustrations
 
-STYLE SUGGESTIONS (not requirements):
-• Consider using site's color scheme for consistency
-• Alternate light/dark backgrounds for visual rhythm
-• Headers often use primary color with white text
-• But feel free to suggest alternatives if appropriate
-
-═══════════════════════════════════════════════════════════════
-CONTENT QUALITY
-═══════════════════════════════════════════════════════════════
-
-PREFER:
-✓ Real, specific content over placeholder text
-✓ Zambian context when appropriate (K for Kwacha, +260 phones, local names)
-✓ Content that matches the business type
-✓ Concise but compelling copy
-✓ Clear calls-to-action
-✓ Professional, friendly tone
-
-FOR STATS: Use realistic, impressive numbers (3-4 max)
-FOR TESTIMONIALS: Realistic names, roles, specific quotes
-FOR SERVICES: 3-6 items with benefit-focused titles
+CONTENT QUALITY STANDARDS:
+- Real, specific content — never lorem ipsum or generic text
+- Zambian context when relevant (Kwacha pricing, +260 phones, local names)
+- Concise but compelling copy that drives action
+- Clear, benefit-focused headlines
+- Strong calls-to-action
+- Professional, friendly tone — like a helpful consultant
 
 {$industryKnowledge}
 
 {$proactiveSuggestions}
 
 ═══════════════════════════════════════════════════════════════
-CREATIVITY MODE
+HOW YOU DECIDE WHAT ACTION TO TAKE
 ═══════════════════════════════════════════════════════════════
 
-When user says "surprise me", "be creative", "something different", or "unconventional":
-• Ignore typical section ordering
-• Try unexpected combinations
-• Experiment with layouts
-• Suggest unique approaches
-• Be bold and innovative
+Read the user's message and context, then choose ONE of these approaches:
 
-═══════════════════════════════════════════════════════════════
-LEARNING FROM USER FEEDBACK
-═══════════════════════════════════════════════════════════════
+A) **The user wants to create/modify content or structure**
+   → Use action "generate_content" — generate section content matching the schema
+   → data.sectionType = the section type name (from AVAILABLE SECTION TYPES above)
+   → data.content = object with all required + optional fields filled in
+   → data.style = { backgroundColor, textColor } matching site palette
+    
+   If the user mentions ANY section name (hero, welcome, about, services, etc.), SHOW
+   the current content in your message (title, subtitle, items, etc.) then offer to
+   improve it. NEVER list all your capabilities.
 
-You have access to feedback data showing what this user (and similar users) have accepted or rejected.
+B) **The user is making conversation / asking a question / needs advice**
+   → Use action "chat" — respond conversationally in the message field
+   Examples:
+   - "How does MyGrowNet work?" → Answer naturally
+   - "What do you think?" → Give your genuine opinion
+   - "Tell me more about..." → Explain
+   - "What should I do next?" → Suggest next steps
+   - "What's the difference between hero and page-header?" → Explain
+   → data can include suggestions or be empty, just be helpful
+   
+   IMPORTANT: When a user asks about a section or wants to see its content, DO
+   include the actual content values in your message. Reference the CURRENT CONTENT
+   and ALL PAGE SECTIONS WITH CONTENT sections above to quote real values.
 
-HOW TO USE FEEDBACK DATA:
-• If acceptance rate is HIGH (>70%): Continue with similar approaches
-• If acceptance rate is LOW (<50%): Try different approaches, ask more questions
-• If certain content types are "preferred": Prioritize those in suggestions
-• If certain content types are "avoided": Be more careful, offer alternatives
-• Industry-specific insights: Apply learnings from similar businesses
+C) **The user wants feedback or improvements**
+   → Use action "analyze_page" — list specific suggestions with priorities
+   → Include suggestions for sections missing from current page
+   → Include suggestions for improving existing sections
+   → DO NOT auto-generate content; let them choose
 
-ADAPTIVE BEHAVIOR:
-• After a rejection: Acknowledge and try a different approach
-• After multiple rejections: Ask clarifying questions
-• When user retries: Generate something noticeably different
-• For new users (no data): Use global best practices
+D) **The user is vague and you need more info**
+   → Use action "clarify" — ask a specific question to narrow down
+
+E) **The user says "surprise me" or "be creative"**
+   → Be bold! Try unusual section combinations, unique layouts, creative content
 
 ═══════════════════════════════════════════════════════════════
 RESPONSE FORMAT
 ═══════════════════════════════════════════════════════════════
 
-Return ONLY valid JSON (no markdown, no extra text):
+Return ONLY valid JSON — no other text before or after:
 
 {
-    "action": "generate_content|create_page|change_style|update_navigation|update_footer|generate_seo|chat|clarify|analyze_page",
-    "message": "Friendly explanation of what you're doing and why",
+    "action": "chat|generate_content|create_page|change_style|update_navigation|update_footer|generate_seo|analyze_page|clarify",
+    "message": "Your natural, conversational response to the user. Explain what you're doing or answer their question in a friendly way. Use markdown for formatting if helpful.",
     "data": {
-        // For generate_content:
-        "sectionType": "page-header|hero|about|services|etc",
-        "content": { /* complete section content */ },
-        "position": "first|last|auto|specific index",
-        "style": {
-            "backgroundColor": "#hex",
-            "textColor": "#hex",
-            "gradientFrom": "#hex (optional)",
-            "gradientTo": "#hex (optional)"
-        }
-        
-        // For change_style:
-        "styleChanges": { "backgroundColor": "#...", "textColor": "#...", "textPosition": "center" },
-        "sectionType": "target section type"
-        
-        // For create_page:
-        "pageType": "about|services|contact|etc",
-        "title": "Page Title",
-        "sections": [{ "type": "...", "content": {...}, "style": {...} }]
-        
-        // For analyze_page (when user asks for feedback/improvements):
-        "suggestions": [
-            { "type": "add_section|improve_content|change_style|seo", "description": "what to improve", "priority": "high|medium|low" }
-        ]
+        // FOR chat: can include optional suggestions array or be empty
+        // FOR generate_content: 
+        //   "sectionType": "hero|about|services|features|testimonials|pricing|team|faq|cta|contact|stats|gallery",
+        //   "content": { ... all required + optional fields for that section type ... },
+        //   "style": { "backgroundColor": "#...", "textColor": "#..." }
+        // FOR create_page: "pageType": "...", "title": "...", "sections": [ ... ]
+        // FOR change_style: "sectionType": "...", "styleChanges": { ... }
+        // FOR analyze_page: "suggestions": [ { "type": "add_section|improve_content|change_style", "description": "...", "priority": "high|medium|low" } ]
     }
 }
 
 ═══════════════════════════════════════════════════════════════
-HANDLING ANALYTICAL QUESTIONS
+PRINCIPLES
 ═══════════════════════════════════════════════════════════════
 
-When user asks questions like:
-- "Are there any improvements?"
-- "What do you think of this page?"
-- "What's missing?"
-- "How can I make this better?"
-- "Any suggestions?"
-
-Use action: "analyze_page" and provide thoughtful analysis in the message field.
-DO NOT automatically generate content - instead, LIST suggestions and let user choose.
-
-Example response for "Any improvements for this page?":
-{
-    "action": "analyze_page",
-    "message": "Looking at your Blog page, here are some suggestions:\n\n1. **Add a newsletter signup** - Capture readers' emails\n2. **Include author bios** - Build trust and credibility\n3. **Add social sharing buttons** - Increase reach\n4. **Consider a 'Related Posts' section** - Keep readers engaged\n\nWould you like me to implement any of these?",
-    "data": {
-        "suggestions": [
-            { "type": "add_section", "description": "Newsletter signup form", "priority": "high" },
-            { "type": "add_section", "description": "Author bio section", "priority": "medium" },
-            { "type": "improve_content", "description": "Add social sharing", "priority": "medium" }
-        ]
-    }
-}
-
-═══════════════════════════════════════════════════════════════
-IMPORTANT PRINCIPLES
-═══════════════════════════════════════════════════════════════
-
-1. Return valid JSON only
-2. Avoid placeholder text when possible
-3. Consider existing styles for consistency (unless user wants change)
-4. RESPECT USER REQUESTS - if they want something specific, do it
-5. Generate complete content (all required fields)
-6. Be helpful - make smart assumptions for vague requests
-7. Explain your choices in the message field
-8. BE FLEXIBLE - guidelines are not laws
-9. When in doubt, ask for clarification rather than assuming
-
-REMEMBER: The user has full control. They can always manually adjust anything you suggest. Your job is to help, not restrict.
+1. Be conversational first — talk like a helpful person, not a robot
+2. Generate complete, high-quality content (all required fields, professional copy)
+3. Use the site's colors and style unless the user wants something different
+4. Respect user requests — if they want something specific, do it
+5. Make smart assumptions for vague requests — don't over-ask
+6. Explain your choices naturally in the message
+7. GUIDELINES are flexible — the user's preference always wins
+8. The user can always manually adjust anything — your job is to help, not control
+9. When user says "create content for [section]" — generate ALL fields for that section type, not just text
+10. Return ONLY valid JSON — nothing before or after
+11. NEVER list your capabilities or options unless the user explicitly asks "What can you do?" or similar
+12. If a user mentions a section type name (hero, about, services, etc.), directly address that section — do not list other options
+13. When a user asks about a section or wants to see its content, quote the ACTUAL content values (title, subtitle, button text, items) from the CONTEXT section — don't say things like "(present, but I don't have the exact text here)"
+14. Always show real data from the context provided — never guess or make up content values
 PROMPT;
     }
     
@@ -938,7 +1025,7 @@ KNOWLEDGE;
         }
         
         $suggestionList = implode("\n- ", $suggestions);
-        return "PROACTIVE SUGGESTIONS (mention these if relevant to user's request):\n- {$suggestionList}\n\nIf the user asks for general help or says \"what should I do\", share these suggestions.";
+        return "PROACTIVE SUGGESTIONS (mention these if relevant to user's request):\n- {$suggestionList}\n\nIf the user asks for general help, pick the MOST RELEVANT single suggestion and focus on that — never list all options.";
     }
     
     /**
@@ -973,62 +1060,139 @@ PROMPT;
     /**
      * Build section content analysis for AI to understand existing content
      */
+    /**
+     * Fallback when AI smartChat fails: use keyword matching to return a helpful response
+     */
+    private function fallbackSmartChat(string $userMessage, array $context): array
+    {
+        $lower = strtolower($userMessage);
+        $selectedSection = $context['selectedSection'] ?? '';
+        $allContent = $context['allSectionsContent'] ?? [];
+        $currentPage = $context['currentPage'] ?? '';
+        
+        // Find content for mentioned section
+        $mentionedSection = '';
+        $sectionContent = null;
+        $sectionNames = ['hero', 'about', 'services', 'features', 'testimonials', 'pricing', 'faq', 'contact', 'cta', 'team', 'gallery', 'stats'];
+        
+        foreach ($sectionNames as $name) {
+            if (str_contains($lower, $name)) {
+                $mentionedSection = $name;
+                break;
+            }
+        }
+        if (empty($mentionedSection)) {
+            $mentionedSection = $selectedSection;
+        }
+        
+        // Find section content from allSectionsContent
+        if (!empty($mentionedSection) && !empty($allContent)) {
+            foreach ($allContent as $section) {
+                if (($section['type'] ?? '') === $mentionedSection) {
+                    $sectionContent = $section['content'] ?? [];
+                    break;
+                }
+            }
+        }
+        
+        // If user asks about content/show/see, return actual content
+        $wantsToSee = str_contains($lower, 'see') || str_contains($lower, 'show') || str_contains($lower, 'view') || str_contains($lower, 'content') || str_contains($lower, 'tell') || str_contains($lower, 'what');
+        
+        if (!empty($mentionedSection) && $wantsToSee && !empty($sectionContent)) {
+            $contentStr = is_string($sectionContent) ? $sectionContent : json_encode($sectionContent, JSON_PRETTY_PRINT);
+            return [
+                'action' => 'chat',
+                'message' => "Here's the current content of your **{$mentionedSection}** section on **{$currentPage}**:\n\n```json\n{$contentStr}\n```\n\nWould you like me to improve or change anything?",
+                'data' => null,
+            ];
+        }
+        
+        // If user mentions a section with improve/edit/make, generate content
+        $wantsChange = str_contains($lower, 'improve') || str_contains($lower, 'edit') || str_contains($lower, 'make') || str_contains($lower, 'change') || str_contains($lower, 'update') || str_contains($lower, 'rewrite') || str_contains($lower, 'paragraph');
+        
+        if (!empty($mentionedSection) && $wantsChange) {
+            return [
+                'action' => 'generate_content',
+                'message' => "Let me improve the {$mentionedSection} section with fresh, compelling content.",
+                'data' => [
+                    'sectionType' => $mentionedSection,
+                    'content' => null, // Will be generated
+                    'style' => null,
+                ],
+            ];
+        }
+        
+        if (!empty($mentionedSection) && !empty($sectionContent)) {
+            $title = $sectionContent['title'] ?? '(no title)';
+            $items = isset($sectionContent['items']) ? count($sectionContent['items']) . ' items' : '';
+            return [
+                'action' => 'chat',
+                'message' => "I can see the **{$mentionedSection}** section on **{$currentPage}**. It has the title \"{$title}\" {$items}. What would you like me to do with it?",
+                'data' => null,
+            ];
+        }
+        
+        if (!empty($mentionedSection)) {
+            return [
+                'action' => 'chat',
+                'message' => "I see you're asking about the **{$mentionedSection}** section on **{$currentPage}**. It exists on the page. What specific changes would you like to make?",
+                'data' => null,
+            ];
+        }
+        
+        // Generic fallback - let the frontend handle it
+        return [
+            'action' => 'chat',
+            'message' => '',
+            'data' => ['frontend_fallback' => true],
+        ];
+    }
+
     private function buildSectionContentAnalysis(array $context): string
     {
         $analysis = [];
         
-        // Analyze selected section content
         if (!empty($context['selectedSectionContent'])) {
             $content = $context['selectedSectionContent'];
             $sectionType = $context['selectedSection'] ?? 'unknown';
             
-            // Check if content is empty or minimal
             $contentLength = strlen(is_string($content) ? $content : json_encode($content));
             $isEmpty = $contentLength < 50;
             $isMinimal = $contentLength < 200;
             
             $analysis[] = "SELECTED SECTION ({$sectionType}):";
             if ($isEmpty) {
-                $analysis[] = "- Status: EMPTY or nearly empty - needs content generation";
+                $analysis[] = "- Status: EMPTY or nearly empty";
             } elseif ($isMinimal) {
-                $analysis[] = "- Status: MINIMAL content - could be expanded";
+                $analysis[] = "- Status: MINIMAL content";
             } else {
-                $analysis[] = "- Status: Has content - can be improved or modified";
+                $analysis[] = "- Status: Has content";
             }
-            
-            // Include actual content preview for AI to analyze
-            $preview = is_string($content) ? $content : json_encode($content);
-            $preview = substr($preview, 0, 500);
-            $analysis[] = "- Current content: {$preview}";
         }
         
-        // Analyze all page sections
         if (!empty($context['allSectionsContent']) && is_array($context['allSectionsContent'])) {
-            $analysis[] = "\nPAGE SECTIONS OVERVIEW:";
+            $analysis[] = "PAGE SECTIONS OVERVIEW:";
             foreach ($context['allSectionsContent'] as $section) {
                 $type = $section['type'] ?? 'unknown';
                 $hasContent = !empty($section['content']);
-                $contentPreview = '';
+                $contentData = $section['content'] ?? [];
                 
+                $preview = '';
                 if ($hasContent) {
-                    $contentData = $section['content'];
-                    // Extract key content for preview
                     if (isset($contentData['title'])) {
-                        $contentPreview = "Title: \"{$contentData['title']}\"";
+                        $preview = "title=\"{$contentData['title']}\"";
                     }
                     if (isset($contentData['items']) && is_array($contentData['items'])) {
-                        $itemCount = count($contentData['items']);
-                        $contentPreview .= " ({$itemCount} items)";
+                        $itemType = isset($contentData['type']) ? $contentData['type'] : '';
+                        $preview .= " ({$itemType} items: " . count($contentData['items']) . ")";
                     }
                 }
-                
-                $status = $hasContent ? "✓ Has content" : "✗ Empty";
-                $analysis[] = "- {$type}: {$status}" . ($contentPreview ? " - {$contentPreview}" : "");
+                $analysis[] = "- {$type}: " . ($hasContent ? "Has content {$preview}" : "Empty");
             }
         }
         
         if (empty($analysis)) {
-            return "SECTION ANALYSIS: No section content available for analysis.";
+            return "No section content available for analysis.";
         }
         
         return "SECTION CONTENT ANALYSIS:\n" . implode("\n", $analysis);
@@ -2185,46 +2349,72 @@ PROMPT;
         return match ($this->provider) {
             'gemini' => $this->callGemini($systemPrompt, $userPrompt),
             'ollama' => $this->callOllama($systemPrompt, $userPrompt),
-            default => $this->callOpenAICompatible($systemPrompt, $userPrompt), // OpenAI, Groq
+            default => $this->callOpenAICompatible($systemPrompt, $userPrompt), // OpenAI, NVIDIA, etc.
         };
     }
     
     /**
-     * Call OpenAI-compatible API (OpenAI, Groq, etc.)
+     * Call OpenAI-compatible API (OpenAI, Groq, NVIDIA, etc.)
      */
     private function callOpenAICompatible(string $systemPrompt, string $userPrompt): string
     {
         $request = Http::withHeaders([
             'Authorization' => "Bearer {$this->apiKey}",
             'Content-Type' => 'application/json',
-        ])->timeout(30);
+        ])->timeout(120); // DeepSeek V4 can be slow, allow 2 minutes
         
         // Bypass SSL verification in development (for Windows SSL certificate issues)
         if (app()->environment('local', 'development')) {
             $request = $request->withoutVerifying();
         }
         
-        $response = $request->post("{$this->baseUrl}/chat/completions", [
+        // Explicit CA bundle path for Guzzle on Windows
+        $caInfo = ini_get('curl.cainfo');
+        if ($caInfo) {
+            $request = $request->withOptions([
+                'curl' => [
+                    CURLOPT_CAINFO => $caInfo,
+                ],
+            ]);
+        }
+        
+        $payload = [
             'model' => $this->model,
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt],
                 ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.7,
-            'max_tokens' => 4096, // Increased for longer, more detailed responses
-        ]);
+            'max_tokens' => 1024, // Responses are 3-5 sentences, no need for 16K
+        ];
+        
+        // Add NVIDIA-specific extra_body for chat_template_kwargs (thinking/reasoning)
+        if ($this->provider === 'nvidia' && !empty($this->extraBody)) {
+            $payload['extra_body'] = $this->extraBody;
+        }
+        
+        $response = $request->post("{$this->baseUrl}/chat/completions", $payload);
         
         if (!$response->successful()) {
+            $errorBody = $response->body();
             Log::error('AI API request failed', [
                 'provider' => $this->provider,
+                'model' => $this->model,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $errorBody,
             ]);
-            throw new \Exception('AI API request failed: ' . $response->body());
+            throw new \Exception("AI API request failed (HTTP {$response->status()}): " . substr($errorBody, 0, 500));
         }
         
         $data = $response->json();
-        return $data['choices'][0]['message']['content'] ?? '';
+        $content = $data['choices'][0]['message']['content'] ?? '';
+        
+        if (empty($content)) {
+            Log::warning('AI returned empty content', ['response' => json_encode($data)]);
+            throw new \Exception('AI returned empty response');
+        }
+        
+        return $content;
     }
     
     /**
@@ -2451,5 +2641,21 @@ PROMPT;
         ];
         
         return $palettes[$businessType] ?? $palettes['default'];
+    }
+
+    /**
+     * Smart chat with custom system prompt (public wrapper for chatbot)
+     */
+    public function smartChatWithPrompt(string $systemPrompt, string $userMessage): string
+    {
+        return $this->callAI($systemPrompt, $userMessage);
+    }
+
+    /**
+     * Raw prompt for analysis (returns AI response text)
+     */
+    public function chatWithRawPrompt(string $prompt): string
+    {
+        return $this->callAI('You are a helpful website analysis assistant.', $prompt);
     }
 }

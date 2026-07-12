@@ -2,9 +2,9 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\InvestorAccount;
-use App\Models\InvestorDividend;
-use App\Models\InvestorPaymentMethod;
+use App\Models\Investor\InvestorAccount;
+use App\Models\Investor\InvestorDividend;
+use App\Models\Investor\InvestorPaymentMethod;
 use Illuminate\Support\Collection;
 
 class DividendManagementService

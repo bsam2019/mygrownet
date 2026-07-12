@@ -2,54 +2,225 @@
 
 namespace App\Services\BusinessPlan;
 
+use App\Services\GrowBuilder\AIContentService;
+
 class AIGenerationService
 {
-    /**
-     * Generate content using AI based on field and context
-     */
-    public function generate(string $field, array $context): string
-    {
-        // This is a placeholder for AI integration
-        // You can integrate with OpenAI, Claude, or other AI services
-        
-        $prompts = $this->getPrompts();
-        
-        if (!isset($prompts[$field])) {
-            throw new \Exception("No prompt template for field: {$field}");
-        }
+    private AIContentService $ai;
 
-        // For now, return template-based content
-        // Replace this with actual AI API call
-        return $this->generateTemplateContent($field, $context);
+    public function __construct(AIContentService $ai)
+    {
+        $this->ai = $ai;
     }
 
-    /**
-     * Get prompt templates for each field
-     */
+    public function generate(string $field, array $context, ?string $tone = null, ?string $refinement = null): string
+    {
+        $prompts = $this->getPrompts();
+
+        $fieldLabel = $prompts[$field] ?? $field;
+        $businessName = $context['business_name'] ?? 'the business';
+        $industry = $context['industry'] ?? '';
+        $country = $context['country'] ?? 'Zambia';
+
+        // Build context from other filled fields
+        $otherContent = '';
+        foreach ($prompts as $key => $label) {
+            if ($key === $field) continue;
+            $val = $context[$key] ?? '';
+            if (!empty($val) && is_string($val)) {
+                $otherContent .= "- {$label}: {$val}\n";
+            }
+        }
+
+        $toneInstructions = match ($tone) {
+            'short' => 'Keep it very concise — 1-2 sentences maximum.',
+            'detailed' => 'Write a thorough, comprehensive response — 5-7 sentences with details.',
+            'formal' => 'Write in a formal, corporate tone suitable for investors.',
+            default => 'Write in professional but accessible language (3-5 sentences).',
+        };
+
+        $systemPrompt = "You are a professional business plan writer and strategic advisor for entrepreneurs in {$country}. "
+            . "You write clear, specific, and actionable business content. "
+            . "{$toneInstructions} "
+            . "Be specific to the {$industry} industry. "
+            . "IMPORTANT: Output plain text only. Do NOT use any markdown formatting — no bold (**), no italics (*), no headings (#), no horizontal rules (--- or ___), no markdown-style lists with asterisks. Use simple paragraphs and numbered lines (1., 2.) instead.";
+
+        $userMessage = "For the business \"{$businessName}\" in the {$industry} industry:\n\n"
+            . "Here is what has already been filled in the business plan:\n{$otherContent}\n"
+            . "Generate content for: {$fieldLabel}\n\n"
+            . ($refinement ? "Additional refinement request: {$refinement}\n\n" : '')
+            . "CRITICAL: Do NOT restate or repeat the section name or heading — just provide the content directly with no preamble. "
+            . "For example, if asked for a mission statement, respond with \"Our mission is…\" not \"Mission Statement: Our mission is…\" "
+            . "Provide specific, detailed content that a business in {$country} can use directly. "
+            . "Ensure it is consistent with and builds upon the existing content above.";
+
+        $attempts = 0;
+        $maxAttempts = 5;
+        $lastException = null;
+        while ($attempts < $maxAttempts) {
+            try {
+                return $this->stripMarkdown($this->ai->smartChatWithPrompt($systemPrompt, $userMessage));
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempts++;
+                if ($attempts < $maxAttempts) {
+                    sleep($attempts * 2);
+                }
+            }
+        }
+        \Illuminate\Support\Facades\Log::warning('AI generation failed after retries', [
+            'field' => $field,
+            'error' => $lastException?->getMessage(),
+        ]);
+        return $this->generateFallbackContent($field, $context);
+    }
+
+    public function chat(string $message, array $context): array
+    {
+        $prompts = $this->getPrompts();
+        $businessName = $context['business_name'] ?? 'the business';
+        $industry = $context['industry'] ?? '';
+        $country = $context['country'] ?? 'Zambia';
+        $currentStep = $context['current_step'] ?? 'unknown';
+        $stepLabel = $context['current_step_label'] ?? '';
+
+        $fieldsList = '';
+        $filledContent = '';
+        $emptyFields = [];
+        foreach ($prompts as $key => $label) {
+            $fieldsList .= "- {$key}: {$label}\n";
+            $val = $context[$key] ?? '';
+            if (!empty($val) && is_string($val)) {
+                $filledContent .= "- {$label}: {$val}\n";
+            } else {
+                $emptyFields[] = $key;
+            }
+        }
+
+        $systemPrompt = "You are a business plan writing assistant embedded in the form itself. "
+            . "You help entrepreneurs in {$country} create a business plan for \"{$businessName}\" in the {$industry} industry.\n\n"
+            . "CURRENT PROGRESS: Step {$currentStep} of 20 — {$stepLabel}\n"
+            . "CURRENTLY FILLED CONTENT:\n{$filledContent}\n"
+            . "EMPTY FIELDS: " . (count($emptyFields) > 0 ? implode(', ', $emptyFields) : 'none') . "\n\n"
+            . "AVAILABLE FIELDS (field_key: description):\n{$fieldsList}\n"
+            . "RULES:\n"
+            . "1. When the user asks to generate, write, create, improve, rewrite, or fix content for a section — respond with a field value.\n"
+            . "2. When the user is just chatting or asking advice — respond conversationally.\n"
+            . "3. Always write content specific to {$country} and the {$industry} industry.\n"
+             . "4. Keep generated content concise (3-5 sentences for text fields, JSON array/object for structured fields).\n"
+             . "5. If the user says something generic like 'write my mission statement', fill the mission_statement field.\n"
+             . "6. Prioritize fields in the current step ({$stepLabel}) when the user is vague.\n"
+             . "7. When generating field content, do NOT restate the section name or heading — just provide the content directly with no preamble.\n\n"
+            . "RESPONSE FORMAT (output ONLY valid JSON, no markdown, no backticks):\n"
+            . "- For generating content: {\"type\":\"field\",\"field\":\"field_key\",\"content\":\"the generated content\"}\n"
+            . "- For chatting: {\"type\":\"chat\",\"content\":\"your helpful response\"}\n"
+            . "- If the user's request is ambiguous, ask for clarification via the chat type.";
+
+        $userMessage = "User says: {$message}";
+
+        $attempts = 0;
+        $maxAttempts = 5;
+        $lastException = null;
+        while ($attempts < $maxAttempts) {
+            try {
+                $raw = $this->ai->smartChatWithPrompt($systemPrompt, $userMessage);
+                $parsed = json_decode($raw, true);
+                if (is_array($parsed) && isset($parsed['type'])) {
+                    if (isset($parsed['content'])) {
+                        $parsed['content'] = $this->stripMarkdown($parsed['content']);
+                    }
+                    return $parsed;
+                }
+                return ['type' => 'chat', 'content' => $this->stripMarkdown($raw)];
+            } catch (\Exception $e) {
+                $lastException = $e;
+                $attempts++;
+                if ($attempts < $maxAttempts) {
+                    sleep($attempts * 2);
+                }
+            }
+        }
+        \Illuminate\Support\Facades\Log::warning('AI chat failed after retries', [
+            'message' => $message,
+            'error' => $lastException?->getMessage(),
+        ]);
+        return ['type' => 'chat', 'content' => 'Sorry, the AI service is busy. Please try again in a moment.'];
+    }
+
     private function getPrompts(): array
     {
         return [
-            'mission_statement' => 'Generate a mission statement for a {industry} business named {business_name}',
-            'vision_statement' => 'Generate a vision statement for a {industry} business',
-            'problem_statement' => 'Describe the problem that a {industry} business solves',
-            'solution_description' => 'Describe how a {industry} business solves customer problems',
-            'competitive_advantage' => 'Describe competitive advantages for a {industry} business',
-            'product_description' => 'Describe products/services for a {industry} business',
-            'pricing_strategy' => 'Suggest pricing strategy for a {industry} business',
-            'target_market' => 'Describe target market for a {industry} business in {country}',
-            'market_size' => 'Estimate market size for {industry} in {country}',
-            'competitive_analysis' => 'Analyze competition in {industry} sector',
-            'branding_approach' => 'Suggest branding approach for a {industry} business',
-            'customer_retention' => 'Suggest customer retention strategies for {industry}',
-            'key_risks' => 'Identify key risks for a {industry} business',
-            'mitigation_strategies' => 'Suggest risk mitigation strategies for {industry}',
+            'tagline' => 'A short, memorable tagline or slogan',
+            'business_description' => 'Quick overview / snapshot of the business (captured during Quick Start wizard)',
+            'mission_statement' => 'A mission statement',
+            'vision_statement' => 'A vision statement',
+            'core_values' => 'Core values as a JSON array of strings',
+            'business_objectives' => 'Business objectives',
+            'company_history' => 'Company history and background story',
+            'long_term_goals' => 'Long-term business goals (5-10 years)',
+            'background' => 'Business background and founding story',
+            'success_factors' => 'Key success factors',
+            'problem_statement' => 'A problem statement describing the customer pain point',
+            'existing_alternatives' => 'Existing alternatives customers currently use',
+            'why_existing_fail' => 'Why existing alternatives fail to solve the problem',
+            'solution_description' => 'A solution description',
+            'product_description' => 'A product or service description',
+            'delivery_method' => 'Delivery method description',
+            'product_lifecycle' => 'Product lifecycle analysis',
+            'future_improvements' => 'Future improvements and roadmap',
+            'product_features' => 'Key features as a JSON array of strings',
+            'production_process' => 'Production process description',
+            'pricing_strategy' => 'A pricing strategy description',
+            'revenue_streams' => 'Revenue streams',
+            'cost_structure' => 'Cost structure analysis',
+            'customer_relationships' => 'Customer relationship strategy',
+            'channels' => 'Sales and distribution channels',
+            'key_activities' => 'Key business activities',
+            'key_resources' => 'Key business resources',
+            'key_partners' => 'Key business partners',
+            'target_market' => 'Target market description',
+            'industry_trends' => 'Industry trends analysis',
+            'regulations' => 'Regulatory and compliance requirements',
+            'technology_changes' => 'Technology changes affecting the industry',
+            'surveys_data' => 'Survey data and findings summary',
+            'interviews_data' => 'Interview insights summary',
+            'competitor_pricing_data' => 'Competitor pricing analysis',
+            'customer_feedback_information' => 'Customer feedback summary',
+            'swot_from_research' => 'SWOT analysis based on research',
+            'competitive_analysis' => 'Competitive analysis summary',
+            'swot_strengths' => 'SWOT strengths',
+            'swot_weaknesses' => 'SWOT weaknesses',
+            'swot_opportunities' => 'SWOT opportunities',
+            'swot_threats' => 'SWOT threats',
+            'unique_selling_points' => 'Unique selling points as a JSON array',
+            'competitive_advantage' => 'Competitive advantage description',
+            'branding_approach' => 'Branding approach and strategy',
+            'sales_funnel' => 'Sales funnel description',
+            'customer_retention' => 'Customer retention strategy',
+            'sales_process' => 'Sales process description',
+            'sales_targets' => 'Sales targets',
+            'crm_process' => 'CRM process description',
+            'daily_operations' => 'Daily operations description',
+            'facilities' => 'Facilities and location requirements',
+            'technology_stack' => 'Technology stack and tools',
+            'quality_control' => 'Quality control processes',
+            'operational_workflow' => 'Operational workflow description',
+            'hiring_plan' => 'Hiring plan',
+            'recruitment_strategy' => 'Recruitment strategy',
+            'employee_benefits' => 'Employee benefits and perks',
+            'training_plan' => 'Training and development plan',
+            'performance_management' => 'Performance management approach',
+            'risks' => 'Key risks as a JSON array',
+            'mitigation_strategies' => 'Mitigation strategies as a JSON object',
+            'timeline' => 'Implementation timeline as a JSON array',
+            'milestones' => 'Key milestones as a JSON array',
+            'financial_projections' => 'Financial projections summary',
+            'break_even_analysis' => 'Break-even analysis',
+            'exit_strategy_details' => 'Exit strategy details',
         ];
     }
 
-    /**
-     * Generate template-based content (fallback when AI is not available)
-     */
-    private function generateTemplateContent(string $field, array $context): string
+    private function generateFallbackContent(string $field, array $context): string
     {
         $industry = $context['industry'] ?? 'business';
         $businessName = $context['business_name'] ?? 'our company';
@@ -57,46 +228,44 @@ class AIGenerationService
 
         $templates = [
             'mission_statement' => "To provide high-quality {$industry} products and services that meet the needs of our customers while contributing to the economic development of {$country}.",
-            
             'vision_statement' => "To become the leading {$industry} provider in {$country}, known for excellence, innovation, and customer satisfaction.",
-            
-            'problem_statement' => "Many customers in the {$industry} sector face challenges with accessibility, affordability, and quality of products/services. There is a significant gap in the market for reliable, customer-focused solutions.",
-            
-            'solution_description' => "{$businessName} addresses these challenges by offering accessible, affordable, and high-quality {$industry} solutions. We combine modern technology with local expertise to deliver exceptional value to our customers.",
-            
-            'competitive_advantage' => "Our competitive advantages include: 1) Deep understanding of local market needs, 2) Competitive pricing without compromising quality, 3) Strong customer service and support, 4) Innovative approach to traditional {$industry} challenges.",
-            
-            'product_description' => "We offer a comprehensive range of {$industry} products and services designed to meet diverse customer needs. Our offerings are carefully curated to ensure quality, reliability, and value for money.",
-            
-            'pricing_strategy' => "Our pricing strategy is based on value-based pricing, ensuring affordability while maintaining quality. We offer flexible payment options and competitive rates compared to market alternatives.",
-            
-            'target_market' => "Our target market includes individuals and businesses in {$country} seeking reliable {$industry} solutions. Primary demographics include middle-income earners aged 25-55 who value quality and service.",
-            
-            'market_size' => "The {$industry} market in {$country} is growing steadily, with increasing demand driven by economic development and changing consumer preferences. Market research indicates significant growth potential over the next 5 years.",
-            
-            'competitive_analysis' => "The {$industry} sector has several established players, but there is room for differentiation through superior service, innovation, and customer focus. Our analysis shows opportunities in underserved market segments.",
-            
-            'branding_approach' => "Our brand will emphasize trust, quality, and local expertise. We will position ourselves as the reliable choice for {$industry} needs, building strong relationships with customers through consistent delivery and excellent service.",
-            
-            'customer_retention' => "We will implement loyalty programs, regular customer engagement, quality assurance measures, and responsive customer service to ensure high retention rates and customer satisfaction.",
-            
-            'key_risks' => "Key risks include: 1) Market competition, 2) Economic fluctuations affecting purchasing power, 3) Supply chain disruptions, 4) Regulatory changes, 5) Technology changes.",
-            
-            'mitigation_strategies' => "Risk mitigation strategies include: 1) Diversifying revenue streams, 2) Building strong supplier relationships, 3) Maintaining cash reserves, 4) Staying informed on regulatory changes, 5) Continuous innovation and adaptation.",
+            'problem_statement' => "Many customers in the {$industry} sector face challenges with accessibility, affordability, and quality of products/services.",
+            'solution_description' => "{$businessName} addresses these challenges by offering accessible, affordable, and high-quality {$industry} solutions.",
+            'competitive_advantage' => "Our competitive advantages include deep understanding of local market needs, competitive pricing, strong customer service, and an innovative approach.",
+            'product_description' => "We offer a comprehensive range of {$industry} products and services designed to meet diverse customer needs.",
+            'pricing_strategy' => "Our pricing strategy is value-based, ensuring affordability while maintaining quality with flexible payment options.",
+            'target_market' => "Our target market includes individuals and businesses in {$country} seeking reliable {$industry} solutions.",
+            'competitive_analysis' => "The {$industry} sector has several established players, but there is room for differentiation through superior service and innovation.",
+            'branding_approach' => "Our brand emphasizes trust, quality, and local expertise, positioning us as the reliable choice for {$industry} needs.",
+            'customer_retention' => "We implement loyalty programs, regular engagement, quality assurance, and responsive service to ensure high retention rates.",
+            'risks' => '["Market competition","Economic fluctuations","Supply chain disruptions","Regulatory changes","Technology changes"]',
+            'mitigation_strategies' => '{"competition":"Diversify revenue streams","supply_chain":"Build strong supplier relationships","economic":"Maintain cash reserves","regulatory":"Stay informed on regulatory changes","technology":"Continuous innovation"}',
         ];
 
-        return $templates[$field] ?? "Content for {$field} will be generated here.";
+        return $templates[$field] ?? "Content for {$field} will be generated based on your business context.";
     }
 
-    /**
-     * Call actual AI API (implement when ready)
-     */
-    private function callAIAPI(string $prompt, array $context): string
+    private function stripMarkdown(string $text): string
     {
-        // TODO: Implement actual AI API integration
-        // Example: OpenAI, Claude, etc.
-        
-        // For now, return template content
-        return $this->generateTemplateContent($prompt, $context);
+        $text = preg_replace('/^#{1,6}\s*/m', '', $text);
+        $text = preg_replace('/\*{1,3}(.+?)\*{1,3}/', '$1', $text);
+        $text = preg_replace('/^[-*_]{3,}\s*$/m', '', $text);
+        $text = preg_replace('/^[\s]*[-*+]\s+(.+)$/m', '• $1', $text);
+        $text = str_replace(['**', '__'], '', $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", trim($text));
+        // Strip leading line if it looks like a repeated heading (short, ends with colon, matches a known key label)
+        $lines = explode("\n", $text, 2);
+        $first = trim($lines[0] ?? '');
+        $firstClean = rtrim($first, " \t\n\r\0\x0B.:-");
+        if ($firstClean !== '' && strlen($firstClean) < 60 && isset($lines[1])) {
+            $keys = array_keys($this->getPrompts());
+            foreach ($keys as $key) {
+                $keyLabel = str_replace('_', ' ', $key);
+                if (strcasecmp($firstClean, $keyLabel) === 0 || stripos($firstClean, $keyLabel) !== false) {
+                    return trim($lines[1]);
+                }
+            }
+        }
+        return $text;
     }
 }

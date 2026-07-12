@@ -12,6 +12,15 @@ Artisan::command('inspire', function () {
 // Points System Scheduled Tasks
 use Illuminate\Support\Facades\Schedule;
 
+// Database Backups
+Schedule::command('backup:clean')
+    ->dailyAt('01:00')
+    ->description('Clean up old backup files');
+
+Schedule::command('backup:run --only-db')
+    ->dailyAt('02:00')
+    ->description('Backup database to Wasabi daily');
+
 Schedule::command('points:reset-monthly')
     ->monthlyOn(1, '00:00')
     ->description('Reset monthly activity points');
@@ -103,6 +112,11 @@ Schedule::command('bizboost:refresh-tokens')
     ->dailyAt('03:00')
     ->description('Refresh expiring social media access tokens');
 
+// Pause ad campaigns when wallet balance reaches zero - runs every 15 minutes
+Schedule::job(new \App\Jobs\BizBoost\PauseCampaignOnZeroBalanceJob)
+    ->everyFifteenMinutes()
+    ->description('Pause active ad campaigns whose wallets are depleted');
+
 // ========================================
 // Life+ Scheduled Tasks
 // ========================================
@@ -179,6 +193,16 @@ Schedule::job(new \App\Jobs\GrowBuilder\CheckOverdueInvoices)
     ->description('Check for overdue invoices and send alerts to agencies');
 
 // ========================================
+// ========================================
+// Exchange Rate Scheduled Tasks
+// ========================================
+
+// Refresh daily exchange rates from API - runs at midnight
+Schedule::command('rates:refresh')
+    ->dailyAt('00:00')
+    ->description('Refresh daily exchange rates for the day');
+
+// ========================================
 // Quick Invoice Scheduled Tasks
 // ========================================
 
@@ -205,6 +229,16 @@ Schedule::command('loans:send-reminders')
 Schedule::command('loans:alert-defaults')
     ->dailyAt('08:00')
     ->description('Send alerts for defaulted loans to admins');
+
+// DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
+// // ========================================
+// GrowMart Scheduled Tasks
+// ========================================
+
+// Check for low stock inventory and send alerts - runs hourly
+Schedule::command('growmart:low-stock-alerts')
+    ->hourly()
+    ->description('Send low stock alerts for GrowMart products');
 
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {

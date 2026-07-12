@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     CurrencyDollarIcon,
     UserPlusIcon,
@@ -245,7 +246,7 @@ const formatTime = (timestamp: string) => {
                             <div class="flex items-center gap-2">
                                 <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ activity.title }}</p>
                                 <span v-if="activity.amount" class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                    K{{ activity.amount.toLocaleString() }}
+                                    {{ formatBizBoostPrice(activity.amount) }}
                                 </span>
                             </div>
                             <p v-if="activity.description" class="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">

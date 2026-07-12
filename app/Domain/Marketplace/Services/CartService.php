@@ -2,7 +2,7 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceProduct;
 use Illuminate\Support\Facades\Session;
 
 class CartService

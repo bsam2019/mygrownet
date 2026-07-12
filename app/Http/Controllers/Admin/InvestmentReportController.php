@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +37,7 @@ class InvestmentReportController extends Controller
             ->get();
 
         $monthlyInvestments = Investment::select(
-                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month" : "DATE_FORMAT(created_at, '%Y-%m') as month"),
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(amount) as total_amount')
             )

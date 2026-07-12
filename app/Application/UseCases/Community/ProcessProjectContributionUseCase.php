@@ -6,7 +6,7 @@ use App\Domain\Community\Repositories\ProjectRepository;
 use App\Domain\Community\Repositories\ContributionRepository;
 use App\Domain\Community\ValueObjects\ContributionAmount;
 use App\Models\User;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

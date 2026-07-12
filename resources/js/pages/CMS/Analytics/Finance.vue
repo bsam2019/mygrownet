@@ -7,7 +7,8 @@ import {
   ArrowTrendingDownIcon,
   BanknotesIcon,
   DocumentTextIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ArrowDownOnSquareIcon,
 } from '@heroicons/vue/24/outline'
 import CMSLayout from '@/Layouts/CMSLayout.vue'
 import DoughnutChart from '@/components/CMS/Charts/DoughnutChart.vue'
@@ -166,14 +167,23 @@ const paymentTrendsChartData = computed(() => {
           <h1 class="text-2xl font-bold text-gray-900">Finance Analytics</h1>
           <p class="mt-1 text-sm text-gray-600">Monitor financial performance and cash flow</p>
         </div>
-        <Link
-          :href="route('cms.reports.index')"
-          class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <DocumentTextIcon class="h-5 w-5" aria-hidden="true" />
-          View Detailed Reports
-          <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <div class="flex items-center gap-2">
+          <Link
+            :href="route('cms.analytics.finance.export-csv', { period: selectedPeriod })"
+            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+          >
+            <ArrowDownOnSquareIcon class="h-5 w-5" aria-hidden="true" />
+            Export CSV
+          </Link>
+          <Link
+            :href="route('cms.reports.index')"
+            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <DocumentTextIcon class="h-5 w-5" aria-hidden="true" />
+            View Detailed Reports
+            <ArrowRightIcon class="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
     </div>
 

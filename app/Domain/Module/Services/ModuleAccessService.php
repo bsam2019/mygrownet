@@ -83,23 +83,6 @@ class ModuleAccessService
             return false;
         }
 
-        // Special case: LifePlus is free for members with active subscriptions
-        if ($moduleId->value() === 'lifeplus' && $user->hasAccountType(\App\Enums\AccountType::MEMBER)) {
-            // Check if member has any active subscription (to any module)
-            $hasActiveSubscription = \DB::table('module_subscriptions')
-                ->where('user_id', $user->id)
-                ->where('status', 'active')
-                ->where(function ($query) {
-                    $query->whereNull('expires_at')
-                          ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-            
-            if ($hasActiveSubscription) {
-                return true; // Free access for members with active subscriptions
-            }
-        }
-
         // If module doesn't require subscription, grant access
         if (!$module->requiresSubscription()) {
             return true;
@@ -116,10 +99,16 @@ class ModuleAccessService
 
     /**
      * Get the user's access level for a module
-     * Returns: 'none', 'free', 'member_free', or the subscription tier name
+     * Returns: 'none', 'free', or the subscription tier name
+     * Admins always get 'business' (highest tier)
      */
     public function getAccessLevel(User $user, ModuleId $moduleId): string
     {
+        // Admins get the highest tier (business)
+        if ($this->isAdmin($user)) {
+            return 'business';
+        }
+
         $module = $this->moduleRepository->findById($moduleId);
         
         if (!$module || !$module->isActive()) {
@@ -130,33 +119,11 @@ class ModuleAccessService
             return 'none';
         }
 
-        // Special case: GrowBuilder admin-granted premium access
-        if ($moduleId->value() === 'growbuilder' && !empty($user->premium_template_tier)) {
-            // User has admin-granted premium access, return their tier
-            return $user->premium_template_tier;
-        }
-
         // Check for active subscription first
         $subscription = $this->subscriptionRepository->findByUserAndModule($user->id, $moduleId);
         
         if ($subscription && $subscription->isActive()) {
             return $subscription->getTier();
-        }
-
-        // Special case: LifePlus member_free tier for members with active subscriptions
-        if ($moduleId->value() === 'lifeplus' && $user->hasAccountType(\App\Enums\AccountType::MEMBER)) {
-            $hasActiveSubscription = \DB::table('module_subscriptions')
-                ->where('user_id', $user->id)
-                ->where('status', 'active')
-                ->where(function ($query) {
-                    $query->whereNull('expires_at')
-                          ->orWhere('expires_at', '>', now());
-                })
-                ->exists();
-            
-            if ($hasActiveSubscription) {
-                return 'member_free'; // Free tier for members
-            }
         }
 
         // If module has free tier, return 'free'

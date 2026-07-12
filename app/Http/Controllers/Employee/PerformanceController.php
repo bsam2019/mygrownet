@@ -16,6 +16,7 @@ use App\Infrastructure\Persistence\Eloquent\EmployeePerformanceModel;
 use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use DateTimeImmutable;
 
@@ -379,11 +380,15 @@ class PerformanceController extends Controller
             ]);
 
         // Performance trends over time
-        $performanceTrends = EmployeePerformanceModel::selectRaw('
-                DATE_FORMAT(period_end, "%Y-%m") as month,
+        $performanceTrends = EmployeePerformanceModel::selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "
+                strftime('%Y-%m', period_end) as month,
                 AVG(overall_score) as avg_score,
                 COUNT(*) as review_count
-            ')
+            " : "
+                DATE_FORMAT(period_end, '%Y-%m') as month,
+                AVG(overall_score) as avg_score,
+                COUNT(*) as review_count
+            ")
             ->where('period_end', '>=', now()->subMonths(12))
             ->groupBy('month')
             ->orderBy('month')

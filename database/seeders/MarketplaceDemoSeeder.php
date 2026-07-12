@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\MarketplaceCategory;
-use App\Models\MarketplaceProduct;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceCategory;
+use App\Models\Marketplace\MarketplaceProduct;
+use App\Models\Marketplace\MarketplaceSeller;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;

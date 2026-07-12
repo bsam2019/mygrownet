@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Investment;
 
 use App\Http\Controllers\Controller;
 use App\Models\WithdrawalPolicy;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;

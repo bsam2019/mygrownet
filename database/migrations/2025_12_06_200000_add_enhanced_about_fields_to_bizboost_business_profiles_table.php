@@ -8,6 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('bizboost_business_profiles', 'business_story')) {
+            return;
+        }
         Schema::table('bizboost_business_profiles', function (Blueprint $table) {
             // Enhanced About Us fields
             $table->text('business_story')->nullable()->after('about');

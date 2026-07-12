@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MyGrowNet;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\InvestmentTier;
@@ -12,7 +13,7 @@ use App\Models\ReferralCommission;
 use App\Models\TeamVolume;
 use App\Models\UserNetwork;
 use App\Models\Achievement;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\PhysicalReward;
 use App\Models\Course;
 use App\Services\MLMCommissionService;
@@ -67,6 +68,10 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        
+        // This is the CLASSIC dashboard
+        // Users reach here via /classic-dashboard or preference setting
+        // No need to check preference - if they're here, show the classic dashboard
         
         // Load user with necessary relationships
         $user = $user->load([
@@ -252,7 +257,7 @@ class DashboardController extends Controller
         // Get messaging data
         $messagingData = $this->getMessagingData($user);
 
-        return Inertia::render('GrowNet/Dashboard', [
+        return Inertia::render('GrowNet/GrowNet', [
             'user' => $user,
             'subscription' => $currentSubscription,
             'starterKit' => $starterKitInfo,
@@ -308,6 +313,12 @@ class DashboardController extends Controller
                 return redirect()->route('login');
             }
             
+            // Only redirect to classic if user explicitly prefers it
+            $preference = $user->preferred_dashboard ?? 'mobile';
+            if ($preference === 'classic' || $preference === 'desktop') {
+                return redirect()->route('mygrownet.classic-dashboard');
+            }
+            
             // Show main dashboard (mobile-first design)
             \Log::info('Mobile Dashboard Accessed', [
                 'user_id' => $user->id,
@@ -340,9 +351,6 @@ class DashboardController extends Controller
             \Log::error('Wallet Service Error', ['error' => $e->getMessage()]);
             $data['walletBalance'] = 0;
         }
-        
-        // Add user currency (ZMW for Zambians, USD for foreigners)
-        $data['userCurrency'] = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         
         // Get verification limits
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
@@ -397,7 +405,7 @@ class DashboardController extends Controller
         
         // Add LGR data for mobile
         $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
-            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+            ?? \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
@@ -431,101 +439,15 @@ class DashboardController extends Controller
             'createdAt' => $ticket->createdAt()->format('Y-m-d H:i:s'),
         ], $tickets);
         
-        // Get LGR packages for mobile
-        $lgrPackages = \App\Models\LgrPackage::where('is_active', true)
-            ->orderBy('package_amount')
-            ->get()
-            ->map(function ($package) {
-                return [
-                    'id' => $package->id,
-                    'name' => $package->name,
-                    'description' => $package->description,
-                    'cost' => (float) $package->package_amount,
-                    'daily_lgr_rate' => (float) $package->daily_lgr_rate,
-                    'duration_days' => $package->duration_days,
-                    'total_reward' => (float) $package->total_reward,
-                    'is_popular' => (bool) ($package->sort_order === 2), // Middle package is popular
-                ];
-            })
-            ->toArray();
-        
-        $data['lgrPackages'] = $lgrPackages;
-        
-        // Get user's current LGR package
-        $userLgrPackage = null;
-        if ($user->lgr_package_id) {
-            $package = \App\Models\LgrPackage::find($user->lgr_package_id);
-            if ($package) {
-                $userLgrPackage = [
-                    'id' => $package->id,
-                    'name' => $package->name,
-                    'description' => $package->description,
-                    'cost' => (float) $package->package_amount,
-                    'daily_lgr_rate' => (float) $package->daily_lgr_rate,
-                    'duration_days' => $package->duration_days,
-                    'total_reward' => (float) $package->total_reward,
-                    'is_popular' => (bool) ($package->sort_order === 2),
-                ];
-            }
-        }
-        $data['userLgrPackage'] = $userLgrPackage;
-        
-        // Get starter kit tier data from database
-        $tierConfigs = \App\Infrastructure\Persistence\Eloquent\StarterKit\StarterKitTierConfig::active()
-            ->ordered()
-            ->get();
-        
-        $tiers = [];
-        foreach ($tierConfigs as $config) {
-            $shopCredit = round($config->price * 0.20, 2);
-            $lgrDailyRate = round($config->price * 0.05, 2);
-            
-            $lpAwards = [
-                'lite' => 15,
-                'basic' => 25,
-                'growth_plus' => 50,
-                'pro' => 100,
-            ];
-            
-            $tiers[$config->tier_key] = [
-                'name' => $config->tier_name,
-                'price' => (float) $config->price,
-                'shopCredit' => $shopCredit,
-                'storage_gb' => $config->storage_gb,
-                'earning_potential' => (float) $config->earning_potential_percentage,
-                'lgrDailyRate' => $lgrDailyRate,
-                'lpAward' => $lpAwards[$config->tier_key] ?? 25,
-            ];
-        }
-        
-        // Fallback to hardcoded values if no tier configs found
-        if (empty($tiers)) {
-            $tiers = [
-                'lite' => ['name' => 'Lite', 'price' => 300, 'shopCredit' => 50, 'lgrDailyRate' => 12.50, 'lpAward' => 15],
-                'basic' => ['name' => 'Basic', 'price' => 500, 'shopCredit' => 100, 'lgrDailyRate' => 25.00, 'lpAward' => 25],
-                'growth_plus' => ['name' => 'Growth Plus', 'price' => 1000, 'shopCredit' => 200, 'lgrDailyRate' => 37.50, 'lpAward' => 50],
-                'pro' => ['name' => 'Pro', 'price' => 2000, 'shopCredit' => 400, 'lgrDailyRate' => 62.50, 'lpAward' => 100],
-            ];
-        }
-        
-        $data['starterKitTiers'] = $tiers;
-        
-        // DEBUG: Add a flag to identify GrowNet dashboard (legacy compatibility)
-        $data['isMobileDashboard'] = true; // Keep for backward compatibility
-        $data['debugInfo'] = [
-            'component' => 'MyGrowNet/GrowNet',
-            'timestamp' => now()->toDateTimeString(),
-            'user' => $user->name,
-            'walletBalance' => $data['walletBalance']
-        ];
-        
-        \Log::info('Rendering GrowNet Dashboard', [
-            'component' => 'MyGrowNet/GrowNet',
+        // DEBUG: Add a flag to identify mobile dashboard
+        $data['isMobileDashboard'] = true;
+        \Log::info('Rendering Mobile Dashboard', [
+            'component' => 'GrowNet/GrowNet',
             'data_keys' => array_keys($data),
             'walletBalance' => $data['walletBalance']
         ]);
         
-        // Render the GrowNet dashboard component
+        // Render the modern mobile SPA dashboard
         return Inertia::render('GrowNet/GrowNet', $data);
     }
 
@@ -681,7 +603,7 @@ class DashboardController extends Controller
         }
 
         // Get team volume visualization data
-        $teamVolumeData = $this->getTeamVolumeData($request);
+        $teamVolumeData = $this->getTeamVolumeVisualization($user);
         
         // Get network data (use direct method, not API endpoint)
         $networkData = $this->getNetworkStructureData($user);
@@ -864,11 +786,11 @@ class DashboardController extends Controller
         
         return [
             'current_month' => [
-                'personal_volume' => $teamVolume->personal_volume ?? 0,
-                'team_volume' => $teamVolume->team_volume ?? 0,
-                'left_leg_volume' => $teamVolume->left_leg_volume ?? 0,
-                'right_leg_volume' => $teamVolume->right_leg_volume ?? 0,
-                'total_volume' => $teamVolume->total_volume ?? 0
+                'personal_volume' => $teamVolume?->personal_volume ?? 0,
+                'team_volume' => $teamVolume?->team_volume ?? 0,
+                'left_leg_volume' => $teamVolume?->left_leg_volume ?? 0,
+                'right_leg_volume' => $teamVolume?->right_leg_volume ?? 0,
+                'total_volume' => $teamVolume?->total_volume ?? 0
             ],
             'monthly_trend' => $this->getMonthlyVolumeHistory($user, 6),
             'volume_breakdown' => [
@@ -2159,7 +2081,7 @@ class DashboardController extends Controller
         $breakdown = $this->earningsService->getEarningsBreakdown($user);
         
         // Team performance (purchases and subscriptions from team)
-        // This includes commissions from team member purchases and subscriptions
+        // This is a subset of total commissions — excludes direct referral commissions
         $teamPerformance = \DB::table('referral_commissions')
             ->where('referrer_id', $user->id)
             ->where('status', 'paid')
@@ -2172,8 +2094,12 @@ class DashboardController extends Controller
         // Get LGR info from service
         $lgrInfo = $this->earningsService->getLgrWithdrawableInfo($user);
 
+        // Deduct team_performance from referral_commissions to avoid double-counting
+        // referral_commissions = everything; team_performance = a subset broken out separately
+        $referralCommissions = max(0, (float) $breakdown['commissions'] - $teamPerformance);
+
         return [
-            'referral_commissions' => (float) $breakdown['commissions'],
+            'referral_commissions' => $referralCommissions,
             'profit_shares' => (float) $breakdown['profit_shares'],
             'team_performance' => (float) $teamPerformance,
             'pending_earnings' => (float) $pendingEarnings,
@@ -2181,7 +2107,7 @@ class DashboardController extends Controller
             'lgr_withdrawable' => (float) $lgrInfo['withdrawable'],
             'lgr_percentage' => (float) $lgrInfo['percentage'],
             'lgr_blocked' => (bool) $lgrInfo['blocked'],
-            'total_earnings' => (float) ($breakdown['commissions'] + $breakdown['profit_shares'] + $teamPerformance),
+            'total_earnings' => (float) ($referralCommissions + $breakdown['profit_shares'] + $teamPerformance),
         ];
     }
 
@@ -2325,7 +2251,7 @@ class DashboardController extends Controller
         try {
             // Get network growth for last 6 months
             $networkGrowth = UserNetwork::where('referrer_id', $user->id)
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month, COUNT(*) as count" : "DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count")
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->groupBy('month')
                 ->orderBy('month')
@@ -2373,7 +2299,7 @@ class DashboardController extends Controller
             // Get earnings from referral commissions for last 6 months
             $earningsTrend = ReferralCommission::where('user_id', $user->id)
                 ->where('status', 'paid')
-                ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(amount) as amount')
+                ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month, SUM(amount) as amount" : "DATE_FORMAT(created_at, '%Y-%m') as month, SUM(amount) as amount")
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->groupBy('month')
                 ->orderBy('month')

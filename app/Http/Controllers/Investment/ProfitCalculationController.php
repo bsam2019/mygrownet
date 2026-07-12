@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Investment;
 
 use App\Http\Controllers\Controller;
-// VBIF removed - Investment and InvestmentTier models deleted
+use App\Models\Investment;
+use App\Models\InvestmentTier;
 use App\Services\ProfitCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

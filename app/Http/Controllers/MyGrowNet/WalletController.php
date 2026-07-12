@@ -15,15 +15,15 @@ class WalletController extends Controller
         // Reset daily withdrawal limit if needed
         $this->resetDailyWithdrawalIfNeeded($user);
         
-        // Use WalletService for consistent balance calculation (Phase 3 migration)
+        // Use WalletService for consistent balance calculation
         $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
         $breakdown = $walletService->getWalletBreakdown($user);
         
         $balance = $breakdown['balance'];
-        $totalEarnings = $breakdown['credits']['earnings']['total'];
-        $commissionEarnings = $breakdown['credits']['earnings']['commissions'];
-        $profitEarnings = $breakdown['credits']['earnings']['profit_shares'];
         $walletTopups = $breakdown['credits']['deposits'];
+        $commissionEarnings = $breakdown['credits']['commissions'] ?? 0;
+        $profitEarnings = $breakdown['credits']['profit_shares'] ?? 0;
+        $totalEarnings = $breakdown['credits']['total'];
         $totalWithdrawals = $breakdown['debits']['withdrawals'];
         $workshopExpenses = $breakdown['debits']['expenses'];
         // Note: starter_kits removed - already included in withdrawals
@@ -90,7 +90,7 @@ class WalletController extends Controller
         // Calculate LGR withdrawable amount
         // Use custom percentage if set, otherwise use global setting
         $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
-            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+            ?? \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         
         $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
@@ -109,7 +109,6 @@ class WalletController extends Controller
         
         return Inertia::render('GrowNet/Wallet', [
             'balance' => $balance,
-            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'loyaltyPoints' => (float) ($user->loyalty_points ?? 0),
             'lgrWithdrawable' => $lgrWithdrawable,

@@ -4,14 +4,43 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
+            // GrowMart routes FIRST so subdomain routes match before web.php
+            Route::middleware('web')
+                ->group(base_path('routes/growmart.php'));
+
+            // Load BizBoost BEFORE web routes that have domain-less root `/` route
+            // so subdomain routes (Route::domain('bizboost.mygrownet.com')) match first
+            Route::middleware('web')
+                ->group(base_path('routes/bizboost.php'));
+
+            // Load ZamStay subdomain routes before web.php so domain routes match first
+            Route::middleware('web')
+                ->group(base_path('routes/zamstay.php'));
+
+            // Subdomain route files — loaded BEFORE web.php so Route::domain() matches first
+            Route::middleware('web')
+                ->group(base_path('routes/bizdocs.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growbuilder.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/venture.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/grownet.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/growstorage.php'));
+
+            // Main web routes
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+
             // Load BOTH CMS route files with different name prefixes
             // This ensures Ziggy has all routes available regardless of environment
             Route::middleware('web')
@@ -32,8 +61,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/growfinance.php'));
             Route::middleware('web')
-                ->group(base_path('routes/bizboost.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/pos.php'));
             Route::middleware('web')
                 ->group(base_path('routes/inventory.php'));
@@ -44,16 +71,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/lifeplus.php'));
             Route::middleware('web')
-                ->group(base_path('routes/growbuilder.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/quick-invoice.php'));
             Route::middleware('web')
-                ->group(base_path('routes/bizdocs.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
-            // CMS routes moved to conditional loading above based on hostname
             Route::middleware('web')
-                ->group(base_path('routes/venture.php'));
+                ->group(base_path('routes/portal.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -90,6 +112,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
             'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
+            'portal.auth' => \App\Http\Middleware\RedirectIfNotPortalUser::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group
@@ -109,5 +132,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // Handle GrowBiz domain exceptions
         $exceptions->render(function (\App\Domain\GrowBiz\Exceptions\GrowBizException $e, $request) {
             return \App\Domain\GrowBiz\Exceptions\Handler::render($e, $request);
+        });
+
+        // Handle 419 CSRF/session expiry — redirect to login with a message
+        $exceptions->render(function (TokenMismatchException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Session expired.'], 419);
+            }
+
+            if ($request->header('X-Inertia')) {
+                return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
+            }
+
+            return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
         });
     })->create();

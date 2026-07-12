@@ -21,15 +21,8 @@
                     />
                 </div>
                 <div class="min-w-0">
-                    <h2 class="text-sm font-semibold flex items-center gap-2" :class="darkMode ? 'text-white' : 'text-gray-900'">
+                    <h2 class="text-sm font-semibold" :class="darkMode ? 'text-white' : 'text-gray-900'">
                         AI Assistant
-                        <span 
-                            v-if="provider"
-                            class="text-[9px] font-medium px-1.5 py-0.5 rounded-full uppercase tracking-wide"
-                            :class="darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'"
-                        >
-                            {{ provider }}
-                        </span>
                     </h2>
                     <p class="text-[11px] truncate max-w-[180px]" :class="darkMode ? 'text-gray-500' : 'text-gray-500'">
                         {{ contextSummary || (isAvailable ? 'Ready to help' : 'Not configured') }}
@@ -182,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { SparklesIcon, XMarkIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, WrenchScrewdriverIcon, ArrowPathIcon, ChevronDownIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, LightBulbIcon } from '@heroicons/vue/24/outline';
+import { SparklesIcon, XMarkIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, WrenchScrewdriverIcon, PhotoIcon, ArrowPathIcon, ChevronDownIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, LightBulbIcon } from '@heroicons/vue/24/outline';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 type CreativityLevel = 'guided' | 'balanced' | 'creative';
@@ -202,7 +195,7 @@ const props = defineProps<{
     darkMode?: boolean;
     isAvailable: boolean;
     provider?: string;
-    activeView: 'chat' | 'generate' | 'tools';
+    activeView: 'chat' | 'generate' | 'tools' | 'media';
     contextSummary?: string;
     aiUsage?: AIUsage;
     creativityLevel?: CreativityLevel;
@@ -210,7 +203,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     close: [];
-    'change-view': [view: 'chat' | 'generate' | 'tools'];
+    'change-view': [view: 'chat' | 'generate' | 'tools' | 'media'];
     'new-chat': [];
     'update:creativityLevel': [level: CreativityLevel];
 }>();
@@ -283,6 +276,7 @@ const statusColor = computed(() => {
 const views = [
     { id: 'chat', label: 'Chat', icon: ChatBubbleLeftRightIcon },
     { id: 'generate', label: 'Generate', icon: DocumentTextIcon },
+    { id: 'media', label: 'Media', icon: PhotoIcon },
     { id: 'tools', label: 'Tools', icon: WrenchScrewdriverIcon },
 ];
 </script>

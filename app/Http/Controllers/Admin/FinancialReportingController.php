@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\FinancialReportingService;
-use App\Services\TransactionBasedFinancialReportingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
@@ -12,8 +11,7 @@ use Illuminate\Http\JsonResponse;
 class FinancialReportingController extends Controller
 {
     public function __construct(
-        protected FinancialReportingService $financialReportingService,
-        protected TransactionBasedFinancialReportingService $transactionBasedService
+        protected FinancialReportingService $financialReportingService
     ) {
         $this->middleware(['auth', 'admin']);
     }
@@ -24,21 +22,14 @@ class FinancialReportingController extends Controller
     public function index(Request $request)
     {
         $period = $request->get('period', 'month');
-        $customStartDate = $request->get('custom_start_date');
-        $customEndDate = $request->get('custom_end_date');
-        
-        // Use transaction-based service for accurate revenue metrics
-        $overview = $this->transactionBasedService->getFinancialOverview($period, $customStartDate, $customEndDate);
         
         return Inertia::render('Admin/Financial/Dashboard', [
-            'overview' => $overview,
+            'overview' => $this->financialReportingService->getFinancialOverview($period),
             'complianceMetrics' => $this->financialReportingService->getComplianceMetrics(),
             'sustainabilityMetrics' => $this->financialReportingService->getSustainabilityMetrics(),
             'commissionCapTracking' => $this->financialReportingService->getCommissionCapTracking(),
-            'revenueAnalysis' => $overview['revenue_metrics'], // Use transaction-based revenue
-            'period' => $period,
-            'customStartDate' => $customStartDate,
-            'customEndDate' => $customEndDate,
+            'revenueAnalysis' => $this->financialReportingService->getRevenueAnalysis($period),
+            'period' => $period
         ]);
     }
 
@@ -328,9 +319,7 @@ class FinancialReportingController extends Controller
         $breakdown_type = $request->get('breakdown_type', 'source');
         
         try {
-            // Use transaction-based service for accurate revenue breakdown
-            $overview = $this->transactionBasedService->getFinancialOverview($period);
-            $breakdown = $overview['revenue_metrics'];
+            $breakdown = $this->financialReportingService->getRevenueBreakdown($period, $breakdown_type);
 
             return response()->json([
                 'success' => true,

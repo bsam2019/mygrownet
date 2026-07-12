@@ -16,7 +16,7 @@
             </div>
           </div>
           <div class="text-right">
-            <p class="text-lg font-bold text-blue-700">K{{ formatCurrency(earnings.referral_commissions) }}</p>
+            <p class="text-lg font-bold text-blue-700">{{ formatCurrency(earnings.referral_commissions) }}</p>
           </div>
         </div>
       </div>
@@ -34,7 +34,7 @@
             </div>
           </div>
           <div class="text-right">
-            <p class="text-lg font-bold text-emerald-700">K{{ formatCurrency(earnings.profit_shares) }}</p>
+            <p class="text-lg font-bold text-emerald-700">{{ formatCurrency(earnings.profit_shares) }}</p>
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@
             </div>
           </div>
           <div class="text-right">
-            <p class="text-lg font-bold text-violet-700">K{{ formatCurrency(earnings.team_performance) }}</p>
+            <p class="text-lg font-bold text-violet-700">{{ formatCurrency(earnings.team_performance) }}</p>
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@
             </div>
           </div>
           <div class="text-right">
-            <p class="text-lg font-bold text-amber-700">K{{ formatCurrency(lgrBalance || 0) }}</p>
+            <p class="text-lg font-bold text-amber-700">{{ formatCurrency(lgrBalance || 0) }}</p>
             <p class="text-xs text-amber-600 font-medium">{{ lgrPercentage }}% transferable</p>
           </div>
         </div>
@@ -79,7 +79,7 @@
           @click="emit('transfer-lgr')"
           class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:from-amber-600 hover:to-amber-700 transition-all shadow-sm hover:shadow active:scale-[0.98]"
         >
-          Transfer K{{ formatCurrency(lgrWithdrawable) }} to Wallet
+          Transfer {{ formatCurrency(lgrWithdrawable) }} to Wallet
         </button>
         <div v-else class="bg-amber-100/50 rounded-lg py-2 px-3">
           <p v-if="lgrBlocked" class="text-xs text-center text-red-700 font-medium">
@@ -107,7 +107,7 @@
             </div>
           </div>
           <div class="text-right">
-            <p class="text-lg font-bold text-orange-700">K{{ formatCurrency(earnings.pending_earnings) }}</p>
+            <p class="text-lg font-bold text-orange-700">{{ formatCurrency(earnings.pending_earnings) }}</p>
           </div>
         </div>
       </div>
@@ -118,7 +118,7 @@
       <div class="bg-gradient-to-br from-slate-50 to-gray-100/50 rounded-xl p-4 border border-gray-200">
         <div class="flex items-center justify-between">
           <p class="text-sm font-semibold text-gray-700">Total Earnings</p>
-          <p class="text-2xl font-bold text-gray-900">K{{ formatCurrency(earnings.total_earnings) }}</p>
+          <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(earnings.total_earnings) }}</p>
         </div>
       </div>
     </div>
@@ -136,6 +136,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { UsersIcon, ChartBarIcon, ClockIcon, InformationCircleIcon, SparklesIcon } from '@heroicons/vue/24/outline';
 import { TrophyIcon } from '@heroicons/vue/24/solid';
 
@@ -153,6 +155,7 @@ interface Props {
   lgrWithdrawable?: number;
   lgrPercentage?: number;
   lgrBlocked?: boolean;
+  userCurrency?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -160,11 +163,15 @@ const props = withDefaults(defineProps<Props>(), {
   lgrWithdrawable: 0,
   lgrPercentage: 40,
   lgrBlocked: false,
+  userCurrency: 'ZMW',
 });
 
 const emit = defineEmits(['transfer-lgr']);
 
+const page = usePage();
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'ZMW' ? 'K' : '$');
+
 const formatCurrency = (value: number): string => {
-  return value.toFixed(2);
+  return `${currencySymbol.value}${value.toFixed(2)}`;
 };
 </script>

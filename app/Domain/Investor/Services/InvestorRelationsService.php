@@ -2,9 +2,9 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\InvestorRelationsDocument;
-use App\Models\InvestorRelationsUpdate;
-use App\Models\InvestorDocumentAccessLog;
+use App\Models\Investor\InvestorRelationsDocument;
+use App\Models\Investor\InvestorRelationsUpdate;
+use App\Models\Investor\InvestorDocumentAccessLog;
 use App\Models\QuarterlyReport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;

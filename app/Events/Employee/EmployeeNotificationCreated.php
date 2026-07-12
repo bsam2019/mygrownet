@@ -2,7 +2,7 @@
 
 namespace App\Events\Employee;
 
-use App\Models\EmployeeNotification;
+use App\Models\Employee\EmployeeNotification;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;

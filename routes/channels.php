@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Employee;
+use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -35,7 +35,7 @@ Broadcast::channel('support.ticket.{ticketId}', function ($user, $ticketId) {
     $employee = Employee::where('user_id', $user->id)->first();
     
     // Check if employee owns this ticket or is support staff
-    $ticket = \App\Models\EmployeeSupportTicket::find($ticketId);
+    $ticket = \App\Models\Employee\EmployeeSupportTicket::find($ticketId);
     if (!$ticket) {
         \Log::warning('Broadcast auth: Ticket not found', ['ticket_id' => $ticketId, 'user_id' => $user->id]);
         return false;
@@ -105,7 +105,7 @@ Broadcast::channel('investor.support.{ticketId}', function ($user, $ticketId) {
     ]);
     
     if ($investorId) {
-        $investor = \App\Models\InvestorAccount::find($investorId);
+        $investor = \App\Models\Investor\InvestorAccount::find($investorId);
         if (!$investor) {
             \Log::warning('Broadcast auth: Investor not found', ['investor_id' => $investorId]);
             return false;

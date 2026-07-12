@@ -15,10 +15,11 @@ use App\Http\Requests\QuickInvoice\UploadLogoRequest;
 use App\Models\QuickInvoice\AdminSetting;
 use App\Models\QuickInvoice\UsageTracking;
 use App\Models\QuickInvoice\UserSubscription;
-use App\Models\QuickInvoiceProfile;
+use App\Models\QuickInvoice\QuickInvoiceProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\QuickInvoice\QuickInvoiceSubscriptionService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -207,7 +208,7 @@ class QuickInvoiceController extends Controller
                 ]);
                 
                 // Get library attachments for this user
-                $libraryAttachments = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+                $libraryAttachments = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                     ->whereIn('id', $libraryIds)
                     ->get();
                 
@@ -722,7 +723,7 @@ class QuickInvoiceController extends Controller
             return response()->json(['success' => false, 'message' => 'Authentication required'], 401);
         }
 
-        $attachments = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+        $attachments = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
             ->orderBy('name')
             ->get()
             ->map(function ($attachment) {
@@ -757,7 +758,7 @@ class QuickInvoiceController extends Controller
         }
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             // Get file from S3
@@ -804,7 +805,7 @@ class QuickInvoiceController extends Controller
             $path = $file->store('quick-invoice/library/' . auth()->id(), 's3');
             
             // Create library entry
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::create([
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::create([
                 'user_id' => auth()->id(),
                 'name' => $request->name,
                 'original_filename' => $file->getClientOriginalName(),
@@ -852,7 +853,7 @@ class QuickInvoiceController extends Controller
         }
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             // Delete from S3
@@ -893,7 +894,7 @@ class QuickInvoiceController extends Controller
         ]);
 
         try {
-            $attachment = \App\Models\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
+            $attachment = \App\Models\QuickInvoice\QuickInvoiceAttachmentLibrary::where('user_id', auth()->id())
                 ->findOrFail($id);
 
             $attachment->update([
@@ -916,6 +917,63 @@ class QuickInvoiceController extends Controller
                 'success' => false,
                 'message' => 'Failed to update attachment',
             ], 500);
+        }
+    }
+
+    // ── Subscription & Billing ──────────────────────────────────────────────────
+
+    public function subscriptionPlans(): Response
+    {
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        return Inertia::render('QuickInvoice/Subscription', [
+            'plans' => $service->getPlans(),
+            'currentSubscription' => $user ? $service->getUserSubscriptionStatus($user->id) : null,
+        ]);
+    }
+
+    public function checkout(int $tierId): \Inertia\Response|\Illuminate\Http\RedirectResponse
+    {
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        try {
+            $checkout = $service->initiateUpgrade($user->id, $tierId);
+            return Inertia::render('QuickInvoice/Checkout', [
+                'checkout' => $checkout,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('quick-invoice.subscription.plans')
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    public function upgrade(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $request->validate([
+            'tier_id' => 'required|exists:quick_invoice_subscription_tiers,id',
+            'payment_method' => 'required|in:wallet',
+        ]);
+
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        try {
+            $service->completePayment($user->id, $request->tier_id, $request->payment_method);
+            return redirect()->route('quick-invoice.subscription.plans')
+                ->with('success', 'Subscription upgraded successfully!');
+        } catch (\RuntimeException $e) {
+            return redirect()->route('quick-invoice.subscription.checkout', $request->tier_id)
+                ->with('error', $e->getMessage());
         }
     }
 }

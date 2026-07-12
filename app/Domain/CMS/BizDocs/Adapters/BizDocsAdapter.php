@@ -13,6 +13,7 @@ use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
 use App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
@@ -33,7 +34,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
 
         $businessProfile = $this->buildBusinessProfile($invoice->company);
         $customer        = $this->buildCustomer($invoice->customer);
-        $document        = $this->buildDocument(
+        $currency      = $invoice->company->settings['currency'] ?? 'ZMW';
+        $document      = $this->buildDocument(
             businessId:   $invoice->company_id,
             customerId:   $invoice->customer_id,
             type:         'invoice',
@@ -43,7 +45,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $invoice->items,
             notes:        $invoice->notes,
             terms:        $invoice->terms,
-            templateId:   $invoice->company->getBizDocsTemplateId('invoice')
+            templateId:   $invoice->company->getBizDocsTemplateId('invoice'),
+            currency:     $currency
         );
 
         $storedTotals = [
@@ -65,7 +68,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
 
         $businessProfile = $this->buildBusinessProfile($quotation->company);
         $customer        = $this->buildCustomer($quotation->customer);
-        $document        = $this->buildDocument(
+        $currency      = $quotation->company->settings['currency'] ?? 'ZMW';
+        $document      = $this->buildDocument(
             businessId:   $quotation->company_id,
             customerId:   $quotation->customer_id,
             type:         'quotation',
@@ -75,7 +79,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $quotation->items,
             notes:        $quotation->notes,
             terms:        $quotation->terms,
-            templateId:   $quotation->company->getBizDocsTemplateId('quotation')
+            templateId:   $quotation->company->getBizDocsTemplateId('quotation'),
+            currency:     $currency
         );
 
         $storedTotals = [
@@ -121,6 +126,7 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             ]);
         }
 
+        $currency      = $payment->company->settings['currency'] ?? 'ZMW';
         $businessProfile = $this->buildBusinessProfile($payment->company);
         $customer        = $this->buildCustomer($payment->customer);
         $document        = $this->buildDocument(
@@ -133,10 +139,45 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             items:        $items,
             notes:        $payment->notes,
             terms:        null,
-            templateId:   $payment->company->getBizDocsTemplateId('receipt')
+            templateId:   $payment->company->getBizDocsTemplateId('receipt'),
+            currency:     $currency
         );
 
         return $this->generatePdfWithBizDocs($document, $businessProfile, $customer);
+    }
+
+    /**
+     * Generate PDF for a purchase order using BizDocs PdfGenerationService.
+     */
+    public function generatePurchaseOrderPdf(MaterialPurchaseOrderModel $purchaseOrder): string
+    {
+        $purchaseOrder->loadMissing(['company', 'items']);
+
+        $businessProfile = $this->buildBusinessProfile($purchaseOrder->company);
+        $customer        = $this->buildCustomerFromSupplier($purchaseOrder);
+        $currency        = $purchaseOrder->company->settings['currency'] ?? 'ZMW';
+        $document        = $this->buildDocument(
+            businessId:   $purchaseOrder->company_id,
+            customerId:   0,
+            type:         'purchase_order',
+            number:       $purchaseOrder->po_number,
+            issueDate:    $purchaseOrder->order_date->format('Y-m-d'),
+            dueDate:      $purchaseOrder->expected_delivery_date?->format('Y-m-d'),
+            items:        $purchaseOrder->items,
+            notes:        $purchaseOrder->notes,
+            terms:        $purchaseOrder->terms,
+            templateId:   $purchaseOrder->company->getBizDocsTemplateId('purchase_order'),
+            currency:     $currency
+        );
+
+        $storedTotals = [
+            'subtotal'  => (float) $purchaseOrder->subtotal,
+            'tax'       => (float) $purchaseOrder->tax_amount,
+            'discount'  => 0,
+            'grand'     => (float) $purchaseOrder->total_amount,
+        ];
+
+        return $this->generatePdfWithBizDocs($document, $businessProfile, $customer, $storedTotals);
     }
 
     /**
@@ -207,6 +248,23 @@ class BizDocsAdapter implements DocumentGeneratorInterface
     }
 
     /**
+     * Build a BizDocs Customer from a Purchase Order's supplier info.
+     */
+    private function buildCustomerFromSupplier(MaterialPurchaseOrderModel $purchaseOrder): Customer
+    {
+        return Customer::fromPersistence(
+            id:         0,
+            businessId: $purchaseOrder->company_id,
+            name:       $purchaseOrder->supplier_name,
+            address:    $purchaseOrder->supplier_address,
+            phone:      $purchaseOrder->supplier_contact,
+            email:      null,
+            tpin:       null,
+            notes:      null
+        );
+    }
+
+    /**
      * Build a BizDocs Document from CMS invoice/quotation/payment items.
      */
     private function buildDocument(
@@ -219,7 +277,8 @@ class BizDocsAdapter implements DocumentGeneratorInterface
         $items,
         ?string $notes,
         ?string $terms,
-        ?int $templateId
+        ?int $templateId,
+        string $currency = 'ZMW'
     ): Document {
         $document = Document::create(
             businessId:   $businessId,
@@ -227,7 +286,7 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             type:         DocumentType::fromString($type),
             number:       DocumentNumber::fromString($number),
             issueDate:    new \DateTimeImmutable($issueDate),
-            currency:     'ZMW',
+            currency:     $currency,
             templateId:   $templateId,
             dueDate:      $dueDate ? new \DateTimeImmutable($dueDate) : null,
             notes:        $notes,
@@ -251,9 +310,9 @@ class BizDocsAdapter implements DocumentGeneratorInterface
             $document->addItem(DocumentItem::create(
                 description:     $desc,
                 quantity:        $effectiveQty,
-                unitPrice:       Money::fromAmount((int)((float)$unitPrice * 100), 'ZMW'),
+                unitPrice:       Money::fromAmount((int)((float)$unitPrice * 100), $currency),
                 taxRate:         (float)$taxRate,
-                discountAmount:  Money::fromAmount(0, 'ZMW'),
+                discountAmount:  Money::fromAmount(0, $currency),
                 sortOrder:       $index,
                 dimensions:      $dims,
                 dimensionsValue: $effectiveDimsVal

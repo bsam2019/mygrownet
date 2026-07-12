@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue';
 import CommandPalette from '@/Components/BizBoost/CommandPalette.vue';
 import ToastContainer from '@/Components/BizBoost/ToastContainer.vue';
 import NotificationDropdown from '@/Components/BizBoost/NotificationDropdown.vue';
@@ -43,6 +44,11 @@ import {
     PaintBrushIcon,
     MagnifyingGlassIcon,
     CommandLineIcon,
+    BookOpenIcon,
+    WalletIcon,
+    ChatBubbleBottomCenterTextIcon,
+    ArrowRightOnRectangleIcon,
+    UserCircleIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -55,6 +61,18 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const business = computed(() => page.props.business);
 const subscriptionTier = computed(() => page.props.subscriptionTier || 'free');
+
+// Detect if running on the BizBoost subdomain
+const isSubdomain = computed(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.hostname === 'bizboost.mygrownet.com';
+});
+
+const mainAppUrl = computed(() => isSubdomain.value ? 'https://mygrownet.com/apps' : '/apps');
+
+const logout = () => {
+    router.post('/bizboost/logout');
+};
 
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
@@ -86,9 +104,13 @@ const isToolsNavActive = computed(() =>
     route().current('bizboost.ai.*') ||
     route().current('bizboost.templates.*') ||
     route().current('bizboost.campaigns.*') ||
+    route().current('bizboost.ad-campaigns.*') ||
+    route().current('bizboost.wallet.*') ||
+    route().current('bizboost.omnichannel.*') ||
     route().current('bizboost.whatsapp.*') ||
     route().current('bizboost.advisor.*') ||
-    route().current('bizboost.reminders.*')
+    route().current('bizboost.reminders.*') ||
+    route().current('bizboost.guides.*')
 );
 
 // Auto-expand tools if active
@@ -138,9 +160,13 @@ const toolsNavigation = [
     { name: 'AI Content', href: '/bizboost/ai', icon: SparklesIcon, current: route().current('bizboost.ai.*') },
     { name: 'Templates', href: '/bizboost/templates', icon: PhotoIcon, current: route().current('bizboost.templates.*') },
     { name: 'Campaigns', href: '/bizboost/campaigns', icon: RocketLaunchIcon, current: route().current('bizboost.campaigns.*') },
-    { name: 'WhatsApp', href: '/bizboost/whatsapp/broadcasts', icon: ChatBubbleLeftRightIcon },
-    { name: 'AI Advisor', href: '/bizboost/advisor', icon: LightBulbIcon },
+    { name: 'Ad Campaigns', href: '/bizboost/ad-campaigns', icon: CurrencyDollarIcon, current: route().current('bizboost.ad-campaigns.*') },
+    { name: 'Wallet', href: '/bizboost/wallet', icon: WalletIcon, current: route().current('bizboost.wallet.*') },
+    { name: 'Omnichannel', href: '/bizboost/omnichannel', icon: ChatBubbleBottomCenterTextIcon, current: route().current('bizboost.omnichannel.*') },
+    { name: 'WhatsApp', href: '/bizboost/whatsapp/broadcasts', icon: ChatBubbleLeftRightIcon, current: route().current('bizboost.whatsapp.*') },
+    { name: 'AI Advisor', href: '/bizboost/advisor', icon: LightBulbIcon, current: route().current('bizboost.advisor.*') },
     { name: 'Reminders', href: '/bizboost/reminders', icon: ClockIcon },
+    { name: 'Guides', href: '/bizboost/guides', icon: BookOpenIcon, current: route().current('bizboost.guides.*') },
 ];
 
 const advancedNavigation = [
@@ -462,26 +488,26 @@ const openCommandPalette = () => {
                         <!-- All Apps & Settings & Upgrade -->
                         <li class="mt-auto space-y-2">
                             <!-- All Apps Link -->
-                            <Link
+                            <a
                                 v-if="!sidebarCollapsed"
-                                href="/apps"
+                                :href="mainAppUrl"
                                 class="group flex gap-x-3 rounded-lg p-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-violet-600 transition-all border border-gray-200 hover:border-violet-200"
                             >
                                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                                 </svg>
                                 All Apps
-                            </Link>
-                            <Link
+                            </a>
+                            <a
                                 v-else
-                                href="/apps"
+                                :href="mainAppUrl"
                                 class="group flex justify-center rounded-lg p-2.5 text-gray-700 hover:bg-gray-50 hover:text-violet-600 transition-all border border-gray-200 hover:border-violet-200"
-                                title="All Apps"
+                                :title="isSubdomain ? 'Back to MyGrowNet' : 'All Apps'"
                             >
                                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                                 </svg>
-                            </Link>
+                            </a>
                             
                             <Link
                                 v-if="!sidebarCollapsed"
@@ -554,15 +580,102 @@ const openCommandPalette = () => {
 
                         <div class="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-200 dark:bg-slate-700" aria-hidden="true"></div>
 
-                        <div class="flex items-center gap-x-3">
-                            <div v-if="business" class="hidden lg:flex lg:flex-col lg:items-end">
-                                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ business.name }}</span>
-                                <span class="text-xs text-gray-500 dark:text-slate-400 capitalize">{{ business.industry }}</span>
-                            </div>
-                            <div class="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center ring-2 ring-white shadow-md">
-                                <span class="text-sm font-semibold text-white">{{ user?.name?.charAt(0) || 'U' }}</span>
-                            </div>
-                        </div>
+                        <!-- User Dropdown Menu -->
+                        <Menu as="div" class="relative">
+                            <MenuButton class="flex items-center gap-x-3 group">
+                                <div v-if="business" class="hidden lg:flex lg:flex-col lg:items-end">
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ business.name }}</span>
+                                    <span class="text-xs text-gray-500 dark:text-slate-400 capitalize">{{ business.industry }}</span>
+                                </div>
+                                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center ring-2 ring-white shadow-md group-hover:ring-violet-300 transition-all cursor-pointer">
+                                    <UserCircleIcon class="h-5 w-5 text-white" />
+                                </div>
+                            </MenuButton>
+
+                            <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                                <MenuItems class="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-50 overflow-hidden">
+                                    <!-- User Info Header -->
+                                    <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ user?.name || 'User' }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ user?.email || '' }}</p>
+                                    </div>
+
+                                    <!-- Business Links -->
+                                    <div class="py-1">
+                                        <MenuItem v-slot="{ active }">
+                                            <Link
+                                                href="/bizboost/business/profile"
+                                                :class="[
+                                                    active ? 'bg-violet-50 dark:bg-violet-900/30' : '',
+                                                    'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 transition-colors'
+                                                ]"
+                                            >
+                                                <BuildingStorefrontIcon class="h-5 w-5 text-violet-500" />
+                                                Business Profile
+                                            </Link>
+                                        </MenuItem>
+                                        <MenuItem v-slot="{ active }">
+                                            <Link
+                                                href="/bizboost/business/settings"
+                                                :class="[
+                                                    active ? 'bg-violet-50 dark:bg-violet-900/30' : '',
+                                                    'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 transition-colors'
+                                                ]"
+                                            >
+                                                <Cog6ToothIcon class="h-5 w-5 text-gray-400" />
+                                                Settings
+                                            </Link>
+                                        </MenuItem>
+                                    </div>
+
+                                    <!-- App Links -->
+                                    <div class="py-1 border-t border-gray-100 dark:border-slate-700">
+                                        <MenuItem v-slot="{ active }">
+                                            <Link
+                                                href="/bizboost/upgrade"
+                                                :class="[
+                                                    active ? 'bg-violet-50 dark:bg-violet-900/30' : '',
+                                                    'flex items-center gap-3 px-4 py-2.5 text-sm text-violet-700 dark:text-violet-300 transition-colors'
+                                                ]"
+                                            >
+                                                <ArrowUpCircleIcon class="h-5 w-5 text-violet-500" />
+                                                Upgrade Plan
+                                            </Link>
+                                        </MenuItem>
+                                        <MenuItem v-slot="{ active }">
+                                            <a
+                                                :href="mainAppUrl"
+                                                :class="[
+                                                    active ? 'bg-gray-50 dark:bg-slate-700' : '',
+                                                    'flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 transition-colors'
+                                                ]"
+                                            >
+                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                                </svg>
+                                                {{ isSubdomain ? 'Back to MyGrowNet' : 'All Apps' }}
+                                            </a>
+                                        </MenuItem>
+                                    </div>
+
+                                    <!-- Logout -->
+                                    <div class="py-1 border-t border-gray-100 dark:border-slate-700">
+                                        <MenuItem v-slot="{ active }">
+                                            <button
+                                                @click="logout"
+                                                :class="[
+                                                    active ? 'bg-red-50 dark:bg-red-900/30' : '',
+                                                    'flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 transition-colors'
+                                                ]"
+                                            >
+                                                <ArrowRightOnRectangleIcon class="h-5 w-5" />
+                                                Sign Out
+                                            </button>
+                                        </MenuItem>
+                                    </div>
+                                </MenuItems>
+                            </transition>
+                        </Menu>
                     </div>
                 </div>
             </div>

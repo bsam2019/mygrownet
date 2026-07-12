@@ -238,6 +238,47 @@ class SetupController extends Controller
     }
 
     /**
+     * Skip setup wizard and go to dashboard.
+     */
+    public function skip(Request $request)
+    {
+        $user = $request->user();
+        $business = BizBoostBusinessModel::where('user_id', $user->id)->first();
+
+        if (!$business) {
+            $baseSlug = Str::slug($user->name . '-business');
+            $slug = $baseSlug;
+            $counter = 1;
+            while (BizBoostBusinessModel::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+
+            $business = BizBoostBusinessModel::create([
+                'user_id' => $user->id,
+                'name' => $user->name . "'s Business",
+                'slug' => $slug,
+                'industry' => 'Other',
+                'email' => $user->email,
+                'onboarding_completed' => true,
+                'is_active' => true,
+            ]);
+
+            BizBoostBusinessProfileModel::firstOrCreate(
+                ['business_id' => $business->id],
+                ['is_published' => false]
+            );
+        } else {
+            $business->update([
+                'onboarding_completed' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        return redirect()->route('bizboost.dashboard')
+            ->with('info', 'Setup skipped. You can complete your business profile later in Settings.');
+    }
+
+    /**
      * Format business data for frontend.
      */
     private function formatBusiness(BizBoostBusinessModel $business): array

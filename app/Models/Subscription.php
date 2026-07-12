@@ -40,20 +40,8 @@ class Subscription extends Model
         'trial_days' => 'integer'
     ];
 
-    /**
-     * Boot method to handle events
-     */
-    protected static function booted()
-    {
-        static::created(function ($subscription) {
-            if ($subscription->status === 'active') {
-                // Process referral commissions for subscription
-                if (class_exists(\App\Services\ReferralService::class)) {
-                    app(\App\Services\ReferralService::class)->processSubscriptionCommission($subscription);
-                }
-            }
-        });
-    }
+    // Commission processing is handled by ProcessMLMCommissions listener (via PaymentVerified event)
+    // using MLMCommissionService with proper multi-currency support.
 
     /**
      * Get the user that owns the subscription

@@ -8,7 +8,7 @@ use App\Domain\Employee\Entities\Goal;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\ValueObjects\GoalStatus;
 use App\Domain\Employee\Repositories\GoalRepositoryInterface;
-use App\Models\EmployeeGoal;
+use App\Models\Employee\EmployeeGoal;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 

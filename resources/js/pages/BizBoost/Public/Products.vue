@@ -89,7 +89,7 @@ const clearFilters = () => {
     applyFilters();
 };
 
-const formatPrice = (price: number) => `K${price.toLocaleString()}`;
+import { formatBizBoostPriceShort as formatPrice } from '@/composables/useBizBoostCurrency';
 
 const whatsappLink = computed(() => {
     const phone = props.business.whatsapp || props.business.phone;
@@ -354,13 +354,13 @@ const hasActiveFilters = computed(() => searchQuery.value || selectedCategory.va
                                 class="text-xl font-bold"
                                 :style="{ color: product.sale_price ? theme.accent_color : theme.primary_color }"
                             >
-                                {{ formatPrice(product.sale_price || product.price) }}
+                                {{ formatPrice(product.sale_price || product.price, product.currency) }}
                             </span>
                             <span 
                                 v-if="product.sale_price"
                                 class="text-sm text-gray-400 line-through"
                             >
-                                {{ formatPrice(product.price) }}
+                                {{ formatPrice(product.price, product.currency) }}
                             </span>
                         </div>
                     </div>

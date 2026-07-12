@@ -4,6 +4,8 @@ import axios from 'axios';
 interface AIStatus {
     available: boolean;
     provider?: string;
+    model?: string;
+    available_models?: Array<{ id: string; name: string; description: string }>;
 }
 
 interface GenerateContentParams {
@@ -55,13 +57,13 @@ export function useAI(siteId: number) {
     const baseUrl = `/growbuilder/sites/${siteId}/ai`;
 
     // Check AI availability
-    const checkStatus = async (): Promise<boolean> => {
+    const checkStatus = async (): Promise<AIStatus | false> => {
         try {
-            const response = await axios.get<AIStatus>('/growbuilder/ai/status');
+            const response = await axios.get('/growbuilder/ai/status');
             isAvailable.value = response.data.available;
             provider.value = response.data.provider || '';
-            console.log('AI Status:', { available: response.data.available, provider: response.data.provider });
-            return response.data.available;
+            console.log('AI Status:', response.data);
+            return response.data;
         } catch (e) {
             console.error('AI status check failed:', e);
             isAvailable.value = false;
@@ -358,17 +360,22 @@ export function useAI(siteId: number) {
             siteColors?: Record<string, string>;
             lastAction?: string;
             conversationHistory?: Array<{ role: string; content: string }>;
-        }
+        },
+        model?: string
     ): Promise<{
         action: string;
         message: string;
         data: Record<string, any> | null;
         usage?: any;
     }> => {
-        const response = await makeRequest('smart-chat', {
+        const payload: Record<string, any> = {
             message,
             context: context || {},
-        });
+        };
+        if (model) {
+            payload.model = model;
+        }
+        const response = await makeRequest('smart-chat', payload);
         
         console.log('smartChat full response:', response);
         

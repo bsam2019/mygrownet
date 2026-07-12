@@ -14,7 +14,7 @@ class EquipmentModel extends Model
     protected $table = 'cms_equipment';
 
     protected $fillable = [
-        'company_id', 'equipment_code', 'name', 'category', 'description',
+        'company_id', 'branch_id', 'equipment_code', 'name', 'category', 'description',
         'manufacturer', 'model', 'serial_number', 'purchase_date', 'purchase_cost',
         'current_value', 'ownership', 'status', 'location', 'useful_life_years',
         'last_maintenance_date', 'next_maintenance_date', 'maintenance_interval_days', 'notes',
@@ -29,6 +29,11 @@ class EquipmentModel extends Model
         'next_maintenance_date' => 'date',
         'maintenance_interval_days' => 'integer',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -66,5 +71,10 @@ class EquipmentModel extends Model
         $totalDepreciation = $annualDepreciation * $yearsOwned;
 
         return min($totalDepreciation, $this->purchase_cost);
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 }

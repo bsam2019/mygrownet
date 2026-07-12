@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
     StarIcon, 
@@ -16,9 +17,15 @@ interface Props {
     lgrRewards: number;
     commissions: number;
     profitShares: number;
+    userCurrency?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    userCurrency: 'ZMW',
+});
+
+const page = usePage();
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K');
 
 const breadcrumbs = [
     { label: 'Dashboard', href: route('dashboard') },
@@ -56,7 +63,7 @@ const earningsData = {
                 <div class="relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-5 text-white shadow-md">
                     <div class="relative z-10">
                         <p class="text-xs font-medium text-blue-100">Total Earnings</p>
-                        <p class="mt-1 text-2xl font-bold">K {{ earningsData.totalEarnings.toFixed(2) }}</p>
+                        <p class="mt-1 text-2xl font-bold">{{ currencySymbol }} {{ earningsData.totalEarnings.toFixed(2) }}</p>
                         <p class="mt-0.5 text-xs text-blue-100">All time</p>
                     </div>
                     <div class="absolute -right-3 -top-3 h-20 w-20 rounded-full bg-white/10"></div>
@@ -66,7 +73,7 @@ const earningsData = {
                 <div class="relative overflow-hidden rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-5 text-white shadow-md">
                     <div class="relative z-10">
                         <p class="text-xs font-medium text-green-100">This Month</p>
-                        <p class="mt-1 text-2xl font-bold">K {{ earningsData.thisMonth.toFixed(2) }}</p>
+                        <p class="mt-1 text-2xl font-bold">{{ currencySymbol }} {{ earningsData.thisMonth.toFixed(2) }}</p>
                         <p class="mt-0.5 text-xs text-green-100">Current period</p>
                     </div>
                     <div class="absolute -right-3 -top-3 h-20 w-20 rounded-full bg-white/10"></div>
@@ -76,7 +83,7 @@ const earningsData = {
                 <div class="relative overflow-hidden rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 p-5 text-white shadow-md">
                     <div class="relative z-10">
                         <p class="text-xs font-medium text-amber-100">Pending</p>
-                        <p class="mt-1 text-2xl font-bold">K {{ earningsData.pending.toFixed(2) }}</p>
+                        <p class="mt-1 text-2xl font-bold">{{ currencySymbol }} {{ earningsData.pending.toFixed(2) }}</p>
                         <p class="mt-0.5 text-xs text-amber-100">Processing</p>
                     </div>
                     <div class="absolute -right-3 -top-3 h-20 w-20 rounded-full bg-white/10"></div>
@@ -98,7 +105,7 @@ const earningsData = {
                                 <div class="text-right">
                                     <p class="text-xs font-medium text-gray-600 dark:text-gray-400">LGR Rewards</p>
                                     <p class="mt-0.5 text-xl font-bold text-gray-900 dark:text-white">
-                                        K {{ earningsData.lgrRewards.toFixed(2) }}
+                                        {{ currencySymbol }} {{ earningsData.lgrRewards.toFixed(2) }}
                                     </p>
                                 </div>
                             </div>
@@ -134,7 +141,7 @@ const earningsData = {
                                 <div class="text-right">
                                     <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Commissions</p>
                                     <p class="mt-0.5 text-xl font-bold text-gray-900 dark:text-white">
-                                        K {{ earningsData.commissions.toFixed(2) }}
+                                        {{ currencySymbol }} {{ earningsData.commissions.toFixed(2) }}
                                     </p>
                                 </div>
                             </div>
@@ -170,7 +177,7 @@ const earningsData = {
                                 <div class="text-right">
                                     <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Profit Shares</p>
                                     <p class="mt-0.5 text-xl font-bold text-gray-900 dark:text-white">
-                                        K {{ earningsData.profitShares.toFixed(2) }}
+                                        {{ currencySymbol }} {{ earningsData.profitShares.toFixed(2) }}
                                     </p>
                                 </div>
                             </div>

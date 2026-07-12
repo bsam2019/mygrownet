@@ -33,7 +33,7 @@ class LgrActivityReportController extends Controller
                 'users.phone',
                 DB::raw('COUNT(DISTINCT lgr_activities.id) as total_activities'),
                 DB::raw('COUNT(DISTINCT DATE(lgr_activities.created_at)) as active_days'),
-                DB::raw('SUM(lgr_activities.credits_awarded) as total_credits'),
+                DB::raw('SUM(lgr_activities.lgc_earned) as total_credits'),
                 DB::raw('MAX(lgr_activities.created_at) as last_activity'),
             ])
             ->leftJoin('lgr_cycles', 'users.id', '=', 'lgr_cycles.user_id')
@@ -71,7 +71,7 @@ class LgrActivityReportController extends Controller
                 'activity_type',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('COUNT(DISTINCT user_id) as unique_users'),
-                DB::raw('SUM(credits_awarded) as total_credits'),
+                DB::raw('SUM(lgc_earned) as total_credits'),
             ])
             ->when($dateRange !== 'all', function ($query) use ($dateRange) {
                 return $query->where('created_at', '>=', now()->subDays((int)$dateRange));
@@ -101,7 +101,7 @@ class LgrActivityReportController extends Controller
                 ->when($dateRange !== 'all', function ($query) use ($dateRange) {
                     return $query->where('created_at', '>=', now()->subDays((int)$dateRange));
                 })
-                ->sum('credits_awarded'),
+                ->sum('lgc_earned'),
         ];
 
         // Get daily activity trend (last 30 days)
@@ -110,7 +110,7 @@ class LgrActivityReportController extends Controller
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as activities'),
                 DB::raw('COUNT(DISTINCT user_id) as users'),
-                DB::raw('SUM(credits_awarded) as credits'),
+                DB::raw('SUM(lgc_earned) as credits'),
             ])
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy(DB::raw('DATE(created_at)'))
@@ -156,7 +156,7 @@ class LgrActivityReportController extends Controller
             ->select([
                 'activity_type',
                 DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(credits_awarded) as credits'),
+                DB::raw('SUM(lgc_earned) as credits'),
             ])
             ->where('user_id', $userId)
             ->when($dateRange !== 'all', function ($query) use ($dateRange) {

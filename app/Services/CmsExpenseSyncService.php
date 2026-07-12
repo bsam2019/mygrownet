@@ -6,7 +6,7 @@ use App\Domain\Transaction\Enums\TransactionType;
 use App\Domain\Transaction\Enums\TransactionStatus;
 use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
 use App\Models\Transaction;
-use App\Models\CmsSyncLog;
+use App\Models\CMS\CmsSyncLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;

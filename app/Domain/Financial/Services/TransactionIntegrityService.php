@@ -12,16 +12,6 @@ use Illuminate\Support\Facades\Log;
 class TransactionIntegrityService
 {
     /**
-     * Unified Wallet Service for cache management
-     */
-    private $walletService;
-    
-    public function __construct()
-    {
-        $this->walletService = app(\App\Domain\Wallet\Services\WalletService::class);
-    }
-    
-    /**
      * Record a wallet debit transaction with integrity checks
      */
     public function recordWalletDebit(
@@ -64,9 +54,6 @@ class TransactionIntegrityService
             
             // Log for audit trail
             $this->logTransaction($transaction, 'wallet_debit');
-            
-            // Clear wallet cache immediately
-            $this->walletService->clearCache($user);
             
             return $transaction;
         });
@@ -116,9 +103,6 @@ class TransactionIntegrityService
             // Log for audit trail
             $this->logTransaction($transaction, 'wallet_credit');
             
-            // Clear wallet cache immediately
-            $this->walletService->clearCache($user);
-            
             return $transaction;
         });
     }
@@ -128,8 +112,8 @@ class TransactionIntegrityService
      */
     public function checkSufficientBalance(User $user, float $amount): bool
     {
-        // Use WalletService (primary service)
-        $currentBalance = $this->walletService->calculateBalance($user);
+        $walletService = app(\App\Services\WalletService::class);
+        $currentBalance = $walletService->calculateBalance($user);
         
         return $currentBalance >= $amount;
     }

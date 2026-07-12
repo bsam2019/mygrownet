@@ -13,22 +13,12 @@ class GetConversationUseCase
         private MessagingService $messagingService
     ) {}
 
-    /**
-     * Get conversation between two users, optionally filtered by module.
-     *
-     * @param int $userId
-     * @param int $otherUserId
-     * @param int $limit
-     * @param string|null $module Filter by module (mygrownet, growfinance, growbiz, etc.)
-     * @return array
-     */
-    public function execute(int $userId, int $otherUserId, int $limit = 50, ?string $module = null): array
+    public function execute(int $userId, int $otherUserId, int $limit = 50): array
     {
         $messages = $this->messagingService->getConversation(
             UserId::fromInt($userId),
             UserId::fromInt($otherUserId),
-            $limit,
-            $module
+            $limit
         );
 
         // Load user names

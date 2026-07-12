@@ -1,137 +1,76 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $document['type_label'] }} from {{ $document['business_info']['name'] }}</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #2563eb;
-        }
-        .header h1 {
-            color: #2563eb;
-            margin: 0;
-            font-size: 24px;
-        }
-        .document-info {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-        .document-info p {
-            margin: 5px 0;
-        }
-        .amount {
-            font-size: 28px;
-            font-weight: bold;
-            color: #059669;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .custom-message {
-            background: #fef3c7;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border-left: 4px solid #d97706;
-        }
-        .attachment-notice {
-            background: #dbeafe;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 20px 0;
-            text-align: center;
-            border-left: 4px solid #2563eb;
-        }
-        .attachment-notice p {
-            margin: 0;
-            color: #1e40af;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .footer a {
-            color: #2563eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ $document['type_label'] }}</h1>
-            <p style="color: #6b7280; margin-top: 5px;">from {{ $document['business_info']['name'] }}</p>
-        </div>
+@extends('emails.layout')
 
-        @if($customMessage)
-        <div class="custom-message">
-            <p style="margin: 0;">{{ $customMessage }}</p>
-        </div>
-        @endif
+@section('content')
+    <h2 class="email-title">{{ $document['type_label'] }}</h2>
+    
+    <p class="email-text">
+        From <strong>{{ $document['business_info']['name'] }}</strong>
+    </p>
 
-        <div class="document-info">
-            <p><strong>Document #:</strong> {{ $document['document_number'] }}</p>
-            <p><strong>Date:</strong> {{ \Carbon\Carbon::parse($document['issue_date'])->format('d M Y') }}</p>
-            @if(!empty($document['due_date']))
-            <p><strong>Due Date:</strong> {{ \Carbon\Carbon::parse($document['due_date'])->format('d M Y') }}</p>
-            @endif
-            <p><strong>To:</strong> {{ $document['client_info']['name'] }}</p>
-        </div>
-
-        <div class="amount">
-            @php
-                $symbol = match($document['currency']) {
-                    'ZMW' => 'K',
-                    'USD' => '$',
-                    'EUR' => '€',
-                    'GBP' => '£',
-                    'ZAR' => 'R',
-                    default => $document['currency'],
-                };
-            @endphp
-            {{ $symbol }} {{ number_format($document['total'], 2) }}
-        </div>
-
-        <div class="attachment-notice">
-            <p>📎 <strong>Your {{ strtolower($document['type_label']) }} is attached to this email as a PDF.</strong></p>
-        </div>
-
-        @if(!empty($document['notes']))
-        <div style="margin-top: 20px;">
-            <strong>Notes:</strong>
-            <p style="color: #6b7280;">{{ $document['notes'] }}</p>
-        </div>
-        @endif
-
-        <div class="footer">
-            <p>This {{ strtolower($document['type_label']) }} was sent via <a href="{{ config('app.url') }}">MyGrowNet</a></p>
-            <p style="margin-top: 10px;">
-                <a href="{{ config('app.url') }}/quick-invoice">Create your own invoices for free</a>
-            </p>
-        </div>
+    @if($customMessage)
+    <div class="info-box info-box-warning">
+        <p>{{ $customMessage }}</p>
     </div>
-</body>
-</html>
+    @endif
+
+    <table class="details-table">
+        <tr>
+            <td class="details-label">Document #</td>
+            <td class="details-value">{{ $document['document_number'] }}</td>
+        </tr>
+        <tr>
+            <td class="details-label">Date</td>
+            <td class="details-value">{{ \Carbon\Carbon::parse($document['issue_date'])->format('d M Y') }}</td>
+        </tr>
+        @if(!empty($document['due_date']))
+        <tr>
+            <td class="details-label">Due Date</td>
+            <td class="details-value">{{ \Carbon\Carbon::parse($document['due_date'])->format('d M Y') }}</td>
+        </tr>
+        @endif
+        <tr>
+            <td class="details-label">To</td>
+            <td class="details-value">{{ $document['client_info']['name'] }}</td>
+        </tr>
+        <tr>
+            <td class="details-label">Amount</td>
+            <td class="details-value" style="font-size: 20px; font-weight: 700; color: #059669;">
+                @php
+                    $symbol = match($document['currency']) {
+                        'ZMW' => 'K',
+                        'USD' => '$',
+                        'EUR' => '€',
+                        'GBP' => '£',
+                        'ZAR' => 'R',
+                        default => $document['currency'],
+                    };
+                @endphp
+                {{ $symbol }} {{ number_format($document['total'], 2) }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <p><strong>📎 Attachment Included</strong></p>
+        <p style="margin-top: 8px;">Your {{ strtolower($document['type_label']) }} is attached to this email as a PDF.</p>
+    </div>
+
+    @if(!empty($document['notes']))
+    <p class="email-text">
+        <strong>Notes:</strong><br>
+        {{ $document['notes'] }}
+    </p>
+    @endif
+
+    <div class="button-container">
+        <a href="{{ config('app.url') }}/quick-invoice" class="button">
+            Create Your Own Invoice
+        </a>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="email-text" style="font-size: 14px; color: #6b7280;">
+        This {{ strtolower($document['type_label']) }} was sent via <a href="{{ config('app.url') }}" style="color: #2563eb;">MyGrowNet</a>.
+    </p>
+@endsection

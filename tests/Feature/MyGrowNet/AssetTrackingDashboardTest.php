@@ -62,7 +62,7 @@ class AssetTrackingDashboardTest extends TestCase
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('MyGrowNet/Dashboard')
+                ->component('GrowNet/GrowNet')
                 ->has('assetData.summary')
                 ->has('assetData.assets')
                 ->where('assetData.summary.total_assets', 1)

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\BgfApplication;
+use App\Models\BGF\BgfApplication;
 use App\Models\User;
 use Carbon\Carbon;
 

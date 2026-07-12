@@ -52,7 +52,7 @@ return [
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'api_version' => env('FACEBOOK_API_VERSION', 'v18.0'),
+        'api_version' => env('FACEBOOK_API_VERSION', 'v25.0'),
     ],
 
     'tiktok' => [
@@ -111,36 +111,72 @@ return [
     | AI Configuration (GrowBuilder AI Features)
     |--------------------------------------------------------------------------
     | Supports multiple providers:
+    | - nvidia: DeepSeek models via NVIDIA API (fast, quality results)
     | - openai: OpenAI GPT models (paid)
-    | - groq: Groq Cloud with Llama models (FREE tier available)
     | - gemini: Google Gemini (FREE tier available)
     | - ollama: Local Ollama server (FREE, runs locally)
     |
-    | To use Groq (recommended for free testing):
-    | 1. Sign up at https://console.groq.com
-    | 2. Get your API key
-    | 3. Set AI_PROVIDER=groq and AI_GROQ_KEY in .env
+    | To use NVIDIA/DeepSeek (recommended):
+    | 1. Get your NVIDIA API key
+    | 2. Set AI_PROVIDER=nvidia and AI_NVIDIA_KEY in .env
+    | 3. Users can select between deepseek-v4-pro and deepseek-v4-flash
     */
 
     'ai' => [
-        'provider' => env('AI_PROVIDER', 'openai'), // openai, groq, gemini, ollama
-        
+        'provider' => env('AI_PROVIDER', 'nvidia'), // nvidia, openai, gemini, ollama
+
+        // NVIDIA (DeepSeek via NVIDIA API - recommended)
+        'nvidia_key' => env('AI_NVIDIA_KEY'),
+        'nvidia_model' => env('AI_NVIDIA_MODEL', 'deepseek-ai/deepseek-v4-flash'),
+        'nvidia_url' => 'https://integrate.api.nvidia.com/v1',
+
         // OpenAI (paid)
         'openai_key' => env('OPENAI_API_KEY'),
         'openai_model' => env('OPENAI_MODEL', 'gpt-3.5-turbo'),
         'openai_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-        
-        // Groq (FREE tier - recommended for testing)
-        'groq_key' => env('AI_GROQ_KEY'),
-        'groq_model' => env('AI_GROQ_MODEL', 'llama-3.3-70b-versatile'),
-        
+
         // Google Gemini (FREE tier)
         'gemini_key' => env('AI_GEMINI_KEY'),
         'gemini_model' => env('AI_GEMINI_MODEL', 'gemini-pro'),
-        
+
         // Ollama (FREE - local)
         'ollama_url' => env('AI_OLLAMA_URL', 'http://localhost:11434/api'),
         'ollama_model' => env('AI_OLLAMA_MODEL', 'llama3'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Image Generation
+    |--------------------------------------------------------------------------
+    */
+
+    'image' => [
+        'provider' => env('IMAGE_PROVIDER', 'huggingface'), // huggingface or replicate
+    ],
+
+    'replicate' => [
+        'api_key' => env('REPLICATE_API_KEY'),
+        'model' => env('REPLICATE_MODEL', 'black-forest-labs/flux-dev'),
+    ],
+
+    'huggingface' => [
+        'api_key' => env('HUGGINGFACE_API_KEY'),
+        'model' => env('HUGGINGFACE_MODEL', 'black-forest-labs/FLUX.1-dev'),
+    ],
+
+    'meta' => [
+        'system_user_token' => env('META_MASTER_PERMANENT_TOKEN'),
+        'ad_account_id' => env('META_SANDBOX_AD_ACCOUNT_ID'),
+        'marketing_api_version' => env('META_MARKETING_API_VERSION', 'v25.0'),
+    ],
+
+    'whatsapp' => [
+        'token' => env('META_MASTER_PERMANENT_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'waba_id' => env('WHATSAPP_WABA_ID'),
+        'verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', 'mygrownet_verify'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v25.0'),
+        'business_phone' => env('WHATSAPP_BUSINESS_PHONE', '260965896512'),
     ],
 
     // Legacy OpenAI config (for backward compatibility)
@@ -148,6 +184,13 @@ return [
         'key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-3.5-turbo'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+    ],
+
+    // Social Login
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
     ],
 
 ];

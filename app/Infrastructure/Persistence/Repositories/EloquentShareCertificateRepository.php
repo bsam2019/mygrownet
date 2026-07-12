@@ -6,7 +6,7 @@ use App\Domain\Investor\Entities\ShareCertificate;
 use App\Domain\Investor\Repositories\ShareCertificateRepositoryInterface;
 use App\Domain\Investor\ValueObjects\CertificateNumber;
 use App\Domain\Investor\ValueObjects\ShareQuantity;
-use App\Models\InvestorShareCertificate;
+use App\Models\Investor\InvestorShareCertificate;
 use DateTimeImmutable;
 
 class EloquentShareCertificateRepository implements ShareCertificateRepositoryInterface

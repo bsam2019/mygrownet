@@ -79,20 +79,28 @@
                 </div>
               </div>
 
-              <!-- Desktop Dashboard -->
+              <!-- Preferred Landing Dashboard -->
               <div class="bg-white border border-gray-200 rounded-xl p-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3 flex-1">
-                    <ComputerDesktopIcon class="h-5 w-5 text-gray-600 flex-shrink-0" />
-                    <div class="flex-1 min-w-0">
-                      <h4 class="text-sm font-semibold text-gray-900">Use Desktop Dashboard</h4>
-                      <p class="text-xs text-gray-500 mt-0.5">Switch to full desktop view</p>
-                    </div>
+                <div class="flex items-start gap-3">
+                  <ComputerDesktopIcon class="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-semibold text-gray-900">Preferred Landing</h4>
+                    <p class="text-xs text-gray-500 mt-0.5 mb-3">Where to land after login</p>
+                    <select
+                      v-model="settings.preferredLanding"
+                      @change="updateLandingPreference"
+                      class="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Default Dashboard</option>
+                      <option value="grownet.dashboard">GrowNet Community</option>
+                      <option value="bizboost.dashboard">BizBoost</option>
+                      <option value="growmart.main.home">GrowMart</option>
+                      <option value="zamstay.home">ZamStay</option>
+                      <option value="growbuilder.dashboard">GrowBuilder</option>
+                      <option value="bizdocs.dashboard">BizDocs</option>
+                      <option value="growbackup.dashboard">GrowBackup</option>
+                    </select>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
-                    <input type="checkbox" v-model="settings.useDesktopDashboard" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
                 </div>
               </div>
 
@@ -100,8 +108,8 @@
               <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
                 <InformationCircleIcon class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div class="text-sm text-blue-800">
-                  <p class="font-medium mb-1">Notification Preferences</p>
-                  <p class="text-xs">Your notification settings will be saved and applied immediately.</p>
+                  <p class="font-medium mb-1">Preferences</p>
+                  <p class="text-xs">Your preferences will be saved and applied immediately.</p>
                 </div>
               </div>
 
@@ -140,7 +148,7 @@ const settings = ref({
   notifications: true,
   emailNotifications: true,
   smsNotifications: false,
-  useDesktopDashboard: false,
+  preferredLanding: '',
 });
 
 const saving = ref(false);
@@ -153,28 +161,20 @@ watch(() => props.show, (newValue) => {
     settings.value.notifications = prefs?.push_enabled ?? true;
     settings.value.emailNotifications = prefs?.email_enabled ?? true;
     settings.value.smsNotifications = prefs?.sms_enabled ?? false;
-    settings.value.useDesktopDashboard = props.user.dashboard_preference === 'desktop';
+    settings.value.preferredLanding = ['mobile', 'desktop', 'auto', 'classic'].includes(props.user.preferred_dashboard)
+      ? ''
+      : (props.user.preferred_dashboard ?? '');
   }
 });
 
-// Watch for desktop dashboard toggle
-watch(() => settings.value.useDesktopDashboard, async (newValue) => {
-  if (props.show) {
-    try {
-      const preference = newValue ? 'desktop' : 'mobile';
-      await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference });
-      
-      // Redirect to desktop dashboard if enabled
-      if (newValue) {
-        router.visit(route('dashboard'));
-      }
-    } catch (error) {
-      console.error('Failed to update dashboard preference:', error);
-      // Revert the toggle on error
-      settings.value.useDesktopDashboard = !newValue;
-    }
+// Watch for landing preference change
+const updateLandingPreference = async () => {
+  try {
+    await axios.post(route('mygrownet.api.user.dashboard-preference'), { preference: settings.value.preferredLanding });
+  } catch (error) {
+    console.error('Failed to update landing preference:', error);
   }
-});
+};
 
 const saveSettings = async () => {
   saving.value = true;

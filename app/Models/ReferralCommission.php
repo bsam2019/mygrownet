@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class ReferralCommission extends Model
 {
@@ -23,7 +24,15 @@ class ReferralCommission extends Model
         'personal_volume',
         'commission_type',
         'package_type',
-        'package_amount'
+        'package_amount',
+        'commission_base_amount',
+        'commission_base_percentage',
+        'non_kit_multiplier',
+        'referrer_has_kit',
+        'currency',
+        'original_amount',
+        'original_currency',
+        'exchange_rate',
     ];
 
     protected $casts = [
@@ -262,11 +271,21 @@ class ReferralCommission extends Model
 
     /**
      * Process commission payment
-     * Converts commission amount to BP (Bonus Points) at K2 per point
+     * Converts commission amount to BP (Bonus Points)
      */
     public function processPayment(): bool
     {
         if (!$this->isEligibleForPayment()) {
+            Log::warning('Commission payment skipped - not eligible', [
+                'commission_id' => $this->id,
+                'referrer_id' => $this->referrer_id,
+                'referred_id' => $this->referred_id,
+                'amount' => $this->amount,
+                'status' => $this->status,
+                'package_type' => $this->package_type,
+                'referrer_status' => $this->referrer?->status,
+                'referrer_has_subscription' => $this->referrer?->hasActiveSubscription(),
+            ]);
             return false;
         }
 
@@ -275,25 +294,32 @@ class ReferralCommission extends Model
             'paid_at' => now()
         ]);
 
-        // Convert commission to BP (Bonus Points)
-        // Value per BP: K2, so BP = Amount ÷ 2
-        $bpAmount = $this->amount / 2;
+        $currency = $this->currency ?? 'ZMW';
+        $currencySymbol = $currency === 'ZMW' ? 'K' : '$';
+
+        // BP is always calculated from the ZMW equivalent
+        // If commission currency is ZMW: amount IS the ZMW value (stored at creation)
+        // If commission currency is not ZMW: original_amount holds the value in original_currency
+        //   (which converts back to ZMW equivalently since original_currency is the purchaser's currency)
+        $zmwAmount = $currency === 'ZMW'
+            ? $this->amount
+            : ($this->original_amount ?? $this->amount);
+        $bpAmount = $zmwAmount / 2;
 
         // Award BP to referrer using PointService
         $pointService = app(\App\Services\PointService::class);
         $pointService->awardPoints(
             user: $this->referrer,
             source: 'referral_commission',
-            lpAmount: 0, // No LP for commissions
-            mapAmount: (int) round($bpAmount), // BP awarded as MAP (Monthly Activity Points)
-            description: "Level {$this->level} referral commission: K{$this->amount} = {$bpAmount} BP",
+            lpAmount: 0,
+            mapAmount: (int) round($bpAmount),
+            description: "Level {$this->level} referral commission: {$currencySymbol}{$this->amount} = {$bpAmount} BP",
             reference: $this
         );
         
-        // Record activity
         $this->referrer->recordActivity(
             'commission_received',
-            "Received {$bpAmount} BP (K{$this->amount} value) - Level {$this->level} {$this->commission_type} commission"
+            "Received {$bpAmount} BP ({$currencySymbol}{$this->amount} value) - Level {$this->level} {$this->commission_type} commission"
         );
 
         return true;

@@ -15,7 +15,7 @@ return [
     'category' => 'marketing',
     'status' => 'active',
     'version' => '1.0.0',
-    'account_types' => ['sme'],
+    'account_types' => ['member', 'business'],
     'requires_subscription' => false, // Has free tier
     'icon' => 'MegaphoneIcon',
     'color' => 'violet',
@@ -27,6 +27,9 @@ return [
         'enabled' => true,
         'installable' => true,
     ],
+    'markup_percentage' => 20, // Ad spend markup applied on top of Meta spend
+    'deposit_fee_percentage' => 0, // Fee charged on wallet deposits (0 = free, industry avg 2.5-5%)
+
     'features' => [
         'offline' => true,
         'dataSync' => true,
@@ -114,6 +117,8 @@ return [
             'description' => 'Essential marketing tools for growing businesses',
             'price_monthly' => 79,
             'price_annual' => 758, // 20% discount
+            'price_monthly_usd' => 5,
+            'price_annual_usd' => 48,
             'limits' => [
                 'posts_per_month' => 50,
                 'templates' => 25,
@@ -143,6 +148,8 @@ return [
             'description' => 'Advanced marketing for established businesses',
             'price_monthly' => 199,
             'price_annual' => 1910, // 20% discount
+            'price_monthly_usd' => 12,
+            'price_annual_usd' => 115,
             'popular' => true,
             'limits' => [
                 'posts_per_month' => -1, // unlimited
@@ -180,6 +187,8 @@ return [
             'description' => 'Complete marketing solution for scaling businesses',
             'price_monthly' => 399,
             'price_annual' => 3830, // 20% discount
+            'price_monthly_usd' => 24,
+            'price_annual_usd' => 230,
             'limits' => [
                 'posts_per_month' => -1,
                 'templates' => -1,

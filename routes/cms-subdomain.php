@@ -48,6 +48,10 @@ Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
         
         Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [AuthController::class, 'register']);
+
+        // Social Login - Google (subdomain)
+        Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('auth.google');
+        Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('auth.google.callback');
     });
 
     // Logout (Authenticated only)

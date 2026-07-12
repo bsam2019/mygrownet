@@ -2,8 +2,8 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplaceOrder;
-use App\Models\MarketplaceEscrow;
+use App\Models\Marketplace\MarketplaceOrder;
+use App\Models\Marketplace\MarketplaceEscrow;
 use Illuminate\Support\Facades\DB;
 
 class EscrowService

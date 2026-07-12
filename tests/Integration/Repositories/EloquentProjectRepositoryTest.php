@@ -9,7 +9,7 @@ use App\Domain\Community\ValueObjects\ProjectStatus;
 use App\Domain\Community\ValueObjects\ContributionAmount;
 use App\Domain\MLM\ValueObjects\UserId;
 use App\Models\User;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\InvestmentTier;
 use Illuminate\Foundation\Testing\RefreshDatabase;

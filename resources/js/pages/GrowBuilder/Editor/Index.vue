@@ -1,26 +1,34 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import draggable from 'vuedraggable';
 import axios from 'axios';
 
-// Components
+// Components — eagerly loaded (always visible)
 import SectionRenderer from './components/SectionRenderer.vue';
 import NavigationRenderer from './components/NavigationRenderer.vue';
 import FooterRenderer from './components/FooterRenderer.vue';
 import ToastContainer from './components/ToastContainer.vue';
 import ContextMenu from './components/common/ContextMenu.vue';
-import OnboardingTutorial from './components/OnboardingTutorial.vue';
-import { NavigationInspector, FooterInspector, SectionInspector } from './components/inspectors';
-import { CreatePageModal, EditPageModal, ApplyTemplateModal, MediaLibraryModal, AIAssistantModal } from './components/modals';
-import { WidgetPalette, PagesList, EditorToolbar } from './components/sidebar';
+import MobileWarningModal from './components/MobileWarningModal.vue';
+import EditorLeftSidebar from './components/EditorLeftSidebar.vue';
+import { EditorToolbar } from './components/sidebar';
+
+// Lazy-loaded (only on user interaction)
+const OnboardingTutorial = defineAsyncComponent(() => import('./components/OnboardingTutorial.vue'));
+const EditorPreview = defineAsyncComponent(() => import('./components/EditorPreview.vue'));
+const KeyboardShortcutsModal = defineAsyncComponent(() => import('./components/KeyboardShortcutsModal.vue'));
+const CreatePageModal = defineAsyncComponent(() => import('./components/modals/CreatePageModal.vue'));
+const EditPageModal = defineAsyncComponent(() => import('./components/modals/EditPageModal.vue'));
+const ApplyTemplateModal = defineAsyncComponent(() => import('./components/modals/ApplyTemplateModal.vue'));
+const MediaLibraryModal = defineAsyncComponent(() => import('./components/modals/MediaLibraryModal.vue'));
+const AIAssistantModal = defineAsyncComponent(() => import('./components/modals/AIAssistantModal.vue'));
+const AIFloatingButton = defineAsyncComponent(() => import('./components/ai/AIFloatingButton.vue'));
 
 // Config
 import { sectionBlocks } from './config/sectionBlocks';
 import { findTemplate } from './config/pageTemplates';
-import { getImageRequirements } from './config/sectionImageRequirements';
-import type { ImageRequirements } from '@/types/growbuilder';
 
 // Types
 import type { Page, Section, Site, NavigationSettings, FooterSettings, NavItem, SectionBlock, NewPageForm } from './types';
@@ -31,37 +39,31 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     Squares2X2Icon,
-    DocumentIcon,
     ArrowsUpDownIcon,
     ArrowUpIcon,
     ArrowDownIcon,
     DocumentDuplicateIcon,
     TrashIcon,
-    Bars3BottomLeftIcon,
-    XMarkIcon,
-    DevicePhoneMobileIcon,
-    DeviceTabletIcon,
     ComputerDesktopIcon,
     QuestionMarkCircleIcon,
     PhotoIcon,
-    PencilSquareIcon,
-    Cog6ToothIcon,
 } from '@heroicons/vue/24/outline';
 
 // Composables
 import { useInlineEdit } from './composables/useInlineEdit';
 import { useElementDrag } from './composables/useElementDrag';
 import { useToast } from './composables/useToast';
-import { useHistory } from './composables/useHistory';
+import { useEditorStore } from './stores/editorStore';
+import { usePageStore } from './stores/pageStore';
+import { useMediaStore } from './stores/mediaStore';
+import { useHistoryStore } from './stores/historyStore';
+import { storeToRefs } from 'pinia';
 import { useAutoSave } from './composables/useAutoSave';
 import { useDragUpload } from './composables/useDragUpload';
 import { useClipboard } from './composables/useClipboard';
 import { useAIContext } from './composables/useAIContext';
 import { useImageOptimization } from './composables/useImageOptimization';
 import { useAIActions } from './composables/useAIActions';
-
-// AI Components
-import AIFloatingButton from './components/ai/AIFloatingButton.vue';
 
 interface AIUsage {
     limit: number;
@@ -127,130 +129,51 @@ const hasAISEO = computed(() => {
 });
 
 // ============================================
-// UI State
+// Non-Store State (kept locally)
 // ============================================
-const leftSidebarOpen = ref(true);
-const previewMode = ref<'desktop' | 'tablet' | 'mobile'>('desktop');
-const selectedSectionId = ref<string | null>(null);
-const saving = ref(false);
-const publishing = ref(false);
-const isPublished = ref(props.site.status === 'published');
-const isDragging = ref(false);
-const activeInspectorTab = ref<'content' | 'style' | 'advanced'>('content');
-const hoveredSectionId = ref<string | null>(null);
-const activeLeftTab = ref<'pages' | 'widgets' | 'inspector'>('widgets');
-const showNavSettings = ref(false);
-const showFooterSettings = ref(false);
-
-// Mobile Detection
 const isMobileDevice = ref(false);
-const showMobileWarning = ref(false); // Disabled - editor now works on mobile
-
-// Full-Width Preview Mode
-const isFullPreview = ref(false);
-const isIframePreview = ref(false); // True = iframe (interactive), False = component preview
-const previewWidth = ref(1024); // Default width in pixels
-const isResizingPreview = ref(false);
-const showKeyboardShortcuts = ref(false);
-const iframeKey = ref(0); // Force iframe refresh
-
-// Zoom and Canvas
-const canvasZoom = ref(100);
-const lastSaved = ref<Date | null>(null);
-const darkMode = ref(false);
-
-// Onboarding Tutorial
-const showOnboarding = ref(false);
+const showMobileWarning = ref(false);
 const ONBOARDING_KEY = computed(() => `growbuilder_onboarding_completed_${props.site.id}`);
-
-// AI Usage tracking (local reactive copy of prop)
 const aiUsage = ref<AIUsage | undefined>(props.aiUsage);
-
-// Watch for prop changes and update local copy
 watch(() => props.aiUsage, (newUsage) => {
     if (newUsage) {
         aiUsage.value = newUsage;
     }
 }, { deep: true });
-
-// Responsive breakpoints
 const breakpoints = [
     { name: 'Mobile', width: 375, icon: 'phone' },
     { name: 'Tablet', width: 768, icon: 'tablet' },
     { name: 'Laptop', width: 1024, icon: 'laptop' },
     { name: 'Desktop', width: 1440, icon: 'desktop' },
 ];
-
-// Page State
-const activePage = ref<Page | null>(props.currentPage || props.pages[0] || null);
-const sections = ref<Section[]>([]);
-const pageTitle = ref('');
-
-// Site Navigation & Footer
-const siteNavigation = ref<NavigationSettings>({
-    logoText: props.site.name,
-    logo: '',
-    navItems: [] as NavItem[],
-    showCta: true,
-    ctaText: 'Contact Us',
-    ctaLink: '#contact',
-    sticky: true,
-    style: 'default',
-    // Auth buttons
-    showAuthButtons: false,
-    showLoginButton: true,
-    showRegisterButton: true,
-    loginText: 'Login',
-    registerText: 'Sign Up',
-    loginStyle: 'link',
-    registerStyle: 'solid',
-});
-
-const siteFooter = ref<FooterSettings>({
-    logo: '',
-    copyrightText: `© ${new Date().getFullYear()} ${props.site.name}. All rights reserved.`,
-    showSocialLinks: true,
-    socialLinks: [],
-    columns: [
-        { id: 'col-1', title: 'Quick Links', links: [] },
-        { id: 'col-2', title: 'Contact', links: [] },
-    ],
-    showNewsletter: false,
-    newsletterTitle: 'Subscribe to our newsletter',
-    backgroundColor: '#1f2937',
-    textColor: '#ffffff',
-    layout: 'columns',
-});
-
-// Modal State
-const showCreatePageModal = ref(false);
-const showEditPageModal = ref(false);
-const editingPage = ref<Page | null>(null);
-const creatingPage = ref(false);
-const pageError = ref<string | null>(null);
-const showApplyTemplateModal = ref(false);
-const applyingTemplate = ref(false);
 const showAIModal = ref(false);
 
-// Media Library State
-const uploadingImage = ref(false);
-const imageUploadError = ref<string | null>(null);
-const mediaLibrary = ref<any[]>([]);
-const showMediaLibrary = ref(false);
-const mediaLibraryTarget = ref<{
-    sectionId?: string;
-    field: string;
-    itemIndex?: number;
-    target?: 'navigation' | 'footer' | 'section';
-} | null>(null);
-const mediaLibraryRequirements = ref<ImageRequirements | null>(null);
-const mediaLibrarySectionType = ref<string | null>(null);
-const mediaLibraryFieldName = ref<string | null>(null);
+// ============================================
+// Store Initialization
+// ============================================
+const editorStore = useEditorStore();
+const pageStore = usePageStore();
+const mediaStore = useMediaStore();
+const historyStore = useHistoryStore();
 
-// Section Resize State
-const resizingSection = ref<string | null>(null);
-const resizeStartY = ref(0);
-const resizeStartHeight = ref(0);
+const {
+    leftSidebarOpen, previewMode, selectedSectionId, saving, publishing, isPublished,
+    isDragging, activeInspectorTab, hoveredSectionId, activeLeftTab,
+    showNavSettings, showFooterSettings, showKeyboardShortcuts, darkMode, canvasZoom, lastSaved,
+    isFullPreview, isIframePreview, previewWidth, isResizingPreview, iframeKey,
+    showOnboarding,
+    activePage, sections, pageTitle, siteNavigation, siteFooter,
+    resizingSection, contextMenu,
+} = storeToRefs(editorStore);
+const {
+    showCreatePageModal, showEditPageModal, editingPage, creatingPage, pageError,
+    showApplyTemplateModal, applyingTemplate,
+} = storeToRefs(pageStore);
+const {
+    uploadingImage, imageUploadError, mediaLibrary, showMediaLibrary,
+    mediaLibraryTarget, mediaLibraryRequirements, mediaLibrarySectionType, mediaLibraryFieldName,
+} = storeToRefs(mediaStore);
+const { canUndo, canRedo } = storeToRefs(historyStore);
 
 // ============================================
 // Composables
@@ -258,8 +181,22 @@ const resizeStartHeight = ref(0);
 const { editingValue, startInlineEdit, saveInlineEdit, isEditing, handleInlineKeydown } = useInlineEdit({ sections });
 const { draggingElement, draggingSectionContent, startElementDrag, startSectionContentDrag, getElementTransform, getSectionContentTransform, hasElementOffset, hasSectionContentOffset, resetAllElementOffsets, resetSectionContentOffset } = useElementDrag({ sections });
 const toast = useToast();
-const history = useHistory({ maxHistory: 50 });
 const { copySection, cutSection, pasteSection, hasClipboard, clipboardType } = useClipboard();
+
+// Destructure store actions (excluding functions with local wrappers)
+const {
+    selectSection,
+    showContextMenu, closeContextMenu,
+    startResize, handleResize, stopResize,
+    addItem, removeItem, addPlan, removePlan, addPlanFeature,
+    addFaqItem, removeFaqItem,
+    addTeamMember, removeTeamMember,
+    addBlogPost, removeBlogPost,
+    addStatItem, removeStatItem,
+    removeGalleryImage,
+    initializeSections, initializeSiteNavigation, initializeSiteFooter,
+    setPreviewMode,
+} = editorStore;
 const { optimizeImage, optimizeLogo, formatFileSize, isImage, needsOptimization } = useImageOptimization();
 
 // AI Actions - Phase 1 Enhancement
@@ -296,15 +233,6 @@ const { context: aiContext, contextSummary, smartSuggestions } = useAIContext(
     sectionsRef,
     selectedSectionIdRef
 );
-
-// Context Menu State
-const contextMenu = ref({
-    visible: false,
-    x: 0,
-    y: 0,
-    sectionId: null as string | null,
-    sectionType: undefined as string | undefined,
-});
 
 // Auto-save setup
 const autoSave = useAutoSave({
@@ -397,114 +325,24 @@ const dragUpload = useDragUpload({
 // ============================================
 // Initialization
 // ============================================
-const initializeSections = () => {
-    if (activePage.value?.content?.sections) {
-        sections.value = activePage.value.content.sections.map((s, i) => ({
-            ...s,
-            id: s.id || `section-${Date.now()}-${i}`,
-            style: s.style || {},
-        }));
-    } else {
-        sections.value = [];
-    }
-    pageTitle.value = activePage.value?.title || 'New Page';
-};
-
-const initializeSiteNavigation = () => {
-    if (props.site.settings?.navigation) {
-        siteNavigation.value = { ...siteNavigation.value, ...props.site.settings.navigation };
-        
-        // Ensure pageId is set for all nav items by matching with pages
-        if (siteNavigation.value.navItems && siteNavigation.value.navItems.length > 0) {
-            siteNavigation.value.navItems = siteNavigation.value.navItems.map(navItem => {
-                // Try to find the matching page by URL or label
-                const matchingPage = props.pages.find(p => {
-                    const pageUrl = p.isHomepage ? '/' : `/${p.slug}`;
-                    return pageUrl === navItem.url || p.title === navItem.label;
-                });
-                
-                return {
-                    ...navItem,
-                    pageId: matchingPage?.id || navItem.pageId, // Use existing or find from pages
-                };
-            });
-        } else {
-            // Navigation settings exist but no navItems - generate from pages
-            siteNavigation.value.navItems = props.pages
-                .filter(p => p.showInNav)
-                .sort((a, b) => a.navOrder - b.navOrder)
-                .map(p => ({
-                    id: `nav-${p.id}`,
-                    label: p.title,
-                    url: p.isHomepage ? '/' : `/${p.slug}`,
-                    pageId: p.id,
-                    isExternal: false,
-                    children: [],
-                }));
-        }
-    } else {
-        // No navigation settings at all - generate from pages
-        siteNavigation.value.navItems = props.pages
-            .filter(p => p.showInNav)
-            .sort((a, b) => a.navOrder - b.navOrder)
-            .map(p => ({
-                id: `nav-${p.id}`,
-                label: p.title,
-                url: p.isHomepage ? '/' : `/${p.slug}`,
-                pageId: p.id,
-                isExternal: false,
-                children: [],
-            }));
-    }
-};
-
-const initializeSiteFooter = () => {
-    if (props.site.settings?.footer) {
-        const footerSettings = { ...props.site.settings.footer };
-        
-        console.log('Initializing footer with settings:', footerSettings);
-        
-        // Ensure columns have IDs
-        if (footerSettings.columns && Array.isArray(footerSettings.columns)) {
-            footerSettings.columns = footerSettings.columns.map((column, colIndex) => ({
-                ...column,
-                id: column.id || `footer-col-${colIndex}`,
-                links: column.links?.map((link, linkIndex) => ({
-                    ...link,
-                    id: link.id || `footer-link-${colIndex}-${linkIndex}`,
-                })) || [],
-            }));
-            
-            console.log('Footer columns after processing:', footerSettings.columns);
-        }
-        
-        siteFooter.value = { ...siteFooter.value, ...footerSettings };
-        console.log('Final siteFooter value:', siteFooter.value);
-    } else {
-        console.log('No footer settings found in props.site.settings');
-    }
-};
-
-initializeSections();
+editorStore.initialize(props.site, props.pages, props.currentPage);
 console.log('Site settings:', props.site.settings);
 console.log('Site settings navigation:', props.site.settings?.navigation);
 console.log('Site settings footer:', props.site.settings?.footer);
-initializeSiteNavigation();
-initializeSiteFooter();
 
 // Initialize history after loading data
-history.initHistory(sections.value, siteNavigation.value, siteFooter.value);
+historyStore.initHistory(sections.value, siteNavigation.value, siteFooter.value);
 
 // ============================================
 // History (Undo/Redo)
 // ============================================
 const pushToHistory = () => {
-    history.pushState(sections.value, siteNavigation.value, siteFooter.value);
+    historyStore.pushState(sections.value, siteNavigation.value, siteFooter.value);
     autoSave.markDirty();
 };
 
 const handleUndo = () => {
-    const state = history.undo();
+    const state = historyStore.undo();
     if (state) {
         sections.value = state.sections;
         siteNavigation.value = state.navigation;
@@ -514,7 +352,7 @@ const handleUndo = () => {
 };
 
 const handleRedo = () => {
-    const state = history.redo();
+    const state = historyStore.redo();
     if (state) {
         sections.value = state.sections;
         siteNavigation.value = state.navigation;
@@ -531,14 +369,14 @@ const handleRedo = () => {
 watch(() => props.currentPage, (newPage) => {
     if (newPage) {
         activePage.value = newPage;
-        initializeSections();
+        editorStore.initializeSections();
         selectedSectionId.value = null;
     }
 });
 
 watch(() => props.pages, () => {
     if (!props.site.settings?.navigation) {
-        initializeSiteNavigation();
+        editorStore.initializeSiteNavigation(props.site, props.pages);
     }
 }, { deep: true });
 
@@ -604,14 +442,6 @@ const gridCols4 = computed(() => isMobilePreview.value ? 'grid-cols-2' : 'grid-c
 // ============================================
 // Section Actions
 // ============================================
-const selectSection = (id: string) => {
-    selectedSectionId.value = id;
-    activeLeftTab.value = 'inspector';
-    activeInspectorTab.value = 'content';
-    showNavSettings.value = false;
-    showFooterSettings.value = false;
-};
-
 const getDefaultContent = (type: string): Record<string, any> => {
     const defaults: Record<string, Record<string, any>> = {
         hero: { title: 'Welcome to Our Business', subtitle: 'We help you grow and succeed', buttonText: 'Get Started', buttonLink: '#contact', textPosition: 'center', backgroundImage: '' },
@@ -639,42 +469,22 @@ const getDefaultContent = (type: string): Record<string, any> => {
 
 const addSection = (type: string) => {
     pushToHistory();
-    const newSection: Section = {
-        id: `section-${Date.now()}`,
-        type: type as any,
-        content: getDefaultContent(type),
-        style: { backgroundColor: '#ffffff', textColor: '#111827' },
-    };
-    sections.value.push(newSection);
-    selectedSectionId.value = newSection.id;
+    editorStore.addSection(type);
 };
 
 const duplicateSection = (id: string) => {
     pushToHistory();
-    const index = sections.value.findIndex(s => s.id === id);
-    if (index === -1) return;
-    const original = sections.value[index];
-    const duplicate: Section = { ...JSON.parse(JSON.stringify(original)), id: `section-${Date.now()}` };
-    sections.value.splice(index + 1, 0, duplicate);
-    selectedSectionId.value = duplicate.id;
+    editorStore.duplicateSection(id);
 };
 
 const deleteSection = (id: string) => {
     pushToHistory();
-    const index = sections.value.findIndex(s => s.id === id);
-    if (index === -1) return;
-    sections.value.splice(index, 1);
-    if (selectedSectionId.value === id) selectedSectionId.value = null;
+    editorStore.deleteSection(id);
 };
 
 const moveSection = (id: string, direction: 'up' | 'down') => {
     pushToHistory();
-    const index = sections.value.findIndex(s => s.id === id);
-    if (index === -1) return;
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= sections.value.length) return;
-    const [section] = sections.value.splice(index, 1);
-    sections.value.splice(newIndex, 0, section);
+    editorStore.moveSection(id, direction);
 };
 
 // ============================================
@@ -722,24 +532,6 @@ const handlePasteSection = (afterId?: string) => {
 // ============================================
 // Context Menu Functions
 // ============================================
-const showContextMenu = (e: MouseEvent, sectionId: string | null = null) => {
-    e.preventDefault();
-    
-    const section = sectionId ? sections.value.find(s => s.id === sectionId) : null;
-    
-    contextMenu.value = {
-        visible: true,
-        x: e.clientX,
-        y: e.clientY,
-        sectionId,
-        sectionType: section?.type,
-    };
-};
-
-const closeContextMenu = () => {
-    contextMenu.value.visible = false;
-};
-
 const handleContextMenuAction = (action: string, sectionId: string | null) => {
     switch (action) {
         case 'edit':
@@ -777,66 +569,24 @@ const handleContextMenuAction = (action: string, sectionId: string | null) => {
         case 'delete':
             if (sectionId) deleteSection(sectionId);
             break;
-        case 'addSection':
-            // Could open add section modal
-            break;
     }
 };
 
 const updateSectionContent = (key: string, value: any) => {
     if (!selectedSection.value) return;
     pushToHistory();
-    selectedSection.value.content[key] = value;
+    editorStore.updateSectionContent(key, value);
 };
 
 const updateSectionStyle = (key: string, value: any) => {
     if (!selectedSection.value) return;
-    // Only push to history on first change in a batch
     if (!selectedSection.value.style) {
         selectedSection.value.style = {};
     }
-    // Check if value actually changed before pushing to history
     if (selectedSection.value.style[key] !== value) {
         pushToHistory();
-        selectedSection.value.style[key] = value;
+        editorStore.updateSectionStyle(key, value);
     }
-};
-
-
-// ============================================
-// Section Resize
-// ============================================
-const startResize = (e: MouseEvent, sectionId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    resizingSection.value = sectionId;
-    resizeStartY.value = e.clientY;
-    const section = sections.value.find(s => s.id === sectionId);
-    const sectionEl = document.querySelector(`[data-section-id="${sectionId}"]`) as HTMLElement;
-    resizeStartHeight.value = section?.style?.minHeight || sectionEl?.offsetHeight || 200;
-    document.addEventListener('mousemove', handleResize);
-    document.addEventListener('mouseup', stopResize);
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-};
-
-const handleResize = (e: MouseEvent) => {
-    if (!resizingSection.value) return;
-    const deltaY = e.clientY - resizeStartY.value;
-    const newHeight = Math.max(100, resizeStartHeight.value + deltaY);
-    const section = sections.value.find(s => s.id === resizingSection.value);
-    if (section) {
-        if (!section.style) section.style = {};
-        section.style.minHeight = newHeight;
-    }
-};
-
-const stopResize = () => {
-    resizingSection.value = null;
-    document.removeEventListener('mousemove', handleResize);
-    document.removeEventListener('mouseup', stopResize);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
 };
 
 // ============================================
@@ -847,191 +597,27 @@ const handleSectionClick = (e: MouseEvent, sectionId: string) => {
     selectSection(sectionId);
 };
 
-// ============================================
-// Items Management
-// ============================================
-const addItem = () => {
-    if (!selectedSection.value) return;
-    const type = selectedSection.value.type;
-    if (!selectedSection.value.content.items) selectedSection.value.content.items = [];
-    if (type === 'services' || type === 'features') {
-        selectedSection.value.content.items.push({ title: 'New Item', description: 'Description' });
-    } else if (type === 'testimonials') {
-        selectedSection.value.content.items.push({ name: 'Customer Name', text: 'Testimonial text', role: 'Role' });
-    }
-};
-
-const removeItem = (index: number) => {
-    if (!selectedSection.value?.content.items) return;
-    selectedSection.value.content.items.splice(index, 1);
-};
-
-const addPlan = () => {
-    if (!selectedSection.value) return;
-    if (!selectedSection.value.content.plans) selectedSection.value.content.plans = [];
-    selectedSection.value.content.plans.push({ name: 'New Plan', price: 'K0', features: ['Feature 1'] });
-};
-
-const removePlan = (index: number) => {
-    if (!selectedSection.value?.content.plans) return;
-    selectedSection.value.content.plans.splice(index, 1);
-};
-
-const addPlanFeature = (planIndex: number) => {
-    if (!selectedSection.value?.content.plans?.[planIndex]) return;
-    if (!selectedSection.value.content.plans[planIndex].features) selectedSection.value.content.plans[planIndex].features = [];
-    selectedSection.value.content.plans[planIndex].features.push('New Feature');
-};
-
-const addFaqItem = () => {
-    if (!selectedSection.value) return;
-    if (!selectedSection.value.content.items) selectedSection.value.content.items = [];
-    selectedSection.value.content.items.push({ question: 'New Question?', answer: 'Answer here...' });
-};
-
-const removeFaqItem = (index: number) => {
-    if (!selectedSection.value?.content.items) return;
-    selectedSection.value.content.items.splice(index, 1);
-};
-
-const addTeamMember = () => {
-    if (!selectedSection.value) return;
-    if (!selectedSection.value.content.items) selectedSection.value.content.items = [];
-    selectedSection.value.content.items.push({ name: 'New Member', role: 'Role', image: '', bio: '' });
-};
-
-const removeTeamMember = (index: number) => {
-    if (!selectedSection.value?.content.items) return;
-    selectedSection.value.content.items.splice(index, 1);
-};
-
-const addBlogPost = () => {
-    if (!selectedSection.value) return;
-    if (!selectedSection.value.content.posts) selectedSection.value.content.posts = [];
-    selectedSection.value.content.posts.push({ title: 'New Post', excerpt: 'Post excerpt...', date: new Date().toISOString().split('T')[0], image: '' });
-};
-
-const removeBlogPost = (index: number) => {
-    if (!selectedSection.value?.content.posts) return;
-    selectedSection.value.content.posts.splice(index, 1);
-};
-
-const addStatItem = () => {
-    if (!selectedSection.value) return;
-    if (!selectedSection.value.content.items) selectedSection.value.content.items = [];
-    selectedSection.value.content.items.push({ value: '100+', label: 'New Stat' });
-};
-
-const removeStatItem = (index: number) => {
-    if (!selectedSection.value?.content.items) return;
-    selectedSection.value.content.items.splice(index, 1);
-};
-
-const removeGalleryImage = (sectionId: string, imageIndex: number) => {
-    const section = sections.value.find(s => s.id === sectionId);
-    if (section?.content.images) section.content.images.splice(imageIndex, 1);
-};
+// Items management actions are destructured from editorStore above
 
 // ============================================
 // Page Management
 // ============================================
 const openCreatePageModal = () => {
-    pageError.value = null;
-    showCreatePageModal.value = true;
+    pageStore.openCreatePageModal();
 };
 
 const createPage = async (form: NewPageForm) => {
-    if (!form.title) {
-        pageError.value = 'Please enter a page title';
-        return;
-    }
-    const slug = form.slug || form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const existingPage = props.pages.find(p => p.slug === slug);
-    if (existingPage) {
-        pageError.value = `A page with the URL "/${slug}" already exists.`;
-        return;
-    }
-    creatingPage.value = true;
-    pageError.value = null;
-    const template = findTemplate(form.templateId);
-    const templateSections = template?.sections.map((s, i) => ({
-        id: `section-${Date.now()}-${i}`,
-        type: s.type,
-        content: { ...s.content },
-        style: { ...s.style },
-    })) || [];
-    try {
-        const response = await axios.post(`/growbuilder/editor/${props.site.id}/pages`, {
-            title: form.title,
-            slug: slug,
-            sections: templateSections,
-            show_in_nav: form.showInNav,
-            is_homepage: false,
-        });
-        if (form.showInNav && response.data.page?.id) {
-            siteNavigation.value.navItems.push({
-                id: `nav-${response.data.page.id}`,
-                label: form.title,
-                url: `/${slug}`,
-                pageId: response.data.page.id,
-                isExternal: false,
-                children: [],
-            });
-            await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
-                navigation: siteNavigation.value,
-                footer: siteFooter.value,
-            });
-        }
-        showCreatePageModal.value = false;
-        if (response.data.page?.id) {
-            router.visit(`/growbuilder/editor/${props.site.id}?page=${response.data.page.id}`);
-        } else {
-            router.reload();
-        }
-    } catch (error: any) {
-        pageError.value = error.response?.data?.error || 'Failed to create page.';
-    } finally {
-        creatingPage.value = false;
-    }
+    await pageStore.createPage(form, props.site.id, props.pages);
 };
 
 const openEditPageModal = (page: Page) => {
-    editingPage.value = { ...page };
-    showEditPageModal.value = true;
+    pageStore.openEditPageModal(page);
 };
 
 const updatePage = async (page: Page) => {
     try {
-        const originalPage = props.pages.find(p => p.id === page.id);
-        const showInNavChanged = originalPage?.showInNav !== page.showInNav;
-        await axios.put(`/growbuilder/editor/${props.site.id}/pages/${page.id}`, {
-            title: page.title,
-            slug: page.slug,
-            show_in_nav: page.showInNav,
-        });
-        if (showInNavChanged) {
-            const navIndex = siteNavigation.value.navItems.findIndex(item => item.pageId === page.id);
-            if (page.showInNav && navIndex === -1) {
-                siteNavigation.value.navItems.push({
-                    id: `nav-${page.id}`,
-                    label: page.title,
-                    url: page.isHomepage ? '/' : `/${page.slug}`,
-                    pageId: page.id,
-                    isExternal: false,
-                    children: [],
-                });
-            } else if (!page.showInNav && navIndex !== -1) {
-                siteNavigation.value.navItems.splice(navIndex, 1);
-            }
-            await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
-                navigation: siteNavigation.value,
-                footer: siteFooter.value,
-            });
-        }
-        showEditPageModal.value = false;
-        editingPage.value = null;
+        await pageStore.updatePage(page, props.site.id, props.pages);
         toast.success('Page updated successfully');
-        router.reload({ only: ['pages'] });
     } catch (error) {
         console.error('Failed to update page:', error);
         toast.error('Failed to update page');
@@ -1039,25 +625,9 @@ const updatePage = async (page: Page) => {
 };
 
 const deletePage = async (pageId: number) => {
-    const page = props.pages.find(p => p.id === pageId);
-    if (!page || page.isHomepage) return;
-    if (!confirm(`Delete "${page.title}"? This cannot be undone.`)) return;
     try {
-        await axios.delete(`/growbuilder/editor/${props.site.id}/pages/${pageId}`);
-        const navIndex = siteNavigation.value.navItems.findIndex(item => item.pageId === pageId);
-        if (navIndex !== -1) {
-            siteNavigation.value.navItems.splice(navIndex, 1);
-            await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
-                navigation: siteNavigation.value,
-                footer: siteFooter.value,
-            });
-        }
+        await pageStore.deletePage(pageId, props.site.id, props.pages);
         toast.success('Page deleted');
-        router.reload({ only: ['pages'] });
-        if (activePage.value?.id === pageId) {
-            const homepage = props.pages.find(p => p.isHomepage);
-            if (homepage) router.get(`/growbuilder/editor/${props.site.id}`, { page: homepage.id });
-        }
     } catch (error) {
         console.error('Failed to delete page:', error);
         toast.error('Failed to delete page');
@@ -1068,16 +638,8 @@ const savePage = async (silent = false) => {
     if (!activePage.value) return;
     saving.value = true;
     try {
-        await axios.post(`/growbuilder/editor/${props.site.id}/pages/${activePage.value.id}/save`, {
-            title: pageTitle.value,
-            content: { sections: sections.value },
-        });
-        await axios.post(`/growbuilder/editor/${props.site.id}/settings`, {
-            navigation: siteNavigation.value,
-            footer: siteFooter.value,
-        });
-        lastSaved.value = new Date();
-        autoSave.reset(); // Reset auto-save timer
+        await pageStore.savePage(props.site.id, silent);
+        autoSave.reset();
         if (!silent) {
             toast.success('Changes saved successfully');
         }
@@ -1086,7 +648,7 @@ const savePage = async (silent = false) => {
         if (!silent) {
             toast.error('Failed to save changes');
         }
-        throw error; // Re-throw for auto-save error handling
+        throw error;
     } finally {
         saving.value = false;
     }
@@ -1132,87 +694,25 @@ const openPreview = async () => {
 };
 
 const switchPage = (pageOrId: Page | number) => {
-    console.log('Editor: switchPage called', { pageOrId, type: typeof pageOrId });
-    
-    const targetPage = typeof pageOrId === 'number' 
-        ? props.pages.find(p => p.id === pageOrId)
-        : pageOrId;
-    
-    console.log('Editor: targetPage found', { targetPage, currentPageId: activePage.value?.id });
-        
-    if (!targetPage) {
-        console.error('Editor: Target page not found!', { pageOrId, availablePages: props.pages.map(p => ({ id: p.id, title: p.title })) });
-        return;
-    }
-    
-    if (targetPage.id === activePage.value?.id) {
-        console.log('Editor: Already on this page, skipping');
-        return;
-    }
-    
-    // For navigation within preview, switch page without router navigation
-    if (typeof pageOrId === 'number') {
-        console.log('Editor: Switching page internally', { from: activePage.value?.title, to: targetPage.title });
-        activePage.value = targetPage;
-        initializeSections();
-        selectedSectionId.value = null;
-        console.log('Editor: Page switched successfully', { newSections: sections.value.length });
-        return;
-    }
-    
-    // For sidebar page switching, use router navigation
-    console.log('Editor: Using router navigation');
-    router.visit(`/growbuilder/editor/${props.site.id}?page=${targetPage.id}`);
+    pageStore.switchPage(pageOrId, props.site.id, props.pages);
 };
-
 
 // ============================================
 // Template Management
 // ============================================
 const openApplyTemplateModal = () => {
-    showApplyTemplateModal.value = true;
+    pageStore.openApplyTemplateModal();
 };
 
 const applyTemplate = async (templateId: string) => {
-    if (!activePage.value) return;
-    const template = findTemplate(templateId);
-    if (!template) return;
-    applyingTemplate.value = true;
-    const newSections = template.sections.map((s, i) => ({
-        id: `section-${Date.now()}-${i}`,
-        type: s.type,
-        content: { ...s.content },
-        style: { ...s.style },
-    }));
-    sections.value = newSections as Section[];
-    showApplyTemplateModal.value = false;
-    applyingTemplate.value = false;
-    await savePage();
+    await pageStore.applyTemplate(templateId, props.site.id);
 };
 
 // ============================================
 // Media Library
 // ============================================
 const loadMediaLibrary = async () => {
-    try {
-        const response = await axios.get(`/growbuilder/media/${props.site.id}`);
-        console.log('Media API Response:', response.data);
-        const firstItem = response.data.data?.[0];
-        if (firstItem) {
-            console.log('=== MEDIA ITEM DEBUG ===');
-            console.log('Raw first item:', firstItem);
-            console.log('Has aspectRatio?', 'aspectRatio' in firstItem, firstItem.aspectRatio);
-            console.log('Has aspectRatioDecimal?', 'aspectRatioDecimal' in firstItem, firstItem.aspectRatioDecimal);
-            console.log('Has fileTypeBadge?', 'fileTypeBadge' in firstItem, firstItem.fileTypeBadge);
-            console.log('Has width?', 'width' in firstItem, firstItem.width);
-            console.log('Has height?', 'height' in firstItem, firstItem.height);
-            console.log('All keys:', Object.keys(firstItem));
-            console.log('======================');
-        }
-        mediaLibrary.value = response.data.data || [];
-    } catch (error) {
-        console.error('Failed to load media library:', error);
-    }
+    await mediaStore.loadMediaLibrary(props.site.id);
 };
 
 const openMediaLibrary = async (
@@ -1221,39 +721,7 @@ const openMediaLibrary = async (
     field?: string,
     itemIndex?: number
 ) => {
-    console.log('openMediaLibrary called:', { target, fieldOrSectionId, field, itemIndex });
-    
-    if (target === 'navigation' || target === 'footer') {
-        mediaLibraryTarget.value = { target, field: fieldOrSectionId };
-        mediaLibraryRequirements.value = null;
-        mediaLibrarySectionType.value = null;
-        mediaLibraryFieldName.value = null;
-    } else {
-        mediaLibraryTarget.value = { target: 'section', sectionId: fieldOrSectionId, field: field!, itemIndex };
-        
-        // Look up image requirements for this section type + field
-        const section = sections.value.find(s => s.id === fieldOrSectionId);
-        console.log('Found section:', section);
-        
-        if (section && field) {
-            const requirements = getImageRequirements(section.type, field);
-            console.log('Image requirements lookup:', {
-                sectionType: section.type,
-                field,
-                requirements
-            });
-            
-            mediaLibraryRequirements.value = requirements;
-            mediaLibrarySectionType.value = section.type;
-            mediaLibraryFieldName.value = field;
-        } else {
-            mediaLibraryRequirements.value = null;
-            mediaLibrarySectionType.value = null;
-            mediaLibraryFieldName.value = null;
-        }
-    }
-    showMediaLibrary.value = true;
-    await loadMediaLibrary();
+    await mediaStore.openMediaLibrary(props.site.id, target, fieldOrSectionId, field, itemIndex);
 };
 
 const uploadImage = async (event: Event) => {
@@ -1310,7 +778,7 @@ const uploadImage = async (event: Event) => {
         
         if (response.data.success) {
             mediaLibrary.value.unshift(response.data.media);
-            selectMediaImage(response.data.media);
+            mediaStore.selectMediaImage(response.data.media);
         }
     } catch (error: any) {
         imageUploadError.value = error.response?.data?.message || 'Failed to upload image';
@@ -1321,64 +789,7 @@ const uploadImage = async (event: Event) => {
     }
 };
 
-const selectMediaImage = (media: any) => {
-    console.log('selectMediaImage called:', { 
-        media: media.id, 
-        target: mediaLibraryTarget.value 
-    });
-    
-    if (!mediaLibraryTarget.value) return;
-    const { target, sectionId, field, itemIndex } = mediaLibraryTarget.value;
-    
-    if (target === 'navigation') {
-        siteNavigation.value.logo = media.url;
-        console.log('Applied image to navigation logo');
-    } else if (target === 'footer') {
-        siteFooter.value.logo = media.url;
-        console.log('Applied image to footer logo');
-    } else if (target === 'section' && sectionId) {
-        const section = sections.value.find(s => s.id === sectionId);
-        console.log('Found section for regular image:', section?.type, 'field:', field);
-        
-        if (section && field) {
-            // Handle nested field paths like 'slides.0.backgroundImage'
-            if (field.includes('.')) {
-                const fieldParts = field.split('.');
-                let target = section.content;
-                
-                // Navigate to the parent object
-                for (let i = 0; i < fieldParts.length - 1; i++) {
-                    const part = fieldParts[i];
-                    if (!target[part]) {
-                        if (isNaN(Number(fieldParts[i + 1]))) {
-                            target[part] = {};
-                        } else {
-                            target[part] = [];
-                        }
-                    }
-                    target = target[part];
-                }
-                
-                // Set the final field value
-                const finalField = fieldParts[fieldParts.length - 1];
-                target[finalField] = media.url;
-                console.log('Applied image to nested field:', { sectionId, field, finalField });
-            } else if (itemIndex !== undefined && section.content.items) {
-                section.content.items[itemIndex][field] = media.url;
-                console.log('Applied image to section item:', { sectionId, field, itemIndex });
-            } else if (field === 'images' && section.type === 'gallery') {
-                if (!section.content.images) section.content.images = [];
-                section.content.images.push({ id: media.id, url: media.url, alt: media.originalName });
-                console.log('Added image to gallery');
-            } else {
-                section.content[field] = media.url;
-                console.log('Applied image to section field:', { sectionId, field, url: media.url });
-            }
-        }
-    }
-    showMediaLibrary.value = false;
-    mediaLibraryTarget.value = null;
-};
+// selectMediaImage is handled by mediaStore
 
 // Handle cropped image selection (data URL from canvas)
 const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
@@ -1509,8 +920,7 @@ const handleCroppedImage = async (dataUrl: string, originalMedia: any) => {
         }
         
         toast.success('Cropped image saved and applied');
-        showMediaLibrary.value = false;
-        mediaLibraryTarget.value = null;
+        mediaStore.closeMediaLibrary();
     } catch (error: any) {
         console.error('Failed to save cropped image:', error);
         toast.error(error.response?.data?.message || 'Failed to process image. Please try again or contact support.');
@@ -1527,6 +937,10 @@ const deleteMediaImage = async (media: any) => {
         console.error('Failed to delete image:', error);
         toast.error('Failed to delete image');
     }
+};
+
+const selectMediaImage = (media: any) => {
+    mediaStore.selectMediaImage(media);
 };
 
 // Handle stock photo selection
@@ -1553,8 +967,7 @@ const handleStockPhotoSelect = (url: string, attribution: string) => {
     }
     
     toast.success('Stock photo added');
-    showMediaLibrary.value = false;
-    mediaLibraryTarget.value = null;
+    mediaStore.closeMediaLibrary();
 };
 
 // ============================================
@@ -2232,224 +1645,37 @@ onUnmounted(() => {
 <template>
     <Head :title="`Edit - ${site.name}`" />
 
-    <!-- Full Preview Mode Overlay - Fullscreen like Template Preview -->
-    <div v-if="isFullPreview" class="fixed inset-0 z-50 bg-gray-900 overflow-hidden">
-        <!-- Fullscreen iframe or preview -->
-        <div class="w-full h-full overflow-hidden preview-frame flex items-center justify-center">
-            <!-- Responsive container for iframe/preview -->
-            <div 
-                :style="{ width: previewWidth + 'px', maxWidth: '100%' }"
-                class="h-full bg-white transition-all duration-300"
-            >
-                <iframe
-                    v-if="isIframePreview"
-                    :key="iframeKey"
-                    :src="site.url"
-                    class="w-full h-full border-0"
-                    title="Site Preview"
-                ></iframe>
-                
-                <!-- Static Preview (component-based) - scrollable -->
-                <div 
-                    v-else
-                    class="w-full h-full overflow-y-auto bg-white"
-                >
-                    <NavigationRenderer
-                        :navigation="siteNavigation"
-                        :siteName="site.name"
-                        :isMobile="isMobilePreview"
-                        :isEditing="false"
-                        @switchPage="switchPage"
-                    />
-                    <div v-for="section in sections" :key="section.id">
-                        <SectionRenderer
-                            :section="section"
-                            :isMobile="isMobilePreview"
-                            :textSize="textSize"
-                            :spacing="spacing"
-                            :gridCols2="gridCols2"
-                            :gridCols3="gridCols3"
-                            :gridCols4="gridCols4"
-                            :getSectionContentTransform="() => ''"
-                            :getElementTransform="() => ''"
-                            :hasElementOffset="() => false"
-                            :isEditing="() => false"
-                            :editingValue="''"
-                            :startInlineEdit="() => {}"
-                            :saveInlineEdit="() => {}"
-                            :handleInlineKeydown="() => {}"
-                            :startElementDrag="() => {}"
-                            :resetAllElementOffsets="() => {}"
-                            :selectedSectionId="null"
-                            :draggingElement="null"
-                        />
-                    </div>
-                    <FooterRenderer
-                        :footer="siteFooter"
-                        :siteName="site.name"
-                        :logoText="siteNavigation.logoText"
-                        :isEditing="false"
-                    />
-                </div>
-            </div>
-        </div>
+    <EditorPreview
+        :is-full-preview="isFullPreview"
+        :is-iframe-preview="isIframePreview"
+        :preview-width="previewWidth"
+        :iframe-key="iframeKey"
+        :site-name="site.name"
+        :site-url="site.url"
+        :site-navigation="siteNavigation"
+        :site-footer="siteFooter"
+        :sections="sections"
+        :is-mobile="isMobilePreview"
+        :editing-value="''"
+        :dragging-element="null"
+        @close="exitFullPreview"
+        @edit="exitFullPreview"
+        @set-preview-breakpoint="previewWidth = $event"
+        @set-iframe-preview="isIframePreview = $event"
+        @refresh-iframe="iframeKey++"
+        @switch-page="switchPage"
+    />
 
-        <!-- Floating toolbar at bottom -->
-        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-full shadow-2xl px-3 py-2 flex items-center gap-1 z-50">
-            <div class="px-3 py-1 border-r border-gray-200">
-                <p class="text-sm font-medium text-gray-900">{{ site.name }}</p>
-            </div>
-            
-            <div class="flex items-center border-r border-gray-200 px-2">
-                <button
-                    @click="isIframePreview = true; iframeKey++"
-                    :class="['px-3 py-1.5 text-sm rounded-full transition-colors', isIframePreview ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700']"
-                    title="Interactive preview"
-                >
-                    Live
-                </button>
-                <button
-                    @click="isIframePreview = false"
-                    :class="['px-3 py-1.5 text-sm rounded-full transition-colors', !isIframePreview ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700']"
-                    title="Static preview"
-                >
-                    Static
-                </button>
-            </div>
-            
-            <div class="flex items-center gap-1 border-r border-gray-200 px-2">
-                <button
-                    v-for="bp in breakpoints"
-                    :key="bp.width"
-                    @click="setPreviewBreakpoint(bp.width)"
-                    :class="['p-2 rounded-full transition-colors', previewWidth === bp.width ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100']"
-                    :title="`${bp.name} (${bp.width}px)`"
-                    :aria-label="`Set preview to ${bp.name}`"
-                >
-                    <DevicePhoneMobileIcon v-if="bp.icon === 'phone'" class="w-5 h-5" aria-hidden="true" />
-                    <DeviceTabletIcon v-else-if="bp.icon === 'tablet'" class="w-5 h-5" aria-hidden="true" />
-                    <ComputerDesktopIcon v-else class="w-5 h-5" aria-hidden="true" />
-                </button>
-            </div>
-            
-            <a :href="site.url" target="_blank" class="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition" title="Open in new tab">
-                <ComputerDesktopIcon class="h-5 w-5" aria-hidden="true" />
-            </a>
-            
-            <button @click="exitFullPreview" class="px-4 py-2 text-gray-700 font-medium rounded-full hover:bg-gray-100 transition">
-                Close
-            </button>
-            
-            <button @click="exitFullPreview" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-full hover:bg-blue-700 transition inline-flex items-center gap-1.5">
-                <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
-                Edit
-            </button>
-        </div>
+    <KeyboardShortcutsModal
+        :show="showKeyboardShortcuts"
+        @close="showKeyboardShortcuts = false"
+    />
 
-        <!-- Close button top right -->
-        <button @click="exitFullPreview" class="absolute top-4 right-4 p-2.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-full shadow-lg hover:bg-white transition z-50" aria-label="Close preview">
-            <XMarkIcon class="h-5 w-5" aria-hidden="true" />
-        </button>
-        
-        <!-- Keyboard hint -->
-        <div class="absolute top-4 left-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white/80 text-xs rounded-full z-50">
-            Press <kbd class="px-1.5 py-0.5 bg-white/20 rounded text-xs mx-1">Esc</kbd> to exit
-        </div>
-    </div>
-
-    <!-- Keyboard Shortcuts Modal -->
-    <Teleport to="body">
-        <div v-if="showKeyboardShortcuts" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="showKeyboardShortcuts = false">
-            <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-between mb-5">
-                    <h3 class="text-lg font-semibold text-gray-900">Keyboard Shortcuts</h3>
-                    <button @click="showKeyboardShortcuts = false" class="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close">
-                        <XMarkIcon class="w-5 h-5 text-gray-500" aria-hidden="true" />
-                    </button>
-                </div>
-                <div class="space-y-1">
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Save</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+S</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Undo</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+Z</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Redo</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+Shift+Z</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Preview Mode</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+P</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Open in New Tab</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+Shift+P</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Toggle Left Sidebar</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+\</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Toggle Right Sidebar</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+]</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Duplicate Section</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+D</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Delete Section</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Delete</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Deselect / Exit Preview</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Esc</kbd>
-                    </div>
-                    <div class="flex justify-between items-center py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <span class="text-gray-700 text-sm">Show Shortcuts</span>
-                        <kbd class="px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-md text-xs font-semibold text-gray-700 shadow-sm">Ctrl+/</kbd>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Teleport>
-
-    <!-- Mobile Device Warning Modal -->
-    <Teleport to="body">
-        <div v-if="showMobileWarning" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
-                <div class="flex items-center justify-center mb-4">
-                    <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
-                        <DevicePhoneMobileIcon class="w-8 h-8 text-amber-600" aria-hidden="true" />
-                    </div>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 text-center mb-3">Desktop Recommended</h3>
-                <p class="text-gray-600 text-center mb-6">
-                    The GrowBuilder editor works best on desktop devices with a larger screen. For the best editing experience, please use a laptop or desktop computer.
-                </p>
-                <div class="space-y-3">
-                    <button
-                        @click="showMobileWarning = false"
-                        class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        Continue Anyway
-                    </button>
-                    <button
-                        @click="router.visit(route('growbuilder.index'))"
-                        class="w-full px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                        Back to Dashboard
-                    </button>
-                </div>
-                <p class="text-xs text-gray-500 text-center mt-4">
-                    💡 Tip: Your published site is fully mobile-responsive and looks great on all devices!
-                </p>
-            </div>
-        </div>
-    </Teleport>
+    <MobileWarningModal
+        :show="showMobileWarning"
+        @close="showMobileWarning = false"
+        @back="router.visit(route('growbuilder.index'))"
+    />
 
     <div :class="['h-screen flex flex-col overflow-hidden transition-colors duration-200', darkMode ? 'bg-gray-900' : 'bg-gray-100']">
         <!-- Top Toolbar -->
@@ -2463,8 +1689,8 @@ onUnmounted(() => {
             :isPublished="isPublished"
             :siteUrl="site.url"
             :lastSaved="lastSaved"
-            :canUndo="history.canUndo.value"
-            :canRedo="history.canRedo.value"
+            :canUndo="canUndo"
+            :canRedo="canRedo"
             :zoom="canvasZoom"
             :darkMode="darkMode"
             :sections="sections"
@@ -2485,191 +1711,25 @@ onUnmounted(() => {
 
         <!-- Main Content Area -->
         <div class="flex-1 flex overflow-hidden relative">
-            <!-- Left Sidebar - Unified (Mobile: Full-width overlay, Desktop: Fixed sidebar) -->
-            <aside :class="[
-                'flex flex-col transition-all duration-300 flex-shrink-0 border-r z-30',
-                // Mobile: Full-width overlay when open, hidden when closed
-                'fixed md:relative inset-y-0 left-0',
-                leftSidebarOpen ? 'w-full md:w-72' : 'w-0',
-                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-                // Add top offset for mobile to account for toolbar
-                'top-14 md:top-0'
-            ]">
-                <div v-if="leftSidebarOpen" class="flex flex-col h-full overflow-hidden">
-                    <!-- Mobile: Close button -->
-                    <div class="md:hidden flex items-center justify-between p-3 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
-                        <h3 :class="['font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Editor Tools</h3>
-                        <button
-                            @click="leftSidebarOpen = false"
-                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                            aria-label="Close sidebar"
-                        >
-                            <XMarkIcon class="w-5 h-5" :class="darkMode ? 'text-gray-400' : 'text-gray-600'" aria-hidden="true" />
-                        </button>
-                    </div>
-                    
-                    <!-- Sidebar Tabs - 3 tabs now -->
-                    <div :class="['flex border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
-                        <button
-                            @click="activeLeftTab = 'widgets'"
-                            data-tour="add-tab"
-                            :class="[
-                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2',
-                                activeLeftTab === 'widgets' 
-                                    ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
-                                    : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
-                            ]"
-                        >
-                            <Squares2X2Icon class="w-4 h-4" aria-hidden="true" />
-                            <span>Add</span>
-                        </button>
-                        <button
-                            @click="activeLeftTab = 'pages'"
-                            data-tour="pages-tab"
-                            :class="[
-                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2',
-                                activeLeftTab === 'pages' 
-                                    ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
-                                    : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
-                            ]"
-                        >
-                            <DocumentIcon class="w-4 h-4" aria-hidden="true" />
-                            <span>Pages</span>
-                        </button>
-                        <button
-                            @click="activeLeftTab = 'inspector'"
-                            data-tour="edit-tab"
-                            :class="[
-                                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2 relative',
-                                activeLeftTab === 'inspector' 
-                                    ? (darkMode ? 'text-blue-400 border-blue-400 bg-blue-900/20' : 'text-blue-600 border-blue-600 bg-blue-50/50')
-                                    : (darkMode ? 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50')
-                            ]"
-                        >
-                            <Cog6ToothIcon class="w-4 h-4" aria-hidden="true" />
-                            <span>Edit</span>
-                            <!-- Indicator dot when something is selected -->
-                            <span 
-                                v-if="selectedSection || showNavSettings || showFooterSettings"
-                                class="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"
-                            ></span>
-                        </button>
-                    </div>
-
-                    <!-- Widget Palette Tab -->
-                    <WidgetPalette
-                        v-if="activeLeftTab === 'widgets'"
-                        :siteName="site.name"
-                        :pages="pages"
-                        :darkMode="darkMode"
-                        @dragStart="onDragStart"
-                        @dragEnd="onDragEnd"
-                    />
-
-                    <!-- Pages Tab -->
-                    <PagesList
-                        v-if="activeLeftTab === 'pages'"
-                        :pages="pages"
-                        :activePage="activePage"
-                        :sections="sections"
-                        :selectedSectionId="selectedSectionId"
-                        :darkMode="darkMode"
-                        @switchPage="switchPage"
-                        @createPage="openCreatePageModal"
-                        @editPage="openEditPageModal"
-                        @deletePage="deletePage"
-                        @applyTemplate="openApplyTemplateModal"
-                        @selectSection="selectSection"
-                        @deleteSection="deleteSection"
-                        @dragStart="onDragStart"
-                        @dragEnd="onDragEnd"
-                        @update:sections="sections = $event"
-                    />
-
-                    <!-- Inspector Tab (moved from right sidebar) -->
-                    <div v-if="activeLeftTab === 'inspector'" class="flex flex-col h-full overflow-hidden">
-                        <!-- Inspector Header -->
-                        <div :class="['p-3 border-b', darkMode ? 'border-gray-700' : 'border-gray-200']">
-                            <div v-if="showNavSettings" class="flex items-center gap-2">
-                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100']">
-                                    <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-indigo-400' : 'text-indigo-600']" aria-hidden="true" />
-                                </div>
-                                <div>
-                                    <h3 :class="['text-sm font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Navigation</h3>
-                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Site-wide settings</p>
-                                </div>
-                            </div>
-                            <div v-else-if="showFooterSettings" class="flex items-center gap-2">
-                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-gray-700' : 'bg-gray-100']">
-                                    <Bars3BottomLeftIcon :class="['w-4 h-4', darkMode ? 'text-gray-300' : 'text-gray-600']" aria-hidden="true" />
-                                </div>
-                                <div>
-                                    <h3 :class="['text-sm font-semibold', darkMode ? 'text-white' : 'text-gray-900']">Footer</h3>
-                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Site-wide settings</p>
-                                </div>
-                            </div>
-                            <div v-else-if="selectedSection" class="flex items-center gap-2">
-                                <div :class="['w-8 h-8 rounded-lg flex items-center justify-center', darkMode ? 'bg-blue-900/50' : 'bg-blue-100']">
-                                    <component :is="selectedSectionType?.icon || Squares2X2Icon" :class="['w-4 h-4', darkMode ? 'text-blue-400' : 'text-blue-600']" aria-hidden="true" />
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 :class="['text-sm font-semibold capitalize truncate', darkMode ? 'text-white' : 'text-gray-900']">{{ selectedSection.type }}</h3>
-                                    <p :class="['text-xs', darkMode ? 'text-gray-400' : 'text-gray-500']">Edit section</p>
-                                </div>
-                                <button
-                                    @click="selectedSectionId = null"
-                                    :class="['p-1.5 rounded-lg transition-colors', darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500']"
-                                    aria-label="Deselect section"
-                                >
-                                    <XMarkIcon class="w-4 h-4" aria-hidden="true" />
-                                </button>
-                            </div>
-                            <div v-else class="text-center py-4">
-                                <div :class="['w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2', darkMode ? 'bg-gray-700' : 'bg-gray-100']">
-                                    <Squares2X2Icon :class="['w-6 h-6', darkMode ? 'text-gray-500' : 'text-gray-400']" aria-hidden="true" />
-                                </div>
-                                <p :class="['text-sm font-medium', darkMode ? 'text-gray-300' : 'text-gray-600']">No selection</p>
-                                <p :class="['text-xs mt-1', darkMode ? 'text-gray-500' : 'text-gray-400']">Click a section to edit</p>
-                            </div>
-                        </div>
-
-                        <!-- Navigation Settings Panel -->
-                        <NavigationInspector
-                            v-if="showNavSettings"
-                            :navigation="siteNavigation"
-                            :pages="pages"
-                            :darkMode="darkMode"
-                            class="flex-1 min-h-0 overflow-hidden"
-                            @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
-                        />
-
-                        <!-- Footer Settings Panel -->
-                        <FooterInspector
-                            v-else-if="showFooterSettings"
-                            :footer="siteFooter"
-                            :pages="pages"
-                            :darkMode="darkMode"
-                            class="flex-1 min-h-0 overflow-hidden"
-                            @openMediaLibrary="(target, field) => openMediaLibrary(target, field)"
-                        />
-
-                        <!-- Section Inspector -->
-                        <SectionInspector
-                            v-else-if="selectedSection"
-                            :section="selectedSection"
-                            :sectionType="selectedSectionType"
-                            :activeTab="activeInspectorTab"
-                            :darkMode="darkMode"
-                            :subdomain="site.subdomain"
-                            class="flex-1 min-h-0 overflow-hidden"
-                            @update:activeTab="activeInspectorTab = $event"
-                            @updateContent="updateSectionContent"
-                            @updateStyle="updateSectionStyle"
-                            @openMediaLibrary="(sectionId, field) => openMediaLibrary('section', sectionId, field)"
-                        />
-                    </div>
-                </div>
-            </aside>
+            <EditorLeftSidebar
+                :siteName="site.name"
+                :siteSubdomain="site.subdomain || ''"
+                :pages="pages"
+                :selectedSectionType="selectedSectionType"
+                @toggle="leftSidebarOpen = false"
+                @dragStart="onDragStart"
+                @dragEnd="onDragEnd"
+                @switchPage="switchPage"
+                @createPage="openCreatePageModal"
+                @editPage="openEditPageModal"
+                @deletePage="deletePage"
+                @applyTemplate="openApplyTemplateModal"
+                @deleteSection="deleteSection"
+                @update:sections="sections = $event"
+                @openMediaLibrary="openMediaLibrary"
+                @updateContent="updateSectionContent"
+                @updateStyle="updateSectionStyle"
+            />
 
             <!-- Mobile Backdrop Overlay -->
             <div

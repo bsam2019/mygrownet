@@ -2,11 +2,11 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\InvestorFeedback;
-use App\Models\InvestorSurvey;
-use App\Models\InvestorSurveyResponse;
-use App\Models\InvestorPoll;
-use App\Models\InvestorPollVote;
+use App\Models\Investor\InvestorFeedback;
+use App\Models\Investor\InvestorSurvey;
+use App\Models\Investor\InvestorSurveyResponse;
+use App\Models\Investor\InvestorPoll;
+use App\Models\Investor\InvestorPollVote;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class InvestorFeedbackService

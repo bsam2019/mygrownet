@@ -2,12 +2,12 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\ShareholderForumCategory;
-use App\Models\ShareholderForumTopic;
-use App\Models\ShareholderForumReply;
-use App\Models\ShareholderDirectoryProfile;
-use App\Models\ShareholderContactRequest;
-use App\Models\InvestorAccount;
+use App\Models\Shareholder\ShareholderForumCategory;
+use App\Models\Shareholder\ShareholderForumTopic;
+use App\Models\Shareholder\ShareholderForumReply;
+use App\Models\Shareholder\ShareholderDirectoryProfile;
+use App\Models\Shareholder\ShareholderContactRequest;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 

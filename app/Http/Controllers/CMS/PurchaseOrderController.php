@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
+use App\Domain\CMS\Core\Services\ApprovalWorkflowService;
+use App\Domain\CMS\Core\Services\PdfPurchaseOrderService;
 use App\Domain\CMS\Materials\Services\PurchaseOrderService;
 use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
@@ -12,34 +15,40 @@ use Inertia\Response;
 
 class PurchaseOrderController extends Controller
 {
+    use HasCmsAccess;
+
     public function __construct(
-        private PurchaseOrderService $purchaseOrderService
+        private PurchaseOrderService $purchaseOrderService,
+        private ApprovalWorkflowService $approvalService,
+        private PdfPurchaseOrderService $pdfService
     ) {}
 
     public function index(Request $request): Response
     {
-        $companyId = $request->user()->cmsUser->company_id ?? null;
+        $companyId = $this->getCompanyId($request);
 
-        if (!$companyId) {
-            abort(403, 'No CMS company access');
-        }
-
-        $purchaseOrders = MaterialPurchaseOrderModel::with(['job', 'createdBy.user', 'approvedBy.user'])
+        $purchaseOrders = MaterialPurchaseOrderModel::with(['job', 'createdBy.user', 'approvedBy.user', 'branch'])
             ->forCompany($companyId)
+            ->forBranch($request->branch_id)
             ->when($request->status, fn($q) => $q->byStatus($request->status))
             ->when($request->job_id, fn($q) => $q->forJob($request->job_id))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/PurchaseOrders/Index', [
             'purchaseOrders' => $purchaseOrders,
-            'filters' => $request->only(['status', 'job_id']),
+            'filters' => $request->only(['status', 'job_id', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 
     public function create(Request $request): Response
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
 
         $jobs = JobModel::forCompany($companyId)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -71,12 +80,12 @@ class PurchaseOrderController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
 
         $po = $this->purchaseOrderService->createPurchaseOrder([
             ...$validated,
             'company_id' => $companyId,
-            'created_by' => $request->user()->cmsUser->id,
+            'created_by' => $this->getCmsUserOrFail($request)->id,
         ]);
 
         return redirect()
@@ -86,7 +95,7 @@ class PurchaseOrderController extends Controller
 
     public function show(MaterialPurchaseOrderModel $purchaseOrder): Response
     {
-        $companyId = request()->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId(request());
         if ($purchaseOrder->company_id !== $companyId) abort(403);
 
         $purchaseOrder->load([
@@ -104,7 +113,7 @@ class PurchaseOrderController extends Controller
 
     public function createFromJob(Request $request, JobModel $job): Response
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
         if ($job->company_id !== $companyId) abort(403);
 
         $job->load(['materialPlans' => function ($q) {
@@ -118,7 +127,7 @@ class PurchaseOrderController extends Controller
 
     public function storeFromJob(Request $request, JobModel $job)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
         if ($job->company_id !== $companyId) abort(403);
 
         $validated = $request->validate([
@@ -144,7 +153,7 @@ class PurchaseOrderController extends Controller
                 'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
-                'created_by' => $request->user()->cmsUser->id,
+                'created_by' => $this->getCmsUserOrFail($request)->id,
             ]
         );
 
@@ -155,13 +164,30 @@ class PurchaseOrderController extends Controller
 
     public function approve(MaterialPurchaseOrderModel $purchaseOrder)
     {
-        $companyId = request()->user()->cmsUser->company_id;
+        $user = $this->getCmsUserOrFail(request());
+        $companyId = $user->company_id;
         if ($purchaseOrder->company_id !== $companyId) abort(403);
+
+        if ($this->approvalService->requiresApproval($companyId, 'purchase_order', $purchaseOrder->total_amount)) {
+            try {
+                $this->approvalService->createApprovalRequest(
+                    $companyId,
+                    'purchase_order',
+                    $purchaseOrder->id,
+                    $purchaseOrder->total_amount,
+                    $user->id,
+                    'Purchase order approval: ' . $purchaseOrder->po_number
+                );
+                return back()->with('info', 'Purchase order approval requires approval. An approval request has been submitted.');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Failed to create approval request: ' . $e->getMessage());
+            }
+        }
 
         try {
             $this->purchaseOrderService->approvePurchaseOrder(
                 $purchaseOrder,
-                request()->user()->cmsUser->id
+                $user->id
             );
             return back()->with('success', 'Purchase order approved and sent');
         } catch (\Exception $e) {
@@ -171,7 +197,7 @@ class PurchaseOrderController extends Controller
 
     public function receive(Request $request, MaterialPurchaseOrderModel $purchaseOrder)
     {
-        $companyId = $request->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId($request);
         if ($purchaseOrder->company_id !== $companyId) abort(403);
 
         $validated = $request->validate([
@@ -189,11 +215,63 @@ class PurchaseOrderController extends Controller
 
     public function cancel(MaterialPurchaseOrderModel $purchaseOrder)
     {
-        $companyId = request()->user()->cmsUser->company_id;
+        $companyId = $this->getCompanyId(request());
         if ($purchaseOrder->company_id !== $companyId) abort(403);
 
         $this->purchaseOrderService->cancelPurchaseOrder($purchaseOrder);
 
         return back()->with('success', 'Purchase order cancelled');
+    }
+
+    public function downloadPdf(Request $request, MaterialPurchaseOrderModel $purchaseOrder)
+    {
+        $companyId = $this->getCompanyId($request);
+        if ($purchaseOrder->company_id !== $companyId) abort(403);
+
+        $purchaseOrder->loadMissing(['company', 'items', 'job']);
+
+        if ($purchaseOrder->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generatePurchaseOrderPdf($purchaseOrder);
+
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="po-' . $purchaseOrder->po_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs PO PDF generation failed', [
+                    'po_id' => $purchaseOrder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $this->pdfService->download($purchaseOrder);
+    }
+
+    public function previewPdf(Request $request, MaterialPurchaseOrderModel $purchaseOrder)
+    {
+        $companyId = $this->getCompanyId($request);
+        if ($purchaseOrder->company_id !== $companyId) abort(403);
+
+        $purchaseOrder->loadMissing(['company', 'items', 'job']);
+
+        if ($purchaseOrder->company->hasBizDocsModule()) {
+            try {
+                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $pdfContent = $adapter->generatePurchaseOrderPdf($purchaseOrder);
+
+                return response($pdfContent)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'inline; filename="po-' . $purchaseOrder->po_number . '.pdf"');
+            } catch (\Exception $e) {
+                \Log::error('BizDocs PO PDF preview failed', [
+                    'po_id' => $purchaseOrder->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $this->pdfService->stream($purchaseOrder);
     }
 }

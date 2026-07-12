@@ -133,7 +133,7 @@ class CommunicationController extends Controller
         }
 
         $investorId = $investor->getId();
-        $investorAccount = \App\Models\InvestorAccount::find($investorId);
+        $investorAccount = \App\Models\Investor\InvestorAccount::find($investorId);
 
         $myFeedback = $investorAccount 
             ? $this->communicationService->getInvestorFeedback($investorAccount->id)

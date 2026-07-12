@@ -24,16 +24,22 @@ class JobController extends Controller
             abort(403, 'No CMS company access');
         }
 
-        $jobs = JobModel::with(['customer', 'assignedTo.user', 'createdBy.user'])
+        $jobs = JobModel::with(['customer', 'assignedTo.user', 'createdBy.user', 'branch'])
             ->forCompany($companyId)
+            ->forBranch($request->branch_id)
             ->when($request->status, fn($q) => $q->byStatus($request->status))
             ->when($request->assigned_to, fn($q) => $q->assignedTo($request->assigned_to))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'branch_name']);
+
         return Inertia::render('CMS/Jobs/Index', [
             'jobs' => $jobs,
-            'filters' => $request->only(['status', 'assigned_to']),
+            'filters' => $request->only(['status', 'assigned_to', 'branch_id']),
+            'branches' => $branches,
         ]);
     }
 

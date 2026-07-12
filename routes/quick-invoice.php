@@ -52,6 +52,13 @@ Route::prefix('quick-invoice')->name('quick-invoice.')->group(function () {
     
     Route::delete('/{id}', [QuickInvoiceController::class, 'destroy'])->name('destroy');
     
+    // Subscription & billing routes
+    Route::middleware('auth')->prefix('subscription')->name('subscription.')->group(function () {
+        Route::get('/', [QuickInvoiceController::class, 'subscriptionPlans'])->name('plans');
+        Route::get('/checkout/{tierId}', [QuickInvoiceController::class, 'checkout'])->name('checkout');
+        Route::post('/upgrade', [QuickInvoiceController::class, 'upgrade'])->name('upgrade');
+    });
+    
     // Authenticated routes for profile management
     Route::middleware('auth')->group(function () {
         Route::post('/save-profile', [QuickInvoiceController::class, 'saveProfile'])->name('save-profile');

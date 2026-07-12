@@ -7,6 +7,7 @@ use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
 use App\Models\User;
+use App\Domain\CMS\Core\Services\IndustryPresetService;
 use App\Services\CMS\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,8 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
     public function __construct(
-        private SecurityService $securityService
+        private SecurityService $securityService,
+        private IndustryPresetService $presetService
     ) {}
 
     /**
@@ -141,10 +143,16 @@ class AuthController extends Controller
                 ->with('warning', 'Your password has expired. Please change it to continue.');
         }
 
-        // Check if user has any companies — if not, send to hub
-        $cmsUser = CmsUserModel::where('user_id', $user->id)->where('status', 'active')->first();
+        // Determine where to send the user based on company count & default preference
+        $activeCompanies = CmsUserModel::where('user_id', $user->id)->where('status', 'active')->get();
+        $companyCount = $activeCompanies->count();
 
-        if (!$cmsUser) {
+        if ($companyCount === 0) {
+            return redirect()->route('cms.companies.hub');
+        }
+
+        // Multi-company user with no default set → hub to choose
+        if ($companyCount > 1 && !$user->default_company_id) {
             return redirect()->route('cms.companies.hub');
         }
 
@@ -152,23 +160,32 @@ class AuthController extends Controller
     }
 
     /**
-     * Show the registration page
+     * Show the registration page with industry presets for rapid company setup.
      */
     public function showRegister()
     {
-        return Inertia::render('CMS/Auth/Register');
+        $presets = \App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel::active()->ordered()->get([
+            'id', 'code', 'name', 'description', 'icon', 'sort_order',
+        ]);
+
+        return Inertia::render('CMS/Auth/Register', [
+            'presets' => $presets,
+        ]);
     }
 
     /**
-     * Handle registration request — creates user only, no company yet.
-     * Redirects to Company Hub where user creates or joins a company.
+     * Handle registration request — creates user + company in one step.
+     * Redirects straight to dashboard.
      */
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'name'            => ['required', 'string', 'max:255'],
+            'email'           => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password'        => ['required', 'confirmed', Password::defaults()],
+            'company_name'    => ['required', 'string', 'max:255'],
+            'industry_type'   => ['nullable', 'string', 'max:100'],
+            'preset_code'     => ['nullable', 'string', 'exists:cms_industry_presets,code'],
         ]);
 
         try {
@@ -184,9 +201,48 @@ class AuthController extends Controller
                 'password_changed_at' => now(),
             ]);
 
+            $company = CompanyModel::create([
+                'name'               => $validated['company_name'],
+                'industry_type'      => $validated['industry_type'] ?? null,
+                'email'              => $validated['email'],
+                'city'               => 'Lusaka',
+                'country'            => 'Zambia',
+                'status'             => 'active',
+                'subscription_type'  => 'complimentary',
+                'complimentary_until' => now()->addDays(14),
+                'settings' => [
+                    'currency'     => 'ZMW',
+                    'vat_enabled'  => true,
+                    'vat_rate'     => 16,
+                    'invoice_due_days' => 30,
+                ],
+            ]);
+
+            $ownerRole = RoleModel::create([
+                'company_id'     => $company->id,
+                'name'           => 'Owner',
+                'is_system_role' => true,
+                'permissions'    => ['*'],
+                'approval_authority' => ['limit' => 999999999],
+            ]);
+
+            CmsUserModel::create([
+                'company_id' => $company->id,
+                'user_id'    => $user->id,
+                'role_id'    => $ownerRole->id,
+                'status'     => 'active',
+            ]);
+
+            if (!empty($validated['preset_code'])) {
+                $this->presetService->applyPresetToCompany($company->id, $validated['preset_code']);
+            }
+
+            $this->setDefaultBizDocsTemplates($company);
+
             DB::commit();
 
             Auth::login($user);
+            session(['active_cms_company_id' => $company->id]);
 
             $this->securityService->recordLoginAttempt(
                 email: $user->email,
@@ -196,8 +252,8 @@ class AuthController extends Controller
                 userAgent: $request->userAgent()
             );
 
-            // No company yet — send to Company Hub
-            return redirect()->route('cms.companies.hub');
+            return redirect()->route('cms.dashboard')
+                ->with('success', "Welcome to {$company->name}! Your company is ready.");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -226,6 +282,8 @@ class AuthController extends Controller
                 );
             }
         }
+
+        session()->forget('active_cms_company_id');
 
         Auth::logout();
 

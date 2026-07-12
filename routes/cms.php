@@ -36,8 +36,11 @@ use Inertia\Inertia;
 
 // Public CMS Routes (Landing & Auth)
 Route::prefix('cms')->name('cms.')->group(function () {
-    // Landing Page
+    // Landing Page — redirect to hub if already authenticated
     Route::get('/', function () {
+        if (auth()->check()) {
+            return redirect()->route('cms.companies.hub');
+        }
         return Inertia::render('CMS/Landing', [
             'routePrefix' => 'cms'
         ]);
@@ -57,6 +60,26 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Email Unsubscribe (Public)
     Route::get('/email/unsubscribe', [\App\Http\Controllers\CMS\EmailSettingsController::class, 'unsubscribe'])->name('email.unsubscribe');
 
+    // Authentication Routes (Guest only)
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [AuthController::class, 'login']);
+
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+    });
+
+    // Logout (Authenticated only)
+    Route::post('/logout', [AuthController::class, 'logout'])
+        ->middleware('auth')
+        ->name('logout');
+
+    // Password Change (Authenticated only)
+    Route::middleware('auth')->group(function () {
+        Route::get('/password/change', [AuthController::class, 'showPasswordChange'])->name('password.change');
+        Route::post('/password/change', [AuthController::class, 'changePassword'])->name('password.update');
+    });
+
     // Switch active company (authenticated users)
     Route::post('/switch-company', [AuthController::class, 'switchCompany'])
         ->middleware('auth')
@@ -68,6 +91,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::get('/companies/create', [\App\Http\Controllers\CMS\CompanyController::class, 'create'])->name('companies.create');
         Route::post('/companies', [\App\Http\Controllers\CMS\CompanyController::class, 'store'])->name('companies.store');
         Route::post('/companies/{companyId}/enter', [\App\Http\Controllers\CMS\CompanyController::class, 'enter'])->name('companies.enter');
+        Route::post('/companies/set-default', [\App\Http\Controllers\CMS\CompanyController::class, 'setDefault'])->name('companies.set-default');
     });
 });
 
@@ -79,6 +103,62 @@ Route::prefix('cms')
         
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // KPIs
+        Route::prefix('kpis')->name('kpis.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\KpiController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\KpiController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\KpiController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\KpiController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\CMS\KpiController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\KpiController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\CMS\KpiController::class, 'destroy'])->name('delete');
+            Route::post('/{id}/values', [\App\Http\Controllers\CMS\KpiController::class, 'recordValue'])->name('values.store');
+            Route::delete('/{id}/values/{valueId}', [\App\Http\Controllers\CMS\KpiController::class, 'deleteValue'])->name('values.delete');
+        });
+
+        // Planning
+        Route::prefix('plans')->name('plans.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\PlanController::class, 'index'])->name('index');
+            Route::get('/command-center', [\App\Http\Controllers\CMS\PlanController::class, 'commandCenter'])->name('command-center');
+            Route::get('/create', [\App\Http\Controllers\CMS\PlanController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\PlanController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\CMS\PlanController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\CMS\PlanController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\CMS\PlanController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\CMS\PlanController::class, 'destroy'])->name('delete');
+
+            // Plan Objectives
+            Route::prefix('{planId}/objectives')->name('objectives.')->group(function () {
+                Route::post('/', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'store'])->name('store');
+                Route::put('/{id}', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'update'])->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'destroy'])->name('delete');
+
+                // Entity linking
+                Route::post('/{id}/link', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'link'])->name('link');
+                Route::delete('/{id}/link/{linkId}', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'unlink'])->name('unlink');
+                Route::post('/{id}/link/{linkId}/sync', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'syncLink'])->name('sync-link');
+                Route::post('/{id}/sync-kpi', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'syncKpi'])->name('sync-kpi');
+            });
+
+            // Entity search (outside objectives prefix — for linking UI)
+            Route::get('/entity-search', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'searchEntities'])->name('entity-search');
+            Route::get('/entity-fields', [\App\Http\Controllers\CMS\PlanObjectiveController::class, 'availableFields'])->name('entity-fields');
+        });
+
+        // Business Plans
+        Route::prefix('business-plans')->name('business-plans.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'create'])->name('create');
+            Route::get('/{planId}/edit', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'edit'])->name('edit');
+            Route::post('/save', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'save'])->name('save');
+            Route::post('/complete', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'complete'])->name('complete');
+            Route::get('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'show'])->name('show');
+            Route::post('/generate-ai', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'generateAI'])->name('generate-ai');
+            Route::post('/chat', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'chat'])->name('chat');
+            Route::post('/export', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'export'])->name('export');
+            Route::delete('/{planId}', [\App\Http\Controllers\CMS\BusinessPlanController::class, 'delete'])->name('delete');
+        });
 
         // Measurements (Aluminium Fabrication)
         Route::prefix('measurements')->name('measurements.')->group(function () {
@@ -245,10 +325,32 @@ Route::prefix('cms')
 
         // Inventory
         Route::prefix('inventory')->name('inventory.')->group(function () {
+            // Static routes MUST come before parameterized {inventory}
             Route::get('/', [InventoryController::class, 'index'])->name('index');
             Route::get('/create', [InventoryController::class, 'create'])->name('create');
             Route::post('/', [InventoryController::class, 'store'])->name('store');
             Route::get('/low-stock-alerts', [InventoryController::class, 'lowStockAlerts'])->name('low-stock-alerts');
+            // Stock Locations
+            Route::get('/locations', [InventoryController::class, 'locations'])->name('locations.index');
+            Route::post('/locations', [InventoryController::class, 'storeLocation'])->name('locations.store');
+            // Stock Levels
+            Route::get('/stock-levels', [InventoryController::class, 'stockLevels'])->name('stock-levels.index');
+            // Stock Transfers
+            Route::get('/transfers', [InventoryController::class, 'transfers'])->name('transfers.index');
+            Route::post('/transfers', [InventoryController::class, 'createTransfer'])->name('transfers.store');
+            Route::post('/transfers/{id}/approve', [InventoryController::class, 'approveTransfer'])->name('transfers.approve');
+            Route::post('/transfers/{id}/receive', [InventoryController::class, 'receiveTransfer'])->name('transfers.receive');
+            // Stock Adjustments
+            Route::get('/adjustments', [InventoryController::class, 'adjustments'])->name('adjustments.index');
+            Route::post('/adjustments', [InventoryController::class, 'createAdjustment'])->name('adjustments.store');
+            Route::post('/adjustments/{id}/approve', [InventoryController::class, 'approveAdjustment'])->name('adjustments.approve');
+            // Stock Counts
+            Route::get('/counts', [InventoryController::class, 'counts'])->name('counts.index');
+            Route::post('/counts', [InventoryController::class, 'createCount'])->name('counts.store');
+            Route::post('/counts/{id}/complete', [InventoryController::class, 'completeCount'])->name('counts.complete');
+            // Stock Valuation
+            Route::get('/valuation', [InventoryController::class, 'valuations'])->name('valuation.index');
+            // Parameterized routes (must be last)
             Route::get('/{inventory}', [InventoryController::class, 'show'])->name('show');
             Route::get('/{inventory}/edit', [InventoryController::class, 'edit'])->name('edit');
             Route::put('/{inventory}', [InventoryController::class, 'update'])->name('update');
@@ -284,10 +386,22 @@ Route::prefix('cms')
             Route::post('/{purchaseOrder}/approve', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'approve'])->name('approve');
             Route::post('/{purchaseOrder}/receive', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'receive'])->name('receive');
             Route::post('/{purchaseOrder}/cancel', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'cancel'])->name('cancel');
+            Route::get('/{purchaseOrder}/pdf', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'downloadPdf'])->name('pdf');
+            Route::get('/{purchaseOrder}/pdf/preview', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'previewPdf'])->name('pdf.preview');
             
             // Create PO from Job
             Route::get('/jobs/{job}/create', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'createFromJob'])->name('create-from-job');
             Route::post('/jobs/{job}', [\App\Http\Controllers\CMS\PurchaseOrderController::class, 'storeFromJob'])->name('store-from-job');
+        });
+
+        // Vendors
+        Route::prefix('vendors')->name('vendors.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\VendorController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\VendorController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\VendorController::class, 'store'])->name('store');
+            Route::get('/{vendor}', [\App\Http\Controllers\CMS\VendorController::class, 'show'])->name('show');
+            Route::get('/{vendor}/edit', [\App\Http\Controllers\CMS\VendorController::class, 'edit'])->name('edit');
+            Route::put('/{vendor}', [\App\Http\Controllers\CMS\VendorController::class, 'update'])->name('update');
         });
 
         // Production Management
@@ -435,10 +549,35 @@ Route::prefix('cms')
             Route::get('/create', [\App\Http\Controllers\CMS\AssetController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\CMS\AssetController::class, 'store'])->name('store');
             Route::get('/maintenance', [\App\Http\Controllers\CMS\AssetController::class, 'maintenance'])->name('maintenance');
+            Route::get('/depreciation-register', [\App\Http\Controllers\CMS\AssetController::class, 'depreciationRegister'])->name('depreciation-register');
             Route::get('/{asset}', [\App\Http\Controllers\CMS\AssetController::class, 'show'])->name('show');
             Route::get('/{asset}/edit', [\App\Http\Controllers\CMS\AssetController::class, 'edit'])->name('edit');
             Route::put('/{asset}', [\App\Http\Controllers\CMS\AssetController::class, 'update'])->name('update');
             Route::post('/{asset}/assign', [\App\Http\Controllers\CMS\AssetController::class, 'assign'])->name('assign');
+            Route::post('/{asset}/setup-depreciation', [\App\Http\Controllers\CMS\AssetController::class, 'setupDepreciation'])->name('setup-depreciation');
+            Route::post('/{asset}/apply-depreciation', [\App\Http\Controllers\CMS\AssetController::class, 'applyDepreciation'])->name('apply-depreciation');
+            Route::post('/{asset}/schedule-maintenance', [\App\Http\Controllers\CMS\AssetController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
+            Route::post('/assignments/{assignment}/return', [\App\Http\Controllers\CMS\AssetController::class, 'returnAsset'])->name('return');
+            Route::post('/maintenance/{maintenance}/complete', [\App\Http\Controllers\CMS\AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
+        });
+
+        // Contract Management
+        Route::prefix('contracts')->name('contracts.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\ContractController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\CMS\ContractController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\CMS\ContractController::class, 'store'])->name('store');
+            Route::get('/{contract}', [\App\Http\Controllers\CMS\ContractController::class, 'show'])->name('show');
+            Route::get('/{contract}/edit', [\App\Http\Controllers\CMS\ContractController::class, 'edit'])->name('edit');
+            Route::put('/{contract}', [\App\Http\Controllers\CMS\ContractController::class, 'update'])->name('update');
+            Route::post('/{contract}/activate', [\App\Http\Controllers\CMS\ContractController::class, 'activate'])->name('activate');
+            Route::post('/{contract}/terminate', [\App\Http\Controllers\CMS\ContractController::class, 'terminate'])->name('terminate');
+            Route::post('/{contract}/sign', [\App\Http\Controllers\CMS\ContractController::class, 'sign'])->name('sign');
+            Route::post('/{contract}/send-for-signing', [\App\Http\Controllers\CMS\ContractController::class, 'sendForSigning'])->name('send-for-signing');
+            Route::get('/{contract}/sign/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'showSigningPage'])->name('sign-with-token');
+            Route::post('/{contract}/sign/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'submitCustomerSignature'])->name('submit-signature');
+            Route::get('/{contract}/signed-confirmation', [\App\Http\Controllers\CMS\ContractController::class, 'signedConfirmation'])->name('signed-confirmation');
+            Route::get('/{contract}/download-pdf', [\App\Http\Controllers\CMS\ContractController::class, 'downloadPdf'])->name('download-pdf');
+            Route::post('/{contract}/renew', [\App\Http\Controllers\CMS\ContractController::class, 'renew'])->name('renew');
         });
 
         // Loans Receivable (Company-scoped loan management)
@@ -450,9 +589,6 @@ Route::prefix('cms')
             Route::get('/{loan}/payment', [\App\Http\Controllers\CMS\LoanController::class, 'paymentForm'])->name('payment');
             Route::post('/{loan}/payment', [\App\Http\Controllers\CMS\LoanController::class, 'recordPayment'])->name('payment.store');
             Route::get('/reports/aging', [\App\Http\Controllers\CMS\LoanController::class, 'agingReport'])->name('reports.aging');
-            Route::post('/{asset}/schedule-maintenance', [\App\Http\Controllers\CMS\AssetController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
-            Route::post('/assignments/{assignment}/return', [\App\Http\Controllers\CMS\AssetController::class, 'returnAsset'])->name('return');
-            Route::post('/maintenance/{maintenance}/complete', [\App\Http\Controllers\CMS\AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
         });
 
         // Payroll & Workers
@@ -507,7 +643,12 @@ Route::prefix('cms')
             Route::post('/{payrollRun}/mark-paid', [\App\Http\Controllers\CMS\PayrollController::class, 'payrollMarkPaid'])->name('mark-paid');
         });
 
-        // HRMS - Departments & Branches
+        // HRMS - Branches
+        Route::resource('branches', \App\Http\Controllers\CMS\BranchController::class)->only([
+            'index', 'create', 'store', 'edit', 'update', 'destroy'
+        ]);
+
+        // HRMS - Departments
         Route::prefix('departments')->name('departments.')->group(function () {
             Route::get('/', [\App\Http\Controllers\CMS\DepartmentController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\CMS\DepartmentController::class, 'create'])->name('create');
@@ -576,8 +717,11 @@ Route::prefix('cms')
 
         // Analytics
         Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::get('/overview', [\App\Http\Controllers\CMS\AnalyticsController::class, 'overview'])->name('overview');
             Route::get('/operations', [\App\Http\Controllers\CMS\AnalyticsController::class, 'operations'])->name('operations');
             Route::get('/finance', [\App\Http\Controllers\CMS\AnalyticsController::class, 'finance'])->name('finance');
+            Route::get('/procurement', [\App\Http\Controllers\CMS\AnalyticsController::class, 'procurement'])->name('procurement');
+            Route::get('/finance/export-csv', [\App\Http\Controllers\CMS\AnalyticsController::class, 'exportCsv'])->name('finance.export-csv');
         });
 
         // Approvals
@@ -936,32 +1080,7 @@ Route::prefix('cms')
             Route::post('/defects/{defectId}/resolve', [\App\Http\Controllers\CMS\InstallationController::class, 'resolveDefect'])->name('defects.resolve');
         });
 
-        // Enhanced Inventory Management
-        Route::prefix('inventory')->name('inventory.')->group(function () {
-            // Stock Locations
-            Route::get('/locations', [\App\Http\Controllers\CMS\InventoryController::class, 'locations'])->name('locations.index');
-            Route::post('/locations', [\App\Http\Controllers\CMS\InventoryController::class, 'storeLocation'])->name('locations.store');
-            
-            // Stock Levels
-            Route::get('/stock-levels', [\App\Http\Controllers\CMS\InventoryController::class, 'stockLevels'])->name('stock-levels.index');
-            Route::get('/stock-levels/alerts', [\App\Http\Controllers\CMS\InventoryController::class, 'lowStockAlerts'])->name('stock-levels.alerts');
-            
-            // Stock Transfers
-            Route::get('/transfers', [\App\Http\Controllers\CMS\InventoryController::class, 'transfers'])->name('transfers.index');
-            Route::post('/transfers', [\App\Http\Controllers\CMS\InventoryController::class, 'createTransfer'])->name('transfers.store');
-            Route::post('/transfers/{id}/approve', [\App\Http\Controllers\CMS\InventoryController::class, 'approveTransfer'])->name('transfers.approve');
-            Route::post('/transfers/{id}/receive', [\App\Http\Controllers\CMS\InventoryController::class, 'receiveTransfer'])->name('transfers.receive');
-            
-            // Stock Adjustments
-            Route::get('/adjustments', [\App\Http\Controllers\CMS\InventoryController::class, 'adjustments'])->name('adjustments.index');
-            Route::post('/adjustments', [\App\Http\Controllers\CMS\InventoryController::class, 'createAdjustment'])->name('adjustments.store');
-            Route::post('/adjustments/{id}/approve', [\App\Http\Controllers\CMS\InventoryController::class, 'approveAdjustment'])->name('adjustments.approve');
-            
-            // Stock Counts
-            Route::get('/counts', [\App\Http\Controllers\CMS\InventoryController::class, 'counts'])->name('counts.index');
-            Route::post('/counts', [\App\Http\Controllers\CMS\InventoryController::class, 'createCount'])->name('counts.store');
-            Route::post('/counts/{id}/complete', [\App\Http\Controllers\CMS\InventoryController::class, 'completeCount'])->name('counts.complete');
-        });
+        // Inventory routes are defined in the main inventory group above
 
         // Vehicle/Fleet Management
         Route::prefix('fleet')->name('fleet.')->group(function () {
@@ -1045,5 +1164,12 @@ Route::prefix('cms')
             // Rework
             Route::get('/rework', [\App\Http\Controllers\CMS\QualityController::class, 'rework'])->name('rework.index');
             Route::post('/rework', [\App\Http\Controllers\CMS\QualityController::class, 'storeRework'])->name('rework.store');
+        });
+
+        // Portal User Management
+        Route::prefix('portal-users')->name('portal-users.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\CMS\PortalUserController::class, 'index'])->name('index');
+            Route::post('/link', [\App\Http\Controllers\CMS\PortalUserController::class, 'link'])->name('link');
+            Route::delete('/unlink/{userId}/{customerId}', [\App\Http\Controllers\CMS\PortalUserController::class, 'unlink'])->name('unlink');
         });
     });

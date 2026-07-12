@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Domain\Marketplace\Services\PayoutService;
-use App\Models\MarketplacePayout;
+use App\Models\Marketplace\MarketplacePayout;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

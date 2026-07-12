@@ -5,6 +5,7 @@ use App\Http\Controllers\GrowBuilder\CheckoutController;
 use App\Http\Controllers\GrowBuilder\CustomDomainController;
 use App\Http\Controllers\GrowBuilder\EditorController;
 use App\Http\Controllers\GrowBuilder\FormSubmissionController;
+use App\Http\Controllers\GrowBuilder\GuestController;
 use App\Http\Controllers\GrowBuilder\ManifestController;
 use App\Http\Controllers\GrowBuilder\MediaController;
 use App\Http\Controllers\GrowBuilder\OrderController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\GrowBuilder\SiteUserManagementController;
 use App\Http\Controllers\GrowBuilder\SiteController;
 use App\Http\Controllers\GrowBuilder\SubscriptionController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,242 +30,287 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->prefix('growbuilder')->name('growbuilder.')->group(function () {
-    
-    // DEBUG: Test if any growbuilder routes work
-    Route::get('/debug', function() {
-        \Log::info('DEBUG route hit');
-        return response('DEBUG ROUTE HIT!');
+// ── Helper register all authenticated GrowBuilder routes ──
+$registerGrowBuilderAuthRoutes = function (string $prefix, string $namePrefix) {
+    Route::prefix($prefix)->name($namePrefix)->middleware(['auth'])->group(function () {
+
+        // DEBUG: Test if any growbuilder routes work
+        Route::get('/debug', function() {
+            \Log::info('DEBUG route hit');
+            return response('DEBUG ROUTE HIT!');
+        });
+
+        // DEBUG: Simple test route
+        Route::get('/test', function() {
+            return response()->json(['message' => 'GrowBuilder route works!', 'user' => auth()->user()->email]);
+        })->name('test');
+
+        // DEBUG: Test controller method
+        Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
+
+        // Agency Management
+        Route::prefix('agency')->name('agency.')->group(function () {
+            Route::get('/dashboard', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'index'])->name('dashboard');
+            Route::post('/create', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'store'])->name('store');
+            Route::post('/switch/{agencyId}', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'switchAgency'])->name('switch');
+        });
+
+        // Client Management
+        Route::prefix('clients')->name('clients.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'edit'])->name('edit');
+            Route::get('/{id}/analytics', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'analytics'])->name('analytics');
+            Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/suspend-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'suspendSites'])->name('suspend-sites');
+            Route::post('/{id}/activate-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'activateSites'])->name('activate-sites');
+        });
+
+        // Service Management
+        Route::prefix('services')->name('services.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'destroy'])->name('destroy');
+        });
+
+        // Invoice Management
+        Route::prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'store'])->name('store');
+            Route::post('/generate-from-services', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'generateFromServices'])->name('generate-from-services');
+            Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/mark-as-sent', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'markAsSent'])->name('mark-as-sent');
+            Route::post('/{id}/record-payment', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'recordPayment'])->name('record-payment');
+        });
+
+        // Dashboard
+        Route::get('/dashboard', [SiteController::class, 'index'])->name('dashboard');
+
+        // Admin tier switching (for testing)
+        Route::post('/switch-tier', [SiteController::class, 'switchTier'])->name('switch-tier');
+
+        // Subscription/Pricing
+        Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+        Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
+        Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
+
+        // Site Templates API
+        Route::get('/templates', [SiteTemplateController::class, 'index'])->name('templates.index');
+        Route::get('/templates/industries', [SiteTemplateController::class, 'industries'])->name('templates.industries');
+        Route::get('/templates/{id}', [SiteTemplateController::class, 'show'])->name('templates.show');
+        Route::get('/templates/{id}/preview', [SiteTemplateController::class, 'preview'])->name('templates.preview');
+        Route::get('/templates/{id}/live', [SiteTemplateController::class, 'livePreview'])->name('templates.live');
+        Route::get('/templates/{id}/render/{page?}', [SiteTemplateController::class, 'renderPreview'])->name('templates.render');
+
+        // Sites
+        Route::get('/sites/create', [SiteController::class, 'create'])->name('sites.create');
+        Route::post('/sites', [SiteController::class, 'store'])->name('sites.store');
+        Route::get('/sites/{id}', [SiteController::class, 'show'])->name('sites.show');
+        Route::get('/sites/{id}/settings', [SiteController::class, 'settings'])->name('sites.settings');
+        Route::get('/sites/{id}/analytics', [SiteController::class, 'analytics'])->name('sites.analytics');
+        Route::get('/sites/{id}/analytics/export', [SiteController::class, 'exportAnalytics'])->name('sites.analytics.export');
+        Route::put('/sites/{id}', [SiteController::class, 'update'])->name('sites.update');
+        Route::delete('/sites/{id}', [SiteController::class, 'destroy'])->name('sites.destroy');
+        Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
+        Route::post('/sites/{id}/publish', [SiteController::class, 'publish'])->name('sites.publish');
+        Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
+        Route::post('/sites/{id}/complete-onboarding', [SiteController::class, 'completeOnboarding'])->name('sites.complete-onboarding');
+
+        // Site Export
+        Route::get('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'show'])->name('sites.export');
+        Route::post('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'export'])->name('sites.export.download');
+
+        // Site Messages (for site owners)
+        Route::get('/sites/{id}/messages', [SiteController::class, 'messages'])->name('sites.messages');
+        Route::get('/sites/{id}/messages/{messageId}', [SiteController::class, 'showMessage'])->name('sites.messages.show');
+        Route::post('/sites/{id}/messages/{messageId}/reply', [SiteController::class, 'replyMessage'])->name('sites.messages.reply');
+        Route::put('/sites/{id}/messages/{messageId}/status', [SiteController::class, 'updateMessageStatus'])->name('sites.messages.status');
+        Route::delete('/sites/{id}/messages/{messageId}', [SiteController::class, 'deleteMessage'])->name('sites.messages.delete');
+        Route::get('/sites/{id}/messages-export', [SiteController::class, 'exportMessages'])->name('sites.messages.export');
+
+        // Site Users Management (for site owners)
+        Route::get('/sites/{id}/users', [SiteController::class, 'users'])->name('sites.users');
+        Route::post('/sites/{id}/users', [SiteController::class, 'createUser'])->name('sites.users.create');
+        Route::put('/sites/{id}/users/{userId}/role', [SiteController::class, 'updateUserRole'])->name('sites.users.role');
+        Route::delete('/sites/{id}/users/{userId}', [SiteController::class, 'deleteUser'])->name('sites.users.delete');
+
+        // Site Roles Management (for site owners)
+        Route::get('/sites/{id}/roles', [SiteController::class, 'roles'])->name('sites.roles');
+        Route::post('/sites/{id}/roles', [SiteController::class, 'createRole'])->name('sites.roles.create');
+        Route::put('/sites/{id}/roles/{roleId}', [SiteController::class, 'updateRole'])->name('sites.roles.update');
+        Route::delete('/sites/{id}/roles/{roleId}', [SiteController::class, 'deleteRole'])->name('sites.roles.delete');
+        Route::get('/sites/{id}/permissions', [SiteController::class, 'permissions'])->name('sites.permissions');
+
+        // Custom Domain Management
+        Route::post('/sites/{id}/domain/verify', [CustomDomainController::class, 'verifyDNS'])->name('sites.domain.verify');
+        Route::post('/sites/{id}/domain/connect', [CustomDomainController::class, 'connect'])->name('sites.domain.connect');
+        Route::delete('/sites/{id}/domain', [CustomDomainController::class, 'disconnect'])->name('sites.domain.disconnect');
+        Route::get('/sites/{id}/domain/status', [CustomDomainController::class, 'status'])->name('sites.domain.status');
+
+        // Editor
+        Route::get('/editor/{siteId}', [EditorController::class, 'index'])->name('editor');
+        Route::get('/editor/{siteId}/page/{pageId}', [EditorController::class, 'editPage'])->name('editor.page');
+        Route::post('/editor/{siteId}/pages', [EditorController::class, 'savePage'])->name('editor.save');
+        Route::post('/editor/{siteId}/pages/{pageId}/save', [EditorController::class, 'savePageContent'])->name('editor.saveContent');
+        Route::put('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'updatePageMeta'])->name('editor.updateMeta');
+        Route::delete('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'deletePage'])->name('editor.delete');
+        Route::post('/editor/{siteId}/settings', [EditorController::class, 'saveSiteSettings'])->name('editor.saveSettings');
+
+        // Media (support both URL patterns)
+        Route::get('/media/{siteId}', [MediaController::class, 'index'])->name('media.index');
+        Route::post('/media/{siteId}', [MediaController::class, 'store'])->name('media.store');
+        Route::post('/media/{siteId}/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64-alt');
+        Route::delete('/media/{siteId}/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
+
+        // Media (alternative URL pattern - sites prefix)
+        Route::get('/sites/{siteId}/media', [MediaController::class, 'index'])->name('sites.media.index');
+        Route::post('/sites/{siteId}/media', [MediaController::class, 'store'])->name('sites.media.store');
+        Route::post('/sites/{siteId}/media/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64');
+        Route::delete('/sites/{siteId}/media/{mediaId}', [MediaController::class, 'destroy'])->name('sites.media.destroy');
+        Route::post('/sites/{siteId}/generate-favicon', [MediaController::class, 'generateFavicon'])->name('media.generate-favicon');
+
+        // Products
+        Route::get('/sites/{siteId}/products', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/sites/{siteId}/products/create', [ProductController::class, 'create'])->name('products.create');
+        Route::post('/sites/{siteId}/products', [ProductController::class, 'store'])->name('products.store');
+        Route::get('/sites/{siteId}/products/{productId}/edit', [ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/sites/{siteId}/products/{productId}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('/sites/{siteId}/products/{productId}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+        // Orders
+        Route::get('/sites/{siteId}/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/sites/{siteId}/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
+        Route::put('/sites/{siteId}/orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/sites/{siteId}/orders/{orderId}/mark-paid', [OrderController::class, 'markAsPaid'])->name('orders.mark-paid');
+
+        // Form Submissions
+        Route::get('/sites/{siteId}/form-submissions', [FormSubmissionController::class, 'index'])->name('form-submissions.index');
+        Route::get('/sites/{siteId}/form-submissions/export', [FormSubmissionController::class, 'export'])->name('form-submissions.export');
+        Route::get('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'show'])->name('form-submissions.show');
+        Route::post('/sites/{siteId}/form-submissions/{submissionId}/toggle-read', [FormSubmissionController::class, 'toggleRead'])->name('form-submissions.toggle-read');
+        Route::post('/sites/{siteId}/form-submissions/{submissionId}/spam', [FormSubmissionController::class, 'markSpam'])->name('form-submissions.spam');
+        Route::delete('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'destroy'])->name('form-submissions.destroy');
+
+        // Marketplace Integration
+        Route::get('/sites/{site}/marketplace', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'show'])->name('marketplace.show');
+        Route::post('/sites/{site}/marketplace/enable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'enable'])->name('marketplace.enable');
+        Route::post('/sites/{site}/marketplace/disable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'disable'])->name('marketplace.disable');
+        Route::get('/sites/{site}/marketplace/products', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'products'])->name('marketplace.products');
+
+        // Payment Settings (legacy)
+        Route::get('/sites/{siteId}/payments', [PaymentSettingsController::class, 'index'])->name('payments.index');
+        Route::put('/sites/{siteId}/payments', [PaymentSettingsController::class, 'update'])->name('payments.update');
+
+        // Payment Gateway Configuration (new)
+        Route::get('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'index'])->name('payment.config');
+        Route::post('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'store'])->name('payment.config.store');
+        Route::delete('/sites/{site}/payment/config/{config}', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'destroy'])->name('payment.config.destroy');
+
+        // Payment API Routes
+        Route::get('/api/payment/gateway-fields', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'getGatewayFields'])->name('api.payment.gateway-fields');
+        Route::post('/sites/{site}/payment/test', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'test'])->name('payment.test');
+        Route::get('/sites/{site}/payment/transactions', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'transactions'])->name('payment.transactions');
+
+        // Payment Webhook (public)
+        Route::post('/sites/{siteId}/payment/webhook', [\App\Http\Controllers\GrowBuilder\PaymentWebhookController::class, 'handle'])->name('payment.webhook')->withoutMiddleware(['auth', 'verified']);
+
+        // AI Content Generation
+        Route::get('/ai/status', [AIController::class, 'status'])->name('ai.status');
+        Route::post('/ai/generate-website', [AIController::class, 'generateWebsite'])->name('ai.generate-website');
+        Route::post('/ai/refine-website', [AIController::class, 'refineWebsite'])->name('ai.refine-website');
+        Route::post('/ai/publish-generated-website', [AIController::class, 'publishGeneratedWebsite'])->name('ai.publish-generated-website');
+
+        // AI Session Context (NEW - Phase 1)
+        Route::get('/sites/{siteId}/ai/context', [AIController::class, 'getSessionContext'])->name('ai.context');
+        Route::post('/sites/{siteId}/ai/context', [AIController::class, 'updateSessionContext'])->name('ai.context.update');
+
+        // AI Chat with Actions (NEW - Phase 1)
+        Route::post('/sites/{siteId}/ai/chat', [AIController::class, 'smartChatWithActions'])->name('ai.chat');
+        Route::post('/sites/{siteId}/ai/apply-action', [AIController::class, 'applyAction'])->name('ai.apply-action');
+
+        // AI Feedback & Stats
+        Route::post('/sites/{siteId}/ai/feedback', [AIController::class, 'recordFeedback'])->name('ai.feedback');
+        Route::get('/sites/{siteId}/ai/feedback-stats', [AIController::class, 'getFeedbackStats'])->name('ai.feedback-stats');
+
+        // AI Image & Logo Generation (NEW)
+        Route::post('/ai/generate-image', [AIController::class, 'generateImage'])->name('ai.generate-image');
+        Route::post('/ai/generate-logo', [AIController::class, 'generateLogo'])->name('ai.generate-logo');
+
+        // AI Multi-Page Generation (NEW)
+        Route::post('/ai/generate-multi-page', [AIController::class, 'generateMultiPageWebsite'])->name('ai.generate-multi-page');
+
+        // AI Reference Site Import (NEW)
+        Route::post('/ai/analyze-reference', [AIController::class, 'analyzeReferenceSite'])->name('ai.analyze-reference');
+        Route::post('/ai/convert-reference', [AIController::class, 'convertReferenceSite'])->name('ai.convert-reference');
+
+        // AI Site Chatbot (NEW)
+        Route::post('/sites/{siteId}/ai/chatbot/ask', [AIController::class, 'chatbotAsk'])->name('ai.chatbot.ask');
+        Route::post('/sites/{siteId}/ai/chatbot/capture-lead', [AIController::class, 'chatbotCaptureLead'])->name('ai.chatbot.capture-lead');
+        Route::get('/sites/{siteId}/ai/chatbot/leads', [AIController::class, 'chatbotLeads'])->name('ai.chatbot.leads');
+        Route::post('/sites/{siteId}/ai/chatbot/toggle', [AIController::class, 'chatbotToggle'])->name('ai.chatbot.toggle');
+
+        // WhatsApp Settings (dashboard)
+        Route::get('/whatsapp/status', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'status'])->name('whatsapp.status');
+        Route::post('/sites/{siteId}/whatsapp/toggle', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'toggle'])->name('whatsapp.toggle');
+        Route::post('/sites/{siteId}/whatsapp/test', [\App\Http\Controllers\GrowBuilder\WhatsAppSettingsController::class, 'testMessage'])->name('whatsapp.test');
+
+        // Legacy AI endpoints (kept for backwards compatibility)
+        Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');
+        Route::post('/sites/{siteId}/ai/classify-intent', [AIController::class, 'classifyIntent'])->name('ai.classify-intent');
+        Route::post('/sites/{siteId}/ai/generate-content', [AIController::class, 'generateContent'])->name('ai.generate-content');
+        Route::post('/sites/{siteId}/ai/generate-meta', [AIController::class, 'generateMeta'])->name('ai.generate-meta');
+        Route::post('/sites/{siteId}/ai/suggest-colors', [AIController::class, 'suggestColors'])->name('ai.suggest-colors');
+        Route::post('/sites/{siteId}/ai/improve-text', [AIController::class, 'improveText'])->name('ai.improve-text');
+        Route::post('/sites/{siteId}/ai/translate', [AIController::class, 'translate'])->name('ai.translate');
+        Route::post('/sites/{siteId}/ai/suggest-images', [AIController::class, 'suggestImages'])->name('ai.suggest-images');
+        Route::post('/sites/{siteId}/ai/generate-testimonials', [AIController::class, 'generateTestimonials'])->name('ai.generate-testimonials');
+        Route::post('/sites/{siteId}/ai/generate-faqs', [AIController::class, 'generateFAQs'])->name('ai.generate-faqs');
+        Route::post('/sites/{siteId}/ai/generate-page', [AIController::class, 'generatePage'])->name('ai.generate-page');
+        Route::post('/sites/{siteId}/ai/generate-page-detailed', [AIController::class, 'generatePageDetailed'])->name('ai.generate-page-detailed');
     });
-    
-    // DEBUG: Simple test route
-    Route::get('/test', function() {
-        return response()->json(['message' => 'GrowBuilder route works!', 'user' => auth()->user()->email]);
-    })->name('test');
-    
-    // DEBUG: Test controller method
-    Route::get('/test-controller', [SiteController::class, 'test'])->name('test-controller');
-    
-    // Agency Management
-    Route::prefix('agency')->name('agency.')->group(function () {
-        Route::get('/dashboard', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'index'])->name('dashboard');
-        Route::post('/create', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'store'])->name('store');
-        Route::post('/switch/{agencyId}', [\App\Http\Controllers\GrowBuilder\AgencyDashboardController::class, 'switchAgency'])->name('switch');
-    });
-    
-    // Client Management
-    Route::prefix('clients')->name('clients.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'store'])->name('store');
-        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'edit'])->name('edit');
-        Route::get('/{id}/analytics', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'analytics'])->name('analytics');
-        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/suspend-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'suspendSites'])->name('suspend-sites');
-        Route::post('/{id}/activate-sites', [\App\Http\Controllers\GrowBuilder\ClientController::class, 'activateSites'])->name('activate-sites');
-    });
-    
-    // Service Management
-    Route::prefix('services')->name('services.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'store'])->name('store');
-        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\ServiceController::class, 'destroy'])->name('destroy');
-    });
-    
-    // Invoice Management
-    Route::prefix('invoices')->name('invoices.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'store'])->name('store');
-        Route::post('/generate-from-services', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'generateFromServices'])->name('generate-from-services');
-        Route::get('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/mark-as-sent', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'markAsSent'])->name('mark-as-sent');
-        Route::post('/{id}/record-payment', [\App\Http\Controllers\GrowBuilder\InvoiceController::class, 'recordPayment'])->name('record-payment');
-    });
-    
-    // Dashboard (main sites dashboard)
-    Route::get('/dashboard', [SiteController::class, 'index'])->name('dashboard');
-    
-    // Dashboard (legacy - redirects to main dashboard)
-    Route::get('/', function() {
+};
+
+// ============================================================
+// 1. MAIN DOMAIN ROUTES (mygrownet.com/growbuilder/*)
+// ============================================================
+
+// Public welcome page — registered BEFORE auth closure so it takes precedence
+Route::get('/growbuilder', function () {
+    if (auth()->check()) {
         return redirect()->route('growbuilder.dashboard');
-    })->name('index');
-    
-    // Admin tier switching (for testing)
-    Route::post('/switch-tier', [SiteController::class, 'switchTier'])->name('switch-tier');
+    }
+    return Inertia::render('GrowBuilder/Welcome');
+})->name('growbuilder.welcome');
 
-    // Subscription/Pricing
-    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
-    Route::post('/subscription/purchase', [SubscriptionController::class, 'purchase'])->name('subscription.purchase');
-    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
-
-    // Site Templates API
-    Route::get('/templates', [SiteTemplateController::class, 'index'])->name('templates.index');
-    Route::get('/templates/industries', [SiteTemplateController::class, 'industries'])->name('templates.industries');
-    Route::get('/templates/{id}', [SiteTemplateController::class, 'show'])->name('templates.show');
-    Route::get('/templates/{id}/preview', [SiteTemplateController::class, 'preview'])->name('templates.preview');
-    Route::get('/templates/{id}/live', [SiteTemplateController::class, 'livePreview'])->name('templates.live');
-    Route::get('/templates/{id}/render/{page?}', [SiteTemplateController::class, 'renderPreview'])->name('templates.render');
-
-    // Sites
-    Route::get('/sites/create', [SiteController::class, 'create'])->name('sites.create');
-    Route::post('/sites', [SiteController::class, 'store'])->name('sites.store');
-    Route::get('/sites/{id}', [SiteController::class, 'show'])->name('sites.show');
-    Route::get('/sites/{id}/settings', [SiteController::class, 'settings'])->name('sites.settings');
-    Route::get('/sites/{id}/analytics', [SiteController::class, 'analytics'])->name('sites.analytics');
-    Route::get('/sites/{id}/analytics/export', [SiteController::class, 'exportAnalytics'])->name('sites.analytics.export');
-    Route::put('/sites/{id}', [SiteController::class, 'update'])->name('sites.update');
-    Route::delete('/sites/{id}', [SiteController::class, 'destroy'])->name('sites.destroy');
-    Route::post('/sites/{id}/restore', [SiteController::class, 'restore'])->name('sites.restore');
-    Route::post('/sites/{id}/publish', [SiteController::class, 'publish'])->name('sites.publish');
-    Route::post('/sites/{id}/unpublish', [SiteController::class, 'unpublish'])->name('sites.unpublish');
-    Route::post('/sites/{id}/complete-onboarding', [SiteController::class, 'completeOnboarding'])->name('sites.complete-onboarding');
-
-    // Site Export
-    Route::get('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'show'])->name('sites.export');
-    Route::post('/sites/{id}/export', [\App\Http\Controllers\GrowBuilder\ExportController::class, 'export'])->name('sites.export.download');
-
-    // Site Messages (for site owners)
-    Route::get('/sites/{id}/messages', [SiteController::class, 'messages'])->name('sites.messages');
-    Route::get('/sites/{id}/messages/{messageId}', [SiteController::class, 'showMessage'])->name('sites.messages.show');
-    Route::post('/sites/{id}/messages/{messageId}/reply', [SiteController::class, 'replyMessage'])->name('sites.messages.reply');
-    Route::put('/sites/{id}/messages/{messageId}/status', [SiteController::class, 'updateMessageStatus'])->name('sites.messages.status');
-    Route::delete('/sites/{id}/messages/{messageId}', [SiteController::class, 'deleteMessage'])->name('sites.messages.delete');
-    Route::get('/sites/{id}/messages-export', [SiteController::class, 'exportMessages'])->name('sites.messages.export');
-
-    // Site Users Management (for site owners)
-    Route::get('/sites/{id}/users', [SiteController::class, 'users'])->name('sites.users');
-    Route::post('/sites/{id}/users', [SiteController::class, 'createUser'])->name('sites.users.create');
-    Route::put('/sites/{id}/users/{userId}/role', [SiteController::class, 'updateUserRole'])->name('sites.users.role');
-    Route::delete('/sites/{id}/users/{userId}', [SiteController::class, 'deleteUser'])->name('sites.users.delete');
-
-    // Site Roles Management (for site owners)
-    Route::get('/sites/{id}/roles', [SiteController::class, 'roles'])->name('sites.roles');
-    Route::post('/sites/{id}/roles', [SiteController::class, 'createRole'])->name('sites.roles.create');
-    Route::put('/sites/{id}/roles/{roleId}', [SiteController::class, 'updateRole'])->name('sites.roles.update');
-    Route::delete('/sites/{id}/roles/{roleId}', [SiteController::class, 'deleteRole'])->name('sites.roles.delete');
-    Route::get('/sites/{id}/permissions', [SiteController::class, 'permissions'])->name('sites.permissions');
-
-    // Custom Domain Management
-    Route::post('/sites/{id}/domain/verify', [CustomDomainController::class, 'verifyDNS'])->name('sites.domain.verify');
-    Route::post('/sites/{id}/domain/connect', [CustomDomainController::class, 'connect'])->name('sites.domain.connect');
-    Route::delete('/sites/{id}/domain', [CustomDomainController::class, 'disconnect'])->name('sites.domain.disconnect');
-    Route::get('/sites/{id}/domain/status', [CustomDomainController::class, 'status'])->name('sites.domain.status');
-
-    // Editor
-    Route::get('/editor/{siteId}', [EditorController::class, 'index'])->name('editor');
-    Route::get('/editor/{siteId}/page/{pageId}', [EditorController::class, 'editPage'])->name('editor.page');
-    Route::post('/editor/{siteId}/pages', [EditorController::class, 'savePage'])->name('editor.save');
-    Route::post('/editor/{siteId}/pages/{pageId}/save', [EditorController::class, 'savePageContent'])->name('editor.saveContent');
-    Route::put('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'updatePageMeta'])->name('editor.updateMeta');
-    Route::delete('/editor/{siteId}/pages/{pageId}', [EditorController::class, 'deletePage'])->name('editor.delete');
-    Route::post('/editor/{siteId}/settings', [EditorController::class, 'saveSiteSettings'])->name('editor.saveSettings');
-
-    // Media (support both URL patterns)
-    Route::get('/media/{siteId}', [MediaController::class, 'index'])->name('media.index');
-    Route::post('/media/{siteId}', [MediaController::class, 'store'])->name('media.store');
-    Route::post('/media/{siteId}/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64-alt');
-    Route::delete('/media/{siteId}/{mediaId}', [MediaController::class, 'destroy'])->name('media.destroy');
-
-    // Media (alternative URL pattern - sites prefix)
-    Route::get('/sites/{siteId}/media', [MediaController::class, 'index'])->name('sites.media.index');
-    Route::post('/sites/{siteId}/media', [MediaController::class, 'store'])->name('sites.media.store');
-    Route::post('/sites/{siteId}/media/base64', [MediaController::class, 'storeBase64'])->name('media.store-base64');
-    Route::delete('/sites/{siteId}/media/{mediaId}', [MediaController::class, 'destroy'])->name('sites.media.destroy');
-    Route::post('/sites/{siteId}/generate-favicon', [MediaController::class, 'generateFavicon'])->name('media.generate-favicon');
-
-    // Products
-    Route::get('/sites/{siteId}/products', [ProductController::class, 'index'])->name('products.index');
-    Route::get('/sites/{siteId}/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/sites/{siteId}/products', [ProductController::class, 'store'])->name('products.store');
-    Route::get('/sites/{siteId}/products/{productId}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/sites/{siteId}/products/{productId}', [ProductController::class, 'update'])->name('products.update');
-    Route::delete('/sites/{siteId}/products/{productId}', [ProductController::class, 'destroy'])->name('products.destroy');
-
-    // Orders
-    Route::get('/sites/{siteId}/orders', [OrderController::class, 'index'])->name('orders.index');
-    Route::get('/sites/{siteId}/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
-    Route::put('/sites/{siteId}/orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
-    Route::post('/sites/{siteId}/orders/{orderId}/mark-paid', [OrderController::class, 'markAsPaid'])->name('orders.mark-paid');
-
-    // Form Submissions
-    Route::get('/sites/{siteId}/form-submissions', [FormSubmissionController::class, 'index'])->name('form-submissions.index');
-    Route::get('/sites/{siteId}/form-submissions/export', [FormSubmissionController::class, 'export'])->name('form-submissions.export');
-    Route::get('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'show'])->name('form-submissions.show');
-    Route::post('/sites/{siteId}/form-submissions/{submissionId}/toggle-read', [FormSubmissionController::class, 'toggleRead'])->name('form-submissions.toggle-read');
-    Route::post('/sites/{siteId}/form-submissions/{submissionId}/spam', [FormSubmissionController::class, 'markSpam'])->name('form-submissions.spam');
-    Route::delete('/sites/{siteId}/form-submissions/{submissionId}', [FormSubmissionController::class, 'destroy'])->name('form-submissions.destroy');
-
-    // Marketplace Integration
-    Route::get('/sites/{site}/marketplace', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'show'])->name('marketplace.show');
-    Route::post('/sites/{site}/marketplace/enable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'enable'])->name('marketplace.enable');
-    Route::post('/sites/{site}/marketplace/disable', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'disable'])->name('marketplace.disable');
-    Route::get('/sites/{site}/marketplace/products', [\App\Http\Controllers\GrowBuilder\MarketplaceIntegrationController::class, 'products'])->name('marketplace.products');
-
-    // Payment Settings (legacy)
-    Route::get('/sites/{siteId}/payments', [PaymentSettingsController::class, 'index'])->name('payments.index');
-    Route::put('/sites/{siteId}/payments', [PaymentSettingsController::class, 'update'])->name('payments.update');
-
-    // Payment Gateway Configuration (new)
-    Route::get('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'index'])->name('payment.config');
-    Route::post('/sites/{site}/payment/config', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'store'])->name('payment.config.store');
-    Route::delete('/sites/{site}/payment/config/{config}', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'destroy'])->name('payment.config.destroy');
-    
-    // Payment API Routes
-    Route::get('/api/payment/gateway-fields', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'getGatewayFields'])->name('api.payment.gateway-fields');
-    Route::post('/sites/{site}/payment/test', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'test'])->name('payment.test');
-    Route::get('/sites/{site}/payment/transactions', [\App\Http\Controllers\GrowBuilder\PaymentConfigController::class, 'transactions'])->name('payment.transactions');
-    
-    // Payment Webhook (public)
-    Route::post('/sites/{siteId}/payment/webhook', [\App\Http\Controllers\GrowBuilder\PaymentWebhookController::class, 'handle'])->name('payment.webhook')->withoutMiddleware(['auth', 'verified']);
-
-    // AI Content Generation
-    Route::get('/ai/status', [AIController::class, 'status'])->name('ai.status');
-    Route::post('/ai/generate-website', [AIController::class, 'generateWebsite'])->name('ai.generate-website');
-    Route::post('/ai/refine-website', [AIController::class, 'refineWebsite'])->name('ai.refine-website');
-    Route::post('/ai/publish-generated-website', [AIController::class, 'publishGeneratedWebsite'])->name('ai.publish-generated-website');
-    
-    // AI Session Context (NEW - Phase 1)
-    Route::get('/sites/{siteId}/ai/context', [AIController::class, 'getSessionContext'])->name('ai.context');
-    Route::post('/sites/{siteId}/ai/context', [AIController::class, 'updateSessionContext'])->name('ai.context.update');
-    
-    // AI Chat with Actions (NEW - Phase 1)
-    Route::post('/sites/{siteId}/ai/chat', [AIController::class, 'smartChatWithActions'])->name('ai.chat');
-    Route::post('/sites/{siteId}/ai/apply-action', [AIController::class, 'applyAction'])->name('ai.apply-action');
-    
-    // AI Feedback & Stats
-    Route::post('/sites/{siteId}/ai/feedback', [AIController::class, 'recordFeedback'])->name('ai.feedback');
-    Route::get('/sites/{siteId}/ai/feedback-stats', [AIController::class, 'getFeedbackStats'])->name('ai.feedback-stats');
-    
-    // Legacy AI endpoints (kept for backwards compatibility)
-    Route::post('/sites/{siteId}/ai/smart-chat', [AIController::class, 'smartChat'])->name('ai.smart-chat');
-    Route::post('/sites/{siteId}/ai/classify-intent', [AIController::class, 'classifyIntent'])->name('ai.classify-intent');
-    Route::post('/sites/{siteId}/ai/generate-content', [AIController::class, 'generateContent'])->name('ai.generate-content');
-    Route::post('/sites/{siteId}/ai/generate-meta', [AIController::class, 'generateMeta'])->name('ai.generate-meta');
-    Route::post('/sites/{siteId}/ai/suggest-colors', [AIController::class, 'suggestColors'])->name('ai.suggest-colors');
-    Route::post('/sites/{siteId}/ai/improve-text', [AIController::class, 'improveText'])->name('ai.improve-text');
-    Route::post('/sites/{siteId}/ai/translate', [AIController::class, 'translate'])->name('ai.translate');
-    Route::post('/sites/{siteId}/ai/suggest-images', [AIController::class, 'suggestImages'])->name('ai.suggest-images');
-    Route::post('/sites/{siteId}/ai/generate-testimonials', [AIController::class, 'generateTestimonials'])->name('ai.generate-testimonials');
-    Route::post('/sites/{siteId}/ai/generate-faqs', [AIController::class, 'generateFAQs'])->name('ai.generate-faqs');
-    Route::post('/sites/{siteId}/ai/generate-page', [AIController::class, 'generatePage'])->name('ai.generate-page');
-    Route::post('/sites/{siteId}/ai/generate-page-detailed', [AIController::class, 'generatePageDetailed'])->name('ai.generate-page-detailed');
-});
+// Authenticated GrowBuilder routes
+$registerGrowBuilderAuthRoutes('growbuilder', 'growbuilder.');
 
 // Public checkout API (for rendered sites)
 Route::prefix('gb-api/{subdomain}')->name('growbuilder.api.')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'createOrder'])->name('checkout');
     Route::get('/orders/{orderId}/payment-status', [CheckoutController::class, 'checkPaymentStatus'])->name('payment-status');
     Route::post('/contact', [SiteContactController::class, 'store'])->name('contact');
+});
+
+// Public Chatbot API (no auth required — called from visitor widgets)
+Route::post('/gb-chatbot/{siteId}/ask', [AIController::class, 'chatbotAsk'])->name('growbuilder.chatbot.ask');
+Route::post('/gb-chatbot/{siteId}/capture-lead', [AIController::class, 'chatbotCaptureLead'])->name('growbuilder.chatbot.capture-lead');
+
+// WhatsApp Cloud API Webhook (public, called by Meta)
+Route::name('growbuilder.whatsapp.')->prefix('api/whatsapp')->group(function () {
+    Route::get('/webhook', [\App\Http\Controllers\GrowBuilder\WhatsAppWebhookController::class, 'verify']);
+    Route::post('/webhook', [\App\Http\Controllers\GrowBuilder\WhatsAppWebhookController::class, 'handle']);
 });
 
 /*
@@ -273,33 +320,24 @@ Route::prefix('gb-api/{subdomain}')->name('growbuilder.api.')->group(function ()
 */
 
 Route::prefix('sites/{subdomain}')->group(function () {
-    // Public auth pages
     Route::get('/login', [SiteAuthController::class, 'showLogin'])->name('site.login');
     Route::post('/login', [SiteAuthController::class, 'login'])->name('site.login.submit');
     Route::get('/register', [SiteAuthController::class, 'showRegister'])->name('site.register');
     Route::post('/register', [SiteAuthController::class, 'register'])->name('site.register.submit');
     Route::post('/logout', [SiteAuthController::class, 'logout'])->name('site.logout');
 
-    // Password reset
     Route::get('/forgot-password', [SiteAuthController::class, 'showForgotPassword'])->name('site.password.request');
     Route::post('/forgot-password', [SiteAuthController::class, 'sendResetLink'])->name('site.password.email');
     Route::get('/reset-password/{token}', [SiteAuthController::class, 'showResetPassword'])->name('site.password.reset');
     Route::post('/reset-password', [SiteAuthController::class, 'resetPassword'])->name('site.password.update');
 
-    // Protected member area
     Route::middleware('site.auth')->prefix('dashboard')->name('site.member.')->group(function () {
-        // Dashboard
         Route::get('/', [SiteMemberController::class, 'dashboard'])->name('dashboard');
-
-        // Profile
         Route::get('/profile', [SiteMemberController::class, 'profile'])->name('profile');
         Route::put('/profile', [SiteMemberController::class, 'updateProfile'])->name('profile.update');
-
-        // Orders
         Route::get('/orders', [SiteMemberController::class, 'orders'])->name('orders');
         Route::get('/orders/{id}', [SiteMemberController::class, 'orderDetail'])->name('orders.show');
 
-        // Posts (Editors & above)
         Route::middleware('site.permission:posts.view')->group(function () {
             Route::get('/posts', [SitePostController::class, 'index'])->name('posts.index');
             Route::get('/posts/create', [SitePostController::class, 'create'])->name('posts.create');
@@ -309,7 +347,6 @@ Route::prefix('sites/{subdomain}')->group(function () {
             Route::delete('/posts/{id}', [SitePostController::class, 'destroy'])->name('posts.destroy');
         });
 
-        // User Management (Admins only)
         Route::middleware('site.permission:users.view')->group(function () {
             Route::get('/users', [SiteUserManagementController::class, 'index'])->name('users.index');
             Route::get('/users/{id}', [SiteUserManagementController::class, 'show'])->name('users.show');
@@ -319,18 +356,15 @@ Route::prefix('sites/{subdomain}')->group(function () {
             Route::delete('/users/{id}', [SiteUserManagementController::class, 'destroy'])->name('users.destroy');
         });
 
-        // Analytics (Admin or analytics.view permission)
         Route::middleware('site.permission:analytics.view')->group(function () {
             Route::get('/analytics', [SiteMemberController::class, 'analytics'])->name('analytics');
         });
 
-        // Settings (Admin only - level 100+)
         Route::middleware('site.permission:settings.view')->group(function () {
             Route::get('/settings', [SiteMemberController::class, 'settings'])->name('settings');
             Route::put('/settings', [SiteMemberController::class, 'updateSettings'])->name('settings.update');
         });
 
-        // Contact Messages (Admin or messages.view permission)
         Route::middleware('site.permission:messages.view')->group(function () {
             Route::get('/messages', [SiteContactController::class, 'index'])->name('messages.index');
             Route::get('/messages/{id}', [SiteContactController::class, 'show'])->name('messages.show');
@@ -339,7 +373,6 @@ Route::prefix('sites/{subdomain}')->group(function () {
             Route::delete('/messages/{id}', [SiteContactController::class, 'destroy'])->name('messages.destroy');
         });
 
-        // Products (Admin or products.view permission)
         Route::middleware('site.permission:products.view')->group(function () {
             Route::get('/products', [SiteProductController::class, 'index'])->name('products.index');
             Route::get('/products/create', [SiteProductController::class, 'create'])->name('products.create');
@@ -365,6 +398,40 @@ Route::get('/sites/{subdomain}/product/{slug}', [SiteController::class, 'showPro
 Route::get('/sites/{subdomain}/checkout', [SiteController::class, 'checkout'])->name('site.checkout');
 
 // Local development site preview (must be last to avoid conflicts)
+// Exclude reserved subdomains (growmart, cms, geopamu, wowthem) from this catch-all
 Route::get('/sites/{subdomain}/{page?}', [SiteController::class, 'preview'])
-    ->where('page', '^(?!login|register|forgot-password|reset-password|dashboard|member|blog|product|checkout).*')
+    ->where([
+        'subdomain' => '^(?!growmart|cms|geopamu|wowthem).*$',
+        'page' => '^(?!login|register|forgot-password|reset-password|dashboard|member|blog|product|checkout).*'
+    ])
     ->name('growbuilder.preview');
+
+// ============================================================
+// 2. SUBDOMAIN ROUTES (growbuilder.mygrownet.com/)
+// ============================================================
+Route::domain('growbuilder.mygrownet.com')->group(function () use ($registerGrowBuilderAuthRoutes) {
+
+    // Public welcome page at root
+    Route::get('/', function () {
+        return Inertia::render('GrowBuilder/Welcome');
+    })->name('growbuilder.sub.welcome');
+
+    // Authenticated routes (served at root, no prefix)
+    $registerGrowBuilderAuthRoutes('', 'growbuilder.sub.');
+
+    // Guest-only auth routes
+    Route::middleware(['guest'])->group(function () {
+        Route::get('/login', [GuestController::class, 'login'])->name('growbuilder.sub.login');
+        Route::post('/login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
+        Route::get('/register', [GuestController::class, 'register'])->name('growbuilder.sub.register');
+        Route::post('/register', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+
+        Route::get('/forgot-password', [GuestController::class, 'forgotPassword'])->name('growbuilder.sub.password.request');
+        Route::post('/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'store'])->name('growbuilder.sub.password.email');
+        Route::get('/reset-password/{token}', [GuestController::class, 'resetPassword'])->name('growbuilder.sub.password.reset');
+        Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('growbuilder.sub.password.update');
+
+        Route::get('/auth/google', [\App\Http\Controllers\Auth\SocialiteController::class, 'redirectToGoogle'])->name('growbuilder.sub.auth.google');
+        Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SocialiteController::class, 'handleGoogleCallback'])->name('growbuilder.sub.auth.google.callback');
+    });
+});

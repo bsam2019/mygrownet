@@ -13,6 +13,7 @@ class JobModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'customer_id',
         'quotation_id',
         'job_number',
@@ -54,6 +55,11 @@ class JobModel extends Model
         'is_locked' => 'boolean',
         'locked_at' => 'datetime',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -150,6 +156,11 @@ class JobModel extends Model
         } else {
             $this->profit_margin = 0;
         }
+    }
+
+    public function scopeForBranch(Builder $query, ?int $branchId): Builder
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 
     public function scopeForCompany(Builder $query, int $companyId): Builder

@@ -2,10 +2,10 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\ShareholderResolution;
-use App\Models\ShareholderVote;
+use App\Models\Shareholder\ShareholderResolution;
+use App\Models\Shareholder\ShareholderVote;
 use App\Models\ProxyDelegation;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Support\Collection;
 
 class ShareholderVotingService

@@ -138,7 +138,7 @@ class ApprovalController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'entity_type' => 'required|in:expense,quotation,payment',
+            'entity_type' => 'required|in:expense,quotation,payment,contract,purchase_order',
             'min_amount' => 'required|numeric|min:0',
             'max_amount' => 'nullable|numeric|gt:min_amount',
             'approval_steps' => 'required|array|min:1',

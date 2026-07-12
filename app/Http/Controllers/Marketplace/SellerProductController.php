@@ -103,7 +103,7 @@ class SellerProductController extends Controller
         
         // Add images from media library references first (already processed during upload)
         if (!empty($validated['media_ids'])) {
-            $mediaItems = \App\Models\MarketplaceSellerMedia::whereIn('id', $validated['media_ids'])
+            $mediaItems = \App\Models\Marketplace\MarketplaceSellerMedia::whereIn('id', $validated['media_ids'])
                 ->where('seller_id', $seller->id)
                 ->get();
             
@@ -227,7 +227,7 @@ class SellerProductController extends Controller
         
         // Add images from media library references (already processed during upload)
         if (!empty($request->media_ids)) {
-            $mediaItems = \App\Models\MarketplaceSellerMedia::whereIn('id', $request->media_ids)
+            $mediaItems = \App\Models\Marketplace\MarketplaceSellerMedia::whereIn('id', $request->media_ids)
                 ->where('seller_id', $seller->id)
                 ->get();
             

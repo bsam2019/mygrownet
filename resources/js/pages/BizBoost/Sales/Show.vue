@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import { ArrowLeftIcon, PrinterIcon } from '@heroicons/vue/24/outline';
 
 interface SaleItem {
@@ -107,8 +108,8 @@ const printReceipt = () => {
                             <tr v-for="item in sale.items" :key="item.id">
                                 <td class="py-3 text-sm text-gray-900">{{ item.product_name }}</td>
                                 <td class="py-3 text-sm text-gray-600 text-center">{{ item.quantity }}</td>
-                                <td class="py-3 text-sm text-gray-600 text-right">K{{ item.unit_price.toLocaleString() }}</td>
-                                <td class="py-3 text-sm font-medium text-gray-900 text-right">K{{ item.total.toLocaleString() }}</td>
+                                <td class="py-3 text-sm text-gray-600 text-right">{{ formatBizBoostPrice(item.unit_price) }}</td>
+                                <td class="py-3 text-sm font-medium text-gray-900 text-right">{{ formatBizBoostPrice(item.total) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -123,7 +124,7 @@ const printReceipt = () => {
                         </div>
                         <div class="text-right">
                             <p class="text-sm text-gray-500">Total Amount</p>
-                            <p class="text-2xl font-bold text-violet-600">K{{ sale.total_amount.toLocaleString() }}</p>
+                            <p class="text-2xl font-bold text-violet-600">{{ formatBizBoostPrice(sale.total_amount) }}</p>
                         </div>
                     </div>
                 </div>

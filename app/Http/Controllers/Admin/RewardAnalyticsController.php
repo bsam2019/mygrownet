@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\ReferralCommission;
 use App\Models\ProfitDistribution;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\MatrixPosition;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

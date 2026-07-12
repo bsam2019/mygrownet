@@ -21,18 +21,14 @@ class MessagingService
         UserId $senderId,
         UserId $recipientId,
         MessageContent $content,
-        ?MessageId $parentId = null,
-        string $module = 'mygrownet',
-        ?array $metadata = null
+        ?MessageId $parentId = null
     ): Message {
         // Create message without ID first (will be set by repository)
         $message = $this->messageRepository->create(
             $senderId,
             $recipientId,
             $content,
-            $parentId,
-            $module,
-            $metadata
+            $parentId
         );
 
         Event::dispatch(new MessageSent($message));
@@ -62,24 +58,24 @@ class MessagingService
         Event::dispatch(new MessageRead($message));
     }
 
-    public function getConversation(UserId $user1, UserId $user2, int $limit = 50, ?string $module = null): array
+    public function getConversation(UserId $user1, UserId $user2, int $limit = 50): array
     {
-        return $this->messageRepository->findConversation($user1, $user2, $limit, $module);
+        return $this->messageRepository->findConversation($user1, $user2, $limit);
     }
 
-    public function getInbox(UserId $userId, int $limit = 50, int $offset = 0, ?string $module = null): array
+    public function getInbox(UserId $userId, int $limit = 50, int $offset = 0): array
     {
-        return $this->messageRepository->findByRecipient($userId, $limit, $offset, $module);
+        return $this->messageRepository->findByRecipient($userId, $limit, $offset);
     }
 
-    public function getSent(UserId $userId, int $limit = 50, int $offset = 0, ?string $module = null): array
+    public function getSent(UserId $userId, int $limit = 50, int $offset = 0): array
     {
-        return $this->messageRepository->findBySender($userId, $limit, $offset, $module);
+        return $this->messageRepository->findBySender($userId, $limit, $offset);
     }
 
-    public function getUnreadCount(UserId $userId, ?string $module = null): int
+    public function getUnreadCount(UserId $userId): int
     {
-        return $this->messageRepository->countUnreadByRecipient($userId, $module);
+        return $this->messageRepository->countUnreadByRecipient($userId);
     }
 
     public function canUserMessageRecipient(UserId $senderId, UserId $recipientId): bool

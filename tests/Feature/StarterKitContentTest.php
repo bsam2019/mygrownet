@@ -81,7 +81,7 @@ class StarterKitContentTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('MyGrowNet/StarterKitContent')
+            ->component('GrowNet/StarterKitContent')
             ->has('contentItems')
         );
     }
@@ -175,7 +175,7 @@ class StarterKitContentTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('MyGrowNet/Tools/CommissionCalculator')
+            ->component('GrowNet/Tools/CommissionCalculator')
             ->has('commissionRates')
             ->has('networkStats')
         );

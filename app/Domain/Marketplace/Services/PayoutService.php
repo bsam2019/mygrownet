@@ -2,8 +2,8 @@
 
 namespace App\Domain\Marketplace\Services;
 
-use App\Models\MarketplacePayout;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplacePayout;
+use App\Models\Marketplace\MarketplaceSeller;
 use Illuminate\Support\Str;
 
 class PayoutService

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { GiftIcon, TrendingUpIcon, UsersIcon, StarIcon, CoinsIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -9,7 +9,7 @@ interface MonthlyEarning {
     amount: number;
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     earningsByType: {
         referral_bonuses: number;
         level_commissions: number;
@@ -21,14 +21,16 @@ const props = defineProps<{
     currentMonthBP: number;
     currentMonthEarnings: number;
     lifetimePoints: number;
-}>();
+    userCurrency?: string;
+}>(), {
+    userCurrency: 'ZMW',
+});
+
+const page = usePage();
+const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K');
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', {
-        style: 'currency',
-        currency: 'ZMW',
-        minimumFractionDigits: 2,
-    }).format(amount);
+    return `${currencySymbol.value}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const earningStreams = computed(() => [

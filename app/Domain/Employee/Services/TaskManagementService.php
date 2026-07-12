@@ -11,8 +11,8 @@ use App\Domain\Employee\ValueObjects\TaskStatus;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\TaskRepositoryInterface;
 use App\Domain\Employee\Exceptions\TaskException;
-use App\Models\Employee;
-use App\Models\EmployeeNotification;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeNotification;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 
@@ -218,7 +218,7 @@ class TaskManagementService
         $oldAssignee = $task->getAssignedTo();
         
         // Update the task assignment in the database directly
-        \App\Models\EmployeeTask::where('id', $taskId->toInt())
+        \App\Models\Employee\EmployeeTask::where('id', $taskId->toInt())
             ->update(['assigned_to' => $newAssignee->toInt()]);
 
         // Notify the new assignee

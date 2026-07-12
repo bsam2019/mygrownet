@@ -14,9 +14,9 @@ import FilePreviewModal from '@/Components/Storage/FilePreviewModal.vue';
 import DeleteConfirmModal from '@/Components/Storage/DeleteConfirmModal.vue';
 import BulkActionsToolbar from '@/Components/Storage/BulkActionsToolbar.vue';
 import ShareModal from '@/Components/Storage/ShareModal.vue';
-import { useStorage } from '@/Composables/useStorage';
-import { useStorageUpload } from '@/Composables/useStorageUpload';
-import { useFileSelection } from '@/Composables/useFileSelection';
+import { useStorage } from '@/composables/useStorage';
+import { useStorageUpload } from '@/composables/useStorageUpload';
+import { useFileSelection } from '@/composables/useFileSelection';
 import { useToast } from '@/composables/useToast';
 import type { StorageFile } from '@/types/storage';
 

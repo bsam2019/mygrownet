@@ -2,7 +2,7 @@
 
 namespace App\Events\Employee;
 
-use App\Models\EmployeeSupportTicket;
+use App\Models\Employee\EmployeeSupportTicket;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;

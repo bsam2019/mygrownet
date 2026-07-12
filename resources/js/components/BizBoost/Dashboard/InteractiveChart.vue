@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { Line, Bar, Doughnut } from 'vue-chartjs';
+import { bizBoostCurrencySymbol } from '@/composables/useBizBoostCurrency';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -169,7 +170,7 @@ const chartData = computed(() => {
                     </h3>
                     <p v-if="showTrend && !isDrilledDown" class="text-sm text-slate-500 flex items-center gap-1">
                         <span class="font-medium" :class="currency ? 'text-emerald-600' : ''">
-                            {{ currency ? 'K' : '' }}{{ total.toLocaleString() }}
+                            {{ currency ? bizBoostCurrencySymbol() : '' }}{{ total.toLocaleString() }}
                         </span>
                         <span 
                             v-if="trend !== 0"
@@ -242,7 +243,7 @@ const chartData = computed(() => {
                                 cornerRadius: 8,
                                 displayColors: false,
                                 callbacks: {
-                                    label: (ctx: any) => currency ? `K${ctx.raw.toLocaleString()}` : ctx.raw.toLocaleString(),
+                                    label: (ctx: any) => currency ? `${bizBoostCurrencySymbol()}${ctx.raw.toLocaleString()}` : ctx.raw.toLocaleString(),
                                 },
                             },
                         },
@@ -256,7 +257,7 @@ const chartData = computed(() => {
                                 ticks: { 
                                     color: '#94a3b8', 
                                     font: { size: 11 },
-                                    callback: (v: number) => currency ? `K${v}` : v,
+                                    callback: (v: number) => currency ? `${bizBoostCurrencySymbol()}${v}` : v,
                                 },
                             },
                         },

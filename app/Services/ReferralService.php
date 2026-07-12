@@ -104,6 +104,9 @@ class ReferralService
         $percentage = ReferralCommission::getCommissionRate($level);
         $amount = $investment->amount * ($percentage / 100);
 
+        $recipientCurrency = $referrer->user_currency ?? $referrer->preferred_currency ?? 'ZMW';
+        $sourceCurrency = $referee->user_currency ?? $referee->preferred_currency ?? 'ZMW';
+
         ReferralCommission::create([
             'referrer_id' => $referrer->id,
             'referred_id' => $referee->id,
@@ -112,7 +115,12 @@ class ReferralService
             'amount' => $amount,
             'percentage' => $percentage,
             'status' => 'pending',
-            'commission_type' => 'REFERRAL'
+            'commission_type' => 'REFERRAL',
+            'package_type' => 'subscription',
+            'package_amount' => $investment->amount,
+            'currency' => $recipientCurrency,
+            'original_amount' => $investment->amount,
+            'original_currency' => $sourceCurrency,
         ]);
         
         \Log::info("Commission created for level {$level}", [
@@ -172,6 +180,9 @@ class ReferralService
         $percentage = ReferralCommission::getCommissionRate($level);
         $amount = $subscription->amount * ($percentage / 100);
 
+        $recipientCurrency = $referrer->user_currency ?? $referrer->preferred_currency ?? 'ZMW';
+        $sourceCurrency = $referee->user_currency ?? $referee->preferred_currency ?? 'ZMW';
+
         ReferralCommission::create([
             'referrer_id' => $referrer->id,
             'referred_id' => $referee->id,
@@ -181,8 +192,11 @@ class ReferralService
             'percentage' => $percentage,
             'status' => 'pending',
             'commission_type' => 'REFERRAL',
-            'package_type' => $subscription->package->name,
-            'package_amount' => $subscription->amount
+            'package_type' => 'subscription',
+            'package_amount' => $subscription->amount,
+            'currency' => $recipientCurrency,
+            'original_amount' => $subscription->amount,
+            'original_currency' => $sourceCurrency,
         ]);
         
         \Log::info("Subscription commission created for level {$level}", [
@@ -284,7 +298,7 @@ class ReferralService
     public function getMonthlyReferralStats()
     {
         return ReferralCommission::selectRaw('
-                DATE_FORMAT(created_at, "%Y-%m") as month,
+                ' . (DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')") . ' as month,
                 COUNT(*) as total_transactions,
                 SUM(amount) as total_amount,
                 COUNT(DISTINCT referrer_id) as unique_referrers

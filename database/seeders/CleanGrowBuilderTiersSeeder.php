@@ -155,7 +155,7 @@ class CleanGrowBuilderTiersSeeder extends Seeder
             'free' => [
                 ['key' => 'sites_limit', 'name' => 'Sites limit', 'value' => 1],
                 ['key' => 'products_limit', 'name' => 'Products limit', 'value' => 0],
-                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => 5],
+                ['key' => 'ai_prompts_limit', 'name' => 'AI prompts per month', 'value' => 50],
                 ['key' => 'storage_mb_limit', 'name' => 'Storage (MB)', 'value' => 500],
             ],
             'starter' => [
@@ -189,7 +189,7 @@ class CleanGrowBuilderTiersSeeder extends Seeder
                 ['key' => 'subdomain', 'name' => 'Subdomain: username.mygrownet.com', 'value' => true],
                 ['key' => 'templates', 'name' => 'Limited templates', 'value' => true],
 
-                ['key' => 'ai_prompts', 'name' => 'AI content (5 prompts/month)', 'value' => true],
+                ['key' => 'ai_prompts', 'name' => 'AI content (50 prompts/month)', 'value' => true],
                 ['key' => 'custom_domain', 'name' => 'Custom domain', 'value' => false],
                 ['key' => 'payment_integration', 'name' => 'Payment integration', 'value' => false],
                 ['key' => 'ecommerce', 'name' => 'E-commerce', 'value' => false],

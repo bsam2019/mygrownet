@@ -449,6 +449,8 @@ class ApprovalWorkflowService
             'expense' => 'App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel',
             'quotation' => 'App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel',
             'payment' => 'App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel',
+            'contract' => 'App\Infrastructure\Persistence\Eloquent\CMS\ContractModel',
+            'purchase_order' => 'App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel',
             default => throw new \InvalidArgumentException("Unknown entity type: {$entityType}"),
         };
     }

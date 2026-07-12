@@ -9,35 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Show the login page.
-     * Using Blade template for reliability (no JS dependency).
      */
-    public function create(Request $request)
+    public function create(Request $request): Response
     {
-        // Store redirect URL in session if provided via query parameter
-        // This allows module landing pages (like BizBoost) to redirect back after login
-        if ($request->has('redirect')) {
-            $redirectUrl = $request->query('redirect');
-            // Only allow internal redirects (starting with /)
-            if (is_string($redirectUrl) && str_starts_with($redirectUrl, '/')) {
-                $request->session()->put('url.intended', url($redirectUrl));
-            }
-        }
-
-        // If this is an Inertia request, force a full page reload
-        if ($request->header('X-Inertia')) {
-            return Inertia::location(url()->current());
-        }
-
-        // Use unified Blade template - bypass Inertia completely
-        return response()->view('auth.unified', [
-            'activeTab' => 'login',
+        return Inertia::render('auth/Login', [
             'canResetPassword' => Route::has('password.request'),
-            'referralCode' => $request->query('ref'),
+            'status' => $request->session()->get('status'),
         ]);
     }
 
@@ -56,90 +39,24 @@ class AuthenticatedSessionController extends Controller
             $user->initializeLoanLimit();
         }
 
-        // Check for pending GrowBiz invitation (token or code)
-        if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
-            return redirect()->route('growbiz.invitation.pending');
-        }
+        // Determine redirect based on subdomain
+        $host = $request->getHost();
+        $redirectMap = [
+            'bizboost.mygrownet.com'     => 'bizboost.sub.dashboard',
+            'growmart.mygrownet.com'     => 'growmart.sub.dashboard',
+            'zamstay.mygrownet.com'      => 'zamstay.sub.dashboard',
+            'bizdocs.mygrownet.com'      => 'bizdocs.sub.dashboard',
+            'growbuilder.mygrownet.com'  => 'growbuilder.sub.dashboard',
+            'venture.mygrownet.com'      => 'venture.sub.dashboard',
+            'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
+            'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
+        ];
+        $fallback = $redirectMap[$host] ?? 'dashboard';
 
-        // Check if there's an intended URL (e.g., from password reset or deep link)
-        $intendedUrl = $request->session()->get('url.intended');
-        
-        // Validate intended URL - clear it if it's a BizBoost route
-        // (BizBoost routes may not exist or user may not have access)
-        if ($intendedUrl && str_contains($intendedUrl, '/bizboost')) {
-            $request->session()->forget('url.intended');
-            $intendedUrl = null;
-        }
+        // Persist session before redirect so auth middleware on next request finds it
+        $request->session()->save();
 
-        // If there's a valid intended URL, use it
-        if ($intendedUrl) {
-            return redirect()->intended($this->getDefaultRouteForUser($user));
-        }
-
-        // Otherwise, determine the appropriate redirect based on user preferences and type
-        $defaultRoute = $this->getDefaultRouteForUser($user);
-
-        return redirect($defaultRoute);
-    }
-
-    /**
-     * Get the default route for a user based on their preferences, account type, and role.
-     * 
-     * Redirect logic (in priority order):
-     * 1. User's custom preference (pwa_default_app setting) - highest priority
-     * 2. Admin/Administrator role → Admin panel
-     * 3. Active Employee record → Workspace (Employee Portal)
-     * 4. GrowNet members (lgr_package_id set) → GrowNet dashboard
-     * 5. Non-GrowNet members → HomeHub dashboard (/dashboard)
-     */
-    private function getDefaultRouteForUser($user): string
-    {
-        if (!$user) {
-            return route('dashboard', absolute: false);
-        }
-
-        // Priority 1: Check if user has set a custom preference in settings
-        if ($user->pwa_default_app) {
-            $appRoutes = [
-                'grownet' => route('grownet.dashboard', absolute: false),
-                'growbuilder' => route('growbuilder.dashboard', absolute: false),
-                'bizboost' => route('bizboost.dashboard', absolute: false),
-                'growfinance' => route('growfinance.dashboard', absolute: false),
-                'growbiz' => route('growbiz.dashboard', absolute: false),
-                'marketplace' => route('marketplace.home', absolute: false),
-                'wallet' => route('wallet.index', absolute: false),
-                'admin' => route('admin.dashboard', absolute: false),
-                'dashboard' => route('dashboard', absolute: false),
-            ];
-
-            // If user has a valid custom preference, use it
-            if (isset($appRoutes[$user->pwa_default_app])) {
-                return $appRoutes[$user->pwa_default_app];
-            }
-        }
-
-        // Priority 2: Admin users go to admin dashboard (check role)
-        if ($user->hasRole('Administrator') || $user->hasRole('admin') || $user->hasRole('superadmin')) {
-            return route('admin.dashboard', absolute: false);
-        }
-
-        // Priority 3: Check if user has an active employee record → Workspace
-        $hasActiveEmployee = \App\Models\Employee::where('user_id', $user->id)
-            ->where('employment_status', 'active')
-            ->exists();
-        
-        if ($hasActiveEmployee) {
-            return route('employee.portal.dashboard', absolute: false);
-        }
-
-        // Priority 4: GrowNet members (users with lgr_package_id) → GrowNet dashboard
-        if (!is_null($user->lgr_package_id)) {
-            return route('grownet.dashboard', absolute: false);
-        }
-
-        // Priority 5: Non-GrowNet members → HomeHub dashboard
-        // This includes clients, business accounts, and users without GrowNet membership
-        return route('dashboard', absolute: false);
+        return redirect()->intended(route($fallback, absolute: false));
     }
 
     /**
@@ -152,6 +69,20 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Determine redirect based on subdomain
+        $host = $request->getHost();
+        $redirectMap = [
+            'bizboost.mygrownet.com'     => 'bizboost.sub.welcome',
+            'growmart.mygrownet.com'     => 'growmart.sub.welcome',
+            'zamstay.mygrownet.com'      => 'zamstay.sub.welcome',
+            'bizdocs.mygrownet.com'      => 'bizdocs.sub.welcome',
+            'growbuilder.mygrownet.com'  => 'growbuilder.sub.welcome',
+            'venture.mygrownet.com'      => 'venture.sub.welcome',
+            'grownet.mygrownet.com'      => 'grownet.sub.welcome',
+            'growstorage.mygrownet.com'  => 'growstorage.sub.welcome',
+        ];
+        $fallback = $redirectMap[$host] ?? '/';
+
+        return redirect($fallback === '/' ? '/' : route($fallback, absolute: false));
     }
 }

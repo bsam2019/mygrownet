@@ -8,8 +8,8 @@ import UploadButton from '@/Components/Storage/UploadButton.vue';
 import UploadProgress from '@/Components/Storage/UploadProgress.vue';
 import UsageIndicator from '@/Components/Storage/UsageIndicator.vue';
 import CreateFolderModal from '@/Components/Storage/CreateFolderModal.vue';
-import { useStorage } from '@/Composables/useStorage';
-import { useStorageUpload } from '@/Composables/useStorageUpload';
+import { useStorage } from '@/composables/useStorage';
+import { useStorageUpload } from '@/composables/useStorageUpload';
 import { useToast } from '@/composables/useToast';
 
 interface Props {

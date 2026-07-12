@@ -9,8 +9,6 @@ class SendMessageDTO
         public readonly int $recipientId,
         public readonly string $subject,
         public readonly string $body,
-        public readonly ?int $parentId = null,
-        public readonly string $module = 'mygrownet',
-        public readonly ?array $metadata = null
+        public readonly ?int $parentId = null
     ) {}
 }

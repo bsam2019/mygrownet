@@ -13,22 +13,12 @@ class GetInboxUseCase
         private MessagingService $messagingService
     ) {}
 
-    /**
-     * Get inbox messages for a user, optionally filtered by module.
-     *
-     * @param int $userId
-     * @param int $limit
-     * @param int $offset
-     * @param string|null $module Filter by module (mygrownet, growfinance, growbiz, etc.)
-     * @return array
-     */
-    public function execute(int $userId, int $limit = 100, int $offset = 0, ?string $module = null): array
+    public function execute(int $userId, int $limit = 100, int $offset = 0): array
     {
         $messages = $this->messagingService->getInbox(
             UserId::fromInt($userId),
             $limit,
-            $offset,
-            $module
+            $offset
         );
 
         // Load all user IDs for names

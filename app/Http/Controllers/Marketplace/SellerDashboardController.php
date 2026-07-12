@@ -8,7 +8,7 @@ use App\Domain\Marketplace\Services\ProductService;
 use App\Domain\Marketplace\Services\OrderService;
 use App\Domain\Marketplace\Services\EscrowService;
 use App\Domain\Marketplace\Services\SellerTierService;
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;

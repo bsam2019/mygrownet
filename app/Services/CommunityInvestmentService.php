@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\InvestmentOpportunity;
 use App\Models\Investment;
 use App\Models\User;
-use App\Models\CommunityInvestmentDistribution;
+use App\Models\Community\CommunityInvestmentDistribution;
 use App\Models\ProfitDistribution;
 use App\Models\InvestmentOpportunityVote;
 use Illuminate\Support\Facades\DB;

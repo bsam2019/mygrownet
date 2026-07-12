@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Domain\Employee\Constants\DelegatedPermissions;
 use App\Domain\Employee\Services\DelegationService;
 use App\Http\Controllers\Controller;
-use App\Models\Employee;
-use App\Models\EmployeeDelegation;
-use App\Models\EmployeeDelegationLog;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeDelegation;
+use App\Models\Employee\EmployeeDelegationLog;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

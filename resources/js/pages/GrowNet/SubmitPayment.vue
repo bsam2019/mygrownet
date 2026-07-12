@@ -175,7 +175,7 @@ const initiateCryptoPayment = async () => {
                             <CoinsIcon class="h-6 w-6 mx-auto mb-2" 
                                 :class="paymentMethod === 'crypto' ? 'text-indigo-600' : 'text-gray-400'" />
                             <p class="font-semibold text-sm text-gray-900">Cryptocurrency</p>
-                            <p class="text-xs text-gray-500 mt-1">BTC, ETH, USDT</p>
+                            <p class="text-xs text-gray-500 mt-1">Pay with crypto from abroad</p>
                         </button>
                     </div>
                 </div>
@@ -385,7 +385,7 @@ const initiateCryptoPayment = async () => {
                                 <div>
                                     <h4 class="font-semibold text-gray-900 mb-1">Pay with 240+ Cryptocurrencies</h4>
                                     <p class="text-sm text-gray-600">
-                                        Bitcoin (BTC), Ethereum (ETH), USDT, Litecoin (LTC), and many more
+                                        300+ cryptocurrencies supported including BTC, ETH, USDT, and more
                                     </p>
                                 </div>
                             </div>

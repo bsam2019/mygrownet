@@ -7,7 +7,7 @@ use App\Infrastructure\Persistence\Eloquent\PositionModel;
 use App\Infrastructure\Persistence\Eloquent\DepartmentModel;
 use App\Infrastructure\Persistence\Eloquent\EmployeeModel;
 use App\Models\PositionKpi;
-use App\Models\EmployeeKpiTracking;
+use App\Models\Employee\EmployeeKpiTracking;
 use App\Models\PositionResponsibility;
 use App\Models\HiringRoadmap;
 use Illuminate\Http\Request;

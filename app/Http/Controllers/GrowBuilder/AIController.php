@@ -6,7 +6,12 @@ use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\SiteId;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\GrowBuilder\Models\AIFeedback;
+use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
+use App\Models\User;
 use App\Services\GrowBuilder\AIContentService;
+use App\Services\GrowBuilder\AIImageService;
+use App\Services\GrowBuilder\AISiteChatbotService;
+use App\Services\GrowBuilder\AIReferenceImportService;
 use App\Services\GrowBuilder\AIUsageService;
 use Illuminate\Http\Request;
 
@@ -17,6 +22,9 @@ class AIController extends Controller
         private AIContentService $aiService,
         private AIUsageService $aiUsageService,
         private \App\Services\GrowBuilder\EditorActionService $actionService,
+        private AIImageService $imageService,
+        private AISiteChatbotService $chatbotService,
+        private AIReferenceImportService $referenceImportService,
     ) {}
     
     /**
@@ -27,9 +35,27 @@ class AIController extends Controller
         $user = $request->user();
         $usageStats = $this->aiUsageService->getUsageStats($user);
         
+        $availableModels = [];
+        $provider = $this->aiService->getProvider();
+        
+        if ($provider === 'nvidia') {
+            $availableModels = [
+                ['id' => 'deepseek-ai/deepseek-v4-pro', 'name' => 'DeepSeek V4 Pro', 'description' => 'Most capable model with superior reasoning'],
+                ['id' => 'deepseek-ai/deepseek-v4-flash', 'name' => 'DeepSeek V4 Flash', 'description' => 'Fast AI with advanced reasoning capabilities'],
+            ];
+        } elseif ($provider === 'groq') {
+            $availableModels = [
+                ['id' => 'llama-3.3-70b-versatile', 'name' => 'Llama 3.3 70B', 'description' => 'Fast and versatile AI model'],
+                ['id' => 'llama-3.1-70b-versatile', 'name' => 'Llama 3.1 70B', 'description' => 'Balanced performance and speed'],
+                ['id' => 'mixtral-8x7b-32768', 'name' => 'Mixtral 8x7B', 'description' => 'Expert mixture model'],
+            ];
+        }
+        
         return response()->json([
             'available' => $this->aiService->isConfigured(),
-            'provider' => $this->aiService->getProvider(),
+            'provider' => $provider,
+            'model' => $this->aiService->getModel(),
+            'available_models' => $availableModels,
             'usage' => $usageStats,
             'can_use' => $this->aiUsageService->canUseAI($user),
         ]);
@@ -183,7 +209,6 @@ class AIController extends Controller
      * The AI understands intent AND generates content in one call
      */
     public function smartChat(Request $request, int $siteId)
-        
     {
         $site = $this->validateSiteAccess($request, $siteId);
         if (!$site) {
@@ -200,14 +225,92 @@ class AIController extends Controller
             'context' => 'nullable|array',
         ]);
         
-        // Add site info to context
+        // Build rich context from session and site data
         $context = $validated['context'] ?? [];
         $context['siteName'] = $site->getName();
+        
+        // Enrich with session context if available
+        try {
+            $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+            if (!$sessionContext->isInitialized()) {
+                $sessionContext->initialize($site, $request->user());
+            }
+            
+            // Pull site pages and their sections for full site awareness
+            $sitePages = \App\Infrastructure\GrowBuilder\Models\GrowBuilderPage::where('site_id', $siteId)
+                ->where('status', '!=', 'deleted')
+                ->orderBy('sort_order')
+                ->get();
+            
+            $pagesData = [];
+            foreach ($sitePages as $page) {
+                $pageSections = [];
+                $pageContent = $page->content ?? [];
+                if (is_string($pageContent)) {
+                    $pageContent = json_decode($pageContent, true) ?? [];
+                }
+                foreach ($pageContent as $section) {
+                    $pageSections[] = $section['type'] ?? 'unknown';
+                }
+                $pagesData[] = [
+                    'id' => $page->id,
+                    'title' => $page->title,
+                    'slug' => $page->slug,
+                    'is_homepage' => $page->is_homepage ?? false,
+                    'sections' => $pageSections,
+                    'section_count' => count($pageSections),
+                ];
+            }
+            $context['sitePages'] = array_map(fn($p) => $p['title'], $pagesData);
+            $context['sitePagesWithSections'] = $pagesData;
+            
+            // Get site colors from theme
+            $theme = $sessionContext->get('theme', []);
+            if (!empty($theme)) {
+                $context['siteColors'] = [
+                    'primary' => $theme['primaryColor'] ?? $theme['primary'] ?? '#2563eb',
+                    'secondary' => $theme['secondaryColor'] ?? $theme['secondary'] ?? '#1e40af',
+                    'accent' => $theme['accentColor'] ?? $theme['accent'] ?? '#f59e0b',
+                    'background' => $theme['backgroundColor'] ?? $theme['background'] ?? '#ffffff',
+                ];
+            }
+            
+            // Add conversation history for continuity
+            $conversation = $sessionContext->getConversation();
+            if (!empty($conversation)) {
+                $context['conversationHistory'] = $conversation;
+            }
+            
+            $context['businessType'] = $sessionContext->get('business_type', 'business');
+            $context['location'] = $sessionContext->get('location', 'Zambia');
+            
+            // Log the enriched context
+            \Illuminate\Support\Facades\Log::debug('smartChat enriched context', [
+                'site_id' => $siteId,
+                'page_count' => count($pagesData),
+                'has_conversation' => !empty($conversation),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to enrich AI context', [
+                'error' => $e->getMessage(),
+                'site_id' => $siteId,
+            ]);
+        }
         
         $result = $this->aiService->smartChat(
             $validated['message'],
             $context
         );
+        
+        // Record AI response in session context
+        try {
+            $sessionContext = new \App\Services\GrowBuilder\EditorSessionContext($siteId, $request->user()->id);
+            $aiMessage = $result['message'] ?? $result['response'] ?? '';
+            $sessionContext->addToConversation('user', $validated['message']);
+            $sessionContext->addToConversation('assistant', $aiMessage);
+        } catch (\Exception $e) {
+            // Non-critical
+        }
         
         // Record usage to database
         $this->recordUsage($request, 'smart_chat', $validated['message'], 0, $siteId);
@@ -902,7 +1005,13 @@ class AIController extends Controller
             'message' => 'required|string|max:2000',
             'current_page_id' => 'nullable|integer',
             'current_sections' => 'nullable|array',
+            'model' => 'nullable|string',
         ]);
+        
+        // Allow frontend to override the model
+        if (!empty($validated['model'])) {
+            $this->aiService->setModel($validated['model']);
+        }
         
         // Get or initialize session context
         $siteModel = \App\Infrastructure\GrowBuilder\Models\GrowBuilderSite::find($siteId);
@@ -959,6 +1068,7 @@ class AIController extends Controller
         
         return response()->json([
             'success' => true,
+            'result' => $result,
             'message' => $aiMessage,
             'actions' => $actions,
             'context' => $sessionContext->all(),
@@ -1110,6 +1220,336 @@ class AIController extends Controller
                 'success' => false,
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // AI Image Generation
+    // ──────────────────────────────────────────────
+
+    /**
+     * Generate an image from a text prompt
+     */
+    public function generateImage(Request $request)
+    {
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+
+        $validated = $request->validate([
+            'prompt' => 'required|string|min:3|max:500',
+            'width' => 'nullable|integer|min:256|max:2048',
+            'height' => 'nullable|integer|min:256|max:2048',
+            'num_outputs' => 'nullable|integer|min:1|max:4',
+        ]);
+
+        try {
+            $images = $this->imageService->generateImage(
+                $validated['prompt'],
+                [
+                    'width' => $validated['width'] ?? 1024,
+                    'height' => $validated['height'] ?? 1024,
+                    'num_outputs' => $validated['num_outputs'] ?? 1,
+                ]
+            );
+
+            if (!$images) {
+                return response()->json([
+                    'error' => 'Image generation failed',
+                    'message' => 'Could not generate image. Check your API configuration.',
+                ], 500);
+            }
+
+            $this->recordUsage($request, 'image_generation', $validated['prompt'], 0);
+
+            return response()->json([
+                'success' => true,
+                'images' => $images,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Image generation failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Generation failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Generate a logo for a business
+     */
+    public function generateLogo(Request $request)
+    {
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+
+        $validated = $request->validate([
+            'business_name' => 'required|string|max:100',
+            'industry' => 'required|string|max:50',
+            'style' => 'nullable|string|max:50',
+        ]);
+
+        try {
+            $images = $this->imageService->generateLogo(
+                $validated['business_name'],
+                $validated['industry'],
+                ['style' => $validated['style'] ?? 'minimalist']
+            );
+
+            if (!$images) {
+                return response()->json([
+                    'error' => 'Logo generation failed',
+                    'message' => 'Could not generate logo. Check your API configuration.',
+                ], 500);
+            }
+
+            $this->recordUsage($request, 'logo_generation', "{$validated['business_name']} ({$validated['industry']})", 0);
+
+            return response()->json([
+                'success' => true,
+                'images' => $images,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Logo generation failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Generation failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Multi-Page Site Generation
+    // ──────────────────────────────────────────────
+
+    /**
+     * Generate a complete multi-page website
+     */
+    public function generateMultiPageWebsite(Request $request)
+    {
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+
+        $validated = $request->validate([
+            'prompt' => 'required|string|min:20|max:2000',
+            'pages' => 'nullable|array',
+            'pages.*' => 'string',
+        ]);
+
+        try {
+            $websiteGenerator = app(\App\Services\GrowBuilder\WebsiteGeneratorService::class);
+            $result = $websiteGenerator->generateWebsite(
+                $validated['prompt'],
+                $request->user()->id
+            );
+
+            if (!$result['success']) {
+                return response()->json([
+                    'error' => 'Generation failed',
+                    'message' => $result['error'] ?? 'Failed to generate website',
+                ], 500);
+            }
+
+            // Generate more pages based on user's request
+            $data = $result['data'] ?? [];
+            $pages = $data['pages'] ?? [];
+
+            // If user specified specific pages, generate those
+            if (!empty($validated['pages'])) {
+                foreach ($validated['pages'] as $pageType) {
+                    if (!in_array($pageType, array_column($pages, 'type'))) {
+                        $pageResult = $websiteGenerator->generatePage($pageType, $data['settings'] ?? []);
+                        if ($pageResult) {
+                            $pages[] = $pageResult;
+                        }
+                    }
+                }
+            }
+
+            $this->recordUsage($request, 'multi_page_generation', $validated['prompt'], 0);
+
+            return response()->json([
+                'success' => true,
+                'data' => array_merge($data, ['pages' => $pages]),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Multi-page generation failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Generation failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Site Chatbot (Visitor-facing)
+    // ──────────────────────────────────────────────
+
+    /**
+     * Ask a question to the site chatbot (public endpoint)
+     */
+    public function chatbotAsk(Request $request, int $siteId)
+    {
+        $site = GrowBuilderSite::find($siteId);
+        if (!$site || !$site->is_published) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'question' => 'required|string|min:2|max:500',
+        ]);
+
+        try {
+            $result = $this->chatbotService->answer($site, $validated['question']);
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            \Log::error('Chatbot error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'answer' => "I'm having trouble right now. Please try again later.",
+                'has_answer' => false,
+                'capture_lead' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Capture a lead from the chatbot
+     */
+    public function chatbotCaptureLead(Request $request, int $siteId)
+    {
+        $site = GrowBuilderSite::find($siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'question' => 'nullable|string|max:500',
+        ]);
+
+        $this->chatbotService->recordLead(
+            $site,
+            $validated['email'],
+            $validated['question'] ?? null
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thanks! We\'ll get back to you soon.',
+        ]);
+    }
+
+    /**
+     * Get chatbot leads for a site (authenticated)
+     */
+    public function chatbotLeads(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        // Get the GrowBuilderSite model
+        $growbuilderSite = GrowBuilderSite::find($siteId);
+        if (!$growbuilderSite) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        $leads = $growbuilderSite->chatbotLeads()
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return response()->json($leads);
+    }
+
+    /**
+     * Toggle chatbot enabled/disabled for a site
+     */
+    public function chatbotToggle(Request $request, int $siteId)
+    {
+        $site = $this->validateSiteAccess($request, $siteId);
+        if (!$site) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $growbuilderSite = GrowBuilderSite::find($siteId);
+        if (!$growbuilderSite) {
+            return response()->json(['error' => 'Site not found'], 404);
+        }
+
+        $settings = $growbuilderSite->settings ?? [];
+        $settings['chatbot_enabled'] = $validated['enabled'];
+        $growbuilderSite->settings = $settings;
+        $growbuilderSite->save();
+
+        return response()->json([
+            'success' => true,
+            'enabled' => $validated['enabled'],
+        ]);
+    }
+
+    // ──────────────────────────────────────────────
+    // Reference Site Import
+    // ──────────────────────────────────────────────
+
+    /**
+     * Analyze a URL and extract its structure
+     */
+    public function analyzeReferenceSite(Request $request)
+    {
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+
+        $validated = $request->validate([
+            'url' => 'required|url|max:500',
+        ]);
+
+        try {
+            $analysis = $this->referenceImportService->analyzeUrl($validated['url']);
+
+            if (isset($analysis['error'])) {
+                return response()->json(['error' => $analysis['error']], 400);
+            }
+
+            $this->recordUsage($request, 'reference_import', $validated['url'], 0);
+
+            return response()->json([
+                'success' => true,
+                'analysis' => $analysis,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Reference import failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Analysis failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Convert analyzed URL into a site structure
+     */
+    public function convertReferenceSite(Request $request)
+    {
+        $accessCheck = $this->checkAIAccess($request, 'content');
+        if ($accessCheck) {
+            return response()->json($accessCheck, 403);
+        }
+
+        $validated = $request->validate([
+            'analysis' => 'required|array',
+        ]);
+
+        try {
+            $structure = $this->referenceImportService->convertToSiteStructure($validated['analysis']);
+
+            return response()->json([
+                'success' => true,
+                'structure' => $structure,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Reference conversion failed', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Conversion failed', 'message' => $e->getMessage()], 500);
         }
     }
 }

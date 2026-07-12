@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProfitDistribution;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\User;
 use App\Domain\Financial\Services\ProfitDistributionService;
 use App\Console\Commands\AnnualProfitDistributionCommand;
@@ -280,7 +280,7 @@ class ProfitDistributionController extends Controller
                     'type' => 'quarterly',
                     'period' => date('Y') . '-Q' . $q,
                     'due_date' => date('Y') . '-' . ($q * 3) . '-' . date('t', mktime(0, 0, 0, $q * 3, 1, date('Y'))),
-                    'estimated_recipients' => User::where('status', 'active')->count(),
+                    'estimated_recipients' => Investment::where('status', 'active')->distinct('user_id')->count(),
                     'status' => $q < $currentQuarter ? 'overdue' : 'upcoming'
                 ];
             }

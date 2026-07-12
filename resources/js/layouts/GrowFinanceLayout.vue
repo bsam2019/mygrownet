@@ -201,7 +201,9 @@ const desktopNavigation = computed(() => [
     { name: 'Customers', href: 'growfinance.customers.index', icon: UsersIcon, badge: null },
     { name: 'Vendors', href: 'growfinance.vendors.index', icon: BuildingStorefrontIcon, badge: null },
     { name: 'Banking', href: 'growfinance.banking.index', icon: BuildingLibraryIcon, badge: null },
+    { name: 'Reconciliation', href: 'growfinance.banking.reconcile', icon: ArrowPathIcon, badge: null },
     { name: 'Reports', href: 'growfinance.reports.profit-loss', icon: ChartBarIcon, badge: null },
+    { name: 'Analytics', href: 'growfinance.analytics.index', icon: ChartBarIcon, badge: null },
 ]);
 
 const isActive = (routeName: string) => {

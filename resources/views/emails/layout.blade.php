@@ -15,8 +15,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
-            color: #111827;
-            background-color: #f9fafb;
+            color: #1f2937;
+            background-color: #f3f4f6;
             margin: 0;
             padding: 0;
             width: 100% !important;
@@ -25,50 +25,37 @@
         
         /* Container */
         .email-wrapper {
-            background-color: #f9fafb;
-            padding: 24px 0;
+            background-color: #f3f4f6;
+            padding: 40px 20px;
         }
         .email-container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
         
-        /* Header */
+        /* Header - Simple & Clean */
         .email-header {
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-            padding: 40px 32px;
+            background-color: #ffffff;
+            padding: 40px 40px 24px 40px;
             text-align: center;
+            border-bottom: 1px solid #e5e7eb;
         }
         .logo-container {
-            margin-bottom: 16px;
+            margin-bottom: 0;
         }
         .logo {
-            width: 56px;
-            height: 56px;
+            width: 120px;
+            height: auto;
             object-fit: contain;
-            display: inline-block;
-        }
-        .brand-text {
-            color: white;
-            font-size: 28px;
-            font-weight: 700;
-            margin: 12px 0 4px 0;
-            letter-spacing: -0.5px;
-        }
-        .tagline {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 15px;
-            margin: 0;
-            font-weight: 500;
         }
         
         /* Content */
         .email-content {
-            padding: 40px 32px;
+            padding: 40px;
         }
         .email-title {
             font-size: 24px;
@@ -79,7 +66,7 @@
         }
         .email-text {
             font-size: 16px;
-            color: #374151;
+            color: #4b5563;
             margin: 0 0 16px 0;
             line-height: 1.6;
         }
@@ -99,36 +86,29 @@
             background-color: #2563eb;
             color: white !important;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 600;
             font-size: 16px;
-            transition: background-color 0.2s;
         }
         .button:hover {
             background-color: #1d4ed8;
         }
-        .button-secondary {
-            background-color: #059669;
-        }
-        .button-secondary:hover {
-            background-color: #047857;
-        }
         
         /* Info boxes */
         .info-box {
-            background-color: #eff6ff;
-            border-left: 4px solid #2563eb;
+            background-color: #f0f9ff;
+            border-left: 3px solid #2563eb;
             padding: 16px 20px;
             margin: 24px 0;
-            border-radius: 6px;
+            border-radius: 4px;
         }
         .info-box-success {
-            background-color: #ecfdf5;
-            border-left-color: #059669;
+            background-color: #f0fdf4;
+            border-left-color: #10b981;
         }
         .info-box-warning {
             background-color: #fffbeb;
-            border-left-color: #d97706;
+            border-left-color: #f59e0b;
         }
         .info-box p {
             margin: 0;
@@ -136,17 +116,17 @@
             font-size: 15px;
         }
         
-        /* Stats/Details table */
+        /* Details table */
         .details-table {
             width: 100%;
             border-collapse: collapse;
             margin: 24px 0;
             background-color: #f9fafb;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
         }
         .details-table td {
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-bottom: 1px solid #e5e7eb;
         }
         .details-table tr:last-child td {
@@ -156,7 +136,7 @@
             font-weight: 600;
             color: #6b7280;
             font-size: 14px;
-            width: 40%;
+            width: 45%;
         }
         .details-value {
             color: #111827;
@@ -164,37 +144,55 @@
             font-weight: 500;
         }
         
-        /* Footer */
+        /* Footer - Professional */
         .email-footer {
-            background-color: #f3f4f6;
-            padding: 32px 24px;
+            background-color: #f9fafb;
+            padding: 40px;
             text-align: center;
+            border-top: 1px solid #e5e7eb;
         }
-        .footer-text {
+        .footer-brand {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2563eb;
+            margin: 0 0 8px 0;
+        }
+        .footer-tagline {
             font-size: 14px;
             color: #6b7280;
-            margin: 8px 0;
+            margin: 0 0 24px 0;
         }
         .footer-links {
-            margin: 16px 0;
+            margin: 0 0 24px 0;
         }
         .footer-link {
             color: #2563eb;
             text-decoration: none;
-            margin: 0 12px;
+            margin: 0 16px;
             font-size: 14px;
+            font-weight: 500;
         }
         .footer-link:hover {
             text-decoration: underline;
         }
-        .social-links {
-            margin: 20px 0 16px 0;
+        .footer-divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 24px auto;
+            width: 80%;
+            max-width: 200px;
         }
-        .social-link {
-            display: inline-block;
-            margin: 0 8px;
-            color: #6b7280;
-            text-decoration: none;
+        .footer-text {
+            font-size: 13px;
+            color: #9ca3af;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .footer-address {
+            font-size: 12px;
+            color: #9ca3af;
+            margin: 16px 0 0 0;
+            line-height: 1.6;
         }
         
         /* Divider */
@@ -206,22 +204,34 @@
         
         /* Responsive */
         @media only screen and (max-width: 600px) {
+            .email-wrapper {
+                padding: 20px 10px !important;
+            }
             .email-container {
                 border-radius: 0 !important;
             }
             .email-header {
-                padding: 32px 24px !important;
+                padding: 32px 24px 20px 24px !important;
             }
             .email-content {
+                padding: 32px 24px !important;
+            }
+            .email-footer {
                 padding: 32px 24px !important;
             }
             .email-title {
                 font-size: 22px !important;
             }
+            .logo {
+                width: 100px !important;
+            }
             .button {
                 display: block !important;
                 width: 100% !important;
                 box-sizing: border-box;
+            }
+            .footer-link {
+                margin: 0 8px !important;
             }
         }
     </style>
@@ -229,13 +239,11 @@
 <body>
     <div class="email-wrapper">
         <div class="email-container">
-            <!-- Header -->
+            <!-- Header - Clean & Minimal -->
             <div class="email-header">
                 <div class="logo-container">
-                    <img src="{{ config('app.url') }}/logo.png" alt="MyGrowNet Logo" class="logo">
+                    <img src="https://mygrownet.com/logo.png" alt="MyGrowNet" class="logo">
                 </div>
-                <h1 class="brand-text">MyGrowNet</h1>
-                <p class="tagline">Learn • Earn • Grow</p>
             </div>
             
             <!-- Content -->
@@ -243,25 +251,31 @@
                 @yield('content')
             </div>
             
-            <!-- Footer -->
+            <!-- Footer - Professional -->
             <div class="email-footer">
+                <p class="footer-brand">MyGrowNet</p>
+                <p class="footer-tagline">Learn • Earn • Grow</p>
+                
                 <div class="footer-links">
-                    <a href="{{ config('app.url') }}" class="footer-link">Home</a>
-                    <a href="{{ config('app.url') }}/support" class="footer-link">Support</a>
-                    <a href="{{ config('app.url') }}/contact" class="footer-link">Contact</a>
+                    <a href="https://mygrownet.com" class="footer-link">Home</a>
+                    <a href="https://mygrownet.com/about" class="footer-link">About</a>
+                    <a href="https://mygrownet.com/support" class="footer-link">Support</a>
+                    <a href="https://mygrownet.com/contact" class="footer-link">Contact</a>
                 </div>
                 
-                <div class="divider" style="margin: 20px auto; width: 80%; max-width: 200px;"></div>
+                <div class="footer-divider"></div>
                 
                 <p class="footer-text">
-                    <strong>MyGrowNet</strong> - Community Empowerment Platform
+                    © {{ date('Y') }} MyGrowNet. All rights reserved.
                 </p>
-                <p class="footer-text">
-                    &copy; {{ date('Y') }} MyGrowNet. All rights reserved.
+                <p class="footer-address">
+                    MyGrowNet Platform<br>
+                    Zambia<br>
+                    Email: support@mygrownet.com
                 </p>
-                <p class="footer-text" style="font-size: 12px; color: #9ca3af; margin-top: 16px;">
-                    This email was sent to you as a member of MyGrowNet.<br>
-                    If you have questions, please contact our support team.
+                <p class="footer-text" style="margin-top: 20px;">
+                    You're receiving this email because you are a member of MyGrowNet.<br>
+                    Need help? Contact our <a href="https://mygrownet.com/support" style="color: #2563eb;">support team</a>.
                 </p>
             </div>
         </div>

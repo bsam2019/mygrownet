@@ -3,6 +3,36 @@
  * Central type definitions for the page builder
  */
 
+export type { SectionContentMap } from './content';
+export type {
+    HeroContent,
+    AboutContent,
+    ServicesContent,
+    FeaturesContent,
+    GalleryContent,
+    TestimonialsContent,
+    PricingContent,
+    ProductsContent,
+    MarketplaceProductsContent,
+    ContactContent,
+    CtaContent,
+    CtaBannerContent,
+    MemberCtaContent,
+    TextContent,
+    FaqContent,
+    TeamContent,
+    BlogContent,
+    StatsContent,
+    MapContent,
+    VideoContent,
+    DividerContent,
+    TimelineContent,
+    LogoCloudContent,
+    VideoHeroContent,
+    WhatsAppContent,
+    PageHeaderContent,
+} from './content';
+
 // ============================================
 // Core Types
 // ============================================
@@ -16,6 +46,32 @@ export interface NavItem {
     children: NavItem[];
 }
 
+export interface SectionStyle {
+    backgroundColor?: string;
+    textColor?: string;
+    backgroundType?: 'solid' | 'gradient' | 'image';
+    gradientFrom?: string;
+    gradientTo?: string;
+    gradientDirection?: string;
+    backgroundImage?: string;
+    backgroundSize?: 'cover' | 'contain' | 'repeat';
+    backgroundPosition?: string;
+    overlayColor?: string;
+    overlayOpacity?: number;
+    minHeight?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+    borderRadius?: string;
+    shadow?: string;
+    textAlign?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+    marginTop?: number;
+    marginBottom?: number;
+    borderWidth?: number;
+    borderColor?: string;
+    borderStyle?: 'solid' | 'dashed' | 'dotted' | 'none';
+}
+
 export interface Section {
     id: string;
     type: SectionType;
@@ -23,11 +79,11 @@ export interface Section {
     style: SectionStyle;
 }
 
-export interface SectionStyle {
-    backgroundColor?: string;
-    textColor?: string;
-    minHeight?: number;
-    [key: string]: any;
+export interface TypedSection<S extends SectionType> {
+    id: string;
+    type: S;
+    content: SectionContentMap[S];
+    style: SectionStyle;
 }
 
 export interface Page {
@@ -39,7 +95,6 @@ export interface Page {
     isPublished: boolean;
     showInNav: boolean;
     navOrder: number;
-    // SEO fields
     metaTitle?: string;
     metaDescription?: string;
     ogImage?: string;
@@ -49,7 +104,7 @@ export interface Site {
     id: number;
     name: string;
     subdomain: string;
-    theme: Record<string, any> | null;
+    theme: Record<string, unknown> | null;
     settings: SiteSettings | null;
     status: string;
     url: string;
@@ -91,36 +146,37 @@ export type SectionType =
     | 'cta-banner'
     | 'logo-cloud'
     | 'video-hero'
-    | 'whatsapp';
+    | 'whatsapp'
+    | 'marketplaceProducts';
 
 export interface SectionBlock {
     type: SectionType;
     name: string;
-    icon: any;
+    icon: unknown;
     category: SectionCategory;
     description: string;
 }
 
-export type SectionCategory = 
-    | 'Layout' 
-    | 'Content' 
-    | 'Media' 
-    | 'Social Proof' 
-    | 'Commerce' 
+export type SectionCategory =
+    | 'Layout'
+    | 'Content'
+    | 'Media'
+    | 'Social Proof'
+    | 'Commerce'
     | 'Forms';
 
 // ============================================
 // Navigation Types
 // ============================================
 
-export type NavStyle = 
-    | 'default' 
-    | 'centered' 
-    | 'split' 
-    | 'floating' 
-    | 'transparent' 
-    | 'dark' 
-    | 'sidebar' 
+export type NavStyle =
+    | 'default'
+    | 'centered'
+    | 'split'
+    | 'floating'
+    | 'transparent'
+    | 'dark'
+    | 'sidebar'
     | 'mega';
 
 export interface NavigationSettings {
@@ -132,7 +188,6 @@ export interface NavigationSettings {
     ctaLink: string;
     sticky: boolean;
     style: NavStyle;
-    // Auth buttons
     showAuthButtons?: boolean;
     showLoginButton?: boolean;
     showRegisterButton?: boolean;
@@ -152,14 +207,14 @@ export interface NavStyleOption {
 // Footer Types
 // ============================================
 
-export type FooterLayout = 
-    | 'columns' 
-    | 'centered' 
-    | 'split' 
-    | 'minimal' 
-    | 'stacked' 
-    | 'newsletter' 
-    | 'social' 
+export type FooterLayout =
+    | 'columns'
+    | 'centered'
+    | 'split'
+    | 'minimal'
+    | 'stacked'
+    | 'newsletter'
+    | 'social'
     | 'contact';
 
 export interface FooterLink {
@@ -174,12 +229,12 @@ export interface FooterColumn {
     links: FooterLink[];
 }
 
-export type SocialPlatform = 
-    | 'facebook' 
-    | 'twitter' 
-    | 'instagram' 
-    | 'linkedin' 
-    | 'youtube' 
+export type SocialPlatform =
+    | 'facebook'
+    | 'twitter'
+    | 'instagram'
+    | 'linkedin'
+    | 'youtube'
     | 'tiktok';
 
 export interface SocialLink {
@@ -213,8 +268,8 @@ export interface PageTemplate {
     isHomepage?: boolean;
     sections: Array<{
         type: SectionType;
-        content: Record<string, any>;
-        style: Record<string, any>;
+        content: Record<string, unknown>;
+        style: Record<string, unknown>;
     }>;
 }
 
@@ -225,7 +280,6 @@ export interface PageTemplate {
 export type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 export type InspectorTab = 'content' | 'style' | 'advanced';
 export type LeftSidebarTab = 'pages' | 'widgets';
-export type CreatePageStep = 'template' | 'details';
 
 export interface EditingField {
     sectionId: string;

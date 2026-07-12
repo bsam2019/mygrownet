@@ -1,6 +1,6 @@
 // Service Worker with proper cache versioning and update strategy
 // Increment this version when deploying new code to force cache invalidation
-const CACHE_VERSION = 'v1.0.8';
+const CACHE_VERSION = 'v1.0.9';
 const CACHE_NAME = `mygrownet-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mygrownet-runtime-${CACHE_VERSION}`;
 const API_CACHE = `mygrownet-api-${CACHE_VERSION}`;
@@ -26,57 +26,21 @@ const ASSETS_TO_CACHE = [
   '/growbiz-offline.html',
   '/growfinance-offline.html',
   '/grownet-offline.html',
-  // BizBoost routes and assets
-  '/bizboost',
-  '/bizboost/products',
-  '/bizboost/customers',
-  '/bizboost/sales',
-  '/bizboost/posts',
-  '/bizboost/campaigns',
-  '/bizboost/reminders',
-  '/bizboost/locations',
-  '/manifest.json',
-  // GrowNet routes
-  '/grownet',
-  '/grownet/dashboard',
-  '/grownet/network',
-  '/grownet/earnings',
-  '/grownet/team',
 ];
 
 // Module route patterns for offline fallback
 const MODULE_ROUTES = {
-  bizboost: { pattern: /^\/bizboost/, offline: '/bizboost-offline.html' },
-  growbiz: { pattern: /^\/growbiz/, offline: '/growbiz-offline.html' },
-  growfinance: { pattern: /^\/growfinance/, offline: '/growfinance-offline.html' },
-  grownet: { pattern: /^\/grownet/, offline: '/grownet-offline.html' },
-  // Add other modules as needed
+  // All modules now live on their own subdomains with dedicated SWs
 };
 
 // Page name mapping for cached pages display
-const PAGE_NAMES = {
-  '/bizboost': 'Dashboard',
-  '/bizboost/products': 'Products',
-  '/bizboost/customers': 'Customers',
-  '/bizboost/sales': 'Sales',
-  '/bizboost/posts': 'Posts',
-  '/bizboost/campaigns': 'Campaigns',
-  '/bizboost/reminders': 'Reminders',
-  '/bizboost/locations': 'Locations',
-  '/grownet': 'Dashboard',
-  '/grownet/dashboard': 'Dashboard',
-  '/grownet/network': 'My Network',
-  '/grownet/earnings': 'Earnings',
-  '/grownet/team': 'Team',
-};
+const PAGE_NAMES = {};
 
 // Install event - cache essential assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   
-  // CRITICAL: Skip waiting immediately to activate ASAP
-  // This ensures admin route fixes are applied immediately
-  self.skipWaiting();
+  // Wait for user approval before activating (sent via SKIP_WAITING message from client)
   
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {

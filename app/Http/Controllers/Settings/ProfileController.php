@@ -116,30 +116,49 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update dashboard preference (mobile vs desktop)
+     * Update dashboard landing preference (module route name)
      */
     public function updateDashboardPreference(Request $request)
     {
+        $validModuleRoutes = [
+            'grownet.dashboard',
+            'bizboost.dashboard',
+            'growmart.main.home',
+            'zamstay.home',
+            'growbuilder.dashboard',
+            'bizdocs.dashboard',
+            'growbackup.dashboard',
+        ];
+
         $validated = $request->validate([
-            'preference' => 'required|in:auto,mobile,desktop',
+            'preference' => ['nullable', 'string', function ($attribute, $value, $fail) use ($validModuleRoutes) {
+                if ($value === '') {
+                    return;
+                }
+                if (in_array($value, ['mobile', 'desktop', 'auto', 'classic'], true)) {
+                    return; // legacy values — stored as null
+                }
+                if (!in_array($value, $validModuleRoutes, true)) {
+                    $fail('Invalid dashboard preference.');
+                }
+            }],
         ]);
 
         $user = $request->user();
-        
-        // Map 'classic' to 'desktop' for backward compatibility
-        $preference = $validated['preference'];
-        if ($preference === 'classic') {
-            $preference = 'desktop';
+
+        $stored = $validated['preference'];
+        if (in_array($stored, ['mobile', 'desktop', 'auto', 'classic', ''], true)) {
+            $stored = null;
         }
-        
+
         $user->update([
-            'preferred_dashboard' => $preference,
+            'preferred_dashboard' => $stored,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Dashboard preference updated successfully',
-            'preference' => $preference,
+            'preference' => $stored,
         ]);
     }
 }

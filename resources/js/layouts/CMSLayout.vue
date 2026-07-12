@@ -207,7 +207,7 @@
           </div>
 
           <!-- Analytics Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.analytics.operations', 'cms.analytics.finance'])">
+          <div v-if="isSectionVisible(['cms.analytics.overview', 'cms.analytics.operations', 'cms.analytics.finance', 'cms.analytics.procurement'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('analytics')"
@@ -227,6 +227,15 @@
             
             <div v-show="sidebarCollapsed || !collapsedSections.analytics || searchQuery" class="space-y-1">
               <NavItem
+                v-if="shouldShowNavItem('cms.analytics.overview')"
+                icon="ChartBarIcon"
+                label="CEO Overview"
+                route-name="cms.analytics.overview"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.analytics.overview')"
+                @click="navigateTo('cms.analytics.overview')"
+              />
+              <NavItem
                 v-if="shouldShowNavItem('cms.analytics.operations')"
                 icon="PresentationChartLineIcon"
                 label="Operations"
@@ -244,6 +253,74 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.analytics.finance')"
                 @click="navigateTo('cms.analytics.finance')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.analytics.procurement')"
+                icon="TruckIcon"
+                label="Procurement"
+                route-name="cms.analytics.procurement"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.analytics.procurement')"
+                @click="navigateTo('cms.analytics.procurement')"
+              />
+            </div>
+          </div>
+
+          <!-- Planning Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.plans', 'cms.plans.command-center', 'cms.kpis', 'cms.business-plans'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('planning')"
+              class="w-full px-3 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-violet-50 to-transparent rounded-lg hover:from-violet-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-violet-500 to-violet-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Planning</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.planning ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <div v-show="sidebarCollapsed || !collapsedSections.planning || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.kpis')"
+                icon="ChartBarIcon"
+                label="KPIs"
+                route-name="cms.kpis"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.kpis')"
+                @click="navigateTo('cms.kpis.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.plans.command-center')"
+                icon="PresentationChartLineIcon"
+                label="Command Center"
+                route-name="cms.plans.command-center"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.plans.command-center')"
+                @click="navigateTo('cms.plans.command-center')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.plans')"
+                icon="ClipboardDocumentListIcon"
+                label="All Plans"
+                route-name="cms.plans"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.plans')"
+                @click="navigateTo('cms.plans.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.business-plans')"
+                icon="DocumentTextIcon"
+                label="Business Plans"
+                route-name="cms.business-plans"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.business-plans')"
+                @click="navigateTo('cms.business-plans.index')"
               />
             </div>
           </div>
@@ -402,7 +479,7 @@
           </div>
 
           <!-- Financial Management Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.expenses', 'cms.quotations', 'cms.inventory', 'cms.materials', 'cms.assets', 'cms.payroll', 'cms.payroll.workers'])">
+          <div v-if="isSectionVisible(['cms.expenses', 'cms.quotations', 'cms.inventory', 'cms.materials', 'cms.assets', 'cms.assets.depreciation-register', 'cms.contracts', 'cms.purchase-orders', 'cms.vendors', 'cms.payroll', 'cms.payroll.workers'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('financial')"
@@ -472,6 +549,46 @@
               />
 
               <NavItem
+                v-if="shouldShowNavItem('cms.assets.depreciation-register')"
+                icon="ChartBarIcon"
+                label="Depreciation Register"
+                route-name="cms.assets.depreciation-register"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.assets.depreciation-register')"
+                @click="navigateTo('cms.assets.depreciation-register')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.contracts')"
+                icon="DocumentTextIcon"
+                label="Contracts"
+                route-name="cms.contracts"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.contracts')"
+                @click="navigateTo('cms.contracts.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.purchase-orders')"
+                icon="ClipboardDocumentListIcon"
+                label="Purchase Orders"
+                route-name="cms.purchase-orders"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.purchase-orders')"
+                @click="navigateTo('cms.purchase-orders.index')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.vendors')"
+                icon="BuildingStorefrontIcon"
+                label="Vendors"
+                route-name="cms.vendors"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.vendors')"
+                @click="navigateTo('cms.vendors.index')"
+              />
+
+              <NavItem
                 v-if="shouldShowNavItem('cms.payroll')"
                 icon="UserGroupIcon"
                 label="Payroll"
@@ -489,6 +606,92 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.payroll.workers')"
                 @click="navigateTo('cms.payroll.workers.index')"
+              />
+            </div>
+          </div>
+
+          <!-- Inventory Management Section (Collapsible) -->
+          <div v-if="isSectionVisible(['cms.inventory.locations', 'cms.inventory.stock-levels', 'cms.inventory.transfers', 'cms.inventory.adjustments', 'cms.inventory.counts', 'cms.inventory.valuation'])">
+            <button
+              v-if="!sidebarCollapsed && !searchQuery"
+              @click="toggleSection('inventoryMgmt')"
+              class="w-full px-3 pt-2 mb-1 group"
+            >
+              <div class="flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-cyan-50 to-transparent rounded-lg hover:from-cyan-100 transition-colors">
+                <div class="flex items-center gap-2">
+                  <div class="w-1 h-4 bg-gradient-to-b from-cyan-500 to-cyan-600 rounded-full"></div>
+                  <p class="text-xs font-bold text-gray-700 uppercase tracking-wider">Inventory</p>
+                </div>
+                <ChevronDownIcon 
+                  :class="['h-4 w-4 text-gray-500 transition-transform duration-200', collapsedSections.inventoryMgmt ? '-rotate-90' : '']"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
+
+            <div v-show="sidebarCollapsed || !collapsedSections.inventoryMgmt || searchQuery" class="space-y-1">
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory')"
+                icon="CubeIcon"
+                label="All Items"
+                route-name="cms.inventory"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory')"
+                @click="navigateTo('cms.inventory.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.locations')"
+                icon="BuildingOffice2Icon"
+                label="Locations"
+                route-name="cms.inventory.locations"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.locations')"
+                @click="navigateTo('cms.inventory.locations.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.stock-levels')"
+                icon="ChartBarIcon"
+                label="Stock Levels"
+                route-name="cms.inventory.stock-levels"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.stock-levels')"
+                @click="navigateTo('cms.inventory.stock-levels.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.transfers')"
+                icon="ArrowPathIcon"
+                label="Transfers"
+                route-name="cms.inventory.transfers"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.transfers')"
+                @click="navigateTo('cms.inventory.transfers.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.adjustments')"
+                icon="CalculatorIcon"
+                label="Adjustments"
+                route-name="cms.inventory.adjustments"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.adjustments')"
+                @click="navigateTo('cms.inventory.adjustments.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.counts')"
+                icon="ClipboardDocumentCheckIcon"
+                label="Stock Counts"
+                route-name="cms.inventory.counts"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.counts')"
+                @click="navigateTo('cms.inventory.counts.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.inventory.valuation')"
+                icon="CurrencyDollarIcon"
+                label="Valuation"
+                route-name="cms.inventory.valuation"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.inventory.valuation')"
+                @click="navigateTo('cms.inventory.valuation.index')"
               />
             </div>
           </div>
@@ -720,7 +923,7 @@
           </div>
 
           <!-- HR Management Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.departments', 'cms.leave', 'cms.shifts', 'cms.attendance', 'cms.overtime', 'cms.recruitment', 'cms.hrms-onboarding', 'cms.performance', 'cms.training', 'cms.hr-reports'])">
+          <div v-if="isSectionVisible(['cms.branches', 'cms.departments', 'cms.org-chart', 'cms.leave', 'cms.shifts', 'cms.attendance', 'cms.overtime', 'cms.recruitment', 'cms.hrms-onboarding', 'cms.performance', 'cms.training', 'cms.hr-reports'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('hr')"
@@ -740,6 +943,15 @@
 
             <div v-show="sidebarCollapsed || !collapsedSections.hr || searchQuery" class="space-y-1">
               <NavItem
+                v-if="shouldShowNavItem('cms.branches')"
+                icon="BuildingOffice2Icon"
+                label="Branches"
+                route-name="cms.branches"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.branches')"
+                @click="navigateTo('cms.branches.index')"
+              />
+              <NavItem
                 v-if="shouldShowNavItem('cms.departments')"
                 icon="BuildingOffice2Icon"
                 label="Departments"
@@ -747,6 +959,15 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.departments')"
                 @click="navigateTo('cms.departments.index')"
+              />
+              <NavItem
+                v-if="shouldShowNavItem('cms.org-chart')"
+                icon="UserGroupIcon"
+                label="Org Chart"
+                route-name="cms.org-chart"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.org-chart')"
+                @click="navigateTo('cms.org-chart.index')"
               />
 
               <NavItem
@@ -904,7 +1125,7 @@
           </div>
 
           <!-- Settings Section (Collapsible) -->
-          <div v-if="isSectionVisible(['cms.settings.index', 'cms.settings.document-templates', 'cms.settings.pricing-rules', 'cms.settings.industry-presets.index', 'cms.settings.email.index', 'cms.settings.sms.index', 'cms.settings.currency.index', 'cms.security.settings'])">
+          <div v-if="isSectionVisible(['cms.settings.index', 'cms.settings.document-templates', 'cms.settings.pricing-rules', 'cms.settings.industry-presets.index', 'cms.settings.email.index', 'cms.settings.sms.index', 'cms.settings.currency.index', 'cms.security.settings', 'cms.portal-users.index'])">
             <button
               v-if="!sidebarCollapsed && !searchQuery"
               @click="toggleSection('settings')"
@@ -1001,6 +1222,16 @@
                 :collapsed="sidebarCollapsed"
                 :active="isActive('cms.security')"
                 @click="navigateTo('cms.security.settings')"
+              />
+
+              <NavItem
+                v-if="shouldShowNavItem('cms.portal-users.index')"
+                icon="UserGroupIcon"
+                label="Portal Users"
+                route-name="cms.portal-users"
+                :collapsed="sidebarCollapsed"
+                :active="isActive('cms.portal-users')"
+                @click="navigateTo('cms.portal-users.index')"
               />
             </div>
           </div>
@@ -1382,10 +1613,11 @@
     </TransitionRoot>
     </div>
   </div>
+  <ToastContainer />
 </template>
 
 <script setup lang="ts">
-import { ref, provide, computed, onMounted, onUnmounted } from 'vue'
+import { ref, provide, computed, watch, onMounted, onUnmounted } from 'vue'
 import { router, usePage, Link, Head } from '@inertiajs/vue3'
 import { Menu, MenuButton, MenuItem, MenuItems, Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
@@ -1441,6 +1673,8 @@ import InvoiceForm from '@/components/CMS/Forms/InvoiceForm.vue'
 import ExpenseForm from '@/components/CMS/Forms/ExpenseForm.vue'
 import NavItem from '@/components/CMS/NavItem.vue'
 import { useCMSSlideOver } from '@/composables/useCMSSlideOver'
+import { useToast } from '@/composables/useToast'
+import ToastContainer from '@/components/GrowBiz/ToastContainer.vue'
 
 interface Notification {
   id: number
@@ -1466,6 +1700,15 @@ const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 const slideOver = useCMSSlideOver()
 
+const { toast } = useToast()
+const flash = computed(() => (page.props as any).flash)
+watch(flash, (f) => {
+    if (f?.success) toast.success(f.success)
+    if (f?.error) toast.error(f.error)
+    if (f?.warning) toast.warning(f.warning)
+    if (f?.info) toast.info(f.info)
+}, { immediate: true, deep: true })
+
 // Collapsible sections state - persisted in localStorage
 const STORAGE_KEY = 'cms_sidebar_sections'
 const collapsedSections = ref<Record<string, boolean>>({
@@ -1479,6 +1722,7 @@ const collapsedSections = ref<Record<string, boolean>>({
   hr: true,
   administration: true,
   payroll: true,
+  inventoryMgmt: true,
   settings: true,
 })
 
@@ -1526,15 +1770,25 @@ const allNavItems = ref([
   { label: 'Payments', route: 'cms.payments', keywords: ['transactions', 'money'] },
   { label: 'Reports', route: 'cms.reports', keywords: ['analytics', 'statistics'] },
   { label: 'Budgets', route: 'cms.budgets', keywords: ['budget', 'planning', 'forecast'] },
+  { label: 'Business Plans', route: 'cms.business-plans', keywords: ['strategy', 'planning', 'forecast', 'growth', 'business plan'] },
   // Analytics
+  { label: 'CEO Overview', route: 'cms.analytics.overview', keywords: ['analytics', 'overview', 'dashboard', 'kpi', 'executive'] },
   { label: 'Operations Analytics', route: 'cms.analytics.operations', keywords: ['analytics', 'performance', 'operations'] },
   { label: 'Finance Analytics', route: 'cms.analytics.finance', keywords: ['analytics', 'financial', 'money'] },
+  { label: 'Procurement Analytics', route: 'cms.analytics.procurement', keywords: ['analytics', 'procurement', 'vendors', 'purchase orders', 'contracts', 'assets'] },
   // Financial
   { label: 'Expenses', route: 'cms.expenses', keywords: ['costs', 'spending'] },
   { label: 'Quotations', route: 'cms.quotations', keywords: ['quotes', 'estimates'] },
   { label: 'Inventory', route: 'cms.inventory', keywords: ['stock', 'products', 'items'] },
+  { label: 'Locations', route: 'cms.inventory.locations', keywords: ['warehouse', 'workshop', 'site', 'storage'] },
+  { label: 'Stock Levels', route: 'cms.inventory.stock-levels', keywords: ['stock levels', 'quantities', 'on hand'] },
+  { label: 'Transfers', route: 'cms.inventory.transfers', keywords: ['transfer', 'move', 'relocate stock'] },
+  { label: 'Adjustments', route: 'cms.inventory.adjustments', keywords: ['adjust', 'correct', 'increase', 'decrease'] },
+  { label: 'Stock Counts', route: 'cms.inventory.counts', keywords: ['count', 'physical inventory', 'cycle count'] },
+  { label: 'Valuation', route: 'cms.inventory.valuation', keywords: ['fifo', 'lifo', 'average', 'value', 'worth'] },
   { label: 'Materials', route: 'cms.materials', keywords: ['materials', 'supplies', 'stock', 'aluminium', 'glass', 'profiles'] },
   { label: 'Assets', route: 'cms.assets', keywords: ['equipment', 'property'] },
+  { label: 'Depreciation Register', route: 'cms.assets.depreciation-register', keywords: ['depreciation', 'asset value', 'amortization'] },
   { label: 'Payroll', route: 'cms.payroll', keywords: ['salary', 'wages', 'pay'] },
   { label: 'Workers', route: 'cms.payroll.workers', keywords: ['employees', 'staff', 'team'] },
   // Construction Modules
@@ -1552,10 +1806,13 @@ const allNavItems = ref([
   { label: 'Fleet', route: 'cms.fleet', keywords: ['vehicles', 'transport', 'trucks'] },
   { label: 'Documents', route: 'cms.documents', keywords: ['files', 'storage', 'uploads'] },
   { label: 'Safety', route: 'cms.safety', keywords: ['health', 'safety', 'compliance'] },
+  { label: 'Contracts', route: 'cms.contracts', keywords: ['agreements', 'legal', 'signed'] },
   { label: 'Purchase Orders', route: 'cms.purchase-orders', keywords: ['po', 'orders', 'procurement'] },
+  { label: 'Vendors', route: 'cms.vendors', keywords: ['suppliers', 'contractors', 'providers'] },
   // HR Management
-  { label: 'Employees', route: 'cms.employees', keywords: ['staff', 'personnel', 'workforce'] },
+  { label: 'Branches', route: 'cms.branches', keywords: ['locations', 'offices', 'branches', 'sites'] },
   { label: 'Departments', route: 'cms.departments', keywords: ['divisions', 'units'] },
+  { label: 'Org Chart', route: 'cms.org-chart', keywords: ['organizational', 'hierarchy', 'reporting', 'structure', 'tree'] },
   { label: 'Leave Management', route: 'cms.leave', keywords: ['vacation', 'time off', 'absence'] },
   { label: 'Shifts', route: 'cms.shifts', keywords: ['schedule', 'roster', 'timing'] },
   { label: 'Attendance', route: 'cms.attendance', keywords: ['clock in', 'presence', 'tracking'] },
@@ -1571,11 +1828,9 @@ const allNavItems = ref([
   { label: 'Recurring Invoices', route: 'cms.recurring-invoices', keywords: ['subscription', 'repeat'] },
   { label: 'Approvals', route: 'cms.approvals', keywords: ['pending', 'review', 'authorize'] },
   { label: 'Chart of Accounts', route: 'cms.accounting', keywords: ['accounting', 'ledger', 'books'] },
-  { label: 'Notifications', route: 'cms.notifications', keywords: ['alerts', 'messages', 'updates'] },
   // Payroll Configuration
   { label: 'Allowance Types', route: 'cms.payroll.configuration.allowance-types', keywords: ['benefits', 'perks', 'allowances'] },
   { label: 'Deduction Types', route: 'cms.payroll.configuration.deduction-types', keywords: ['taxes', 'withholding', 'deductions'] },
-  { label: 'Payroll Settings', route: 'cms.payroll.configuration.settings', keywords: ['payroll config', 'settings'] },
   // Settings
   { label: 'Company Settings', route: 'cms.settings.index', keywords: ['configuration', 'preferences', 'setup', 'company'] },
   { label: 'Document Templates', route: 'cms.settings.document-templates', keywords: ['templates', 'documents', 'formats'] },
@@ -1585,6 +1840,7 @@ const allNavItems = ref([
   { label: 'SMS Settings', route: 'cms.settings.sms.index', keywords: ['text', 'messages', 'notifications'] },
   { label: 'Currency', route: 'cms.settings.currency.index', keywords: ['money', 'exchange', 'rates'] },
   { label: 'Security', route: 'cms.security.settings', keywords: ['password', 'authentication', 'access'] },
+  { label: 'Portal Users', route: 'cms.portal-users.index', keywords: ['portal', 'customer portal', 'access', 'customer access', 'users'] },
 ])
 
 const filteredNavItems = computed(() => {

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\MyGrowNet;
 
 use App\Http\Controllers\Controller;
-use App\Models\BgfApplication;
-use App\Models\BgfProject;
+use App\Models\BGF\BgfApplication;
+use App\Models\BGF\BgfProject;
 use App\Services\BgfScoringService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

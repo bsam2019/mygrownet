@@ -69,6 +69,11 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\VentureBuilder\VentureDividendPaid::class => [
             \App\Listeners\VentureBuilder\SendDividendPaymentNotification::class,
         ],
+
+        // Backup Events
+        \Spatie\Backup\Events\BackupWasSuccessful::class => [
+            \App\Listeners\SendBackupSuccessNotification::class,
+        ],
     ];
 
     public function boot(): void

@@ -303,6 +303,14 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/export-network-analysis', [App\Http\Controllers\Admin\MLMAdministrationController::class, 'exportNetworkAnalysis'])->name('export-network-analysis');
     });
 
+    // GrowNet Administration Routes
+    Route::prefix('grownet')->name('grownet.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\GrowNet\GrowNetDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/earnings', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'index'])->name('earnings');
+        Route::get('/earnings/{user}', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'show'])->name('earnings.show');
+        Route::post('/earnings/{user}/adjust-bonus', [\App\Http\Controllers\Admin\GrowNet\EarningsManagementController::class, 'adjustBonusBalance'])->name('earnings.adjust-bonus');
+    });
+
     // Asset Management Administration Routes
     Route::prefix('assets')->name('assets.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\AssetManagementController::class, 'index'])->name('dashboard');
@@ -486,6 +494,20 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
 
     // BizBoost Administration
     Route::prefix('bizboost')->name('bizboost.')->group(function () {
+        // Dashboard
+        Route::get('/', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'dashboard']);
+
+        // Business Management
+        Route::prefix('businesses')->name('businesses.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'businesses'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'showBusiness'])->name('show');
+            Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'toggleBusinessActive'])->name('toggle-active');
+        });
+
+        // AI Usage
+        Route::get('/ai-usage', [\App\Http\Controllers\Admin\BizBoostAdminController::class, 'aiUsage'])->name('ai-usage');
+
         // Template Management
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'index'])->name('index');
@@ -496,6 +518,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
             Route::delete('/{id}', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/toggle-active', [\App\Http\Controllers\Admin\BizBoostTemplateController::class, 'toggleActive'])->name('toggle-active');
         });
+
+        // Billing Ledger (admin view)
+        Route::get('/billing', [\App\Http\Controllers\Admin\BizBoostBillingController::class, 'index'])->name('billing');
     });
 
     // Module Subscription Management (Admin manages app subscriptions)
@@ -587,4 +612,9 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::post('/creators/{creator}/activate', [\App\Domain\GrowStream\Presentation\Http\Controllers\Admin\CreatorAdminController::class, 'activate'])->name('creators.activate');
     });
 
+    // Withdrawal Limits Settings
+    Route::prefix('settings/withdrawal-limits')->name('settings.withdrawal-limits.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\WithdrawalLimitController::class, 'update'])->name('update');
+    });
 });

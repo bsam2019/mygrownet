@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\GrowBuilder\Models;
 
-use App\Models\MarketplaceSeller;
+use App\Models\Marketplace\MarketplaceSeller;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -119,6 +119,11 @@ class GrowBuilderSite extends Model
     public function marketplaceSeller(): BelongsTo
     {
         return $this->belongsTo(MarketplaceSeller::class, 'marketplace_seller_id');
+    }
+
+    public function chatbotLeads(): HasMany
+    {
+        return $this->hasMany(ChatbotLead::class, 'site_id');
     }
 
     public function scopePublished($query)

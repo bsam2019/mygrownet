@@ -220,29 +220,54 @@ class AssetService
         });
     }
 
+    public function calculateAnnualDepreciation(float $purchaseCost, float $salvageValue, int $usefulLifeYears, string $method): float
+    {
+        return match ($method) {
+            'declining_balance' => ($purchaseCost - $salvageValue) * (2 / $usefulLifeYears),
+            'sum_of_years_digits' => ($purchaseCost - $salvageValue) * (2 / ($usefulLifeYears * ($usefulLifeYears + 1) / 2)),
+            default => ($purchaseCost - $salvageValue) / $usefulLifeYears,
+        };
+    }
+
     public function calculateDepreciation(AssetModel $asset, array $data): AssetDepreciationModel
     {
         $purchaseCost = $asset->purchase_cost;
         $salvageValue = $data['salvage_value'] ?? 0;
         $usefulLifeYears = $data['useful_life_years'];
+        $method = $data['method'] ?? 'straight_line';
 
-        // Calculate annual depreciation (straight line method)
-        $annualDepreciation = ($purchaseCost - $salvageValue) / $usefulLifeYears;
+        $annualDepreciation = $this->calculateAnnualDepreciation($purchaseCost, $salvageValue, $usefulLifeYears, $method);
 
         $depreciation = AssetDepreciationModel::create([
             'company_id' => $asset->company_id,
             'asset_id' => $asset->id,
-            'method' => $data['method'] ?? 'straight_line',
+            'method' => $method,
             'useful_life_years' => $usefulLifeYears,
             'salvage_value' => $salvageValue,
             'annual_depreciation' => $annualDepreciation,
             'depreciation_start_date' => $data['depreciation_start_date'] ?? $asset->purchase_date,
         ]);
 
-        // Update asset current value based on depreciation
         $this->updateAssetValue($asset);
 
         return $depreciation;
+    }
+
+    public function getAccumulatedDepreciation(AssetModel $asset): float
+    {
+        $depreciation = $asset->depreciation()->first();
+        if (!$depreciation) {
+            return 0;
+        }
+
+        $startDate = Carbon::parse($depreciation->depreciation_start_date);
+        $monthsElapsed = (int) $startDate->diffInMonths(now());
+        $yearsElapsed = $monthsElapsed / 12;
+
+        return min(
+            $depreciation->annual_depreciation * $yearsElapsed,
+            $asset->purchase_cost - $depreciation->salvage_value
+        );
     }
 
     public function updateAssetValue(AssetModel $asset): void
@@ -253,16 +278,10 @@ class AssetService
             return;
         }
 
-        $startDate = Carbon::parse($depreciation->depreciation_start_date);
-        $yearsElapsed = $startDate->diffInYears(now());
-
-        $totalDepreciation = min(
-            $depreciation->annual_depreciation * $yearsElapsed,
-            $asset->purchase_cost - $depreciation->salvage_value
-        );
+        $accumulated = $this->getAccumulatedDepreciation($asset);
 
         $currentValue = max(
-            $asset->purchase_cost - $totalDepreciation,
+            $asset->purchase_cost - $accumulated,
             $depreciation->salvage_value
         );
 

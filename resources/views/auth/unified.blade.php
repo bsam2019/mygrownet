@@ -42,11 +42,12 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 1rem;
+            padding: 2rem 1rem;
             position: relative;
             overflow-x: hidden;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -69,9 +70,27 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            background: 
+                radial-gradient(circle at 20% 25%, rgba(59, 130, 246, 0.2) 0%, transparent 45%),
+                radial-gradient(circle at 80% 75%, rgba(16, 185, 129, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
             animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.15) 0%, transparent 100%),
+                radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.1) 0%, transparent 100%),
+                radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.12) 0%, transparent 100%),
+                radial-gradient(1px 1px at 70% 85%, rgba(255,255,255,0.1) 0%, transparent 100%),
+                radial-gradient(1px 1px at 90% 35%, rgba(255,255,255,0.08) 0%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 45% 50%, rgba(255,255,255,0.15) 0%, transparent 100%),
+                radial-gradient(1px 1px at 15% 80%, rgba(255,255,255,0.1) 0%, transparent 100%),
+                radial-gradient(1px 1px at 85% 10%, rgba(255,255,255,0.08) 0%, transparent 100%);
+            background-size: 100% 100%;
         }
         
         @keyframes float {
@@ -89,12 +108,13 @@
         
         /* Card */
         .auth-card {
-            background: rgba(255, 255, 255, 0.98);
+            background: rgba(255, 255, 255, 0.97);
             border-radius: 1.5rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4),
-                        0 0 0 1px rgba(255, 255, 255, 0.1);
+                        0 0 0 1px rgba(255, 255, 255, 0.08);
             overflow: hidden;
             backdrop-filter: blur(20px);
+            margin: auto 0;
         }
         
         /* Header */
@@ -103,6 +123,25 @@
             text-align: center;
             background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
             border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .header-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .header-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-600);
         }
         
         .logo-wrapper {
@@ -378,7 +417,53 @@
         }
         
         @keyframes spin { to { transform: rotate(360deg); } }
-        
+
+        /* Social Login Buttons */
+        .social-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+        .social-divider::before,
+        .social-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-200);
+        }
+        .social-divider-text {
+            font-size: 0.8125rem;
+            color: var(--gray-400);
+            white-space: nowrap;
+        }
+        .btn-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.8125rem 1rem;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-700);
+            background: white;
+        }
+        .btn-social:hover {
+            border-color: var(--gray-300);
+            background: var(--gray-50);
+        }
+        .social-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            flex-shrink: 0;
+        }
+
         /* Password Toggle */
         .password-wrapper { position: relative; }
         
@@ -427,7 +512,7 @@
         
         /* Responsive */
         @media (max-width: 480px) {
-            body { padding: 0.75rem; }
+            body { padding: 1rem 0.75rem; }
             .auth-card { border-radius: 1.25rem; }
             .auth-header { padding: 1.5rem 1.5rem 1rem; }
             .tabs-container { margin: 1rem 1.5rem 0; }
@@ -436,6 +521,15 @@
             .logo-img { height: 48px; }
             .brand-name { font-size: 1.25rem; }
         }
+        @media (max-height: 700px) {
+            body { padding-top: 1rem; padding-bottom: 1rem; }
+            .auth-header { padding: 1rem 1.5rem 0.75rem; }
+            .auth-body { padding: 0.75rem 1.5rem 1rem; }
+            .auth-footer { padding: 0.75rem 1.5rem; }
+            .logo-img { height: 40px; }
+            .brand-name { font-size: 1.1rem; }
+            .brand-tagline { font-size: 0.75rem; }
+        }
     </style>
 
     <!-- Background decoration -->
@@ -443,8 +537,14 @@
     
     <div class="auth-container">
         <div class="auth-card">
-            <!-- Header with Logo -->
-            <div class="auth-header">
+            <!-- Header with Logo and Close -->
+            <div class="auth-header" style="position: relative;">
+                <a href="/" class="header-close" title="Back to Home">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </a>
                 <a href="/" class="logo-wrapper">
                     <img src="/logo.png" alt="MyGrowNet" class="logo-img" onerror="this.style.display='none'">
                 </a>
@@ -548,6 +648,20 @@
                             </span>
                         </button>
                     </form>
+
+                    <!-- Social Login -->
+                    <div class="social-divider">
+                        <span class="social-divider-text">or continue with</span>
+                    </div>
+                    <a href="{{ route('auth.google') }}" class="btn btn-social btn-google" id="google-signin-btn">
+                        <svg class="social-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign in with Google
+                    </a>
                 </div>
 
                 <!-- REGISTER FORM -->
@@ -673,6 +787,20 @@
                             </span>
                         </button>
                     </form>
+
+                    <!-- Social Register -->
+                    <div class="social-divider">
+                        <span class="social-divider-text">or sign up with</span>
+                    </div>
+                    <a href="{{ route('auth.google') }}" class="btn btn-social btn-google" id="google-signup-btn">
+                        <svg class="social-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign up with Google
+                    </a>
                 </div>
             </div>
 
@@ -761,6 +889,17 @@
                 if (stored && document.getElementById('referral_code')) {
                     document.getElementById('referral_code').value = stored;
                 }
+            }
+            
+            // Pass referral code to Google OAuth links
+            var savedRef = sessionStorage.getItem('mygrownet_ref');
+            if (savedRef) {
+                var googleBtns = document.querySelectorAll('#google-signin-btn, #google-signup-btn');
+                googleBtns.forEach(function(btn) {
+                    var url = new URL(btn.href);
+                    url.searchParams.set('ref', savedRef);
+                    btn.href = url.toString();
+                });
             }
         })();
     </script>

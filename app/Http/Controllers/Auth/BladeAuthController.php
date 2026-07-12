@@ -44,7 +44,8 @@ class BladeAuthController extends Controller
             }
         }
 
-        return view('auth.login', [
+        return view('auth.unified', [
+            'activeTab' => 'login',
             'canResetPassword' => Route::has('password.request'),
         ]);
     }
@@ -62,6 +63,9 @@ class BladeAuthController extends Controller
         if ($user) {
             $user->initializeLoanLimit();
         }
+
+        // Persist session before redirect so auth middleware on next request finds it
+        $request->session()->save();
 
         // Check for pending GrowBiz invitation
         if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
@@ -84,7 +88,8 @@ class BladeAuthController extends Controller
             }
         }
 
-        return view('auth.register', [
+        return view('auth.unified', [
+            'activeTab' => 'register',
             'referralCode' => $request->query('ref'),
         ]);
     }
@@ -94,35 +99,72 @@ class BladeAuthController extends Controller
      */
     public function register(Request $request, DefaultSponsorService $defaultSponsorService): RedirectResponse
     {
-        // Normalize phone number before validation
-        $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
+        // Determine whether identifier is email or phone
+        $isNewFlow = $request->has('identifier');
 
-        $validated = $request->validate([
+        if ($isNewFlow) {
+            $identifier = $request->identifier;
+            $isEmail = $identifier && str_contains($identifier, '@');
+            $isPhone = $identifier && !$isEmail;
+            $normalizedPhone = $isPhone ? User::normalizePhone($identifier) : null;
+        } else {
+            // Legacy flow: separate email and phone fields (Blade view)
+            $email = $request->email;
+            $phone = $request->phone;
+            $isEmail = !empty($email);
+            $isPhone = !$isEmail && !empty($phone);
+            $normalizedPhone = $isPhone ? User::normalizePhone($phone) : null;
+            $identifier = $isEmail ? $email : ($isPhone ? $phone : null);
+        }
+
+        $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'nullable|string|lowercase|email|max:255|unique:' . User::class,
-            'phone' => 'nullable|string|max:20',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'referral_code' => 'nullable|string|max:20|exists:users,referral_code',
-        ], [
+        ];
+
+        $messages = [
             'name.required' => 'Please enter your full name.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'This email is already registered.',
             'password.required' => 'Please enter a password.',
             'password.confirmed' => 'The password confirmation does not match.',
             'referral_code.exists' => 'Invalid referral code. Please check and try again.',
-        ]);
+        ];
+
+        if ($isNewFlow) {
+            // New single-field flow (LoginModal)
+            if ($isEmail) {
+                $rules['identifier'] = 'required|string|lowercase|email|max:255|unique:users,email';
+                $messages['identifier.unique'] = 'This email is already registered.';
+            } elseif ($isPhone) {
+                $rules['identifier'] = 'required|string|max:20';
+            } else {
+                $rules['identifier'] = 'required|string|max:255';
+            }
+            $messages['identifier.required'] = 'Please enter your email or phone number.';
+            $messages['identifier.email'] = 'Please enter a valid email address.';
+        } else {
+            // Legacy dual-field flow (Blade view)
+            $rules['email'] = 'nullable|string|lowercase|email|max:255|unique:users,email';
+            $rules['phone'] = 'nullable|string|max:20';
+            $messages['email.email'] = 'Please enter a valid email address.';
+            $messages['email.unique'] = 'This email is already registered.';
+        }
+
+        $request->validate($rules, $messages);
 
         // Ensure at least one identifier is provided
-        if (empty($request->email) && empty($request->phone)) {
+        if (empty($identifier)) {
+            $field = $isNewFlow ? 'identifier' : 'email';
             throw ValidationException::withMessages([
-                'email' => 'Please provide either an email address or phone number.',
+                $field => 'Please provide either an email address or phone number.',
             ]);
         }
 
-        // Check if normalized phone already exists
-        if ($normalizedPhone && User::where('phone', $normalizedPhone)->exists()) {
+        // Check if phone already exists
+        if ($isPhone && $normalizedPhone && User::where('phone', $normalizedPhone)->exists()) {
+            $field = $isNewFlow ? 'identifier' : 'phone';
             throw ValidationException::withMessages([
-                'phone' => 'This phone number is already registered.',
+                $field => 'This phone number is already registered.',
             ]);
         }
 
@@ -146,32 +188,34 @@ class BladeAuthController extends Controller
         try {
             $user = User::create([
                 'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $normalizedPhone,
+                'email' => $isEmail ? ($isNewFlow ? $identifier : $email) : null,
+                'phone' => $isPhone ? $normalizedPhone : null,
                 'password' => Hash::make($request->password),
                 'referrer_id' => $actualReferrerId,
             ]);
 
             event(new Registered($user));
             Auth::login($user);
+            $request->session()->regenerate();
+            $request->session()->save();
 
             // Check for pending GrowBiz invitation
             if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
                 return to_route('growbiz.invitation.pending');
             }
 
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->route('dashboard');
 
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
                 if (str_contains($e->getMessage(), 'users_email_unique')) {
                     throw ValidationException::withMessages([
-                        'email' => 'This email is already registered.',
+                        $isNewFlow ? 'identifier' : 'email' => 'This email is already registered.',
                     ]);
                 }
                 if (str_contains($e->getMessage(), 'users_phone_unique')) {
                     throw ValidationException::withMessages([
-                        'phone' => 'This phone number is already registered.',
+                        $isNewFlow ? 'identifier' : 'phone' => 'This phone number is already registered.',
                     ]);
                 }
             }
@@ -200,7 +244,7 @@ class BladeAuthController extends Controller
             return route('admin.dashboard', absolute: false);
         }
 
-        $hasActiveEmployee = \App\Models\Employee::where('user_id', $user->id)
+        $hasActiveEmployee = \App\Models\Employee\Employee::where('user_id', $user->id)
             ->where('employment_status', 'active')
             ->exists();
 
@@ -211,9 +255,10 @@ class BladeAuthController extends Controller
         $accountType = $user->getPrimaryAccountType();
 
         if ($accountType === \App\Enums\AccountType::MEMBER) {
-            return route('grownet.dashboard', absolute: false);
+            return route('dashboard', absolute: false);
         }
 
         return route('dashboard', absolute: false);
     }
 }
+

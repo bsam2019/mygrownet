@@ -11,6 +11,7 @@ class ExpenseModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'expense_number',
         'category_id',
         'job_id',
@@ -35,6 +36,11 @@ class ExpenseModel extends Model
         'expense_date' => 'date',
         'approved_at' => 'datetime',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
 
     public function company(): BelongsTo
     {
@@ -74,5 +80,10 @@ class ExpenseModel extends Model
     public function isRejected(): bool
     {
         return $this->approval_status === 'rejected';
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
     }
 }

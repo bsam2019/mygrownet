@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GrowFinance\AccountController;
+use App\Http\Controllers\GrowFinance\AnalyticsController;
 use App\Http\Controllers\GrowFinance\ApiTokenController;
 use App\Http\Controllers\GrowFinance\BankingController;
 use App\Http\Controllers\GrowFinance\BudgetController;
@@ -89,7 +90,13 @@ Route::middleware(['auth', 'verified', GrowFinanceStandalone::class])->prefix('g
         Route::post('/transfer', [BankingController::class, 'transfer'])->name('transfer');
         Route::get('/reconcile', [BankingController::class, 'reconcile'])->name('reconcile');
         Route::post('/reconcile', [BankingController::class, 'storeReconciliation'])->name('reconcile.store');
+        Route::post('/import-statement', [BankingController::class, 'importStatement'])->name('import-statement');
+        Route::post('/match', [BankingController::class, 'matchTransaction'])->name('match');
+        Route::post('/unmatch/{matchId}', [BankingController::class, 'unmatchTransaction'])->name('unmatch');
     });
+
+    // Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {

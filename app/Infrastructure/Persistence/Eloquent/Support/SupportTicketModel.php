@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\User;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 
 class SupportTicketModel extends Model
 {
@@ -17,8 +17,6 @@ class SupportTicketModel extends Model
         'investor_account_id',
         'category',
         'source',
-        'module',
-        'metadata',
         'priority',
         'status',
         'subject',
@@ -42,16 +40,7 @@ class SupportTicketModel extends Model
         'user_last_read_at' => 'datetime',
         'admin_last_read_at' => 'datetime',
         'satisfaction_rating' => 'integer',
-        'metadata' => 'array',
     ];
-
-    /**
-     * Scope to filter tickets by module/app context.
-     */
-    public function scopeForModule($query, string $module)
-    {
-        return $query->where('module', $module);
-    }
 
     public function user(): BelongsTo
     {

@@ -50,7 +50,7 @@ class MessageController extends Controller
         };
 
         // Use mobile view if requested or detected
-        $view = $isMobile ? 'MyGrowNet/Messages/MobileIndex' : 'MyGrowNet/Messages/Index';
+        $view = $isMobile ? 'GrowNet/Messages/MobileIndex' : 'GrowNet/Messages/Index';
 
         return Inertia::render($view, [
             'messages' => $messages,
@@ -97,7 +97,7 @@ class MessageController extends Controller
         $isMobile = $request->get('mobile') || $this->isMobileDevice($request);
 
         // Use mobile view if requested or detected
-        $view = $isMobile ? 'MyGrowNet/Messages/MobileShow' : 'MyGrowNet/Messages/Show';
+        $view = $isMobile ? 'GrowNet/Messages/MobileShow' : 'GrowNet/Messages/Show';
 
         return Inertia::render($view, [
             'messages' => $messages,

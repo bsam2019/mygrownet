@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BizBoost;
 use App\Domain\Module\Services\SubscriptionService;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
+use App\Services\BizBoost\AIContentSuggestionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,8 @@ use Inertia\Response;
 class AdvisorController extends Controller
 {
     public function __construct(
-        private SubscriptionService $subscriptionService
+        private SubscriptionService $subscriptionService,
+        private AIContentSuggestionService $aiService,
     ) {}
 
     public function index(Request $request): Response
@@ -61,7 +63,7 @@ class AdvisorController extends Controller
         $business = $this->getBusiness($request);
 
         // Check AI credits
-        $result = $this->subscriptionService->canIncrement($user, 'ai_credits', 'bizboost');
+        $result = $this->subscriptionService->canIncrement($user, 'ai_credits_per_month', 'bizboost');
         if (!$result['allowed']) {
             return response()->json([
                 'error' => 'AI credits exhausted. Please upgrade your plan.',
@@ -72,8 +74,8 @@ class AdvisorController extends Controller
         // Get business context for AI
         $context = $this->getBusinessContext($business);
 
-        // Generate AI response (placeholder - integrate with OpenAI)
-        $response = $this->generateAdvisorResponse($validated['message'], $context);
+        // Generate AI response
+        $response = $this->aiService->generateAdvisorResponse($validated['message'], $context);
 
         // Log the interaction
         DB::table('bizboost_ai_usage_logs')->insert([
@@ -83,16 +85,10 @@ class AdvisorController extends Controller
             'content_type' => 'advisor_chat',
             'prompt' => $validated['message'],
             'response' => $response,
-            'input_tokens' => 50,  // Placeholder
-            'output_tokens' => 50, // Placeholder
-            'tokens_used' => 100,  // Placeholder
             'credits_used' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        // Increment AI usage
-        $this->subscriptionService->incrementUsage($user, 'ai_credits', 'bizboost');
 
         return response()->json([
             'message' => $response,
@@ -142,65 +138,6 @@ class AdvisorController extends Controller
             'industry' => $business->industry,
             'insights' => $this->getBusinessInsights($business),
         ];
-    }
-
-    private function generateAdvisorResponse(string $message, array $context): string
-    {
-        // Placeholder responses based on keywords
-        // In production, this would call OpenAI API
-        $message = strtolower($message);
-        $businessName = $context['business_name'];
-        $insights = $context['insights'];
-
-        if (str_contains($message, 'sales') || str_contains($message, 'revenue')) {
-            $salesCount = $insights['sales_count_30d'];
-            $salesTotal = number_format($insights['total_sales_30d'], 2);
-            return "Based on your data, {$businessName} has made {$salesCount} sales totaling K{$salesTotal} in the last 30 days. " .
-                "To boost sales, consider:\n\n" .
-                "1. **Run a promotion campaign** - Create a limited-time offer to drive urgency\n" .
-                "2. **Engage inactive customers** - Reach out to customers who haven't purchased recently\n" .
-                "3. **Showcase your top product** - Your best seller is '{$insights['top_product']}', feature it prominently\n\n" .
-                "Would you like me to help you create a sales campaign?";
-        }
-
-        if (str_contains($message, 'marketing') || str_contains($message, 'promote')) {
-            $postsCount = $insights['posts_30d'];
-            return "You've created {$postsCount} posts in the last 30 days. Here are some marketing tips:\n\n" .
-                "1. **Post consistently** - Aim for at least 3-4 posts per week\n" .
-                "2. **Use our templates** - Industry-specific templates can save time\n" .
-                "3. **Schedule ahead** - Plan your content calendar for the week\n" .
-                "4. **Engage with comments** - Respond to customer interactions promptly\n\n" .
-                "Would you like me to suggest some post ideas for your industry?";
-        }
-
-        if (str_contains($message, 'customer') || str_contains($message, 'clients')) {
-            $customerCount = $insights['total_customers'];
-            $newCustomers = $insights['new_customers_30d'];
-            return "You have {$customerCount} customers, with {$newCustomers} new ones in the last 30 days. " .
-                "To grow your customer base:\n\n" .
-                "1. **Ask for referrals** - Happy customers are your best marketers\n" .
-                "2. **Offer loyalty rewards** - Encourage repeat purchases\n" .
-                "3. **Collect feedback** - Understand what customers love about you\n" .
-                "4. **Use WhatsApp broadcasts** - Keep customers informed about new products\n\n" .
-                "Would you like help setting up a customer engagement campaign?";
-        }
-
-        if (str_contains($message, 'help') || str_contains($message, 'what can you do')) {
-            return "I'm your AI Business Advisor! I can help you with:\n\n" .
-                "📊 **Sales Analysis** - Understanding your sales trends\n" .
-                "📱 **Marketing Strategy** - Tips for social media and promotions\n" .
-                "👥 **Customer Growth** - Strategies to attract and retain customers\n" .
-                "📅 **Campaign Planning** - Creating effective marketing campaigns\n" .
-                "💡 **Business Tips** - General advice for growing your business\n\n" .
-                "Just ask me anything about your business!";
-        }
-
-        // Default response
-        return "Thanks for your question! Based on your business data, here are some general recommendations:\n\n" .
-            "1. Keep posting regularly on social media\n" .
-            "2. Engage with your {$insights['total_customers']} customers through WhatsApp\n" .
-            "3. Consider running a promotional campaign\n\n" .
-            "Is there something specific you'd like help with? I can assist with sales, marketing, customer engagement, or campaign planning.";
     }
 
     private function generateRecommendations(BizBoostBusinessModel $business, array $insights): array

@@ -2,7 +2,7 @@
 
 namespace App\Application\Services;
 
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\ProjectProfitDistribution;
 use App\Models\ProjectVote;

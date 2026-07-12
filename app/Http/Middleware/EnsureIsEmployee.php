@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Employee;
+use App\Models\Employee\Employee;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +36,7 @@ class EnsureIsEmployee
             if ($user->hasRole('Administrator') || $user->hasRole('admin')) {
                 return redirect()->route('admin.dashboard');
             }
-            return redirect()->route('dashboard')
+            return redirect()->route('mygrownet.classic-dashboard')
                 ->with('error', 'You do not have access to the employee portal.');
         }
 
@@ -51,7 +51,7 @@ class EnsureIsEmployee
                 return response()->json(['error' => 'Employee profile not set up.'], 403);
             }
             // User has role but no employee record - show error page
-            return redirect()->route('dashboard')
+            return redirect()->route('mygrownet.classic-dashboard')
                 ->with('error', 'Your employee profile is not set up. Please contact HR to complete your onboarding.');
         }
 

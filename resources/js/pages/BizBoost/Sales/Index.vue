@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import BizBoostLayout from '@/Layouts/BizBoostLayout.vue';
+import { formatBizBoostPrice } from '@/composables/useBizBoostCurrency';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
@@ -66,15 +67,15 @@ const formatDate = (date: string) => {
             <div class="grid grid-cols-3 gap-4">
                 <div class="rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
                     <p class="text-sm text-gray-500 dark:text-gray-400">Today</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">K{{ stats.today.toLocaleString() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatBizBoostPrice(stats.today) }}</p>
                 </div>
                 <div class="rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
                     <p class="text-sm text-gray-500 dark:text-gray-400">This Week</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white">K{{ stats.this_week.toLocaleString() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ formatBizBoostPrice(stats.this_week) }}</p>
                 </div>
                 <div class="rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
                     <p class="text-sm text-gray-500 dark:text-gray-400">This Month</p>
-                    <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">K{{ stats.this_month.toLocaleString() }}</p>
+                    <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">{{ formatBizBoostPrice(stats.this_month) }}</p>
                 </div>
             </div>
 
@@ -136,7 +137,7 @@ const formatDate = (date: string) => {
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">#{{ sale.id }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ sale.customer_name || 'Walk-in' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{{ sale.items_count }} items</td>
-                            <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">K{{ sale.total_amount.toLocaleString() }}</td>
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white">{{ formatBizBoostPrice(sale.total_amount) }}</td>
                             <td class="px-6 py-4">
                                 <span
                                     :class="[

@@ -8,6 +8,7 @@ import QuickActionsWidget from '@/Components/BizBoost/Dashboard/QuickActionsWidg
 import DashboardWidget from '@/Components/BizBoost/Dashboard/DashboardWidget.vue';
 import DashboardCustomizer from '@/Components/BizBoost/Dashboard/DashboardCustomizer.vue';
 import { useBizBoostDashboard } from '@/composables/useBizBoostDashboard';
+import { bizBoostCurrencySymbol } from '@/composables/useBizBoostCurrency';
 import {
     ShoppingBagIcon,
     UsersIcon,
@@ -340,7 +341,7 @@ const onDrop = (targetId: string, position: 'before' | 'after') => {
                             :icon="CurrencyDollarIcon"
                             href="/bizboost/sales"
                             color="amber"
-                            prefix="K"
+                            :prefix="bizBoostCurrencySymbol()"
                             :sparkline-data="sparklineData?.sales"
                         />
                     </div>

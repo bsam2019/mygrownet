@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\LgrManualAward;
+use App\Models\LGR\LgrManualAward;
 use App\Models\User;
 use App\Application\Notification\UseCases\SendNotificationUseCase;
 use App\Services\IdempotencyService;

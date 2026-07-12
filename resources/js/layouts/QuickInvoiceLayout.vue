@@ -9,7 +9,8 @@ import {
     UserCircleIcon,
     ArrowLeftOnRectangleIcon,
     HomeIcon,
-    ChevronDownIcon
+    ChevronDownIcon,
+    CreditCardIcon
 } from '@heroicons/vue/24/outline';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
@@ -24,6 +25,7 @@ const navigation = [
     { name: 'Create', href: route('quick-invoice.create'), icon: DocumentTextIcon },
     { name: 'History', href: route('quick-invoice.history'), icon: ClockIcon },
     { name: 'Design Studio', href: route('quick-invoice.design-studio'), icon: PaintBrushIcon },
+    { name: 'Subscription', href: route('quick-invoice.subscription.plans'), icon: CreditCardIcon },
 ];
 
 // Close dropdown when clicking outside

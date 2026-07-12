@@ -9,15 +9,16 @@ use App\Domain\Employee\Services\TimeOffService;
 use App\Domain\Employee\Services\AttendanceService;
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\ValueObjects\TaskId;
-use App\Models\Employee;
-use App\Models\EmployeeTask;
-use App\Models\EmployeeDocument;
-use App\Models\EmployeeNotification;
-use App\Models\EmployeePayslip;
-use App\Models\EmployeeAnnouncement;
+use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeTask;
+use App\Models\Employee\EmployeeDocument;
+use App\Models\Employee\EmployeeNotification;
+use App\Models\Employee\EmployeePayslip;
+use App\Models\Employee\EmployeeAnnouncement;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use DateTimeImmutable;
@@ -506,7 +507,7 @@ class PortalController extends Controller
         // Get available years
         $availableYears = EmployeePayslip::where('employee_id', $employee->id)
             ->paid()
-            ->selectRaw('YEAR(payment_date) as year')
+            ->selectRaw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', payment_date) as year" : 'YEAR(payment_date) as year')
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year');
@@ -707,7 +708,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function performanceReviewShow(\App\Models\EmployeePerformanceReview $review)
+    public function performanceReviewShow(\App\Models\Employee\EmployeePerformanceReview $review)
     {
         $employee = $this->getEmployee();
 
@@ -720,7 +721,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function submitSelfAssessment(Request $request, \App\Models\EmployeePerformanceReview $review)
+    public function submitSelfAssessment(Request $request, \App\Models\Employee\EmployeePerformanceReview $review)
     {
         $employee = $this->getEmployee();
 
@@ -787,7 +788,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function updateCourseProgress(Request $request, \App\Models\EmployeeCourseEnrollment $enrollment)
+    public function updateCourseProgress(Request $request, \App\Models\Employee\EmployeeCourseEnrollment $enrollment)
     {
         $employee = $this->getEmployee();
 
@@ -856,7 +857,7 @@ class PortalController extends Controller
             ->with('success', 'Expense created successfully.');
     }
 
-    public function expenseShow(\App\Models\EmployeeExpense $expense)
+    public function expenseShow(\App\Models\Employee\EmployeeExpense $expense)
     {
         $employee = $this->getEmployee();
 
@@ -869,7 +870,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function expenseSubmit(\App\Models\EmployeeExpense $expense)
+    public function expenseSubmit(\App\Models\Employee\EmployeeExpense $expense)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -879,7 +880,7 @@ class PortalController extends Controller
         return back()->with('success', 'Expense submitted for approval.');
     }
 
-    public function expenseCancel(\App\Models\EmployeeExpense $expense)
+    public function expenseCancel(\App\Models\Employee\EmployeeExpense $expense)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -958,7 +959,7 @@ class PortalController extends Controller
             ->with('success', 'Support ticket created successfully.');
     }
 
-    public function supportTicketShow(Request $request, \App\Models\EmployeeSupportTicket $ticket)
+    public function supportTicketShow(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
     {
         $employeeId = $this->getEmployeeId();
         $ticketService = app(\App\Domain\Employee\Services\SupportTicketService::class);
@@ -979,7 +980,7 @@ class PortalController extends Controller
         ]);
     }
 
-    public function supportTicketAddComment(Request $request, \App\Models\EmployeeSupportTicket $ticket)
+    public function supportTicketAddComment(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -994,7 +995,7 @@ class PortalController extends Controller
         return back()->with('success', 'Comment added.');
     }
 
-    public function supportTicketChat(Request $request, \App\Models\EmployeeSupportTicket $ticket)
+    public function supportTicketChat(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
     {
         try {
             $employee = $this->getEmployee();
@@ -1098,7 +1099,7 @@ class PortalController extends Controller
     /**
      * Rate a closed support ticket
      */
-    public function supportTicketRate(Request $request, \App\Models\EmployeeSupportTicket $ticket)
+    public function supportTicketRate(Request $request, \App\Models\Employee\EmployeeSupportTicket $ticket)
     {
         $employeeId = $this->getEmployeeId();
         
@@ -1199,7 +1200,7 @@ class PortalController extends Controller
         return back()->with('success', 'Event created.');
     }
 
-    public function calendarEventUpdate(Request $request, \App\Models\EmployeeCalendarEvent $event)
+    public function calendarEventUpdate(Request $request, \App\Models\Employee\EmployeeCalendarEvent $event)
     {
         $employeeId = $this->getEmployeeId();
 
@@ -1217,7 +1218,7 @@ class PortalController extends Controller
         return back()->with('success', 'Event updated.');
     }
 
-    public function calendarEventCancel(\App\Models\EmployeeCalendarEvent $event)
+    public function calendarEventCancel(\App\Models\Employee\EmployeeCalendarEvent $event)
     {
         $employeeId = $this->getEmployeeId();
 

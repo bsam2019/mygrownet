@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\StarterKitService;
 use App\Services\DefaultSponsorService;
-use App\Services\LgrActivityTrackingService;
-use App\Domain\Payment\Services\CurrencyDetectionService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,35 +14,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
     /**
      * Show the registration page.
-     * Using Blade template for reliability (no JS dependency).
      */
-    public function create(Request $request)
+    public function create(): Response
     {
-        // Store redirect URL in session if provided via query parameter
-        // This allows module landing pages (like BizBoost) to redirect back after registration
-        if ($request->has('redirect')) {
-            $redirectUrl = $request->query('redirect');
-            // Only allow internal redirects (starting with /)
-            if (is_string($redirectUrl) && str_starts_with($redirectUrl, '/')) {
-                $request->session()->put('url.intended', url($redirectUrl));
-            }
-        }
-
-        // If this is an Inertia request, force a full page reload
-        if ($request->header('X-Inertia')) {
-            return Inertia::location(url()->current());
-        }
-
-        // Use unified Blade template - bypass Inertia completely
-        return response()->view('auth.unified', [
-            'activeTab' => 'register',
-            'referralCode' => $request->query('ref'),
-        ]);
+        return Inertia::render('auth/Register');
     }
 
     /**
@@ -52,12 +31,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(
-        Request $request, 
-        DefaultSponsorService $defaultSponsorService,
-        LgrActivityTrackingService $lgrTrackingService,
-        CurrencyDetectionService $currencyDetectionService
-    ): RedirectResponse
+    public function store(Request $request, DefaultSponsorService $defaultSponsorService): RedirectResponse
     {
         // Normalize phone number BEFORE validation
         $normalizedPhone = $request->phone ? User::normalizePhone($request->phone) : null;
@@ -111,8 +85,6 @@ class RegisteredUserController extends Controller
         // Find the best placement position in the 3x3 matrix (with spillover)
         $actualReferrerId = $originalReferrerId ? User::findMatrixPlacement($originalReferrerId) : null;
 
-        $userCurrency = $currencyDetectionService->detectCurrency($request->ip(), null);
-
         try {
             $user = User::create([
                 'name' => $request->name,
@@ -120,8 +92,6 @@ class RegisteredUserController extends Controller
                 'phone' => $normalizedPhone,
                 'password' => Hash::make($request->password),
                 'referrer_id' => $actualReferrerId,
-                'user_currency' => $userCurrency,
-                'preferred_currency' => $userCurrency,
             ]);
 
             event(new Registered($user));
@@ -130,25 +100,23 @@ class RegisteredUserController extends Controller
             // See StarterKitService::awardRegistrationBonus() for correct implementation
             // Registration alone does NOT award points
 
-            // CRITICAL: Record LGR activity for referrer (if exists)
-            if ($originalReferrerId) {
-                $lgrTrackingService->recordReferralRegistration(
-                    $originalReferrerId,
-                    $user->id,
-                    $user->name
-                );
-            }
-
             Auth::login($user);
 
-            // Check for pending GrowBiz invitation (token or code)
-            if ($request->session()->has('pending_invitation_token') || $request->session()->has('pending_invitation_code')) {
-                return to_route('growbiz.invitation.pending');
-            }
+            // Determine redirect based on subdomain
+            $host = $request->getHost();
+            $redirectMap = [
+                'bizboost.mygrownet.com'     => 'bizboost.sub.dashboard',
+                'growmart.mygrownet.com'     => 'growmart.sub.dashboard',
+                'zamstay.mygrownet.com'      => 'zamstay.sub.dashboard',
+                'bizdocs.mygrownet.com'      => 'bizdocs.sub.dashboard',
+                'growbuilder.mygrownet.com'  => 'growbuilder.sub.dashboard',
+                'venture.mygrownet.com'      => 'venture.sub.dashboard',
+                'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
+                'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
+            ];
+            $fallback = $redirectMap[$host] ?? 'dashboard';
 
-            // Use intended redirect if set (e.g., from BizBoost landing page)
-            // Otherwise redirect to dashboard
-            return redirect()->intended(route('dashboard', absolute: false));
+            return to_route($fallback);
             
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle any database errors gracefully

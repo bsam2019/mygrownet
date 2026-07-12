@@ -154,38 +154,38 @@ class QueryCacheService
             return [
                 'investment_trends' => DB::table('investments')
                     ->select([
-                        DB::raw('DATE_FORMAT(investment_date, "%Y-%m") as month'),
+                        DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', investment_date) as month" : "DATE_FORMAT(investment_date, '%Y-%m') as month"),
                         DB::raw('COUNT(*) as count'),
                         DB::raw('SUM(amount) as total_amount')
                     ])
                     ->where('investment_date', '>=', $startDate)
-                    ->groupBy(DB::raw('DATE_FORMAT(investment_date, "%Y-%m")'))
+                    ->groupBy(DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', investment_date)" : "DATE_FORMAT(investment_date, '%Y-%m')"))
                     ->orderBy('month')
                     ->get()
                     ->toArray(),
                 
                 'commission_trends' => DB::table('referral_commissions')
                     ->select([
-                        DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                        DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month" : "DATE_FORMAT(created_at, '%Y-%m') as month"),
                         DB::raw('COUNT(*) as count'),
                         DB::raw('SUM(amount) as total_amount')
                     ])
                     ->where('created_at', '>=', $startDate)
                     ->where('status', 'paid')
-                    ->groupBy(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'))
+                    ->groupBy(DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')"))
                     ->orderBy('month')
                     ->get()
                     ->toArray(),
                 
                 'withdrawal_trends' => DB::table('withdrawal_requests')
                     ->select([
-                        DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                        DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at) as month" : "DATE_FORMAT(created_at, '%Y-%m') as month"),
                         DB::raw('COUNT(*) as count'),
                         DB::raw('SUM(amount) as total_amount')
                     ])
                     ->where('created_at', '>=', $startDate)
                     ->where('status', 'completed')
-                    ->groupBy(DB::raw('DATE_FORMAT(created_at, "%Y-%m")'))
+                    ->groupBy(DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', created_at)" : "DATE_FORMAT(created_at, '%Y-%m')"))
                     ->orderBy('month')
                     ->get()
                     ->toArray()

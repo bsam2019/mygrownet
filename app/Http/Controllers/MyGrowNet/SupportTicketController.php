@@ -29,8 +29,8 @@ class SupportTicketController extends Controller
         $tickets = $this->getUserTicketsUseCase->execute(auth()->id());
 
         $view = request()->query('mobile') 
-            ? 'MyGrowNet/Support/MobileIndex' 
-            : 'MyGrowNet/Support/Index';
+            ? 'GrowNet/Support/MobileIndex' 
+            : 'GrowNet/Support/Index';
 
         return Inertia::render($view, [
             'tickets' => $tickets
@@ -40,8 +40,8 @@ class SupportTicketController extends Controller
     public function create(): Response
     {
         $view = request()->query('mobile') 
-            ? 'MyGrowNet/Support/MobileCreate' 
-            : 'MyGrowNet/Support/Create';
+            ? 'GrowNet/Support/MobileCreate' 
+            : 'GrowNet/Support/Create';
 
         return Inertia::render($view);
     }
@@ -84,8 +84,8 @@ class SupportTicketController extends Controller
             }
 
             $view = request()->query('mobile') 
-                ? 'MyGrowNet/Support/MobileShow' 
-                : 'MyGrowNet/Support/Show';
+                ? 'GrowNet/Support/MobileShow' 
+                : 'GrowNet/Support/Show';
 
             return Inertia::render($view, $data);
         } catch (\Exception $e) {

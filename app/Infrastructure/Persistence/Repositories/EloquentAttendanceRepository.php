@@ -6,7 +6,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Employee\ValueObjects\EmployeeId;
 use App\Domain\Employee\Repositories\AttendanceRepositoryInterface;
-use App\Models\EmployeeAttendance;
+use App\Models\Employee\EmployeeAttendance;
 use DateTimeImmutable;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;

@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Application\Services\CommunityNotificationService;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\ProjectProfitDistribution;
 use App\Models\ProjectVote;

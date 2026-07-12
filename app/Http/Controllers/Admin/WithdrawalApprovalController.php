@@ -48,36 +48,22 @@ class WithdrawalApprovalController extends Controller
                 return back()->with('error', 'This withdrawal cannot be approved.');
             }
 
+            // Check if user has sufficient balance
+            if ($withdrawal->user->balance < $withdrawal->amount) {
+                return back()->with('error', 'User has insufficient balance for this withdrawal.');
+            }
+
             DB::beginTransaction();
 
             try {
-                // Find the corresponding transaction
-                $transaction = DB::table('transactions')
-                    ->where('reference_number', $withdrawal->reference)
-                    ->where('user_id', $withdrawal->user_id)
-                    ->where('transaction_type', 'withdrawal')
-                    ->first();
-                
-                // Update withdrawal status and link to transaction
+                // Deduct amount from user's balance
+                $withdrawal->user->decrement('balance', $withdrawal->amount);
+
+                // Update withdrawal status
                 $withdrawal->update([
                     'status' => 'approved',
                     'processed_at' => now(),
-                    'transaction_id' => $transaction ? $transaction->id : null,
                 ]);
-                
-                // Update corresponding transaction status
-                if ($transaction) {
-                    DB::table('transactions')
-                        ->where('id', $transaction->id)
-                        ->update([
-                            'status' => 'completed',
-                            'updated_at' => now(),
-                        ]);
-                }
-                
-                // Clear wallet cache
-                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
-                $walletService->clearCache($withdrawal->user);
 
                 // Log activity
                 ActivityLog::create([
@@ -93,7 +79,7 @@ class WithdrawalApprovalController extends Controller
                 // $withdrawal->user->notify(new WithdrawalApproved($withdrawal));
 
                 DB::commit();
-                return back()->with('success', 'Withdrawal approved successfully.');
+                return back()->with('success', 'Withdrawal approved successfully. Amount deducted from user balance.');
             } catch (\Exception $e) {
                 DB::rollBack();
                 \Log::error('Withdrawal approval failed: ' . $e->getMessage());
@@ -127,21 +113,6 @@ class WithdrawalApprovalController extends Controller
                     'reason' => $request->reason,
                     'processed_at' => now(),
                 ]);
-                
-                // Update corresponding transaction status
-                DB::table('transactions')
-                    ->where('reference_number', $withdrawal->reference)
-                    ->where('user_id', $withdrawal->user_id)
-                    ->where('transaction_type', 'withdrawal')
-                    ->update([
-                        'status' => 'failed',
-                        'description' => DB::raw("CONCAT(description, ' - Rejected: " . addslashes($request->reason) . "')"),
-                        'updated_at' => now(),
-                    ]);
-                
-                // Clear wallet cache (rejected withdrawals should restore balance)
-                $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
-                $walletService->clearCache($withdrawal->user);
 
                 // Log activity
                 ActivityLog::create([

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Services\DashboardService;
+use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\InvestmentCategory;
 use App\Models\InvestmentOpportunity;
@@ -12,6 +13,7 @@ use App\Models\ReferralCommission;
 use App\Models\ProfitShare;
 use App\Models\WithdrawalRequest;
 use App\Domain\Financial\Services\WithdrawalPolicyService;
+use App\Domain\Investment\Services\InvestmentTierService;
 use App\Domain\Reward\Services\ReferralMatrixService;
 use App\Infrastructure\Persistence\Repositories\EloquentReferralRepository;
 use Illuminate\Http\Request;
@@ -19,40 +21,38 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     protected $dashboardService;
     protected $withdrawalPolicyService;
+    protected $investmentTierService;
     protected $referralMatrixService;
     protected $referralRepository;
 
     public function __construct(
         DashboardService $dashboardService,
         WithdrawalPolicyService $withdrawalPolicyService,
+        InvestmentTierService $investmentTierService,
         ReferralMatrixService $referralMatrixService,
         EloquentReferralRepository $referralRepository
     ) {
         $this->dashboardService = $dashboardService;
         $this->withdrawalPolicyService = $withdrawalPolicyService;
+        $this->investmentTierService = $investmentTierService;
         $this->referralMatrixService = $referralMatrixService;
         $this->referralRepository = $referralRepository;
     }
 
     /**
-     * Display the Unified Dashboard
-     * 
-     * Shows everything in one place:
-     * - Wallet balance and quick actions
-     * - App launcher (modules)
-     * - Quick stats
-     * - Recent activity
+     * Display role-based dashboard with VBIF-specific data aggregation
      */
     public function index()
     {
         $user = auth()->user();
-        
+
         // Get modules using the use case directly
         $getUserModulesUseCase = app(\App\Application\UseCases\Module\GetUserModulesUseCase::class);
         $moduleDTOs = $getUserModulesUseCase->execute($user);
@@ -144,19 +144,51 @@ class DashboardController extends Controller
             'bizboost' => 'bizboost.dashboard',
             'growfinance' => 'growfinance.dashboard',
             'growbiz' => 'growbiz.dashboard',
-            'home' => 'home-hub.index', // App Launcher
+            'home' => 'home-hub.index',
         ];
         
         $routeName = $appRoutes[$app] ?? 'home-hub.index';
         
-        // Check if route exists before redirecting
         if (\Route::has($routeName)) {
             return redirect()->route($routeName);
         }
         
-        // Fallback to HomeHub
-        $homeHubController = app(\App\Presentation\Http\Controllers\HomeHubController::class);
-        return $homeHubController->index(request());
+        // Check if user is an employee - redirect to employee portal
+        if ($user->hasRole('employee')) {
+            $employee = \App\Models\Employee\Employee::where('user_id', $user->id)
+                ->where('employment_status', 'active')
+                ->first();
+            
+            if ($employee) {
+                return redirect()->route('employee.portal.dashboard');
+            }
+        }
+        
+        // Check user preference for landing dashboard
+        $preference = $user->preferred_dashboard;
+        
+        if ($preference && !in_array($preference, ['mobile', 'desktop', 'auto', 'classic'], true) && Route::has($preference)) {
+            // User has a valid module dashboard route preference
+            return redirect()->route($preference);
+        }
+        
+        // Default: Render the user apps dashboard
+        $walletBalance = app(\App\Services\WalletService::class)->calculateBalance($user);
+        $referralCommissions = $user->referralCommissions()
+            ->where('status', 'paid')
+            ->sum('amount');
+        
+        return Inertia::render('Dashboard/Index', [
+            'walletBalance' => (float) $walletBalance,
+            'bonusBalance' => (float) ($user->bonus_balance ?? 0),
+            'totalDeposits' => (float) ($user->total_deposits ?? 0),
+            'totalWithdrawals' => (float) ($user->total_withdrawals ?? 0),
+            'commissions' => (float) $referralCommissions,
+            'profitShares' => (float) ProfitShare::where('user_id', $user->id)->sum('amount'),
+            'user' => $user,
+            'accountType' => $user->account_type ?? 'member',
+            'isAdmin' => $user->is_admin,
+        ]);
     }
 
     /**
@@ -353,8 +385,8 @@ class DashboardController extends Controller
     
     private function getWalletBalance($user)
     {
-        // Use WalletService for consistent calculation
-        $walletService = app(\App\Domain\Wallet\Services\WalletService::class);
+        // Use centralized WalletService for consistent calculation
+        $walletService = app(\App\Services\WalletService::class);
         return $walletService->calculateBalance($user);
     }
     
@@ -617,16 +649,16 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // VBIF removed - use membership tier logic
-        $eligibility = $user->checkMyGrowNetTierUpgradeEligibility();
+        $eligibility = $user->checkTierUpgradeEligibility();
+        $recommendations = $this->investmentTierService->getTierUpgradeRecommendations($user);
         
         return response()->json([
             'success' => true,
             'data' => [
                 'eligibility' => $eligibility,
-                'recommendations' => [],
-                'tier_comparison' => [],
-                'upgrade_benefits' => []
+                'recommendations' => $recommendations,
+                'tier_comparison' => $this->getTierComparisonData($user),
+                'upgrade_benefits' => $this->calculateUpgradeBenefits($user)
             ]
         ]);
     }

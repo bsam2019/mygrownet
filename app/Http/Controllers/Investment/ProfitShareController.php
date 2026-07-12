@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Investment;
 
 use App\Http\Controllers\Controller;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\ProfitShare;
 use App\Models\Transaction;
 use Carbon\Carbon;

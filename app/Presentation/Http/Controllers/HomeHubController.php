@@ -150,7 +150,7 @@ class HomeHubController extends Controller
         // Check user roles for special access
         $isAdmin = $user->hasRole('Administrator') || $user->hasRole('admin');
         $isManager = $user->rank === 'manager' || in_array($user->rank, ['manager', 'regional_manager']);
-        $isEmployee = $user->hasRole('employee') && \App\Models\Employee::where('user_id', $user->id)
+        $isEmployee = $user->hasRole('employee') && \App\Models\Employee\Employee::where('user_id', $user->id)
             ->where('employment_status', 'active')
             ->exists();
 

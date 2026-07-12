@@ -14,6 +14,12 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureInvestmentModel;
 use App\Infrastructure\Persistence\Eloquent\VentureBuilder\VentureShareholderModel;
 use App\Enums\AccountType;
+use App\Models\BGF\BgfApplication;
+use App\Models\BGF\BgfContract;
+use App\Models\BGF\BgfDisbursement;
+use App\Models\BGF\BgfProject;
+use App\Models\BGF\BgfRepayment;
+use App\Models\Community\CommunityProject;
 
 class User extends Authenticatable
 {
@@ -225,6 +231,11 @@ class User extends Authenticatable
         'loan_notes',
         // Multi-account type support
         'account_types',
+        // Currency fields
+        'user_currency',
+        'preferred_currency',
+        // CMS default company preference
+        'default_company_id',
         // LifePlus fields
         'lifeplus_onboarded',
         'fcm_token',
@@ -287,6 +298,8 @@ class User extends Authenticatable
         // LifePlus casts
         'lifeplus_onboarded' => 'boolean',
         'lifeplus_notifications_enabled' => 'boolean',
+        // CMS
+        'default_company_id' => 'integer',
     ];
 
     // ==========================================
@@ -616,6 +629,11 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
+    }
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
     }
 
     // Professional Level relationship (MyGrowNet 7-level system)
@@ -1063,9 +1081,19 @@ class User extends Authenticatable
             return false;
         }
         
-        // Double-check: User must have at least one verified payment
-        return $this->memberPayments()
+        // Check legacy member_payments table (pre-Phase 3 records)
+        $hasLegacyPayment = $this->memberPayments()
             ->where('status', 'verified')
+            ->exists();
+
+        if ($hasLegacyPayment) {
+            return true;
+        }
+
+        // Check transactions table (Phase 3+ records - all verified payments migrated here)
+        return $this->transactions()
+            ->whereIn('transaction_type', ['wallet_topup', 'starter_kit_purchase', 'subscription_payment'])
+            ->where('status', 'completed')
             ->exists();
     }
 
@@ -2129,6 +2157,7 @@ class User extends Authenticatable
      */
     public function getCmsUserAttribute(): ?\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel
     {
+        // 1. Session-set company (highest priority — active working session)
         $activeCompanyId = session('active_cms_company_id');
 
         if ($activeCompanyId) {
@@ -2139,7 +2168,19 @@ class User extends Authenticatable
             if ($record) return $record;
         }
 
-        // Fall back to first active membership
+        // 2. User's default company preference (persistent across sessions)
+        if ($this->default_company_id) {
+            $record = $this->cmsUsers()
+                ->where('company_id', $this->default_company_id)
+                ->where('status', 'active')
+                ->first();
+            if ($record) {
+                session(['active_cms_company_id' => $this->default_company_id]);
+                return $record;
+            }
+        }
+
+        // 3. Fall back to first active membership
         return $this->cmsUsers()->where('status', 'active')->first();
     }
 
@@ -2276,5 +2317,15 @@ class User extends Authenticatable
         }
         
         return $currentAgency->owner_user_id === $this->id;
+    }
+
+    public function portalCustomers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel::class,
+            'portal_user_customers',
+            'user_id',
+            'customer_id'
+        )->withPivot('company_id', 'is_active', 'last_login_at')->withTimestamps();
     }
 }

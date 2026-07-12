@@ -42,6 +42,7 @@ class GeneralWalletController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $currency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         
         // Reset daily withdrawal limit if needed
         $this->resetDailyWithdrawalIfNeeded($user);
@@ -49,16 +50,20 @@ class GeneralWalletController extends Controller
         // Get wallet breakdown using unified service for better account type support
         $breakdown = $this->unifiedWalletService->getWalletBreakdown($user);
         
-        // Get verification limits
+        // Get verification limits (ZMW for enforcement, user's currency for display)
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         $remainingDailyLimit = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
+        $displayLimits = $this->getVerificationLimits($user->verification_level ?? 'basic', $currency);
+        $remainingDailyLimitDisplay = $currency === 'USD'
+            ? round(($displayLimits['daily_withdrawal'] / $limits['daily_withdrawal']) * max(0, $remainingDailyLimit), 2)
+            : max(0, $remainingDailyLimit);
         
         // Get recent transactions using unified service
         $recentTransactions = $this->unifiedWalletService->getRecentTransactions($user, 15);
         
         \Log::info('Wallet data being passed to view:', [
             'user_id' => $user->id,
-            'user_currency' => $user->user_currency,
+            'user_currency' => $currency,
             'preferred_currency' => $user->preferred_currency,
             'balance' => $breakdown['balance'],
         ]);
@@ -77,10 +82,12 @@ class GeneralWalletController extends Controller
             'pendingWithdrawals' => (float) ($user->withdrawals()->where('status', 'pending')->sum('amount') ?? 0),
             'verificationLevel' => $user->verification_level ?? 'basic',
             'verificationLimits' => $limits,
+            'verificationLimitsDisplay' => $displayLimits,
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
+            'remainingDailyLimitDisplay' => max(0, $remainingDailyLimitDisplay),
             'policyAccepted' => (bool) ($user->wallet_policy_accepted ?? false),
             'accountType' => $user->getPrimaryAccountType()?->value ?? 'client',
-            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
+            'userCurrency' => $currency,
         ]);
     }
 
@@ -171,32 +178,11 @@ class GeneralWalletController extends Controller
     }
     
     /**
-     * Get verification limits based on level
+     * Get verification limits based on level and currency
      */
-    private function getVerificationLimits(string $level): array
+    private function getVerificationLimits(string $level, string $currency = 'ZMW'): array
     {
-        return match($level) {
-            'basic' => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-            'enhanced' => [
-                'daily_withdrawal' => 5000,
-                'monthly_withdrawal' => 50000,
-                'single_transaction' => 2000,
-            ],
-            'premium' => [
-                'daily_withdrawal' => 20000,
-                'monthly_withdrawal' => 200000,
-                'single_transaction' => 10000,
-            ],
-            default => [
-                'daily_withdrawal' => 1000,
-                'monthly_withdrawal' => 10000,
-                'single_transaction' => 500,
-            ],
-        };
+        return app(\App\Services\VerificationLimitService::class)->getLimits($level, $currency);
     }
     
     /**
@@ -252,10 +238,12 @@ class GeneralWalletController extends Controller
         
         return Inertia::render('Wallet/TopUp', [
             'balance' => $breakdown['balance'],
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             'paymentMethods' => [
                 ['id' => 'mtn', 'name' => 'MTN Mobile Money', 'type' => 'mobile_money', 'provider' => 'mtn'],
                 ['id' => 'airtel', 'name' => 'Airtel Money', 'type' => 'mobile_money', 'provider' => 'airtel'],
                 ['id' => 'zamtel', 'name' => 'Zamtel Kwacha', 'type' => 'mobile_money', 'provider' => 'zamtel'],
+                ['id' => 'crypto', 'name' => 'Cryptocurrency', 'type' => 'crypto', 'provider' => 'nowpayments'],
             ],
         ]);
     }
@@ -344,18 +332,26 @@ class GeneralWalletController extends Controller
     public function showWithdraw(Request $request)
     {
         $user = $request->user();
+        $currency = $user->user_currency ?? $user->preferred_currency ?? 'ZMW';
         
         $this->resetDailyWithdrawalIfNeeded($user);
         
         $breakdown = $this->unifiedWalletService->getWalletBreakdown($user);
         $limits = $this->getVerificationLimits($user->verification_level ?? 'basic');
         $remainingDailyLimit = $limits['daily_withdrawal'] - ($user->daily_withdrawal_used ?? 0);
+        $displayLimits = $this->getVerificationLimits($user->verification_level ?? 'basic', $currency);
+        $remainingDailyLimitDisplay = $currency === 'USD'
+            ? round(($displayLimits['daily_withdrawal'] / $limits['daily_withdrawal']) * max(0, $remainingDailyLimit), 2)
+            : max(0, $remainingDailyLimit);
         
         return Inertia::render('Wallet/Withdraw', [
             'balance' => $breakdown['balance'],
+            'userCurrency' => $currency,
             'remainingDailyLimit' => max(0, $remainingDailyLimit),
+            'remainingDailyLimitDisplay' => max(0, $remainingDailyLimitDisplay),
             'verificationLevel' => $user->verification_level ?? 'basic',
             'verificationLimits' => $limits,
+            'verificationLimitsDisplay' => $displayLimits,
             'withdrawalMethods' => [
                 ['id' => 'mtn', 'name' => 'MTN Mobile Money', 'type' => 'mobile_money'],
                 ['id' => 'airtel', 'name' => 'Airtel Money', 'type' => 'mobile_money'],
@@ -476,6 +472,7 @@ class GeneralWalletController extends Controller
         return Inertia::render('Wallet/History', [
             'transactions' => $transactions,
             'balance' => $breakdown['balance'],
+            'userCurrency' => $user->user_currency ?? $user->preferred_currency ?? 'ZMW',
             'totalDeposits' => $breakdown['credits']['deposits'],
             'totalWithdrawals' => $breakdown['debits']['withdrawals'],
         ]);

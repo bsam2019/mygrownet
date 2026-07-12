@@ -7,7 +7,7 @@ use App\Models\ReferralCommission;
 use App\Models\Subscription;
 use App\Models\PaymentTransaction;
 use App\Models\PhysicalReward;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProfitDistribution;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

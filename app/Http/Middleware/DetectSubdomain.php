@@ -59,11 +59,80 @@ class DetectSubdomain
                 return $this->handleCmsSubdomain($request, $next);
             }
             
+            // Handle GrowMart subdomain
+            // Routes are defined via Route::domain('growmart.mygrownet.com') in growmart.php
+            if ($subdomain === 'growmart') {
+                $baseUrl = "https://{$subdomain}.mygrownet.com";
+                URL::forceRootUrl($baseUrl);
+                URL::useAssetOrigin($baseUrl);
+                config(['app.url' => $baseUrl]);
+                config(['app.asset_url' => $baseUrl]);
+
+                // Block main-site routes from leaking onto the subdomain.
+                // Only allow routes with name prefix "growmart." (e.g. growmart.home, growmart.products.index).
+                // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
+                $route = $request->route();
+                if ($route) {
+                    $name = $route->getName();
+                    if ($name) {
+                        $isGrowmartSubdomain = str_starts_with($name, 'growmart.')
+                            && !str_starts_with($name, 'growmart.main.');
+                        if (!$isGrowmartSubdomain) {
+                            abort(404);
+                        }
+                    }
+                }
+
+                return $next($request);
+            }
+
+            // Handle BizBoost subdomain
+            if ($subdomain === 'bizboost') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle BizDocs subdomain
+            if ($subdomain === 'bizdocs') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle GrowBuilder subdomain
+            if ($subdomain === 'growbuilder') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle Venture subdomain
+            if ($subdomain === 'venture') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle GrowNet subdomain
+            if ($subdomain === 'grownet') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle GrowStorage subdomain
+            if ($subdomain === 'growstorage') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
+            // Handle ZamStay subdomain
+            if ($subdomain === 'zamstay') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                 'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-                'growbuilder', 'app', 'dashboard', 'portal', 'staging', 'dev'
+                'app', 'dashboard', 'portal', 'staging', 'dev'
             ];
             
             if (in_array($subdomain, $reserved)) {
@@ -493,7 +562,16 @@ class DetectSubdomain
         
         return false;
     }
-    
+
+    private function configureSubdomainUrl(string $subdomain): void
+    {
+        $baseUrl = "https://{$subdomain}.mygrownet.com";
+        URL::forceRootUrl($baseUrl);
+        URL::useAssetOrigin($baseUrl);
+        config(['app.url' => $baseUrl]);
+        config(['app.asset_url' => $baseUrl]);
+    }
+
     /**
      * Handle auth routes for subdomain
      */
@@ -533,6 +611,7 @@ class DetectSubdomain
     {
         // Set the asset URL for Vite assets
         URL::forceRootUrl($baseUrl);
+        URL::useAssetOrigin($baseUrl);
         config(['app.url' => $baseUrl]);
         
         // CRITICAL: Force asset URL for Vite to use subdomain

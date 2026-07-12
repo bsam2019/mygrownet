@@ -4,6 +4,7 @@ namespace App\Http\Controllers\CMS;
 
 use App\Domain\CMS\Core\Services\InvoiceService;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
@@ -15,13 +16,14 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    use HasCmsAccess;
     public function __construct(
         private readonly InvoiceService $invoiceService
     ) {}
 
     public function index(Request $request): Response
     {
-        $cmsUser  = $request->user()->cmsUser;
+        $cmsUser  = $this->getCmsUserOrFail($request);
         $company  = $cmsUser->company;
         $companyId = $company->id;
 

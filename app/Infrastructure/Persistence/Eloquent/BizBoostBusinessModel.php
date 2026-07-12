@@ -71,7 +71,7 @@ class BizBoostBusinessModel extends Model
 
     public function marketplaceSeller(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\MarketplaceSeller::class, 'marketplace_seller_id');
+        return $this->belongsTo(\App\Models\Marketplace\MarketplaceSeller::class, 'marketplace_seller_id');
     }
 
     public function profile(): HasOne
@@ -137,6 +137,11 @@ class BizBoostBusinessModel extends Model
     public function qrCodes(): HasMany
     {
         return $this->hasMany(BizBoostQrCodeModel::class, 'business_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(BizBoostOrderModel::class, 'business_id');
     }
 
     public function customerTags(): HasMany

@@ -216,14 +216,14 @@ class OptimizedInvestmentRepository
             $startDate = now()->subMonths($months)->startOfMonth();
             
             return Investment::select([
-                    DB::raw('DATE_FORMAT(investment_date, "%Y-%m") as month'),
+                    DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', investment_date) as month" : "DATE_FORMAT(investment_date, '%Y-%m') as month"),
                     DB::raw('COUNT(*) as investment_count'),
                     DB::raw('SUM(amount) as total_amount'),
                     DB::raw('AVG(amount) as average_amount')
                 ])
                 ->where('investment_date', '>=', $startDate)
                 ->where('status', 'active')
-                ->groupBy(DB::raw('DATE_FORMAT(investment_date, "%Y-%m")'))
+                ->groupBy(DB::raw(DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m', investment_date)" : "DATE_FORMAT(investment_date, '%Y-%m')"))
                 ->orderBy('month')
                 ->get()
                 ->toArray();

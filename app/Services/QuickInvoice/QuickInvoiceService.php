@@ -4,8 +4,8 @@ namespace App\Services\QuickInvoice;
 
 use App\Models\QuickInvoice\UserSubscription;
 use App\Models\QuickInvoice\UsageTracking;
-use App\Models\QuickInvoiceDocument;
-use App\Models\QuickInvoiceProfile;
+use App\Models\QuickInvoice\QuickInvoiceDocument;
+use App\Models\QuickInvoice\QuickInvoiceProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 

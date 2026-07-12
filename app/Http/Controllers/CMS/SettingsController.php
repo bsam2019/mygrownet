@@ -94,6 +94,10 @@ class SettingsController extends Controller
             'approval_thresholds.quotation_auto_approve_limit' => 'required|numeric|min:0',
             'approval_thresholds.payment_approval_required' => 'required|boolean',
             'approval_thresholds.payment_auto_approve_limit' => 'required|numeric|min:0',
+            'approval_thresholds.contract_approval_required' => 'required|boolean',
+            'approval_thresholds.contract_auto_approve_limit' => 'required|numeric|min:0',
+            'approval_thresholds.purchase_order_approval_required' => 'required|boolean',
+            'approval_thresholds.purchase_order_auto_approve_limit' => 'required|numeric|min:0',
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;

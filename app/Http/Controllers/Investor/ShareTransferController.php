@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Investor;
 use App\Http\Controllers\Controller;
 use App\Domain\Investor\Services\ShareTransferService;
 use App\Models\ShareTransferRequest;
-use App\Models\InvestorAccount;
+use App\Models\Investor\InvestorAccount;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

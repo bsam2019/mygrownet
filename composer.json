@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "barryvdh/laravel-dompdf": "^3.1",
         "blessedjasonmwanza/moneyunify": "*",
         "getbrevo/brevo-php": "^4.0",
@@ -17,26 +17,29 @@
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image-laravel": "^1.5",
         "irazasyed/telegram-bot-sdk": "^3.15",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "^13.0",
         "laravel/reverb": "^1.6",
-        "laravel/tinker": "^2.10.1",
+        "laravel/socialite": "*",
+        "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.0",
         "predis/predis": "^3.3",
         "resend/resend-php": "^1.3",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
+        "spatie/laravel-backup": "^10.3",
         "spatie/laravel-permission": "^6.21",
         "tightenco/ziggy": "^2.6"
     },
     "require-dev": {
+        "doctrine/dbal": "^4.4",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "pestphp/pest": "^3.8",
-        "phpunit/phpunit": "^11.5.3"
+        "pestphp/pest": "^4.0",
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
@@ -61,7 +64,13 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php -d max_execution_time=120 artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+        ],
+        "dev:optimize": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php artisan config:cache",
+            "@php artisan event:cache",
+            "@php artisan view:cache"
         ],
         "test": [
             "@php artisan config:clear --ansi",
@@ -92,7 +101,7 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {

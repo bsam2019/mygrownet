@@ -263,7 +263,7 @@ class PersonalizedAnnouncementService
         
         // Calculate withdrawable amount
         $lgrWithdrawablePercentage = $user->lgr_custom_withdrawable_percentage 
-            ?? \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+            ?? \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;

@@ -77,7 +77,8 @@ const theme = computed(() => ({
     ...(props.business.profile?.theme_settings || {}),
 }));
 
-const formatPrice = (price: number) => `K${price.toLocaleString()}`;
+import { formatBizBoostPriceShort } from '@/composables/useBizBoostCurrency';
+const formatPrice = (price: number, currency?: string | null) => formatBizBoostPriceShort(price, currency ?? props.product.currency);
 
 const discountPercentage = computed(() => {
     if (!props.product.sale_price) return 0;
@@ -301,16 +302,16 @@ const copyLink = () => {
                                     class="text-3xl lg:text-4xl font-bold"
                                     :style="{ color: theme.accent_color }"
                                 >
-                                    {{ formatPrice(product.sale_price) }}
+                                    {{ formatPrice(product.sale_price, product.currency) }}
                                 </span>
-                                <span class="text-xl text-gray-400 line-through">{{ formatPrice(product.price) }}</span>
+                                <span class="text-xl text-gray-400 line-through">{{ formatPrice(product.price, product.currency) }}</span>
                             </div>
                             <div v-else>
                                 <span 
                                     class="text-3xl lg:text-4xl font-bold"
                                     :style="{ color: theme.primary_color }"
                                 >
-                                    {{ formatPrice(product.price) }}
+                                    {{ formatPrice(product.price, product.currency) }}
                                 </span>
                             </div>
                         </div>

@@ -2,12 +2,12 @@
 
 namespace App\Domain\Investor\Services;
 
-use App\Models\InvestorQuestion;
-use App\Models\InvestorQuestionAnswer;
-use App\Models\InvestorQuestionUpvote;
-use App\Models\InvestorFeedback;
-use App\Models\InvestorSurvey;
-use App\Models\InvestorSurveyResponse;
+use App\Models\Investor\InvestorQuestion;
+use App\Models\Investor\InvestorQuestionAnswer;
+use App\Models\Investor\InvestorQuestionUpvote;
+use App\Models\Investor\InvestorFeedback;
+use App\Models\Investor\InvestorSurvey;
+use App\Models\Investor\InvestorSurveyResponse;
 use Illuminate\Support\Collection;
 
 class InvestorCommunicationService

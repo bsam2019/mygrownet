@@ -259,7 +259,8 @@
       :weddingEventId="weddingEvent.id"
       @close="showRSVPModal = false" 
       @submitted="onRSVPSubmitted"
-    />
+    >
+    </RSVPModal>
   </div>
 </template>
 

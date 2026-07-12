@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-// VBIF removed - Investment model deleted
+use App\Models\Investment;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Resources\InvestmentResource;

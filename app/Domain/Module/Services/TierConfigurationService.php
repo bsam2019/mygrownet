@@ -2,21 +2,17 @@
 
 namespace App\Domain\Module\Services;
 
-use App\Models\ModuleTier;
-use App\Models\ModuleDiscount;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Tier Configuration Service
  * 
  * Centralized service for loading and accessing module tier configurations.
- * Reads from database first (admin-configured), falls back to config/modules.php
+ * All tier limits, features, and pricing are defined in config/modules/*.php
  */
 class TierConfigurationService
 {
     private array $loadedConfigs = [];
-    private const CACHE_TTL = 300; // 5 minutes
 
     /**
      * Get the full configuration for a module
@@ -32,77 +28,12 @@ class TierConfigurationService
     }
 
     /**
-     * Get all tiers for a module (DB first, then config fallback)
+     * Get all tiers for a module
      */
     public function getTiers(string $moduleId): array
     {
-        $cacheKey = "module_tiers:{$moduleId}";
-        
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($moduleId) {
-            // Try database first
-            $dbTiers = ModuleTier::forModule($moduleId)
-                ->active()
-                ->ordered()
-                ->with('activeFeatures')
-                ->get();
-
-            if ($dbTiers->isNotEmpty()) {
-                $tiers = [];
-                foreach ($dbTiers as $tier) {
-                    $tiers[$tier->tier_key] = $this->formatDbTier($tier);
-                }
-                return $tiers;
-            }
-
-            // Fallback to config
-            $config = $this->getModuleConfig($moduleId);
-            return $config['subscription_tiers'] ?? $config['tiers'] ?? [];
-        });
-    }
-
-    /**
-     * Format a database tier to match config structure
-     */
-    private function formatDbTier(ModuleTier $tier): array
-    {
-        $features = [];
-        $limits = [];
-
-        foreach ($tier->activeFeatures as $feature) {
-            if ($feature->feature_type === 'boolean') {
-                // Include both true and false boolean features
-                $features[$feature->feature_key] = [
-                    'value' => $feature->value_boolean,
-                    'name' => $feature->feature_name,
-                ];
-            } elseif ($feature->feature_type === 'limit') {
-                $limits[$feature->feature_key] = $feature->value_limit;
-                $features[$feature->feature_key] = [
-                    'value' => $feature->value_limit,
-                    'name' => $feature->feature_name,
-                ];
-            } elseif ($feature->feature_type === 'text') {
-                $features[$feature->feature_key] = [
-                    'value' => $feature->value_text,
-                    'name' => $feature->feature_name,
-                ];
-            }
-        }
-
-        return [
-            'name' => $tier->name,
-            'description' => $tier->description,
-            'price' => $tier->price_monthly,
-            'price_monthly' => $tier->price_monthly,
-            'price_annual' => $tier->price_annual,
-            'billing_cycle' => 'monthly',
-            'user_limit' => $tier->user_limit,
-            'storage_limit_mb' => $tier->storage_limit_mb,
-            'features' => $features,
-            'limits' => $limits,
-            'is_default' => $tier->is_default,
-            'is_popular' => $tier->is_popular ?? false,
-        ];
+        $config = $this->getModuleConfig($moduleId);
+        return $config['tiers'] ?? [];
     }
 
     /**
@@ -149,8 +80,8 @@ class TierConfigurationService
         $tierConfig = $this->getTierConfig($moduleId, $tier);
         
         return [
-            'monthly' => $tierConfig['price_monthly'] ?? $tierConfig['price'] ?? 0,
-            'annual' => $tierConfig['price_annual'] ?? (($tierConfig['price'] ?? 0) * 10),
+            'monthly' => $tierConfig['price_monthly'] ?? 0,
+            'annual' => $tierConfig['price_annual'] ?? 0,
             'currency' => 'ZMW',
         ];
     }
@@ -171,16 +102,7 @@ class TierConfigurationService
     public function hasFeature(string $moduleId, string $tier, string $feature): bool
     {
         $features = $this->getTierFeatures($moduleId, $tier);
-        
-        // Handle both array format and key-value format
-        if (is_array($features)) {
-            if (isset($features[$feature])) {
-                return (bool) $features[$feature];
-            }
-            return in_array($feature, $features, true);
-        }
-        
-        return false;
+        return in_array($feature, $features, true);
     }
 
     /**
@@ -197,7 +119,7 @@ class TierConfigurationService
      */
     public function getRequiredTierForFeature(string $moduleId, string $feature): ?string
     {
-        $tierOrder = ['free', 'basic', 'professional', 'business', 'premium', 'enterprise'];
+        $tierOrder = ['free', 'basic', 'professional', 'business'];
         $tiers = $this->getTiers($moduleId);
 
         foreach ($tierOrder as $tier) {
@@ -205,7 +127,8 @@ class TierConfigurationService
                 continue;
             }
             
-            if ($this->hasFeature($moduleId, $tier, $feature)) {
+            $features = $tiers[$tier]['features'] ?? [];
+            if (in_array($feature, $features, true)) {
                 return $tier;
             }
         }
@@ -218,7 +141,7 @@ class TierConfigurationService
      */
     public function getRequiredTierForLimit(string $moduleId, string $limitKey, int $requiredValue): ?string
     {
-        $tierOrder = ['free', 'basic', 'professional', 'business', 'premium', 'enterprise'];
+        $tierOrder = ['free', 'basic', 'professional', 'business'];
         $tiers = $this->getTiers($moduleId);
 
         foreach ($tierOrder as $tier) {
@@ -228,8 +151,8 @@ class TierConfigurationService
             
             $limit = $tiers[$tier]['limits'][$limitKey] ?? 0;
             
-            // -1 or null means unlimited
-            if ($limit === -1 || $limit === null || $limit >= $requiredValue) {
+            // -1 means unlimited
+            if ($limit === -1 || $limit >= $requiredValue) {
                 return $tier;
             }
         }
@@ -238,103 +161,58 @@ class TierConfigurationService
     }
 
     /**
-     * Get all tiers formatted for display on upgrade pages
+     * Get all tier information formatted for upgrade page display
      */
     public function getAllTiersForDisplay(string $moduleId): array
     {
         $tiers = $this->getTiers($moduleId);
-        $discounts = $this->getApplicableDiscounts($moduleId);
-        $displayTiers = [];
+        $config = $this->getModuleConfig($moduleId);
+        $featureLabels = $config['feature_labels'] ?? [];
+        $limitLabels = $config['limit_labels'] ?? [];
+        $result = [];
 
-        $tierOrder = ['free', 'member', 'basic', 'starter', 'standard', 'professional', 'business', 'premium', 'ecommerce', 'enterprise', 'agency'];
-        $sortOrder = 0;
-
-        foreach ($tierOrder as $tierKey) {
-            if (!isset($tiers[$tierKey])) {
-                continue;
+        foreach ($tiers as $tierKey => $tierConfig) {
+            // Convert feature keys to labeled features
+            $features = $tierConfig['features'] ?? [];
+            $labeledFeatures = [];
+            foreach ($features as $feature) {
+                $labeledFeatures[] = [
+                    'key' => $feature,
+                    'label' => $featureLabels[$feature] ?? $this->formatFeatureKey($feature),
+                ];
+            }
+            
+            // Convert limit keys to labeled limits
+            $limits = $tierConfig['limits'] ?? [];
+            $labeledLimits = [];
+            foreach ($limits as $limitKey => $limitValue) {
+                $labeledLimits[$limitKey] = [
+                    'key' => $limitKey,
+                    'label' => $limitLabels[$limitKey] ?? $this->formatFeatureKey($limitKey),
+                    'value' => $limitValue,
+                ];
             }
 
-            $tierConfig = $tiers[$tierKey];
-            $monthlyPrice = $tierConfig['price_monthly'] ?? $tierConfig['price'] ?? 0;
-            $annualPrice = $tierConfig['price_annual'] ?? ($monthlyPrice * 10);
-
-            // Apply any active discounts
-            $discountedMonthly = $monthlyPrice;
-            $discountedAnnual = $annualPrice;
-            $activeDiscount = null;
-
-            foreach ($discounts as $discount) {
-                if ($this->discountAppliesToTier($discount, $tierKey)) {
-                    $activeDiscount = $discount;
-                    if ($discount['discount_type'] === 'percentage') {
-                        $discountedMonthly = $monthlyPrice * (1 - $discount['discount_value'] / 100);
-                        $discountedAnnual = $annualPrice * (1 - $discount['discount_value'] / 100);
-                    } else {
-                        $discountedMonthly = max(0, $monthlyPrice - $discount['discount_value']);
-                        $discountedAnnual = max(0, $annualPrice - $discount['discount_value']);
-                    }
-                    break;
-                }
-            }
-
-            $displayTiers[$tierKey] = [
+            $result[$tierKey] = [
                 'key' => $tierKey,
                 'name' => $tierConfig['name'] ?? ucfirst($tierKey),
                 'description' => $tierConfig['description'] ?? '',
-                'price_monthly' => $monthlyPrice,
-                'price_annual' => $annualPrice,
-                'discounted_monthly' => $discountedMonthly,
-                'discounted_annual' => $discountedAnnual,
-                'has_discount' => $activeDiscount !== null,
-                'discount' => $activeDiscount,
-                'features' => $this->formatFeaturesForDisplay($tierConfig['features'] ?? []),
-                'limits' => $tierConfig['limits'] ?? [],
+                'price_monthly' => $tierConfig['price_monthly'] ?? 0,
+                'price_annual' => $tierConfig['price_annual'] ?? 0,
+                'popular' => $tierConfig['popular'] ?? false,
+                'limits' => $limits,
+                'labeled_limits' => $labeledLimits,
+                'features' => $features,
+                'labeled_features' => $labeledFeatures,
                 'reports' => $tierConfig['reports'] ?? [],
-                'user_limit' => $tierConfig['user_limit'] ?? null,
-                'storage_limit_mb' => $tierConfig['storage_limit_mb'] ?? null,
-                'is_popular' => $tierConfig['is_popular'] ?? $tierConfig['popular'] ?? ($tierKey === 'business'),
-                'is_default' => $tierConfig['is_default'] ?? ($tierKey === 'free'),
-                'sort_order' => $sortOrder++,
             ];
         }
 
-        return $displayTiers;
+        return $result;
     }
-
+    
     /**
-     * Format features for display (convert to human-readable format)
-     */
-    private function formatFeaturesForDisplay(array $features): array
-    {
-        $formatted = [];
-
-        foreach ($features as $key => $value) {
-            // Handle new structure with name included
-            if (is_array($value) && isset($value['name'])) {
-                $formatted[] = [
-                    'key' => $key,
-                    'name' => $value['name'],
-                    'value' => $value['value'],
-                    'display' => $this->formatFeatureValue($value['value']),
-                    'available' => $this->isFeatureAvailable($value['value']),
-                ];
-            } else {
-                // Handle legacy structure
-                $formatted[] = [
-                    'key' => $key,
-                    'name' => $this->formatFeatureKey($key),
-                    'value' => $value,
-                    'display' => $this->formatFeatureValue($value),
-                    'available' => $this->isFeatureAvailable($value),
-                ];
-            }
-        }
-
-        return $formatted;
-    }
-
-    /**
-     * Format a feature key to human-readable name
+     * Format a feature key into a human-readable label
      */
     private function formatFeatureKey(string $key): string
     {
@@ -342,186 +220,27 @@ class TierConfigurationService
     }
 
     /**
-     * Format a feature value for display
-     */
-    private function formatFeatureValue(mixed $value): string
-    {
-        if (is_bool($value)) {
-            return $value ? '✓' : '✗';
-        }
-
-        if ($value === -1 || $value === null) {
-            return 'Unlimited';
-        }
-
-        if (is_numeric($value)) {
-            return number_format($value);
-        }
-
-        return (string) $value;
-    }
-
-    /**
-     * Check if a feature value indicates availability
-     */
-    private function isFeatureAvailable(mixed $value): bool
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if ($value === 0 || $value === '0' || $value === false) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Check if a limit value represents unlimited
-     */
-    public function isUnlimited(mixed $value): bool
-    {
-        return $value === -1 || $value === null || $value === 'unlimited';
-    }
-
-    /**
-     * Check if a limit value represents not available
-     */
-    public function isNotAvailable(mixed $value): bool
-    {
-        return $value === 0 || $value === false || $value === '0';
-    }
-
-    /**
      * Get usage metric definitions for a module
      */
     public function getUsageMetrics(string $moduleId): array
     {
-        $moduleConfig = $this->getModuleConfig($moduleId);
-        
-        // Default metrics based on module type
-        $defaultMetrics = [
-            'transactions' => ['name' => 'Transactions', 'unit' => 'count'],
-            'storage' => ['name' => 'Storage Used', 'unit' => 'mb'],
-            'users' => ['name' => 'Team Members', 'unit' => 'count'],
-        ];
-
-        return $moduleConfig['usage_metrics'] ?? $defaultMetrics;
+        $config = $this->getModuleConfig($moduleId);
+        return $config['usage_metrics'] ?? [];
     }
 
     /**
-     * Get applicable discounts for a module
+     * Check if a limit is unlimited (-1)
      */
-    public function getApplicableDiscounts(string $moduleId, ?string $tierKey = null): array
+    public function isUnlimited(int $limit): bool
     {
-        $cacheKey = "module_discounts:{$moduleId}";
-        
-        $discounts = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($moduleId) {
-            return ModuleDiscount::query()
-                ->where(function ($query) use ($moduleId) {
-                    $query->where('module_id', $moduleId)
-                        ->orWhereNull('module_id'); // Global discounts
-                })
-                ->where('is_active', true)
-                ->where(function ($query) {
-                    $query->whereNull('starts_at')
-                        ->orWhere('starts_at', '<=', now());
-                })
-                ->where(function ($query) {
-                    $query->whereNull('ends_at')
-                        ->orWhere('ends_at', '>=', now());
-                })
-                ->where(function ($query) {
-                    $query->whereNull('max_uses')
-                        ->orWhereColumn('current_uses', '<', 'max_uses');
-                })
-                ->orderBy('discount_value', 'desc')
-                ->get()
-                ->toArray();
-        });
-
-        if ($tierKey) {
-            return array_filter($discounts, fn($d) => $this->discountAppliesToTier($d, $tierKey));
-        }
-
-        return $discounts;
+        return $limit === -1;
     }
 
     /**
-     * Check if a discount applies to a specific tier
+     * Check if a feature/limit is not available (0)
      */
-    private function discountAppliesToTier(array $discount, string $tierKey): bool
+    public function isNotAvailable(int $limit): bool
     {
-        $appliesTo = $discount['applies_to'] ?? 'all_tiers';
-        
-        if ($appliesTo === 'all_tiers') {
-            return true;
-        }
-
-        if ($appliesTo === 'specific_tiers') {
-            $tierKeys = $discount['tier_keys'] ?? [];
-            return in_array($tierKey, $tierKeys, true);
-        }
-
-        return true;
-    }
-
-    /**
-     * Clear cache for a module's tiers
-     */
-    public function clearCache(?string $moduleId = null): void
-    {
-        if ($moduleId) {
-            Cache::forget("module_tiers:{$moduleId}");
-            Cache::forget("module_discounts:{$moduleId}");
-        } else {
-            // Clear all module tier caches
-            $modules = array_keys(Config::get('modules', []));
-            foreach ($modules as $module) {
-                if ($module !== 'settings' && $module !== 'categories') {
-                    Cache::forget("module_tiers:{$module}");
-                    Cache::forget("module_discounts:{$module}");
-                }
-            }
-        }
-
-        // Clear loaded configs
-        $this->loadedConfigs = [];
-    }
-
-    /**
-     * Compare two tiers and return upgrade info
-     */
-    public function getUpgradeInfo(string $moduleId, string $fromTier, string $toTier): array
-    {
-        $fromConfig = $this->getTierConfig($moduleId, $fromTier);
-        $toConfig = $this->getTierConfig($moduleId, $toTier);
-
-        if (!$fromConfig || !$toConfig) {
-            return ['valid' => false, 'error' => 'Invalid tier'];
-        }
-
-        $fromPrice = $fromConfig['price_monthly'] ?? $fromConfig['price'] ?? 0;
-        $toPrice = $toConfig['price_monthly'] ?? $toConfig['price'] ?? 0;
-
-        $newFeatures = [];
-        $toFeatures = $toConfig['features'] ?? [];
-        $fromFeatures = $fromConfig['features'] ?? [];
-
-        foreach ($toFeatures as $key => $value) {
-            if (!isset($fromFeatures[$key]) || $fromFeatures[$key] !== $value) {
-                $newFeatures[$key] = $value;
-            }
-        }
-
-        return [
-            'valid' => true,
-            'is_upgrade' => $toPrice > $fromPrice,
-            'price_difference' => $toPrice - $fromPrice,
-            'new_features' => $newFeatures,
-            'from_tier' => $fromConfig,
-            'to_tier' => $toConfig,
-        ];
+        return $limit === 0;
     }
 }

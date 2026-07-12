@@ -5,7 +5,7 @@ namespace Tests\Feature\MyGrowNet;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\InvestmentTier;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use App\Models\ProjectContribution;
 use App\Models\ProjectProfitDistribution;
 use App\Models\ProjectVote;
@@ -73,7 +73,7 @@ class CommunityProjectDashboardTest extends TestCase
 
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('MyGrowNet/Dashboard')
+                ->component('GrowNet/GrowNet')
                 ->has('communityProjectData.portfolio_summary')
                 ->has('communityProjectData.recent_contributions')
                 ->has('communityProjectData.recent_distributions')

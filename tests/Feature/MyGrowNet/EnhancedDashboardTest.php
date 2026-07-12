@@ -9,7 +9,7 @@ use App\Models\ReferralCommission;
 use App\Models\TeamVolume;
 use App\Models\UserNetwork;
 use App\Models\Achievement;
-use App\Models\CommunityProject;
+use App\Models\Community\CommunityProject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 
@@ -42,7 +42,7 @@ class EnhancedDashboardTest extends TestCase
             ->get(route('mygrownet.dashboard'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('MyGrowNet/Dashboard')
+                ->component('GrowNet/GrowNet')
                 ->has('referralStats.levels')
                 ->has('teamVolumeData.current_month')
                 ->has('networkData.direct_referrals')

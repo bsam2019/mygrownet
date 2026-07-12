@@ -1,0 +1,37 @@
+PRODUCTION SESSION SHARING FIX
+================================
+
+PROBLEM:
+Users logged in on mygrownet.com have to login again when visiting subdomains
+(bizboost.mygrownet.com, growmart.mygrownet.com, cms.mygrownet.com, etc.)
+
+ROOT CAUSE:
+Sessions are not shared across subdomains because SESSION_DOMAIN is not set.
+
+SOLUTION:
+Edit /var/www/mygrownet.com/.env and change:
+
+FROM:
+SESSION_DOMAIN=null
+
+TO:
+SESSION_DOMAIN=.mygrownet.com
+
+NOTE: The leading dot (.) is critical! It makes the session cookie available to all subdomains.
+
+AFTER CHANGING:
+1. php artisan config:clear
+2. php artisan config:cache
+3. Test: Login at mygrownet.com, then visit bizboost.mygrownet.com (should stay logged in)
+
+SECURITY NOTE:
+- Use SESSION_SECURE_COOKIE=true in production (HTTPS only)
+- Keep SESSION_HTTP_ONLY=true (prevent JS access)
+- SESSION_SAME_SITE=lax works well for subdomain sharing
+
+VERIFICATION:
+1. Open mygrownet.com in browser
+2. Login
+3. Open DevTools > Application > Cookies
+4. Check session cookie - Domain should be ".mygrownet.com" (with leading dot)
+5. Visit any subdomain - should remain logged in

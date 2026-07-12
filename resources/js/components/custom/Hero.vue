@@ -54,15 +54,15 @@
           <!-- Product-Focused Metrics -->
           <div class="flex items-center gap-8 pt-8 border-t border-white/20">
             <div>
-              <div class="text-3xl font-bold">100+</div>
+              <div class="text-3xl font-bold">{{ (stats?.courses ?? 100) }}+</div>
               <div class="text-sm text-blue-200">Available Courses</div>
             </div>
             <div>
-              <div class="text-3xl font-bold">50+</div>
+              <div class="text-3xl font-bold">{{ (stats?.mentors ?? 50) }}+</div>
               <div class="text-sm text-blue-200">Mentors</div>
             </div>
             <div>
-              <div class="text-3xl font-bold">500+</div>
+              <div class="text-3xl font-bold">{{ (stats?.products ?? 500) }}+</div>
               <div class="text-sm text-blue-200">Products Listed</div>
             </div>
           </div>
@@ -128,8 +128,16 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+
+defineProps<{
+  stats?: {
+    courses?: number;
+    mentors?: number;
+    products?: number;
+  };
+}>();
 </script>
 
 <style scoped>

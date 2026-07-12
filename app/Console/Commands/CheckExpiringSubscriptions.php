@@ -39,11 +39,9 @@ class CheckExpiringSubscriptions extends Command
         $targetDate = Carbon::now()->addDays($days)->startOfDay();
         $endDate = $targetDate->copy()->endOfDay();
         
-        // Get users with active subscriptions expiring in X days
-        $users = User::whereHas('subscription', function ($query) use ($targetDate, $endDate) {
-            $query->where('status', 'active')
-                ->whereBetween('end_date', [$targetDate, $endDate]);
-        })->with('subscription')->get();
+        $users = User::whereBetween('subscription_expires_at', [$targetDate, $endDate])
+            ->whereNotNull('subscription_expires_at')
+            ->get();
         
         foreach ($users as $user) {
             // Check if we already sent this reminder
@@ -65,8 +63,8 @@ class CheckExpiringSubscriptions extends Command
                         'title' => 'Subscription Expiring Soon',
                         'message' => "Your subscription expires in {$days} day" . ($days > 1 ? 's' : '') . ". Renew now to keep your benefits!",
                         'days_remaining' => $days,
-                        'expires_at' => $user->subscription->end_date->format('M d, Y'),
-                        'action_url' => route('mygrownet.membership.show'),
+                        'expires_at' => $user->subscription_expires_at->format('M d, Y'),
+                        'action_url' => route('mygrownet.membership.index'),
                         'action_text' => 'Renew Now'
                     ]
                 );
@@ -84,15 +82,14 @@ class CheckExpiringSubscriptions extends Command
     
     private function checkExpired()
     {
-        // Get users with active subscriptions that have passed their end date
-        $users = User::whereHas('subscription', function ($query) {
-            $query->where('status', 'active')
-                ->where('end_date', '<', Carbon::now());
-        })->with('subscription')->get();
+        $users = User::where('subscription_expires_at', '<', Carbon::now())
+            ->whereNotNull('subscription_expires_at')
+            ->where('subscription_status', '!=', 'expired')
+            ->get();
         
         foreach ($users as $user) {
             // Update subscription status
-            $user->subscription->update(['status' => 'expired']);
+            $user->update(['subscription_status' => 'expired']);
             
             try {
                 app(SendNotificationUseCase::class)->execute(
@@ -101,8 +98,8 @@ class CheckExpiringSubscriptions extends Command
                     data: [
                         'title' => 'Subscription Expired',
                         'message' => 'Your subscription has expired. Renew now to restore your access and benefits!',
-                        'expired_at' => $user->subscription->end_date->format('M d, Y'),
-                        'action_url' => route('mygrownet.membership.show'),
+                        'expired_at' => $user->subscription_expires_at->format('M d, Y'),
+                        'action_url' => route('mygrownet.membership.index'),
                         'action_text' => 'Renew Subscription'
                     ]
                 );

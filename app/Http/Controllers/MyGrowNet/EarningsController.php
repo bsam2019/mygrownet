@@ -28,7 +28,7 @@ class EarningsController extends Controller
         $lgrWithdrawnTotal = (float) ($user->loyalty_points_withdrawn_total ?? 0);
         
         // Calculate LGR withdrawable amount
-        $lgrWithdrawablePercentage = \App\Models\LgrSetting::get('lgr_max_cash_conversion', 40);
+        $lgrWithdrawablePercentage = \App\Models\LGR\LgrSetting::get('lgr_max_cash_conversion', 40);
         $lgrMaxWithdrawable = ($lgrAwardedTotal * $lgrWithdrawablePercentage / 100) - $lgrWithdrawnTotal;
         $lgrWithdrawable = min($lgrRewards, max(0, $lgrMaxWithdrawable));
         
@@ -115,7 +115,7 @@ class EarningsController extends Controller
         }
         
         // Get current month BP and earnings
-        $currentMonthBP = $user->bonus_points ?? 0;
+        $currentMonthBP = $user->points?->monthly_points ?? 0;
         $currentMonthCommissions = $user->referralCommissions()
             ->whereYear('created_at', date('Y'))
             ->whereMonth('created_at', date('m'))
@@ -125,14 +125,18 @@ class EarningsController extends Controller
             ->whereYear('created_at', date('Y'))
             ->whereMonth('created_at', date('m'))
             ->sum('amount') ?? 0;
+
+        // LGR total awarded (matches hub's totalEarnings calculation)
+        $lgrAwardedTotal = (float) ($user->loyalty_points_awarded_total ?? 0);
         
         return Inertia::render('GrowNet/Earnings', [
             'earningsByType' => $earningsByType,
-            'totalEarnings' => (float) array_sum($earningsByType),
+            'totalEarnings' => (float) (array_sum($earningsByType) + $lgrAwardedTotal),
             'monthlyEarnings' => $monthlyEarnings,
             'currentMonthBP' => $currentMonthBP,
             'currentMonthEarnings' => (float) ($currentMonthCommissions + $currentMonthProfits),
             'lifetimePoints' => $user->lifetime_points ?? 0,
+            'lgrAwardedTotal' => $lgrAwardedTotal,
         ]);
     }
 }

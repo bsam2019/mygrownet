@@ -179,6 +179,7 @@ return [
         App\Providers\GrowFinanceServiceProvider::class,
         App\Providers\ModuleSubscriptionServiceProvider::class, // Centralized module subscription services
         App\Providers\PaymentServiceProvider::class, // Payment gateway integration
+        App\Providers\ZamStayServiceProvider::class, // ZamStay module
     ])->toArray(),
 
     /*

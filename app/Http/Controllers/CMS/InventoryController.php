@@ -9,6 +9,8 @@ use App\Infrastructure\Persistence\Eloquent\CMS\StockLevelModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\StockTransferModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\StockAdjustmentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\StockCountModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\StockValuationModel;
+use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -42,11 +44,19 @@ class InventoryController extends Controller
 
     public function stockLevels(Request $request)
     {
-        $levels = StockLevelModel::whereHas('location', fn($q) => $q->where('company_id', $request->user()->current_company_id))
+        $companyId = $request->user()->current_company_id;
+        $levels = StockLevelModel::whereHas('location', fn($q) => $q->where('company_id', $companyId))
             ->with(['material', 'location'])
             ->paginate(50);
 
-        return Inertia::render('CMS/Inventory/StockLevels', ['levels' => $levels]);
+        $locations = StockLocationModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        return Inertia::render('CMS/Inventory/StockLevels', [
+            'levels' => $levels,
+            'locations' => $locations,
+        ]);
     }
 
     public function lowStockAlerts(Request $request)
@@ -57,12 +67,25 @@ class InventoryController extends Controller
 
     public function transfers(Request $request)
     {
-        $transfers = StockTransferModel::where('company_id', $request->user()->current_company_id)
-            ->with(['fromLocation', 'toLocation', 'requestedBy'])
+        $companyId = $request->user()->current_company_id;
+        $transfers = StockTransferModel::where('company_id', $companyId)
+            ->with(['fromLocation', 'toLocation', 'requestedBy', 'items.material'])
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Inventory/Transfers', ['transfers' => $transfers]);
+        $locations = StockLocationModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        $materials = MaterialModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name', 'unit']);
+
+        return Inertia::render('CMS/Inventory/Transfers', [
+            'transfers' => $transfers,
+            'locations' => $locations,
+            'materials' => $materials,
+        ]);
     }
 
     public function createTransfer(Request $request)
@@ -102,12 +125,25 @@ class InventoryController extends Controller
 
     public function adjustments(Request $request)
     {
-        $adjustments = StockAdjustmentModel::where('company_id', $request->user()->current_company_id)
-            ->with('createdBy')
+        $companyId = $request->user()->current_company_id;
+        $adjustments = StockAdjustmentModel::where('company_id', $companyId)
+            ->with(['createdBy', 'items.material', 'items.location'])
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Inventory/Adjustments', ['adjustments' => $adjustments]);
+        $locations = StockLocationModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        $materials = MaterialModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name', 'unit']);
+
+        return Inertia::render('CMS/Inventory/Adjustments', [
+            'adjustments' => $adjustments,
+            'locations' => $locations,
+            'materials' => $materials,
+        ]);
     }
 
     public function createAdjustment(Request $request)
@@ -138,12 +174,25 @@ class InventoryController extends Controller
 
     public function counts(Request $request)
     {
-        $counts = StockCountModel::where('company_id', $request->user()->current_company_id)
-            ->with(['location', 'countedBy'])
+        $companyId = $request->user()->current_company_id;
+        $counts = StockCountModel::where('company_id', $companyId)
+            ->with(['location', 'countedBy', 'items.material', 'items.location'])
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Inventory/Counts', ['counts' => $counts]);
+        $locations = StockLocationModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        $materials = MaterialModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name', 'unit']);
+
+        return Inertia::render('CMS/Inventory/Counts', [
+            'counts' => $counts,
+            'locations' => $locations,
+            'materials' => $materials,
+        ]);
     }
 
     public function createCount(Request $request)
@@ -168,5 +217,23 @@ class InventoryController extends Controller
     {
         $count = $this->inventoryService->completeStockCount($id, $request->user()->id);
         return back()->with('success', 'Stock count completed and variances adjusted');
+    }
+
+    public function valuations(Request $request)
+    {
+        $companyId = $request->user()->current_company_id;
+        $valuations = StockValuationModel::where('company_id', $companyId)
+            ->with(['material', 'location'])
+            ->latest('valuation_date')
+            ->paginate(50);
+
+        $locations = StockLocationModel::where('company_id', $companyId)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
+        return Inertia::render('CMS/Inventory/Valuation', [
+            'valuations' => $valuations,
+            'locations' => $locations,
+        ]);
     }
 }

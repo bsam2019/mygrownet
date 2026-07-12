@@ -343,32 +343,19 @@ class AdminDashboardController extends Controller
      */
     private function getMemberGrowthTrend(): array
     {
-        // SQLite-compatible date functions
         $driver = DB::connection()->getDriverName();
-        
-        if ($driver === 'sqlite') {
-            $trend = User::select(
-                    DB::raw("strftime('%Y', created_at) as year"),
-                    DB::raw("strftime('%m', created_at) as month"),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-        } else {
-            $trend = User::select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-        }
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+        $trend = User::select(
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
 
         return $trend->map(function($item) {
             return [
@@ -383,36 +370,21 @@ class AdminDashboardController extends Controller
      */
     private function getRevenueGrowthTrend(): array
     {
-        // SQLite-compatible date functions
         $driver = DB::connection()->getDriverName();
-        
-        if ($driver === 'sqlite') {
-            $trend = DB::table('package_subscriptions')
-                ->select(
-                    DB::raw("strftime('%Y', created_at) as year"),
-                    DB::raw("strftime('%m', created_at) as month"),
-                    DB::raw('SUM(amount) as revenue')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->where('status', 'active')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-        } else {
-            $trend = DB::table('package_subscriptions')
-                ->select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('SUM(amount) as revenue')
-                )
-                ->where('created_at', '>=', now()->subMonths(12))
-                ->where('status', 'active')
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->get();
-        }
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+        $trend = DB::table('package_subscriptions')
+            ->select(
+                DB::raw("{$yearExpr} as year"),
+                DB::raw("{$monthExpr} as month"),
+                DB::raw('SUM(amount) as revenue')
+            )
+            ->where('created_at', '>=', now()->subMonths(12))
+            ->where('status', 'active')
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
 
         return $trend->map(function($item) {
             return [

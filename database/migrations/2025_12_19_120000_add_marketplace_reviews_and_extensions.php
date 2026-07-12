@@ -83,7 +83,8 @@ return new class extends Migration
         });
 
         // Marketplace Disputes
-        Schema::create('marketplace_disputes', function (Blueprint $table) {
+        if (!Schema::hasTable('marketplace_disputes')) {
+            Schema::create('marketplace_disputes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('marketplace_orders')->onDelete('cascade');
             $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
@@ -101,6 +102,7 @@ return new class extends Migration
             $table->index(['order_id', 'status']);
             $table->index(['seller_id', 'status']);
         });
+        }
 
         // Marketplace Wishlists
         Schema::create('marketplace_wishlists', function (Blueprint $table) {
@@ -206,7 +208,8 @@ return new class extends Migration
         });
 
         // Marketplace Payouts
-        Schema::create('marketplace_payouts', function (Blueprint $table) {
+        if (!Schema::hasTable('marketplace_payouts')) {
+            Schema::create('marketplace_payouts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('seller_id')->constrained('marketplace_sellers')->onDelete('cascade');
             $table->unsignedBigInteger('amount'); // Amount in ngwee
@@ -222,6 +225,7 @@ return new class extends Migration
             
             $table->index(['seller_id', 'status']);
         });
+        }
 
         // Marketplace Transactions (Financial Ledger)
         Schema::create('marketplace_transactions', function (Blueprint $table) {

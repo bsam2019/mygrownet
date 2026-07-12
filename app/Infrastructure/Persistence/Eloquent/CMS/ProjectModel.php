@@ -15,6 +15,7 @@ class ProjectModel extends Model
 
     protected $fillable = [
         'company_id',
+        'branch_id',
         'customer_id',
         'project_number',
         'name',
@@ -48,6 +49,16 @@ class ProjectModel extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
     ];
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(BranchModel::class, 'branch_id');
+    }
+
+    public function scopeForBranch($query, ?int $branchId)
+    {
+        return $branchId ? $query->where('branch_id', $branchId) : $query;
+    }
 
     public function company(): BelongsTo
     {

@@ -29,6 +29,45 @@
                     @update:creativity-level="updateCreativityLevel"
                 />
 
+                <!-- Model Selector -->
+                <div v-if="availableModels.length > 0" class="px-3 py-1.5 border-b" :class="darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">Model:</span>
+                        <div class="relative flex-1">
+                            <button
+                                @click="showModelSelector = !showModelSelector"
+                                class="w-full text-xs px-2 py-1 rounded text-left flex items-center justify-between gap-1"
+                                :class="darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'"
+                            >
+                                <span>{{ availableModels.find(m => m.id === selectedModel)?.name || selectedModel || 'Select model' }}</span>
+                                <svg class="w-3 h-3" :class="showModelSelector ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div
+                                v-if="showModelSelector"
+                                class="absolute top-full left-0 right-0 mt-1 rounded shadow-lg z-10 overflow-hidden"
+                                :class="darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'"
+                            >
+                                <button
+                                    v-for="m in availableModels"
+                                    :key="m.id"
+                                    @click="selectedModel = m.id; showModelSelector = false; localStorage.setItem('ai_selected_model', m.id)"
+                                    class="w-full text-left px-3 py-2 text-xs"
+                                    :class="[
+                                        selectedModel === m.id
+                                            ? (darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-700')
+                                            : (darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-50'),
+                                        'border-b last:border-b-0',
+                                        darkMode ? 'border-gray-700' : 'border-gray-100'
+                                    ]"
+                                >
+                                    <div class="font-medium">{{ m.name }}</div>
+                                    <div class="opacity-70 mt-0.5">{{ m.description }}</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Main Content Area -->
                 <div class="flex-1 flex flex-col overflow-hidden">
                     <!-- Chat View -->
@@ -90,6 +129,14 @@
                             @apply-colors="$emit('applyColors', $event)"
                         />
                     </div>
+
+                    <!-- Media View (Image & Logo Generation) -->
+                    <div v-else-if="activeView === 'media'" class="flex-1 overflow-y-auto">
+                        <AIImagePanel
+                            @use-image="handleUseImage"
+                            @import-site="handleImportSite"
+                        />
+                    </div>
                 </div>
             </div>
         </Transition>
@@ -106,6 +153,7 @@ import AIQuickActions from './ai/AIQuickActions.vue';
 import AIChatInput from './ai/AIChatInput.vue';
 import AIGeneratePanel from './ai/AIGeneratePanel.vue';
 import AIToolsPanel from './ai/AIToolsPanel.vue';
+import AIImagePanel from './ai/AIImagePanel.vue';
 
 interface Message {
     id: string;
@@ -178,6 +226,8 @@ const emit = defineEmits<{
     createPage: [template: string, title?: string];
     createAIPage: [pageType: string, pageData: any];
     updateUsage: [usage: any];
+    addImage: [url: string];
+    importSite: [structure: any];
 }>();
 
 const {
@@ -199,7 +249,7 @@ const {
 } = useAI(props.siteId);
 
 // State
-const activeView = ref<'chat' | 'generate' | 'tools'>('chat');
+const activeView = ref<'chat' | 'generate' | 'tools' | 'media'>('chat');
 const messages = ref<Message[]>([]);
 const userInput = ref('');
 const isTyping = ref(false);
@@ -207,6 +257,12 @@ const providerName = ref('');
 const generatedContent = ref<any>(null);
 const feedbackStats = ref<any>(null);
 const messageListRef = ref<any>(null);
+
+// Model selection
+const availableModels = ref<Array<{ id: string; name: string; description: string }>>([]);
+const storedModel = localStorage.getItem('ai_selected_model');
+const selectedModel = ref(storedModel || '');
+const showModelSelector = ref(false);
 
 // Creativity level state with localStorage persistence
 type CreativityLevel = 'guided' | 'balanced' | 'creative';
@@ -513,11 +569,15 @@ const processUserMessage = async (input: string): Promise<{ content: string; typ
     try {
         const richContext = buildRichContext();
         console.log('Calling smartChat with:', { input, contextKeys: Object.keys(richContext) });
-        const result = await smartChat(input, richContext);
+        const result = await smartChat(input, richContext, selectedModel.value || undefined);
         console.log('SmartChat result:', result);
         
         if (result && result.action) {
             // Map AI action to message type and format response
+            // If backend says to use frontend fallback, skip to keyword matching
+            if (result.data?.frontend_fallback) {
+                throw new Error('frontend_fallback');
+            }
             const response = mapSmartChatResponse(result, ctx);
             // Include usage in response
             return { ...response, usage: result.usage };
@@ -1051,7 +1111,7 @@ const processWithKeywordMatching = async (
         const styleChange = parseStyleRequest(lowerInput);
         
         // Check if they want content improvement too
-        const wantsContentImprovement = lowerInput.includes('word') || lowerInput.includes('text') || lowerInput.includes('content') || lowerInput.includes('correct') || lowerInput.includes('better') || lowerInput.includes('empty') || lowerInput.includes('fill');
+        const wantsContentImprovement = lowerInput.includes('word') || lowerInput.includes('text') || lowerInput.includes('content') || lowerInput.includes('correct') || lowerInput.includes('better') || lowerInput.includes('empty') || lowerInput.includes('fill') || lowerInput.includes('paragraph');
         
         // Determine target section type - expanded list
         let targetSection = ctx?.selectedSection?.type;
@@ -1156,7 +1216,7 @@ const processWithKeywordMatching = async (
     // ============================================
     // 3. CONTENT GENERATION - Generate content for sections
     // ============================================
-    if (lowerInput.includes('generate') || lowerInput.includes('create') || lowerInput.includes('write')) {
+    if (lowerInput.includes('generate') || lowerInput.includes('create') || lowerInput.includes('write') || lowerInput.includes('paragraph') || lowerInput.includes('content') || lowerInput.includes('text')) {
         // Check for specific content types
         if (lowerInput.includes('testimonial')) {
             const testimonials = await generateTestimonials(ctx?.site.businessType, 3);
@@ -1879,38 +1939,39 @@ const detectSectionType = (input: string): string | null => {
 
 const buildContextAwareHelp = (): { content: string; type: Message['type'] } => {
     const ctx = props.aiContext;
-    let help = `I can help you with:\n\n`;
+    const sections = ctx?.currentPage?.sections || [];
+    const pageTitle = ctx?.currentPage?.title || 'this page';
+    const siteName = props.siteName || 'your website';
 
-    // Context-specific suggestions
-    if (ctx?.selectedSection) {
-        help += `**For your ${ctx.selectedSection.type} section:**\n`;
-        help += `• "Make the background blue"\n`;
-        help += `• "Improve the headline"\n`;
-        help += `• "Make it taller"\n\n`;
+    // Show actual section content if available
+    if (sections.length > 0) {
+        let help = `Here are the sections on **${pageTitle}**:\n\n`;
+        sections.forEach((s: any) => {
+            const content = s.content || {};
+            const title = content.title || s.type;
+            const status = content.title ? '✓ has content' : '✗ empty';
+            const items = content.items ? ` (${content.items.length} items)` : '';
+            help += `• **${s.type}**: ${status}${items}\n`;
+        });
+        help += `\nWhat would you like to work on? Try:\n`;
+        help += `• "Improve the hero section"\n`;
+        help += `• "Show me the about content"\n`;
+        help += `• "Make the services section better"\n`;
+        if (ctx?.selectedSection) {
+            help += `• "Edit ${ctx.selectedSection.type} text"\n`;
+        }
+        return { content: help, type: 'text' };
     }
 
-    help += `**Content Generation:**\n`;
-    help += `• "Generate testimonials"\n`;
-    help += `• "Write FAQ questions"\n`;
-    help += `• "Create pricing plans"\n\n`;
-
-    help += `**Add Sections:**\n`;
+    // No sections - generic help
+    let help = `Welcome to the AI assistant for **${siteName}**!\n\n`;
+    help += `You can ask me to:\n`;
     help += `• "Add a hero section"\n`;
-    help += `• "Add testimonials"\n`;
-    help += `• "Add a contact form"\n\n`;
-
-    help += `**Style Changes:**\n`;
-    help += `• "Make it darker/lighter"\n`;
-    help += `• "Center the text"\n`;
-    help += `• "Add more spacing"\n\n`;
-
-    help += `**Navigation & Footer:**\n`;
-    help += `• "Make nav sticky"\n`;
-    help += `• "Change footer to dark"\n\n`;
-
-    help += `**SEO & Colors:**\n`;
-    help += `• "Generate meta description"\n`;
+    help += `• "Generate testimonials"\n`;
+    help += `• "Create a contact page"\n`;
     help += `• "Suggest a color palette"\n`;
+    help += `• "Improve the about section"\n\n`;
+    help += `What would you like to do?`;
 
     return { content: help, type: 'text' };
 };
@@ -2256,14 +2317,37 @@ const handleColors = async (businessType: string, mood: string) => {
     return await suggestColors(businessType, mood);
 };
 
+// Handle using a generated image in the editor
+const handleUseImage = (url: string) => {
+    addMessage('assistant', `I'll add this image to your media library. You can then drag it into any section.`, 'text');
+    emit('addImage', url);
+};
+
+// Handle importing a reference site structure
+const handleImportSite = (structure: any) => {
+    if (structure?.suggested_pages || structure?.pages) {
+        const pages = structure.suggested_pages || structure.pages || [];
+        addMessage('assistant', `I've analyzed the reference site. Found ${pages.length} pages ready to import.`, 'text');
+        emit('importSite', structure);
+    } else {
+        addMessage('assistant', 'Analysis complete, but no pages were detected. Try a different URL.', 'text');
+    }
+};
+
 // Initialize
 onMounted(async () => {
     // Load conversation history from localStorage
     loadConversation();
     
-    await checkStatus();
+    const statusResult = await checkStatus() as any;
     providerName.value = provider.value;
-    console.log('After checkStatus:', { isAvailable: isAvailable.value, provider: provider.value, providerName: providerName.value });
+    if (statusResult?.available_models) {
+        availableModels.value = statusResult.available_models;
+    }
+    if (statusResult?.model && !selectedModel.value) {
+        selectedModel.value = statusResult.model;
+    }
+    console.log('After checkStatus:', { isAvailable: isAvailable.value, provider: provider.value, availableModels: availableModels.value });
     // Load feedback stats from database
     await loadFeedbackStats();
 });

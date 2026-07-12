@@ -27,6 +27,11 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
+            // GrowMart routes loaded BEFORE web.php so domain-specific routes
+            // (growmart.mygrownet.com) match before web.php's root / route
+            Route::middleware('web')
+                ->group(base_path('routes/growmart.php'));
+
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
                 
@@ -84,6 +89,8 @@ class RouteServiceProvider extends ServiceProvider
             // GrowBuilder subdomain routes - must be loaded for subdomain handling
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));
+
+            // ZamStay module - loaded in bootstrap/app.php
         });
     }
 }
