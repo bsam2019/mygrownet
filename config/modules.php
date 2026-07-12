@@ -259,6 +259,18 @@ return [
             'nav_group' => 'tools',
             'requires_subscription' => false,
         ],
+
+        'primeedge' => [
+            'enabled' => true,
+            'name' => 'PrimeEdge Advisory',
+            'description' => 'Finance, compliance, and business advisory for SMEs',
+            'icon' => 'BriefcaseIcon',
+            'route' => 'primeedge.dashboard',
+            'nav_group' => 'business',
+            'requires_subscription' => false,
+            'category' => 'advisory',
+            'color' => 'emerald',
+        ],
     ],
 
     /*

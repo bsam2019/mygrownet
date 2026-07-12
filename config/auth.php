@@ -40,6 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'primeedge' => [
+            'driver' => 'session',
+            'provider' => 'primeedge_clients',
+        ],
     ],
 
     /*
@@ -63,6 +68,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'primeedge_clients' => [
+            'driver' => 'eloquent',
+            'model' => App\Infrastructure\PrimeEdge\Persistence\ClientModel::class,
         ],
 
         // 'users' => [

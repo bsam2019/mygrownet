@@ -128,6 +128,12 @@ class DetectSubdomain
                 return $next($request);
             }
 
+            // Handle PrimeEdge subdomain
+            if ($subdomain === 'primeedge') {
+                $this->configureSubdomainUrl($subdomain);
+                return $next($request);
+            }
+
             // Skip other reserved subdomains
             $reserved = [
                 'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 

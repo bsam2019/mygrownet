@@ -15,12 +15,14 @@ const ALL_INPUTS: Record<string, string[]> = {
         'resources/js/app-growmart.ts',
         'resources/js/app-zamstay.ts',
         'resources/js/app-cms.ts',
+        'resources/js/app-primeedge.ts',
     ],
     main: ['resources/js/app.ts'],
     bizboost: ['resources/js/app-bizboost.ts'],
     growmart: ['resources/js/app-growmart.ts'],
     zamstay: ['resources/js/app-zamstay.ts'],
     cms: ['resources/js/app-cms.ts'],
+    primeedge: ['resources/js/app-primeedge.ts'],
 };
 
 const inputs = MODULE && MODULE !== 'all' ? ALL_INPUTS[MODULE] ?? ALL_INPUTS.all : ALL_INPUTS.all;

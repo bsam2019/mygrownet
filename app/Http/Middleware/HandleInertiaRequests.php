@@ -31,7 +31,13 @@ class HandleInertiaRequests extends Middleware
             'growmart.mygrownet.com'    => 'growmart',
             'zamstay.mygrownet.com'     => 'zamstay',
             'cms.mygrownet.com'         => 'cms',
+            'primeedge.mygrownet.com'   => 'primeedge',
         ];
+
+        // Main domain path detection
+        if (!isset($map[$host]) && str_starts_with($request->path(), 'primeedge')) {
+            return 'primeedge';
+        }
 
         return $map[$host] ?? $this->rootView;
     }
@@ -124,6 +130,16 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $authUser,
+                'client' => function () use ($request) {
+                    if ($request->path() === 'primeedge' || str_starts_with($request->path(), 'primeedge/')) {
+                        $client = $request->user('primeedge');
+                        if ($client) {
+                            $client->load('clientProfile');
+                            return $client?->only(['id', 'name', 'email', 'phone', 'company']);
+                        }
+                    }
+                    return null;
+                },
             ],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),

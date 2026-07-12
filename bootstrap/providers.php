@@ -26,4 +26,5 @@ return [
     App\Providers\BizDocsServiceProvider::class,
     App\Providers\BizDocsIntegrationServiceProvider::class,
     App\Domain\GrowStream\GrowStreamServiceProvider::class,
+    App\Providers\PrimeEdgeServiceProvider::class,
 ];

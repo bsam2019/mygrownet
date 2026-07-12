@@ -28,5 +28,12 @@
 - Auth: `GET|HEAD auth/google` and `GET|HEAD auth/google/callback` — no prefix, no subdomain
 - Each subdomain needs its own callback URL registered in Google Cloud Console
 
+## PrimeEdge Advisory Subdomain Setup
+- **DNS**: Create `CNAME primeedge` pointing to `mygrownet.com` (or A record to droplet IP)
+- **Middleware**: Handler added in `DetectSubdomain.php` at line 131 — calls `configureSubdomainUrl()` (same as bizboost/zamstay)
+- **Routes**: `primeedge.mygrownet.com` group registered in `routes/primeedge.php` line 81 — serves all routes at root `/` with name prefix `primeedge.sub.`
+- **Blade view**: `primeedge.mygrownet.com` → `primeedge` already mapped in `HandleInertiaRequests.php`
+- **Note**: Subdomain routes use `primeedge.sub.*` name prefix to avoid collisions with main domain `primeedge.*` routes. Controllers that redirect (login, logout) currently use `primeedge.*` names. If activating subdomain, update redirect targets to detect current domain and use `primeedge.sub.*` names.
+
 ## Removed Files
 - `resources/js/Pages/GrowNet/Dashboard.vue` — classic desktop GrowNet dashboard, replaced by `GrowNet/GrowNet.vue` (modern mobile SPA)
