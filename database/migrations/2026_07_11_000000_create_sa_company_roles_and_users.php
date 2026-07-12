@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('name'); // e.g., "Store Manager", "Floor Supervisor", "Cashier"
             $table->string('slug'); // e.g., "store_manager", "floor_supervisor", "cashier"
             $table->text('description')->nullable();
-            $table->json('permissions')->default('[]'); // array of permission strings
+            $table->json('permissions'); // array of permission strings — no default (MySQL < 8.0.13 compat)
             $table->boolean('is_system')->default(false); // protected roles (owner, admin)
             $table->integer('sort_order')->default(0);
             $table->timestamps();
