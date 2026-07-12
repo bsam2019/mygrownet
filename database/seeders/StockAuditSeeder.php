@@ -179,83 +179,34 @@ class StockAuditSeeder extends Seeder
             ]);
         }
 
-        // Get bin references for seeding items
-        $bin2 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 2')->first();
-        $bin7 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 7')->first();
-        $bin8 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 8')->first();
-        $bin21 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 21')->first();
-        $bin23 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 23')->first();
-        $bin25 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 25')->first();
-        $bin27 = Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 27')->first();
+        // Build bin name → model map
+        $binMap = [];
+        for ($i = 1; $i <= 28; $i++) {
+            $name = "Bin {$i}";
+            $binMap[$name] = Bin::where('sa_company_id', $taradasi->id)->where('name', $name)->first();
+        }
 
-        // Seed items from the audit report (high-value discrepancy items)
-        $items = [
-            // Bin 8 — Composites
-            [
-                'sa_bin_id' => $bin8->id, 'name' => 'Nanotech 7 Syringe Kit (Shades A1–UO, Debond)', 'unit_price' => 2420.00, 'system_quantity' => 19, 'unit' => 'kit',
-            ],
-            [
-                'sa_bin_id' => $bin8->id, 'name' => 'Supreme 7 Syringe Kit 4g (Shades A1–Opaque)', 'unit_price' => 1738.33, 'system_quantity' => 16, 'unit' => 'kit',
-            ],
-            [
-                'sa_bin_id' => $bin8->id, 'name' => 'Dentogyl 12g', 'unit_price' => 560.00, 'system_quantity' => 23, 'unit' => 'tube',
-            ],
-            [
-                'sa_bin_id' => $bin8->id, 'name' => 'Denbond TE', 'unit_price' => 450.00, 'system_quantity' => 27, 'unit' => 'piece',
-            ],
-            // Bin 25 — Infection Control
-            [
-                'sa_bin_id' => $bin25->id, 'name' => 'Saliva Ejectors, Standard, Clear/Blue tip (100 pcs/pk)', 'unit_price' => 180.00, 'system_quantity' => 170, 'unit' => 'pack',
-            ],
-            [
-                'sa_bin_id' => $bin25->id, 'name' => 'Dental Bibs, 3-Ply Tissue + Poly (125 pcs/pk)', 'unit_price' => 757.58, 'system_quantity' => 33, 'unit' => 'pack',
-            ],
-            // Bin 2 — Instruments
-            [
-                'sa_bin_id' => $bin2->id, 'name' => 'Mouth Gag – Children 110mm', 'unit_price' => 150.00, 'system_quantity' => 5, 'unit' => 'piece',
-            ],
-            [
-                'sa_bin_id' => $bin2->id, 'name' => 'Mouth Gag – Adult 140mm', 'unit_price' => 180.00, 'system_quantity' => 4, 'unit' => 'piece',
-            ],
-            // Bin 7 — Etchant and Bond
-            [
-                'sa_bin_id' => $bin7->id, 'name' => 'Dental Lidocaine 2% (50 Cartridges/Box)', 'unit_price' => 528.00, 'system_quantity' => 25, 'unit' => 'box',
-            ],
-            // Bin 23 — Acrylic Teeth
-            [
-                'sa_bin_id' => $bin23->id, 'name' => 'Acrylic Teeth Set — Full (Anteriors & Posteriors)', 'unit_price' => 450.00, 'system_quantity' => 120, 'unit' => 'set',
-            ],
-            // Bin 21 — Lab Materials
-            [
-                'sa_bin_id' => $bin21->id, 'name' => 'Beloform Powder – Investment Material, Powder 160g + Liquid 35ml', 'unit_price' => 180.00, 'system_quantity' => 218, 'unit' => 'set',
-            ],
-            [
-                'sa_bin_id' => $bin21->id, 'name' => 'Cold Mold Seal 500ml', 'unit_price' => 180.00, 'system_quantity' => 44, 'unit' => 'bottle',
-            ],
-            [
-                'sa_bin_id' => $bin21->id, 'name' => 'Cold Cure Denture Base Liquid 100ml', 'unit_price' => 235.00, 'system_quantity' => 20, 'unit' => 'bottle',
-            ],
-            [
-                'sa_bin_id' => $bin21->id, 'name' => 'Cold Cure Denture Base Liquid 500ml', 'unit_price' => 240.00, 'system_quantity' => 30, 'unit' => 'bottle',
-            ],
-            // Bin 27 — Small Equipment
-            [
-                'sa_bin_id' => $bin27->id, 'name' => 'Curing Light, Woodpecker LED.B', 'unit_price' => 2500.00, 'system_quantity' => 5, 'unit' => 'piece',
-            ],
-            // Bin 1 — Misc (using first clinic bin)
-            [
-                'sa_bin_id' => Bin::where('sa_company_id', $taradasi->id)->where('name', 'Bin 1')->first()->id,
-                'name' => 'Holly Hexidine 100mls', 'unit_price' => 85.00, 'system_quantity' => 6, 'unit' => 'bottle',
-            ],
-        ];
+        // Load all items from the data file
+        $items = require __DIR__ . '/data/taradasi-items.php';
 
         foreach ($items as $itemData) {
-            $bin = Bin::find($itemData['sa_bin_id']);
-            Item::create(array_merge($itemData, [
+            $bin = $binMap[$itemData['bin']] ?? null;
+            if (!$bin) {
+                $this->command->warn("Bin '{$itemData['bin']}' not found, skipping: {$itemData['name']}");
+                continue;
+            }
+            Item::create([
                 'sa_company_id' => $taradasi->id,
                 'sa_department_id' => $bin->sa_department_id,
-                'category' => $bin->label ?? null,
-            ]));
+                'sa_bin_id' => $bin->id,
+                'name' => $itemData['name'],
+                'unit_price' => $itemData['price'],
+                'unit' => $itemData['unit'] ?? 'pcs',
+                'system_quantity' => $itemData['qty'],
+                'category' => $bin->label,
+                'is_expirable' => !empty($itemData['expiry']),
+                'expiry_date' => $itemData['expiry'] ?? null,
+            ]);
         }
     }
 }
