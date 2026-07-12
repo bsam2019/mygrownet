@@ -218,6 +218,13 @@ const bizBoostNavItems: NavItem[] = [
     { title: 'AI Usage', href: safeRoute('admin.bizboost.ai-usage'), icon: SparklesIcon },
 ];
 
+const quickInvoiceNavItems: NavItem[] = [
+    { title: 'Dashboard', href: safeRoute('admin.quick-invoice.dashboard'), icon: LayoutGrid },
+    { title: 'Analytics', href: safeRoute('admin.quick-invoice.analytics'), icon: BarChart3 },
+    { title: 'Users', href: safeRoute('admin.quick-invoice.users'), icon: Users },
+    { title: 'Plans', href: safeRoute('admin.quick-invoice.tiers'), icon: CreditCard },
+];
+
 const reportsNavItems: NavItem[] = [
     { title: 'Points Analytics', href: safeRoute('admin.analytics.points'), icon: Target },
     { title: 'Matrix Analytics', href: safeRoute('admin.analytics.matrix'), icon: LayoutGrid },
@@ -862,6 +869,36 @@ onMounted(() => {
 
                     <div v-if="showSubmenu.bizBoost" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
                         <Link v-for="item in bizBoostNavItems" :key="item.title"
+                            :href="item.href"
+                            :class="[
+                                'flex items-center px-4 py-2 transition-colors duration-200 text-sm',
+                                'hover:bg-gray-100 dark:hover:bg-gray-800',
+                                isUrlActive(item.href) ? 'text-blue-600 border-l-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            <component :is="item.icon" class="h-4 w-4" />
+                            <span class="ml-3">{{ item.title }}</span>
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Quick Invoice Section -->
+                <div class="pt-2">
+                    <button @click="toggleSubmenu('quickInvoice')"
+                        class="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg"
+                        @mouseenter="showItemTooltip($event, 'Quick Invoice')"
+                        @mouseleave="hideTooltip"
+                    >
+                        <div class="flex items-center">
+                            <FileText class="h-5 w-5" />
+                            <span v-show="!isCollapsed || isMobile" class="ml-3">Quick Invoice</span>
+                        </div>
+                        <ChevronDown v-show="!isCollapsed || isMobile" class="h-5 w-5 transform transition-transform duration-200"
+                            :class="{ 'rotate-180': showSubmenu.quickInvoice }" />
+                    </button>
+
+                    <div v-if="showSubmenu.quickInvoice" v-show="!isCollapsed || isMobile" class="mt-2 pl-4 space-y-1">
+                        <Link v-for="item in quickInvoiceNavItems" :key="item.title"
                             :href="item.href"
                             :class="[
                                 'flex items-center px-4 py-2 transition-colors duration-200 text-sm',

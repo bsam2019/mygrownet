@@ -19,6 +19,7 @@ use App\Models\QuickInvoice\QuickInvoiceProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\QuickInvoice\QuickInvoiceSubscriptionService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -916,6 +917,63 @@ class QuickInvoiceController extends Controller
                 'success' => false,
                 'message' => 'Failed to update attachment',
             ], 500);
+        }
+    }
+
+    // ── Subscription & Billing ──────────────────────────────────────────────────
+
+    public function subscriptionPlans(): Response
+    {
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        return Inertia::render('QuickInvoice/Subscription', [
+            'plans' => $service->getPlans(),
+            'currentSubscription' => $user ? $service->getUserSubscriptionStatus($user->id) : null,
+        ]);
+    }
+
+    public function checkout(int $tierId): \Inertia\Response|\Illuminate\Http\RedirectResponse
+    {
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        try {
+            $checkout = $service->initiateUpgrade($user->id, $tierId);
+            return Inertia::render('QuickInvoice/Checkout', [
+                'checkout' => $checkout,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('quick-invoice.subscription.plans')
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    public function upgrade(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $request->validate([
+            'tier_id' => 'required|exists:quick_invoice_subscription_tiers,id',
+            'payment_method' => 'required|in:wallet',
+        ]);
+
+        $service = app(QuickInvoiceSubscriptionService::class);
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        try {
+            $service->completePayment($user->id, $request->tier_id, $request->payment_method);
+            return redirect()->route('quick-invoice.subscription.plans')
+                ->with('success', 'Subscription upgraded successfully!');
+        } catch (\RuntimeException $e) {
+            return redirect()->route('quick-invoice.subscription.checkout', $request->tier_id)
+                ->with('error', $e->getMessage());
         }
     }
 }

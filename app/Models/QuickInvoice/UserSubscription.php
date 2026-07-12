@@ -18,15 +18,24 @@ class UserSubscription extends Model
         'tier_id',
         'starts_at',
         'expires_at',
+        'trial_ends_at',
         'documents_used',
         'is_active',
+        'billing_cycle',
+        'last_payment_at',
+        'last_payment_amount',
+        'payment_method',
+        'payment_reference',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
         'documents_used' => 'integer',
         'is_active' => 'boolean',
+        'last_payment_at' => 'datetime',
+        'last_payment_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -55,7 +64,8 @@ class UserSubscription extends Model
     }
 
     /**
-     * Get or create free subscription for user
+     * Get or create free subscription for user.
+     * If trial settings exist and this is a new user, start the trial period.
      */
     public static function getOrCreateFreeSubscription(int $userId): self
     {
@@ -66,15 +76,62 @@ class UserSubscription extends Model
         }
 
         $freeTier = SubscriptionTier::getFreeTier();
-        
+
+        // Check if trial should be applied
+        $trialSettings = AdminSetting::get('trial_settings', []);
+        $trialDays = $trialSettings['trial_days'] ?? 0;
+        $tierOnTrial = $trialSettings['tier_on_trial'] ?? null;
+
+        if ($trialDays > 0 && $tierOnTrial) {
+            $trialTier = SubscriptionTier::where('name', $tierOnTrial)
+                ->where('is_active', true)
+                ->first();
+
+            if ($trialTier && $trialTier->id !== $freeTier->id) {
+                return self::create([
+                    'user_id' => $userId,
+                    'tier_id' => $trialTier->id,
+                    'starts_at' => now(),
+                    'trial_ends_at' => now()->addDays($trialDays),
+                    'expires_at' => now()->addDays($trialDays), // trial = first billing period
+                    'documents_used' => 0,
+                    'is_active' => true,
+                ]);
+            }
+        }
+
         return self::create([
             'user_id' => $userId,
             'tier_id' => $freeTier->id,
             'starts_at' => now(),
-            'expires_at' => null, // Free tier never expires
+            'expires_at' => null,
             'documents_used' => 0,
             'is_active' => true,
         ]);
+    }
+
+    /**
+     * Check if user is on trial
+     */
+    public function onTrial(): bool
+    {
+        return $this->trial_ends_at && $this->trial_ends_at->isFuture();
+    }
+
+    /**
+     * Check if trial has expired
+     */
+    public function trialExpired(): bool
+    {
+        return $this->trial_ends_at && $this->trial_ends_at->isPast();
+    }
+
+    /**
+     * Check if subscription is paid (not trial, not free)
+     */
+    public function isPaid(): bool
+    {
+        return $this->last_payment_at !== null && $this->tier->price > 0;
     }
 
     /**
@@ -86,18 +143,25 @@ class UserSubscription extends Model
             return false;
         }
 
+        // Allow during trial period regardless of expiry
+        if ($this->onTrial()) {
+            return $this->checkDocumentLimit();
+        }
+
         if ($this->expires_at && $this->expires_at->isPast()) {
             return false;
         }
 
-        // If documents_per_month is -1, it means unlimited
+        return $this->checkDocumentLimit();
+    }
+
+    private function checkDocumentLimit(): bool
+    {
         if ($this->tier->documents_per_month == -1) {
             return true;
         }
 
-        // Get current month usage
         $monthlyUsage = UsageTracking::getUserMonthlyUsage($this->user_id);
-        
         return $monthlyUsage < $this->tier->documents_per_month;
     }
 

@@ -26,4 +26,15 @@ Route::prefix('admin/quick-invoice')->name('admin.quick-invoice.')->middleware([
     // Monetization Settings
     Route::post('/monetization-settings', [QuickInvoiceAdminController::class, 'updateMonetizationSettings'])->name('monetization-settings.update');
     Route::post('/toggle-usage-limits', [QuickInvoiceAdminController::class, 'toggleUsageLimits'])->name('toggle-usage-limits');
+    
+    // Trial Settings
+    Route::post('/trial-settings', [QuickInvoiceAdminController::class, 'updateTrialSettings'])->name('trial-settings.update');
+    
+    // Tier (Plan) Management
+    Route::get('/tiers', [QuickInvoiceAdminController::class, 'tiers'])->name('tiers');
+    Route::get('/tiers/create', [QuickInvoiceAdminController::class, 'createTier'])->name('tiers.create');
+    Route::post('/tiers', [QuickInvoiceAdminController::class, 'storeTier'])->name('tiers.store');
+    Route::get('/tiers/{id}/edit', [QuickInvoiceAdminController::class, 'editTier'])->name('tiers.edit');
+    Route::put('/tiers/{id}', [QuickInvoiceAdminController::class, 'updateTier'])->name('tiers.update');
+    Route::delete('/tiers/{id}', [QuickInvoiceAdminController::class, 'destroyTier'])->name('tiers.destroy');
 });

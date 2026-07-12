@@ -7,6 +7,7 @@ use App\Models\QuickInvoice\AdminSetting;
 use App\Models\QuickInvoice\SubscriptionTier;
 use App\Models\QuickInvoice\UsageTracking;
 use App\Models\QuickInvoice\UserSubscription;
+use App\Services\QuickInvoice\QuickInvoiceSubscriptionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +16,6 @@ class QuickInvoiceAdminController extends Controller
 {
     public function dashboard(): Response
     {
-        // Get usage stats for different periods
         $today = now()->format('Y-m-d');
         $weekAgo = now()->subWeek()->format('Y-m-d');
         $monthAgo = now()->subMonth()->format('Y-m-d');
@@ -24,7 +24,6 @@ class QuickInvoiceAdminController extends Controller
         $weekStats = UsageTracking::getStats($weekAgo, $today);
         $monthStats = UsageTracking::getStats($monthAgo, $today);
         
-        // Get subscription stats
         $subscriptionStats = [
             'total_users' => UserSubscription::distinct('user_id')->count(),
             'active_subscriptions' => UserSubscription::where('is_active', true)->count(),
@@ -36,7 +35,6 @@ class QuickInvoiceAdminController extends Controller
                 ->toArray(),
         ];
         
-        // Get recent activity
         $recentActivity = UsageTracking::with('user')
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -52,8 +50,15 @@ class QuickInvoiceAdminController extends Controller
                 ];
             });
         
-        // Get monetization settings
         $monetizationSettings = AdminSetting::getMonetizationSettings();
+        $trialSettings = AdminSetting::get('trial_settings', [
+            'trial_days' => 30,
+            'tier_on_trial' => 'Basic',
+            'require_payment_after_trial' => true,
+        ]);
+        
+        $subscriptionService = app(QuickInvoiceSubscriptionService::class);
+        $billingStats = $subscriptionService->getAdminStats();
         
         return Inertia::render('Admin/QuickInvoice/Dashboard', [
             'stats' => [
@@ -64,6 +69,8 @@ class QuickInvoiceAdminController extends Controller
             'subscriptionStats' => $subscriptionStats,
             'recentActivity' => $recentActivity,
             'monetizationSettings' => $monetizationSettings,
+            'trialSettings' => $trialSettings,
+            'billingStats' => $billingStats,
             'tiers' => SubscriptionTier::where('is_active', true)->get(),
         ]);
     }
@@ -151,6 +158,23 @@ class QuickInvoiceAdminController extends Controller
         ]);
     }
     
+    public function updateTrialSettings(Request $request)
+    {
+        $request->validate([
+            'trial_days' => 'required|integer|min:0|max:365',
+            'tier_on_trial' => 'required|string|exists:quick_invoice_subscription_tiers,name',
+            'require_payment_after_trial' => 'required|boolean',
+        ]);
+
+        AdminSetting::set('trial_settings', [
+            'trial_days' => (int) $request->trial_days,
+            'tier_on_trial' => $request->tier_on_trial,
+            'require_payment_after_trial' => (bool) $request->require_payment_after_trial,
+        ], auth()->id());
+
+        return back()->with('success', 'Trial settings updated successfully');
+    }
+
     public function userManagement(Request $request): Response
     {
         $search = $request->get('search');
@@ -175,6 +199,11 @@ class QuickInvoiceAdminController extends Controller
         $subscriptions = $query->paginate(20)->through(function ($subscription) {
             $monthlyUsage = UsageTracking::getUserMonthlyUsage($subscription->user_id);
             
+            $status = 'free';
+            if ($subscription->onTrial()) $status = 'trial';
+            elseif ($subscription->isPaid()) $status = 'active';
+            elseif ($subscription->expires_at && $subscription->expires_at->isPast()) $status = 'expired';
+
             return [
                 'id' => $subscription->id,
                 'user' => [
@@ -187,6 +216,13 @@ class QuickInvoiceAdminController extends Controller
                     'documents_per_month' => $subscription->tier->documents_per_month,
                     'formatted_price' => $subscription->tier->formatted_price,
                 ],
+                'status' => $status,
+                'is_trial' => $subscription->onTrial(),
+                'trial_ends_at' => $subscription->trial_ends_at?->format('M j, Y'),
+                'is_paid' => $subscription->isPaid(),
+                'last_payment_at' => $subscription->last_payment_at?->format('M j, Y'),
+                'last_payment_amount' => $subscription->last_payment_amount,
+                'payment_method' => $subscription->payment_method,
                 'monthly_usage' => $monthlyUsage,
                 'remaining_documents' => $subscription->getRemainingDocuments(),
                 'usage_percentage' => $subscription->getUsagePercentage(),
@@ -203,5 +239,117 @@ class QuickInvoiceAdminController extends Controller
                 'tier' => $tierFilter,
             ],
         ]);
+    }
+
+    // ── Tier (Plan) Management ──────────────────────────────────────────────────
+
+    public function tiers(): Response
+    {
+        $tiers = SubscriptionTier::orderBy('price')->get()->map(function ($tier) {
+            return [
+                'id' => $tier->id,
+                'name' => $tier->name,
+                'price' => (float) $tier->price,
+                'currency' => $tier->currency,
+                'formatted_price' => $tier->formatted_price,
+                'documents_per_month' => $tier->documents_per_month,
+                'features' => $tier->features,
+                'is_active' => $tier->is_active,
+                'subscriber_count' => $tier->userSubscriptions()->where('is_active', true)->count(),
+                'created_at' => $tier->created_at->format('M j, Y'),
+            ];
+        });
+
+        return Inertia::render('Admin/QuickInvoice/Tiers/Index', [
+            'tiers' => $tiers,
+        ]);
+    }
+
+    public function createTier(): Response
+    {
+        return Inertia::render('Admin/QuickInvoice/Tiers/Form', [
+            'tier' => null,
+        ]);
+    }
+
+    public function storeTier(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100|unique:quick_invoice_subscription_tiers,name',
+            'price' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3',
+            'documents_per_month' => 'required|integer|min:-1',
+            'features' => 'required|array',
+            'is_active' => 'boolean',
+        ]);
+
+        SubscriptionTier::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'currency' => $request->currency,
+            'documents_per_month' => $request->documents_per_month,
+            'features' => $request->features,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('admin.quick-invoice.tiers')
+            ->with('success', 'Plan created successfully');
+    }
+
+    public function editTier(int $id): Response
+    {
+        $tier = SubscriptionTier::findOrFail($id);
+
+        return Inertia::render('Admin/QuickInvoice/Tiers/Form', [
+            'tier' => [
+                'id' => $tier->id,
+                'name' => $tier->name,
+                'price' => (float) $tier->price,
+                'currency' => $tier->currency,
+                'documents_per_month' => $tier->documents_per_month,
+                'features' => $tier->features,
+                'is_active' => $tier->is_active,
+            ],
+        ]);
+    }
+
+    public function updateTier(int $id, Request $request)
+    {
+        $tier = SubscriptionTier::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:100|unique:quick_invoice_subscription_tiers,name,' . $id,
+            'price' => 'required|numeric|min:0',
+            'currency' => 'required|string|size:3',
+            'documents_per_month' => 'required|integer|min:-1',
+            'features' => 'required|array',
+            'is_active' => 'boolean',
+        ]);
+
+        $tier->update([
+            'name' => $request->name,
+            'price' => $request->price,
+            'currency' => $request->currency,
+            'documents_per_month' => $request->documents_per_month,
+            'features' => $request->features,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('admin.quick-invoice.tiers')
+            ->with('success', 'Plan updated successfully');
+    }
+
+    public function destroyTier(int $id)
+    {
+        $tier = SubscriptionTier::findOrFail($id);
+
+        if ($tier->userSubscriptions()->exists()) {
+            return back()->with('error', 'Cannot delete a plan that has active subscribers. Deactivate it instead.');
+        }
+
+        $tier->delete();
+
+        return redirect()->route('admin.quick-invoice.tiers')
+            ->with('success', 'Plan deleted successfully');
     }
 }
