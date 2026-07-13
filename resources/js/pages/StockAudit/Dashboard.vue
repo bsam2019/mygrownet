@@ -6,10 +6,10 @@ import {
     ArchiveBoxIcon, CreditCardIcon, ShoppingCartIcon,
     CurrencyDollarIcon, ClipboardDocumentListIcon, DocumentTextIcon,
     ArrowTrendingUpIcon, BuildingStorefrontIcon, BuildingOfficeIcon, CubeIcon,
-    SparklesIcon, CheckCircleIcon, ClockIcon, ExclamationCircleIcon,
+    SparklesIcon, CheckCircleIcon, ClockIcon, ExclamationCircleIcon, ExclamationTriangleIcon,
     XCircleIcon, HomeModernIcon, ChevronRightIcon, PlusIcon,
-    ArrowPathIcon, AlertCircleIcon, TrendingUpIcon, MagnifyingGlassIcon,
-    Cog6ToothIcon, BellIcon, CurrencyDollarCircleIcon,
+    ArrowPathIcon, TrendingUpIcon, MagnifyingGlassIcon,
+    Cog6ToothIcon, BellIcon,
 } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/vue/24/solid';
 
@@ -178,7 +178,7 @@ const greeting = computed(() => {
 
 // Quick actions
 const quickActions = [
-    { label: 'Open Register', href: '/stock-audit/cash', icon: CurrencyDollarCircleIcon, color: 'emerald', show: props.company && !props.stats.has_open_register },
+    { label: 'Open Register', href: '/stock-audit/cash', icon: CurrencyDollarIcon, color: 'emerald', show: props.company && !props.stats.has_open_register },
     { label: 'Record Sale', href: '/stock-audit/sales/create', icon: CreditCardIcon, color: 'blue', show: props.company },
     { label: 'Create PO', href: '/stock-audit/purchases/create', icon: ShoppingCartIcon, color: 'amber', show: props.company },
     { label: 'Start Count', href: '/stock-audit/physical-counts/create', icon: ClipboardDocumentListIcon, color: 'violet', show: props.company },
@@ -190,7 +190,7 @@ const alertItems = computed(() => {
     if (props.stats.low_stock_count > 0) {
         alerts.push({
             label: `${props.stats.low_stock_count} Low Stock`,
-            icon: AlertCircleIcon,
+            icon: ExclamationTriangleIcon,
             color: 'amber',
             href: '/stock-audit/items?filter=low_stock',
         });
@@ -359,7 +359,7 @@ const recentActivity = computed(() => {
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
                             <div class="rounded-lg bg-teal-50 p-2.5">
-                                <CurrencyDollarCircleIcon class="h-5 w-5 text-teal-600" />
+                                <CurrencyDollarIcon class="h-5 w-5 text-teal-600" />
                             </div>
                             <div>
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Today's Sales</p>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     TrophyIcon,
     LockClosedIcon,
@@ -56,7 +56,7 @@ const getCriteriaLabel = (type: string, value: string | null) => {
 <template>
     <Head title="GrowStart - Badges & Achievements" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -164,5 +164,5 @@ const getCriteriaLabel = (type: string, value: string | null) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

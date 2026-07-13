@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     RocketLaunchIcon, 
     ArrowLeftIcon, 
@@ -88,7 +88,7 @@ const getIndustryIcon = (slug: string) => {
 <template>
     <Head title="GrowStart - Begin Your Journey" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="min-h-screen bg-gray-50 py-8">
             <div class="max-w-3xl mx-auto px-4">
                 <!-- Header -->
@@ -282,5 +282,5 @@ const getIndustryIcon = (slug: string) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     DocumentTextIcon,
     ArrowDownTrayIcon,
@@ -56,7 +56,7 @@ const getCategoryColor = (category: string) => {
 <template>
     <Head title="GrowStart - Templates" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -158,5 +158,5 @@ const getCategoryColor = (category: string) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

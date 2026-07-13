@@ -6,7 +6,7 @@ import {
     PlusIcon, UserCircleIcon, ChevronRightIcon, ChevronDownIcon,
     KeyIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon,
     PauseCircleIcon, PlayCircleIcon, ArrowPathIcon, TrashIcon,
-    PencilIcon, EyeIcon, MailIcon, MagnifyingGlassIcon,
+    PencilIcon, EyeIcon, EnvelopeIcon, MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline';
 
 interface Employee {
@@ -254,7 +254,7 @@ const getRoleDisplay = (employee: Employee) => {
                                                 class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                                                 title="Resend invitation"
                                             >
-                                                <MailIcon class="h-4 w-4" />
+                                                <EnvelopeIcon class="h-4 w-4" />
                                             </button>
 
                                             <button

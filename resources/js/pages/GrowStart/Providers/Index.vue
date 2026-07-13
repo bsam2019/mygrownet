@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     MagnifyingGlassIcon,
     FunnelIcon,
@@ -59,7 +59,7 @@ const renderStars = (rating: number) => {
 <template>
     <Head title="GrowStart - Service Providers" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -211,5 +211,5 @@ const renderStars = (rating: number) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

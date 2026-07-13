@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     CheckCircleIcon, 
     ClockIcon,
@@ -70,7 +70,7 @@ const skipTask = (taskId: number) => {
 <template>
     <Head :title="`GrowStart - ${stage.name}`" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Back Link -->
@@ -261,5 +261,5 @@ const skipTask = (taskId: number) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

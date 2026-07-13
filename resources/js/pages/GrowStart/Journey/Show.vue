@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     RocketLaunchIcon,
     CalendarIcon,
@@ -67,7 +67,7 @@ const getStageIcon = (slug: string) => {
 <template>
     <Head title="GrowStart - My Journey" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -279,5 +279,5 @@ const getStageIcon = (slug: string) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

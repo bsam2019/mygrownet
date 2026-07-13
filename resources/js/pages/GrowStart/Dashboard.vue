@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     RocketLaunchIcon, 
     CheckCircleIcon, 
@@ -51,7 +51,7 @@ const getStatusColor = (status: string) => {
 <template>
     <Head title="GrowStart - Dashboard" />
     
-    <AuthenticatedLayout>
+    <AppLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- No Journey State -->
@@ -262,5 +262,5 @@ const getStatusColor = (status: string) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>
