@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/grownet.php'));
             Route::middleware('web')
                 ->group(base_path('routes/growstorage.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/primeedge.php'));
 
             // Main web routes
             Route::middleware('web')
@@ -76,8 +78,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/ubumi.php'));
             Route::middleware('web')
                 ->group(base_path('routes/portal.php'));
-            Route::middleware('web')
-                ->group(base_path('routes/primeedge.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
