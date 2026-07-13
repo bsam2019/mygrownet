@@ -14,7 +14,11 @@ use App\Http\Controllers\StockAudit\RoleController;
 use App\Http\Controllers\StockAudit\SaleController;
 use App\Http\Controllers\StockAudit\StockMovementController;
 use App\Http\Controllers\StockAudit\SupplierController;
+use App\Http\Controllers\StockAudit\AuthController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,9 +36,21 @@ use Illuminate\Support\Facades\Route;
 Route::domain('{account}.mygrownet.com')
     ->middleware(['web', 'stockflow.company'])
     ->group(function () {
-        // Dashboard (requires auth)
+        // Public routes (no auth required)
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('stockflow.sub.login');
+        Route::post('/login', [AuthController::class, 'login'])->name('stockflow.sub.login.store');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('stockflow.sub.logout');
+
+        // Root — show login page if unauthenticated, dashboard if authenticated
+        Route::get('/', function (Request $request) {
+            if (Auth::check()) {
+                return app(DashboardController::class)->index($request);
+            }
+            return Inertia::render('StockAudit/Login');
+        })->name('stockflow.sub.dashboard');
+
+        // Authenticated routes
         Route::middleware(['auth', 'verified'])->group(function () {
-            Route::get('/', [DashboardController::class, 'index'])->name('stockflow.sub.dashboard');
 
             // Company switch
             Route::post('/switch-company', [DashboardController::class, 'switchCompany'])->name('stockflow.sub.switch-company');
