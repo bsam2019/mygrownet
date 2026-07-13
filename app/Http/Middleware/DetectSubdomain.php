@@ -159,11 +159,6 @@ class DetectSubdomain
                 $this->configureSubdomainUrl($subdomain);
                 $request->attributes->set('stock_audit_company_id', $company->id());
 
-                // Redirect root path to stock-audit dashboard, not main site
-                if ($request->path() === '/') {
-                    return redirect('/stock-audit');
-                }
-
                 return $next($request);
             }
             

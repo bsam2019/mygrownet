@@ -34,6 +34,16 @@ class HandleInertiaRequests extends Middleware
             'primeedge.mygrownet.com'   => 'primeedge',
         ];
 
+        // Check if this is a StockFlow company subdomain
+        if (!isset($map[$host]) && preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)) {
+            $subdomain = strtolower(explode('.', $host)[0]);
+            // If not a known subdomain, check if it's a StockFlow company
+            $knownSubdomains = array_keys($map);
+            if (!in_array($subdomain . '.mygrownet.com', $knownSubdomains) && $subdomain !== 'www') {
+                return 'app';
+            }
+        }
+
         // Main domain path detection
         if (!isset($map[$host]) && str_starts_with($request->path(), 'primeedge')) {
             return 'primeedge';
