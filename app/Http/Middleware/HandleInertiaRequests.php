@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -84,30 +85,35 @@ class HandleInertiaRequests extends Middleware
         // Prepare lightweight user payload with cached roles and permissions
         $authUser = null;
         if ($user) {
-            // Use cache to avoid loading roles/permissions on every request
-            $cacheKey = "user_auth_data_{$user->id}";
-            $authData = cache()->remember($cacheKey, 300, function () use ($user) { // 5 min cache
-                $roles = $user->roles()->pluck('slug')->toArray();
-                $permissions = $user->roles()
-                    ->with('permissions:id,slug')
-                    ->get()
-                    ->pluck('permissions')
-                    ->flatten()
-                    ->pluck('slug')
-                    ->unique()
-                    ->values()
-                    ->toArray();
+            // StockFlow users use SaUserModel which has no roles() relationship
+            if ($user instanceof SaUserModel) {
+                $authUser = $user->only(['id', 'name', 'email']);
+            } else {
+                // Use cache to avoid loading roles/permissions on every request
+                $cacheKey = "user_auth_data_{$user->id}";
+                $authData = cache()->remember($cacheKey, 300, function () use ($user) { // 5 min cache
+                    $roles = $user->roles()->pluck('slug')->toArray();
+                    $permissions = $user->roles()
+                        ->with('permissions:id,slug')
+                        ->get()
+                        ->pluck('permissions')
+                        ->flatten()
+                        ->pluck('slug')
+                        ->unique()
+                        ->values()
+                        ->toArray();
 
-                return [
-                    'roles' => $roles,
-                    'permissions' => $permissions,
-                ];
-            });
+                    return [
+                        'roles' => $roles,
+                        'permissions' => $permissions,
+                    ];
+                });
 
-            $authUser = array_merge(
-                $user->only(['id', 'name', 'email']),
-                $authData
-            );
+                $authUser = array_merge(
+                    $user->only(['id', 'name', 'email']),
+                    $authData
+                );
+            }
         }
 
         // Get support stats for admin users

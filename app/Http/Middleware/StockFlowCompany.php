@@ -14,6 +14,9 @@ class StockFlowCompany
             abort(404);
         }
 
+        $companyId = $request->attributes->get('stock_audit_company_id');
+        $request->session()->put('stock_audit_company_id', $companyId);
+
         return $next($request);
     }
 }
