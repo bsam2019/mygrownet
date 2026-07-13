@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class VentureCategoryModel extends Model
 {
     use HasFactory;
-{
     protected $table = 'venture_categories';
 
     protected $fillable = [
