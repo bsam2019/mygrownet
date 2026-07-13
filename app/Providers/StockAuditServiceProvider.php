@@ -8,6 +8,7 @@ use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyRoleRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyUserRepositoryInterface;
+use App\Domain\StockFlow\Repositories\UserRepositoryInterface;
 use App\Domain\StockFlow\Repositories\DepartmentRepositoryInterface;
 use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
@@ -23,6 +24,7 @@ use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCashRegisterRe
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRoleRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyUserRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentUserRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentDepartmentRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentItemRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPhysicalCountRepository;
@@ -56,6 +58,7 @@ class StockAuditServiceProvider extends ServiceProvider
         // Employee/Role repositories
         $this->app->bind(CompanyRoleRepositoryInterface::class, EloquentCompanyRoleRepository::class);
         $this->app->bind(CompanyUserRepositoryInterface::class, EloquentCompanyUserRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 
         // Services
         $this->app->singleton(CompanyRoleService::class);

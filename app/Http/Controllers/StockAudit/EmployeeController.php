@@ -34,7 +34,7 @@ class EmployeeController extends Controller
         $companyId = $request->session()->get('stock_audit_company_id');
         
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'required|exists:sa_users,id',
             'role_id' => 'nullable|exists:sa_company_roles,id',
         ]);
 

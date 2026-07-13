@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SaCompanyModel extends Model
 {
     protected $table = 'sa_companies';
-    protected $fillable = ['name', 'subdomain', 'email', 'phone', 'address', 'city', 'country', 'contact_person', 'currency', 'status'];
+    protected $fillable = ['name', 'subdomain', 'email', 'phone', 'address', 'city', 'country', 'contact_person', 'currency', 'status', 'logo_path', 'tagline', 'brand_color', 'settings'];
     protected $casts = ['status' => 'string'];
 
     public function departments(): HasMany { return $this->hasMany(SaDepartmentModel::class, 'sa_company_id'); }

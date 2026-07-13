@@ -40,6 +40,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/primeedge.php'));
             Route::middleware('web')
                 ->group(base_path('routes/stockflow-subdomain.php'));
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow-admin.php'));
 
             // Main web routes
             Route::middleware('web')
@@ -118,6 +120,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
             'portal.auth' => \App\Http\Middleware\RedirectIfNotPortalUser::class,
             'stockflow.company' => \App\Http\Middleware\StockFlowCompany::class,
+            'stockflow.admin' => \App\Http\Middleware\StockFlowAdminMiddleware::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group

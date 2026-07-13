@@ -168,6 +168,8 @@ class HandleInertiaRequests extends Middleware
                 'generatedContent' => fn () => $request->session()->get('generatedContent'),
                 'businessPlan' => fn () => $request->session()->get('businessPlan'),
                 'chatResponse' => fn () => $request->session()->get('chatResponse'),
+                'generated_password' => fn () => $request->session()->get('generated_password'),
+                'generated_email' => fn () => $request->session()->get('generated_email'),
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'supportStats' => $supportStats,

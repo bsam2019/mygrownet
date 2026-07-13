@@ -1,26 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\StockAudit;
+namespace App\Http\Controllers\StockAudit\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
-use App\Domain\StockFlow\ValueObjects\CompanyId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    public function showLogin(Request $request)
+    public function showLogin()
     {
-        $companyId = $request->attributes->get('stock_audit_company_id');
-        $company = $companyId
-            ? app(CompanyRepositoryInterface::class)->findById(CompanyId::fromInt($companyId))
-            : null;
-
-        return Inertia::render('StockAudit/Login', [
-            'company' => $company ? $company->toArray() : null,
-        ]);
+        return Inertia::render('StockAudit/Admin/Login');
     }
 
     public function login(Request $request)
@@ -31,8 +22,16 @@ class AuthController extends Controller
         ]);
 
         if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
+            $user = Auth::guard('stockflow')->user();
+            if (!$user->is_stockflow_admin) {
+                Auth::guard('stockflow')->logout();
+                return back()->withErrors([
+                    'email' => 'You do not have admin access.',
+                ])->onlyInput('email');
+            }
+
             $request->session()->regenerate();
-            return redirect()->intended(route('stockflow.sub.dashboard', [], false));
+            return redirect()->intended(route('stockflow.admin.dashboard'));
         }
 
         return back()->withErrors([
@@ -46,6 +45,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('stockflow.admin.login');
     }
 }

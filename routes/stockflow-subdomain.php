@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\StockAudit\AuditController;
+use App\Http\Controllers\StockAudit\AuthController;
 use App\Http\Controllers\StockAudit\BinController;
 use App\Http\Controllers\StockAudit\CashController;
 use App\Http\Controllers\StockAudit\CompanyController;
@@ -8,17 +9,14 @@ use App\Http\Controllers\StockAudit\DashboardController;
 use App\Http\Controllers\StockAudit\DepartmentController;
 use App\Http\Controllers\StockAudit\EmployeeController;
 use App\Http\Controllers\StockAudit\ItemController;
+use App\Http\Controllers\StockAudit\LandingController;
 use App\Http\Controllers\StockAudit\PhysicalCountController;
 use App\Http\Controllers\StockAudit\PurchaseOrderController;
 use App\Http\Controllers\StockAudit\RoleController;
 use App\Http\Controllers\StockAudit\SaleController;
 use App\Http\Controllers\StockAudit\StockMovementController;
 use App\Http\Controllers\StockAudit\SupplierController;
-use App\Http\Controllers\StockAudit\AuthController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,16 +39,11 @@ Route::domain('{account}.mygrownet.com')
         Route::post('/login', [AuthController::class, 'login'])->name('stockflow.sub.login.store');
         Route::post('/logout', [AuthController::class, 'logout'])->name('stockflow.sub.logout');
 
-        // Root — show login page if unauthenticated, dashboard if authenticated
-        Route::get('/', function (Request $request) {
-            if (Auth::check()) {
-                return app(DashboardController::class)->index($request);
-            }
-            return Inertia::render('StockAudit/Login');
-        })->name('stockflow.sub.dashboard');
+        // Root — show company landing page if unauthenticated, dashboard if authenticated
+        Route::get('/', [LandingController::class, 'index'])->name('stockflow.sub.dashboard');
 
-        // Authenticated routes
-        Route::middleware(['auth', 'verified'])->group(function () {
+        // Authenticated routes (using stockflow guard)
+        Route::middleware('auth:stockflow')->group(function () {
 
             // Company switch
             Route::post('/switch-company', [DashboardController::class, 'switchCompany'])->name('stockflow.sub.switch-company');

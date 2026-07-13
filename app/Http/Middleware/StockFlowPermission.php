@@ -11,7 +11,7 @@ class StockFlowPermission
 {
     public function handle(Request $request, Closure $next, string $permission): Response
     {
-        $user = Auth::user();
+        $user = Auth::guard('stockflow')->user();
         $companyId = $request->session()->get('stock_audit_company_id');
 
         if (!$user || !$companyId) {

@@ -51,6 +51,10 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
             'contact_person' => $company->getContactPerson(),
             'currency' => $company->getCurrency(),
             'status' => $company->getStatus(),
+            'logo_path' => $company->getLogoPath(),
+            'tagline' => $company->getTagline(),
+            'brand_color' => $company->getBrandColor(),
+            'settings' => $company->getSettings(),
         ];
 
         if ($company->id() === 0) {
@@ -79,6 +83,10 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
             status: $model->status ?? 'active',
             createdAt: new DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')),
             updatedAt: new DateTimeImmutable($model->updated_at->format('Y-m-d H:i:s')),
+            logoPath: $model->logo_path,
+            tagline: $model->tagline,
+            brandColor: $model->brand_color ?? '#059669',
+            settings: $model->settings ? (is_array($model->settings) ? $model->settings : json_decode($model->settings, true)) : null,
         );
     }
 }
