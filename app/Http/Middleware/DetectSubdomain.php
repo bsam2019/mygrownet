@@ -158,7 +158,7 @@ class DetectSubdomain
             if ($company && $company->getStatus() === 'active') {
                 $this->configureSubdomainUrl($subdomain);
                 // Set the company in session so controllers can access it
-                $request->session()->put('stock_audit_company_id', $company->id());
+                $request->attributes->set('stock_audit_company_id', $company->id());
                 return $next($request);
             }
             
