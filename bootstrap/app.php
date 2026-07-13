@@ -38,6 +38,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/growstorage.php'));
             Route::middleware('web')
                 ->group(base_path('routes/primeedge.php'));
+
+            // StockFlow company subdomain routes - loaded BEFORE web.php so
+            // {account}.mygrownet.com/ matches before web.php's domain-less GET / route
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow-subdomain.php'));
+
             Route::middleware('web')
                 ->group(base_path('routes/stockflow-admin.php'));
 
