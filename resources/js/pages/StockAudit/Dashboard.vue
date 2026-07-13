@@ -437,12 +437,14 @@ const recentActivity = computed(() => {
                         <div class="h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent"></div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <Link v-for="action in quickActions" :key="action.label" v-if="action.show" :href="action.href" class="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center text-center">
-                            <div :class="[colorMap[action.color].bg, 'rounded-lg p-3 ring-1 ring-inset ring-black/5 transition-colors group-hover:ring-black/10']">
-                                <component :is="action.icon" :class="[colorMap[action.color].icon, 'h-6 w-6']" aria-hidden="true" />
-                            </div>
-                            <p class="mt-3 text-sm font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">{{ action.label }}</p>
-                        </Link>
+                        <template v-for="action in quickActions" :key="action.label">
+                            <Link v-if="action.show" :href="action.href" class="group relative overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center text-center">
+                                <div :class="[colorMap[action.color].bg, 'rounded-lg p-3 ring-1 ring-inset ring-black/5 transition-colors group-hover:ring-black/10']">
+                                    <component :is="action.icon" :class="[colorMap[action.color].icon, 'h-6 w-6']" aria-hidden="true" />
+                                </div>
+                                <p class="mt-3 text-sm font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">{{ action.label }}</p>
+                            </Link>
+                        </template>
                     </div>
                 </div>
 

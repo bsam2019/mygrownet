@@ -26,6 +26,8 @@ defineProps<Props>();
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
+const sidebarOpen = ref(false);
+const sidebarCollapsed = ref(false);
 
 // Detect if we're on a company subdomain (stockflow.sub.* routes)
 const isSubdomain = computed(() => {
@@ -52,7 +54,11 @@ const navigation = computed(() => {
 
 const isCurrentRoute = (routeName: string) => {
     try {
-        return route().current(routeName) || route().current(routeName + '.*');
+        const routeHelper = route();
+        if (!routeHelper || typeof routeHelper.current !== 'function') {
+            return false;
+        }
+        return routeHelper.current(routeName) || routeHelper.current(routeName + '.*');
     } catch {
         return false;
     }
