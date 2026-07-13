@@ -86,6 +86,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/ubumi.php'));
                 
+            // StockFlow company subdomain routes - loaded BEFORE GrowBuilder subdomain
+            // so {account}.mygrownet.com/ matches before {subdomain}.mygrownet.com/{slug?}
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow-subdomain.php'));
+
             // GrowBuilder subdomain routes - must be loaded for subdomain handling
             Route::middleware('web')
                 ->group(base_path('routes/subdomain.php'));

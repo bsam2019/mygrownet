@@ -39,8 +39,6 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/primeedge.php'));
             Route::middleware('web')
-                ->group(base_path('routes/stockflow-subdomain.php'));
-            Route::middleware('web')
                 ->group(base_path('routes/stockflow-admin.php'));
 
             // Main web routes
