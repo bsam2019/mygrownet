@@ -32,7 +32,8 @@ class AuthController extends Controller
 
         if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('stockflow.sub.dashboard', [], false));
+            $account = $this->getAccountFromRequest($request);
+            return redirect()->intended(route('stockflow.sub.dashboard', ['account' => $account], false));
         }
 
         return back()->withErrors([
@@ -47,5 +48,26 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function getAccountFromRequest(Request $request): string
+    {
+        // First try to get from company ID in request attributes (set by DetectSubdomain middleware)
+        $companyId = $request->attributes->get('stock_audit_company_id');
+        if ($companyId) {
+            $company = app(CompanyRepositoryInterface::class)
+                ->findById(CompanyId::fromInt($companyId));
+            if ($company && $company->getSubdomain()) {
+                return $company->getSubdomain();
+            }
+        }
+
+        // Fallback: extract from host
+        $host = $request->getHost();
+        if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
+            return strtolower($matches[1]);
+        }
+
+        return 'stockflow';
     }
 }

@@ -55,7 +55,7 @@ class DashboardService
 
         // Today's sales total
         $today = new DateTimeImmutable();
-        $todaysSales = $this->saleRepository->getTodayTotal($companyId);
+        $todaysSales = $this->saleRepository->getTodayTotal(CompanyId::fromInt($companyId));
 
         // Recent activity (last 5 audits, counts, sales)
         $recentAudits = array_slice($audits, 0, 5);

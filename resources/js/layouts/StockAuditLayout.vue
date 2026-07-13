@@ -27,22 +27,28 @@ defineProps<Props>();
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
-const sidebarOpen = ref(false);
-const sidebarCollapsed = ref(false);
+// Detect if we're on a company subdomain (stockflow.sub.* routes)
+const isSubdomain = computed(() => {
+    const routeName = page.props.routeName ?? '';
+    return routeName.startsWith('stockflow.sub.');
+});
 
-const navigation = [
-    { name: 'Dashboard', href: '/stock-audit', icon: HomeIcon, routeName: 'stock-audit.dashboard' },
-    { name: 'Items', href: '/stock-audit/items', icon: ArchiveBoxIcon, routeName: 'stock-audit.items' },
-    { name: 'Sales', href: '/stock-audit/sales', icon: CreditCardIcon, routeName: 'stock-audit.sales' },
-    { name: 'Purchases', href: '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: 'stock-audit.purchases' },
-    { name: 'Cash Register', href: '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: 'stock-audit.cash' },
-    { name: 'Stock Movements', href: '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: 'stock-audit.movements' },
-    { name: 'Physical Counts', href: '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, routeName: 'stock-audit.physical-counts' },
-    { name: 'Audits', href: '/stock-audit/audits', icon: DocumentTextIcon, routeName: 'stock-audit.audits' },
-    { name: 'Suppliers', href: '/stock-audit/suppliers', icon: BuildingStorefrontIcon, routeName: 'stock-audit.suppliers' },
-    { name: 'Departments', href: '/stock-audit/departments', icon: BuildingOfficeIcon, routeName: 'stock-audit.departments' },
-    { name: 'Bins', href: '/stock-audit/bins', icon: CubeIcon, routeName: 'stock-audit.bins' },
-];
+const navigation = computed(() => {
+    const base = isSubdomain.value ? 'stockflow.sub' : 'stock-audit';
+    return [
+        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stock-audit', icon: HomeIcon, routeName: `${base}.dashboard` },
+        { name: 'Items', href: isSubdomain.value ? '/items' : '/stock-audit/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index` },
+        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stock-audit/sales', icon: CreditCardIcon, routeName: `${base}.sales.index` },
+        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index` },
+        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index` },
+        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index` },
+        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index` },
+        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stock-audit/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index` },
+        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stock-audit/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index` },
+        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stock-audit/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index` },
+        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stock-audit/bins', icon: CubeIcon, routeName: `${base}.bins.index` },
+    ];
+});
 
 const isCurrentRoute = (routeName: string) => {
     try {

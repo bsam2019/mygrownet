@@ -40,7 +40,7 @@ const logoUrl = computed(() => props.company?.logo_path ?? null);
                 <p class="text-xl text-white/80 mb-8">{{ tagline }}</p>
 
                 <Link
-                    :href="route('stockflow.sub.login')"
+                    :href="route('stockflow.sub.login', { account: company?.subdomain })"
                     class="inline-block px-8 py-3 bg-white font-semibold rounded-xl shadow-lg hover:bg-white/90 transition-all"
                     :style="{ color: brandColor }"
                 >

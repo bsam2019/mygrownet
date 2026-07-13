@@ -6,6 +6,7 @@ const props = defineProps<{
     company: {
         id: number;
         name: string;
+        subdomain: string | null;
         tagline: string | null;
         logo_path: string | null;
         brand_color: string;
@@ -16,6 +17,7 @@ const brandColor = computed(() => props.company?.brand_color ?? '#059669');
 const companyName = computed(() => props.company?.name ?? 'StockFlow');
 const tagline = computed(() => props.company?.tagline ?? 'Inventory Management System');
 const logoUrl = computed(() => props.company?.logo_path ?? null);
+const account = computed(() => props.company?.subdomain ?? '');
 
 const form = useForm({
     email: '',
@@ -24,7 +26,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('stockflow.sub.login.store'), {
+    form.post(route('stockflow.sub.login.store', { account: account.value }), {
         onError: () => form.reset('password'),
     });
 };
