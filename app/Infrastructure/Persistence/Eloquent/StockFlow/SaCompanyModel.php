@@ -9,7 +9,10 @@ class SaCompanyModel extends Model
 {
     protected $table = 'sa_companies';
     protected $fillable = ['name', 'subdomain', 'email', 'phone', 'address', 'city', 'country', 'contact_person', 'currency', 'status', 'logo_path', 'tagline', 'brand_color', 'settings'];
-    protected $casts = ['status' => 'string'];
+    protected $casts = [
+        'status' => 'string',
+        'settings' => 'array',
+    ];
 
     public function departments(): HasMany { return $this->hasMany(SaDepartmentModel::class, 'sa_company_id'); }
     public function bins(): HasMany { return $this->hasMany(SaBinModel::class, 'sa_company_id'); }
