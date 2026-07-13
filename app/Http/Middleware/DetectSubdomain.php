@@ -157,8 +157,13 @@ class DetectSubdomain
             $company = $this->companyRepository->findBySubdomain($subdomain);
             if ($company && $company->getStatus() === 'active') {
                 $this->configureSubdomainUrl($subdomain);
-                // Set the company in session so controllers can access it
                 $request->attributes->set('stock_audit_company_id', $company->id());
+
+                // Redirect root path to stock-audit dashboard, not main site
+                if ($request->path() === '/') {
+                    return redirect('/stock-audit');
+                }
+
                 return $next($request);
             }
             
