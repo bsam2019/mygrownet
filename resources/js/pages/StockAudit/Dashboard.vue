@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { computed, ref } from 'vue';
 import {
@@ -102,6 +102,14 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const page = usePage();
+const isSubdomain = computed(() => {
+    const routeName = page.props.routeName ?? '';
+    return routeName.startsWith('stockflow.sub.');
+});
+
+const sf = (path: string) => isSubdomain.value ? path : '/stock-audit' + path;
+
 const statusConfig: Record<string, { label: string; icon: any; class: string }> = {
     active: { label: 'Active', icon: CheckCircleSolid, class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' },
     trial: { label: 'Trial', icon: SparklesIcon, class: 'bg-blue-50 text-blue-700 ring-blue-600/20' },
@@ -114,33 +122,33 @@ const companyStatus = computed(() => {
     return statusConfig[props.company?.status || ''] || statusConfig.inactive;
 });
 
-const moduleGroups = [
+const moduleGroups = computed(() => [
     {
         title: 'Operations',
         items: [
-            { name: 'Items', href: '/stock-audit/items', icon: ArchiveBoxIcon, desc: 'Manage your stock inventory', color: 'emerald' },
-            { name: 'Sales', href: '/stock-audit/sales', icon: CreditCardIcon, desc: 'Record daily transactions', color: 'blue' },
-            { name: 'Purchases', href: '/stock-audit/purchases', icon: ShoppingCartIcon, desc: 'Purchase orders & receiving', color: 'amber' },
-            { name: 'Cash Register', href: '/stock-audit/cash', icon: CurrencyDollarIcon, desc: 'Daily cash management', color: 'teal' },
+            { name: 'Items', href: sf('/items'), icon: ArchiveBoxIcon, desc: 'Manage your stock inventory', color: 'emerald' },
+            { name: 'Sales', href: sf('/sales'), icon: CreditCardIcon, desc: 'Record daily transactions', color: 'blue' },
+            { name: 'Purchases', href: sf('/purchases'), icon: ShoppingCartIcon, desc: 'Purchase orders & receiving', color: 'amber' },
+            { name: 'Cash Register', href: sf('/cash'), icon: CurrencyDollarIcon, desc: 'Daily cash management', color: 'teal' },
         ],
     },
     {
         title: 'Audit & Control',
         items: [
-            { name: 'Stock Movements', href: '/stock-audit/movements', icon: ArrowTrendingUpIcon, desc: 'Complete stock change ledger', color: 'purple' },
-            { name: 'Physical Counts', href: '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, desc: 'Count and verify stock', color: 'violet' },
-            { name: 'Audits', href: '/stock-audit/audits', icon: DocumentTextIcon, desc: 'Generate audit reports', color: 'indigo' },
+            { name: 'Stock Movements', href: sf('/movements'), icon: ArrowTrendingUpIcon, desc: 'Complete stock change ledger', color: 'purple' },
+            { name: 'Physical Counts', href: sf('/physical-counts'), icon: ClipboardDocumentListIcon, desc: 'Count and verify stock', color: 'violet' },
+            { name: 'Audits', href: sf('/audits'), icon: DocumentTextIcon, desc: 'Generate audit reports', color: 'indigo' },
         ],
     },
     {
         title: 'Administration',
         items: [
-            { name: 'Suppliers', href: '/stock-audit/suppliers', icon: BuildingStorefrontIcon, desc: 'Manage vendor records', color: 'cyan' },
-            { name: 'Departments', href: '/stock-audit/departments', icon: BuildingOfficeIcon, desc: 'Organize by department', color: 'rose' },
-            { name: 'Bins', href: '/stock-audit/bins', icon: CubeIcon, desc: 'Storage locations', color: 'orange' },
+            { name: 'Suppliers', href: sf('/suppliers'), icon: BuildingStorefrontIcon, desc: 'Manage vendor records', color: 'cyan' },
+            { name: 'Departments', href: sf('/departments'), icon: BuildingOfficeIcon, desc: 'Organize by department', color: 'rose' },
+            { name: 'Bins', href: sf('/bins'), icon: CubeIcon, desc: 'Storage locations', color: 'orange' },
         ],
     },
-];
+]);
 
 const colorMap: Record<string, { bg: string; icon: string; hover: string }> = {
     emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', hover: 'hover:bg-emerald-50' },
@@ -178,10 +186,10 @@ const greeting = computed(() => {
 
 // Quick actions
 const quickActions = [
-    { label: 'Open Register', href: '/stock-audit/cash', icon: CurrencyDollarIcon, color: 'emerald', show: props.company && !props.stats.has_open_register },
-    { label: 'Record Sale', href: '/stock-audit/sales/create', icon: CreditCardIcon, color: 'blue', show: props.company },
-    { label: 'Create PO', href: '/stock-audit/purchases/create', icon: ShoppingCartIcon, color: 'amber', show: props.company },
-    { label: 'Start Count', href: '/stock-audit/physical-counts/create', icon: ClipboardDocumentListIcon, color: 'violet', show: props.company },
+    { label: 'Open Register', href: sf('/cash'), icon: CurrencyDollarIcon, color: 'emerald', show: props.company && !props.stats.has_open_register },
+    { label: 'Record Sale', href: sf('/sales/create'), icon: CreditCardIcon, color: 'blue', show: props.company },
+    { label: 'Create PO', href: sf('/purchases/create'), icon: ShoppingCartIcon, color: 'amber', show: props.company },
+    { label: 'Start Count', href: sf('/physical-counts/create'), icon: ClipboardDocumentListIcon, color: 'violet', show: props.company },
 ];
 
 // Alert items for dashboard
@@ -192,7 +200,7 @@ const alertItems = computed(() => {
             label: `${props.stats.low_stock_count} Low Stock`,
             icon: ExclamationTriangleIcon,
             color: 'amber',
-            href: '/stock-audit/items?filter=low_stock',
+            href: sf('/items?filter=low_stock'),
         });
     }
     if (props.stats.out_of_stock_count > 0) {
@@ -200,7 +208,7 @@ const alertItems = computed(() => {
             label: `${props.stats.out_of_stock_count} Out of Stock`,
             icon: XCircleIcon,
             color: 'red',
-            href: '/stock-audit/items?filter=out_of_stock',
+            href: sf('/items?filter=out_of_stock'),
         });
     }
     if (props.stats.pending_po_count > 0 || props.stats.partial_po_count > 0) {
@@ -208,7 +216,7 @@ const alertItems = computed(() => {
             label: `${props.stats.pending_po_count + props.stats.partial_po_count} POs Pending`,
             icon: ArrowPathIcon,
             color: 'blue',
-            href: '/stock-audit/purchases',
+            href: sf('/purchases'),
         });
     }
     if (props.stats.in_progress_count_count > 0) {
@@ -216,7 +224,7 @@ const alertItems = computed(() => {
             label: `${props.stats.in_progress_count_count} Counts In Progress`,
             icon: ClipboardDocumentListIcon,
             color: 'violet',
-            href: '/stock-audit/physical-counts',
+            href: sf('/physical-counts'),
         });
     }
     if (props.stats.unresolved_audit_count > 0) {
@@ -224,7 +232,7 @@ const alertItems = computed(() => {
             label: `${props.stats.unresolved_audit_count} Unresolved Audits`,
             icon: DocumentTextIcon,
             color: 'indigo',
-            href: '/stock-audit/audits',
+            href: sf('/audits'),
         });
     }
     return alerts;
@@ -239,7 +247,7 @@ const recentActivity = computed(() => {
             title: `Audit: ${a.title}`,
             date: a.audit_date,
             status: a.status,
-            href: `/stock-audit/audits/${a.id}`,
+            href: sf('/audits/' + a.id),
         });
     });
     // Add recent counts
@@ -249,7 +257,7 @@ const recentActivity = computed(() => {
             title: `Physical Count`,
             date: c.count_date,
             status: c.status,
-            href: `/stock-audit/physical-counts/${c.id}`,
+            href: sf('/physical-counts/' + c.id),
         });
     });
     // Sort by date descending
@@ -422,7 +430,7 @@ const recentActivity = computed(() => {
                                 <CheckCircleSolid class="h-3 w-3" />
                                 Register Open
                             </span>
-                            <Link :href="`/stock-audit/cash/${open_register.id}`" class="text-sm font-semibold text-emerald-700 hover:text-emerald-600 transition-colors">
+                            <Link :href="sf('/cash/' + open_register.id)" class="text-sm font-semibold text-emerald-700 hover:text-emerald-600 transition-colors">
                                 View Details <ChevronRightIcon class="inline h-4 w-4 ml-1" />
                             </Link>
                         </div>
@@ -454,7 +462,7 @@ const recentActivity = computed(() => {
                     <div v-if="low_stock_items.length > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm">
                         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900">Low Stock Items</h3>
-                            <Link :href="`/stock-audit/items?filter=low_stock`" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
+                            <Link :href="sf('/items?filter=low_stock')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
                         </div>
                         <div class="divide-y divide-gray-100">
                             <div v-for="item in low_stock_items.slice(0, 5)" :key="item.id" class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
@@ -462,7 +470,7 @@ const recentActivity = computed(() => {
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</p>
                                     <p class="text-xs text-gray-500">Qty: {{ item.system_quantity }} | Reorder: {{ item.reorder_level }}</p>
                                 </div>
-                                <Link :href="`/stock-audit/items/${item.id}`" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">View</Link>
+                                <Link :href="sf('/items/' + item.id)" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">View</Link>
                             </div>
                         </div>
                     </div>
@@ -471,7 +479,7 @@ const recentActivity = computed(() => {
                     <div v-if="pending_pos.length > 0 || partial_pos.length > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm">
                         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900">Pending Purchase Orders</h3>
-                            <Link :href="`/stock-audit/purchases`" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
+                            <Link :href="sf('/purchases')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
                         </div>
                         <div class="divide-y divide-gray-100">
                             <div v-for="po in [...pending_pos.slice(0, 3), ...partial_pos.slice(0, 2)]" :key="po.id" class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
@@ -490,7 +498,7 @@ const recentActivity = computed(() => {
                     <div v-if="in_progress_counts.length > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm">
                         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900">Physical Counts In Progress</h3>
-                            <Link :href="`/stock-audit/physical-counts`" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
+                            <Link :href="sf('/physical-counts')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
                         </div>
                         <div class="divide-y divide-gray-100">
                             <div v-for="count in in_progress_counts.slice(0, 5)" :key="count.id" class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
@@ -498,7 +506,7 @@ const recentActivity = computed(() => {
                                     <p class="text-sm font-medium text-gray-900">Count #{{ count.id }}</p>
                                     <p class="text-xs text-gray-500">{{ formatDate(count.count_date) }}</p>
                                 </div>
-                                <Link :href="`/stock-audit/physical-counts/${count.id}`" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Continue</Link>
+                                <Link :href="sf('/physical-counts/' + count.id)" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Continue</Link>
                             </div>
                         </div>
                     </div>
@@ -507,7 +515,7 @@ const recentActivity = computed(() => {
                     <div v-if="unresolved_audits.length > 0" class="rounded-xl border border-gray-100 bg-white shadow-sm">
                         <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900">Unresolved Audits</h3>
-                            <Link :href="`/stock-audit/audits`" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
+                            <Link :href="sf('/audits')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View all</Link>
                         </div>
                         <div class="divide-y divide-gray-100">
                             <div v-for="audit in unresolved_audits.slice(0, 5)" :key="audit.id" class="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
@@ -515,7 +523,7 @@ const recentActivity = computed(() => {
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ audit.title }}</p>
                                     <p class="text-xs text-gray-500">{{ formatDate(audit.audit_date) }} • {{ audit.status }}</p>
                                 </div>
-                                <Link :href="`/stock-audit/audits/${audit.id}`" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Review</Link>
+                                <Link :href="sf('/audits/' + audit.id)" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Review</Link>
                             </div>
                         </div>
                     </div>

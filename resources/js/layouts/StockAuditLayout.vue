@@ -94,7 +94,7 @@ onUnmounted(() => {
                     </div>
                     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                         <div class="flex h-16 shrink-0 items-center">
-                            <Link href="/stock-audit" class="flex items-center gap-2">
+                            <Link :href="isSubdomain ? '/' : '/stock-audit'" class="flex items-center gap-2">
                                 <div class="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center">
                                     <ClipboardDocumentListIcon class="h-5 w-5 text-white" />
                                 </div>
@@ -137,7 +137,7 @@ onUnmounted(() => {
         >
             <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white pb-4">
                 <div :class="['flex h-16 shrink-0 items-center border-b border-gray-200', sidebarCollapsed ? 'justify-center px-4' : 'justify-between px-6']">
-                    <Link href="/stock-audit" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
+                    <Link :href="isSubdomain ? '/' : '/stock-audit'" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
                         <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                             <ClipboardDocumentListIcon class="h-5 w-5 text-white" />
                         </div>
