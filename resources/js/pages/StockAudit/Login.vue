@@ -33,6 +33,8 @@ const submit = () => {
         onError: () => form.reset('password'),
     });
 };
+
+const hasError = computed(() => Object.keys(form.errors).length > 0);
 </script>
 
 <template>
@@ -50,6 +52,9 @@ const submit = () => {
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div v-if="hasError" class="mb-5 p-3 rounded-lg text-sm font-medium text-red-800 bg-red-50 border border-red-200">
+                        Invalid email or password. Please try again.
+                    </div>
                     <form @submit.prevent="submit" class="space-y-5">
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>

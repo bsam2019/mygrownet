@@ -14,7 +14,7 @@ import AOS from 'aos';
 
 (window as any).Pusher = Pusher;
 
-const echoInstance = new Echo({
+const echoInstance = (window as any).__sfSubdomain ? null : new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: import.meta.env.VITE_REVERB_HOST,
@@ -31,7 +31,9 @@ const echoInstance = new Echo({
 });
 
 (window as any).Echo = echoInstance;
-configureEcho(echoInstance);
+if (echoInstance) {
+    configureEcho(echoInstance);
+}
 
 const PWA_CACHE_PREFIXES = ['bizboost-', 'growbiz-', 'growfinance-', 'mygrownet-'];
 
@@ -57,11 +59,22 @@ declare module 'vite/client' {
 
 let redirecting = false;
 
+function getLoginUrl(): string {
+    if ((window as any).__sfSubdomain) {
+        const hostParts = window.location.hostname.split('.');
+        if (hostParts.length > 2) {
+            const account = hostParts[0];
+            return `https://${account}.${hostParts.slice(1).join('.')}/login`;
+        }
+    }
+    return '/login';
+}
+
 window.addEventListener('error', (event) => {
     if (event.message?.includes('419')) {
         if (!redirecting) {
             redirecting = true;
-            window.location.href = '/login';
+            window.location.href = getLoginUrl();
         }
     }
 });
@@ -71,7 +84,7 @@ window.fetch = function (...args) {
     return originalFetch.apply(this, args).then((response) => {
         if (response.status === 419 && !redirecting) {
             redirecting = true;
-            setTimeout(() => { window.location.href = '/login'; }, 500);
+            setTimeout(() => { window.location.href = getLoginUrl(); }, 500);
         }
         return response;
     }).catch((error) => {

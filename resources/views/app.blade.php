@@ -153,8 +153,10 @@
         <meta name="msapplication-TileColor" content="{{ $brandColor }}">
         <meta name="msapplication-tap-highlight" content="no">
         
-        <!-- PWA Manifest -->
+        <!-- PWA Manifest (disabled for StockFlow subdomains) -->
+        @if(!$sfCompany)
         <link rel="manifest" href="/manifest.json">
+        @endif
         
         <!-- Apple Splash Screens -->
         <link rel="apple-touch-startup-image" href="/splash.html" />
