@@ -134,20 +134,25 @@ export function bootInertia(
             return pageResolver(name);
         },
         setup({ el, App, props, plugin }) {
+            // Apply route aliases BEFORE ZiggyVue reads routes so that
+            // route('stock-audit.X') works on subdomains where routes are
+            // named stockflow.sub.X
+            if ((window as any).__sfSubdomain) {
+                const routes = (props as any).ziggy?.routes || (window as any).Ziggy?.routes;
+                if (routes) {
+                    for (const key of Object.keys(routes)) {
+                        if (key.startsWith('stockflow.sub.')) {
+                            const alias = key.replace('stockflow.sub.', 'stock-audit.');
+                            routes[alias] = routes[key];
+                        }
+                    }
+                }
+            }
+
             const app = createApp({ render: () => h(App, props) })
                 .use(plugin)
                 .use(ZiggyVue)
                 .use(createPinia());
-
-            if ((window as any).__sfSubdomain && (window as any).Ziggy?.routes) {
-                const routes = (window as any).Ziggy.routes as Record<string, any>;
-                for (const key of Object.keys(routes)) {
-                    if (key.startsWith('stockflow.sub.')) {
-                        const alias = key.replace('stockflow.sub.', 'stock-audit.');
-                        routes[alias] = routes[key];
-                    }
-                }
-            }
 
             app.mount(el);
         },
