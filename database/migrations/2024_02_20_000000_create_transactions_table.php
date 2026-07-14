@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('investment_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('referrer_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->decimal('amount', 10, 2);
-            $table->string('transaction_type'); // deposit, withdrawal, return
-            $table->string('status')->default('pending'); // pending, completed, failed
-            $table->string('payment_method')->nullable();
-            $table->string('reference_number')->unique();
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('transactions')) {
+            Schema::create('transactions', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('investment_id')->nullable()->constrained()->onDelete('cascade');
+                $table->foreignId('referrer_id')->nullable()->constrained('users')->onDelete('set null');
+                $table->decimal('amount', 10, 2);
+                $table->string('transaction_type'); // deposit, withdrawal, return
+                $table->string('status')->default('pending'); // pending, completed, failed
+                $table->string('payment_method')->nullable();
+                $table->string('reference_number')->unique();
+                $table->text('description')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
