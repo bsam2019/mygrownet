@@ -17,17 +17,7 @@ class LandingController extends Controller
 
     public function index(Request $request)
     {
-        $isAuth = Auth::guard('stockflow')->check();
-
-        \Log::debug('StockFlow LandingController::index', [
-            'is_authenticated' => $isAuth,
-            'host' => $request->getHost(),
-            'path' => $request->path(),
-            'session_company_id' => $request->session()->get('stock_audit_company_id'),
-            'route_name' => $request->route()?->getName(),
-        ]);
-
-        if ($isAuth) {
+        if (Auth::guard('stockflow')->check()) {
             return app(DashboardController::class)->index($request);
         }
 

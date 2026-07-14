@@ -105,7 +105,13 @@ const isCurrentRoute = (routeName: string) => {
 };
 
 const logout = () => {
-    router.post(route(isSubdomain.value ? 'stockflow.sub.logout' : 'stock-audit.logout'));
+    if (isSubdomain.value) {
+        const hostParts = window.location.hostname.split('.');
+        const account = hostParts.length > 2 ? hostParts[0] : '';
+        router.post(route('stockflow.sub.logout', { account }));
+    } else {
+        router.post(route('stock-audit.logout'));
+    }
 };
 
 const closeUserMenu = () => {

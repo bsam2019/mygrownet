@@ -25,47 +25,16 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        \Log::debug('StockFlow AuthController::login called', [
-            'email' => $request->email,
-            'method' => $request->method(),
-            'url' => $request->fullUrl(),
-            'host' => $request->getHost(),
-            'session_has_company' => $request->session()->has('stock_audit_company_id'),
-            'session_prev_url' => $request->session()->previousUrl(),
-            'has_token' => $request->has('_token'),
-            'has_xsrf_header' => $request->hasHeader('X-XSRF-TOKEN'),
-            'has_csrf_header' => $request->hasHeader('X-CSRF-TOKEN'),
-        ]);
-
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        $attempted = Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'));
-
-        \Log::debug('StockFlow AuthController::login attempt result', [
-            'success' => $attempted,
-            'email' => $credentials['email'],
-        ]);
-
-        if ($attempted) {
+        if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             $account = $this->getAccountFromRequest($request);
-
-            $routeUrl = route('stockflow.sub.dashboard', ['account' => $account], false);
-
-            \Log::debug('StockFlow AuthController::login success - redirecting', [
-                'account' => $account,
-                'route_url' => $routeUrl,
-            ]);
-
-            return redirect()->intended($routeUrl);
+            return redirect()->intended(route('stockflow.sub.dashboard', ['account' => $account], false));
         }
-
-        \Log::debug('StockFlow AuthController::login failed', [
-            'back_url' => url()->previous(),
-        ]);
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
