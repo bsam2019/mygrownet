@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 
 interface SaleItem {
@@ -103,6 +104,11 @@ const { formatCurrency } = useCurrency();
                         <p class="text-xs text-gray-500">Notes</p>
                         <p class="mt-1 text-sm text-gray-700">{{ sale.notes }}</p>
                     </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="mt-6">
+                    <CommentSection type="sale" :id="sale.id" />
                 </div>
             </div>
         </div>

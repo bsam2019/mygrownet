@@ -23,6 +23,7 @@ import {
     UsersIcon,
     ShieldCheckIcon,
     DocumentChartBarIcon,
+    EnvelopeIcon,
 } from '@heroicons/vue/24/outline';
 import NotificationToast from '@/components/StockAudit/NotificationToast.vue';
 import NotificationBell from '@/components/StockAudit/NotificationBell.vue';
@@ -46,6 +47,25 @@ const isSubdomain = computed(() => {
 });
 
 const companyFeatures = computed(() => (page.props as any).companyFeatures ?? {});
+const messageUnreadCount = ref(0);
+
+const fetchMessageUnreadCount = async () => {
+    try {
+        const url = isSubdomain.value ? '/messages/unread-count' : '/stock-audit/messages/unread-count';
+        const res = await fetch(url);
+        const data = await res.json();
+        messageUnreadCount.value = data.count ?? 0;
+    } catch {
+        messageUnreadCount.value = 0;
+    }
+};
+
+const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+        sidebarOpen.value = false;
+        showUserMenu.value = false;
+    }
+};
 
 const navigation = computed(() => {
     const base = isSubdomain.value ? 'stockflow.sub' : 'stock-audit';
@@ -67,6 +87,7 @@ const navigation = computed(() => {
         { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stock-audit/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
         { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stock-audit/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
         { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stock-audit/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
+        { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stock-audit/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
     ];
     return items.filter(i => i.feature);
 });
@@ -87,18 +108,15 @@ const logout = () => {
     router.post(route(isSubdomain.value ? 'stockflow.sub.logout' : 'stock-audit.logout'));
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-        sidebarOpen.value = false;
-        showUserMenu.value = false;
-    }
-};
-
 const closeUserMenu = () => {
     showUserMenu.value = false;
 };
 
 onMounted(() => {
+    fetchMessageUnreadCount();
+    const interval = setInterval(fetchMessageUnreadCount, 30000);
+    onUnmounted(() => clearInterval(interval));
+
     document.addEventListener('keydown', handleKeydown);
     document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
@@ -203,22 +221,34 @@ onUnmounted(() => {
 
                 <nav :class="['flex flex-1 flex-col', sidebarCollapsed ? 'px-3' : 'px-4']">
                     <ul role="list" class="flex flex-1 flex-col gap-y-2">
-                        <li v-for="item in navigation" :key="item.name">
-                            <Link
-                                :href="item.href"
-                                :class="[
-                                    isCurrentRoute(item.routeName)
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border border-transparent',
-                                    'group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold transition-all',
-                                    sidebarCollapsed && 'justify-center'
-                                ]"
-                                :title="sidebarCollapsed ? item.name : ''"
-                            >
+                    <li v-for="item in navigation" :key="item.name">
+                        <Link
+                            :href="item.href"
+                            :class="[
+                                isCurrentRoute(item.routeName)
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border border-transparent',
+                                'group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold transition-all',
+                                sidebarCollapsed && 'justify-center'
+                            ]"
+                            :title="sidebarCollapsed ? item.name : ''"
+                        >
+                            <div class="relative">
                                 <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
-                                <span v-if="!sidebarCollapsed">{{ item.name }}</span>
-                            </Link>
-                        </li>
+                                <span
+                                    v-if="item.name === 'Messages' && messageUnreadCount > 0 && sidebarCollapsed"
+                                    class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
+                                >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
+                            </div>
+                            <div v-if="!sidebarCollapsed" class="flex items-center gap-2 flex-1">
+                                <span>{{ item.name }}</span>
+                                <span
+                                    v-if="item.name === 'Messages' && messageUnreadCount > 0"
+                                    class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold"
+                                >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
+                            </div>
+                        </Link>
+                    </li>
                     </ul>
                 </nav>
             </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 
@@ -210,6 +211,10 @@ const exportCsv = () => {
                         <h3 class="text-sm font-semibold text-gray-900">Conclusion</h3>
                         <p class="mt-2 text-sm text-gray-700">{{ audit.conclusion }}</p>
                     </div>
+                </div>
+                <!-- Comments -->
+                <div class="mt-6">
+                    <CommentSection type="audit" :id="audit.id" />
                 </div>
             </div>
         </div>

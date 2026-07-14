@@ -5,12 +5,14 @@ namespace App\Providers;
 use App\Domain\StockFlow\Repositories\AuditRepositoryInterface;
 use App\Domain\StockFlow\Repositories\BinRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
+use App\Domain\StockFlow\Repositories\CommentRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyRoleRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CompanyUserRepositoryInterface;
 use App\Domain\StockFlow\Repositories\UserRepositoryInterface;
 use App\Domain\StockFlow\Repositories\DepartmentRepositoryInterface;
 use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
+use App\Domain\StockFlow\Repositories\MessageRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PurchaseOrderRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
@@ -21,12 +23,14 @@ use App\Domain\StockFlow\Services\CompanyUserService;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentAuditRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBinRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCashRegisterRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCommentRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyRoleRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCompanyUserRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentUserRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentDepartmentRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentItemRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentMessageRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPhysicalCountRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPurchaseOrderRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSaleRepository;
@@ -68,9 +72,15 @@ class StockAuditServiceProvider extends ServiceProvider
         $this->app->bind(CompanyUserRepositoryInterface::class, EloquentCompanyUserRepository::class);
         $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 
+        // Comment & Message bindings
+        $this->app->bind(CommentRepositoryInterface::class, EloquentCommentRepository::class);
+        $this->app->bind(MessageRepositoryInterface::class, EloquentMessageRepository::class);
+
         // Services
         $this->app->singleton(CompanyRoleService::class);
         $this->app->singleton(CompanyUserService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\StockFlowNotificationService::class);
+        $this->app->singleton(\App\Domain\StockFlow\Services\CommentService::class);
+        $this->app->singleton(\App\Domain\StockFlow\Services\MessagingService::class);
     }
 }

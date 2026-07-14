@@ -204,6 +204,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'companyFeatures' => $companyFeatures,
+            'csrf_token' => csrf_token(),
             'supportStats' => $supportStats,
             'employee' => $employee,
         ];

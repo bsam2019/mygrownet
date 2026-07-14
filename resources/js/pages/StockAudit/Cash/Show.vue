@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
@@ -199,6 +200,11 @@ const isOpen = props.register.status === 'open';
                         <p class="text-xs text-gray-500">Notes</p>
                         <p class="mt-1 text-sm text-gray-700">{{ register.notes }}</p>
                     </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="mt-6">
+                    <CommentSection type="cash_register" :id="register.id" />
                 </div>
             </div>
         </div>

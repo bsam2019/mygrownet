@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref, computed } from 'vue';
 
@@ -156,6 +157,11 @@ const submitReceive = () => {
                         <p class="text-xs text-gray-500">Notes</p>
                         <p class="mt-1 text-sm text-gray-700">{{ order.notes }}</p>
                     </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="mt-6">
+                    <CommentSection type="purchase_order" :id="order.id" />
                 </div>
             </div>
         </div>

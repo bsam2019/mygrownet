@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
@@ -160,6 +161,11 @@ const generateAudit = async () => {
                 <div v-if="count.notes" class="mt-6 rounded-xl bg-white p-6 shadow-sm">
                     <p class="text-xs text-gray-500">Notes</p>
                     <p class="mt-1 text-sm text-gray-700">{{ count.notes }}</p>
+                </div>
+
+                <!-- Comments -->
+                <div class="mt-6">
+                    <CommentSection type="physical_count" :id="count.id" />
                 </div>
             </div>
         </div>

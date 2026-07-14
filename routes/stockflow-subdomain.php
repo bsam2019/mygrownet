@@ -4,12 +4,14 @@ use App\Http\Controllers\StockAudit\AuditController;
 use App\Http\Controllers\StockAudit\AuthController;
 use App\Http\Controllers\StockAudit\BinController;
 use App\Http\Controllers\StockAudit\CashController;
+use App\Http\Controllers\StockAudit\CommentController;
 use App\Http\Controllers\StockAudit\CompanyController;
 use App\Http\Controllers\StockAudit\DashboardController;
 use App\Http\Controllers\StockAudit\DepartmentController;
 use App\Http\Controllers\StockAudit\EmployeeController;
 use App\Http\Controllers\StockAudit\ItemController;
 use App\Http\Controllers\StockAudit\LandingController;
+use App\Http\Controllers\StockAudit\MessageController;
 use App\Http\Controllers\StockAudit\NotificationController as StockAuditNotificationController;
 use App\Http\Controllers\StockAudit\PhysicalCountController;
 use App\Http\Controllers\StockAudit\PurchaseOrderController;
@@ -46,6 +48,26 @@ Route::domain('{account}.mygrownet.com')
 
         // Authenticated routes (using stockflow guard)
         Route::middleware('auth:stockflow')->group(function () {
+
+            // Comments API (cross-cutting, no feature flag)
+            Route::prefix('comments')->name('stockflow.sub.comments.')->group(function () {
+                Route::get('/', [CommentController::class, 'index'])->name('index');
+                Route::post('/', [CommentController::class, 'store'])->name('store');
+                Route::put('/{commentId}', [CommentController::class, 'update'])->name('update');
+                Route::delete('/{commentId}', [CommentController::class, 'destroy'])->name('destroy');
+            });
+
+            // Messages
+            Route::prefix('messages')->name('stockflow.sub.messages.')->group(function () {
+                Route::get('/', [MessageController::class, 'inbox'])->name('inbox');
+                Route::get('/sent', [MessageController::class, 'sent'])->name('sent');
+                Route::get('/compose', [MessageController::class, 'compose'])->name('compose');
+                Route::get('/unread-count', [MessageController::class, 'unreadCount'])->name('unread-count');
+                Route::get('/{userId}', [MessageController::class, 'show'])->name('show');
+                Route::post('/', [MessageController::class, 'store'])->name('store');
+                Route::post('/{messageId}/read', [MessageController::class, 'markAsRead'])->name('read');
+                Route::post('/read-all', [MessageController::class, 'markAllAsRead'])->name('read-all');
+            });
 
             // Notifications API
             Route::prefix('notifications')->name('stockflow.sub.notifications.')->group(function () {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import CommentSection from '@/components/StockAudit/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 
@@ -168,6 +169,11 @@ const submitAdjust = () => {
                                 </div>
                             </dl>
                         </div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="lg:col-span-2">
+                        <CommentSection type="item" :id="item.id" />
                     </div>
                 </div>
             </div>
