@@ -15,6 +15,12 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
+        \Log::debug('StockFlow DashboardController::index called', [
+            'host' => $request->getHost(),
+            'session_company_id' => $request->session()->get('stock_audit_company_id'),
+            'route' => $request->route()?->getName(),
+        ]);
+
         $companyId = $request->session()->get('stock_audit_company_id');
         $companies = $this->dashboardService->getActiveCompanies();
 
