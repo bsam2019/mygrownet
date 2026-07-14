@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\PurchaseOrderItemId;
 use App\Domain\StockFlow\ValueObjects\PurchaseOrderId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use DateTimeImmutable;
 
-class PurchaseOrderItem
+class PurchaseOrderItem implements Arrayable
 {
     private function __construct(
         private PurchaseOrderItemId $id,

@@ -39,6 +39,14 @@ class StockAuditServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(database_path('migrations'));
+
+        \Illuminate\Support\Facades\Redirect::macro('sfRoute', function ($name, $parameters = [], $status = 302, $headers = []) {
+            if (str_starts_with($name, 'stock-audit.') && request()->route() &&
+                str_starts_with(request()->route()->getName() ?? '', 'stockflow.sub.')) {
+                $name = 'stockflow.sub.' . substr($name, 12);
+            }
+            return $this->route($name, $parameters, $status, $headers);
+        });
     }
 
     public function register(): void

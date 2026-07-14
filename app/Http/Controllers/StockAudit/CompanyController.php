@@ -64,7 +64,7 @@ class CompanyController extends Controller
 
         $repo->save($company);
 
-        return redirect()->route('stock-audit.companies.index')
+        return redirect()->sfRoute('stock-audit.companies.index')
             ->with('success', "Company created with subdomain: {$subdomain}.mygrownet.com");
     }
 

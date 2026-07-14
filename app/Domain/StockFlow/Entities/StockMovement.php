@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\StockMovementId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
@@ -12,7 +14,7 @@ use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\MovementType;
 use DateTimeImmutable;
 
-class StockMovement
+class StockMovement implements Arrayable
 {
     private function __construct(
         private StockMovementId $id,

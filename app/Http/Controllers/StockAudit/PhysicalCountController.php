@@ -35,7 +35,7 @@ class PhysicalCountController extends Controller
 
         $count = $this->physicalCountService->createCount($companyId, $validated, $request->user()->id);
 
-        return redirect()->route('stock-audit.physical-counts.show', $count->id());
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $count->id());
     }
 
     public function show(int $physicalCountId)
@@ -61,20 +61,20 @@ class PhysicalCountController extends Controller
 
         $this->physicalCountService->updateCountItems($physicalCountId, $validated['items']);
 
-        return redirect()->route('stock-audit.physical-counts.show', $physicalCountId);
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId);
     }
 
     public function complete(Request $request, int $physicalCountId)
     {
         $this->physicalCountService->completeCount($physicalCountId, $request->user()->id);
 
-        return redirect()->route('stock-audit.physical-counts.show', $physicalCountId);
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId);
     }
 
     public function generateAudit(Request $request, int $physicalCountId)
     {
         $audit = $this->physicalCountService->generateAudit($physicalCountId);
 
-        return redirect()->route('stock-audit.audits.show', $audit->id());
+        return redirect()->sfRoute('stock-audit.audits.show', $audit->id());
     }
 }

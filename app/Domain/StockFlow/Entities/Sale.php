@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\SaleId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\PaymentMethod;
 use DateTimeImmutable;
 
-class Sale
+class Sale implements Arrayable
 {
     private function __construct(
         private SaleId $id,

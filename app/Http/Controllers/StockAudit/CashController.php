@@ -42,7 +42,7 @@ class CashController extends Controller
                 $validated['opening_balance'],
                 $request->user()->id,
             );
-            return redirect()->route('stock-audit.cash.show', $register->id());
+            return redirect()->sfRoute('stock-audit.cash.show', $register->id());
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()]);
         }
@@ -77,7 +77,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->route('stock-audit.cash.show', $registerId);
+        return redirect()->sfRoute('stock-audit.cash.show', $registerId);
     }
 
     public function close(Request $request, int $registerId)
@@ -93,7 +93,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->route('stock-audit.cash.show', $registerId);
+        return redirect()->sfRoute('stock-audit.cash.show', $registerId);
     }
 
     public function verify(Request $request, int $registerId)
@@ -104,7 +104,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->route('stock-audit.cash.show', $registerId);
+        return redirect()->sfRoute('stock-audit.cash.show', $registerId);
     }
 
     public function summary(Request $request)

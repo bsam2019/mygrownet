@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\CountItemId;
 use App\Domain\StockFlow\ValueObjects\PhysicalCountId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
@@ -11,7 +13,7 @@ use App\Domain\StockFlow\ValueObjects\BinId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use DateTimeImmutable;
 
-class CountItem
+class CountItem implements Arrayable
 {
     private function __construct(
         private CountItemId $id,

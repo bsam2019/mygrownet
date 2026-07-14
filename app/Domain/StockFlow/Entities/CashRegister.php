@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\CashRegisterId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\CashRegisterStatus;
 use DateTimeImmutable;
 
-class CashRegister
+class CashRegister implements Arrayable
 {
     private function __construct(
         private CashRegisterId $id,

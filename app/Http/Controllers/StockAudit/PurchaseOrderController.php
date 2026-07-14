@@ -51,7 +51,7 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->createPurchaseOrder($companyId, $validated);
 
-        return redirect()->route('stock-audit.purchases.index');
+        return redirect()->sfRoute('stock-audit.purchases.index');
     }
 
     public function show(int $purchaseOrderId)
@@ -80,7 +80,7 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->receiveOrder($purchaseOrderId, $companyId, $validated['items'], $request->user()->id);
 
-        return redirect()->route('stock-audit.purchases.index');
+        return redirect()->sfRoute('stock-audit.purchases.index');
     }
 
     public function suppliers(Request $request)
@@ -108,13 +108,13 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->createSupplier($companyId, $validated);
 
-        return redirect()->route('stock-audit.suppliers.index');
+        return redirect()->sfRoute('stock-audit.suppliers.index');
     }
 
     public function destroySupplier(int $supplierId)
     {
         $this->purchasingService->deleteSupplier($supplierId);
 
-        return redirect()->route('stock-audit.suppliers.index');
+        return redirect()->sfRoute('stock-audit.suppliers.index');
     }
 }

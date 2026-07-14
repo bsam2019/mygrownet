@@ -37,7 +37,7 @@ class BinController extends Controller
 
         $this->departmentBinService->createBin($companyId, $validated);
 
-        return redirect()->route('stock-audit.bins.index');
+        return redirect()->sfRoute('stock-audit.bins.index');
     }
 
     public function update(Request $request, int $binId)
@@ -52,13 +52,13 @@ class BinController extends Controller
 
         $this->departmentBinService->updateBin($binId, $validated);
 
-        return redirect()->route('stock-audit.bins.index');
+        return redirect()->sfRoute('stock-audit.bins.index');
     }
 
     public function destroy(int $binId)
     {
         $this->departmentBinService->deleteBin($binId);
 
-        return redirect()->route('stock-audit.bins.index');
+        return redirect()->sfRoute('stock-audit.bins.index');
     }
 }

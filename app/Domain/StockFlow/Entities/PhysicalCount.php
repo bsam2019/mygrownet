@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\PhysicalCountId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use DateTimeImmutable;
 
-class PhysicalCount
+class PhysicalCount implements Arrayable
 {
     private function __construct(
         private PhysicalCountId $id,

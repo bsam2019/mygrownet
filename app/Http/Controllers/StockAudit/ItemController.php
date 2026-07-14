@@ -55,7 +55,7 @@ class ItemController extends Controller
 
         $this->inventoryService->createItem($companyId, $validated);
 
-        return redirect()->route('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index');
     }
 
     public function show(int $itemId)
@@ -89,7 +89,7 @@ class ItemController extends Controller
 
         $this->inventoryService->updateItem($itemId, $companyId, $validated);
 
-        return redirect()->route('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index');
     }
 
     public function destroy(int $itemId)
@@ -97,7 +97,7 @@ class ItemController extends Controller
         $companyId = session('stock_audit_company_id');
         $this->inventoryService->deleteItem($itemId, $companyId);
 
-        return redirect()->route('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index');
     }
 
     public function import(Request $request)
@@ -116,7 +116,7 @@ class ItemController extends Controller
             $this->inventoryService->createItem($companyId, $itemData);
         }
 
-        return redirect()->route('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index');
     }
 
     public function adjustStock(Request $request, int $itemId)
@@ -138,6 +138,6 @@ class ItemController extends Controller
             $request->user()->id,
         );
 
-        return redirect()->route('stock-audit.items.show', $itemId);
+        return redirect()->sfRoute('stock-audit.items.show', $itemId);
     }
 }

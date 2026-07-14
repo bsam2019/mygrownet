@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\AuditItemId;
 use App\Domain\StockFlow\ValueObjects\AuditId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
@@ -11,7 +13,7 @@ use App\Domain\StockFlow\ValueObjects\BinId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use DateTimeImmutable;
 
-class AuditItem
+class AuditItem implements Arrayable
 {
     private function __construct(
         private AuditItemId $id,

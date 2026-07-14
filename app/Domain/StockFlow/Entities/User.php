@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\StockFlow\Entities;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 use App\Domain\StockFlow\ValueObjects\UserId;
 use DateTimeImmutable;
 
-class User
+class User implements Arrayable
 {
     private function __construct(
         private UserId $id,

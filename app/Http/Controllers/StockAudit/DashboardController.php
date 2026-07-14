@@ -49,6 +49,6 @@ class DashboardController extends Controller
 
         $request->session()->put('stock_audit_company_id', $validated['company_id']);
 
-        return redirect()->route('stock-audit.dashboard');
+        return redirect()->sfRoute('stock-audit.dashboard');
     }
 }

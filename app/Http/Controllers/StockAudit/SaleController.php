@@ -56,7 +56,7 @@ class SaleController extends Controller
 
         $this->salesService->createSale($companyId, $validated, $request->user()->id);
 
-        return redirect()->route('stock-audit.sales.index');
+        return redirect()->sfRoute('stock-audit.sales.index');
     }
 
     public function show(int $saleId)

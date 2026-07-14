@@ -160,6 +160,9 @@
 
         @routes
         @vite(['resources/js/app.ts'])
+        @if(str_starts_with(request()->route()?->getName() ?? '', 'stockflow.sub.'))
+        <script>window.__sfSubdomain = true;</script>
+        @endif
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

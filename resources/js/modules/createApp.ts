@@ -94,6 +94,12 @@ export function registerModuleSW(moduleSwPath: string, moduleName: string) {
                 });
                 return;
             }
+            if ((window as any).__sfSubdomain) {
+                navigator.serviceWorker.getRegistrations().then((registrations) => {
+                    registrations.forEach((r) => r.unregister());
+                });
+                return;
+            }
             navigator.serviceWorker
                 .register(moduleSwPath, { updateViaCache: 'none' })
                 .then((registration) => {
@@ -128,11 +134,22 @@ export function bootInertia(
             return pageResolver(name);
         },
         setup({ el, App, props, plugin }) {
-            createApp({ render: () => h(App, props) })
+            const app = createApp({ render: () => h(App, props) })
                 .use(plugin)
                 .use(ZiggyVue)
-                .use(createPinia())
-                .mount(el);
+                .use(createPinia());
+
+            if ((window as any).__sfSubdomain && (window as any).Ziggy?.routes) {
+                const routes = (window as any).Ziggy.routes as Record<string, any>;
+                for (const key of Object.keys(routes)) {
+                    if (key.startsWith('stockflow.sub.')) {
+                        const alias = key.replace('stockflow.sub.', 'stock-audit.');
+                        routes[alias] = routes[key];
+                    }
+                }
+            }
+
+            app.mount(el);
         },
         progress: (window as any).__isGrowBuilderSite ? false : progressConfig,
     });
