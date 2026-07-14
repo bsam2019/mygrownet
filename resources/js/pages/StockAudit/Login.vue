@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
     company: {
@@ -18,6 +19,8 @@ const companyName = computed(() => props.company?.name ?? 'StockFlow');
 const tagline = computed(() => props.company?.tagline ?? 'Inventory Management System');
 const logoUrl = computed(() => props.company?.logo_path ?? null);
 const account = computed(() => props.company?.subdomain ?? '');
+
+const showPassword = ref(false);
 
 const form = useForm({
     email: '',
@@ -56,7 +59,13 @@ const submit = () => {
 
                         <div>
                             <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <input v-model="form.password" id="password" type="password" autocomplete="current-password" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" placeholder="Your password" />
+                            <div class="relative">
+                                <input v-model="form.password" id="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" class="w-full px-4 py-2.5 pr-11 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" placeholder="Your password" />
+                                <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" tabindex="-1">
+                                    <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                                    <EyeSlashIcon v-else class="h-5 w-5" />
+                                </button>
+                            </div>
                             <p v-if="form.errors.password" class="text-sm text-red-600 mt-1">{{ form.errors.password }}</p>
                         </div>
 

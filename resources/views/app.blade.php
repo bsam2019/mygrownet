@@ -19,6 +19,22 @@
             })();
         </script>
 
+        @php
+            $sfCompany = null;
+            if (str_starts_with(request()->route()?->getName() ?? '', 'stockflow.sub.')) {
+                try {
+                    $account = request()->route('account');
+                    if ($account) {
+                        $sfCompany = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::where('subdomain', $account)->first();
+                    }
+                } catch (\Exception $e) {}
+            }
+            $brandColor = $sfCompany ? ($sfCompany->settings['brand_color'] ?? '#2563eb') : '#2563eb';
+            $companyName = $sfCompany?->name ?? 'MyGrowNet';
+            $companyTagline = $sfCompany ? ($sfCompany->settings['tagline'] ?? '') : 'Grow Together, Succeed Together';
+            $companyInitial = $sfCompany ? mb_substr($sfCompany->name, 0, 1) : 'M';
+        @endphp
+
         {{-- Inline style to set the HTML background color --}}
         <style>
             html {
@@ -36,7 +52,7 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                background: linear-gradient(135deg, {{ $brandColor }} 0%, #1d4ed8 100%);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -62,9 +78,15 @@
                 margin-bottom: 24px;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 animation: splash-bounce 2s ease-in-out infinite;
-                padding: 20px;
             }
-            
+
+            .splash-logo .splash-initial {
+                font-size: 52px;
+                font-weight: 700;
+                color: {{ $brandColor }};
+                line-height: 1;
+            }
+
             .splash-logo img {
                 width: 100%;
                 height: 100%;
@@ -121,29 +143,18 @@
         <link rel="apple-touch-icon" href="/logo.png">
         
         <!-- PWA Meta Tags -->
-        <meta name="theme-color" content="#2563eb">
+        <meta name="theme-color" content="{{ $brandColor }}">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="MyGrowNet">
-        <meta name="application-name" content="MyGrowNet">
+        <meta name="apple-mobile-web-app-title" content="{{ $companyName }}">
+        <meta name="application-name" content="{{ $companyName }}">
         <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-TileColor" content="#2563eb">
+        <meta name="msapplication-TileColor" content="{{ $brandColor }}">
         <meta name="msapplication-tap-highlight" content="no">
         
         <!-- PWA Manifest -->
         <link rel="manifest" href="/manifest.json">
-        
-        <!-- Apple Touch Icons -->
-        <link rel="apple-touch-icon" sizes="180x180" href="/images/icon-192x192.png">
-        <link rel="apple-touch-icon" sizes="152x152" href="/images/icon-152x152.png">
-        <link rel="apple-touch-icon" sizes="144x144" href="/images/icon-144x144.png">
-        <link rel="apple-touch-icon" sizes="120x120" href="/images/icon-128x128.png">
-        <link rel="apple-touch-icon" sizes="114x114" href="/images/icon-128x128.png">
-        <link rel="apple-touch-icon" sizes="76x76" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="72x72" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="60x60" href="/images/icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="57x57" href="/images/icon-72x72.png">
         
         <!-- Apple Splash Screens -->
         <link rel="apple-touch-startup-image" href="/splash.html" />
@@ -153,7 +164,7 @@
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icon-192x192.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icon-192x192.png">
 
-        <title inertia>{{ config('app.name', 'MyGrowNet') }}</title>
+        <title inertia>{{ $sfCompany ? $companyName : config('app.name', 'MyGrowNet') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -169,10 +180,16 @@
         <!-- Splash Screen -->
         <div id="app-splash">
             <div class="splash-logo">
-                <img src="{{ asset('logo.png') }}" alt="MyGrowNet Logo">
+                @if($sfCompany && !empty($sfCompany->settings['logo_url']))
+                <img src="{{ $sfCompany->settings['logo_url'] }}" alt="{{ $companyName }} Logo">
+                @else
+                <span class="splash-initial">{{ $companyInitial }}</span>
+                @endif
             </div>
-            <div class="splash-text">MyGrowNet</div>
-            <div class="splash-tagline">Grow Together, Succeed Together</div>
+            <div class="splash-text">{{ $companyName }}</div>
+            @if($companyTagline)
+            <div class="splash-tagline">{{ $companyTagline }}</div>
+            @endif
             <div class="splash-progress-container">
                 <div class="splash-progress-bar"></div>
             </div>
