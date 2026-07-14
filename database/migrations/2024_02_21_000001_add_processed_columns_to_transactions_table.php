@@ -9,8 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->timestamp('processed_at')->nullable();
-            $table->foreignId('processed_by')->nullable()->constrained('users')->onDelete('set null');
+            if (!Schema::hasColumn('transactions', 'processed_at')) {
+                $table->timestamp('processed_at')->nullable();
+            }
+            if (!Schema::hasColumn('transactions', 'processed_by')) {
+                $table->foreignId('processed_by')->nullable()->constrained('users')->onDelete('set null');
+            }
         });
     }
 
