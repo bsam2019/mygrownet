@@ -26,6 +26,9 @@ Route::middleware(['auth', 'verified'])->prefix('stock-audit')->name('stock-audi
         Route::post('/{notificationId}/read', [StockAuditNotificationController::class, 'markAsRead'])->name('read');
         Route::post('/read-all', [StockAuditNotificationController::class, 'markAllAsRead'])->name('read-all');
     });
+    // Logout
+    Route::post('/logout', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
