@@ -14,6 +14,7 @@
 - **HandleInertiaRequests**: Must skip Inertia for auth routes on main domain only. All subdomains (bizboost, zamstay, growmart) must keep Inertia processing.
 - **ZamStay 500 error**: Caused by missing subdomain handler in `DetectSubdomain` middleware and unloaded zamstay migrations. **Fix**: Added `zamstay` handler to `DetectSubdomain.php`, created `ZamStayServiceProvider` to load `database/migrations/zamstay/`, removed double route loading from `RouteServiceProvider`. After pulling on production: run `php artisan migrate --path=database/migrations/zamstay` then `php artisan optimize`.
 - **StockFlow subdomain "Page not found: ./pages/auth/Login.vue"**: Route cache or outdated frontend build. **Fix**: Run `bash fix-stockflow-production.sh` or manually: `php artisan route:clear && php artisan route:cache && php artisan optimize`. See `docs/STOCKFLOW_SUBDOMAIN_FIX.md` and `DEPLOY_STOCKFLOW_FIX.md` for complete guide.
+- **Migration errors (table/column already exists)**: Migrations fail because schema elements exist from previous runs. **Fix**: Added existence checks to migrations. See `docs/MIGRATION_FIX_DEPLOYMENT.md`. After git pull, run `php artisan migrate --force`.
 
 ## Deployment
 1. Commit and push to `origin/main` on local
