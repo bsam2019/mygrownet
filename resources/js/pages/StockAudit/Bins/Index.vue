@@ -3,6 +3,8 @@ import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { ref } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Bin {
     id: number;
@@ -18,6 +20,9 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const showCreateForm = ref(false);
 const editingId = ref<number | null>(null);
@@ -45,20 +50,24 @@ const startEdit = (bin: Bin) => {
 const submit = () => {
     if (editingId.value) {
         router.put(route('stock-audit.bins.update', editingId.value), form.value, {
-            onSuccess: () => resetForm(),
-            onError: (err) => { errors.value = err; },
+            onSuccess: () => { success('Bin updated'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to update bin'); },
         });
     } else {
         router.post(route('stock-audit.bins.store'), form.value, {
-            onSuccess: () => resetForm(),
-            onError: (err) => { errors.value = err; },
+            onSuccess: () => { success('Bin created'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to create bin'); },
         });
     }
 };
 
-const deleteBin = (id: number, name: string) => {
-    if (confirm(`Delete bin "${name}"?`)) {
-        router.delete(route('stock-audit.bins.destroy', id));
+const deleteBin = async (id: number, name: string) => {
+    const ok = await confirm.show(`Delete bin "${name}"?`, 'Delete Bin');
+    if (ok) {
+        router.delete(route('stock-audit.bins.destroy', id), {
+            onSuccess: () => success('Bin deleted'),
+            onError: () => notifyError('Failed to delete bin'),
+        });
     }
 };
 </script>

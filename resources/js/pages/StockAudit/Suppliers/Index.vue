@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { ref } from 'vue';
-import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Supplier {
     id: number;
@@ -20,7 +22,11 @@ interface Props {
 
 defineProps<Props>();
 
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
+
 const showCreateForm = ref(false);
+const editingId = ref<number | null>(null);
 const form = ref({
     name: '',
     contact_person: '',
@@ -31,19 +37,46 @@ const form = ref({
 });
 const errors = ref<Record<string, string>>({});
 
-const createSupplier = () => {
-    router.post(route('stock-audit.suppliers.store'), form.value, {
-        onSuccess: () => {
-            showCreateForm.value = false;
-            form.value = { name: '', contact_person: '', phone: '', email: '', address: '', payment_terms: '' };
-        },
-        onError: (err) => { errors.value = err; },
-    });
+const resetForm = () => {
+    form.value = { name: '', contact_person: '', phone: '', email: '', address: '', payment_terms: '' };
+    editingId.value = null;
+    showCreateForm.value = false;
 };
 
-const deleteSupplier = (id: number, name: string) => {
-    if (confirm(`Delete supplier "${name}"?`)) {
-        router.delete(route('stock-audit.suppliers.destroy', id));
+const startEdit = (supplier: Supplier) => {
+    form.value = {
+        name: supplier.name,
+        contact_person: supplier.contact_person || '',
+        phone: supplier.phone || '',
+        email: supplier.email || '',
+        address: supplier.address || '',
+        payment_terms: supplier.payment_terms || '',
+    };
+    editingId.value = supplier.id;
+    showCreateForm.value = true;
+};
+
+const submit = () => {
+    if (editingId.value) {
+        router.put(route('stock-audit.suppliers.update', editingId.value), form.value, {
+            onSuccess: () => { success('Supplier updated'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to update supplier'); },
+        });
+    } else {
+        router.post(route('stock-audit.suppliers.store'), form.value, {
+            onSuccess: () => { success('Supplier created'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to create supplier'); },
+        });
+    }
+};
+
+const deleteSupplier = async (id: number, name: string) => {
+    const ok = await confirm.show(`Delete supplier "${name}"? This cannot be undone.`, 'Delete Supplier');
+    if (ok) {
+        router.delete(route('stock-audit.suppliers.destroy', id), {
+            onSuccess: () => success('Supplier deleted'),
+            onError: () => notifyError('Failed to delete supplier'),
+        });
     }
 };
 </script>
@@ -55,14 +88,14 @@ const deleteSupplier = (id: number, name: string) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
-                    <button @click="showCreateForm = !showCreateForm" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    <button @click="resetForm(); showCreateForm = true" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                         <PlusIcon class="h-5 w-5" aria-hidden="true" />
                         Add Supplier
                     </button>
                 </div>
 
                 <div v-if="showCreateForm" class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-emerald-200">
-                    <h2 class="text-lg font-semibold text-gray-900">New Supplier</h2>
+                    <h2 class="text-lg font-semibold text-gray-900">{{ editingId ? 'Edit' : 'New' }} Supplier</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Name *</label>
@@ -91,8 +124,8 @@ const deleteSupplier = (id: number, name: string) => {
                         </div>
                     </div>
                     <div class="mt-4 flex gap-3">
-                        <button @click="createSupplier" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save</button>
-                        <button @click="showCreateForm = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button @click="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">{{ editingId ? 'Update' : 'Save' }}</button>
+                        <button @click="resetForm" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
                     </div>
                 </div>
 
@@ -103,9 +136,14 @@ const deleteSupplier = (id: number, name: string) => {
                                 <h3 class="font-semibold text-gray-900">{{ supplier.name }}</h3>
                                 <p v-if="supplier.contact_person" class="text-sm text-gray-500">{{ supplier.contact_person }}</p>
                             </div>
-                            <button @click="deleteSupplier(supplier.id, supplier.name)" class="p-1 text-gray-400 hover:text-red-600" title="Delete supplier">
-                                <TrashIcon class="h-5 w-5" aria-hidden="true" />
-                            </button>
+                            <div class="flex gap-1">
+                                <button @click="startEdit(supplier)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit supplier">
+                                    <PencilIcon class="h-5 w-5" aria-hidden="true" />
+                                </button>
+                                <button @click="deleteSupplier(supplier.id, supplier.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete supplier">
+                                    <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                </button>
+                            </div>
                         </div>
                         <div class="mt-3 space-y-1 text-sm text-gray-600">
                             <p v-if="supplier.phone">Phone: {{ supplier.phone }}</p>

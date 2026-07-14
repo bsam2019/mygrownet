@@ -2,6 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { ref } from 'vue';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface CashRegister {
     id: number;
@@ -25,6 +27,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const showMovementForm = ref(false);
 const showCloseForm = ref(false);
@@ -54,21 +58,25 @@ const statusColors: Record<string, string> = {
 
 const addMovement = () => {
     router.post(route('stock-audit.cash.movement', props.register.id), movementForm.value, {
-        onSuccess: () => { showMovementForm.value = false; movementForm.value = { type: 'expense', amount: 0, description: '' }; },
-        onError: (err) => { errors.value = err; },
+        onSuccess: () => { success('Movement recorded'); showMovementForm.value = false; movementForm.value = { type: 'expense', amount: 0, description: '' }; },
+        onError: (err) => { errors.value = err; notifyError('Failed to record movement'); },
     });
 };
 
 const closeRegister = () => {
     router.post(route('stock-audit.cash.close', props.register.id), closeForm.value, {
-        onSuccess: () => { showCloseForm.value = false; },
-        onError: (err) => { errors.value = err; },
+        onSuccess: () => { success('Register closed'); showCloseForm.value = false; },
+        onError: (err) => { errors.value = err; notifyError('Failed to close register'); },
     });
 };
 
-const verifyRegister = () => {
-    if (confirm('Mark this register as verified?')) {
-        router.post(route('stock-audit.cash.verify', props.register.id));
+const verifyRegister = async () => {
+    const ok = await confirm.show('Mark this register as verified?', 'Verify Register');
+    if (ok) {
+        router.post(route('stock-audit.cash.verify', props.register.id), {}, {
+            onSuccess: () => success('Register verified'),
+            onError: () => notifyError('Failed to verify register'),
+        });
     }
 };
 

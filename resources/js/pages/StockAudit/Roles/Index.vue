@@ -7,6 +7,8 @@ import {
     XMarkIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon,
     InformationCircleIcon,
 } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Role {
     id: number;
@@ -25,6 +27,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -99,8 +103,10 @@ const openEditModal = (role: Role) => {
 const submitCreate = () => {
     createForm.post(route('stock-audit.roles.store'), {
         onSuccess: () => {
+            success('Role created');
             showCreateModal.value = false;
         },
+        onError: () => notifyError('Failed to create role'),
     });
 };
 
@@ -108,15 +114,22 @@ const submitEdit = () => {
     if (!editingRole.value) return;
     editForm.put(route('stock-audit.roles.update', editingRole.value.id), {
         onSuccess: () => {
+            success('Role updated');
             showEditModal.value = false;
             editingRole.value = null;
         },
+        onError: () => notifyError('Failed to update role'),
     });
 };
 
-const handleDelete = (role: Role) => {
-    if (!confirm(`Delete "${role.name}"? This action cannot be undone.`)) return;
-    useForm({}).delete(route('stock-audit.roles.destroy', role.id));
+const handleDelete = async (role: Role) => {
+    const ok = await confirm.show(`Delete "${role.name}"? This action cannot be undone.`, 'Delete Role');
+    if (ok) {
+        useForm({}).delete(route('stock-audit.roles.destroy', role.id), {
+            onSuccess: () => success('Role deleted'),
+            onError: () => notifyError('Failed to delete role'),
+        });
+    }
 };
 
 const generateSlug = (name: string): string => {

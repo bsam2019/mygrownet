@@ -79,6 +79,7 @@ Route::domain('{account}.mygrownet.com')
             // Suppliers
             Route::get('/suppliers', [PurchaseOrderController::class, 'suppliers'])->name('stockflow.sub.suppliers.index');
             Route::post('/suppliers', [PurchaseOrderController::class, 'storeSupplier'])->name('stockflow.sub.suppliers.store');
+            Route::put('/suppliers/{supplier}', [PurchaseOrderController::class, 'updateSupplier'])->name('stockflow.sub.suppliers.update');
             Route::delete('/suppliers/{supplier}', [PurchaseOrderController::class, 'destroySupplier'])->name('stockflow.sub.suppliers.destroy');
 
             // Purchases

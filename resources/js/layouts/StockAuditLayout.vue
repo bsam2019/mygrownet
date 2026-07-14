@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, usePage, router } from '@inertiajs/vue3';
 import {
     HomeIcon,
     ArchiveBoxIcon,
@@ -16,7 +16,12 @@ import {
     XMarkIcon,
     ChevronLeftIcon,
     BuildingOfficeIcon,
+    ArrowsRightLeftIcon,
+    UserCircleIcon,
+    ArrowRightOnRectangleIcon,
 } from '@heroicons/vue/24/outline';
+import NotificationToast from '@/components/StockAudit/NotificationToast.vue';
+import ConfirmDialog from '@/components/StockAudit/ConfirmDialog.vue';
 
 interface Props {
     title?: string;
@@ -28,8 +33,8 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
+const showUserMenu = ref(false);
 
-// Detect if we're on a company subdomain (stockflow.sub.* routes)
 const isSubdomain = computed(() => {
     const routeName = page.props.routeName ?? '';
     return routeName.startsWith('stockflow.sub.');
@@ -64,14 +69,29 @@ const isCurrentRoute = (routeName: string) => {
     }
 };
 
+const logout = () => {
+    router.post(route('stockflow.sub.logout'));
+};
+
 const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && sidebarOpen.value) {
+    if (e.key === 'Escape') {
         sidebarOpen.value = false;
+        showUserMenu.value = false;
     }
+};
+
+const closeUserMenu = () => {
+    showUserMenu.value = false;
 };
 
 onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-user-menu]')) {
+            showUserMenu.value = false;
+        }
+    });
 });
 
 onUnmounted(() => {
@@ -81,6 +101,9 @@ onUnmounted(() => {
 
 <template>
     <div class="h-screen overflow-hidden bg-gray-50">
+        <NotificationToast />
+        <ConfirmDialog />
+
         <!-- Mobile sidebar -->
         <div v-if="sidebarOpen" class="relative z-50 lg:hidden">
             <div class="fixed inset-0 bg-gray-900/80" @click="sidebarOpen = false"></div>
@@ -203,11 +226,38 @@ onUnmounted(() => {
                         <h1 class="text-lg font-semibold text-gray-900">{{ title || 'StockFlow' }}</h1>
                     </div>
                     <div class="flex items-center gap-x-4 lg:gap-x-6">
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm text-gray-700">{{ user?.name }}</span>
-                            <div class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <span class="text-sm font-medium text-emerald-700">{{ user?.name?.charAt(0) }}</span>
-                            </div>
+                        <!-- User dropdown -->
+                        <div data-user-menu class="relative">
+                            <button
+                                @click.stop="showUserMenu = !showUserMenu"
+                                class="flex items-center gap-3 rounded-lg p-1.5 hover:bg-gray-50 transition-colors"
+                            >
+                                <span class="hidden sm:block text-sm font-medium text-gray-700">{{ user?.name }}</span>
+                                <div class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <span class="text-sm font-semibold text-emerald-700">{{ user?.name?.charAt(0)?.toUpperCase() }}</span>
+                                </div>
+                            </button>
+
+                            <transition name="dropdown">
+                                <div
+                                    v-if="showUserMenu"
+                                    class="absolute right-0 mt-2 w-56 origin-top-right rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-none"
+                                >
+                                    <div class="px-4 py-3 border-b border-gray-100">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ user?.name }}</p>
+                                        <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
+                                    </div>
+                                    <div class="py-1">
+                                        <button
+                                            @click="logout"
+                                            class="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-red-600"
+                                        >
+                                            <ArrowRightOnRectangleIcon class="h-5 w-5" />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </div>
+                            </transition>
                         </div>
                     </div>
                 </div>
@@ -240,3 +290,10 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.dropdown-enter-active { transition: all 0.15s ease-out; }
+.dropdown-leave-active { transition: all 0.1s ease-in; }
+.dropdown-enter-from { opacity: 0; transform: translateY(-4px); }
+.dropdown-leave-to { opacity: 0; transform: translateY(-4px); }
+</style>

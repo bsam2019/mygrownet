@@ -8,6 +8,8 @@ import {
     PauseCircleIcon, PlayCircleIcon, ArrowPathIcon, TrashIcon,
     PencilIcon, EyeIcon, EnvelopeIcon, MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Employee {
     id: number;
@@ -50,6 +52,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const showInviteModal = ref(false);
 const searchQuery = ref('');
@@ -96,26 +100,41 @@ const openInviteModal = () => {
 const submitInvite = () => {
     inviteForm.post(route('stock-audit.employees.invite'), {
         onSuccess: () => {
+            success('Invitation sent');
             showInviteModal.value = false;
         },
+        onError: () => notifyError('Failed to send invitation'),
     });
 };
 
-const handleAction = (employee: Employee, action: 'suspend' | 'reactivate' | 'remove') => {
+const handleAction = async (employee: Employee, action: 'suspend' | 'reactivate' | 'remove') => {
     if (action === 'suspend') {
-        if (!confirm(`Suspend ${employee.user?.name}? They will lose access until reactivated.`)) return;
-        useForm({}).post(route('stock-audit.employees.suspend', employee.user_id));
+        const ok = await confirm.show(`Suspend ${employee.user?.name}? They will lose access until reactivated.`, 'Suspend Employee');
+        if (!ok) return;
+        useForm({}).post(route('stock-audit.employees.suspend', employee.user_id), {
+            onSuccess: () => success('Employee suspended'),
+            onError: () => notifyError('Failed to suspend employee'),
+        });
     } else if (action === 'reactivate') {
-        useForm({}).post(route('stock-audit.employees.reactivate', employee.user_id));
+        useForm({}).post(route('stock-audit.employees.reactivate', employee.user_id), {
+            onSuccess: () => success('Employee reactivated'),
+            onError: () => notifyError('Failed to reactivate employee'),
+        });
     } else if (action === 'remove') {
-        const reason = prompt(`Remove ${employee.user?.name}? Enter a reason (optional):`);
-        if (reason === null) return;
-        useForm({ reason }).post(route('stock-audit.employees.remove', employee.user_id));
+        const ok = await confirm.show(`Remove ${employee.user?.name}? This action cannot be undone.`, 'Remove Employee');
+        if (!ok) return;
+        useForm({ reason: '' }).post(route('stock-audit.employees.remove', employee.user_id), {
+            onSuccess: () => success('Employee removed'),
+            onError: () => notifyError('Failed to remove employee'),
+        });
     }
 };
 
 const resendInvite = (employee: Employee) => {
-    useForm({}).post(route('stock-audit.employees.invite', employee.user_id));
+    useForm({}).post(route('stock-audit.employees.invite', employee.user_id), {
+        onSuccess: () => success('Invitation resent'),
+        onError: () => notifyError('Failed to resend invitation'),
+    });
 };
 
 const formatDate = (dateStr: string | null) => {

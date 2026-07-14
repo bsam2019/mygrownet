@@ -53,6 +53,7 @@ Route::middleware(['auth', 'verified'])->prefix('stock-audit')->name('stock-audi
     // Suppliers
     Route::get('/suppliers', [PurchaseOrderController::class, 'suppliers'])->name('suppliers.index');
     Route::post('/suppliers', [PurchaseOrderController::class, 'storeSupplier'])->name('suppliers.store');
+    Route::put('/suppliers/{supplier}', [PurchaseOrderController::class, 'updateSupplier'])->name('suppliers.update');
     Route::delete('/suppliers/{supplier}', [PurchaseOrderController::class, 'destroySupplier'])->name('suppliers.destroy');
 
     // Purchases

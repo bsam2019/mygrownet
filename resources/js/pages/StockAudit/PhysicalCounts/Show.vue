@@ -2,6 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { ref } from 'vue';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface CountItem {
     id: number;
@@ -29,6 +31,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const editingItems = ref<Record<number, number>>({});
 const errors = ref<Record<string, string>>({});
@@ -60,21 +64,28 @@ const saveItems = () => {
     if (items.length === 0) return;
 
     router.put(route('stock-audit.physical-counts.update-items', props.count.id), { items }, {
-        onError: (err) => { errors.value = err; },
+        onSuccess: () => success('Items updated'),
+        onError: (err) => { errors.value = err; notifyError('Failed to update items'); },
     });
 };
 
-const completeCount = () => {
-    if (confirm('Complete this physical count? This will update system quantities.')) {
+const completeCount = async () => {
+    const ok = await confirm.show('Complete this physical count? This will update system quantities.', 'Complete Count');
+    if (ok) {
         router.post(route('stock-audit.physical-counts.complete', props.count.id), {}, {
-            onError: (err) => { errors.value = err; },
+            onSuccess: () => success('Count completed'),
+            onError: (err) => { errors.value = err; notifyError('Failed to complete count'); },
         });
     }
 };
 
-const generateAudit = () => {
-    if (confirm('Generate audit from this count?')) {
-        router.post(route('stock-audit.physical-counts.generate-audit', props.count.id));
+const generateAudit = async () => {
+    const ok = await confirm.show('Generate audit from this count?', 'Generate Audit');
+    if (ok) {
+        router.post(route('stock-audit.physical-counts.generate-audit', props.count.id), {}, {
+            onSuccess: () => success('Audit generated'),
+            onError: () => notifyError('Failed to generate audit'),
+        });
     }
 };
 </script>

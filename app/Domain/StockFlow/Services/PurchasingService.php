@@ -160,6 +160,27 @@ class PurchasingService
         return $this->supplierRepository->findByCompanyId(CompanyId::fromInt($companyId));
     }
 
+    public function updateSupplier(int $supplierId, array $data): Supplier
+    {
+        $supplier = $this->supplierRepository->findById(SupplierId::fromInt($supplierId));
+        if (!$supplier) {
+            throw new OperationFailedException('update supplier', 'Supplier not found');
+        }
+        $supplier = Supplier::reconstitute(
+            id: $supplier->getId(),
+            companyId: $supplier->getCompanyId(),
+            name: $data['name'] ?? $supplier->getName(),
+            contactPerson: $data['contact_person'] ?? $supplier->getContactPerson(),
+            phone: $data['phone'] ?? $supplier->getPhone(),
+            email: $data['email'] ?? $supplier->getEmail(),
+            address: $data['address'] ?? $supplier->getAddress(),
+            paymentTerms: $data['payment_terms'] ?? $supplier->getPaymentTerms(),
+            createdAt: $supplier->getCreatedAt(),
+            updatedAt: new DateTimeImmutable(),
+        );
+        return $this->supplierRepository->save($supplier);
+    }
+
     public function deleteSupplier(int $supplierId): void
     {
         $this->supplierRepository->delete(SupplierId::fromInt($supplierId));

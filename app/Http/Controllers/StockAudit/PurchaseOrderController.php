@@ -111,6 +111,22 @@ class PurchaseOrderController extends Controller
         return redirect()->sfRoute('stock-audit.suppliers.index');
     }
 
+    public function updateSupplier(Request $request, int $supplierId)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string',
+            'payment_terms' => 'nullable|string|max:255',
+        ]);
+
+        $this->purchasingService->updateSupplier($supplierId, $validated);
+
+        return redirect()->sfRoute('stock-audit.suppliers.index');
+    }
+
     public function destroySupplier(int $supplierId)
     {
         $this->purchasingService->deleteSupplier($supplierId);

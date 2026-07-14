@@ -7,6 +7,8 @@ import {
     MagnifyingGlassIcon,
     TrashIcon,
 } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Item {
     id: number;
@@ -25,6 +27,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
+
 const search = ref('');
 
 const filteredItems = ref(props.items);
@@ -42,9 +47,13 @@ const applySearch = () => {
     );
 };
 
-const deleteItem = (item: Item) => {
-    if (confirm(`Delete "${item.name}"? This cannot be undone.`)) {
-        router.delete(route('stock-audit.items.destroy', item.id));
+const deleteItem = async (item: Item) => {
+    const ok = await confirm.show(`Delete "${item.name}"? This cannot be undone.`, 'Delete Item');
+    if (ok) {
+        router.delete(route('stock-audit.items.destroy', item.id), {
+            onSuccess: () => success('Item deleted'),
+            onError: () => notifyError('Failed to delete item'),
+        });
     }
 };
 </script>

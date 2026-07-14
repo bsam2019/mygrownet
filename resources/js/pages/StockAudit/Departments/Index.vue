@@ -3,6 +3,8 @@ import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
 import { ref } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { useNotifications } from '@/composables/useNotifications';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 interface Department {
     id: number;
@@ -17,6 +19,9 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const { success, error: notifyError } = useNotifications();
+const confirm = useConfirmDialog();
 
 const showCreateForm = ref(false);
 const editingId = ref<number | null>(null);
@@ -38,20 +43,24 @@ const startEdit = (dept: Department) => {
 const submit = () => {
     if (editingId.value) {
         router.put(route('stock-audit.departments.update', editingId.value), form.value, {
-            onSuccess: () => resetForm(),
-            onError: (err) => { errors.value = err; },
+            onSuccess: () => { success('Department updated'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to update department'); },
         });
     } else {
         router.post(route('stock-audit.departments.store'), form.value, {
-            onSuccess: () => resetForm(),
-            onError: (err) => { errors.value = err; },
+            onSuccess: () => { success('Department created'); resetForm(); },
+            onError: (err) => { errors.value = err; notifyError('Failed to create department'); },
         });
     }
 };
 
-const deleteDept = (id: number, name: string) => {
-    if (confirm(`Delete department "${name}"?`)) {
-        router.delete(route('stock-audit.departments.destroy', id));
+const deleteDept = async (id: number, name: string) => {
+    const ok = await confirm.show(`Delete department "${name}"?`, 'Delete Department');
+    if (ok) {
+        router.delete(route('stock-audit.departments.destroy', id), {
+            onSuccess: () => success('Department deleted'),
+            onError: () => notifyError('Failed to delete department'),
+        });
     }
 };
 </script>
