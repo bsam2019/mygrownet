@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 
@@ -21,7 +24,11 @@ interface CashRegister {
 }
 
 interface Props {
-    registers: CashRegister[];
+    registers: {
+        data: CashRegister[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
@@ -30,9 +37,7 @@ const showOpenForm = ref(false);
 const openForm = ref({ register_date: new Date().toISOString().slice(0, 10), opening_balance: 0 });
 const errors = ref<Record<string, string>>({});
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const statusColors: Record<string, string> = {
     open: 'bg-green-100 text-green-800',
@@ -87,43 +92,47 @@ const openRegister = () => {
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Opening</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Sales</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Expenses</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Banking</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Expected</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="register in registers" :key="register.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ register.register_date }}</td>
-                                <td class="px-6 py-4">
-                                    <span :class="[statusColors[register.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
-                                        {{ register.status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatCurrency(register.opening_balance) }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-emerald-600 font-medium">{{ formatCurrency(register.total_sales) }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-red-600">{{ formatCurrency(register.total_expenses) }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-blue-600">{{ formatCurrency(register.total_banking) }}</td>
-                                <td class="px-6 py-4 text-right text-sm font-medium text-gray-900">{{ formatCurrency(register.expected_closing) }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <Link :href="route('stock-audit.cash.show', register.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
-                                </td>
-                            </tr>
-                            <tr v-if="registers.length === 0">
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">No cash registers yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!registers.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Opening</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Sales</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Expenses</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Banking</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Expected</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="register in registers.data" :key="register.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 text-sm text-gray-900">{{ register.register_date }}</td>
+                                    <td class="px-6 py-4">
+                                        <span :class="[statusColors[register.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
+                                            {{ register.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatCurrency(register.opening_balance) }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-emerald-600 font-medium">{{ formatCurrency(register.total_sales) }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-red-600">{{ formatCurrency(register.total_expenses) }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-blue-600">{{ formatCurrency(register.total_banking) }}</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium text-gray-900">{{ formatCurrency(register.expected_closing) }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <Link :href="route('stock-audit.cash.show', register.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!registers.data?.length">
+                                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">No cash registers yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="registers.links" :meta="registers.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

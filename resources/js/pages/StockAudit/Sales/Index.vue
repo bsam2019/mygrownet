@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 
 interface SaleItem {
@@ -24,15 +27,17 @@ interface Sale {
 }
 
 interface Props {
-    sales: Sale[];
+    sales: {
+        data: Sale[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
     todayTotal: number;
 }
 
 defineProps<Props>();
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const methodColors: Record<string, string> = {
     cash: 'bg-green-100 text-green-800',
@@ -64,43 +69,47 @@ const methodColors: Record<string, string> = {
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Receipt</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Method</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Items</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Total</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="sale in sales" :key="sale.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    <Link :href="route('stock-audit.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
-                                        {{ sale.receipt_number }}
-                                    </Link>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ sale.sale_date }}</td>
-                                <td class="px-6 py-4">
-                                    <span :class="[methodColors[sale.payment_method] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
-                                        {{ sale.payment_method.replace('_', ' ') }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ sale.items?.length || 0 }}</td>
-                                <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(sale.total) }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <Link :href="route('stock-audit.sales.show', sale.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
-                                </td>
-                            </tr>
-                            <tr v-if="sales.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center text-gray-500">No sales recorded yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!sales.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Receipt</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Method</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Items</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Total</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <Link :href="route('stock-audit.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                            {{ sale.receipt_number }}
+                                        </Link>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ sale.sale_date }}</td>
+                                    <td class="px-6 py-4">
+                                        <span :class="[methodColors[sale.payment_method] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
+                                            {{ sale.payment_method.replace('_', ' ') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ sale.items?.length || 0 }}</td>
+                                    <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(sale.total) }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <Link :href="route('stock-audit.sales.show', sale.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!sales.data?.length">
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">No sales recorded yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="sales.links" :meta="sales.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 
 interface Audit {
     id: number;
@@ -17,14 +20,16 @@ interface Audit {
 }
 
 interface Props {
-    audits: Audit[];
+    audits: {
+        data: Audit[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',
@@ -43,45 +48,49 @@ const statusColors: Record<string, string> = {
                     <p class="mt-1 text-sm text-gray-500">Stock audits generated from physical counts</p>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Reference</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Title</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Variance</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unaccounted</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="audit in audits" :key="audit.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-mono text-sm text-gray-900">{{ audit.report_reference }}</td>
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ audit.title }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ audit.audit_date }}</td>
-                                <td class="px-6 py-4">
-                                    <span :class="[statusColors[audit.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
-                                        {{ audit.status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm font-medium" :class="audit.total_variance < 0 ? 'text-red-600' : 'text-emerald-600'">
-                                    {{ formatCurrency(audit.total_variance) }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm" :class="audit.unaccounted_value < 0 ? 'text-red-600 font-medium' : 'text-gray-700'">
-                                    {{ formatCurrency(audit.unaccounted_value) }}
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <Link :href="route('stock-audit.audits.show', audit.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
-                                </td>
-                            </tr>
-                            <tr v-if="audits.length === 0">
-                                <td colspan="7" class="px-6 py-12 text-center text-gray-500">No audits yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!audits.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Reference</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Variance</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unaccounted</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="audit in audits.data" :key="audit.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-mono text-sm text-gray-900">{{ audit.report_reference }}</td>
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ audit.title }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ audit.audit_date }}</td>
+                                    <td class="px-6 py-4">
+                                        <span :class="[statusColors[audit.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
+                                            {{ audit.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium" :class="audit.total_variance < 0 ? 'text-red-600' : 'text-emerald-600'">
+                                        {{ formatCurrency(audit.total_variance) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm" :class="audit.unaccounted_value < 0 ? 'text-red-600 font-medium' : 'text-gray-700'">
+                                        {{ formatCurrency(audit.unaccounted_value) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <Link :href="route('stock-audit.audits.show', audit.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!audits.data?.length">
+                                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">No audits yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="audits.links" :meta="audits.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

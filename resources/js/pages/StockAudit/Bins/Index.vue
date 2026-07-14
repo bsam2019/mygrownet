@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
@@ -15,11 +17,26 @@ interface Bin {
     sort_order: number;
 }
 
-interface Props {
-    bins: Bin[];
+interface Department {
+    id: number;
+    name: string;
 }
 
-defineProps<Props>();
+interface Props {
+    bins: {
+        data: Bin[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
+    departments: Department[];
+}
+
+const props = defineProps<Props>();
+
+const departmentName = (deptId: number): string => {
+    const dept = props.departments.find(d => d.id === deptId);
+    return dept?.name || `Dept #${deptId}`;
+};
 
 const { success, error: notifyError } = useNotifications();
 const confirm = useConfirmDialog();
@@ -98,8 +115,11 @@ const deleteBin = async (id: number, name: string) => {
                             <input v-model="form.label" type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Department ID *</label>
-                            <input v-model="form.sa_department_id" type="number" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
+                            <label class="block text-sm font-medium text-gray-700">Department *</label>
+                            <select v-model="form.sa_department_id" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                                <option value="">Select a department...</option>
+                                <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
+                            </select>
                             <p v-if="errors.sa_department_id" class="mt-1 text-sm text-red-600">{{ errors.sa_department_id }}</p>
                         </div>
                         <div>
@@ -117,38 +137,42 @@ const deleteBin = async (id: number, name: string) => {
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Label</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Dept ID</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Order</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="bin in bins" :key="bin.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ bin.name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ bin.label || '-' }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ bin.sa_department_id }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ bin.sort_order }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button @click="startEdit(bin)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit">
-                                        <PencilIcon class="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                    <button @click="deleteBin(bin.id, bin.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete">
-                                        <TrashIcon class="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="bins.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">No bins</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!bins.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Label</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Department</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Order</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="bin in bins.data" :key="bin.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ bin.name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ bin.label || '-' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ departmentName(bin.sa_department_id) }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ bin.sort_order }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button @click="startEdit(bin)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit">
+                                            <PencilIcon class="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                        <button @click="deleteBin(bin.id, bin.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete">
+                                            <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="!bins.data?.length">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">No bins</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="bins.links" :meta="bins.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

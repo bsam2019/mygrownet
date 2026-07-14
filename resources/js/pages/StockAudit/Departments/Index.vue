@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
@@ -15,7 +17,11 @@ interface Department {
 }
 
 interface Props {
-    departments: Department[];
+    departments: {
+        data: Department[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
@@ -101,38 +107,42 @@ const deleteDept = async (id: number, name: string) => {
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Slug</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Description</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Order</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="dept in departments" :key="dept.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ dept.name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ dept.slug }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ dept.description || '-' }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ dept.sort_order }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button @click="startEdit(dept)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit">
-                                        <PencilIcon class="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                    <button @click="deleteDept(dept.id, dept.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete">
-                                        <TrashIcon class="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="departments.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">No departments</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!departments.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Slug</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Description</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Order</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="dept in departments.data" :key="dept.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ dept.name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ dept.slug }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ dept.description || '-' }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ dept.sort_order }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button @click="startEdit(dept)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit">
+                                            <PencilIcon class="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                        <button @click="deleteDept(dept.id, dept.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete">
+                                            <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="!departments.data?.length">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">No departments</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="departments.links" :meta="departments.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

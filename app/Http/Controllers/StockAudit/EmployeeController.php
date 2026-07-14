@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\CompanyUserService;
 use App\Domain\StockFlow\Services\CompanyRoleService;
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,9 +23,15 @@ class EmployeeController extends Controller
         $employees = $this->userService->getEmployees($companyId);
         $roles = $this->roleService->getRolesForCompany($companyId);
 
+        $employeeUserIds = array_map(fn($e) => $e['user_id'], $employees);
+        $availableUsers = SaUserModel::whereNotIn('id', $employeeUserIds)
+            ->get(['id', 'name', 'email'])
+            ->toArray();
+
         return Inertia::render('StockAudit/Employees/Index', [
             'employees' => $employees,
             'roles' => $roles,
+            'availableUsers' => $availableUsers,
             'availablePermissions' => $this->roleService->getAvailablePermissions(),
         ]);
     }

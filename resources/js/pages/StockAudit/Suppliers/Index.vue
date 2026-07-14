@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
@@ -17,7 +19,11 @@ interface Supplier {
 }
 
 interface Props {
-    suppliers: Supplier[];
+    suppliers: {
+        data: Supplier[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
@@ -129,31 +135,35 @@ const deleteSupplier = async (id: number, name: string) => {
                     </div>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div v-for="supplier in suppliers" :key="supplier.id" class="rounded-xl bg-white p-6 shadow-sm">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="font-semibold text-gray-900">{{ supplier.name }}</h3>
-                                <p v-if="supplier.contact_person" class="text-sm text-gray-500">{{ supplier.contact_person }}</p>
+                <LoadingSkeleton v-if="!suppliers.data?.length" type="card" />
+                <template v-else>
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div v-for="supplier in suppliers.data" :key="supplier.id" class="rounded-xl bg-white p-6 shadow-sm">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ supplier.name }}</h3>
+                                    <p v-if="supplier.contact_person" class="text-sm text-gray-500">{{ supplier.contact_person }}</p>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button @click="startEdit(supplier)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit supplier">
+                                        <PencilIcon class="h-5 w-5" aria-hidden="true" />
+                                    </button>
+                                    <button @click="deleteSupplier(supplier.id, supplier.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete supplier">
+                                        <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex gap-1">
-                                <button @click="startEdit(supplier)" class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600" title="Edit supplier">
-                                    <PencilIcon class="h-5 w-5" aria-hidden="true" />
-                                </button>
-                                <button @click="deleteSupplier(supplier.id, supplier.name)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete supplier">
-                                    <TrashIcon class="h-5 w-5" aria-hidden="true" />
-                                </button>
+                            <div class="mt-3 space-y-1 text-sm text-gray-600">
+                                <p v-if="supplier.phone">Phone: {{ supplier.phone }}</p>
+                                <p v-if="supplier.email">Email: {{ supplier.email }}</p>
+                                <p v-if="supplier.payment_terms">Terms: {{ supplier.payment_terms }}</p>
+                                <p v-if="supplier.address">{{ supplier.address }}</p>
                             </div>
                         </div>
-                        <div class="mt-3 space-y-1 text-sm text-gray-600">
-                            <p v-if="supplier.phone">Phone: {{ supplier.phone }}</p>
-                            <p v-if="supplier.email">Email: {{ supplier.email }}</p>
-                            <p v-if="supplier.payment_terms">Terms: {{ supplier.payment_terms }}</p>
-                            <p v-if="supplier.address">{{ supplier.address }}</p>
-                        </div>
+                        <div v-if="!suppliers.data?.length" class="col-span-full py-12 text-center text-gray-500">No suppliers yet</div>
                     </div>
-                    <div v-if="suppliers.length === 0" class="col-span-full py-12 text-center text-gray-500">No suppliers yet</div>
-                </div>
+                    <Pagination :links="suppliers.links" :meta="suppliers.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

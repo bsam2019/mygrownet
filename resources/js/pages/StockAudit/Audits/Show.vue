@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 
 interface AuditItem {
@@ -52,9 +53,7 @@ const finalizeForm = ref({
 
 const errors = ref<Record<string, string>>({});
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',

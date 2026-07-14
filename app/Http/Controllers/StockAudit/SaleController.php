@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\SalesService;
 use App\Domain\StockFlow\Services\InventoryService;
 use App\Domain\StockFlow\Services\CashRegisterService;
+use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaSaleModel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,7 +23,23 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $companyId = $request->session()->get('stock_audit_company_id');
-        $sales = $this->salesService->getSalesForCompany($companyId);
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 15);
+
+        $query = SaSaleModel::where('sa_company_id', $companyId);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('receipt_number', 'like', "%{$search}%")
+                  ->orWhere('payment_method', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%");
+            });
+        }
+
+        $sales = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn($model) => $model->toArray());
+
         $todayTotal = $this->salesService->getTodayTotal($companyId);
 
         return Inertia::render('StockAudit/Sales/Index', [
@@ -35,7 +54,6 @@ class SaleController extends Controller
 
         return Inertia::render('StockAudit/Sales/Create', [
             'items' => $this->inventoryService->getInStockItems($companyId),
-            'todayRegister' => $this->cashRegisterService->getRegistersForCompany($companyId),
         ]);
     }
 
@@ -56,7 +74,7 @@ class SaleController extends Controller
 
         $this->salesService->createSale($companyId, $validated, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.sales.index');
+        return redirect()->sfRoute('stock-audit.sales.index')->with('success', 'Sale created successfully.');
     }
 
     public function show(int $saleId)
@@ -127,5 +145,47 @@ class SaleController extends Controller
             'from' => $validated['from'],
             'to' => $validated['to'],
         ]);
+    }
+
+    public function reportPdf(Request $request)
+    {
+        $companyId = $request->session()->get('stock_audit_company_id');
+        $companyName = $this->getCompanyName($companyId);
+
+        $validated = $request->validate([
+            'from' => 'required|date',
+            'to' => 'required|date|after_or_equal:from',
+        ]);
+
+        $repo = app(\App\Domain\StockFlow\Repositories\SaleRepositoryInterface::class);
+        $sales = $repo->findByCompanyIdAndDateBetween(
+            CompanyId::fromInt($companyId),
+            new \DateTimeImmutable($validated['from']),
+            new \DateTimeImmutable($validated['to']),
+        );
+
+        $summary = ['total_sales' => 0, 'total_transactions' => count($sales), 'by_method' => [], 'cash_sales' => 0];
+        foreach ($sales as $sale) {
+            $summary['total_sales'] += $sale->getTotal()->toFloat();
+            $method = $sale->getPaymentMethod()->value();
+            $summary['by_method'][$method] = ($summary['by_method'][$method] ?? 0) + $sale->getTotal()->toFloat();
+            if ($sale->isCashPayment()) $summary['cash_sales'] += $sale->getTotal()->toFloat();
+        }
+
+        $pdf = Pdf::loadView('pdf.stock-audit.sales-report', [
+            'companyName' => $companyName,
+            'sales' => array_map(fn($s) => $s->toArray(), $sales),
+            'summary' => $summary,
+            'from' => $validated['from'],
+            'to' => $validated['to'],
+        ]);
+
+        return $pdf->download("sales-report-{$validated['from']}-to-{$validated['to']}.pdf");
+    }
+
+    private function getCompanyName(int $companyId): string
+    {
+        $model = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find($companyId);
+        return $model?->name ?? 'Company';
     }
 }

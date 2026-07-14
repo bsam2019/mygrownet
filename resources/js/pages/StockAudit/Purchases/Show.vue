@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref, computed } from 'vue';
 
 interface PurchaseOrderItem {
     id: number;
     sa_item_id: number;
+    item_name?: string;
     quantity_ordered: number;
     quantity_received: number;
     unit_cost: number;
@@ -36,9 +38,7 @@ const receiveItems = ref<Record<number, { quantity_received: number; unit_cost: 
 
 const errors = ref<Record<string, string>>({});
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',
@@ -107,7 +107,7 @@ const submitReceive = () => {
                     <div v-if="showReceive" class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
                         <h3 class="font-semibold text-blue-800">Receive Stock</h3>
                         <div v-for="item in order.items" :key="item.id" class="mt-3 grid gap-3 sm:grid-cols-3">
-                            <p class="text-sm font-medium text-gray-700 pt-2">{{ item.sa_item_id }} (Ordered: {{ item.quantity_ordered }}, Received: {{ item.quantity_received }})</p>
+                            <p class="text-sm font-medium text-gray-700 pt-2">{{ item.item_name || 'Item #' + item.sa_item_id }} (Ordered: {{ item.quantity_ordered }}, Received: {{ item.quantity_received }})</p>
                             <div>
                                 <label class="block text-xs text-gray-500">Qty Receiving</label>
                                 <input v-model.number="receiveItems[item.sa_item_id].quantity_received" type="number" step="0.01" min="0" class="mt-1 w-full rounded border-blue-300 text-sm focus:border-blue-500 focus:ring-blue-500" />
@@ -127,7 +127,7 @@ const submitReceive = () => {
                     <table class="mt-6 w-full">
                         <thead>
                             <tr class="text-xs text-gray-500">
-                                <th class="pb-2 text-left font-medium">Item ID</th>
+                                <th class="pb-2 text-left font-medium">Item</th>
                                 <th class="pb-2 text-right font-medium">Ordered</th>
                                 <th class="pb-2 text-right font-medium">Received</th>
                                 <th class="pb-2 text-right font-medium">Unit Cost</th>
@@ -136,7 +136,7 @@ const submitReceive = () => {
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr v-for="item in order.items" :key="item.id">
-                                <td class="py-2 text-sm text-gray-900">{{ item.sa_item_id }}</td>
+                                <td class="py-2 text-sm text-gray-900">{{ item.item_name || 'Item #' + item.sa_item_id }}</td>
                                 <td class="py-2 text-right text-sm text-gray-700">{{ item.quantity_ordered }}</td>
                                 <td class="py-2 text-right text-sm text-gray-700">{{ item.quantity_received }}</td>
                                 <td class="py-2 text-right text-sm text-gray-700">{{ formatCurrency(item.unit_cost) }}</td>

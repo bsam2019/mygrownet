@@ -19,8 +19,19 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
 {
     public function findById(PurchaseOrderId $id): ?PurchaseOrder
     {
-        $model = SaPurchaseOrderModel::with('items.item')->find($id->toInt());
+        $model = SaPurchaseOrderModel::with('items.item', 'supplier')->find($id->toInt());
         return $model ? $this->toDomainEntity($model) : null;
+    }
+
+    public function findByCompanyIdAndDateBetween(CompanyId $companyId, DateTimeImmutable $from, DateTimeImmutable $to): array
+    {
+        return SaPurchaseOrderModel::where('sa_company_id', $companyId->toInt())
+            ->whereBetween('order_date', [$from->format('Y-m-d'), $to->format('Y-m-d')])
+            ->with('items.item', 'supplier')
+            ->orderBy('order_date', 'desc')
+            ->get()
+            ->map(fn($m) => $this->toDomainEntity($m))
+            ->all();
     }
 
     public function findByCompanyId(CompanyId $companyId, int $perPage = 20): array
@@ -126,6 +137,10 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
                 );
                 $order->addItem($poItem);
             }
+        }
+
+        if ($model->relationLoaded('supplier') && $model->supplier) {
+            $order->setSupplierName($model->supplier->name);
         }
 
         return $order;

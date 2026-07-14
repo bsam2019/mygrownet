@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 
@@ -23,7 +25,11 @@ interface PhysicalCount {
 }
 
 interface Props {
-    counts: PhysicalCount[];
+    counts: {
+        data: PhysicalCount[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
@@ -83,37 +89,41 @@ const createCount = () => {
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Title</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Items</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="count in counts" :key="count.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ count.title }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ count.count_date }}</td>
-                                <td class="px-6 py-4">
-                                    <span :class="[statusColors[count.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
-                                        {{ count.status.replace('_', ' ') }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ count.items?.length || 0 }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <Link :href="route('stock-audit.physical-counts.show', count.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
-                                </td>
-                            </tr>
-                            <tr v-if="counts.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">No physical counts yet</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!counts.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Items</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="count in counts.data" :key="count.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 font-medium text-gray-900">{{ count.title }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ count.count_date }}</td>
+                                    <td class="px-6 py-4">
+                                        <span :class="[statusColors[count.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
+                                            {{ count.status.replace('_', ' ') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ count.items?.length || 0 }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <Link :href="route('stock-audit.physical-counts.show', count.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                    </td>
+                                </tr>
+                                <tr v-if="!counts.data?.length">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">No physical counts yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="counts.links" :meta="counts.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

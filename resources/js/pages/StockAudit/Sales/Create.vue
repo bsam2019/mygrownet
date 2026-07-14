@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref, computed } from 'vue';
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
@@ -12,15 +13,8 @@ interface Item {
     unit: string;
 }
 
-interface CashRegister {
-    id: number;
-    register_date: string;
-    status: string;
-}
-
 interface Props {
     items: Item[];
-    todayRegister: CashRegister[];
 }
 
 defineProps<Props>();
@@ -66,9 +60,7 @@ const submit = () => {
     });
 };
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 </script>
 
 <template>

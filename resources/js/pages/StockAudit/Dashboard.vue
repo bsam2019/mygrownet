@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { computed, ref } from 'vue';
 import {
     ArchiveBoxIcon, CreditCardIcon, ShoppingCartIcon,
@@ -84,7 +85,7 @@ interface Props {
         out_of_stock_count: number;
         pending_po_count: number;
         partial_po_count: number;
-        in_progress_count_count: number;
+        in_progress_count: number;
         unresolved_audit_count: number;
         todays_sales: number;
         has_open_register: boolean;
@@ -163,9 +164,7 @@ const colorMap: Record<string, { bg: string; icon: string; hover: string }> = {
     orange: { bg: 'bg-orange-50', icon: 'text-orange-600', hover: 'hover:bg-orange-50' },
 };
 
-const formatCurrency = (amount: number, currency = 'ZMW') => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-ZM', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -219,9 +218,9 @@ const alertItems = computed(() => {
             href: sf('/purchases'),
         });
     }
-    if (props.stats.in_progress_count_count > 0) {
+    if (props.stats.in_progress_count > 0) {
         alerts.push({
-            label: `${props.stats.in_progress_count_count} Counts In Progress`,
+            label: `${props.stats.in_progress_count} Counts In Progress`,
             icon: ClipboardDocumentListIcon,
             color: 'violet',
             href: sf('/physical-counts'),
@@ -537,7 +536,7 @@ const recentActivity = computed(() => {
                         <div class="h-px flex-1 bg-gradient-to-l from-gray-200 to-transparent"></div>
                     </div>
                     <div class="rounded-xl border border-gray-100 bg-white shadow-sm divide-y divide-gray-100">
-                        <div v-for="activity in recentActivity" :key="activity.type + activity.date + activity.title" :href="activity.href" class="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                        <Link v-for="activity in recentActivity" :key="activity.type + activity.date + activity.title" :href="activity.href" class="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                             <div class="flex-shrink-0">
                                 <component :is="activity.type === 'audit' ? DocumentTextIcon : ClipboardDocumentListIcon" class="h-6 w-6 text-gray-400" />
                             </div>
@@ -546,7 +545,7 @@ const recentActivity = computed(() => {
                                 <p class="text-xs text-gray-500">{{ formatDate(activity.date) }} • {{ activity.status }}</p>
                             </div>
                             <ChevronRightIcon class="h-4 w-4 text-gray-300" />
-                        </div>
+                        </Link>
                     </div>
                 </div>
 

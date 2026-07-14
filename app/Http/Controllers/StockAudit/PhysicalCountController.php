@@ -4,6 +4,7 @@ namespace App\Http\Controllers\StockAudit;
 
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\PhysicalCountService;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaPhysicalCountModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,7 +17,21 @@ class PhysicalCountController extends Controller
     public function index(Request $request)
     {
         $companyId = $request->session()->get('stock_audit_company_id');
-        $counts = $this->physicalCountService->getCountsForCompany($companyId);
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 15);
+
+        $query = SaPhysicalCountModel::where('sa_company_id', $companyId);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+
+        $counts = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn($model) => $model->toArray());
 
         return Inertia::render('StockAudit/PhysicalCounts/Index', [
             'counts' => $counts,
@@ -35,7 +50,7 @@ class PhysicalCountController extends Controller
 
         $count = $this->physicalCountService->createCount($companyId, $validated, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.physical-counts.show', $count->id());
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $count->id())->with('success', 'Physical count created successfully.');
     }
 
     public function show(int $physicalCountId)
@@ -61,20 +76,20 @@ class PhysicalCountController extends Controller
 
         $this->physicalCountService->updateCountItems($physicalCountId, $validated['items']);
 
-        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId);
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId)->with('success', 'Count items updated successfully.');
     }
 
     public function complete(Request $request, int $physicalCountId)
     {
         $this->physicalCountService->completeCount($physicalCountId, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId);
+        return redirect()->sfRoute('stock-audit.physical-counts.show', $physicalCountId)->with('success', 'Physical count completed successfully.');
     }
 
     public function generateAudit(Request $request, int $physicalCountId)
     {
         $audit = $this->physicalCountService->generateAudit($physicalCountId);
 
-        return redirect()->sfRoute('stock-audit.audits.show', $audit->id());
+        return redirect()->sfRoute('stock-audit.audits.show', $audit->id())->with('success', 'Audit generated successfully.');
     }
 }

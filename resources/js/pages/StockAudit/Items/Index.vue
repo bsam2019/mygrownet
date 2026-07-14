@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref } from 'vue';
 import {
     PlusIcon,
@@ -23,29 +26,20 @@ interface Item {
 }
 
 interface Props {
-    items: Item[];
+    items: {
+        data: Item[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const { success, error: notifyError } = useNotifications();
 const confirm = useConfirmDialog();
 
 const search = ref('');
 
-const filteredItems = ref(props.items);
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
-
-const applySearch = () => {
-    const q = search.value.toLowerCase();
-    filteredItems.value = props.items.filter(i =>
-        i.name.toLowerCase().includes(q) ||
-        (i.sku && i.sku.toLowerCase().includes(q)) ||
-        (i.category && i.category.toLowerCase().includes(q))
-    );
-};
+const { formatCurrency } = useCurrency();
 
 const deleteItem = async (item: Item) => {
     const ok = await confirm.show(`Delete "${item.name}"? This cannot be undone.`, 'Delete Item');
@@ -76,48 +70,52 @@ const deleteItem = async (item: Item) => {
                 <div class="mb-6 rounded-xl bg-white p-4 shadow-sm">
                     <div class="relative">
                         <MagnifyingGlassIcon class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-                        <input v-model="search" @input="applySearch" type="text" placeholder="Search by name, SKU, or category..." class="w-full rounded-lg border-gray-300 pl-10 focus:border-emerald-500 focus:ring-emerald-500" />
+                        <input v-model="search" @keydown.enter="router.get(route('stock-audit.items.index'), { search: search.value }, { preserveState: true, preserveScroll: true })" type="text" placeholder="Search by name, SKU, or category..." class="w-full rounded-lg border-gray-300 pl-10 focus:border-emerald-500 focus:ring-emerald-500" />
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Item</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Stock</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unit Price</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="item in filteredItems" :key="item.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    <Link :href="route('stock-audit.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
-                                        {{ item.name }}
-                                    </Link>
-                                    <div v-if="item.sku" class="text-xs text-gray-500">SKU: {{ item.sku }}</div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">{{ item.category || '-' }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <span :class="[item.system_quantity <= 0 ? 'text-red-600 font-semibold' : 'text-gray-900']">
-                                        {{ item.system_quantity }} {{ item.unit }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatCurrency(item.unit_price) }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button @click="deleteItem(item)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete item">
-                                        <TrashIcon class="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredItems.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">No items found</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!items.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Item</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Stock</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unit Price</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <Link :href="route('stock-audit.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                            {{ item.name }}
+                                        </Link>
+                                        <div v-if="item.sku" class="text-xs text-gray-500">SKU: {{ item.sku }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ item.category || '-' }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <span :class="[item.system_quantity <= 0 ? 'text-red-600 font-semibold' : 'text-gray-900']">
+                                            {{ item.system_quantity }} {{ item.unit }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatCurrency(item.unit_price) }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <button @click="deleteItem(item)" class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600" title="Delete item">
+                                            <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="!items.data?.length">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">No items found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="items.links" :meta="items.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

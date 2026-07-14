@@ -77,6 +77,7 @@ class EloquentStockMovementRepository implements StockMovementRepositoryInterfac
             referenceId: $model->reference_id,
             createdBy: $model->created_by ?? 0,
             createdAt: new DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')),
+            itemName: $model->item?->name,
         );
     }
 }

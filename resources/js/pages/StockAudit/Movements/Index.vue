@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 
 interface StockMovement {
     id: number;
@@ -17,14 +20,16 @@ interface StockMovement {
 }
 
 interface Props {
-    movements: StockMovement[];
+    movements: {
+        data: StockMovement[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const typeColors: Record<string, string> = {
     addition: 'bg-green-100 text-green-800',
@@ -50,43 +55,47 @@ const typeColors: Record<string, string> = {
                     <p class="mt-1 text-sm text-gray-500">Append-only ledger of all stock changes</p>
                 </div>
 
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Type</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Item ID</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Before</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Qty</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">After</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Value</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Reason</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr v-for="m in movements" :key="m.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4">
-                                    <span :class="[typeColors[m.type] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
-                                        {{ m.type.replace(/_/g, ' ') }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.sa_item_id }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.quantity_before }}</td>
-                                <td class="px-6 py-4 text-right text-sm font-medium" :class="m.quantity >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                                    {{ m.quantity >= 0 ? '+' : '' }}{{ m.quantity }}
-                                </td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.quantity_after }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-700">{{ formatCurrency(m.total_value) }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">{{ m.reason }}</td>
-                                <td class="px-6 py-4 text-right text-sm text-gray-500">{{ m.created_at }}</td>
-                            </tr>
-                            <tr v-if="movements.length === 0">
-                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">No stock movements recorded</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <LoadingSkeleton v-if="!movements.data?.length" type="table" />
+                <template v-else>
+                    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Type</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Item ID</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Before</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Qty</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">After</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Value</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Reason</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr v-for="m in movements.data" :key="m.id" class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <span :class="[typeColors[m.type] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">
+                                            {{ m.type.replace(/_/g, ' ') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.item_name || 'Item #' + m.sa_item_id }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.quantity_before }}</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium" :class="m.quantity >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                                        {{ m.quantity >= 0 ? '+' : '' }}{{ m.quantity }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ m.quantity_after }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-700">{{ formatCurrency(m.total_value) }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">{{ m.reason }}</td>
+                                    <td class="px-6 py-4 text-right text-sm text-gray-500">{{ m.created_at }}</td>
+                                </tr>
+                                <tr v-if="!movements.data?.length">
+                                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">No stock movements recorded</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination :links="movements.links" :meta="movements.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

@@ -11,6 +11,7 @@ use App\Domain\StockFlow\Repositories\AuditRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PurchaseOrderRepositoryInterface;
+use App\Domain\StockFlow\Entities\Company;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use DateTimeImmutable;
 
@@ -77,7 +78,7 @@ class DashboardService
                 'out_of_stock_count' => count($outOfStockItems),
                 'pending_po_count' => count($pendingPOs),
                 'partial_po_count' => count($partialPOs),
-                'in_progress_count_count' => count($inProgressCounts),
+                'in_progress_count' => count($inProgressCounts),
                 'unresolved_audit_count' => count($unresolvedAudits),
                 'todays_sales' => $todaysSales,
                 'has_open_register' => $openRegister !== null,
@@ -107,7 +108,7 @@ class DashboardService
                 'out_of_stock_count' => 0,
                 'pending_po_count' => 0,
                 'partial_po_count' => 0,
-                'in_progress_count_count' => 0,
+                'in_progress_count' => 0,
                 'unresolved_audit_count' => 0,
                 'todays_sales' => 0,
                 'has_open_register' => false,
@@ -122,6 +123,40 @@ class DashboardService
             'recent_audits' => [],
             'recent_counts' => [],
         ];
+    }
+
+    public function updateCompany(int $companyId, array $data): array
+    {
+        $companyIdVO = CompanyId::fromInt($companyId);
+        $company = $this->companyRepository->findById($companyIdVO);
+
+        if (!$company) {
+            throw new \RuntimeException('Company not found');
+        }
+
+        $updated = Company::reconstitute(
+            id: $companyIdVO,
+            name: $data['name'] ?? $company->getName(),
+            subdomain: $company->getSubdomain(),
+            email: $data['email'] ?? $company->getEmail(),
+            phone: $data['phone'] ?? $company->getPhone(),
+            address: $data['address'] ?? $company->getAddress(),
+            city: $data['city'] ?? $company->getCity(),
+            country: $data['country'] ?? $company->getCountry(),
+            contactPerson: $data['contact_person'] ?? $company->getContactPerson(),
+            currency: $data['currency'] ?? $company->getCurrency(),
+            status: $company->getStatus(),
+            logoPath: $data['logo_path'] ?? $company->getLogoPath(),
+            tagline: $data['tagline'] ?? $company->getTagline(),
+            brandColor: $data['brand_color'] ?? $company->getBrandColor(),
+            settings: $data['settings'] ?? $company->getSettings(),
+            createdAt: $company->getCreatedAt(),
+            updatedAt: new DateTimeImmutable(),
+        );
+
+        $this->companyRepository->save($updated);
+
+        return $updated->toArray();
     }
 
     public function getActiveCompanies(): array

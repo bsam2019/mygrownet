@@ -4,6 +4,7 @@ namespace App\Http\Controllers\StockAudit;
 
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\DashboardService;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,9 +14,24 @@ class CompanyController extends Controller
         private DashboardService $dashboardService,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $companies = $this->dashboardService->getAllCompanies();
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 15);
+
+        $query = SaCompanyModel::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('subdomain', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $companies = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn($model) => $model->toArray());
 
         return Inertia::render('StockAudit/Companies/Index', [
             'companies' => $companies,

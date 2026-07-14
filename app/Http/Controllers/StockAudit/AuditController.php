@@ -5,6 +5,8 @@ namespace App\Http\Controllers\StockAudit;
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\AuditService;
 use App\Domain\StockFlow\Services\DashboardService;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaAuditModel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,7 +20,22 @@ class AuditController extends Controller
     public function index(Request $request)
     {
         $companyId = $request->session()->get('stock_audit_company_id');
-        $audits = $this->auditService->getAuditsForCompany($companyId);
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 15);
+
+        $query = SaAuditModel::where('sa_company_id', $companyId);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhere('report_reference', 'like', "%{$search}%");
+            });
+        }
+
+        $audits = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn($model) => $model->toArray());
 
         if ($request->wantsJson()) {
             return response()->json($audits);
@@ -65,7 +82,7 @@ class AuditController extends Controller
         $repo = app(\App\Domain\StockFlow\Repositories\AuditRepositoryInterface::class);
         $saved = $repo->save($audit);
 
-        return redirect()->sfRoute('stock-audit.audits.show', $saved->id());
+        return redirect()->sfRoute('stock-audit.audits.show', $saved->id())->with('success', 'Audit created successfully.');
     }
 
     public function finalize(Request $request, int $auditId)
@@ -79,7 +96,7 @@ class AuditController extends Controller
 
         $this->auditService->finalizeAudit($auditId, $validated);
 
-        return redirect()->sfRoute('stock-audit.audits.show', $auditId);
+        return redirect()->sfRoute('stock-audit.audits.show', $auditId)->with('success', 'Audit finalized successfully.');
     }
 
     public function exportCsv(int $auditId)
@@ -129,5 +146,23 @@ class AuditController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportPdf(int $auditId)
+    {
+        $audit = $this->auditService->getAuditById($auditId);
+        if (!$audit) abort(404);
+
+        $companyModel = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find($audit->getCompanyId()->toInt());
+        $companyName = $companyModel?->name ?? 'Company';
+        $items = $this->auditService->getAuditItemData($auditId);
+
+        $pdf = Pdf::loadView('pdf.stock-audit.audit-report', [
+            'companyName' => $companyName,
+            'audit' => $audit->toArray(),
+            'items' => $items,
+        ]);
+
+        return $pdf->download("audit-{$audit->getReportReference()}.pdf");
     }
 }

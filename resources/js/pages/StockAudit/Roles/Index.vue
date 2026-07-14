@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref, computed } from 'vue';
 import {
     PlusIcon, ShieldCheckIcon, KeyIcon, PencilIcon, TrashIcon,
@@ -38,6 +40,7 @@ const openCompanyDropdown = ref(false);
 const createForm = useForm({
     name: '',
     slug: '',
+    prevName: '',
     description: '',
     permissions: [] as string[],
 });
@@ -162,60 +165,64 @@ const updateSlug = () => {
                 </div>
             </div>
 
-            <div class="px-4 sm:px-6 lg:px-8 pb-8 space-y-8">
-                <div v-for="role in props.roles" :key="role.id" class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex items-center gap-3">
-                            <div :class="['flex h-10 w-10 items-center justify-center rounded-lg', role.is_system ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700']">
-                                <component :is="role.is_system ? ShieldCheckIcon : KeyIcon" class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h3 class="text-lg font-semibold text-gray-900">{{ role.name }}</h3>
-                                    <span v-if="role.is_system" class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
-                                        System Role
-                                    </span>
+            <LoadingSkeleton v-if="!roles.length && !(roles as any).data" type="card" />
+            <template v-else>
+                <div class="px-4 sm:px-6 lg:px-8 pb-8 space-y-8">
+                    <div v-for="role in props.roles" :key="role.id" class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                        <div class="px-5 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex items-center gap-3">
+                                <div :class="['flex h-10 w-10 items-center justify-center rounded-lg', role.is_system ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700']">
+                                    <component :is="role.is_system ? ShieldCheckIcon : KeyIcon" class="h-5 w-5" />
                                 </div>
-                                <p v-if="role.description" class="mt-0.5 text-sm text-gray-500">{{ role.description }}</p>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-lg font-semibold text-gray-900">{{ role.name }}</h3>
+                                        <span v-if="role.is_system" class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                            System Role
+                                        </span>
+                                    </div>
+                                    <p v-if="role.description" class="mt-0.5 text-sm text-gray-500">{{ role.description }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    @click="openEditModal(role)"
+                                    :disabled="role.is_system"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <PencilIcon class="h-4 w-4" />
+                                    Edit
+                                </button>
+                                <button
+                                    v-if="!role.is_system"
+                                    @click="handleDelete(role)"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-300"
+                                >
+                                    <TrashIcon class="h-4 w-4" />
+                                    Delete
+                                </button>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button
-                                @click="openEditModal(role)"
-                                :disabled="role.is_system"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <PencilIcon class="h-4 w-4" />
-                                Edit
-                            </button>
-                            <button
-                                v-if="!role.is_system"
-                                @click="handleDelete(role)"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-300"
-                            >
-                                <TrashIcon class="h-4 w-4" />
-                                Delete
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="px-5 py-4">
-                        <div class="flex items-center gap-2 mb-3">
-                            <InformationCircleIcon class="h-4 w-4 text-gray-400" />
-                            <span class="text-xs text-gray-500">{{ role.permissions.length }} permissions assigned</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1.5">
-                            <span
-                                v-for="perm in role.permissions"
-                                :key="perm"
-                                class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-                            >
-                                {{ perm.replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
-                            </span>
+                        <div class="px-5 py-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <InformationCircleIcon class="h-4 w-4 text-gray-400" />
+                                <span class="text-xs text-gray-500">{{ role.permissions.length }} permissions assigned</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span
+                                    v-for="perm in role.permissions"
+                                    :key="perm"
+                                    class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                                >
+                                    {{ perm.replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                <Pagination v-if="(roles as any).links" :links="(roles as any).links" :meta="(roles as any).meta" />
+            </template>
 
             <!-- Create Role Modal -->
             <div v-if="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto">

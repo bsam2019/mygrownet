@@ -32,6 +32,7 @@ class StockMovement implements Arrayable
         private ?int $referenceId,
         private int $createdBy,
         private DateTimeImmutable $createdAt,
+        private ?string $itemName = null,
     ) {}
 
     public static function create(
@@ -52,8 +53,9 @@ class StockMovement implements Arrayable
         MovementType $type, float $quantity, Money $unitPrice, Money $totalValue,
         float $quantityBefore, float $quantityAfter, ?string $reason,
         ?string $referenceType, ?int $referenceId, int $createdBy, DateTimeImmutable $createdAt,
+        ?string $itemName = null,
     ): self {
-        return new self($id, $companyId, $itemId, $binId, $type, $quantity, $unitPrice, $totalValue, $quantityBefore, $quantityAfter, $reason, $referenceType, $referenceId, $createdBy, $createdAt);
+        return new self($id, $companyId, $itemId, $binId, $type, $quantity, $unitPrice, $totalValue, $quantityBefore, $quantityAfter, $reason, $referenceType, $referenceId, $createdBy, $createdAt, $itemName);
     }
 
     public function id(): int { return $this->id->toInt(); }
@@ -70,6 +72,7 @@ class StockMovement implements Arrayable
     public function getReferenceType(): ?string { return $this->referenceType; }
     public function getReferenceId(): ?int { return $this->referenceId; }
     public function getCreatedBy(): int { return $this->createdBy; }
+    public function getItemName(): ?string { return $this->itemName; }
 
     public function toArray(): array
     {
@@ -88,6 +91,7 @@ class StockMovement implements Arrayable
             'reference_type' => $this->referenceType,
             'reference_id' => $this->referenceId,
             'created_by' => $this->createdBy,
+            'item_name' => $this->itemName,
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
         ];
     }

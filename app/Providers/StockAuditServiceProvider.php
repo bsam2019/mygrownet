@@ -71,5 +71,6 @@ class StockAuditServiceProvider extends ServiceProvider
         // Services
         $this->app->singleton(CompanyRoleService::class);
         $this->app->singleton(CompanyUserService::class);
+        $this->app->singleton(\App\Domain\StockFlow\Services\StockFlowNotificationService::class);
     }
 }

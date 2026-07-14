@@ -75,6 +75,9 @@ class CompanyRoleService
         'suppliers.edit',
         'suppliers.delete',
 
+        // Reports
+        'reports.view',
+
         // Departments & Bins
         'departments.view',
         'departments.create',

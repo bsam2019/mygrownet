@@ -64,5 +64,6 @@ class Kernel extends HttpKernel
         'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
         'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
         'stockflow.permission' => \App\Http\Middleware\StockFlowPermission::class,
+        'stockflow.feature' => \App\Http\Middleware\CheckFeatureEnabled::class,
     ];
 }

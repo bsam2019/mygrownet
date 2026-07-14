@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 
 interface Company {
@@ -15,7 +17,11 @@ interface Company {
 }
 
 interface Props {
-    companies: Company[];
+    companies: {
+        data: Company[];
+        links: { url: string | null; label: string; active: boolean }[];
+        meta: { current_page: number; last_page: number; total: number; from: number; to: number };
+    };
 }
 
 defineProps<Props>();
@@ -34,28 +40,32 @@ defineProps<Props>();
                     </Link>
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Link
-                        v-for="company in companies"
-                        :key="company.id"
-                        :href="route('stock-audit.companies.show', company.id)"
-                        class="rounded-xl bg-white p-6 shadow-sm transition hover:shadow-md"
-                    >
-                        <h3 class="font-semibold text-gray-900">{{ company.name }}</h3>
-                        <p class="mt-1 text-sm text-gray-500">{{ company.city }}{{ company.city && company.country ? ', ' : '' }}{{ company.country }}</p>
-                        <div class="mt-3 flex items-center gap-3 text-sm text-gray-600">
-                            <span v-if="company.email" class="truncate">{{ company.email }}</span>
-                            <span v-if="company.phone">{{ company.phone }}</span>
+                <LoadingSkeleton v-if="!companies.data?.length" type="card" />
+                <template v-else>
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <Link
+                            v-for="company in companies.data"
+                            :key="company.id"
+                            :href="route('stock-audit.companies.show', company.id)"
+                            class="rounded-xl bg-white p-6 shadow-sm transition hover:shadow-md"
+                        >
+                            <h3 class="font-semibold text-gray-900">{{ company.name }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ company.city }}{{ company.city && company.country ? ', ' : '' }}{{ company.country }}</p>
+                            <div class="mt-3 flex items-center gap-3 text-sm text-gray-600">
+                                <span v-if="company.email" class="truncate">{{ company.email }}</span>
+                                <span v-if="company.phone">{{ company.phone }}</span>
+                            </div>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs text-gray-400">Currency: {{ company.currency }}</span>
+                                <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 capitalize">{{ company.status }}</span>
+                            </div>
+                        </Link>
+                        <div v-if="!companies.data?.length" class="col-span-full py-12 text-center text-gray-500">
+                            No companies yet
                         </div>
-                        <div class="mt-2 flex items-center gap-2">
-                            <span class="text-xs text-gray-400">Currency: {{ company.currency }}</span>
-                            <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 capitalize">{{ company.status }}</span>
-                        </div>
-                    </Link>
-                    <div v-if="companies.length === 0" class="col-span-full py-12 text-center text-gray-500">
-                        No companies yet
                     </div>
-                </div>
+                    <Pagination :links="companies.links" :meta="companies.meta" />
+                </template>
             </div>
         </div>
     </StockAuditLayout>

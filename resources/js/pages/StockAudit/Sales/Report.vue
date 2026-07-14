@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 
 interface SaleItem {
@@ -37,12 +38,15 @@ const props = defineProps<Props>();
 const dateFrom = ref(props.from);
 const dateTo = ref(props.to);
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const searchReport = () => {
     router.get(route('stock-audit.sales.report'), { from: dateFrom.value, to: dateTo.value });
+};
+
+const downloadPdf = () => {
+    const params = new URLSearchParams({ from: dateFrom.value, to: dateTo.value });
+    window.open(route('stock-audit.sales.report') + '/pdf?' + params.toString(), '_blank');
 };
 </script>
 
@@ -51,9 +55,15 @@ const searchReport = () => {
         <Head title="Sales Report - StockFlow" />
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="mb-6">
-                    <Link :href="route('stock-audit.sales.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Sales</Link>
-                    <h1 class="mt-2 text-2xl font-bold text-gray-900">Sales Report</h1>
+                <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <Link :href="route('stock-audit.sales.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Sales</Link>
+                        <h1 class="mt-2 text-2xl font-bold text-gray-900">Sales Report</h1>
+                    </div>
+                    <button @click="downloadPdf" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                        Download PDF
+                    </button>
                 </div>
 
                 <!-- Date Filter -->

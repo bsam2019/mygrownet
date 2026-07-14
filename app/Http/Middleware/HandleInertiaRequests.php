@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -80,7 +81,16 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        // Use the correct auth guard for StockFlow subdomains.
+        // The default $request->user() uses the 'web' guard, but StockFlow
+        // users authenticate via the 'stockflow' guard. Routes inside the
+        // auth:stockflow middleware group switch the guard before Inertia
+        // renders the response, but the dashboard (GET /) is outside that
+        // group, so we must explicitly fall back to the stockflow guard.
         $user = $request->user();
+        if (!$user && $request->attributes->has('stock_audit_company_id')) {
+            $user = Auth::guard('stockflow')->user();
+        }
 
         // Prepare lightweight user payload with cached roles and permissions
         $authUser = null;
@@ -132,6 +142,20 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        // Get stockflow company features for feature toggles
+        $companyFeatures = null;
+        if ($request->session()->has('stock_audit_company_id')) {
+            try {
+                $companyModel = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find(
+                    $request->session()->get('stock_audit_company_id')
+                );
+                $settings = $companyModel?->settings;
+                $companyFeatures = $settings['features_enabled'] ?? null;
+            } catch (\Exception $e) {
+                $companyFeatures = null;
+            }
+        }
+
         // Get employee data if user has an employee record
         $employee = null;
         if ($user) {
@@ -179,6 +203,7 @@ class HandleInertiaRequests extends Middleware
                 'generated_email' => fn () => $request->session()->get('generated_email'),
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
+            'companyFeatures' => $companyFeatures,
             'supportStats' => $supportStats,
             'employee' => $employee,
         ];

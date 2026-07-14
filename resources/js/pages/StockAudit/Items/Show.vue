@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 
 interface Item {
@@ -35,9 +36,7 @@ const adjustForm = ref({
 
 const errors = ref<Record<string, string>>({});
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const submitAdjust = () => {
     router.post(route('stock-audit.items.adjust', props.item.id), adjustForm.value, {

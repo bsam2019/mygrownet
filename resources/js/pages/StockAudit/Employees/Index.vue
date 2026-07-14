@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import LoadingSkeleton from '@/components/StockAudit/LoadingSkeleton.vue';
+import Pagination from '@/components/StockAudit/Pagination.vue';
 import { ref, computed } from 'vue';
 import {
     PlusIcon, UserCircleIcon, ChevronRightIcon, ChevronDownIcon,
-    KeyIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon,
+    KeyIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, ClockIcon,
     PauseCircleIcon, PlayCircleIcon, ArrowPathIcon, TrashIcon,
     PencilIcon, EyeIcon, EnvelopeIcon, MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline';
@@ -48,6 +50,7 @@ interface Role {
 interface Props {
     employees: Employee[];
     roles: Role[];
+    availableUsers: { id: number; name: string; email: string }[];
     availablePermissions: string[];
 }
 
@@ -194,131 +197,135 @@ const getRoleDisplay = (employee: Employee) => {
 
             <!-- Employees Table -->
             <div class="px-4 sm:px-6 lg:px-8 pb-8">
-                <div class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Employee</th>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden md:table-cell">Role</th>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Invited</th>
-                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Joined</th>
-                                <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="emp in sortedEmployees" :key="emp.id" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium text-sm">
-                                            {{ emp.user?.name?.charAt(0).toUpperCase() }}
+                <LoadingSkeleton v-if="!employees.length && !(employees as any).data" type="table" />
+                <template v-else>
+                    <div class="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Employee</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden md:table-cell">Role</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Invited</th>
+                                    <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 hidden lg:table-cell">Joined</th>
+                                    <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="emp in sortedEmployees" :key="emp.id" class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium text-sm">
+                                                {{ emp.user?.name?.charAt(0).toUpperCase() }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">{{ emp.user?.name }}</p>
+                                                <p class="text-xs text-gray-500 truncate">{{ emp.user?.email }}</p>
+                                            </div>
                                         </div>
-                                        <div class="min-w-0">
-                                            <p class="text-sm font-medium text-gray-900 truncate">{{ emp.user?.name }}</p>
-                                            <p class="text-xs text-gray-500 truncate">{{ emp.user?.email }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-4 hidden md:table-cell">
-                                    <span
-                                        v-if="emp.role"
-                                        :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', emp.role.is_system ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20']"
-                                    >
-                                        {{ emp.role.name }}
-                                    </span>
-                                    <span v-else class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600/20">
-                                        No Role
-                                    </span>
-                                </td>
-                                <td class="px-5 py-4">
-                                    <span :class="['inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', statusConfig[emp.status].class]">
-                                        <component :is="statusConfig[emp.status].icon" class="h-3.5 w-3.5" />
-                                        {{ statusConfig[emp.status].label }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-4 hidden lg:table-cell text-sm text-gray-500">
-                                    {{ formatDate(emp.invited_at) }}
-                                </td>
-                                <td class="px-5 py-4 hidden lg:table-cell text-sm text-gray-500">
-                                    {{ formatDate(emp.joined_at) }}
-                                </td>
-                                <td class="px-5 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <!-- Role Dropdown -->
-                                        <div class="relative" v-if="emp.status === 'active'">
-                                            <button
-                                                @click="emp.showRoleDropdown = !emp.showRoleDropdown"
-                                                class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                                            >
-                                                <ChevronDownIcon class="inline h-4 w-4" />
-                                            </button>
-                                            <div v-if="emp.showRoleDropdown" class="absolute right-0 z-10 mt-1 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none animate-in fade-in-0 zoom-in-95" role="menu" aria-orientation="vertical">
+                                    </td>
+                                    <td class="px-5 py-4 hidden md:table-cell">
+                                        <span
+                                            v-if="emp.role"
+                                            :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', emp.role.is_system ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20']"
+                                        >
+                                            {{ emp.role.name }}
+                                        </span>
+                                        <span v-else class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600/20">
+                                            No Role
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <span :class="['inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', statusConfig[emp.status].class]">
+                                            <component :is="statusConfig[emp.status].icon" class="h-3.5 w-3.5" />
+                                            {{ statusConfig[emp.status].label }}
+                                        </span>
+                                    </td>
+                                    <td class="px-5 py-4 hidden lg:table-cell text-sm text-gray-500">
+                                        {{ formatDate(emp.invited_at) }}
+                                    </td>
+                                    <td class="px-5 py-4 hidden lg:table-cell text-sm text-gray-500">
+                                        {{ formatDate(emp.joined_at) }}
+                                    </td>
+                                    <td class="px-5 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <!-- Role Dropdown -->
+                                            <div class="relative" v-if="emp.status === 'active'">
                                                 <button
-                                                    v-for="role in props.roles"
-                                                    :key="role.id"
-                                                    @click="inviteForm.role_id = role.id; inviteForm.user_id = emp.user_id; submitInvite()"
-                                                    class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                                                    role="menuitem"
+                                                    @click="emp.showRoleDropdown = !emp.showRoleDropdown"
+                                                    class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                                                 >
-                                                    {{ role.name }}
+                                                    <ChevronDownIcon class="inline h-4 w-4" />
+                                                </button>
+                                                <div v-if="emp.showRoleDropdown" class="absolute right-0 z-10 mt-1 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none animate-in fade-in-0 zoom-in-95" role="menu" aria-orientation="vertical">
+                                                    <button
+                                                        v-for="role in props.roles"
+                                                        :key="role.id"
+                                                        @click="inviteForm.role_id = role.id; inviteForm.user_id = emp.user_id; submitInvite()"
+                                                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                                        role="menuitem"
+                                                    >
+                                                        {{ role.name }}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <div class="flex items-center gap-1">
+                                                <button
+                                                    v-if="emp.status === 'pending'"
+                                                    @click="resendInvite(emp)"
+                                                    class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                                    title="Resend invitation"
+                                                >
+                                                    <EnvelopeIcon class="h-4 w-4" />
+                                                </button>
+
+                                                <button
+                                                    v-if="emp.status === 'active'"
+                                                    @click="handleAction(emp, 'suspend')"
+                                                    class="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                    title="Suspend"
+                                                >
+                                                    <PauseCircleIcon class="h-4 w-4" />
+                                                </button>
+
+                                                <button
+                                                    v-if="emp.status === 'suspended'"
+                                                    @click="handleAction(emp, 'reactivate')"
+                                                    class="rounded-lg p-1.5 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                                                    title="Reactivate"
+                                                >
+                                                    <PlayCircleIcon class="h-4 w-4" />
+                                                </button>
+
+                                                <button
+                                                    v-if="emp.status !== 'removed'"
+                                                    @click="handleAction(emp, 'remove')"
+                                                    class="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                                    title="Remove"
+                                                >
+                                                    <TrashIcon class="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                                        <!-- Action Buttons -->
-                                        <div class="flex items-center gap-1">
-                                            <button
-                                                v-if="emp.status === 'pending'"
-                                                @click="resendInvite(emp)"
-                                                class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                                                title="Resend invitation"
-                                            >
-                                                <EnvelopeIcon class="h-4 w-4" />
-                                            </button>
-
-                                            <button
-                                                v-if="emp.status === 'active'"
-                                                @click="handleAction(emp, 'suspend')"
-                                                class="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                                                title="Suspend"
-                                            >
-                                                <PauseCircleIcon class="h-4 w-4" />
-                                            </button>
-
-                                            <button
-                                                v-if="emp.status === 'suspended'"
-                                                @click="handleAction(emp, 'reactivate')"
-                                                class="rounded-lg p-1.5 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
-                                                title="Reactivate"
-                                            >
-                                                <PlayCircleIcon class="h-4 w-4" />
-                                            </button>
-
-                                            <button
-                                                v-if="emp.status !== 'removed'"
-                                                @click="handleAction(emp, 'remove')"
-                                                class="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                                                title="Remove"
-                                            >
-                                                <TrashIcon class="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div v-if="sortedEmployees.length === 0" class="px-5 py-12 text-center">
-                        <UserCircleIcon class="mx-auto h-12 w-12 text-gray-300" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No employees found</h3>
-                        <p class="mt-1 text-sm text-gray-500">Get started by inviting your first team member</p>
-                        <button @click="openInviteModal" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
-                            <PlusIcon class="h-5 w-5" />
-                            Invite Employee
-                        </button>
+                        <div v-if="sortedEmployees.length === 0" class="px-5 py-12 text-center">
+                            <UserCircleIcon class="mx-auto h-12 w-12 text-gray-300" />
+                            <h3 class="mt-2 text-sm font-semibold text-gray-900">No employees found</h3>
+                            <p class="mt-1 text-sm text-gray-500">Get started by inviting your first team member</p>
+                            <button @click="openInviteModal" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                                <PlusIcon class="h-5 w-5" />
+                                Invite Employee
+                            </button>
+                        </div>
                     </div>
-                </div>
+                    <Pagination v-if="(employees as any).links" :links="(employees as any).links" :meta="(employees as any).meta" />
+                </template>
             </div>
         </div>
 

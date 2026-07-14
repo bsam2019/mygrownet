@@ -19,8 +19,13 @@ import {
     ArrowsRightLeftIcon,
     UserCircleIcon,
     ArrowRightOnRectangleIcon,
+    Cog6ToothIcon,
+    UsersIcon,
+    ShieldCheckIcon,
+    DocumentChartBarIcon,
 } from '@heroicons/vue/24/outline';
 import NotificationToast from '@/components/StockAudit/NotificationToast.vue';
+import NotificationBell from '@/components/StockAudit/NotificationBell.vue';
 import ConfirmDialog from '@/components/StockAudit/ConfirmDialog.vue';
 
 interface Props {
@@ -40,21 +45,30 @@ const isSubdomain = computed(() => {
     return routeName.startsWith('stockflow.sub.');
 });
 
+const companyFeatures = computed(() => (page.props as any).companyFeatures ?? {});
+
 const navigation = computed(() => {
     const base = isSubdomain.value ? 'stockflow.sub' : 'stock-audit';
-    return [
-        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stock-audit', icon: HomeIcon, routeName: `${base}.dashboard` },
-        { name: 'Items', href: isSubdomain.value ? '/items' : '/stock-audit/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index` },
-        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stock-audit/sales', icon: CreditCardIcon, routeName: `${base}.sales.index` },
-        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index` },
-        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index` },
-        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index` },
-        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index` },
-        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stock-audit/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index` },
-        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stock-audit/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index` },
-        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stock-audit/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index` },
-        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stock-audit/bins', icon: CubeIcon, routeName: `${base}.bins.index` },
+    const features = companyFeatures.value;
+    const f = (key: string) => features[key] !== false;
+
+    const items = [
+        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stock-audit', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
+        { name: 'Items', href: isSubdomain.value ? '/items' : '/stock-audit/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
+        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stock-audit/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
+        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
+        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
+        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
+        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index`, feature: f('counts') },
+        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stock-audit/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index`, feature: f('audits') },
+        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stock-audit/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index`, feature: f('suppliers') },
+        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stock-audit/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index`, feature: f('departments') },
+        { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stock-audit/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
+        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stock-audit/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
+        { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stock-audit/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
+        { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stock-audit/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
     ];
+    return items.filter(i => i.feature);
 });
 
 const isCurrentRoute = (routeName: string) => {
@@ -70,7 +84,7 @@ const isCurrentRoute = (routeName: string) => {
 };
 
 const logout = () => {
-    router.post(route('stockflow.sub.logout'));
+    router.post(route(isSubdomain.value ? 'stockflow.sub.logout' : 'stock-audit.logout'));
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
@@ -225,7 +239,10 @@ onUnmounted(() => {
                     <div class="flex flex-1 items-center">
                         <h1 class="text-lg font-semibold text-gray-900">{{ title || 'StockFlow' }}</h1>
                     </div>
-                    <div class="flex items-center gap-x-4 lg:gap-x-6">
+                    <div class="flex items-center gap-x-2 lg:gap-x-4">
+                        <!-- Notification Bell -->
+                        <NotificationBell />
+
                         <!-- User dropdown -->
                         <div data-user-menu class="relative">
                             <button
@@ -248,6 +265,15 @@ onUnmounted(() => {
                                         <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
                                     </div>
                                     <div class="py-1">
+                                        <Link
+                                            :href="isSubdomain ? '/settings' : '/stock-audit/settings'"
+                                            class="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                        >
+                                            <Cog6ToothIcon class="h-5 w-5" />
+                                            Settings
+                                        </Link>
+                                    </div>
+                                    <div class="py-1 border-t border-gray-100">
                                         <button
                                             @click="logout"
                                             class="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-red-600"

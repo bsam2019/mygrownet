@@ -29,6 +29,7 @@ class PurchaseOrder implements Arrayable
         private DateTimeImmutable $createdAt,
         private DateTimeImmutable $updatedAt,
         private array $items = [],
+        private ?string $supplierName = null,
     ) {}
 
     public static function create(
@@ -50,7 +51,7 @@ class PurchaseOrder implements Arrayable
         DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt,
     ): self {
         return new self($id, $companyId, $supplierId, $orderNumber, $orderDate,
-            $status, $subtotal, $tax, $total, $notes, $createdAt, $updatedAt);
+            $status, $subtotal, $tax, $total, $notes, $createdAt, $updatedAt, [], null);
     }
 
     public function addItem(PurchaseOrderItem $item): void { $this->items[] = $item; }
@@ -68,6 +69,8 @@ class PurchaseOrder implements Arrayable
     public function getTotal(): Money { return $this->total; }
     public function getNotes(): ?string { return $this->notes; }
     public function getItems(): array { return $this->items; }
+    public function getSupplierName(): ?string { return $this->supplierName; }
+    public function setSupplierName(?string $name): void { $this->supplierName = $name; }
 
     public function toArray(): array
     {
@@ -82,6 +85,7 @@ class PurchaseOrder implements Arrayable
             'tax' => $this->tax->toFloat(),
             'total' => $this->total->toFloat(),
             'notes' => $this->notes,
+            'supplier_name' => $this->supplierName,
             'items' => array_map(fn(PurchaseOrderItem $i) => $i->toArray(), $this->items),
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt->format('Y-m-d H:i:s'),

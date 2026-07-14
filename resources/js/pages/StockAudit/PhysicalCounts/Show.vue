@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -37,9 +38,7 @@ const confirm = useConfirmDialog();
 const editingItems = ref<Record<number, number>>({});
 const errors = ref<Record<string, string>>({});
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZM', { style: 'currency', currency: 'ZMW', minimumFractionDigits: 2 }).format(amount);
-};
+const { formatCurrency } = useCurrency();
 
 const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',
@@ -130,7 +129,7 @@ const generateAudit = async () => {
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             <tr v-for="item in count.items" :key="item.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ item.sa_item_id }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ item.item_name || 'Item #' + item.sa_item_id }}</td>
                                 <td class="px-6 py-4 text-right text-sm text-gray-700">{{ item.system_quantity }}</td>
                                 <td class="px-6 py-4 text-right">
                                     <input

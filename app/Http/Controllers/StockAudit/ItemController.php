@@ -5,6 +5,9 @@ namespace App\Http\Controllers\StockAudit;
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\InventoryService;
 use App\Domain\StockFlow\Services\DepartmentBinService;
+use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaItemModel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,7 +21,22 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         $companyId = $request->session()->get('stock_audit_company_id');
-        $items = $this->inventoryService->getItemsForCompany($companyId);
+        $search = $request->get('search');
+        $perPage = $request->get('per_page', 15);
+
+        $query = SaItemModel::where('sa_company_id', $companyId);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        $items = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->through(fn($model) => $model->toArray());
 
         return Inertia::render('StockAudit/Items/Index', [
             'items' => $items,
@@ -55,7 +73,7 @@ class ItemController extends Controller
 
         $this->inventoryService->createItem($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item created successfully.');
     }
 
     public function show(int $itemId)
@@ -89,7 +107,7 @@ class ItemController extends Controller
 
         $this->inventoryService->updateItem($itemId, $companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item updated successfully.');
     }
 
     public function destroy(int $itemId)
@@ -97,7 +115,7 @@ class ItemController extends Controller
         $companyId = session('stock_audit_company_id');
         $this->inventoryService->deleteItem($itemId, $companyId);
 
-        return redirect()->sfRoute('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item deleted successfully.');
     }
 
     public function import(Request $request)
@@ -116,7 +134,7 @@ class ItemController extends Controller
             $this->inventoryService->createItem($companyId, $itemData);
         }
 
-        return redirect()->sfRoute('stock-audit.items.index');
+        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Items imported successfully.');
     }
 
     public function adjustStock(Request $request, int $itemId)
@@ -138,6 +156,62 @@ class ItemController extends Controller
             $request->user()->id,
         );
 
-        return redirect()->sfRoute('stock-audit.items.show', $itemId);
+        return redirect()->sfRoute('stock-audit.items.show', $itemId)->with('success', 'Stock adjusted successfully.');
+    }
+
+    public function inventoryReport(Request $request)
+    {
+        $companyId = $request->session()->get('stock_audit_company_id');
+        $items = $this->inventoryService->getItemsForCompany($companyId);
+
+        $summary = [
+            'total_items' => count($items),
+            'total_value' => 0,
+            'low_stock' => 0,
+            'out_of_stock' => 0,
+        ];
+
+        $itemArray = [];
+        foreach ($items as $item) {
+            $arr = $item->toArray();
+            $summary['total_value'] += ($arr['unit_price'] ?? 0) * ($arr['system_quantity'] ?? 0);
+            if (($arr['system_quantity'] ?? 0) <= 0) $summary['out_of_stock']++;
+            elseif (($arr['reorder_level'] ?? null) !== null && ($arr['system_quantity'] ?? 0) <= ($arr['reorder_level'] ?? 0)) $summary['low_stock']++;
+            $itemArray[] = $arr;
+        }
+
+        return Inertia::render('StockAudit/Inventory/Report', [
+            'items' => $itemArray,
+            'summary' => $summary,
+            'reportDate' => now()->format('Y-m-d'),
+        ]);
+    }
+
+    public function inventoryReportPdf()
+    {
+        $companyId = session('stock_audit_company_id');
+        $companyModel = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find($companyId);
+        $companyName = $companyModel?->name ?? 'Company';
+
+        $items = $this->inventoryService->getItemsForCompany($companyId);
+
+        $summary = ['total_items' => count($items), 'total_value' => 0, 'low_stock' => 0, 'out_of_stock' => 0];
+        $itemArray = [];
+        foreach ($items as $item) {
+            $arr = $item->toArray();
+            $summary['total_value'] += ($arr['unit_price'] ?? 0) * ($arr['system_quantity'] ?? 0);
+            if (($arr['system_quantity'] ?? 0) <= 0) $summary['out_of_stock']++;
+            elseif (($arr['reorder_level'] ?? null) !== null && ($arr['system_quantity'] ?? 0) <= ($arr['reorder_level'] ?? 0)) $summary['low_stock']++;
+            $itemArray[] = $arr;
+        }
+
+        $pdf = Pdf::loadView('pdf.stock-audit.inventory-report', [
+            'companyName' => $companyName,
+            'items' => $itemArray,
+            'summary' => $summary,
+            'reportDate' => now()->format('Y-m-d'),
+        ]);
+
+        return $pdf->download("inventory-report-{$summary['total_items']}-items.pdf");
     }
 }
