@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('referral_commissions', function (Blueprint $table) {
-            $table->foreignId('payment_transaction_id')->nullable()->constrained('payment_transactions')->onDelete('set null');
-            $table->index('payment_transaction_id');
+            if (!Schema::hasColumn('referral_commissions', 'payment_transaction_id')) {
+                $table->foreignId('payment_transaction_id')->nullable()->constrained('payment_transactions')->onDelete('set null');
+                $table->index('payment_transaction_id');
+            }
         });
     }
 
