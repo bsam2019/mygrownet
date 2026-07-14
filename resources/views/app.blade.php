@@ -171,11 +171,16 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+        @if(str_starts_with(request()->route()?->getName() ?? '', 'stockflow.sub.'))
+        <script>
+            window.__sfSubdomain = true;
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(r) { r.forEach(function(s) { s.unregister(); }); });
+            }
+        </script>
+        @endif
         @routes
         @vite(['resources/js/app.ts'])
-        @if(str_starts_with(request()->route()?->getName() ?? '', 'stockflow.sub.'))
-        <script>window.__sfSubdomain = true;</script>
-        @endif
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
@@ -225,8 +230,8 @@
             console.log('Page loading started:', new Date().toISOString());
             console.log('User Agent:', navigator.userAgent);
             
-            // Register Service Worker and handle PWA install prompt
-            if ('serviceWorker' in navigator) {
+            // Register Service Worker (disabled for StockFlow subdomains)
+            if ('serviceWorker' in navigator && !window.__sfSubdomain) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/sw.js')
                         .then(function(registration) {
