@@ -150,16 +150,20 @@ export function bootInertia(
             // Apply route aliases BEFORE ZiggyVue reads routes so that
             // route('stock-audit.X') works on subdomains where routes are
             // named stockflow.sub.X
+            // Must modify BOTH props.ziggy.routes AND window.Ziggy.routes
+            // because ZiggyVue reads from window.Ziggy, not from Inertia props.
             if ((window as any).__sfSubdomain) {
-                const routes = (props as any).ziggy?.routes || (window as any).Ziggy?.routes;
-                if (routes) {
+                const applyAliases = (routes: Record<string, any> | undefined) => {
+                    if (!routes) return;
                     for (const key of Object.keys(routes)) {
                         if (key.startsWith('stockflow.sub.')) {
                             const alias = key.replace('stockflow.sub.', 'stock-audit.');
                             routes[alias] = routes[key];
                         }
                     }
-                }
+                };
+                applyAliases((props as any).ziggy?.routes);
+                applyAliases((window as any).Ziggy?.routes);
             }
 
             const app = createApp({ render: () => h(App, props) })

@@ -188,7 +188,7 @@ const quickActions = [
     { label: 'Open Register', href: sf('/cash'), icon: CurrencyDollarIcon, color: 'emerald', show: props.company && !props.stats.has_open_register },
     { label: 'Record Sale', href: sf('/sales/create'), icon: CreditCardIcon, color: 'blue', show: props.company },
     { label: 'Create PO', href: sf('/purchases/create'), icon: ShoppingCartIcon, color: 'amber', show: props.company },
-    { label: 'Start Count', href: sf('/physical-counts/create'), icon: ClipboardDocumentListIcon, color: 'violet', show: props.company },
+    { label: 'Start Count', href: sf('/physical-counts'), icon: ClipboardDocumentListIcon, color: 'violet', show: props.company },
 ];
 
 // Alert items for dashboard
