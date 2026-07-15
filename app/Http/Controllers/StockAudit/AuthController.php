@@ -18,10 +18,6 @@ class AuthController extends Controller
             ? app(CompanyRepositoryInterface::class)->findById(CompanyId::fromInt($companyId))
             : null;
 
-        \Log::info('StockFlow Login - Route Name: ' . $request->route()?->getName());
-        \Log::info('StockFlow Login - Company ID: ' . $companyId);
-        \Log::info('StockFlow Login - Host: ' . $request->getHost());
-
         return Inertia::render('StockAudit/Login', [
             'company' => $company ? $company->toArray() : null,
         ]);
@@ -36,8 +32,7 @@ class AuthController extends Controller
 
         if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            $account = $this->getAccountFromRequest($request);
-            return redirect()->intended(route('stockflow.sub.dashboard', ['account' => $account], false));
+            return redirect('/');
         }
 
         return back()->withErrors([
