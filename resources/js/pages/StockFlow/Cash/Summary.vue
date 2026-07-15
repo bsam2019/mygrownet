@@ -3,6 +3,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
+
+const { route } = useStockflowRoute();
 
 interface CashRegister {
     id: number;

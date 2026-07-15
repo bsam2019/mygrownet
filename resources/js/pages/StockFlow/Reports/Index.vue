@@ -8,10 +8,9 @@ import {
     CurrencyDollarIcon,
     ArchiveBoxIcon,
 } from '@heroicons/vue/24/outline';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 
-const isSubdomain = (usePage().props.routeName ?? '').startsWith('stockflow.sub.');
-const sf = (path: string) => isSubdomain ? path : '/stock-audit' + path;
-import { usePage } from '@inertiajs/vue3';
+const { route } = useStockflowRoute();
 
 interface ReportCard {
     title: string;

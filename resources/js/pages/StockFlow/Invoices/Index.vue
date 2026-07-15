@@ -6,6 +6,9 @@ import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
 import Pagination from '@/components/StockFlow/Pagination.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
+
+const { route } = useStockflowRoute();
 
 interface InvoiceItem {
     id: number;

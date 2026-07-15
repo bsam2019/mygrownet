@@ -6,6 +6,9 @@ import { useCurrency } from '@/composables/useCurrency';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
+
+const { route } = useStockflowRoute();
 
 interface CashRegister {
     id: number;

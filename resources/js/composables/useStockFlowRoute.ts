@@ -1,47 +1,58 @@
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
 /**
- * StockFlow Route Helper
- * 
- * Provides context-aware routing for StockFlow module.
- * Automatically uses subdomain routes when on company subdomain,
- * or main site routes when accessed from main app.
+ * Composable for generating StockFlow subdomain routes with the account parameter.
  * 
  * Usage:
- *   const { sfRoute } = useStockFlowRoute();
- *   router.get(sfRoute('items.index'));
- *   <Link :href="sfRoute('sales.create')">
+ *   const { route } = useStockflowRoute();
+ *   route('stockflow.sub.items.create')  // Automatically includes account
  */
+export function useStockflowRoute() {
+    const page = usePage();
 
-export function useStockFlowRoute() {
+    const account = computed(() => {
+        // Get from shared props (set by HandleInertiaRequests middleware)
+        const stockflowAccount = (page.props as any).stockflowAccount;
+        if (stockflowAccount) {
+            return stockflowAccount;
+        }
+
+        // Fallback: extract from hostname
+        const hostParts = window.location.hostname.split('.');
+        if (hostParts.length > 2) {
+            return hostParts[0];
+        }
+
+        return '';
+    });
+
     /**
-     * Generate StockFlow route based on context
+     * Generate a route URL with account parameter automatically included.
      * 
-     * @param routeName - Route name without prefix (e.g., 'items.index', 'sales.create')
-     * @param params - Optional route parameters
-     * @returns Full route URL
-     * 
-     * Examples:
-     *   sfRoute('items.index') 
-     *     → On subdomain: /items (stockflow.sub.items.index)
-     *     → On main site: /stock-audit/items (stock-audit.items.index)
-     * 
-     *   sfRoute('sales.show', { id: 123 })
-     *     → On subdomain: /sales/123
-     *     → On main site: /stock-audit/sales/123
+     * @param name - Route name (e.g., 'stockflow.sub.items.create')
+     * @param params - Additional route parameters
      */
-    const sfRoute = (routeName: string, params?: any) => {
-        // Check if we're on a StockFlow company subdomain
-        const isSubdomain = !!(window as any).__sfSubdomain;
+    const route = (name: string, params: Record<string, any> = {}): string => {
+        // Import route helper from Ziggy
+        const routeHelper = (window as any).route;
         
-        // Use subdomain routes (stockflow.sub.*) or main site routes (stock-audit.*)
-        const fullRouteName = isSubdomain 
-            ? `stockflow.sub.${routeName}` 
-            : `stock-audit.${routeName}`;
-        
-        // Call the global route() helper with the correct prefix
-        return (window as any).route(fullRouteName, params);
+        if (!routeHelper) {
+            console.error('Ziggy route helper not found');
+            return '#';
+        }
+
+        // Auto-inject account parameter for stockflow.sub.* routes
+        if (name.startsWith('stockflow.sub.')) {
+            return routeHelper(name, { ...params, account: account.value });
+        }
+
+        // For non-subdomain routes, just use the route helper as-is
+        return routeHelper(name, params);
     };
 
     return {
-        sfRoute
+        route,
+        account,
     };
 }

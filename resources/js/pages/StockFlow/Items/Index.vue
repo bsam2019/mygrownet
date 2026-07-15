@@ -12,6 +12,9 @@ import {
 } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
+
+const { route } = useStockflowRoute();
 
 interface Item {
     id: number;
