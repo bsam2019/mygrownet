@@ -15,8 +15,9 @@ const props = defineProps<{
 
 const brandColor = computed(() => props.company?.brand_color ?? '#059669');
 const companyName = computed(() => props.company?.name ?? 'StockFlow');
-const tagline = computed(() => props.company?.tagline ?? null);
+const tagline = computed(() => props.company?.tagline ?? 'Complete Stock Management & Audit Solution');
 const logoUrl = computed(() => props.company?.logo_path ?? null);
+const isMarketingPage = computed(() => !props.company); // True for stockflow.mygrownet.com
 </script>
 
 <template>
@@ -48,6 +49,18 @@ const logoUrl = computed(() => props.company?.logo_path ?? null);
                 </div>
 
                 <Link
+                    v-if="isMarketingPage"
+                    href="/admin/login"
+                    class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-inset transition-all hover:shadow-md"
+                    :style="{
+                        backgroundColor: brandColor,
+                        color: '#fff',
+                    }"
+                >
+                    Admin Login
+                </Link>
+                <Link
+                    v-else
                     :href="route('stockflow.sub.login', { account: company?.subdomain })"
                     class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-inset transition-all hover:shadow-md"
                     :style="{
@@ -79,12 +92,27 @@ const logoUrl = computed(() => props.company?.logo_path ?? null);
                 <p v-if="tagline" class="mt-5 text-lg text-gray-500 leading-relaxed max-w-md mx-auto">
                     {{ tagline }}
                 </p>
+                <p v-else-if="isMarketingPage" class="mt-5 text-lg text-gray-500 leading-relaxed max-w-md mx-auto">
+                    Complete inventory management, stock audit, and business analytics solution for modern businesses.
+                </p>
                 <p v-else class="mt-5 text-lg text-gray-500 leading-relaxed max-w-md mx-auto">
                     Welcome to your inventory management portal.
                 </p>
 
                 <div class="mt-12">
                     <Link
+                        v-if="isMarketingPage"
+                        href="/admin/login"
+                        class="inline-flex items-center gap-2.5 rounded-xl px-8 py-3.5 text-base font-semibold shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+                        :style="{ backgroundColor: brandColor, color: '#fff' }"
+                    >
+                        Get Started
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </Link>
+                    <Link
+                        v-else
                         :href="route('stockflow.sub.login', { account: company?.subdomain })"
                         class="inline-flex items-center gap-2.5 rounded-xl px-8 py-3.5 text-base font-semibold shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                         :style="{ backgroundColor: brandColor, color: '#fff' }"
