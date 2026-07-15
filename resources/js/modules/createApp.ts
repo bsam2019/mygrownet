@@ -162,7 +162,11 @@ export function bootInertia(
                         }
                     }
                 };
+                
+                // Apply to props first
                 applyAliases((props as any).ziggy?.routes);
+                
+                // Apply to window.Ziggy (from @routes directive)
                 applyAliases((window as any).Ziggy?.routes);
             }
 
@@ -170,6 +174,17 @@ export function bootInertia(
                 .use(plugin)
                 .use(ZiggyVue)
                 .use(createPinia());
+
+            // Re-apply aliases AFTER ZiggyVue is initialized to ensure they stick
+            if ((window as any).__sfSubdomain && (window as any).Ziggy?.routes) {
+                const routes = (window as any).Ziggy.routes;
+                for (const key of Object.keys(routes)) {
+                    if (key.startsWith('stockflow.sub.')) {
+                        const alias = key.replace('stockflow.sub.', 'stock-audit.');
+                        routes[alias] = routes[key];
+                    }
+                }
+            }
 
             app.mount(el);
         },
