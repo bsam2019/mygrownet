@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useCurrency } from '@/composables/useCurrency';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
 import Pagination from '@/components/StockFlow/Pagination.vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
@@ -38,6 +39,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const { formatCurrency } = useCurrency();
+const { route } = useStockflowRoute();
 const selectedStatus = ref(props.currentStatus || '');
 
 const statusColors: Record<string, string> = {
