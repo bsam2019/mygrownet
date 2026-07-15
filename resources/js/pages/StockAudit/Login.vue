@@ -22,6 +22,11 @@ const account = computed(() => props.company?.subdomain ?? '');
 
 const showPassword = ref(false);
 
+const csrfToken = computed(() => {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta?.getAttribute('content') ?? '';
+});
+
 const form = useForm({
     email: '',
     password: '',
@@ -56,6 +61,7 @@ const hasError = computed(() => Object.keys(form.errors).length > 0);
                         Invalid email or password. Please try again.
                     </div>
                     <form @submit.prevent="submit" class="space-y-5">
+                        <input type="hidden" name="_token" :value="csrfToken" />
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input v-model="form.email" id="email" type="email" autocomplete="email" class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" placeholder="you@example.com" />

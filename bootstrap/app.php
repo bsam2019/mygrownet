@@ -153,14 +153,25 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Handle 419 CSRF/session expiry — redirect to login with a message
         $exceptions->render(function (TokenMismatchException $e, $request) {
+            // Detect StockFlow subdomain
+            $host = $request->getHost();
+            $isStockFlowSubdomain = preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)
+                && !in_array(strtolower(explode('.', $host)[0]), [
+                    'bizboost', 'bizdocs', 'growbuilder', 'venture', 'grownet',
+                    'growstorage', 'growmart', 'zamstay', 'cms', 'primeedge',
+                    'stockflow', 'geopamu', 'wowthem', 'www',
+                ]);
+
+            $loginUrl = $isStockFlowSubdomain ? 'https://' . $host . '/login' : '/login';
+
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['message' => 'Session expired.'], 419);
             }
 
             if ($request->header('X-Inertia')) {
-                return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
+                return redirect()->guest($loginUrl)->with('warning', 'Your session has expired. Please log in again.');
             }
 
-            return redirect()->guest('/login')->with('warning', 'Your session has expired. Please log in again.');
+            return redirect()->guest($loginUrl)->with('warning', 'Your session has expired. Please log in again.');
         });
     })->create();

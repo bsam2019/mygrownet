@@ -8,16 +8,32 @@
         if (file_exists(public_path('build/manifest.json'))) {
             $version = md5_file(public_path('build/manifest.json'));
         }
+
+        // Detect StockFlow subdomain
+        $host = request()->getHost();
+        $isStockFlowSubdomain = preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)
+            && !in_array(strtolower(explode('.', $host)[0]), [
+                'bizboost', 'bizdocs', 'growbuilder', 'venture', 'grownet',
+                'growstorage', 'growmart', 'zamstay', 'cms', 'primeedge',
+                'stockflow', 'geopamu', 'wowthem', 'www',
+            ]);
+
+        if ($isStockFlowSubdomain) {
+            $loginUrl = 'https://' . $host . '/login';
+        } else {
+            $loginUrl = url('/login');
+        }
+
         header('X-Inertia: true');
-        header('X-Inertia-Location: ' . url('/login'));
+        header('X-Inertia-Location: ' . $loginUrl);
         http_response_code(200);
         echo json_encode([
-            'component' => 'auth/Login',
+            'component' => $isStockFlowSubdomain ? 'StockAudit/Login' : 'auth/Login',
             'props' => [
                 'errors' => ['session' => 'Your session has expired. Please log in again.'],
                 'flash' => ['warning' => 'Session expired. Please log in again.'],
             ],
-            'url' => '/login',
+            'url' => $isStockFlowSubdomain ? '/login' : '/login',
             'version' => $version,
         ]);
         exit;
