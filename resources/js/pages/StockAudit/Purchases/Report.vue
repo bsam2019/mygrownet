@@ -32,12 +32,12 @@ const dateTo = ref(props.to);
 const { formatCurrency } = useCurrency();
 
 const searchReport = () => {
-    router.get(route('stock-audit.purchases.report'), { from: dateFrom.value, to: dateTo.value });
+    router.get(route('stockflow.sub.purchases.report'), { from: dateFrom.value, to: dateTo.value });
 };
 
 const downloadPdf = () => {
     const params = new URLSearchParams({ from: dateFrom.value, to: dateTo.value });
-    window.open(route('stock-audit.purchases.report') + '/pdf?' + params.toString(), '_blank');
+    window.open(route('stockflow.sub.purchases.report') + '/pdf?' + params.toString(), '_blank');
 };
 
 const statusColors: Record<string, string> = {
@@ -55,7 +55,7 @@ const statusColors: Record<string, string> = {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.purchases.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Purchases</Link>
+                        <Link :href="route('stockflow.sub.purchases.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Purchases</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">Purchase Orders Report</h1>
                     </div>
                     <button @click="downloadPdf" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
@@ -111,7 +111,7 @@ const statusColors: Record<string, string> = {
                         <tbody class="divide-y divide-gray-200">
                             <tr v-for="po in purchases" :key="po.id" class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <Link :href="route('stock-audit.purchases.show', po.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ po.order_number }}</Link>
+                                    <Link :href="route('stockflow.sub.purchases.show', po.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ po.order_number }}</Link>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ po.order_date }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ po.supplier_name || 'N/A' }}</td>

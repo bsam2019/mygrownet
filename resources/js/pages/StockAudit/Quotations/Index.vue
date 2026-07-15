@@ -50,7 +50,7 @@ const statusColors: Record<string, string> = {
 };
 
 const filterByStatus = () => {
-    router.get(route('stock-audit.quotations.index'), { status: selectedStatus.value || undefined }, { preserveState: true });
+    router.get(route('stockflow.sub.quotations.index'), { status: selectedStatus.value || undefined }, { preserveState: true });
 };
 </script>
 
@@ -74,7 +74,7 @@ const filterByStatus = () => {
                             <option value="expired">Expired</option>
                             <option value="converted">Converted</option>
                         </select>
-                        <Link :href="route('stock-audit.quotations.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                        <Link :href="route('stockflow.sub.quotations.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             New Quotation
                         </Link>
@@ -98,7 +98,7 @@ const filterByStatus = () => {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="q in quotations.data" :key="q.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.quotations.show', q.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.quotations.show', q.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ q.quotation_number }}
                                         </Link>
                                     </td>
@@ -111,7 +111,7 @@ const filterByStatus = () => {
                                     </td>
                                     <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(q.total) }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.quotations.show', q.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.quotations.show', q.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!quotations.data?.length">

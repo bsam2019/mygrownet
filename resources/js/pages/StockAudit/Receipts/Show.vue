@@ -54,7 +54,7 @@ const methodLabels: Record<string, string> = {
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.receipts.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Receipts</Link>
+                    <Link :href="route('stockflow.sub.receipts.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Receipts</Link>
                     <h1 class="mt-1 text-xl font-bold text-gray-900">{{ receipt.receipt_number }}</h1>
                 </div>
 

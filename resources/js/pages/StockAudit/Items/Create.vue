@@ -34,7 +34,7 @@ const processing = ref(false);
 
 const submit = () => {
     processing.value = true;
-    router.post(route('stock-audit.items.store'), form.value, {
+    router.post(route('stockflow.sub.items.store'), form.value, {
         onSuccess: () => { processing.value = false; },
         onError: (err) => { errors.value = err; processing.value = false; },
     });
@@ -47,7 +47,7 @@ const submit = () => {
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
+                    <Link :href="route('stockflow.sub.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
                     <h1 class="mt-2 text-2xl font-bold text-gray-900">Create New Item</h1>
                 </div>
 
@@ -124,7 +124,7 @@ const submit = () => {
                         <button type="submit" :disabled="processing" class="rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
                             {{ processing ? 'Creating...' : 'Create Item' }}
                         </button>
-                        <Link :href="route('stock-audit.items.index')" class="text-sm text-gray-600 hover:text-gray-800">Cancel</Link>
+                        <Link :href="route('stockflow.sub.items.index')" class="text-sm text-gray-600 hover:text-gray-800">Cancel</Link>
                     </div>
                 </form>
             </div>

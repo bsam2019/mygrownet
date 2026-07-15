@@ -72,7 +72,7 @@ const submitReceive = () => {
         unit_cost: data.unit_cost,
     }));
 
-    router.post(route('stock-audit.purchases.receive', props.order.id), { items }, {
+    router.post(route('stockflow.sub.purchases.receive', props.order.id), { items }, {
         onSuccess: () => { showReceive.value = false; },
         onError: (err) => { errors.value = err; },
     });
@@ -85,7 +85,7 @@ const submitReceive = () => {
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.purchases.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Purchases</Link>
+                    <Link :href="route('stockflow.sub.purchases.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Purchases</Link>
                 </div>
 
                 <div class="rounded-xl bg-white p-6 shadow-sm">

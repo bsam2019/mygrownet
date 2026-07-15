@@ -80,7 +80,7 @@ const statusColors: Record<string, string> = {
                                         {{ formatCurrency(audit.unaccounted_value) }}
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.audits.show', audit.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.audits.show', audit.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!audits.data?.length">

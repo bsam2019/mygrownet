@@ -64,12 +64,12 @@ const startEdit = (supplier: Supplier) => {
 
 const submit = () => {
     if (editingId.value) {
-        router.put(route('stock-audit.suppliers.update', editingId.value), form.value, {
+        router.put(route('stockflow.sub.suppliers.update', editingId.value), form.value, {
             onSuccess: () => { success('Supplier updated'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to update supplier'); },
         });
     } else {
-        router.post(route('stock-audit.suppliers.store'), form.value, {
+        router.post(route('stockflow.sub.suppliers.store'), form.value, {
             onSuccess: () => { success('Supplier created'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to create supplier'); },
         });
@@ -79,7 +79,7 @@ const submit = () => {
 const deleteSupplier = async (id: number, name: string) => {
     const ok = await confirm.show(`Delete supplier "${name}"? This cannot be undone.`, 'Delete Supplier');
     if (ok) {
-        router.delete(route('stock-audit.suppliers.destroy', id), {
+        router.delete(route('stockflow.sub.suppliers.destroy', id), {
             onSuccess: () => success('Supplier deleted'),
             onError: () => notifyError('Failed to delete supplier'),
         });

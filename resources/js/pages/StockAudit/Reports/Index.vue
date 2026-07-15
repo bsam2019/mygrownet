@@ -22,11 +22,11 @@ interface ReportCard {
 }
 
 const reports: ReportCard[] = [
-    { title: 'Sales Report', description: 'View and export sales within a date range, with payment method breakdown', icon: CreditCardIcon, href: route('stock-audit.sales.report'), color: 'emerald' },
-    { title: 'Purchase Orders Report', description: 'Purchase order history with supplier and status breakdown', icon: ShoppingCartIcon, href: route('stock-audit.purchases.report'), color: 'blue' },
-    { title: 'Cash Summary', description: 'Cash register activity including sales, expenses, banking, and variance', icon: CurrencyDollarIcon, href: route('stock-audit.cash.summary'), color: 'amber' },
-    { title: 'Inventory Report', description: 'Current stock levels, total value, low stock and out-of-stock items', icon: ArchiveBoxIcon, href: route('stock-audit.inventory.report'), color: 'indigo' },
-    { title: 'Audit Reports', description: 'View completed audit reports and export to PDF or CSV', icon: DocumentTextIcon, href: route('stock-audit.audits.index'), color: 'purple' },
+    { title: 'Sales Report', description: 'View and export sales within a date range, with payment method breakdown', icon: CreditCardIcon, href: route('stockflow.sub.sales.report'), color: 'emerald' },
+    { title: 'Purchase Orders Report', description: 'Purchase order history with supplier and status breakdown', icon: ShoppingCartIcon, href: route('stockflow.sub.purchases.report'), color: 'blue' },
+    { title: 'Cash Summary', description: 'Cash register activity including sales, expenses, banking, and variance', icon: CurrencyDollarIcon, href: route('stockflow.sub.cash.summary'), color: 'amber' },
+    { title: 'Inventory Report', description: 'Current stock levels, total value, low stock and out-of-stock items', icon: ArchiveBoxIcon, href: route('stockflow.sub.inventory.report'), color: 'indigo' },
+    { title: 'Audit Reports', description: 'View completed audit reports and export to PDF or CSV', icon: DocumentTextIcon, href: route('stockflow.sub.audits.index'), color: 'purple' },
 ];
 </script>
 

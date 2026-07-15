@@ -63,7 +63,7 @@ const saveItems = () => {
 
     if (items.length === 0) return;
 
-    router.put(route('stock-audit.physical-counts.update-items', props.count.id), { items }, {
+    router.put(route('stockflow.sub.physical-counts.update-items', props.count.id), { items }, {
         onSuccess: () => success('Items updated'),
         onError: (err) => { errors.value = err; notifyError('Failed to update items'); },
     });
@@ -72,7 +72,7 @@ const saveItems = () => {
 const completeCount = async () => {
     const ok = await confirm.show('Complete this physical count? This will update system quantities.', 'Complete Count');
     if (ok) {
-        router.post(route('stock-audit.physical-counts.complete', props.count.id), {}, {
+        router.post(route('stockflow.sub.physical-counts.complete', props.count.id), {}, {
             onSuccess: () => success('Count completed'),
             onError: (err) => { errors.value = err; notifyError('Failed to complete count'); },
         });
@@ -82,7 +82,7 @@ const completeCount = async () => {
 const generateAudit = async () => {
     const ok = await confirm.show('Generate audit from this count?', 'Generate Audit');
     if (ok) {
-        router.post(route('stock-audit.physical-counts.generate-audit', props.count.id), {}, {
+        router.post(route('stockflow.sub.physical-counts.generate-audit', props.count.id), {}, {
             onSuccess: () => success('Audit generated'),
             onError: () => notifyError('Failed to generate audit'),
         });
@@ -97,7 +97,7 @@ const generateAudit = async () => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.physical-counts.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Counts</Link>
+                        <Link :href="route('stockflow.sub.physical-counts.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Counts</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">{{ count.title }}</h1>
                         <p class="text-sm text-gray-500">{{ count.count_date }}</p>
                     </div>

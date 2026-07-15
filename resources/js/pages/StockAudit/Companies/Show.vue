@@ -30,7 +30,7 @@ defineProps<Props>();
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.companies.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Companies</Link>
+                    <Link :href="route('stockflow.sub.companies.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Companies</Link>
                 </div>
 
                 <div class="rounded-xl bg-white p-6 shadow-sm">

@@ -115,7 +115,7 @@ const logout = () => {
         const account = hostParts.length > 2 ? hostParts[0] : '';
         router.post(route('stockflow.sub.logout', { account }));
     } else {
-        router.post(route('stock-audit.logout'));
+        router.post(route('stockflow.sub.logout'));
     }
 };
 

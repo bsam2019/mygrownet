@@ -41,12 +41,12 @@ const dateTo = ref(props.to);
 const { formatCurrency } = useCurrency();
 
 const searchReport = () => {
-    router.get(route('stock-audit.sales.report'), { from: dateFrom.value, to: dateTo.value });
+    router.get(route('stockflow.sub.sales.report'), { from: dateFrom.value, to: dateTo.value });
 };
 
 const downloadPdf = () => {
     const params = new URLSearchParams({ from: dateFrom.value, to: dateTo.value });
-    window.open(route('stock-audit.sales.report') + '/pdf?' + params.toString(), '_blank');
+    window.open(route('stockflow.sub.sales.report') + '/pdf?' + params.toString(), '_blank');
 };
 </script>
 
@@ -57,7 +57,7 @@ const downloadPdf = () => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.sales.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Sales</Link>
+                        <Link :href="route('stockflow.sub.sales.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Sales</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">Sales Report</h1>
                     </div>
                     <button @click="downloadPdf" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
@@ -115,7 +115,7 @@ const downloadPdf = () => {
                         <tbody class="divide-y divide-gray-200">
                             <tr v-for="sale in sales" :key="sale.id" class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <Link :href="route('stock-audit.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ sale.receipt_number }}</Link>
+                                    <Link :href="route('stockflow.sub.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ sale.receipt_number }}</Link>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ sale.sale_date }}</td>
                                 <td class="px-6 py-4 text-sm capitalize text-gray-700">{{ sale.payment_method.replace('_', ' ') }}</td>

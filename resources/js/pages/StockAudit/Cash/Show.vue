@@ -57,14 +57,14 @@ const statusColors: Record<string, string> = {
 };
 
 const addMovement = () => {
-    router.post(route('stock-audit.cash.movement', props.register.id), movementForm.value, {
+    router.post(route('stockflow.sub.cash.movement', props.register.id), movementForm.value, {
         onSuccess: () => { success('Movement recorded'); showMovementForm.value = false; movementForm.value = { type: 'expense', amount: 0, description: '' }; },
         onError: (err) => { errors.value = err; notifyError('Failed to record movement'); },
     });
 };
 
 const closeRegister = () => {
-    router.post(route('stock-audit.cash.close', props.register.id), closeForm.value, {
+    router.post(route('stockflow.sub.cash.close', props.register.id), closeForm.value, {
         onSuccess: () => { success('Register closed'); showCloseForm.value = false; },
         onError: (err) => { errors.value = err; notifyError('Failed to close register'); },
     });
@@ -73,7 +73,7 @@ const closeRegister = () => {
 const verifyRegister = async () => {
     const ok = await confirm.show('Mark this register as verified?', 'Verify Register');
     if (ok) {
-        router.post(route('stock-audit.cash.verify', props.register.id), {}, {
+        router.post(route('stockflow.sub.cash.verify', props.register.id), {}, {
             onSuccess: () => success('Register verified'),
             onError: () => notifyError('Failed to verify register'),
         });
@@ -89,7 +89,7 @@ const isOpen = props.register.status === 'open';
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.cash.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Register</Link>
+                    <Link :href="route('stockflow.sub.cash.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Register</Link>
                 </div>
 
                 <div class="rounded-xl bg-white p-6 shadow-sm">

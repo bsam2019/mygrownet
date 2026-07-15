@@ -59,10 +59,10 @@ const methodColors: Record<string, string> = {
                         <p class="mt-1 text-sm text-gray-500">Today's total: <span class="font-semibold text-emerald-600">{{ formatCurrency(todayTotal) }}</span></p>
                     </div>
                     <div class="flex gap-3">
-                        <Link :href="route('stock-audit.sales.report')" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <Link :href="route('stockflow.sub.sales.report')" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             Reports
                         </Link>
-                        <Link :href="route('stock-audit.sales.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                        <Link :href="route('stockflow.sub.sales.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             New Sale
                         </Link>
@@ -86,7 +86,7 @@ const methodColors: Record<string, string> = {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="sale in sales.data" :key="sale.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.sales.show', sale.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ sale.receipt_number }}
                                         </Link>
                                     </td>
@@ -99,7 +99,7 @@ const methodColors: Record<string, string> = {
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">{{ sale.items?.length || 0 }}</td>
                                     <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(sale.total) }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.sales.show', sale.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.sales.show', sale.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!sales.data?.length">

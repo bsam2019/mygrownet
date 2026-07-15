@@ -55,7 +55,7 @@ const statusColors: Record<string, string> = {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Purchase Orders</h1>
-                    <Link :href="route('stock-audit.purchases.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    <Link :href="route('stockflow.sub.purchases.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                         <PlusIcon class="h-5 w-5" aria-hidden="true" />
                         New Purchase Order
                     </Link>
@@ -78,7 +78,7 @@ const statusColors: Record<string, string> = {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="order in orders.data" :key="order.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.purchases.show', order.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.purchases.show', order.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ order.order_number }}
                                         </Link>
                                     </td>
@@ -91,7 +91,7 @@ const statusColors: Record<string, string> = {
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">{{ order.items?.length || 0 }}</td>
                                     <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(order.total) }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.purchases.show', order.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.purchases.show', order.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!orders.data?.length">

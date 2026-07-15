@@ -40,7 +40,7 @@ const errors = ref<Record<string, string>>({});
 const { formatCurrency } = useCurrency();
 
 const submitAdjust = () => {
-    router.post(route('stock-audit.items.adjust', props.item.id), adjustForm.value, {
+    router.post(route('stockflow.sub.items.adjust', props.item.id), adjustForm.value, {
         onSuccess: () => {
             showAdjust.value = false;
         },
@@ -57,7 +57,7 @@ const submitAdjust = () => {
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6">
-                    <Link :href="route('stock-audit.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
+                    <Link :href="route('stockflow.sub.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
                 </div>
 
                 <div class="grid gap-6 lg:grid-cols-3">

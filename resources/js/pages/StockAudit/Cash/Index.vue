@@ -46,7 +46,7 @@ const statusColors: Record<string, string> = {
 };
 
 const openRegister = () => {
-    router.post(route('stock-audit.cash.open'), openForm.value, {
+    router.post(route('stockflow.sub.cash.open'), openForm.value, {
         onSuccess: () => { showOpenForm.value = false; },
         onError: (err) => { errors.value = err; },
     });
@@ -61,7 +61,7 @@ const openRegister = () => {
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Cash Register</h1>
                     <div class="flex gap-3">
-                        <Link :href="route('stock-audit.cash.summary')" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <Link :href="route('stockflow.sub.cash.summary')" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             Summary Report
                         </Link>
                         <button @click="showOpenForm = !showOpenForm" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
@@ -122,7 +122,7 @@ const openRegister = () => {
                                     <td class="px-6 py-4 text-right text-sm text-blue-600">{{ formatCurrency(register.total_banking) }}</td>
                                     <td class="px-6 py-4 text-right text-sm font-medium text-gray-900">{{ formatCurrency(register.expected_closing) }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.cash.show', register.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.cash.show', register.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!registers.data?.length">

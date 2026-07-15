@@ -104,7 +104,7 @@ const openEditModal = (role: Role) => {
 };
 
 const submitCreate = () => {
-    createForm.post(route('stock-audit.roles.store'), {
+    createForm.post(route('stockflow.sub.roles.store'), {
         onSuccess: () => {
             success('Role created');
             showCreateModal.value = false;
@@ -115,7 +115,7 @@ const submitCreate = () => {
 
 const submitEdit = () => {
     if (!editingRole.value) return;
-    editForm.put(route('stock-audit.roles.update', editingRole.value.id), {
+    editForm.put(route('stockflow.sub.roles.update', editingRole.value.id), {
         onSuccess: () => {
             success('Role updated');
             showEditModal.value = false;
@@ -128,7 +128,7 @@ const submitEdit = () => {
 const handleDelete = async (role: Role) => {
     const ok = await confirm.show(`Delete "${role.name}"? This action cannot be undone.`, 'Delete Role');
     if (ok) {
-        useForm({}).delete(route('stock-audit.roles.destroy', role.id), {
+        useForm({}).delete(route('stockflow.sub.roles.destroy', role.id), {
             onSuccess: () => success('Role deleted'),
             onError: () => notifyError('Failed to delete role'),
         });

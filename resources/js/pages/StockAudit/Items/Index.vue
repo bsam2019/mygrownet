@@ -44,7 +44,7 @@ const { formatCurrency } = useCurrency();
 const deleteItem = async (item: Item) => {
     const ok = await confirm.show(`Delete "${item.name}"? This cannot be undone.`, 'Delete Item');
     if (ok) {
-        router.delete(route('stock-audit.items.destroy', item.id), {
+        router.delete(route('stockflow.sub.items.destroy', item.id), {
             onSuccess: () => success('Item deleted'),
             onError: () => notifyError('Failed to delete item'),
         });
@@ -60,7 +60,7 @@ const deleteItem = async (item: Item) => {
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Inventory Items</h1>
                     <div class="flex gap-3">
-                        <Link :href="route('stock-audit.items.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                        <Link :href="route('stockflow.sub.items.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             Add Item
                         </Link>
@@ -70,7 +70,7 @@ const deleteItem = async (item: Item) => {
                 <div class="mb-6 rounded-xl bg-white p-4 shadow-sm">
                     <div class="relative">
                         <MagnifyingGlassIcon class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" aria-hidden="true" />
-                        <input v-model="search" @keydown.enter="router.get(route('stock-audit.items.index'), { search: search.value }, { preserveState: true, preserveScroll: true })" type="text" placeholder="Search by name, SKU, or category..." class="w-full rounded-lg border-gray-300 pl-10 focus:border-emerald-500 focus:ring-emerald-500" />
+                        <input v-model="search" @keydown.enter="router.get(route('stockflow.sub.items.index'), { search: search.value }, { preserveState: true, preserveScroll: true })" type="text" placeholder="Search by name, SKU, or category..." class="w-full rounded-lg border-gray-300 pl-10 focus:border-emerald-500 focus:ring-emerald-500" />
                     </div>
                 </div>
 
@@ -90,7 +90,7 @@ const deleteItem = async (item: Item) => {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ item.name }}
                                         </Link>
                                         <div v-if="item.sku" class="text-xs text-gray-500">SKU: {{ item.sku }}</div>

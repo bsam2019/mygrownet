@@ -45,7 +45,7 @@ const statusColors: Record<string, string> = {
 };
 
 const createCount = () => {
-    router.post(route('stock-audit.physical-counts.store'), createForm.value, {
+    router.post(route('stockflow.sub.physical-counts.store'), createForm.value, {
         onSuccess: () => { showCreateForm.value = false; },
         onError: (err) => { errors.value = err; },
     });
@@ -113,7 +113,7 @@ const createCount = () => {
                                     </td>
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">{{ count.items?.length || 0 }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.physical-counts.show', count.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.physical-counts.show', count.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!counts.data?.length">

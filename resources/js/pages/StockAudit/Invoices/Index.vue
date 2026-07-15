@@ -53,7 +53,7 @@ const statusColors: Record<string, string> = {
 };
 
 const filterByStatus = () => {
-    router.get(route('stock-audit.invoices.index'), { status: selectedStatus.value || undefined }, { preserveState: true });
+    router.get(route('stockflow.sub.invoices.index'), { status: selectedStatus.value || undefined }, { preserveState: true });
 };
 </script>
 
@@ -77,7 +77,7 @@ const filterByStatus = () => {
                             <option value="partially_paid">Partially Paid</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
-                        <Link :href="route('stock-audit.invoices.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                        <Link :href="route('stockflow.sub.invoices.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             New Invoice
                         </Link>
@@ -103,7 +103,7 @@ const filterByStatus = () => {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="inv in invoices.data" :key="inv.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.invoices.show', inv.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.invoices.show', inv.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ inv.invoice_number }}
                                         </Link>
                                     </td>
@@ -120,7 +120,7 @@ const filterByStatus = () => {
                                         {{ formatCurrency(inv.balance_due) }}
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.invoices.show', inv.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.invoices.show', inv.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!invoices.data?.length">

@@ -29,7 +29,7 @@ const props = defineProps<Props>();
 const { formatCurrency } = useCurrency();
 
 const downloadPdf = () => {
-    window.open(route('stock-audit.inventory.report') + '/pdf', '_blank');
+    window.open(route('stockflow.sub.inventory.report') + '/pdf', '_blank');
 };
 </script>
 
@@ -40,7 +40,7 @@ const downloadPdf = () => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
+                        <Link :href="route('stockflow.sub.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">Inventory Report</h1>
                         <p class="text-sm text-gray-500">As of {{ reportDate }}</p>
                     </div>

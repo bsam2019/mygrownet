@@ -171,7 +171,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const switchCompany = (companyId: number) => {
-    router.post(route('stock-audit.switch-company'), { company_id: companyId });
+    router.post(route('stockflow.sub.switch-company'), { company_id: companyId });
 };
 
 const openCompanyDropdown = ref(false);

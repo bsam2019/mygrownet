@@ -66,12 +66,12 @@ const startEdit = (bin: Bin) => {
 
 const submit = () => {
     if (editingId.value) {
-        router.put(route('stock-audit.bins.update', editingId.value), form.value, {
+        router.put(route('stockflow.sub.bins.update', editingId.value), form.value, {
             onSuccess: () => { success('Bin updated'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to update bin'); },
         });
     } else {
-        router.post(route('stock-audit.bins.store'), form.value, {
+        router.post(route('stockflow.sub.bins.store'), form.value, {
             onSuccess: () => { success('Bin created'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to create bin'); },
         });
@@ -81,7 +81,7 @@ const submit = () => {
 const deleteBin = async (id: number, name: string) => {
     const ok = await confirm.show(`Delete bin "${name}"?`, 'Delete Bin');
     if (ok) {
-        router.delete(route('stock-audit.bins.destroy', id), {
+        router.delete(route('stockflow.sub.bins.destroy', id), {
             onSuccess: () => success('Bin deleted'),
             onError: () => notifyError('Failed to delete bin'),
         });

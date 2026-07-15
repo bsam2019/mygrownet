@@ -66,14 +66,14 @@ const isDraft = props.audit.status === 'draft';
 const isFinalized = props.audit.status === 'finalized';
 
 const finalizeAudit = () => {
-    router.post(route('stock-audit.audits.finalize', props.audit.id), finalizeForm.value, {
+    router.post(route('stockflow.sub.audits.finalize', props.audit.id), finalizeForm.value, {
         onSuccess: () => { showFinalize.value = false; },
         onError: (err) => { errors.value = err; },
     });
 };
 
 const exportCsv = () => {
-    window.open(route('stock-audit.audits.export-csv', props.audit.id), '_blank');
+    window.open(route('stockflow.sub.audits.export-csv', props.audit.id), '_blank');
 };
 </script>
 
@@ -84,7 +84,7 @@ const exportCsv = () => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.audits.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Audits</Link>
+                        <Link :href="route('stockflow.sub.audits.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Audits</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">{{ audit.report_reference }}</h1>
                         <p class="text-sm text-gray-500">{{ audit.title }} - {{ audit.audit_date }}</p>
                     </div>

@@ -37,12 +37,12 @@ const dateTo = ref(props.to);
 const { formatCurrency } = useCurrency();
 
 const search = () => {
-    router.get(route('stock-audit.cash.summary'), { from: dateFrom.value, to: dateTo.value });
+    router.get(route('stockflow.sub.cash.summary'), { from: dateFrom.value, to: dateTo.value });
 };
 
 const downloadPdf = () => {
     const params = new URLSearchParams({ from: dateFrom.value, to: dateTo.value });
-    window.open(route('stock-audit.cash.summary') + '/pdf?' + params.toString(), '_blank');
+    window.open(route('stockflow.sub.cash.summary') + '/pdf?' + params.toString(), '_blank');
 };
 
 const statusColors: Record<string, string> = {
@@ -59,7 +59,7 @@ const statusColors: Record<string, string> = {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <Link :href="route('stock-audit.cash.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Register</Link>
+                        <Link :href="route('stockflow.sub.cash.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Register</Link>
                         <h1 class="mt-2 text-2xl font-bold text-gray-900">Cash Summary</h1>
                     </div>
                     <button @click="downloadPdf" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500">
@@ -118,7 +118,7 @@ const statusColors: Record<string, string> = {
                         <tbody class="divide-y divide-gray-200">
                             <tr v-for="reg in registers" :key="reg.id" class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
-                                    <Link :href="route('stock-audit.cash.show', reg.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ reg.register_date }}</Link>
+                                    <Link :href="route('stockflow.sub.cash.show', reg.id)" class="font-medium text-emerald-600 hover:text-emerald-700">{{ reg.register_date }}</Link>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span :class="[statusColors[reg.status] || 'bg-gray-100 text-gray-800', 'inline-flex rounded-full px-2 py-1 text-xs font-medium capitalize']">{{ reg.status }}</span>

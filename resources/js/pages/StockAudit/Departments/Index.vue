@@ -48,12 +48,12 @@ const startEdit = (dept: Department) => {
 
 const submit = () => {
     if (editingId.value) {
-        router.put(route('stock-audit.departments.update', editingId.value), form.value, {
+        router.put(route('stockflow.sub.departments.update', editingId.value), form.value, {
             onSuccess: () => { success('Department updated'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to update department'); },
         });
     } else {
-        router.post(route('stock-audit.departments.store'), form.value, {
+        router.post(route('stockflow.sub.departments.store'), form.value, {
             onSuccess: () => { success('Department created'); resetForm(); },
             onError: (err) => { errors.value = err; notifyError('Failed to create department'); },
         });
@@ -63,7 +63,7 @@ const submit = () => {
 const deleteDept = async (id: number, name: string) => {
     const ok = await confirm.show(`Delete department "${name}"?`, 'Delete Department');
     if (ok) {
-        router.delete(route('stock-audit.departments.destroy', id), {
+        router.delete(route('stockflow.sub.departments.destroy', id), {
             onSuccess: () => success('Department deleted'),
             onError: () => notifyError('Failed to delete department'),
         });

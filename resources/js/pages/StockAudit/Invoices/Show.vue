@@ -58,14 +58,14 @@ const statusColors: Record<string, string> = {
 const isOpen = computed(() => ['draft', 'sent', 'partially_paid'].includes(props.invoice.status));
 
 const recordPayment = () => {
-    router.post(route('stock-audit.invoices.payment', props.invoice.id), { amount: paymentAmount.value }, {
+    router.post(route('stockflow.sub.invoices.payment', props.invoice.id), { amount: paymentAmount.value }, {
         preserveScroll: true,
         onSuccess: () => { showPaymentForm.value = false; paymentAmount.value = 0; },
     });
 };
 
 const updateStatus = (status: string) => {
-    router.post(route('stock-audit.invoices.status', props.invoice.id), { status }, {
+    router.post(route('stockflow.sub.invoices.status', props.invoice.id), { status }, {
         preserveScroll: true,
     });
 };
@@ -78,7 +78,7 @@ const updateStatus = (status: string) => {
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex items-center justify-between">
                     <div>
-                        <Link :href="route('stock-audit.invoices.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Invoices</Link>
+                        <Link :href="route('stockflow.sub.invoices.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Invoices</Link>
                         <h1 class="mt-1 text-xl font-bold text-gray-900">{{ invoice.invoice_number }}</h1>
                     </div>
                     <div class="flex gap-2">

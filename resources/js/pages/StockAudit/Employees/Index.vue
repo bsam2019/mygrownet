@@ -101,7 +101,7 @@ const openInviteModal = () => {
 };
 
 const submitInvite = () => {
-    inviteForm.post(route('stock-audit.employees.invite'), {
+    inviteForm.post(route('stockflow.sub.employees.invite'), {
         onSuccess: () => {
             success('Invitation sent');
             showInviteModal.value = false;
@@ -114,19 +114,19 @@ const handleAction = async (employee: Employee, action: 'suspend' | 'reactivate'
     if (action === 'suspend') {
         const ok = await confirm.show(`Suspend ${employee.user?.name}? They will lose access until reactivated.`, 'Suspend Employee');
         if (!ok) return;
-        useForm({}).post(route('stock-audit.employees.suspend', employee.user_id), {
+        useForm({}).post(route('stockflow.sub.employees.suspend', employee.user_id), {
             onSuccess: () => success('Employee suspended'),
             onError: () => notifyError('Failed to suspend employee'),
         });
     } else if (action === 'reactivate') {
-        useForm({}).post(route('stock-audit.employees.reactivate', employee.user_id), {
+        useForm({}).post(route('stockflow.sub.employees.reactivate', employee.user_id), {
             onSuccess: () => success('Employee reactivated'),
             onError: () => notifyError('Failed to reactivate employee'),
         });
     } else if (action === 'remove') {
         const ok = await confirm.show(`Remove ${employee.user?.name}? This action cannot be undone.`, 'Remove Employee');
         if (!ok) return;
-        useForm({ reason: '' }).post(route('stock-audit.employees.remove', employee.user_id), {
+        useForm({ reason: '' }).post(route('stockflow.sub.employees.remove', employee.user_id), {
             onSuccess: () => success('Employee removed'),
             onError: () => notifyError('Failed to remove employee'),
         });
@@ -134,7 +134,7 @@ const handleAction = async (employee: Employee, action: 'suspend' | 'reactivate'
 };
 
 const resendInvite = (employee: Employee) => {
-    useForm({}).post(route('stock-audit.employees.invite', employee.user_id), {
+    useForm({}).post(route('stockflow.sub.employees.invite', employee.user_id), {
         onSuccess: () => success('Invitation resent'),
         onError: () => notifyError('Failed to resend invitation'),
     });

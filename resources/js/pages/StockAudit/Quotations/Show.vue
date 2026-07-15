@@ -70,7 +70,7 @@ const statusActions: Record<string, { label: string; status: string }[]> = {
 const canConvert = computed(() => props.quotation.status === 'accepted' || props.quotation.status === 'sent');
 
 const updateStatus = (status: string) => {
-    router.post(route('stock-audit.quotations.status', props.quotation.id), { status }, {
+    router.post(route('stockflow.sub.quotations.status', props.quotation.id), { status }, {
         preserveScroll: true,
     });
 };
@@ -83,7 +83,7 @@ const updateStatus = (status: string) => {
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex items-center justify-between">
                     <div>
-                        <Link :href="route('stock-audit.quotations.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Quotations</Link>
+                        <Link :href="route('stockflow.sub.quotations.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Quotations</Link>
                         <h1 class="mt-1 text-xl font-bold text-gray-900">{{ quotation.quotation_number }}</h1>
                     </div>
                     <div class="flex gap-2">

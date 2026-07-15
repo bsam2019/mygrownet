@@ -34,7 +34,7 @@ defineProps<Props>();
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Companies</h1>
-                    <Link :href="route('stock-audit.companies.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                    <Link :href="route('stockflow.sub.companies.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                         <PlusIcon class="h-5 w-5" aria-hidden="true" />
                         Create Company
                     </Link>
@@ -46,7 +46,7 @@ defineProps<Props>();
                         <Link
                             v-for="company in companies.data"
                             :key="company.id"
-                            :href="route('stock-audit.companies.show', company.id)"
+                            :href="route('stockflow.sub.companies.show', company.id)"
                             class="rounded-xl bg-white p-6 shadow-sm transition hover:shadow-md"
                         >
                             <h3 class="font-semibold text-gray-900">{{ company.name }}</h3>

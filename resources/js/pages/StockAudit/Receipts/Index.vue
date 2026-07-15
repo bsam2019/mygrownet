@@ -77,7 +77,7 @@ const methodColors: Record<string, string> = {
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="receipt in receipts.data" :key="receipt.id" class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <Link :href="route('stock-audit.receipts.show', receipt.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
+                                        <Link :href="route('stockflow.sub.receipts.show', receipt.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ receipt.receipt_number }}
                                         </Link>
                                     </td>
@@ -91,7 +91,7 @@ const methodColors: Record<string, string> = {
                                     <td class="px-6 py-4 text-right font-semibold text-gray-900">{{ formatCurrency(receipt.total) }}</td>
                                     <td class="px-6 py-4 text-right font-medium text-emerald-600">{{ formatCurrency(receipt.amount_received) }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        <Link :href="route('stock-audit.receipts.show', receipt.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
+                                        <Link :href="route('stockflow.sub.receipts.show', receipt.id)" class="text-sm text-emerald-600 hover:text-emerald-700">View</Link>
                                     </td>
                                 </tr>
                                 <tr v-if="!receipts.data?.length">
