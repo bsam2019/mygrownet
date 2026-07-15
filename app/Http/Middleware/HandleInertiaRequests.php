@@ -144,6 +144,7 @@ class HandleInertiaRequests extends Middleware
 
         // Get stockflow company features for feature toggles
         $companyFeatures = null;
+        $stockflowAccount = null;
         if ($request->session()->has('stockflow_company_id')) {
             try {
                 $companyModel = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find(
@@ -151,8 +152,10 @@ class HandleInertiaRequests extends Middleware
                 );
                 $settings = $companyModel?->settings;
                 $companyFeatures = $settings['features_enabled'] ?? null;
+                $stockflowAccount = $companyModel?->subdomain; // Get the subdomain slug (e.g., 'taradasi')
             } catch (\Exception $e) {
                 $companyFeatures = null;
+                $stockflowAccount = null;
             }
         }
 
@@ -216,6 +219,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'impersonate_admin_id' => fn () => $request->session()->get('impersonate_admin_id'),
             'companyFeatures' => $companyFeatures,
+            'stockflowAccount' => $stockflowAccount, // Share subdomain slug for Ziggy routes
             'csrf_token' => csrf_token(),
             'supportStats' => $supportStats,
             'employee' => $employee,
