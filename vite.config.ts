@@ -23,6 +23,8 @@ const ALL_INPUTS: Record<string, string[]> = {
     zamstay: ['resources/js/app-zamstay.ts'],
     cms: ['resources/js/app-cms.ts'],
     primeedge: ['resources/js/app-primeedge.ts'],
+    // StockFlow uses main app.ts (subdomain routing)
+    stockflow: ['resources/js/app.ts'],
 };
 
 const inputs = MODULE && MODULE !== 'all' ? ALL_INPUTS[MODULE] ?? ALL_INPUTS.all : ALL_INPUTS.all;
