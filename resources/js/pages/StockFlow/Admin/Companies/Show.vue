@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 
 interface Employee {
     id: number;
@@ -64,7 +64,7 @@ const update = () => {
 </script>
 
 <template>
-    <StockAuditLayout :title="company.name">
+    <StockFlowLayout :title="company.name">
         <Head :title="`${company.name} — StockFlow Admin`" />
         <div class="min-h-screen bg-gray-50">
             <div class="max-w-4xl mx-auto px-6 py-8">
@@ -193,5 +193,5 @@ const update = () => {
                 </div>
             </div>
         </div>
-    </StockAuditLayout>
+    </StockFlowLayout>
 </template>

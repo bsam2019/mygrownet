@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 
 interface Company {
     id: number;
@@ -18,7 +18,7 @@ defineProps<{
 </script>
 
 <template>
-    <StockAuditLayout title="Companies">
+    <StockFlowLayout title="Companies">
         <Head title="Companies — StockFlow Admin" />
         <div class="min-h-screen bg-gray-50">
             <div class="max-w-7xl mx-auto px-6 py-8">
@@ -81,5 +81,5 @@ defineProps<{
                 </div>
             </div>
         </div>
-    </StockAuditLayout>
+    </StockFlowLayout>
 </template>

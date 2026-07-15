@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { computed, ref } from 'vue';
 import {
@@ -265,7 +265,7 @@ const recentActivity = computed(() => {
 </script>
 
 <template>
-    <StockAuditLayout title="Dashboard">
+    <StockFlowLayout title="Dashboard">
         <Head title="StockFlow Dashboard" />
 
         <div class="min-h-screen bg-gray-50">
@@ -596,5 +596,5 @@ const recentActivity = computed(() => {
                 </div>
             </div>
         </div>
-    </StockAuditLayout>
+    </StockFlowLayout>
 </template>

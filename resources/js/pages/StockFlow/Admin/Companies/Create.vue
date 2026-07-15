@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import StockAuditLayout from '@/layouts/StockAuditLayout.vue';
+import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 
 const form = useForm({
     name: '',
@@ -21,7 +21,7 @@ const submit = () => {
 </script>
 
 <template>
-    <StockAuditLayout title="Create Company">
+    <StockFlowLayout title="Create Company">
         <Head title="Create Company — StockFlow Admin" />
         <div class="min-h-screen bg-gray-50">
             <div class="max-w-3xl mx-auto px-6 py-8">
@@ -107,5 +107,5 @@ const submit = () => {
                 </form>
             </div>
         </div>
-    </StockAuditLayout>
+    </StockFlowLayout>
 </template>
