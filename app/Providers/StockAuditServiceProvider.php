@@ -15,6 +15,9 @@ use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
 use App\Domain\StockFlow\Repositories\MessageRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PurchaseOrderRepositoryInterface;
+use App\Domain\StockFlow\Repositories\QuotationRepositoryInterface;
+use App\Domain\StockFlow\Repositories\InvoiceRepositoryInterface;
+use App\Domain\StockFlow\Repositories\ReceiptRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
 use App\Domain\StockFlow\Repositories\StockMovementRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SupplierRepositoryInterface;
@@ -33,6 +36,9 @@ use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentItemRepository
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentMessageRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPhysicalCountRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPurchaseOrderRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentQuotationRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentInvoiceRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentReceiptRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSaleRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentStockMovementRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSupplierRepository;
@@ -66,6 +72,9 @@ class StockAuditServiceProvider extends ServiceProvider
         $this->app->bind(PhysicalCountRepositoryInterface::class, EloquentPhysicalCountRepository::class);
         $this->app->bind(AuditRepositoryInterface::class, EloquentAuditRepository::class);
         $this->app->bind(CashRegisterRepositoryInterface::class, EloquentCashRegisterRepository::class);
+        $this->app->bind(QuotationRepositoryInterface::class, EloquentQuotationRepository::class);
+        $this->app->bind(InvoiceRepositoryInterface::class, EloquentInvoiceRepository::class);
+        $this->app->bind(ReceiptRepositoryInterface::class, EloquentReceiptRepository::class);
         
         // Employee/Role repositories
         $this->app->bind(CompanyRoleRepositoryInterface::class, EloquentCompanyRoleRepository::class);

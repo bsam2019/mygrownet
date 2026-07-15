@@ -20,6 +20,9 @@ use App\Http\Controllers\StockAudit\RoleController;
 use App\Http\Controllers\StockAudit\SaleController;
 use App\Http\Controllers\StockAudit\SettingsController;
 use App\Http\Controllers\StockAudit\StockMovementController;
+use App\Http\Controllers\StockAudit\QuotationController;
+use App\Http\Controllers\StockAudit\InvoiceController;
+use App\Http\Controllers\StockAudit\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -151,6 +154,31 @@ Route::domain('{account}.mygrownet.com')
                 Route::get('/sales-report', [SaleController::class, 'report'])->name('stockflow.sub.sales.report');
                 Route::get('/sales-report/pdf', [SaleController::class, 'reportPdf'])->name('stockflow.sub.sales.report.pdf');
                 Route::get('/api/sales/by-date', [SaleController::class, 'byDate'])->name('stockflow.sub.sales.by-date');
+            });
+
+            // Quotations
+            Route::middleware('stockflow.feature:quotations')->group(function () {
+                Route::get('/quotations', [QuotationController::class, 'index'])->name('stockflow.sub.quotations.index');
+                Route::get('/quotations/create', [QuotationController::class, 'create'])->name('stockflow.sub.quotations.create');
+                Route::post('/quotations', [QuotationController::class, 'store'])->name('stockflow.sub.quotations.store');
+                Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->name('stockflow.sub.quotations.show');
+                Route::post('/quotations/{quotation}/status', [QuotationController::class, 'updateStatus'])->name('stockflow.sub.quotations.status');
+            });
+
+            // Invoices
+            Route::middleware('stockflow.feature:invoices')->group(function () {
+                Route::get('/invoices', [InvoiceController::class, 'index'])->name('stockflow.sub.invoices.index');
+                Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('stockflow.sub.invoices.create');
+                Route::post('/invoices', [InvoiceController::class, 'store'])->name('stockflow.sub.invoices.store');
+                Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('stockflow.sub.invoices.show');
+                Route::post('/invoices/{invoice}/payment', [InvoiceController::class, 'recordPayment'])->name('stockflow.sub.invoices.payment');
+                Route::post('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('stockflow.sub.invoices.status');
+            });
+
+            // Receipts
+            Route::middleware('stockflow.feature:receipts')->group(function () {
+                Route::get('/receipts', [ReceiptController::class, 'index'])->name('stockflow.sub.receipts.index');
+                Route::get('/receipts/{receipt}', [ReceiptController::class, 'show'])->name('stockflow.sub.receipts.show');
             });
 
             // Cash Register

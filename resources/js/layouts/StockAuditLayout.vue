@@ -24,6 +24,8 @@ import {
     ShieldCheckIcon,
     DocumentChartBarIcon,
     EnvelopeIcon,
+    DocumentArrowUpIcon,
+    DocumentCheckIcon,
 } from '@heroicons/vue/24/outline';
 import NotificationToast from '@/components/StockAudit/NotificationToast.vue';
 import NotificationBell from '@/components/StockAudit/NotificationBell.vue';
@@ -75,7 +77,10 @@ const navigation = computed(() => {
     const items = [
         { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stock-audit', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
         { name: 'Items', href: isSubdomain.value ? '/items' : '/stock-audit/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
+        { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stock-audit/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
         { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stock-audit/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
+        { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stock-audit/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
+        { name: 'Receipts', href: isSubdomain.value ? '/receipts' : '/stock-audit/receipts', icon: DocumentArrowUpIcon, routeName: `${base}.receipts.index`, feature: f('receipts') },
         { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
         { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
         { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },

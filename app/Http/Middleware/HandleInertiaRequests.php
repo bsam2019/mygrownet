@@ -182,10 +182,22 @@ class HandleInertiaRequests extends Middleware
                     return null;
                 },
             ],
-            'ziggy' => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(),
-            ],
+            'ziggy' => function () use ($request) {
+                $ziggy = (new Ziggy)->toArray();
+                $routeName = $request->route()?->getName() ?? '';
+                if (str_starts_with($routeName, 'stockflow.sub.')) {
+                    foreach ($ziggy['routes'] ?? [] as $key => $route) {
+                        if (str_starts_with($key, 'stockflow.sub.')) {
+                            $alias = str_replace('stockflow.sub.', 'stock-audit.', $key);
+                            $ziggy['routes'][$alias] = $route;
+                        }
+                    }
+                }
+                return [
+                    ...$ziggy,
+                    'location' => $request->url(),
+                ];
+            },
             'errors' => function () use ($request) {
                 return $request->session()->get('errors')
                     ? $request->session()->get('errors')->getBag('default')->getMessages()
