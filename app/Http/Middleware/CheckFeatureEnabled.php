@@ -10,7 +10,7 @@ class CheckFeatureEnabled
 {
     public function handle(Request $request, Closure $next, string $feature): Response
     {
-        $companyId = $request->session()->get('stock_audit_company_id');
+        $companyId = $request->session()->get('stockflow_company_id');
 
         if (!$companyId) {
             return $next($request);

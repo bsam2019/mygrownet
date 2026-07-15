@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\StockAudit\Admin\CompanyController as AdminCompanyController;
-use App\Http\Controllers\StockAudit\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\StockAudit\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\StockFlow\Admin\CompanyController as AdminCompanyController;
+use App\Http\Controllers\StockFlow\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\StockFlow\Admin\AuthController as AdminAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('stockflow-admin')

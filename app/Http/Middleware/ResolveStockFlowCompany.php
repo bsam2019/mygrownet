@@ -10,10 +10,10 @@ class ResolveStockFlowCompany
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->attributes->has('stock_audit_company_id') && $request->hasSession()) {
+        if ($request->attributes->has('stockflow_company_id') && $request->hasSession()) {
             $request->session()->put(
-                'stock_audit_company_id',
-                $request->attributes->get('stock_audit_company_id')
+                'stockflow_company_id',
+                $request->attributes->get('stockflow_company_id')
             );
         }
 

@@ -88,7 +88,7 @@ class HandleInertiaRequests extends Middleware
         // renders the response, but the dashboard (GET /) is outside that
         // group, so we must explicitly fall back to the stockflow guard.
         $user = $request->user();
-        if (!$user && $request->attributes->has('stock_audit_company_id')) {
+        if (!$user && $request->attributes->has('stockflow_company_id')) {
             $user = Auth::guard('stockflow')->user();
         }
 
@@ -144,10 +144,10 @@ class HandleInertiaRequests extends Middleware
 
         // Get stockflow company features for feature toggles
         $companyFeatures = null;
-        if ($request->session()->has('stock_audit_company_id')) {
+        if ($request->session()->has('stockflow_company_id')) {
             try {
                 $companyModel = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel::find(
-                    $request->session()->get('stock_audit_company_id')
+                    $request->session()->get('stockflow_company_id')
                 );
                 $settings = $companyModel?->settings;
                 $companyFeatures = $settings['features_enabled'] ?? null;

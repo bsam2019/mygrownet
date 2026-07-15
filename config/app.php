@@ -180,7 +180,7 @@ return [
         App\Providers\ModuleSubscriptionServiceProvider::class, // Centralized module subscription services
         App\Providers\PaymentServiceProvider::class, // Payment gateway integration
         App\Providers\ZamStayServiceProvider::class, // ZamStay module
-        App\Providers\StockAuditServiceProvider::class, // Stock Audit module
+        App\Providers\StockFlowServiceProvider::class, // StockFlow module
     ])->toArray(),
 
     /*

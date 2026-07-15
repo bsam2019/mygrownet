@@ -1,28 +1,28 @@
 <?php
 
-use App\Http\Controllers\StockAudit\AuditController;
-use App\Http\Controllers\StockAudit\AuthController;
-use App\Http\Controllers\StockAudit\BinController;
-use App\Http\Controllers\StockAudit\CashController;
-use App\Http\Controllers\StockAudit\CommentController;
-use App\Http\Controllers\StockAudit\CompanyController;
-use App\Http\Controllers\StockAudit\DashboardController;
-use App\Http\Controllers\StockAudit\DepartmentController;
-use App\Http\Controllers\StockAudit\EmployeeController;
-use App\Http\Controllers\StockAudit\ItemController;
-use App\Http\Controllers\StockAudit\LandingController;
-use App\Http\Controllers\StockAudit\MessageController;
-use App\Http\Controllers\StockAudit\NotificationController as StockAuditNotificationController;
-use App\Http\Controllers\StockAudit\PhysicalCountController;
-use App\Http\Controllers\StockAudit\PurchaseOrderController;
-use App\Http\Controllers\StockAudit\ReportController;
-use App\Http\Controllers\StockAudit\RoleController;
-use App\Http\Controllers\StockAudit\SaleController;
-use App\Http\Controllers\StockAudit\SettingsController;
-use App\Http\Controllers\StockAudit\StockMovementController;
-use App\Http\Controllers\StockAudit\QuotationController;
-use App\Http\Controllers\StockAudit\InvoiceController;
-use App\Http\Controllers\StockAudit\ReceiptController;
+use App\Http\Controllers\StockFlow\AuditController;
+use App\Http\Controllers\StockFlow\AuthController;
+use App\Http\Controllers\StockFlow\BinController;
+use App\Http\Controllers\StockFlow\CashController;
+use App\Http\Controllers\StockFlow\CommentController;
+use App\Http\Controllers\StockFlow\CompanyController;
+use App\Http\Controllers\StockFlow\DashboardController;
+use App\Http\Controllers\StockFlow\DepartmentController;
+use App\Http\Controllers\StockFlow\EmployeeController;
+use App\Http\Controllers\StockFlow\ItemController;
+use App\Http\Controllers\StockFlow\LandingController;
+use App\Http\Controllers\StockFlow\MessageController;
+use App\Http\Controllers\StockFlow\NotificationController as StockFlowNotificationController;
+use App\Http\Controllers\StockFlow\PhysicalCountController;
+use App\Http\Controllers\StockFlow\PurchaseOrderController;
+use App\Http\Controllers\StockFlow\ReportController;
+use App\Http\Controllers\StockFlow\RoleController;
+use App\Http\Controllers\StockFlow\SaleController;
+use App\Http\Controllers\StockFlow\SettingsController;
+use App\Http\Controllers\StockFlow\StockMovementController;
+use App\Http\Controllers\StockFlow\QuotationController;
+use App\Http\Controllers\StockFlow\InvoiceController;
+use App\Http\Controllers\StockFlow\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*

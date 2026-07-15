@@ -157,7 +157,7 @@ class DetectSubdomain
             $company = $this->companyRepository->findBySubdomain($subdomain);
             if ($company && $company->getStatus() === 'active') {
                 $this->configureSubdomainUrl($subdomain);
-                $request->attributes->set('stock_audit_company_id', $company->id());
+                $request->attributes->set('stockflow_company_id', $company->id());
 
                 return $next($request);
             }
