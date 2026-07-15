@@ -147,42 +147,23 @@ export function bootInertia(
             return pageResolver(name);
         },
         setup({ el, App, props, plugin }) {
-            // Apply route aliases BEFORE ZiggyVue reads routes so that
-            // route('stock-audit.X') works on subdomains where routes are
-            // named stockflow.sub.X
-            // Must modify BOTH props.ziggy.routes AND window.Ziggy.routes
-            // because ZiggyVue reads from window.Ziggy, not from Inertia props.
-            if ((window as any).__sfSubdomain) {
-                const applyAliases = (routes: Record<string, any> | undefined) => {
-                    if (!routes) return;
-                    for (const key of Object.keys(routes)) {
-                        if (key.startsWith('stockflow.sub.')) {
-                            const alias = key.replace('stockflow.sub.', 'stock-audit.');
-                            routes[alias] = routes[key];
-                        }
-                    }
-                };
-                
-                // Apply to props first
-                applyAliases((props as any).ziggy?.routes);
-                
-                // Apply to window.Ziggy (from @routes directive)
-                applyAliases((window as any).Ziggy?.routes);
-            }
-
             const app = createApp({ render: () => h(App, props) })
                 .use(plugin)
                 .use(ZiggyVue)
                 .use(createPinia());
 
-            // Re-apply aliases AFTER ZiggyVue is initialized to ensure they stick
-            if ((window as any).__sfSubdomain && (window as any).Ziggy?.routes) {
-                const routes = (window as any).Ziggy.routes;
-                for (const key of Object.keys(routes)) {
-                    if (key.startsWith('stockflow.sub.')) {
-                        const alias = key.replace('stockflow.sub.', 'stock-audit.');
-                        routes[alias] = routes[key];
-                    }
+            // CRITICAL FIX: Override the global route() function on StockFlow subdomains
+            // to automatically convert 'stock-audit.*' to 'stockflow.sub.*'
+            if ((window as any).__sfSubdomain) {
+                const originalRoute = (window as any).route;
+                if (originalRoute) {
+                    (window as any).route = function(name: string, ...args: any[]) {
+                        // If route name starts with 'stock-audit.', convert to 'stockflow.sub.'
+                        if (typeof name === 'string' && name.startsWith('stock-audit.')) {
+                            name = name.replace('stock-audit.', 'stockflow.sub.');
+                        }
+                        return originalRoute(name, ...args);
+                    };
                 }
             }
 
