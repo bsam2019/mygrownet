@@ -33,11 +33,11 @@ return new class extends Migration
             'sa_invoices', 'sa_receipts', 'sa_items'];
 
         foreach ($tables as $table) {
-            if (Schema::hasTable($table) && $branchesExist) {
+            if (Schema::hasTable($table) && $branchesExist && !Schema::hasColumn($table, 'sa_branch_id')) {
                 Schema::table($table, function (Blueprint $t) {
                     $t->foreignId('sa_branch_id')->nullable()->constrained('sa_branches')->nullOnDelete();
                 });
-            } elseif (Schema::hasTable($table)) {
+            } elseif (Schema::hasTable($table) && !Schema::hasColumn($table, 'sa_branch_id')) {
                 Schema::table($table, function (Blueprint $t) {
                     $t->unsignedBigInteger('sa_branch_id')->nullable();
                 });
