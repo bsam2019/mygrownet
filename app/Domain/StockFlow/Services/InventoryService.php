@@ -93,6 +93,8 @@ class InventoryService
                 reorderLevel: $data['reorder_level'] ?? $item->getReorderLevel(),
                 category: $data['category'] ?? $item->getCategory(),
                 notes: $data['notes'] ?? $item->getNotes(),
+                isExpirable: (bool) ($data['is_expirable'] ?? $item->isExpirable()),
+                expiryDate: isset($data['expiry_date']) && $data['expiry_date'] ? new \DateTimeImmutable($data['expiry_date']) : $item->getExpiryDate(),
             );
 
             return $this->itemRepository->save($item);

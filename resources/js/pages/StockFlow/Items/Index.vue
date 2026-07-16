@@ -26,6 +26,8 @@ interface Item {
     system_quantity: number;
     category: string | null;
     sa_bin_id: number | null;
+    is_expirable: boolean;
+    expiry_date: string | null;
 }
 
 interface Props {
@@ -85,6 +87,7 @@ const deleteItem = async (item: Item) => {
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Item</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Expiry</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Stock</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unit Price</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
@@ -96,9 +99,18 @@ const deleteItem = async (item: Item) => {
                                         <Link :href="route('stockflow.sub.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ item.name }}
                                         </Link>
-                                        <div v-if="item.sku" class="text-xs text-gray-500">SKU: {{ item.sku }}</div>
+                                        <div class="flex items-center gap-2">
+                                            <span v-if="item.sku" class="text-xs text-gray-500">SKU: {{ item.sku }}</span>
+                                            <span v-if="item.is_expirable && item.expiry_date && new Date(item.expiry_date) < new Date()" class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Expired</span>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ item.category || '-' }}</td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <span v-if="item.is_expirable && item.expiry_date" :class="[new Date(item.expiry_date) < new Date() ? 'text-red-600 font-semibold' : 'text-amber-600']">
+                                            {{ item.expiry_date }}
+                                        </span>
+                                        <span v-else class="text-gray-400">-</span>
+                                    </td>
                                     <td class="px-6 py-4 text-right">
                                         <span :class="[item.system_quantity <= 0 ? 'text-red-600 font-semibold' : 'text-gray-900']">
                                             {{ item.system_quantity }} {{ item.unit }}
@@ -112,7 +124,7 @@ const deleteItem = async (item: Item) => {
                                     </td>
                                 </tr>
                                 <tr v-if="!items.data?.length">
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">No items found</td>
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">No items found</td>
                                 </tr>
                             </tbody>
                         </table>

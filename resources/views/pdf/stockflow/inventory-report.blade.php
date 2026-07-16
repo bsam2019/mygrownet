@@ -34,6 +34,7 @@
                 <th>Item</th>
                 <th>SKU</th>
                 <th>Category</th>
+                <th>Expiry</th>
                 <th class="text-right">Qty</th>
                 <th class="text-right">Unit Price</th>
                 <th class="text-right">Total Value</th>
@@ -45,6 +46,7 @@
                 <td>{{ $item['name'] ?? $item['item_name'] ?? 'N/A' }}</td>
                 <td>{{ $item['sku'] ?? '-' }}</td>
                 <td>{{ $item['category'] ?? '-' }}</td>
+                <td>{{ $item['is_expirable'] ? ($item['expiry_date'] ?? '-') : '-' }}</td>
                 <td class="text-right">{{ $item['system_quantity'] ?? 0 }}</td>
                 <td class="text-right">{{ number_format($item['unit_price'] ?? 0, 2) }}</td>
                 <td class="text-right">{{ number_format(($item['unit_price'] ?? 0) * ($item['system_quantity'] ?? 0), 2) }}</td>

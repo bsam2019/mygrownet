@@ -102,6 +102,8 @@ class ItemController extends Controller
             'unit' => 'nullable|string|max:50',
             'system_quantity' => 'required|numeric|min:0',
             'category' => 'nullable|string|max:255',
+            'is_expirable' => 'boolean',
+            'expiry_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
@@ -128,6 +130,8 @@ class ItemController extends Controller
             'items.*.sa_bin_id' => 'nullable|exists:sa_bins,id',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.system_quantity' => 'required|numeric|min:0',
+            'items.*.is_expirable' => 'boolean',
+            'items.*.expiry_date' => 'nullable|date',
         ]);
 
         foreach ($validated['items'] as $itemData) {

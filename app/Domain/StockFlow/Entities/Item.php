@@ -117,6 +117,8 @@ class Item implements Arrayable
         ?float $reorderLevel,
         ?string $category,
         ?string $notes,
+        bool $isExpirable = false,
+        ?DateTimeImmutable $expiryDate = null,
     ): void {
         $this->name = $name;
         $this->departmentId = $departmentId;
@@ -128,6 +130,8 @@ class Item implements Arrayable
         $this->reorderLevel = $reorderLevel;
         $this->category = $category;
         $this->notes = $notes;
+        $this->isExpirable = $isExpirable;
+        $this->expiryDate = $expiryDate;
         $this->updatedAt = new DateTimeImmutable();
     }
 
