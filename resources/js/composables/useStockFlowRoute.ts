@@ -1,58 +1,52 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-/**
- * Composable for generating StockFlow subdomain routes with the account parameter.
- * 
- * Usage:
- *   const { route } = useStockflowRoute();
- *   route('stockflow.sub.items.create')  // Automatically includes account
- */
 export function useStockflowRoute() {
     const page = usePage();
 
     const account = computed(() => {
-        // Get from shared props (set by HandleInertiaRequests middleware)
         const stockflowAccount = (page.props as any).stockflowAccount;
-        if (stockflowAccount) {
-            return stockflowAccount;
-        }
-
-        // Fallback: extract from hostname
+        if (stockflowAccount) return stockflowAccount;
         const hostParts = window.location.hostname.split('.');
-        if (hostParts.length > 2) {
-            return hostParts[0];
-        }
-
+        if (hostParts.length > 2) return hostParts[0];
         return '';
     });
 
-    /**
-     * Generate a route URL with account parameter automatically included.
-     * 
-     * @param name - Route name (e.g., 'stockflow.sub.items.create')
-     * @param params - Additional route parameters
-     */
-    const route = (name: string, params: Record<string, any> = {}): string => {
-        // Import route helper from Ziggy
+    function getRouteParamName(name: string): string | null {
+        try {
+            const ziggyRoutes = (window as any).Ziggy?.routes;
+            if (!ziggyRoutes?.[name]) return null;
+            if (ziggyRoutes[name].parameters?.length) {
+                return ziggyRoutes[name].parameters[0];
+            }
+            const uri = ziggyRoutes[name].uri;
+            const match = uri.match(/\{([^}]+)\}/);
+            return match ? match[1] : null;
+        } catch {
+            return null;
+        }
+    }
+
+    const route = (name: string, params: any = {}): string => {
         const routeHelper = (window as any).route;
-        
         if (!routeHelper) {
             console.error('Ziggy route helper not found');
             return '#';
         }
 
-        // Auto-inject account parameter for stockflow.sub.* routes
         if (name.startsWith('stockflow.sub.')) {
-            return routeHelper(name, { ...params, account: account.value });
+            let mergedParams: Record<string, any>;
+            if (typeof params === 'object' && params !== null && !Array.isArray(params)) {
+                mergedParams = { ...params, account: account.value };
+            } else {
+                const paramName = getRouteParamName(name) || 'id';
+                mergedParams = { [paramName]: params, account: account.value };
+            }
+            return routeHelper(name, mergedParams);
         }
 
-        // For non-subdomain routes, just use the route helper as-is
         return routeHelper(name, params);
     };
 
-    return {
-        route,
-        account,
-    };
+    return { route, account };
 }

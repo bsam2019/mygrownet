@@ -324,56 +324,56 @@ const recentActivity = computed(() => {
                 <div v-if="company" class="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div class="rounded-lg bg-emerald-50 p-2.5">
+                            <div class="rounded-lg bg-emerald-50 p-2.5 shrink-0">
                                 <ArchiveBoxIcon class="h-5 w-5 text-emerald-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Items</p>
-                                <p class="text-xl font-bold text-gray-900">{{ stats.total_items }}</p>
+                                <p class="text-lg font-bold text-gray-900 truncate">{{ stats.total_items }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div class="rounded-lg bg-blue-50 p-2.5">
+                            <div class="rounded-lg bg-blue-50 p-2.5 shrink-0">
                                 <CurrencyDollarIcon class="h-5 w-5 text-blue-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Stock Value</p>
-                                <p class="text-xl font-bold text-gray-900">{{ formatCurrency(stats.total_system_value) }}</p>
+                                <p class="text-lg font-bold text-gray-900 truncate">{{ formatCurrency(stats.total_system_value) }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div class="rounded-lg bg-violet-50 p-2.5">
+                            <div class="rounded-lg bg-violet-50 p-2.5 shrink-0">
                                 <ClipboardDocumentListIcon class="h-5 w-5 text-violet-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Counts</p>
-                                <p class="text-xl font-bold text-gray-900">{{ stats.total_physical_counts }}</p>
+                                <p class="text-lg font-bold text-gray-900 truncate">{{ stats.total_physical_counts }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div class="rounded-lg bg-indigo-50 p-2.5">
+                            <div class="rounded-lg bg-indigo-50 p-2.5 shrink-0">
                                 <DocumentTextIcon class="h-5 w-5 text-indigo-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Audits</p>
-                                <p class="text-xl font-bold text-gray-900">{{ stats.total_audits }}</p>
+                                <p class="text-lg font-bold text-gray-900 truncate">{{ stats.total_audits }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div class="rounded-lg bg-teal-50 p-2.5">
+                            <div class="rounded-lg bg-teal-50 p-2.5 shrink-0">
                                 <CurrencyDollarIcon class="h-5 w-5 text-teal-600" />
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Today's Sales</p>
-                                <p class="text-xl font-bold text-gray-900">{{ formatCurrency(stats.todays_sales) }}</p>
+                                <p class="text-lg font-bold text-gray-900 truncate">{{ formatCurrency(stats.todays_sales) }}</p>
                             </div>
                         </div>
                     </div>
