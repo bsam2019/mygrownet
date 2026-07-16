@@ -11,7 +11,11 @@ export function useSubdomainRoute() {
 
     const saRoute = (name: string, params?: Record<string, unknown> | string, absolute?: boolean): string => {
         if (isSubdomain()) {
-            const subName = name.replace('stock-audit.', 'stockflow.sub.');
+            // Convert stockflow.* to stockflow.sub.* for subdomain routes
+            let subName = name;
+            if (name.startsWith('stockflow.') && !name.startsWith('stockflow.sub.')) {
+                subName = name.replace('stockflow.', 'stockflow.sub.');
+            }
             try {
                 return route(subName, params as any, absolute);
             } catch {

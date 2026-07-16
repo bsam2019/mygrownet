@@ -10,13 +10,13 @@ use Illuminate\Console\Command;
 
 class StockAuditImportItems extends Command
 {
-    protected $signature = 'stock-audit:import-items
+    protected $signature = 'stockflow:import-items
         {company : The ID or name of the company}
         {file : Path to the CSV file}
         {--delimiter=, : CSV delimiter}
     ';
 
-    protected $description = 'Import inventory items from a CSV file into the Stock Audit module';
+    protected $description = 'Import inventory items from a CSV file into StockFlow';
 
     public function handle(): int
     {

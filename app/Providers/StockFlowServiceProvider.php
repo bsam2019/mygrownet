@@ -51,10 +51,13 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(database_path('migrations'));
 
         \Illuminate\Support\Facades\Redirect::macro('sfRoute', function ($name, $parameters = [], $status = 302, $headers = []) {
-            if (str_starts_with($name, 'stock-audit.') && request()->route() &&
-                str_starts_with(request()->route()->getName() ?? '', 'stockflow.sub.')) {
-                $name = 'stockflow.sub.' . substr($name, 12);
+            // Convert stockflow.* to stockflow.sub.* for subdomain routes
+            $isSubdomain = request()->route() && str_starts_with(request()->route()->getName() ?? '', 'stockflow.sub.');
+            
+            if ($isSubdomain && str_starts_with($name, 'stockflow.') && !str_starts_with($name, 'stockflow.sub.')) {
+                $name = 'stockflow.sub.' . substr($name, 10);
             }
+            
             return $this->route($name, $parameters, $status, $headers);
         });
     }

@@ -2,6 +2,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useNotifications } from '@/composables/useNotifications';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import {
     UserCircleIcon, BuildingOffice2Icon, EnvelopeIcon,
     PhoneIcon, MapPinIcon, GlobeAltIcon, CurrencyDollarIcon,
@@ -14,6 +15,8 @@ import {
 
 const page = usePage();
 const { success, error: notifyError } = useNotifications();
+
+const { route } = useStockflowRoute();
 
 interface Props {
     company: Record<string, any> | null;
@@ -57,7 +60,7 @@ const companyForm = useForm({
 const isSubdomain = (page.props.routeName ?? '').startsWith('stockflow.sub.');
 
 const updateProfile = () => {
-    profileForm.put(isSubdomain ? '/settings/profile' : '/stock-audit/settings/profile', {
+    profileForm.put(isSubdomain ? '/settings/profile' : '/stockflow/settings/profile', {
         preserveScroll: true,
         onSuccess: () => {
             profileForm.reset('current_password', 'password', 'password_confirmation');
@@ -70,7 +73,7 @@ const updateProfile = () => {
 };
 
 const updateCompany = () => {
-    companyForm.put(isSubdomain ? '/settings/company' : '/stock-audit/settings/company', {
+    companyForm.put(isSubdomain ? '/settings/company' : '/stockflow/settings/company', {
         preserveScroll: true,
         onSuccess: () => success('Company settings updated'),
     });

@@ -55,7 +55,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Employee invited successfully');
     }
 
@@ -69,7 +69,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Invitation accepted');
     }
 
@@ -87,7 +87,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Employee role updated');
     }
 
@@ -101,7 +101,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Employee suspended');
     }
 
@@ -115,7 +115,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Employee reactivated');
     }
 
@@ -133,7 +133,7 @@ class EmployeeController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.employees.index')
+        return redirect()->sfRoute('stockflow.employees.index')
             ->with('success', 'Employee removed');
     }
 }

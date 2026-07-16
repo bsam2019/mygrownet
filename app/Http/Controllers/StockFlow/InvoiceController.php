@@ -72,7 +72,7 @@ class InvoiceController extends Controller
 
         $this->invoiceService->createInvoice($companyId, $validated, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.invoices.index')->with('success', 'Invoice created successfully.');
+        return redirect()->sfRoute('stockflow.invoices.index')->with('success', 'Invoice created successfully.');
     }
 
     public function show(int $invoiceId)
@@ -98,7 +98,7 @@ class InvoiceController extends Controller
 
         $this->invoiceService->recordPayment($invoiceId, $companyId, (float) $validated['amount']);
 
-        return redirect()->sfRoute('stock-audit.invoices.show', $invoiceId)
+        return redirect()->sfRoute('stockflow.invoices.show', $invoiceId)
             ->with('success', 'Payment recorded successfully.');
     }
 
@@ -112,7 +112,7 @@ class InvoiceController extends Controller
 
         $this->invoiceService->updateStatus($invoiceId, $companyId, $validated['status']);
 
-        return redirect()->sfRoute('stock-audit.invoices.show', $invoiceId)
+        return redirect()->sfRoute('stockflow.invoices.show', $invoiceId)
             ->with('success', 'Invoice status updated.');
     }
 }

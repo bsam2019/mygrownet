@@ -74,7 +74,7 @@ class SaleController extends Controller
 
         $this->salesService->createSale($companyId, $validated, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.sales.index')->with('success', 'Sale created successfully.');
+        return redirect()->sfRoute('stockflow.sales.index')->with('success', 'Sale created successfully.');
     }
 
     public function show(int $saleId)
@@ -172,7 +172,7 @@ class SaleController extends Controller
             if ($sale->isCashPayment()) $summary['cash_sales'] += $sale->getTotal()->toFloat();
         }
 
-        $pdf = Pdf::loadView('pdf.stock-audit.sales-report', [
+        $pdf = Pdf::loadView('pdf.stockflow.sales-report', [
             'companyName' => $companyName,
             'sales' => array_map(fn($s) => $s->toArray(), $sales),
             'summary' => $summary,

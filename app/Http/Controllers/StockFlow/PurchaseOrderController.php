@@ -70,7 +70,7 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->createPurchaseOrder($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.purchases.index')->with('success', 'Purchase order created successfully.');
+        return redirect()->sfRoute('stockflow.purchases.index')->with('success', 'Purchase order created successfully.');
     }
 
     public function show(int $purchaseOrderId)
@@ -99,7 +99,7 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->receiveOrder($purchaseOrderId, $companyId, $validated['items'], $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.purchases.index')->with('success', 'Order received successfully.');
+        return redirect()->sfRoute('stockflow.purchases.index')->with('success', 'Order received successfully.');
     }
 
     public function suppliers(Request $request)
@@ -142,7 +142,7 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->createSupplier($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.suppliers.index')->with('success', 'Supplier created successfully.');
+        return redirect()->sfRoute('stockflow.suppliers.index')->with('success', 'Supplier created successfully.');
     }
 
     public function updateSupplier(Request $request, int $supplierId)
@@ -158,14 +158,14 @@ class PurchaseOrderController extends Controller
 
         $this->purchasingService->updateSupplier($supplierId, $validated);
 
-        return redirect()->sfRoute('stock-audit.suppliers.index')->with('success', 'Supplier updated successfully.');
+        return redirect()->sfRoute('stockflow.suppliers.index')->with('success', 'Supplier updated successfully.');
     }
 
     public function destroySupplier(int $supplierId)
     {
         $this->purchasingService->deleteSupplier($supplierId);
 
-        return redirect()->sfRoute('stock-audit.suppliers.index')->with('success', 'Supplier deleted successfully.');
+        return redirect()->sfRoute('stockflow.suppliers.index')->with('success', 'Supplier deleted successfully.');
     }
 
     public function report(Request $request)
@@ -237,7 +237,7 @@ class PurchaseOrderController extends Controller
             $summary['by_supplier'][$supplier] = ($summary['by_supplier'][$supplier] ?? 0) + $po->getTotal()->toFloat();
         }
 
-        $pdf = Pdf::loadView('pdf.stock-audit.purchases-report', [
+        $pdf = Pdf::loadView('pdf.stockflow.purchases-report', [
             'companyName' => $companyName,
             'purchases' => array_map(fn($p) => $p->toArray(), $purchases),
             'summary' => $summary,

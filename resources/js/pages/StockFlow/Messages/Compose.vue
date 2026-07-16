@@ -2,11 +2,14 @@
 import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import {
     PaperAirplaneIcon,
     ArrowLeftIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+
+const { route } = useStockflowRoute();
 
 const props = defineProps<{
     users: { id: number; name: string; email: string }[];
@@ -15,7 +18,7 @@ const props = defineProps<{
 const page = usePage();
 const isSubdomain = computed(() => (page.props as any).routeName?.startsWith('stockflow.sub.'));
 
-const baseUrl = computed(() => isSubdomain.value ? '' : '/stock-audit');
+const baseUrl = computed(() => isSubdomain.value ? '' : '/stockflow');
 const csrfToken = computed(() => (page.props as any).csrf_token ?? '');
 
 const recipientId = ref<number | null>(null);

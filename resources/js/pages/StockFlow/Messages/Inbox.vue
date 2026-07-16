@@ -2,12 +2,15 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import {
     EnvelopeIcon,
     EnvelopeOpenIcon,
     PaperAirplaneIcon,
     PencilSquareIcon,
 } from '@heroicons/vue/24/outline';
+
+const { route } = useStockflowRoute();
 
 defineProps<{
     messages: any[];
@@ -16,7 +19,7 @@ defineProps<{
 const page = usePage();
 const isSubdomain = computed(() => (page.props as any).routeName?.startsWith('stockflow.sub.'));
 
-const baseUrl = computed(() => isSubdomain.value ? '' : '/stock-audit');
+const baseUrl = computed(() => isSubdomain.value ? '' : '/stockflow');
 
 const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);

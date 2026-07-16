@@ -70,7 +70,7 @@ class QuotationController extends Controller
 
         $this->quotationService->createQuotation($companyId, $validated, $request->user()->id);
 
-        return redirect()->sfRoute('stock-audit.quotations.index')->with('success', 'Quotation created successfully.');
+        return redirect()->sfRoute('stockflow.quotations.index')->with('success', 'Quotation created successfully.');
     }
 
     public function show(int $quotationId)
@@ -102,7 +102,7 @@ class QuotationController extends Controller
             isset($validated['converted_to_sale_id']) ? (int) $validated['converted_to_sale_id'] : null,
         );
 
-        return redirect()->sfRoute('stock-audit.quotations.show', $quotationId)
+        return redirect()->sfRoute('stockflow.quotations.show', $quotationId)
             ->with('success', 'Quotation status updated.');
     }
 }

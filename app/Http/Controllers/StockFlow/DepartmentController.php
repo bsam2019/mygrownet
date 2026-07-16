@@ -49,7 +49,7 @@ class DepartmentController extends Controller
 
         $department = $this->departmentBinService->createDepartment($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.departments.index')->with('success', 'Department created successfully.');
+        return redirect()->sfRoute('stockflow.departments.index')->with('success', 'Department created successfully.');
     }
 
     public function update(Request $request, int $departmentId)
@@ -62,13 +62,13 @@ class DepartmentController extends Controller
 
         $this->departmentBinService->updateDepartment($departmentId, $validated);
 
-        return redirect()->sfRoute('stock-audit.departments.index')->with('success', 'Department updated successfully.');
+        return redirect()->sfRoute('stockflow.departments.index')->with('success', 'Department updated successfully.');
     }
 
     public function destroy(int $departmentId)
     {
         $this->departmentBinService->deleteDepartment($departmentId);
 
-        return redirect()->sfRoute('stock-audit.departments.index')->with('success', 'Department deleted successfully.');
+        return redirect()->sfRoute('stockflow.departments.index')->with('success', 'Department deleted successfully.');
     }
 }

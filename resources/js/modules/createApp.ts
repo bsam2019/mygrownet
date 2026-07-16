@@ -152,21 +152,6 @@ export function bootInertia(
                 .use(ZiggyVue)
                 .use(createPinia());
 
-            // CRITICAL FIX: Override the global route() function on StockFlow subdomains
-            // to automatically convert 'stock-audit.*' to 'stockflow.sub.*'
-            if ((window as any).__sfSubdomain) {
-                const originalRoute = (window as any).route;
-                if (originalRoute) {
-                    (window as any).route = function(name: string, ...args: any[]) {
-                        // If route name starts with 'stock-audit.', convert to 'stockflow.sub.'
-                        if (typeof name === 'string' && name.startsWith('stock-audit.')) {
-                            name = name.replace('stock-audit.', 'stockflow.sub.');
-                        }
-                        return originalRoute(name, ...args);
-                    };
-                }
-            }
-
             app.mount(el);
         },
         progress: (window as any).__isGrowBuilderSite ? false : progressConfig,

@@ -2,8 +2,11 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useCurrency } from '@/composables/useCurrency';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import { ref, computed } from 'vue';
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
+
+const { route } = useStockflowRoute();
 
 interface Item {
     id: number;

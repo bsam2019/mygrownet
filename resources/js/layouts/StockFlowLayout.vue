@@ -53,7 +53,7 @@ const messageUnreadCount = ref(0);
 
 const fetchMessageUnreadCount = async () => {
     try {
-        const url = isSubdomain.value ? '/messages/unread-count' : '/stock-audit/messages/unread-count';
+        const url = isSubdomain.value ? '/messages/unread-count' : '/stockflow/messages/unread-count';
         const res = await fetch(url);
         const data = await res.json();
         messageUnreadCount.value = data.count ?? 0;
@@ -70,29 +70,29 @@ const handleKeydown = (e: KeyboardEvent) => {
 };
 
 const navigation = computed(() => {
-    const base = isSubdomain.value ? 'stockflow.sub' : 'stock-audit';
+    const base = isSubdomain.value ? 'stockflow.sub' : 'stockflow';
     const features = companyFeatures.value;
     const f = (key: string) => features[key] !== false;
 
     const items = [
-        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stock-audit', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
-        { name: 'Items', href: isSubdomain.value ? '/items' : '/stock-audit/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
-        { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stock-audit/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
-        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stock-audit/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
-        { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stock-audit/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
-        { name: 'Receipts', href: isSubdomain.value ? '/receipts' : '/stock-audit/receipts', icon: DocumentArrowUpIcon, routeName: `${base}.receipts.index`, feature: f('receipts') },
-        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stock-audit/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
-        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stock-audit/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
-        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stock-audit/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
-        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stock-audit/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index`, feature: f('counts') },
-        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stock-audit/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index`, feature: f('audits') },
-        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stock-audit/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index`, feature: f('suppliers') },
-        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stock-audit/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index`, feature: f('departments') },
-        { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stock-audit/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
-        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stock-audit/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
-        { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stock-audit/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
-        { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stock-audit/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
-        { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stock-audit/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
+        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stockflow', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
+        { name: 'Items', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
+        { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stockflow/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
+        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stockflow/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
+        { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stockflow/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
+        { name: 'Receipts', href: isSubdomain.value ? '/receipts' : '/stockflow/receipts', icon: DocumentArrowUpIcon, routeName: `${base}.receipts.index`, feature: f('receipts') },
+        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stockflow/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
+        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stockflow/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
+        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stockflow/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
+        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stockflow/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index`, feature: f('counts') },
+        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stockflow/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index`, feature: f('audits') },
+        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stockflow/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index`, feature: f('suppliers') },
+        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stockflow/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index`, feature: f('departments') },
+        { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stockflow/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
+        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stockflow/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
+        { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stockflow/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
+        { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stockflow/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
+        { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stockflow/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
     ];
     return items.filter(i => i.feature);
 });
@@ -160,7 +160,7 @@ onUnmounted(() => {
                     </div>
                     <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
                         <div class="flex h-16 shrink-0 items-center">
-                            <Link :href="isSubdomain ? '/' : '/stock-audit'" class="flex items-center gap-2">
+                            <Link :href="isSubdomain ? '/' : '/stockflow'" class="flex items-center gap-2">
                                 <div class="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center">
                                     <ClipboardDocumentListIcon class="h-5 w-5 text-white" />
                                 </div>
@@ -203,7 +203,7 @@ onUnmounted(() => {
         >
             <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white pb-4">
                 <div :class="['flex h-16 shrink-0 items-center border-b border-gray-200', sidebarCollapsed ? 'justify-center px-4' : 'justify-between px-6']">
-                    <Link :href="isSubdomain ? '/' : '/stock-audit'" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
+                    <Link :href="isSubdomain ? '/' : '/stockflow'" :class="['flex items-center gap-3', sidebarCollapsed && 'justify-center']">
                         <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                             <ClipboardDocumentListIcon class="h-5 w-5 text-white" />
                         </div>
@@ -307,7 +307,7 @@ onUnmounted(() => {
                                     </div>
                                     <div class="py-1">
                                         <Link
-                                            :href="isSubdomain ? '/settings' : '/stock-audit/settings'"
+                                            :href="isSubdomain ? '/settings' : '/stockflow/settings'"
                                             class="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                         >
                                             <Cog6ToothIcon class="h-5 w-5" />

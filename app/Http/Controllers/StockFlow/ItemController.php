@@ -73,7 +73,7 @@ class ItemController extends Controller
 
         $this->inventoryService->createItem($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item created successfully.');
+        return redirect()->sfRoute('stockflow.items.index')->with('success', 'Item created successfully.');
     }
 
     public function show(int $itemId)
@@ -107,7 +107,7 @@ class ItemController extends Controller
 
         $this->inventoryService->updateItem($itemId, $companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item updated successfully.');
+        return redirect()->sfRoute('stockflow.items.index')->with('success', 'Item updated successfully.');
     }
 
     public function destroy(int $itemId)
@@ -115,7 +115,7 @@ class ItemController extends Controller
         $companyId = session('stockflow_company_id');
         $this->inventoryService->deleteItem($itemId, $companyId);
 
-        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Item deleted successfully.');
+        return redirect()->sfRoute('stockflow.items.index')->with('success', 'Item deleted successfully.');
     }
 
     public function import(Request $request)
@@ -134,7 +134,7 @@ class ItemController extends Controller
             $this->inventoryService->createItem($companyId, $itemData);
         }
 
-        return redirect()->sfRoute('stock-audit.items.index')->with('success', 'Items imported successfully.');
+        return redirect()->sfRoute('stockflow.items.index')->with('success', 'Items imported successfully.');
     }
 
     public function adjustStock(Request $request, int $itemId)
@@ -156,7 +156,7 @@ class ItemController extends Controller
             $request->user()->id,
         );
 
-        return redirect()->sfRoute('stock-audit.items.show', $itemId)->with('success', 'Stock adjusted successfully.');
+        return redirect()->sfRoute('stockflow.items.show', $itemId)->with('success', 'Stock adjusted successfully.');
     }
 
     public function inventoryReport(Request $request)
@@ -205,7 +205,7 @@ class ItemController extends Controller
             $itemArray[] = $arr;
         }
 
-        $pdf = Pdf::loadView('pdf.stock-audit.inventory-report', [
+        $pdf = Pdf::loadView('pdf.stockflow.inventory-report', [
             'companyName' => $companyName,
             'items' => $itemArray,
             'summary' => $summary,

@@ -109,7 +109,7 @@ const isSubdomain = computed(() => {
     return routeName.startsWith('stockflow.sub.');
 });
 
-const sf = (path: string) => isSubdomain.value ? path : '/stock-audit' + path;
+const sf = (path: string) => isSubdomain.value ? path : '/stockflow' + path;
 
 const statusConfig: Record<string, { label: string; icon: any; class: string }> = {
     active: { label: 'Active', icon: CheckCircleSolid, class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' },

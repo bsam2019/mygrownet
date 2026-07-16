@@ -9,11 +9,11 @@ use Illuminate\Console\Command;
 
 class StockAuditImportSample extends Command
 {
-    protected $signature = 'stock-audit:import-sample
+    protected $signature = 'stockflow:import-sample
         {company? : Company ID or name (defaults to first active company)}
     ';
 
-    protected $description = 'Import all Taradasi Dental Clinic inventory items into the Stock Audit module';
+    protected $description = 'Import all Taradasi Dental Clinic inventory items into StockFlow';
 
     public function handle(): int
     {

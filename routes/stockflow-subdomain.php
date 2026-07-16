@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | These routes handle company-specific subdomains like taradasi.mygrownet.com.
-| They serve the StockFlow module at the subdomain root (no /stock-audit prefix).
+| They serve the StockFlow module at the subdomain root (no /stockflow prefix).
 | The stockflow.company middleware validates the subdomain is an active company.
 |
 | IMPORTANT: This file MUST be loaded BEFORE web.php so the wildcard domain

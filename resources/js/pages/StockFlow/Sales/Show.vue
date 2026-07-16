@@ -3,6 +3,9 @@ import { Head, Link } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import CommentSection from '@/components/StockFlow/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
+
+const { route } = useStockflowRoute();
 
 interface SaleItem {
     id: number;

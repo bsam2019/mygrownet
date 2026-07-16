@@ -82,7 +82,7 @@ class AuditController extends Controller
         $repo = app(\App\Domain\StockFlow\Repositories\AuditRepositoryInterface::class);
         $saved = $repo->save($audit);
 
-        return redirect()->sfRoute('stock-audit.audits.show', $saved->id())->with('success', 'Audit created successfully.');
+        return redirect()->sfRoute('stockflow.audits.show', $saved->id())->with('success', 'Audit created successfully.');
     }
 
     public function finalize(Request $request, int $auditId)
@@ -96,7 +96,7 @@ class AuditController extends Controller
 
         $this->auditService->finalizeAudit($auditId, $validated);
 
-        return redirect()->sfRoute('stock-audit.audits.show', $auditId)->with('success', 'Audit finalized successfully.');
+        return redirect()->sfRoute('stockflow.audits.show', $auditId)->with('success', 'Audit finalized successfully.');
     }
 
     public function exportCsv(int $auditId)
@@ -157,7 +157,7 @@ class AuditController extends Controller
         $companyName = $companyModel?->name ?? 'Company';
         $items = $this->auditService->getAuditItemData($auditId);
 
-        $pdf = Pdf::loadView('pdf.stock-audit.audit-report', [
+        $pdf = Pdf::loadView('pdf.stockflow.audit-report', [
             'companyName' => $companyName,
             'audit' => $audit->toArray(),
             'items' => $items,

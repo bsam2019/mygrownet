@@ -2,11 +2,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import {
     EnvelopeIcon,
     PaperAirplaneIcon,
     ArrowLeftIcon,
 } from '@heroicons/vue/24/outline';
+
+const { route } = useStockflowRoute();
 
 const props = defineProps<{
     conversation: any[];
@@ -17,7 +20,7 @@ const page = usePage();
 const user = computed(() => (page.props.auth as any)?.user);
 const isSubdomain = computed(() => (page.props as any).routeName?.startsWith('stockflow.sub.'));
 
-const baseUrl = computed(() => isSubdomain.value ? '' : '/stock-audit');
+const baseUrl = computed(() => isSubdomain.value ? '' : '/stockflow');
 const csrfToken = computed(() => (page.props as any).csrf_token ?? '');
 
 const newMessage = ref('');

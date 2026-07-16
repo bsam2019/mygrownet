@@ -44,7 +44,7 @@ class RoleController extends Controller
             $validated['permissions'] ?? [],
         );
 
-        return redirect()->sfRoute('stock-audit.roles.index')
+        return redirect()->sfRoute('stockflow.roles.index')
             ->with('success', "Role '{$role['name']}' created successfully");
     }
 
@@ -66,7 +66,7 @@ class RoleController extends Controller
             $validated['permissions'] ?? [],
         );
 
-        return redirect()->sfRoute('stock-audit.roles.index')
+        return redirect()->sfRoute('stockflow.roles.index')
             ->with('success', "Role '{$role['name']}' updated successfully");
     }
 
@@ -74,7 +74,7 @@ class RoleController extends Controller
     {
         $this->roleService->deleteRole($roleId);
 
-        return redirect()->sfRoute('stock-audit.roles.index')
+        return redirect()->sfRoute('stockflow.roles.index')
             ->with('success', 'Role deleted successfully');
     }
 }

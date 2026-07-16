@@ -3,7 +3,10 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import CommentSection from '@/components/StockFlow/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import { ref, computed } from 'vue';
+
+const { route } = useStockflowRoute();
 
 interface PurchaseOrderItem {
     id: number;

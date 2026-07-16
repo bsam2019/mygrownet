@@ -58,7 +58,7 @@ class CashController extends Controller
                 $validated['opening_balance'],
                 $request->user()->id,
             );
-            return redirect()->sfRoute('stock-audit.cash.show', $register->id())->with('success', 'Register opened successfully.');
+            return redirect()->sfRoute('stockflow.cash.show', $register->id())->with('success', 'Register opened successfully.');
         } catch (\Exception $e) {
             return back()->withErrors(['message' => $e->getMessage()]);
         }
@@ -93,7 +93,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.cash.show', $registerId)->with('success', 'Movement added successfully.');
+        return redirect()->sfRoute('stockflow.cash.show', $registerId)->with('success', 'Movement added successfully.');
     }
 
     public function close(Request $request, int $registerId)
@@ -109,7 +109,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.cash.show', $registerId)->with('success', 'Register closed successfully.');
+        return redirect()->sfRoute('stockflow.cash.show', $registerId)->with('success', 'Register closed successfully.');
     }
 
     public function verify(Request $request, int $registerId)
@@ -120,7 +120,7 @@ class CashController extends Controller
             return back()->withErrors(['message' => $e->getMessage()]);
         }
 
-        return redirect()->sfRoute('stock-audit.cash.show', $registerId)->with('success', 'Register verified successfully.');
+        return redirect()->sfRoute('stockflow.cash.show', $registerId)->with('success', 'Register verified successfully.');
     }
 
     public function summary(Request $request)
@@ -187,7 +187,7 @@ class CashController extends Controller
             $totals['total_variance'] += $r->getVariance()?->toFloat() ?? 0;
         }
 
-        $pdf = Pdf::loadView('pdf.stock-audit.cash-summary', [
+        $pdf = Pdf::loadView('pdf.stockflow.cash-summary', [
             'companyName' => $companyName,
             'registers' => array_map(fn($r) => $r->toArray(), $registers),
             'totals' => $totals,

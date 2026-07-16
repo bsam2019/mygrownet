@@ -20,7 +20,7 @@ const user = computed(() => (page.props.auth as any)?.user);
 const isSubdomain = computed(() => (page.props as any).routeName?.startsWith('stockflow.sub.'));
 
 const baseUrl = computed(() => {
-    return isSubdomain.value ? '/comments' : '/stock-audit/comments';
+    return isSubdomain.value ? '/comments' : '/stockflow/comments';
 });
 
 const comments = ref<any[]>([]);

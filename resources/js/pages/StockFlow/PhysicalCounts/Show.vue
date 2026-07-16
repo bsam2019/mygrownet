@@ -3,9 +3,12 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import CommentSection from '@/components/StockFlow/CommentSection.vue';
 import { useCurrency } from '@/composables/useCurrency';
+import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+
+const { route } = useStockflowRoute();
 
 interface CountItem {
     id: number;

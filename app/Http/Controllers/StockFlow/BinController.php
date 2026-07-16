@@ -56,7 +56,7 @@ class BinController extends Controller
 
         $this->departmentBinService->createBin($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.bins.index')->with('success', 'Bin created successfully.');
+        return redirect()->sfRoute('stockflow.bins.index')->with('success', 'Bin created successfully.');
     }
 
     public function update(Request $request, int $binId)
@@ -71,13 +71,13 @@ class BinController extends Controller
 
         $this->departmentBinService->updateBin($binId, $validated);
 
-        return redirect()->sfRoute('stock-audit.bins.index')->with('success', 'Bin updated successfully.');
+        return redirect()->sfRoute('stockflow.bins.index')->with('success', 'Bin updated successfully.');
     }
 
     public function destroy(int $binId)
     {
         $this->departmentBinService->deleteBin($binId);
 
-        return redirect()->sfRoute('stock-audit.bins.index')->with('success', 'Bin deleted successfully.');
+        return redirect()->sfRoute('stockflow.bins.index')->with('success', 'Bin deleted successfully.');
     }
 }

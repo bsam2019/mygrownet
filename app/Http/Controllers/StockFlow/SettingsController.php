@@ -68,7 +68,7 @@ class SettingsController extends Controller
 
         $this->dashboardService->updateCompany($companyId, $validated);
 
-        return redirect()->sfRoute('stock-audit.settings.index')
+        return redirect()->sfRoute('stockflow.settings.index')
             ->with('success', 'Company settings updated.');
     }
 
@@ -104,7 +104,7 @@ class SettingsController extends Controller
         }
         $model->save();
 
-        return redirect()->sfRoute('stock-audit.settings.index')
+        return redirect()->sfRoute('stockflow.settings.index')
             ->with('success', 'Profile updated.');
     }
 }

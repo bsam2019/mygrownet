@@ -36,7 +36,7 @@ let pollTimer: number | null = null;
 const unreadCount = computed(() => unreadApiCount.value + localNotes.value.filter(n => !n.read).length);
 
 const isSubdomain = ((page.props as any).routeName ?? '').startsWith('stockflow.sub.');
-const apiPrefix = isSubdomain ? '/notifications' : '/stock-audit/notifications';
+const apiPrefix = isSubdomain ? '/notifications' : '/stockflow/notifications';
 
 const addLocalNote = (type: LocalNote['type'], message: string) => {
     localNotes.value.unshift({ id: ++localId, type, message, read: false });
