@@ -21,80 +21,40 @@ return new class extends Migration
             });
         }
 
-        Schema::table('sa_sales', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_sales', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_sales', 'discount_rate')) {
-                $table->decimal('discount_rate', 5, 2)->default(0)->after('discount_amount');
-            }
-            if (!Schema::hasColumn('sa_sales', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_rate');
-            }
-            if (!Schema::hasColumn('sa_sales', 'sa_tax_rate_id')) {
-                $table->unsignedBigInteger('sa_tax_rate_id')->nullable()->after('tax_amount');
-            }
-            if (!Schema::hasColumn('sa_sales', 'currency')) {
-                $table->string('currency', 10)->default('ZMW')->after('tax_amount');
-            }
-        });
+        // Apply columns one at a time to avoid "column already exists" on re-run
+        $this->addColumnIfMissing('sa_sales', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_sales', 'discount_rate', function ($t) { $t->decimal('discount_rate', 5, 2)->default(0); });
+        $this->addColumnIfMissing('sa_sales', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_sales', 'sa_tax_rate_id', function ($t) { $t->unsignedBigInteger('sa_tax_rate_id')->nullable(); });
+        $this->addColumnIfMissing('sa_sales', 'currency', function ($t) { $t->string('currency', 10)->default('ZMW'); });
 
-        Schema::table('sa_sale_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_sale_items', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_sale_items', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_amount');
-            }
-        });
+        $this->addColumnIfMissing('sa_sale_items', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_sale_items', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
 
-        Schema::table('sa_invoices', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_invoices', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_invoices', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_amount');
-            }
-            if (!Schema::hasColumn('sa_invoices', 'sa_tax_rate_id')) {
-                $table->unsignedBigInteger('sa_tax_rate_id')->nullable()->after('tax_amount');
-            }
-            if (!Schema::hasColumn('sa_invoices', 'currency')) {
-                $table->string('currency', 10)->default('ZMW')->after('tax_amount');
-            }
-        });
+        $this->addColumnIfMissing('sa_invoices', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_invoices', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_invoices', 'sa_tax_rate_id', function ($t) { $t->unsignedBigInteger('sa_tax_rate_id')->nullable(); });
+        $this->addColumnIfMissing('sa_invoices', 'currency', function ($t) { $t->string('currency', 10)->default('ZMW'); });
 
-        Schema::table('sa_invoice_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_invoice_items', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_invoice_items', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_amount');
-            }
-        });
+        $this->addColumnIfMissing('sa_invoice_items', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_invoice_items', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
 
-        Schema::table('sa_quotations', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_quotations', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_quotations', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_amount');
-            }
-            if (!Schema::hasColumn('sa_quotations', 'sa_tax_rate_id')) {
-                $table->unsignedBigInteger('sa_tax_rate_id')->nullable()->after('tax_amount');
-            }
-            if (!Schema::hasColumn('sa_quotations', 'currency')) {
-                $table->string('currency', 10)->default('ZMW')->after('tax_amount');
-            }
-        });
+        $this->addColumnIfMissing('sa_quotations', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_quotations', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_quotations', 'sa_tax_rate_id', function ($t) { $t->unsignedBigInteger('sa_tax_rate_id')->nullable(); });
+        $this->addColumnIfMissing('sa_quotations', 'currency', function ($t) { $t->string('currency', 10)->default('ZMW'); });
 
-        Schema::table('sa_quotation_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sa_quotation_items', 'discount_amount')) {
-                $table->decimal('discount_amount', 14, 2)->default(0)->after('total');
-            }
-            if (!Schema::hasColumn('sa_quotation_items', 'tax_amount')) {
-                $table->decimal('tax_amount', 14, 2)->default(0)->after('discount_amount');
-            }
-        });
+        $this->addColumnIfMissing('sa_quotation_items', 'discount_amount', function ($t) { $t->decimal('discount_amount', 14, 2)->default(0); });
+        $this->addColumnIfMissing('sa_quotation_items', 'tax_amount', function ($t) { $t->decimal('tax_amount', 14, 2)->default(0); });
+    }
+
+    private function addColumnIfMissing(string $table, string $column, callable $callback): void
+    {
+        if (!Schema::hasColumn($table, $column)) {
+            Schema::table($table, function (Blueprint $t) use ($callback) {
+                $callback($t);
+            });
+        }
     }
 
     public function down(): void
