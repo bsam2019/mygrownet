@@ -11,6 +11,8 @@ use App\Domain\StockFlow\Repositories\AuditRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PhysicalCountRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PurchaseOrderRepositoryInterface;
+use App\Domain\StockFlow\Repositories\LotRepositoryInterface;
+use App\Domain\StockFlow\Repositories\BranchRepositoryInterface;
 use App\Domain\StockFlow\Entities\Company;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use DateTimeImmutable;
@@ -25,6 +27,8 @@ class DashboardService
         private SaleRepositoryInterface $saleRepository,
         private PurchaseOrderRepositoryInterface $poRepository,
         private CashRegisterRepositoryInterface $cashRegisterRepository,
+        private LotRepositoryInterface $lotRepository,
+        private BranchRepositoryInterface $branchRepository,
     ) {}
 
     public function getDashboardData(int $companyId): array
@@ -54,6 +58,9 @@ class DashboardService
         // Out of stock items
         $outOfStockItems = array_filter($items, fn($item) => $item->getSystemQuantity() <= 0);
 
+        // Branch count
+        $branches = $this->branchRepository->findByCompanyId(CompanyId::fromInt($companyId));
+
         // Today's sales total
         $today = new DateTimeImmutable();
         $todaysSales = $this->saleRepository->getTodayTotal(CompanyId::fromInt($companyId));
@@ -67,10 +74,36 @@ class DashboardService
             $totalSystemValue += $item->getStockValue()->toFloat();
         }
 
+        // Expiry KPIs from lots
+        $now = new DateTimeImmutable();
+        $expiring30 = $expiring60 = $expiring90 = 0;
+        $lots = $this->lotRepository->findByCompanyId(CompanyId::fromInt($companyId));
+        foreach ($lots as $lot) {
+            $lotArr = $lot->toArray();
+            if ($lotArr['expiry_date'] && $lot->getCurrentQuantity() > 0) {
+                $expDate = new DateTimeImmutable($lotArr['expiry_date']);
+                $days = (int) $now->diff($expDate)->format('%a');
+                if ($days <= 30) $expiring30++;
+                elseif ($days <= 60) $expiring60++;
+                elseif ($days <= 90) $expiring90++;
+            }
+        }
+        // Also check items with direct expiry dates
+        foreach ($items as $item) {
+            $expiry = $item->getExpiryDate();
+            if ($expiry && $item->getSystemQuantity() > 0) {
+                $days = (int) $now->diff($expiry)->format('%a');
+                if ($days <= 30) $expiring30++;
+                elseif ($days <= 60) $expiring60++;
+                elseif ($days <= 90) $expiring90++;
+            }
+        }
+
         return [
             'company' => $company->toArray(),
             'stats' => [
                 'total_items' => count($items),
+                'total_branches' => count($branches),
                 'total_audits' => count($audits),
                 'total_physical_counts' => count($counts),
                 'total_system_value' => $totalSystemValue,
@@ -82,6 +115,9 @@ class DashboardService
                 'unresolved_audit_count' => count($unresolvedAudits),
                 'todays_sales' => $todaysSales,
                 'has_open_register' => $openRegister !== null,
+                'expiring_in_30_days' => $expiring30,
+                'expiring_in_60_days' => $expiring60,
+                'expiring_in_90_days' => $expiring90,
             ],
             'open_register' => $openRegister?->toArray(),
             'low_stock_items' => array_slice(array_map(fn($i) => $i->toArray(), $lowStockItems), 0, 5),
@@ -101,6 +137,7 @@ class DashboardService
             'company' => null,
             'stats' => [
                 'total_items' => 0,
+                'total_branches' => 0,
                 'total_audits' => 0,
                 'total_physical_counts' => 0,
                 'total_system_value' => 0,
@@ -112,6 +149,9 @@ class DashboardService
                 'unresolved_audit_count' => 0,
                 'todays_sales' => 0,
                 'has_open_register' => false,
+                'expiring_in_30_days' => 0,
+                'expiring_in_60_days' => 0,
+                'expiring_in_90_days' => 0,
             ],
             'open_register' => null,
             'low_stock_items' => [],

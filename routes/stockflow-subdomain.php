@@ -23,6 +23,18 @@ use App\Http\Controllers\StockFlow\StockMovementController;
 use App\Http\Controllers\StockFlow\QuotationController;
 use App\Http\Controllers\StockFlow\InvoiceController;
 use App\Http\Controllers\StockFlow\ReceiptController;
+use App\Http\Controllers\StockFlow\CustomerController;
+use App\Http\Controllers\StockFlow\TaxRateController;
+use App\Http\Controllers\StockFlow\CurrencyController;
+use App\Http\Controllers\StockFlow\WarehouseController;
+use App\Http\Controllers\StockFlow\LotController;
+use App\Http\Controllers\StockFlow\RequisitionController;
+use App\Http\Controllers\StockFlow\PaymentController;
+use App\Http\Controllers\StockFlow\CategoryController;
+use App\Http\Controllers\StockFlow\ControlledMedicineController;
+use App\Http\Controllers\StockFlow\SaleReturnController;
+use App\Http\Controllers\StockFlow\SupplierReturnController;
+use App\Http\Controllers\StockFlow\BranchController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -99,6 +111,14 @@ Route::domain('{account}.mygrownet.com')
             Route::post('/companies', [CompanyController::class, 'store'])->name('stockflow.sub.companies.store');
             Route::get('/companies/{company}', [CompanyController::class, 'show'])->name('stockflow.sub.companies.show');
 
+            // Branches
+            Route::middleware('stockflow.feature:branches')->group(function () {
+                Route::get('/branches', [BranchController::class, 'index'])->name('stockflow.sub.branches.index');
+                Route::post('/branches', [BranchController::class, 'store'])->name('stockflow.sub.branches.store');
+                Route::put('/branches/{id}', [BranchController::class, 'update'])->name('stockflow.sub.branches.update');
+                Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('stockflow.sub.branches.destroy');
+            });
+
             // Departments
             Route::middleware('stockflow.feature:departments')->group(function () {
                 Route::get('/departments', [DepartmentController::class, 'index'])->name('stockflow.sub.departments.index');
@@ -125,6 +145,17 @@ Route::domain('{account}.mygrownet.com')
                 Route::delete('/items/{item}', [ItemController::class, 'destroy'])->name('stockflow.sub.items.destroy');
                 Route::post('/items/import', [ItemController::class, 'import'])->name('stockflow.sub.items.import');
                 Route::post('/items/{item}/adjust', [ItemController::class, 'adjustStock'])->name('stockflow.sub.items.adjust');
+                Route::get('/items/{item}/ledger', [ItemController::class, 'ledger'])->name('stockflow.sub.items.ledger');
+            });
+
+            // Customers
+            Route::middleware('stockflow.feature:customers')->group(function () {
+                Route::get('/customers', [CustomerController::class, 'index'])->name('stockflow.sub.customers.index');
+                Route::get('/customers/create', [CustomerController::class, 'create'])->name('stockflow.sub.customers.create');
+                Route::post('/customers', [CustomerController::class, 'store'])->name('stockflow.sub.customers.store');
+                Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('stockflow.sub.customers.show');
+                Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('stockflow.sub.customers.update');
+                Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('stockflow.sub.customers.destroy');
             });
 
             // Suppliers
@@ -218,6 +249,89 @@ Route::domain('{account}.mygrownet.com')
                 Route::post('/audits/{audit}/finalize', [AuditController::class, 'finalize'])->name('stockflow.sub.audits.finalize');
                 Route::get('/audits/{audit}/export-csv', [AuditController::class, 'exportCsv'])->name('stockflow.sub.audits.export-csv');
                 Route::get('/audits/{audit}/pdf', [AuditController::class, 'exportPdf'])->name('stockflow.sub.audits.export-pdf');
+            });
+
+            // Tax Rates
+            Route::middleware('stockflow.feature:tax')->group(function () {
+                Route::get('/tax-rates', [TaxRateController::class, 'index'])->name('stockflow.sub.tax-rates.index');
+                Route::post('/tax-rates', [TaxRateController::class, 'store'])->name('stockflow.sub.tax-rates.store');
+                Route::put('/tax-rates/{id}', [TaxRateController::class, 'update'])->name('stockflow.sub.tax-rates.update');
+                Route::delete('/tax-rates/{id}', [TaxRateController::class, 'destroy'])->name('stockflow.sub.tax-rates.destroy');
+            });
+
+            // Exchange Rates (multi-currency)
+            Route::middleware('stockflow.feature:currency')->group(function () {
+                Route::get('/exchange-rates', [CurrencyController::class, 'index'])->name('stockflow.sub.exchange-rates.index');
+                Route::post('/exchange-rates', [CurrencyController::class, 'store'])->name('stockflow.sub.exchange-rates.store');
+                Route::put('/exchange-rates/{id}', [CurrencyController::class, 'update'])->name('stockflow.sub.exchange-rates.update');
+                Route::delete('/exchange-rates/{id}', [CurrencyController::class, 'destroy'])->name('stockflow.sub.exchange-rates.destroy');
+            });
+
+            // Warehouses
+            Route::middleware('stockflow.feature:warehouses')->group(function () {
+                Route::get('/warehouses', [WarehouseController::class, 'index'])->name('stockflow.sub.warehouses.index');
+                Route::post('/warehouses', [WarehouseController::class, 'store'])->name('stockflow.sub.warehouses.store');
+                Route::put('/warehouses/{id}', [WarehouseController::class, 'update'])->name('stockflow.sub.warehouses.update');
+                Route::delete('/warehouses/{id}', [WarehouseController::class, 'destroy'])->name('stockflow.sub.warehouses.destroy');
+            });
+
+            // Lot/Batch Tracking
+            Route::middleware('stockflow.feature:lots')->group(function () {
+                Route::get('/lots', [LotController::class, 'index'])->name('stockflow.sub.lots.index');
+                Route::post('/lots', [LotController::class, 'store'])->name('stockflow.sub.lots.store');
+                Route::put('/lots/{id}', [LotController::class, 'update'])->name('stockflow.sub.lots.update');
+                Route::delete('/lots/{id}', [LotController::class, 'destroy'])->name('stockflow.sub.lots.destroy');
+                Route::get('/lots/by-item/{itemId}', [LotController::class, 'byItem'])->name('stockflow.sub.lots.by-item');
+            });
+
+            // Purchase Requisitions
+            Route::middleware('stockflow.feature:requisitions')->group(function () {
+                Route::get('/requisitions', [RequisitionController::class, 'index'])->name('stockflow.sub.requisitions.index');
+                Route::post('/requisitions', [RequisitionController::class, 'store'])->name('stockflow.sub.requisitions.store');
+                Route::get('/requisitions/{id}', [RequisitionController::class, 'show'])->name('stockflow.sub.requisitions.show');
+                Route::post('/requisitions/{id}/approve', [RequisitionController::class, 'approve'])->name('stockflow.sub.requisitions.approve');
+                Route::post('/requisitions/{id}/reject', [RequisitionController::class, 'reject'])->name('stockflow.sub.requisitions.reject');
+                Route::delete('/requisitions/{id}', [RequisitionController::class, 'destroy'])->name('stockflow.sub.requisitions.destroy');
+            });
+
+            // Payment Transactions
+            Route::middleware('stockflow.feature:payments')->group(function () {
+                Route::get('/payments', [PaymentController::class, 'index'])->name('stockflow.sub.payments.index');
+                Route::post('/payments', [PaymentController::class, 'store'])->name('stockflow.sub.payments.store');
+                Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('stockflow.sub.payments.show');
+            });
+
+            // Categories (nested)
+            Route::middleware('stockflow.feature:items')->group(function () {
+                Route::get('/categories', [CategoryController::class, 'index'])->name('stockflow.sub.categories.index');
+                Route::post('/categories', [CategoryController::class, 'store'])->name('stockflow.sub.categories.store');
+                Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('stockflow.sub.categories.update');
+                Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('stockflow.sub.categories.destroy');
+            });
+
+            // Controlled Medicine Register
+            Route::middleware('stockflow.feature:controlled-medicines')->group(function () {
+                Route::get('/controlled-medicines', [ControlledMedicineController::class, 'index'])->name('stockflow.sub.controlled-medicines.index');
+                Route::post('/controlled-medicines', [ControlledMedicineController::class, 'store'])->name('stockflow.sub.controlled-medicines.store');
+            });
+
+            // Sale Returns
+            Route::middleware('stockflow.feature:sales')->group(function () {
+                Route::get('/sale-returns', [SaleReturnController::class, 'index'])->name('stockflow.sub.sale-returns.index');
+                Route::post('/sale-returns', [SaleReturnController::class, 'store'])->name('stockflow.sub.sale-returns.store');
+            });
+
+            // Supplier Returns
+            Route::middleware('stockflow.feature:purchases')->group(function () {
+                Route::get('/supplier-returns', [SupplierReturnController::class, 'index'])->name('stockflow.sub.supplier-returns.index');
+                Route::post('/supplier-returns', [SupplierReturnController::class, 'store'])->name('stockflow.sub.supplier-returns.store');
+            });
+
+            // Supplier Portal
+            Route::middleware('stockflow.feature:suppliers')->prefix('supplier-portal')->name('stockflow.sub.supplier-portal.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\StockFlow\SupplierPortalController::class, 'dashboard'])->name('dashboard');
+                Route::get('/orders', [\App\Http\Controllers\StockFlow\SupplierPortalController::class, 'orders'])->name('orders');
+                Route::get('/profile', [\App\Http\Controllers\StockFlow\SupplierPortalController::class, 'profile'])->name('profile');
             });
 
             // Settings

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\StockFlow;
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\InventoryService;
 use App\Domain\StockFlow\Services\DepartmentBinService;
+use App\Domain\StockFlow\Repositories\StockMovementRepositoryInterface;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaItemModel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -16,6 +18,7 @@ class ItemController extends Controller
     public function __construct(
         private InventoryService $inventoryService,
         private DepartmentBinService $departmentBinService,
+        private StockMovementRepositoryInterface $movementRepository,
     ) {}
 
     public function index(Request $request)
@@ -217,5 +220,20 @@ class ItemController extends Controller
         ]);
 
         return $pdf->download("inventory-report-{$summary['total_items']}-items.pdf");
+    }
+
+    public function ledger(int $itemId, Request $request)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        $item = $this->inventoryService->getItemById($itemId, $companyId);
+        if (!$item) abort(404);
+
+        $movements = $this->movementRepository->findByItemId(ItemId::fromInt($itemId));
+        $movementArr = array_map(fn($m) => $m->toArray(), $movements);
+
+        return Inertia::render('StockFlow/StockLedger/Index', [
+            'item' => $item->toArray(),
+            'movements' => $movementArr,
+        ]);
     }
 }

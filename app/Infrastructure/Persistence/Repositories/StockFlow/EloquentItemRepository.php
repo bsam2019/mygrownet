@@ -6,6 +6,7 @@ use App\Domain\StockFlow\Entities\Item;
 use App\Domain\StockFlow\Repositories\ItemRepositoryInterface;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Domain\StockFlow\ValueObjects\CategoryId;
 use App\Domain\StockFlow\ValueObjects\DepartmentId;
 use App\Domain\StockFlow\ValueObjects\BinId;
 use App\Domain\StockFlow\ValueObjects\Money;
@@ -90,10 +91,15 @@ class EloquentItemRepository implements ItemRepositoryInterface
             'sa_company_id' => $item->getCompanyId()->toInt(),
             'sa_department_id' => $item->getDepartmentIdValue(),
             'sa_bin_id' => $item->getBinIdValue(),
+            'sa_category_id' => $item->getCategoryId()?->toInt(),
             'name' => $item->getName(),
             'sku' => $item->getSku(),
+            'barcode' => $item->getBarcode(),
+            'brand' => $item->getBrand(),
             'description' => $item->getDescription(),
             'unit_price' => $item->getUnitPrice()->toFloat(),
+            'wholesale_price' => $item->getWholesalePrice()?->toFloat(),
+            'vip_price' => $item->getVipPrice()?->toFloat(),
             'unit' => $item->getUnit(),
             'system_quantity' => $item->getSystemQuantity(),
             'reorder_level' => $item->getReorderLevel(),
@@ -127,6 +133,7 @@ class EloquentItemRepository implements ItemRepositoryInterface
     {
         $departmentId = $model->sa_department_id ? DepartmentId::fromInt($model->sa_department_id) : null;
         $binId = $model->sa_bin_id ? BinId::fromInt($model->sa_bin_id) : null;
+        $categoryId = $model->sa_category_id ? CategoryId::fromInt($model->sa_category_id) : null;
         $expiryDate = $model->expiry_date ? new DateTimeImmutable($model->expiry_date->format('Y-m-d')) : null;
 
         return Item::reconstitute(
@@ -134,10 +141,15 @@ class EloquentItemRepository implements ItemRepositoryInterface
             companyId: CompanyId::fromInt($model->sa_company_id),
             departmentId: $departmentId,
             binId: $binId,
+            categoryId: $categoryId,
             name: $model->name,
             sku: $model->sku,
+            barcode: $model->barcode,
+            brand: $model->brand,
             description: $model->description,
             unitPrice: Money::fromFloat((float) $model->unit_price),
+            wholesalePrice: $model->wholesale_price !== null ? Money::fromFloat((float) $model->wholesale_price) : null,
+            vipPrice: $model->vip_price !== null ? Money::fromFloat((float) $model->vip_price) : null,
             unit: $model->unit,
             systemQuantity: (float) $model->system_quantity,
             reorderLevel: $model->reorder_level !== null ? (float) $model->reorder_level : null,

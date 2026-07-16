@@ -40,10 +40,12 @@ const profileForm = useForm({
 });
 
 const defaultFeatures = {
-    items: true, sales: true, purchases: true, cash: true,
+    items: true, customers: true, sales: true, purchases: true, cash: true,
     movements: true, counts: true, audits: true, suppliers: true,
-    departments: true, bins: true, employees: true, roles: true,
+    departments: true, branches: true, bins: true, employees: true, roles: true,
     reports: true, quotations: true, invoices: true, receipts: true,
+    tax: true, currency: true, warehouses: true, lots: true,
+    requisitions: true, payments: true, 'controlled-medicines': true,
 };
 
 const companySettings = props.company?.settings ?? {};

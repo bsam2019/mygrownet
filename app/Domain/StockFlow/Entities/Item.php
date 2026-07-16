@@ -8,6 +8,7 @@ use Illuminate\Contracts\Support\Arrayable;
 
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Domain\StockFlow\ValueObjects\CategoryId;
 use App\Domain\StockFlow\ValueObjects\DepartmentId;
 use App\Domain\StockFlow\ValueObjects\BinId;
 use App\Domain\StockFlow\ValueObjects\Money;
@@ -20,10 +21,15 @@ class Item implements Arrayable
         private CompanyId $companyId,
         private ?DepartmentId $departmentId,
         private ?BinId $binId,
+        private ?CategoryId $categoryId,
         private string $name,
         private ?string $sku,
+        private ?string $barcode,
+        private ?string $brand,
         private ?string $description,
         private Money $unitPrice,
+        private ?Money $wholesalePrice,
+        private ?Money $vipPrice,
         private ?string $unit,
         private float $systemQuantity,
         private ?float $reorderLevel,
@@ -39,10 +45,15 @@ class Item implements Arrayable
         CompanyId $companyId,
         ?DepartmentId $departmentId = null,
         ?BinId $binId = null,
+        ?CategoryId $categoryId = null,
         string $name = '',
         ?string $sku = null,
+        ?string $barcode = null,
+        ?string $brand = null,
         ?string $description = null,
         Money $unitPrice = null,
+        ?Money $wholesalePrice = null,
+        ?Money $vipPrice = null,
         ?string $unit = null,
         float $systemQuantity = 0,
         ?float $reorderLevel = null,
@@ -56,10 +67,15 @@ class Item implements Arrayable
             companyId: $companyId,
             departmentId: $departmentId,
             binId: $binId,
+            categoryId: $categoryId,
             name: $name,
             sku: $sku,
+            barcode: $barcode,
+            brand: $brand,
             description: $description,
             unitPrice: $unitPrice ?? Money::zero(),
+            wholesalePrice: $wholesalePrice,
+            vipPrice: $vipPrice,
             unit: $unit,
             systemQuantity: max(0, $systemQuantity),
             reorderLevel: $reorderLevel,
@@ -77,10 +93,15 @@ class Item implements Arrayable
         CompanyId $companyId,
         ?DepartmentId $departmentId,
         ?BinId $binId,
+        ?CategoryId $categoryId,
         string $name,
         ?string $sku,
+        ?string $barcode,
+        ?string $brand,
         ?string $description,
         Money $unitPrice,
+        ?Money $wholesalePrice,
+        ?Money $vipPrice,
         ?string $unit,
         float $systemQuantity,
         ?float $reorderLevel,
@@ -91,7 +112,7 @@ class Item implements Arrayable
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
     ): self {
-        return new self($id, $companyId, $departmentId, $binId, $name, $sku, $description, $unitPrice, $unit, $systemQuantity, $reorderLevel, $category, $isExpirable, $expiryDate, $notes, $createdAt, $updatedAt);
+        return new self($id, $companyId, $departmentId, $binId, $categoryId, $name, $sku, $barcode, $brand, $description, $unitPrice, $wholesalePrice, $vipPrice, $unit, $systemQuantity, $reorderLevel, $category, $isExpirable, $expiryDate, $notes, $createdAt, $updatedAt);
     }
 
     public function adjustStock(float $quantity): void
@@ -110,9 +131,14 @@ class Item implements Arrayable
         string $name,
         ?DepartmentId $departmentId,
         ?BinId $binId,
+        ?CategoryId $categoryId,
         ?string $sku,
+        ?string $barcode,
+        ?string $brand,
         ?string $description,
         Money $unitPrice,
+        ?Money $wholesalePrice,
+        ?Money $vipPrice,
         ?string $unit,
         ?float $reorderLevel,
         ?string $category,
@@ -123,9 +149,14 @@ class Item implements Arrayable
         $this->name = $name;
         $this->departmentId = $departmentId;
         $this->binId = $binId;
+        $this->categoryId = $categoryId;
         $this->sku = $sku;
+        $this->barcode = $barcode;
+        $this->brand = $brand;
         $this->description = $description;
         $this->unitPrice = $unitPrice;
+        $this->wholesalePrice = $wholesalePrice;
+        $this->vipPrice = $vipPrice;
         $this->unit = $unit;
         $this->reorderLevel = $reorderLevel;
         $this->category = $category;
@@ -163,10 +194,15 @@ class Item implements Arrayable
     public function getDepartmentIdValue(): ?int { return $this->departmentId?->toInt(); }
     public function getBinId(): ?BinId { return $this->binId; }
     public function getBinIdValue(): ?int { return $this->binId?->toInt(); }
+    public function getCategoryId(): ?CategoryId { return $this->categoryId; }
     public function getName(): string { return $this->name; }
     public function getSku(): ?string { return $this->sku; }
+    public function getBarcode(): ?string { return $this->barcode; }
+    public function getBrand(): ?string { return $this->brand; }
     public function getDescription(): ?string { return $this->description; }
     public function getUnitPrice(): Money { return $this->unitPrice; }
+    public function getWholesalePrice(): ?Money { return $this->wholesalePrice; }
+    public function getVipPrice(): ?Money { return $this->vipPrice; }
     public function getUnit(): ?string { return $this->unit; }
     public function getSystemQuantity(): float { return $this->systemQuantity; }
     public function getReorderLevel(): ?float { return $this->reorderLevel; }
@@ -182,10 +218,15 @@ class Item implements Arrayable
             'sa_company_id' => $this->companyId->toInt(),
             'sa_department_id' => $this->departmentId?->toInt(),
             'sa_bin_id' => $this->binId?->toInt(),
+            'sa_category_id' => $this->categoryId?->toInt(),
             'name' => $this->name,
             'sku' => $this->sku,
+            'barcode' => $this->barcode,
+            'brand' => $this->brand,
             'description' => $this->description,
             'unit_price' => $this->unitPrice->toFloat(),
+            'wholesale_price' => $this->wholesalePrice?->toFloat(),
+            'vip_price' => $this->vipPrice?->toFloat(),
             'unit' => $this->unit,
             'system_quantity' => $this->systemQuantity,
             'reorder_level' => $this->reorderLevel,

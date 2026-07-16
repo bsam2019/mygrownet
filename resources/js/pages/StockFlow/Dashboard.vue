@@ -78,6 +78,7 @@ interface Props {
     companies: Company[];
     stats: {
         total_items: number;
+        total_branches: number;
         total_audits: number;
         total_physical_counts: number;
         total_system_value: number;
@@ -145,6 +146,7 @@ const moduleGroups = computed(() => [
         title: 'Administration',
         items: [
             { name: 'Suppliers', href: sf('/suppliers'), icon: BuildingStorefrontIcon, desc: 'Manage vendor records', color: 'cyan' },
+            { name: 'Branches', href: sf('/branches'), icon: HomeModernIcon, desc: 'Manage branch locations', color: 'pink' },
             { name: 'Departments', href: sf('/departments'), icon: BuildingOfficeIcon, desc: 'Organize by department', color: 'rose' },
             { name: 'Bins', href: sf('/bins'), icon: CubeIcon, desc: 'Storage locations', color: 'orange' },
         ],
@@ -162,6 +164,7 @@ const colorMap: Record<string, { bg: string; icon: string; hover: string }> = {
     cyan: { bg: 'bg-cyan-50', icon: 'text-cyan-600', hover: 'hover:bg-cyan-50' },
     rose: { bg: 'bg-rose-50', icon: 'text-rose-600', hover: 'hover:bg-rose-50' },
     orange: { bg: 'bg-orange-50', icon: 'text-orange-600', hover: 'hover:bg-orange-50' },
+    pink: { bg: 'bg-pink-50', icon: 'text-pink-600', hover: 'hover:bg-pink-50' },
 };
 
 const { formatCurrency } = useCurrency();
