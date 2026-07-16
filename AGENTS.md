@@ -2,6 +2,7 @@
 
 ## Constraints
 - NEVER run `npm run build` on the production server (droplet 138.197.187.134)
+- NEVER run `npm run build` — building frontend assets must only be done by the user manually
 - `public/build/` is untracked from git — deployment of built assets must be handled separately
 - No duplicate user accounts — single MyGrowNet user database
 
