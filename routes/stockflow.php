@@ -203,6 +203,12 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings/company', [SettingsController::class, 'updateCompany'])->name('settings.update-company');
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.update-profile');
+    Route::post('/settings/backup', [SettingsController::class, 'updateBackup'])->name('settings.update-backup');
+    Route::post('/settings/domains', [SettingsController::class, 'addDomain'])->name('settings.domains.add');
+    Route::delete('/settings/domains/{domainId}', [SettingsController::class, 'deleteDomain'])->name('settings.domains.delete');
+    Route::post('/settings/email', [SettingsController::class, 'updateEmailSettings'])->name('settings.update-email');
+    Route::post('/settings/api-keys', [SettingsController::class, 'generateApiKey'])->name('settings.api-keys.generate');
+    Route::post('/settings/api-keys/{keyId}/revoke', [SettingsController::class, 'revokeApiKey'])->name('settings.api-keys.revoke');
 
     // Roles & Employees (require feature + permission)
     Route::middleware(['stockflow.feature:roles', 'stockflow.permission:employees.roles'])->group(function () {

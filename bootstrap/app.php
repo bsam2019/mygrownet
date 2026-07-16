@@ -132,6 +132,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'stockflow.admin' => \App\Http\Middleware\StockFlowAdminMiddleware::class,
             'stockflow.permission' => \App\Http\Middleware\StockFlowPermission::class,
             'stockflow.feature' => \App\Http\Middleware\CheckFeatureEnabled::class,
+            'stockflow.api' => \App\Http\Middleware\StockFlowApiAuth::class,
             'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
             'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
         ]);

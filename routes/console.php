@@ -240,6 +240,15 @@ Schedule::command('growmart:low-stock-alerts')
     ->hourly()
     ->description('Send low stock alerts for GrowMart products');
 
+// ========================================
+// StockFlow Scheduled Tasks
+// ========================================
+
+// Send daily inventory backups to companies that have enabled backups
+Schedule::command('stockflow:send-backup')
+    ->dailyAt('06:00')
+    ->description('Send daily StockFlow inventory backups to enabled companies');
+
 // DISABLED - RewardAnalyticsController causing circular dependency memory exhaustion
 // Artisan::command('test:reward-analytics', function () {
 //     $this->info('Testing RewardAnalyticsController...');

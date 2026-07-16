@@ -224,6 +224,12 @@ Route::domain('{account}.mygrownet.com')
             Route::get('/settings', [SettingsController::class, 'index'])->name('stockflow.sub.settings.index');
             Route::put('/settings/company', [SettingsController::class, 'updateCompany'])->name('stockflow.sub.settings.update-company');
             Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('stockflow.sub.settings.update-profile');
+            Route::post('/settings/backup', [SettingsController::class, 'updateBackup'])->name('stockflow.sub.settings.update-backup');
+            Route::post('/settings/domains', [SettingsController::class, 'addDomain'])->name('stockflow.sub.settings.domains.add');
+            Route::delete('/settings/domains/{domainId}', [SettingsController::class, 'deleteDomain'])->name('stockflow.sub.settings.domains.delete');
+            Route::post('/settings/email', [SettingsController::class, 'updateEmailSettings'])->name('stockflow.sub.settings.update-email');
+            Route::post('/settings/api-keys', [SettingsController::class, 'generateApiKey'])->name('stockflow.sub.settings.api-keys.generate');
+            Route::post('/settings/api-keys/{keyId}/revoke', [SettingsController::class, 'revokeApiKey'])->name('stockflow.sub.settings.api-keys.revoke');
 
             // Roles & Employees
             Route::middleware(['stockflow.feature:roles', 'stockflow.permission:employees.roles'])->group(function () {

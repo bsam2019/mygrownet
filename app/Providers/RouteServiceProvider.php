@@ -89,9 +89,13 @@ class RouteServiceProvider extends ServiceProvider
             // GrowBuilder subdomain routes - loaded in bootstrap/app.php
             // (subdomain.php is commented out there since DetectSubdomain handles it)
 
-            // StockFlow module - subdomain routes loaded in bootstrap/app.php
-            // Route::middleware('web')
-            //     ->group(base_path('routes/stockflow.php'));
+            // StockFlow module - main domain routes
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow.php'));
+
+            // StockFlow API routes
+            Route::middleware('web')
+                ->group(base_path('routes/stockflow-api.php'));
 
             // ZamStay module - loaded in bootstrap/app.php
         });

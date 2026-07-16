@@ -6,9 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\DashboardService;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaBackupConfigModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaCustomDomainModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaEmailSettingModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaApiKeyModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -29,9 +34,18 @@ class SettingsController extends Controller
 
         $user = Auth::guard('stockflow')->user();
 
+        $backup = $companyId ? SaBackupConfigModel::where('sa_company_id', $companyId)->first() : null;
+        $domains = $companyId ? SaCustomDomainModel::where('sa_company_id', $companyId)->get()->toArray() : [];
+        $emailSettings = $companyId ? SaEmailSettingModel::where('sa_company_id', $companyId)->first() : null;
+        $apiKeys = $companyId ? SaApiKeyModel::where('sa_company_id', $companyId)->get()->toArray() : [];
+
         return Inertia::render('StockFlow/Settings/Index', [
             'company' => $company?->toArray(),
             'profile' => $user?->only(['id', 'name', 'email']),
+            'backup' => $backup ? $backup->toArray() : null,
+            'domains' => $domains,
+            'emailSettings' => $emailSettings ? $emailSettings->toArray() : null,
+            'apiKeys' => $apiKeys,
         ]);
     }
 
@@ -57,7 +71,6 @@ class SettingsController extends Controller
             'features_enabled.*' => 'boolean',
         ]);
 
-        // Merge features_enabled into existing company settings
         if ($request->has('features_enabled')) {
             $repo = app(\App\Domain\StockFlow\Repositories\CompanyRepositoryInterface::class);
             $company = $repo->findById(\App\Domain\StockFlow\ValueObjects\CompanyId::fromInt($companyId));
@@ -106,5 +119,116 @@ class SettingsController extends Controller
 
         return redirect()->sfRoute('stockflow.settings.index')
             ->with('success', 'Profile updated.');
+    }
+
+    public function updateBackup(Request $request)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        if (!$companyId) {
+            return back()->withErrors(['backup' => 'No company selected.']);
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'enabled' => 'boolean',
+            'frequency' => 'nullable|string|in:daily,weekly,monthly',
+            'include_files' => 'nullable|string',
+        ]);
+
+        SaBackupConfigModel::updateOrCreate(
+            ['sa_company_id' => $companyId],
+            $validated
+        );
+
+        return back()->with('success', 'Backup settings saved.');
+    }
+
+    public function addDomain(Request $request)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        if (!$companyId) {
+            return back()->withErrors(['domain' => 'No company selected.']);
+        }
+
+        $validated = $request->validate([
+            'domain' => 'required|string|max:255|unique:sa_custom_domains,domain',
+        ]);
+
+        $validated['sa_company_id'] = $companyId;
+        $validated['status'] = 'pending';
+
+        SaCustomDomainModel::create($validated);
+
+        return back()->with('success', 'Domain added. Update your DNS records to point to the server.');
+    }
+
+    public function deleteDomain(Request $request, int $domainId)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        $domain = SaCustomDomainModel::where('id', $domainId)->where('sa_company_id', $companyId)->first();
+        if (!$domain) {
+            return back()->withErrors(['domain' => 'Domain not found.']);
+        }
+        $domain->delete();
+
+        return back()->with('success', 'Domain removed.');
+    }
+
+    public function updateEmailSettings(Request $request)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        if (!$companyId) {
+            return back()->withErrors(['email_settings' => 'No company selected.']);
+        }
+
+        $validated = $request->validate([
+            'provider' => 'nullable|string|max:50',
+            'smtp_host' => 'nullable|string|max:255',
+            'smtp_port' => 'nullable|integer|min:1|max:65535',
+            'smtp_username' => 'nullable|string|max:255',
+            'smtp_password' => 'nullable|string|max:255',
+            'smtp_encryption' => 'nullable|string|in:tls,ssl,null',
+            'from_address' => 'nullable|email',
+            'from_name' => 'nullable|string|max:255',
+        ]);
+
+        SaEmailSettingModel::updateOrCreate(
+            ['sa_company_id' => $companyId],
+            $validated
+        );
+
+        return back()->with('success', 'Email settings saved.');
+    }
+
+    public function generateApiKey(Request $request)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        if (!$companyId) {
+            return back()->withErrors(['api_key' => 'No company selected.']);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+        ]);
+
+        $validated['sa_company_id'] = $companyId;
+        $validated['key'] = Str::random(64);
+
+        SaApiKeyModel::create($validated);
+
+        return back()->with('success', 'API key generated. Copy the key now — it won\'t be shown again.');
+    }
+
+    public function revokeApiKey(Request $request, int $keyId)
+    {
+        $companyId = $request->session()->get('stockflow_company_id');
+        $key = SaApiKeyModel::where('id', $keyId)->where('sa_company_id', $companyId)->first();
+        if (!$key) {
+            return back()->withErrors(['api_key' => 'API key not found.']);
+        }
+        $key->update(['active' => false]);
+
+        return back()->with('success', 'API key revoked.');
     }
 }
