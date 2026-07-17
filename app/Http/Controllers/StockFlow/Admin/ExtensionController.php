@@ -25,6 +25,7 @@ class ExtensionController extends Controller
             'description' => $e->description,
             'version' => $e->version,
             'is_active' => $e->is_active,
+            'trial_days' => $e->trial_days,
             'price_monthly_usd' => $e->price_monthly_usd,
             'price_yearly_usd' => $e->price_yearly_usd,
             'price_monthly_zmw' => $e->price_monthly_zmw,
@@ -44,6 +45,7 @@ class ExtensionController extends Controller
                 'extension_id' => $ce->extension_id,
                 'extension_code' => $ce->extension->code,
                 'status' => $ce->status,
+                'trial_ends_at' => $ce->trial_ends_at?->format('Y-m-d'),
             ]));
 
         return Inertia::render('StockFlow/Admin/Extensions/Index', [
@@ -56,6 +58,7 @@ class ExtensionController extends Controller
     public function updatePrice(Request $request, Extension $extension)
     {
         $validated = $request->validate([
+            'trial_days' => 'required|integer|min:0',
             'price_monthly_usd' => 'required|numeric|min:0',
             'price_yearly_usd' => 'required|numeric|min:0',
             'price_monthly_zmw' => 'required|numeric|min:0',
@@ -85,12 +88,22 @@ class ExtensionController extends Controller
 
         $extension = Extension::findOrFail($validated['extension_id']);
 
+        $now = now();
+        $payload = [
+            'status' => $extension->trial_days > 0 ? 'trial' : 'active',
+            'subscribed_at' => $now,
+        ];
+
+        if ($extension->trial_days > 0) {
+            $payload['trial_ends_at'] = $now->copy()->addDays($extension->trial_days);
+        }
+
         CompanyExtension::firstOrCreate(
             [
                 'sa_company_id' => $validated['sa_company_id'],
                 'extension_id' => $validated['extension_id'],
             ],
-            ['status' => 'active', 'subscribed_at' => now()]
+            $payload
         );
 
         // Sync extension features to company settings

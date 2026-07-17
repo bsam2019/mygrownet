@@ -15,12 +15,14 @@ class CompanyExtension extends Model
         'status',
         'settings',
         'subscribed_at',
+        'trial_ends_at',
         'expires_at',
     ];
 
     protected $casts = [
         'settings' => 'array',
         'subscribed_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
 

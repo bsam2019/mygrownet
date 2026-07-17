@@ -17,6 +17,7 @@ class Extension extends Model
         'provider_class',
         'default_settings',
         'is_active',
+        'trial_days',
         'price_monthly_usd',
         'price_yearly_usd',
         'price_monthly_zmw',
@@ -26,6 +27,7 @@ class Extension extends Model
     protected $casts = [
         'default_settings' => 'array',
         'is_active' => 'boolean',
+        'trial_days' => 'integer',
         'price_monthly_usd' => 'decimal:2',
         'price_yearly_usd' => 'decimal:2',
         'price_monthly_zmw' => 'decimal:2',

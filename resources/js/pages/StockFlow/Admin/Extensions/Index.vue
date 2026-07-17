@@ -11,6 +11,7 @@ interface Extension {
     description: string | null;
     version: string | null;
     is_active: boolean;
+    trial_days: number;
     price_monthly_usd: number;
     price_yearly_usd: number;
     price_monthly_zmw: number;
@@ -28,6 +29,7 @@ interface Assignments {
         extension_id: number;
         extension_code: string;
         status: string;
+        trial_ends_at: string | null;
     }[];
 }
 
@@ -65,10 +67,11 @@ const getCompanyExtensions = (companyId: number) => {
 
 // Pricing
 const editingPrice = ref<number | null>(null);
-const priceForm = useForm({ price_monthly_usd: 0, price_yearly_usd: 0, price_monthly_zmw: 0, price_yearly_zmw: 0 });
+const priceForm = useForm({ trial_days: 0, price_monthly_usd: 0, price_yearly_usd: 0, price_monthly_zmw: 0, price_yearly_zmw: 0 });
 
 const startEditPrice = (ext: Extension) => {
     editingPrice.value = ext.id;
+    priceForm.trial_days = ext.trial_days;
     priceForm.price_monthly_usd = ext.price_monthly_usd;
     priceForm.price_yearly_usd = ext.price_yearly_usd;
     priceForm.price_monthly_zmw = ext.price_monthly_zmw;
@@ -104,6 +107,7 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Extension</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Code</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Version</th>
+                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Trial <span class="text-gray-400">(days)</span></th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Monthly <span class="text-gray-400">(USD/ZMW)</span></th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Yearly <span class="text-gray-400">(USD/ZMW)</span></th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -119,6 +123,16 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ ext.code }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ ext.version || '-' }}</td>
+                                <td class="px-6 py-4 text-center text-sm">
+                                    <template v-if="editingPrice === ext.id">
+                                        <input v-model="priceForm.trial_days" type="number" min="0" class="w-14 rounded border border-gray-200 px-1 py-1 text-xs text-center" />
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">
+                                            {{ ext.trial_days }}d
+                                        </span>
+                                    </template>
+                                </td>
                                 <td class="px-6 py-4 text-center text-sm">
                                     <template v-if="editingPrice === ext.id">
                                         <div class="flex items-center justify-center gap-1">
@@ -171,7 +185,7 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                                 </td>
                             </tr>
                             <tr v-if="!extensions.length">
-                                <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                                <td colspan="9" class="px-6 py-8 text-center text-gray-400">
                                     No extensions registered. Add extension providers to config/stockflow.php
                                 </td>
                             </tr>
@@ -211,10 +225,12 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                         <div class="px-6 py-4">
                             <h4 class="text-sm font-semibold text-gray-700 mb-3">Current Assignments</h4>
                             <div v-for="company in companies" :key="company.id" class="mb-3 last:mb-0">
-                                <div v-if="getCompanyExtensions(company.id).length" class="flex items-center gap-3">
+                                <div v-if="getCompanyExtensions(company.id).length" class="flex items-center gap-3 flex-wrap">
                                     <span class="text-sm font-medium text-gray-700 min-w-[150px]">{{ company.name }}</span>
-                                    <span v-for="ce in getCompanyExtensions(company.id)" :key="ce.extension_id" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                    <span v-for="ce in getCompanyExtensions(company.id)" :key="ce.extension_id" class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset"
+                                        :class="ce.status === 'trial' ? 'bg-amber-50 text-amber-700 ring-amber-600/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'">
                                         {{ ce.extension_code }}
+                                        <span v-if="ce.status === 'trial' && ce.trial_ends_at" class="text-amber-500">(trial until {{ ce.trial_ends_at }})</span>
                                         <Link :href="route('stockflow.admin.extensions.revoke', ce.extension_id)" method="post" as="button" class="text-emerald-400 hover:text-red-500 ml-1">&times;</Link>
                                     </span>
                                 </div>
