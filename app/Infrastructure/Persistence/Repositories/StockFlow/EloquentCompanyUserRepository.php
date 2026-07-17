@@ -5,6 +5,7 @@ namespace App\Infrastructure\Persistence\Repositories\StockFlow;
 use App\Domain\StockFlow\Entities\CompanyUser;
 use App\Domain\StockFlow\Repositories\CompanyUserRepositoryInterface;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
+use App\Domain\StockFlow\ValueObjects\CompanyRoleId;
 use App\Domain\StockFlow\ValueObjects\CompanyUserId;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyUserModel;
 
