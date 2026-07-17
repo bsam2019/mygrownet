@@ -42,6 +42,12 @@ export function useStockflowRoute() {
         }
 
         if (name.startsWith('stockflow.sub.')) {
+            const ziggyRoutes = (page.props as any).ziggy?.routes ?? (window as any).Ziggy?.routes;
+            if (!ziggyRoutes?.[name]) {
+                const mainName = name.replace('stockflow.sub.', 'stockflow.');
+                return routeHelper(mainName, params);
+            }
+
             let mergedParams: Record<string, any>;
             if (typeof params === 'object' && params !== null && !Array.isArray(params)) {
                 mergedParams = { ...params, account: account.value };

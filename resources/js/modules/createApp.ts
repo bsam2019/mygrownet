@@ -135,7 +135,7 @@ export function registerModuleSW(moduleSwPath: string, moduleName: string) {
 export function bootInertia(
     appName: string,
     pageResolver: (name: string) => Promise<DefineComponent>,
-    progressConfig: any = { delay: 250, color: '#2563eb', includeCSS: true, showSpinner: false },
+    progressConfig: any = { delay: 80, color: '#059669', includeCSS: true, showSpinner: false },
 ) {
     createInertiaApp({
         title: (title) => `${title} - ${appName}`,

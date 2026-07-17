@@ -51,7 +51,7 @@ const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 const showUserMenu = ref(false);
-const collapsedGroups = ref<Set<string>>(new Set());
+const collapsedGroups = ref<Set<string>>(new Set(['Overview', 'Inventory', 'Sales & Customers', 'Purchasing', 'Operations', 'Extensions', 'Administration']));
 const desktopNavRef = ref<HTMLElement | null>(null);
 
 const isSubdomain = computed(() => {
