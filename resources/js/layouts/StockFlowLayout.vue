@@ -33,6 +33,7 @@ import {
     ArrowUturnLeftIcon,
     WrenchIcon,
     TrashIcon,
+    BookOpenIcon,
 } from '@heroicons/vue/24/outline';
 import NotificationToast from '@/components/StockFlow/NotificationToast.vue';
 import NotificationBell from '@/components/StockFlow/NotificationBell.vue';
