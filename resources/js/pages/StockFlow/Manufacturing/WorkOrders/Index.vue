@@ -20,7 +20,7 @@ function submit() { form.post(sf('work-orders.store'), { onSuccess: () => { rese
         <div class="max-w-6xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Work Orders</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Work Order' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Work Order' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -30,7 +30,7 @@ function submit() { form.post(sf('work-orders.store'), { onSuccess: () => { rese
                     <div><label>BOM ID</label><input v-model="form.sa_bom_id" type="number" class="w-full border rounded px-3 py-2" /></div>
                     <div><label>Due Date</label><input v-model="form.due_date" type="date" class="w-full border rounded px-3 py-2" /></div>
                     <div class="col-span-2"><label>Notes</label><textarea v-model="form.notes" class="w-full border rounded px-3 py-2"></textarea></div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Create</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Create</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow overflow-x-auto">

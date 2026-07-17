@@ -24,7 +24,7 @@ function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.des
         <div class="max-w-5xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Lot / Batch Tracking</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Lot' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Lot' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -34,7 +34,7 @@ function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.des
                     <div><label>Manufacturing Date</label><input v-model="form.manufacturing_date" type="date" class="w-full border rounded px-3 py-2" /></div>
                     <div><label>Expiry Date</label><input v-model="form.expiry_date" type="date" class="w-full border rounded px-3 py-2" /></div>
                     <div><label>Received Date</label><input v-model="form.received_date" type="date" class="w-full border rounded px-3 py-2" /></div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Create Lot</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Create Lot</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow">

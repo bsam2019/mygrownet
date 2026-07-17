@@ -45,7 +45,7 @@ function remove(id: number) {
         <div class="max-w-4xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Tax Rates</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">
                     {{ showForm ? 'Cancel' : 'Add Tax Rate' }}
                 </button>
             </div>
@@ -71,7 +71,7 @@ function remove(id: number) {
                         <input v-model="form.is_default" type="checkbox" />
                         <span>Set as default</span>
                     </label>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button>
                 </form>
             </div>
 

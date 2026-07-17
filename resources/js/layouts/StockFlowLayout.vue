@@ -243,7 +243,7 @@ onUnmounted(() => {
                         </div>
                         <div v-if="!sidebarCollapsed">
                             <h3 class="text-lg font-bold text-gray-900">StockFlow</h3>
-                            <p class="text-xs text-gray-500">Stock Audit</p>
+                            <p class="text-xs text-gray-500">Inventory</p>
                         </div>
                     </Link>
                     <button

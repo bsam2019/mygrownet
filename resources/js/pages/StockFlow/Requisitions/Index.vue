@@ -26,7 +26,7 @@ const badgeClass = (s: string) => s === 'approved' ? 'bg-green-100 text-green-80
         <div class="max-w-5xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Purchase Requisitions</h1>
-                <Link :href="sf('requisitions.index') + '?create=1'" class="px-4 py-2 bg-blue-600 text-white rounded">New Requisition</Link>
+                <Link :href="sf('requisitions.index') + '?create=1'" class="px-4 py-2 bg-emerald-600 text-white rounded">New Requisition</Link>
             </div>
             <div class="bg-white rounded-lg shadow">
                 <table class="w-full">

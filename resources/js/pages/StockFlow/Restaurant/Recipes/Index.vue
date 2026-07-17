@@ -20,7 +20,7 @@ function submit() { form.post(sf('recipes.store'), { onSuccess: () => { reset();
         <div class="max-w-6xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Recipes</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Recipe' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Recipe' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -29,7 +29,7 @@ function submit() { form.post(sf('recipes.store'), { onSuccess: () => { reset();
                     <div><label>Yield Qty</label><input v-model="form.yield_quantity" type="number" step="0.01" class="w-full border rounded px-3 py-2" /></div>
                     <div><label>Yield UOM</label><input v-model="form.yield_uom" class="w-full border rounded px-3 py-2" /></div>
                     <div class="col-span-2"><label>Instructions</label><textarea v-model="form.instructions" class="w-full border rounded px-3 py-2"></textarea></div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Save</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow overflow-x-auto">

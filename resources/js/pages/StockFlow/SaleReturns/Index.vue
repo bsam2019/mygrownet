@@ -22,7 +22,7 @@ function submit() { form.post(sf('sale-returns.store'), { onSuccess: () => { res
         <div class="max-w-5xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Sales Returns</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Return' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'New Return' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="space-y-4">
@@ -43,7 +43,7 @@ function submit() { form.post(sf('sale-returns.store'), { onSuccess: () => { res
                         <button type="button" @click="removeItem(i)" class="text-red-600 text-sm">Remove</button>
                     </div>
                     <button type="button" @click="addItem" class="text-blue-600 text-sm">+ Add Item</button>
-                    <div><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Process Return</button></div>
+                    <div><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Process Return</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow">

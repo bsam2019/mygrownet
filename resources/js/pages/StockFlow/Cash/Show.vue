@@ -111,7 +111,7 @@ const isOpen = props.register.status === 'open';
                             <button v-if="isOpen" @click="showCloseForm = !showCloseForm" class="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
                                 Close Register
                             </button>
-                            <button v-if="register.status === 'closed'" @click="verifyRegister" class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                            <button v-if="register.status === 'closed'" @click="verifyRegister" class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                                 Verify
                             </button>
                         </div>

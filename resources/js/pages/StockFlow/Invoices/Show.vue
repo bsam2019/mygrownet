@@ -88,7 +88,7 @@ const updateStatus = (status: string) => {
                         <button
                             v-if="invoice.status === 'draft'"
                             @click="updateStatus('sent')"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                         >
                             Mark Sent
                         </button>

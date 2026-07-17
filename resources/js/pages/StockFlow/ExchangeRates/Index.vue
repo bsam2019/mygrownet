@@ -34,7 +34,7 @@ function remove(id: number) {
         <div class="max-w-4xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Exchange Rates</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Rate' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Rate' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -42,7 +42,7 @@ function remove(id: number) {
                     <div><label>To</label><input v-model="form.to_currency" class="w-full border rounded px-3 py-2" maxlength="3" /></div>
                     <div><label>Rate</label><input v-model="form.rate" type="number" step="0.000001" class="w-full border rounded px-3 py-2" /></div>
                     <div><label>Effective Date</label><input v-model="form.effective_date" type="date" class="w-full border rounded px-3 py-2" /></div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow">

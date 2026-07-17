@@ -93,7 +93,7 @@ const submitEdit = () => {
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <h1 class="text-2xl font-bold text-gray-900">{{ item.name }}</h1>
                                 <div class="flex gap-2">
-                                    <button @click="showEdit = !showEdit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                                    <button @click="showEdit = !showEdit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                                         Edit Details
                                     </button>
                                     <button @click="showAdjust = !showAdjust" class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
@@ -200,7 +200,7 @@ const submitEdit = () => {
                                     <textarea v-model="editForm.notes" rows="2" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"></textarea>
                                 </div>
                                 <div class="flex gap-3">
-                                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save Changes</button>
+                                    <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Save Changes</button>
                                     <button type="button" @click="showEdit = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
                                 </div>
                             </form>

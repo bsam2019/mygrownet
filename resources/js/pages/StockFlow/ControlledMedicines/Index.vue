@@ -21,7 +21,7 @@ const typeBadge = (t: string) => t === 'received' ? 'bg-green-100 text-green-800
         <div class="max-w-6xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Controlled Medicine Register</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'Record Transaction' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'Record Transaction' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -33,7 +33,7 @@ const typeBadge = (t: string) => t === 'received' ? 'bg-green-100 text-green-800
                     <div><label>Patient ID #</label><input v-model="form.patient_id_number" class="w-full border rounded px-3 py-2" /></div>
                     <div class="col-span-2"><label>Prescription #</label><input v-model="form.prescription_number" class="w-full border rounded px-3 py-2" /></div>
                     <div class="col-span-2"><label>Notes</label><textarea v-model="form.notes" class="w-full border rounded px-3 py-2"></textarea></div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Record</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">Record</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow overflow-x-auto">

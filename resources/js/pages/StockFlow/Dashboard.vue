@@ -338,9 +338,9 @@ const recentActivity = computed(() => {
                             <div class="rounded-lg bg-blue-50 p-2.5 shrink-0">
                                 <CurrencyDollarIcon class="h-5 w-5 text-blue-600" />
                             </div>
-                            <div class="min-w-0">
+                            <div class="flex-1">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Stock Value</p>
-                                <p class="text-lg font-bold text-gray-900 truncate">{{ formatCurrency(stats.total_system_value) }}</p>
+                                <p class="text-lg font-bold text-gray-900 break-words">{{ formatCurrency(stats.total_system_value) }}</p>
                             </div>
                         </div>
                     </div>

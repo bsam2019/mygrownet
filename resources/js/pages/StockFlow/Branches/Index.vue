@@ -27,7 +27,7 @@ function remove(id: number) { if (confirm('Delete?')) router.delete(sf('branches
         <div class="max-w-4xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Branches</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Branch' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Branch' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="grid grid-cols-2 gap-4">
@@ -42,7 +42,7 @@ function remove(id: number) { if (confirm('Delete?')) router.delete(sf('branches
                         <label><input v-model="form.is_head_office" type="checkbox" /> Head Office</label>
                         <label><input v-model="form.is_active" type="checkbox" /> Active</label>
                     </div>
-                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button></div>
+                    <div class="col-span-2"><button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button></div>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow">

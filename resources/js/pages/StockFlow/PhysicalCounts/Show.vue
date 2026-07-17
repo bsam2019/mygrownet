@@ -108,7 +108,7 @@ const generateAudit = async () => {
                         <span :class="[statusColors[count.status] || 'bg-gray-100 text-gray-800', 'rounded-full px-3 py-1 text-sm font-medium capitalize']">
                             {{ count.status.replace('_', ' ') }}
                         </span>
-                        <button v-if="canEdit && Object.keys(editingItems).length > 0" @click="saveItems" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                        <button v-if="canEdit && Object.keys(editingItems).length > 0" @click="saveItems" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             Save Changes
                         </button>
                         <button v-if="canComplete" @click="completeCount" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">

@@ -36,7 +36,7 @@ const flat = ref(renderTree(props.categories));
         <div class="max-w-4xl mx-auto py-6 px-4">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Product Categories</h1>
-                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-blue-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Category' }}</button>
+                <button @click="reset(); showForm = !showForm" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ showForm ? 'Cancel' : 'Add Category' }}</button>
             </div>
             <div v-if="showForm" class="bg-white rounded-lg shadow p-6 mb-6">
                 <form @submit.prevent="submit" class="space-y-4">
@@ -48,7 +48,7 @@ const flat = ref(renderTree(props.categories));
                         </select>
                     </div>
                     <div><label class="block text-sm font-medium">Description</label><textarea v-model="form.description" class="w-full border rounded px-3 py-2"></textarea></div>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded">{{ editingId ? 'Update' : 'Create' }}</button>
                 </form>
             </div>
             <div class="bg-white rounded-lg shadow">

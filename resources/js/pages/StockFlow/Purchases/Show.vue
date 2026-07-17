@@ -101,7 +101,7 @@ const submitReceive = () => {
                             <span :class="[statusColors[order.status] || 'bg-gray-100 text-gray-800', 'rounded-full px-3 py-1 text-sm font-medium capitalize']">
                                 {{ order.status }}
                             </span>
-                            <button v-if="canReceive" @click="initReceive" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                            <button v-if="canReceive" @click="initReceive" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                                 Receive Stock
                             </button>
                         </div>
@@ -122,7 +122,7 @@ const submitReceive = () => {
                             </div>
                         </div>
                         <div class="mt-4 flex gap-3">
-                            <button @click="submitReceive" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Confirm Receive</button>
+                            <button @click="submitReceive" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Confirm Receive</button>
                             <button @click="showReceive = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
                         </div>
                     </div>
