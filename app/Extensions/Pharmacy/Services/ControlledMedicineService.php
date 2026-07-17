@@ -2,17 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\StockFlow\Services;
+namespace App\Extensions\Pharmacy\Services;
 
 use App\Domain\StockFlow\Exceptions\OperationFailedException;
-use App\Domain\StockFlow\Repositories\ControlledMedicineRepositoryInterface;
 use App\Domain\StockFlow\Repositories\LotRepositoryInterface;
-use App\Domain\StockFlow\ValueObjects\ControlledMedicineId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\LotId;
 use App\Domain\StockFlow\ValueObjects\UserId;
-use Illuminate\Support\Facades\DB;
+use App\Extensions\Pharmacy\Entities\ControlledMedicine;
+use App\Extensions\Pharmacy\Repositories\ControlledMedicineRepositoryInterface;
 use Throwable;
 
 class ControlledMedicineService
@@ -40,7 +39,7 @@ class ControlledMedicineService
                 ? $lastBalance + $quantity
                 : $lastBalance - $quantity;
 
-            $entry = \App\Domain\StockFlow\Entities\ControlledMedicine::create(
+            $entry = ControlledMedicine::create(
                 companyId: $companyCid, itemId: $itemId,
                 transactionType: $data['transaction_type'], quantity: $quantity,
                 balanceAfter: max(0, $newBalance),

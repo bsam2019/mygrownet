@@ -13,6 +13,9 @@ return [
     */
     'extensions' => [
         \App\Extensions\Pharmacy\PharmacyServiceProvider::class,
+        // \App\Extensions\SuperMarket\SuperMarketServiceProvider::class,
+        // \App\Extensions\Hardware\HardwareServiceProvider::class,
+        // \App\Extensions\Electronics\ElectronicsServiceProvider::class,
     ],
 
     /*

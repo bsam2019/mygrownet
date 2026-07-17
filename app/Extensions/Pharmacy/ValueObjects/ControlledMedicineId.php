@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\StockFlow\ValueObjects;
+namespace App\Extensions\Pharmacy\ValueObjects;
 
 class ControlledMedicineId
 {

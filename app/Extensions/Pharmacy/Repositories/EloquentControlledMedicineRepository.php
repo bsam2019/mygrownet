@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Repositories\StockFlow;
+namespace App\Extensions\Pharmacy\Repositories;
 
-use App\Domain\StockFlow\Entities\ControlledMedicine;
-use App\Domain\StockFlow\Repositories\ControlledMedicineRepositoryInterface;
-use App\Domain\StockFlow\ValueObjects\ControlledMedicineId;
+use App\Extensions\Pharmacy\Entities\ControlledMedicine;
+use App\Extensions\Pharmacy\ValueObjects\ControlledMedicineId;
+use App\Extensions\Pharmacy\Models\SaControlledMedicineModel;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\LotId;
 use App\Domain\StockFlow\ValueObjects\UserId;
-use App\Infrastructure\Persistence\Eloquent\StockFlow\SaControlledMedicineModel;
 use DateTimeImmutable;
 
 class EloquentControlledMedicineRepository implements ControlledMedicineRepositoryInterface

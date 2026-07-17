@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\StockFlow\Repositories;
+namespace App\Extensions\Pharmacy\Repositories;
 
-use App\Domain\StockFlow\Entities\ControlledMedicine;
-use App\Domain\StockFlow\ValueObjects\ControlledMedicineId;
+use App\Extensions\Pharmacy\Entities\ControlledMedicine;
+use App\Extensions\Pharmacy\ValueObjects\ControlledMedicineId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 

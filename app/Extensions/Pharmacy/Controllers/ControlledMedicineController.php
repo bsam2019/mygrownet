@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\StockFlow;
+namespace App\Extensions\Pharmacy\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Domain\StockFlow\Services\ControlledMedicineService;
+use App\Extensions\Pharmacy\Services\ControlledMedicineService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

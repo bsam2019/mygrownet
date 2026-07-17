@@ -3,6 +3,9 @@
 namespace App\Extensions\Pharmacy;
 
 use App\Extensions\ExtensionServiceProvider;
+use App\Extensions\Pharmacy\Repositories\ControlledMedicineRepositoryInterface;
+use App\Extensions\Pharmacy\Repositories\EloquentControlledMedicineRepository;
+use App\Extensions\Pharmacy\Services\ControlledMedicineService;
 
 class PharmacyServiceProvider extends ExtensionServiceProvider
 {
@@ -51,13 +54,12 @@ class PharmacyServiceProvider extends ExtensionServiceProvider
 
     public function register(): void
     {
-        // Repository bindings will be moved here from StockFlowServiceProvider
-        // $this->registerBindings([
-        //     ControlledMedicineRepositoryInterface::class => EloquentControlledMedicineRepository::class,
-        // ]);
+        $this->registerBindings([
+            ControlledMedicineRepositoryInterface::class => EloquentControlledMedicineRepository::class,
+        ]);
 
-        // $this->registerServices([
-        //     ControlledMedicineService::class,
-        // ]);
+        $this->registerServices([
+            ControlledMedicineService::class,
+        ]);
     }
 }

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\StockFlow\Entities;
+namespace App\Extensions\Pharmacy\Entities;
 
-use App\Domain\StockFlow\ValueObjects\ControlledMedicineId;
+use App\Extensions\Pharmacy\ValueObjects\ControlledMedicineId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Domain\StockFlow\ValueObjects\LotId;

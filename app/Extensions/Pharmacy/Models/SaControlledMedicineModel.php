@@ -1,7 +1,11 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Eloquent\StockFlow;
+namespace App\Extensions\Pharmacy\Models;
 
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaCompanyModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaItemModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaLotModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

@@ -45,7 +45,7 @@ const defaultFeatures = {
     departments: true, branches: true, bins: true, employees: true, roles: true,
     reports: true, quotations: true, invoices: true, receipts: true,
     tax: true, currency: true, warehouses: true, lots: true,
-    requisitions: true, payments: true, 'controlled-medicines': true,
+    requisitions: true, payments: true,
 };
 
 const companySettings = props.company?.settings ?? {};

@@ -31,7 +31,6 @@ use App\Http\Controllers\StockFlow\LotController;
 use App\Http\Controllers\StockFlow\RequisitionController;
 use App\Http\Controllers\StockFlow\PaymentController;
 use App\Http\Controllers\StockFlow\CategoryController;
-use App\Http\Controllers\StockFlow\ControlledMedicineController;
 use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
@@ -307,12 +306,6 @@ Route::domain('{account}.mygrownet.com')
                 Route::post('/categories', [CategoryController::class, 'store'])->name('stockflow.sub.categories.store');
                 Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('stockflow.sub.categories.update');
                 Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('stockflow.sub.categories.destroy');
-            });
-
-            // Controlled Medicine Register
-            Route::middleware('stockflow.feature:controlled-medicines')->group(function () {
-                Route::get('/controlled-medicines', [ControlledMedicineController::class, 'index'])->name('stockflow.sub.controlled-medicines.index');
-                Route::post('/controlled-medicines', [ControlledMedicineController::class, 'store'])->name('stockflow.sub.controlled-medicines.store');
             });
 
             // Sale Returns

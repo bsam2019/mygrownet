@@ -118,7 +118,6 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseRequisitionRepositoryInterface::class, EloquentPurchaseRequisitionRepository::class);
         $this->app->bind(PaymentTransactionRepositoryInterface::class, EloquentPaymentTransactionRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, EloquentCategoryRepository::class);
-        $this->app->bind(ControlledMedicineRepositoryInterface::class, EloquentControlledMedicineRepository::class);
         $this->app->bind(BranchRepositoryInterface::class, EloquentBranchRepository::class);
         $this->app->bind(SaleReturnRepositoryInterface::class, EloquentSaleReturnRepository::class);
         $this->app->bind(SupplierReturnRepositoryInterface::class, EloquentSupplierReturnRepository::class);
@@ -147,7 +146,6 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Domain\StockFlow\Services\PaymentService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\EmailNotificationService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\CategoryService::class);
-        $this->app->singleton(\App\Domain\StockFlow\Services\ControlledMedicineService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\SaleReturnService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\SupplierReturnService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\BranchService::class);
