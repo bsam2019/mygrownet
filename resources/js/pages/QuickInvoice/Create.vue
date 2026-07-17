@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import QuickInvoiceLayout from '@/Layouts/QuickInvoiceLayout.vue';
 import { 
@@ -8,8 +8,8 @@ import {
     XMarkIcon, CheckCircleIcon, PencilIcon, BookmarkIcon, DocumentTextIcon
 } from '@heroicons/vue/24/outline';
 import { useAutoSave } from '@/composables/useAutoSave';
-// Use global axios with CSRF token configured
-const axios = (window as any).axios || require('axios').default;
+
+const axios = (window as any).axios;
 
 interface Currency { code: string; symbol: string; name: string; }
 interface LineItem { 
@@ -184,78 +184,114 @@ const attachmentToSave = ref<{ file: File; index: number } | null>(null);
 const saveToLibraryName = ref('');
 const saveToLibraryDescription = ref('');
 
-// Auto-save setup
-const autoSave = useAutoSave({
-    key: `invoice_${props.documentType}_${isEditing.value ? props.editDocument?.id : 'new'}`,
-    data: () => ({
-        selectedTemplate: selectedTemplate.value,
-        primaryColor: primaryColor.value,
-        businessName: businessName.value,
-        businessAddress: businessAddress.value,
-        businessPhone: businessPhone.value,
-        businessEmail: businessEmail.value,
-        businessTaxNumber: businessTaxNumber.value,
-        preparedByName: preparedByName.value,
-        clientName: clientName.value,
-        clientAddress: clientAddress.value,
-        clientPhone: clientPhone.value,
-        clientEmail: clientEmail.value,
-        documentNumber: documentNumber.value,
-        issueDate: issueDate.value,
-        dueDate: dueDate.value,
-        currency: currency.value,
-        taxRate: taxRate.value,
-        discountRate: discountRate.value,
-        notes: notes.value,
-        terms: terms.value,
-        items: items.value,
-    }),
-    onRestore: (savedData) => {
-        // Only show restore prompt if not editing and not loading from saved profile
-        if (!isEditing.value && !props.savedProfile) {
-            showRestorePrompt.value = true;
-            lastSaveTime.value = autoSave.getLastSaveTime();
-        }
-    },
-    debounceMs: 3000, // Save every 3 seconds after changes stop
-    exclude: ['businessLogo', 'signature'] // Don't auto-save uploaded files
+// Auto-save setup — reactive form data object for useAutoSave
+const autoSaveKey = computed(() => `invoice_${props.documentType}_${isEditing.value ? props.editDocument?.id : 'new'}`);
+const autoSaveData = reactive({
+    selectedTemplate: '',
+    primaryColor: '#059669',
+    businessName: '',
+    businessAddress: '',
+    businessPhone: '',
+    businessEmail: '',
+    businessTaxNumber: '',
+    preparedByName: '',
+    clientName: '',
+    clientAddress: '',
+    clientPhone: '',
+    clientEmail: '',
+    documentNumber: '',
+    issueDate: '',
+    dueDate: '',
+    currency: 'ZMW',
+    taxRate: 0,
+    discountRate: 0,
+    notes: '',
+    terms: '',
+    items: [] as LineItem[],
 });
 
+const autoSave = useAutoSave(autoSaveKey, autoSaveData, { debounce: 3000 });
+
+// Sync autoSaveData when form refs change (outbound) and vice versa
+const syncAutoSaveData = () => {
+    autoSaveData.selectedTemplate = selectedTemplate.value;
+    autoSaveData.primaryColor = primaryColor.value;
+    autoSaveData.businessName = businessName.value;
+    autoSaveData.businessAddress = businessAddress.value;
+    autoSaveData.businessPhone = businessPhone.value;
+    autoSaveData.businessEmail = businessEmail.value;
+    autoSaveData.businessTaxNumber = businessTaxNumber.value;
+    autoSaveData.preparedByName = preparedByName.value;
+    autoSaveData.clientName = clientName.value;
+    autoSaveData.clientAddress = clientAddress.value;
+    autoSaveData.clientPhone = clientPhone.value;
+    autoSaveData.clientEmail = clientEmail.value;
+    autoSaveData.documentNumber = documentNumber.value;
+    autoSaveData.issueDate = issueDate.value;
+    autoSaveData.dueDate = dueDate.value;
+    autoSaveData.currency = currency.value;
+    autoSaveData.taxRate = taxRate.value;
+    autoSaveData.discountRate = discountRate.value;
+    autoSaveData.notes = notes.value;
+    autoSaveData.terms = terms.value;
+    autoSaveData.items = items.value;
+};
+
+// Watch form refs and sync to autoSaveData whenever anything changes
+watch([
+    selectedTemplate, primaryColor,
+    businessName, businessAddress, businessPhone, businessEmail, businessTaxNumber,
+    preparedByName,
+    clientName, clientAddress, clientPhone, clientEmail,
+    documentNumber, issueDate, dueDate, currency,
+    taxRate, discountRate, notes, terms,
+], () => syncAutoSaveData(), { deep: true });
+
+watch(items, () => {
+    autoSaveData.items = items.value;
+}, { deep: true });
+
 const restoreSavedData = () => {
-    const savedData = autoSave.restoreData();
+    const savedData = autoSave.loadDraft();
     if (savedData) {
-        selectedTemplate.value = savedData.selectedTemplate || selectedTemplate.value;
-        primaryColor.value = savedData.primaryColor || primaryColor.value;
-        businessName.value = savedData.businessName || '';
-        businessAddress.value = savedData.businessAddress || '';
-        businessPhone.value = savedData.businessPhone || '';
-        businessEmail.value = savedData.businessEmail || '';
-        businessTaxNumber.value = savedData.businessTaxNumber || '';
-        preparedByName.value = savedData.preparedByName || '';
-        clientName.value = savedData.clientName || '';
-        clientAddress.value = savedData.clientAddress || '';
-        clientPhone.value = savedData.clientPhone || '';
-        clientEmail.value = savedData.clientEmail || '';
-        documentNumber.value = savedData.documentNumber || '';
-        issueDate.value = savedData.issueDate || issueDate.value;
-        dueDate.value = savedData.dueDate || '';
-        currency.value = savedData.currency || currency.value;
-        taxRate.value = savedData.taxRate || 0;
-        discountRate.value = savedData.discountRate || 0;
-        notes.value = savedData.notes || '';
-        terms.value = savedData.terms || '';
-        if (savedData.items && savedData.items.length > 0) {
-            items.value = savedData.items;
-        }
+        if (savedData.selectedTemplate) selectedTemplate.value = savedData.selectedTemplate;
+        if (savedData.primaryColor) primaryColor.value = savedData.primaryColor;
+        if (savedData.businessName) businessName.value = savedData.businessName;
+        if (savedData.businessAddress) businessAddress.value = savedData.businessAddress;
+        if (savedData.businessPhone) businessPhone.value = savedData.businessPhone;
+        if (savedData.businessEmail) businessEmail.value = savedData.businessEmail;
+        if (savedData.businessTaxNumber) businessTaxNumber.value = savedData.businessTaxNumber;
+        if (savedData.preparedByName) preparedByName.value = savedData.preparedByName;
+        if (savedData.clientName) clientName.value = savedData.clientName;
+        if (savedData.clientAddress) clientAddress.value = savedData.clientAddress;
+        if (savedData.clientPhone) clientPhone.value = savedData.clientPhone;
+        if (savedData.clientEmail) clientEmail.value = savedData.clientEmail;
+        if (savedData.documentNumber) documentNumber.value = savedData.documentNumber;
+        if (savedData.issueDate) issueDate.value = savedData.issueDate;
+        if (savedData.dueDate) dueDate.value = savedData.dueDate;
+        if (savedData.currency) currency.value = savedData.currency;
+        if (typeof savedData.taxRate === 'number') taxRate.value = savedData.taxRate;
+        if (typeof savedData.discountRate === 'number') discountRate.value = savedData.discountRate;
+        if (savedData.notes) notes.value = savedData.notes;
+        if (savedData.terms) terms.value = savedData.terms;
+        if (savedData.items && savedData.items.length > 0) items.value = savedData.items;
         showRestorePrompt.value = false;
         successMessage.value = 'Draft restored successfully!';
+        syncAutoSaveData();
         setTimeout(() => successMessage.value = '', 3000);
     }
 };
 
 const discardSavedData = () => {
-    autoSave.clearSavedData();
+    autoSave.clearDraft();
     showRestorePrompt.value = false;
+};
+
+const tryShowRestorePrompt = () => {
+    if (!isEditing.value && !props.savedProfile && autoSave.hasDraft()) {
+        showRestorePrompt.value = true;
+        lastSaveTime.value = new Date();
+    }
 };
 
 onMounted(() => { 
@@ -263,7 +299,6 @@ onMounted(() => {
     // This ensures URL parameters override profile defaults
     if (props.initialTemplate) {
         selectedTemplate.value = props.initialTemplate;
-        console.log('Template set from URL parameter:', props.initialTemplate);
     }
     
     if (props.editDocument) {
@@ -271,13 +306,14 @@ onMounted(() => {
     } else if (props.savedProfile) {
         loadSavedProfile(props.savedProfile);
         hasSavedProfile.value = true;
+        syncAutoSaveData();
     } else if (isAuthenticated.value) {
         // Show setup wizard for logged-in users without a saved profile
         showSetupWizard.value = true;
     }
     
-    // Setup auto-save watcher
-    autoSave.setupAutoSave();
+    syncAutoSaveData();
+    tryShowRestorePrompt();
     
     // Load attachment library for authenticated users
     if (isAuthenticated.value) {
@@ -764,7 +800,7 @@ const generateDocument = async () => {
         shareData.value = response.data.share; showShareModal.value = true; successMessage.value = isEditing.value ? 'Document updated!' : 'Document generated!';
         
         // Clear auto-saved data and attachments on successful generation
-        autoSave.clearSavedData();
+        autoSave.clearDraft();
         attachments.value = [];
         libraryAttachmentIds.value = [];
     } catch (error: any) {
