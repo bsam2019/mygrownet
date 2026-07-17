@@ -16,19 +16,6 @@ fi
 echo "🚀 Deploying assets to MyGrowNet droplet..."
 echo "📍 Server: $DROPLET_IP"
 
-# Clean up old build files on production first
-echo "🧹 Cleaning up old build files on production..."
-ssh ${DROPLET_USER}@${DROPLET_IP} << 'CLEANUP'
-cd ${PROJECT_PATH}
-if [ -d "public/build" ]; then
-    echo "Removing old build directory..."
-    rm -rf public/build/*
-    echo "✅ Old build files removed"
-else
-    echo "ℹ️  No existing build directory to clean"
-fi
-CLEANUP
-
 # Ensure manifest is in correct location before upload
 echo "📦 Ensuring Vite manifest is in correct location..."
 mkdir -p public/build/.vite
@@ -83,6 +70,29 @@ echo '${DROPLET_SUDO_PASSWORD}' | sudo -S chmod 664 config/modules.php
 # Optimize
 echo "🚀 Optimizing..."
 php artisan optimize
+
+# Clean up old unused asset files (keep files referenced in current manifest)
+echo "🧹 Cleaning up old unused asset files..."
+cd public/build/assets
+
+# Get list of files referenced in manifest
+MANIFEST_FILES=\$(grep -oP '"file":\\s*"assets/\\K[^"]+' ../manifest.json | sort | uniq)
+
+# Remove files NOT in manifest (older versions)
+for file in *; do
+    if [ -f "\$file" ]; then
+        if ! echo "\$MANIFEST_FILES" | grep -q "^\$file\$"; then
+            # Only remove if file is older than 1 hour (safety check)
+            if [ \$(find "\$file" -mmin +60 2>/dev/null | wc -l) -gt 0 ]; then
+                echo "  Removing old file: \$file"
+                rm "\$file"
+            fi
+        fi
+    fi
+done
+
+cd ../../..
+echo "✅ Cleanup complete"
 
 echo "✅ Deployment complete!"
 

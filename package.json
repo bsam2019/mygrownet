@@ -2,9 +2,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "prebuild": "rm -rf public/build/*",
         "build": "set NODE_OPTIONS=--max-old-space-size=4096 && vite build",
-        "build:clean": "rm -rf public/build/* && npm run build",
+        "build:clean": "rm -rf public/build/* && set NODE_OPTIONS=--max-old-space-size=4096 && vite build",
         "build:ssr": "set NODE_OPTIONS=--max-old-space-size=4096 && vite build && vite build --ssr",
         "build:module": "set NODE_OPTIONS=--max-old-space-size=4096 && set MODULE=%npm_config_module% && vite build",
         "build:stockflow": "set NODE_OPTIONS=--max-old-space-size=4096 && set MODULE=stockflow && vite build",
