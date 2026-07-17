@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import {
     HomeIcon,
@@ -15,6 +15,7 @@ import {
     Bars3Icon,
     XMarkIcon,
     ChevronLeftIcon,
+    ChevronDownIcon,
     BuildingOfficeIcon,
     ArrowsRightLeftIcon,
     UserCircleIcon,
@@ -50,6 +51,8 @@ const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 const showUserMenu = ref(false);
+const collapsedGroups = ref<Set<string>>(new Set());
+const desktopNavRef = ref<HTMLElement | null>(null);
 
 const isSubdomain = computed(() => {
     const routeName = page.props.routeName ?? '';
@@ -211,6 +214,14 @@ const logout = () => {
 
 const flatNav = computed(() => navigation.value.flatMap(g => g.items));
 
+const toggleGroup = (name: string) => {
+    const s = new Set(collapsedGroups.value);
+    if (s.has(name)) s.delete(name); else s.add(name);
+    collapsedGroups.value = s;
+};
+
+const isGroupCollapsed = (name: string) => collapsedGroups.value.has(name);
+
 const closeUserMenu = () => {
     showUserMenu.value = false;
 };
@@ -231,6 +242,15 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
+});
+
+watch(() => page.props.routeName, () => {
+    nextTick(() => {
+        const nav = desktopNavRef.value;
+        if (!nav) return;
+        const active = nav.querySelector('[data-active="true"]') as HTMLElement | null;
+        if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
 });
 </script>
 
@@ -260,10 +280,13 @@ onUnmounted(() => {
                             </Link>
                         </div>
                         <nav class="flex flex-1 flex-col">
-                            <ul role="list" class="flex flex-1 flex-col gap-y-6">
+                            <ul role="list" class="flex flex-1 flex-col gap-y-4">
                                 <li v-for="group in navigation" :key="group.name">
-                                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-2">{{ group.name }}</p>
-                                    <ul role="list" class="-mx-2 space-y-1">
+                                    <button @click="toggleGroup(group.name)" class="flex items-center justify-between w-full px-2 py-1 rounded-md hover:bg-gray-50 group-header">
+                                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ group.name }}</p>
+                                        <ChevronDownIcon :class="['h-3.5 w-3.5 text-gray-400 transition-transform', isGroupCollapsed(group.name) ? '-rotate-90' : '']" />
+                                    </button>
+                                    <ul v-if="!isGroupCollapsed(group.name)" role="list" class="-mx-2 mt-1 space-y-0.5">
                                         <li v-for="item in group.items" :key="item.name">
                                             <Link
                                                 :href="item.href"
@@ -274,7 +297,7 @@ onUnmounted(() => {
                                                     'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold',
                                                 ]"
                                             >
-                                                <component :is="item.icon" class="h-6 w-6 shrink-0" aria-hidden="true" />
+                                                <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
                                                 {{ item.name }}
                                             </Link>
                                         </li>
@@ -323,16 +346,20 @@ onUnmounted(() => {
                     </button>
                 </div>
 
-                <nav :class="['flex flex-1 flex-col', sidebarCollapsed ? 'px-3' : 'px-4']">
-                    <ul role="list" class="flex flex-1 flex-col gap-y-4">
+                <nav ref="desktopNavRef" :class="['flex flex-1 flex-col overflow-y-auto', sidebarCollapsed ? 'px-3' : 'px-4']">
+                    <ul role="list" class="flex flex-1 flex-col gap-y-3">
                         <li v-for="group in navigation" :key="group.name">
-                            <div v-if="!sidebarCollapsed" class="px-2.5 mb-1">
-                                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{{ group.name }}</p>
+                            <div v-if="!sidebarCollapsed" class="flex items-center justify-between px-2.5 mb-0.5">
+                                <button @click="toggleGroup(group.name)" class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600">
+                                    <ChevronDownIcon :class="['h-3 w-3 transition-transform', isGroupCollapsed(group.name) ? '-rotate-90' : '']" />
+                                    {{ group.name }}
+                                </button>
                             </div>
-                            <ul role="list" class="flex flex-col gap-y-0.5">
+                            <ul v-if="sidebarCollapsed || !isGroupCollapsed(group.name)" role="list" class="flex flex-col gap-y-0.5">
                                 <li v-for="item in group.items" :key="item.name">
                                     <Link
                                         :href="item.href"
+                                        :data-active="isCurrentRoute(item.routeName) ? 'true' : undefined"
                                         :class="[
                                             isCurrentRoute(item.routeName)
                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
