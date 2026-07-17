@@ -31,6 +31,8 @@ import {
     ClipboardDocumentCheckIcon,
     ListBulletIcon,
     ArrowUturnLeftIcon,
+    WrenchIcon,
+    TrashIcon,
 } from '@heroicons/vue/24/outline';
 import NotificationToast from '@/components/StockFlow/NotificationToast.vue';
 import NotificationBell from '@/components/StockFlow/NotificationBell.vue';
@@ -89,6 +91,10 @@ const navigation = computed(() => {
         { name: 'Warehouses', href: isSubdomain.value ? '/warehouses' : '/stockflow/warehouses', icon: BuildingOffice2Icon, routeName: `${base}.warehouses.index`, feature: f('warehouses') },
         { name: 'Lots', href: isSubdomain.value ? '/lots' : '/stockflow/lots', icon: CubeIcon, routeName: `${base}.lots.index`, feature: f('lots') },
         { name: 'Controlled Medicines', href: isSubdomain.value ? '/controlled-medicines' : '/stockflow/controlled-medicines', icon: ShieldCheckIcon, routeName: `${base}.controlled-medicines.index`, feature: f('controlled-medicines') },
+        { name: 'BOMs', href: isSubdomain.value ? '/boms' : '/stockflow/boms', icon: CubeIcon, routeName: `${base}.boms.index`, feature: f('bill-of-materials') },
+        { name: 'Work Orders', href: isSubdomain.value ? '/work-orders' : '/stockflow/work-orders', icon: WrenchIcon, routeName: `${base}.work-orders.index`, feature: f('work-orders') },
+        { name: 'Recipes', href: isSubdomain.value ? '/recipes' : '/stockflow/recipes', icon: DocumentTextIcon, routeName: `${base}.recipes.index`, feature: f('recipes') },
+        { name: 'Wastage', href: isSubdomain.value ? '/wastage' : '/stockflow/wastage', icon: TrashIcon, routeName: `${base}.wastage.index`, feature: f('wastage') },
         { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stockflow/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
         { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stockflow/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
         { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stockflow/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
