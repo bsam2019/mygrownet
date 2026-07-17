@@ -11,7 +11,7 @@ class SaPurchaseOrderModel extends Model
     protected $table = 'sa_purchase_orders';
     protected $fillable = [
         'sa_company_id', 'sa_supplier_id', 'order_number', 'order_date',
-        'status', 'subtotal', 'tax', 'total', 'notes',
+        'status', 'subtotal', 'tax', 'total', 'notes', 'currency', 'exchange_rate',
     ];
     protected $casts = [
         'order_date' => 'date',

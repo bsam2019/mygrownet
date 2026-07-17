@@ -32,6 +32,8 @@ const form = ref({
     sa_supplier_id: '',
     order_date: new Date().toISOString().slice(0, 10),
     notes: '',
+    currency: 'USD',
+    exchange_rate: null as number | null,
 });
 
 interface POLineItem {
@@ -88,9 +90,21 @@ const { formatCurrency } = useCurrency();
                         <div>
                             <h1 class="text-lg font-semibold text-white">New Purchase Order</h1>
                             <p class="text-sm text-emerald-100">Create a new purchase order</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Currency</label>
+                                    <select v-model="form.currency" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                        <option value="USD">USD</option>
+                                        <option value="ZMW">ZMW</option>
+                                    </select>
+                                </div>
+                                <div v-if="form.currency !== 'ZMW'">
+                                    <label class="block text-sm font-medium text-gray-700">Exchange Rate (to ZMW)</label>
+                                    <input v-model.number="form.exchange_rate" type="number" step="0.000001" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.exchange_rate" class="mt-1 text-sm text-red-600">{{ errors.exchange_rate }}</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">

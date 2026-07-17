@@ -18,6 +18,7 @@ use App\Domain\StockFlow\ValueObjects\PurchaseOrderId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\SupplierId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
+use App\Domain\StockFlow\ValueObjects\LotId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\MovementType;
 use DateTimeImmutable;
@@ -55,6 +56,8 @@ class PurchasingService
                     orderDate: new DateTimeImmutable($data['order_date'] ?? 'now'),
                     subtotal: Money::fromFloat($subtotal),
                     notes: $data['notes'] ?? null,
+                    currency: $data['currency'] ?? 'USD',
+                    exchangeRate: isset($data['exchange_rate']) ? (float) $data['exchange_rate'] : null,
                 );
 
                 $savedOrder = $this->poRepository->save($order);
@@ -63,6 +66,7 @@ class PurchasingService
                     $poItem = PurchaseOrderItem::create(
                         purchaseOrderId: PurchaseOrderId::fromInt($savedOrder->id()),
                         itemId: ItemId::fromInt($line['sa_item_id']),
+                        lotId: isset($line['sa_lot_id']) ? LotId::fromInt((int) $line['sa_lot_id']) : null,
                         quantityOrdered: $line['quantity_ordered'],
                         unitCost: Money::fromFloat($line['unit_cost']),
                     );

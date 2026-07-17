@@ -2,9 +2,13 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import CommentSection from '@/components/StockFlow/CommentSection.vue';
+import ItemSuppliers from '@/pages/StockFlow/Suppliers/ItemSuppliers.vue';
+import BarcodeScanner from '@/components/StockFlow/BarcodeScanner.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { useStockflowRoute } from '@/composables/useStockflowRoute';
-import { ref } from 'vue';
+import { useNotifications } from '@/composables/useNotifications';
+import { ref, computed } from 'vue';
+import { XMarkIcon, PrinterIcon, CameraIcon } from '@heroicons/vue/24/outline';
 
 const { route } = useStockflowRoute();
 
@@ -13,6 +17,7 @@ interface Item {
     name: string;
     sku: string | null;
     description: string | null;
+    image_url: string | null;
     unit_price: number;
     unit: string;
     system_quantity: number;
@@ -31,6 +36,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const showImageModal = ref(false);
 const showAdjust = ref(false);
 const showEdit = ref(false);
 const adjustForm = ref({
@@ -52,7 +58,14 @@ const editForm = ref({
 
 const errors = ref<Record<string, string>>({});
 
+const { success, error: notifyError } = useNotifications();
+
 const { formatCurrency } = useCurrency();
+
+const imageUrl = computed(() => {
+    if (!props.item.image_url) return null;
+    return '/storage/' + props.item.image_url;
+});
 
 const submitAdjust = () => {
     router.post(route('stockflow.sub.items.adjust', props.item.id), adjustForm.value, {
@@ -63,6 +76,15 @@ const submitAdjust = () => {
             errors.value = err;
         },
     });
+};
+
+const onBarcodeScanned = (value: string) => {
+    editForm.value.sku = value;
+    success('Barcode scanned: ' + value);
+};
+
+const printLabel = () => {
+    window.open(route('stockflow.sub.items.label', props.item.id), '_blank');
 };
 
 const submitEdit = () => {
@@ -93,6 +115,11 @@ const submitEdit = () => {
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <h1 class="text-2xl font-bold text-gray-900">{{ item.name }}</h1>
                                 <div class="flex gap-2">
+                                    <BarcodeScanner @scanned="onBarcodeScanned" />
+                                    <button @click="printLabel" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:border-emerald-200">
+                                        <PrinterIcon class="h-4 w-4" />
+                                        Print Label
+                                    </button>
                                     <button @click="showEdit = !showEdit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                                         Edit Details
                                     </button>
@@ -100,6 +127,10 @@ const submitEdit = () => {
                                         Adjust Stock
                                     </button>
                                 </div>
+                            </div>
+
+                            <div v-if="imageUrl" class="mt-4">
+                                <img :src="imageUrl" @click="showImageModal = true" class="h-24 w-24 rounded-lg object-cover border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" />
                             </div>
 
                             <div class="mt-6 grid gap-6 sm:grid-cols-3">
@@ -263,7 +294,21 @@ const submitEdit = () => {
                     <div class="lg:col-span-2">
                         <CommentSection type="item" :id="item.id" />
                     </div>
+
+                    <!-- Suppliers -->
+                    <div class="lg:col-span-2">
+                        <ItemSuppliers :item-id="item.id" />
+                    </div>
                 </div>
+            </div>
+        </div>
+        <!-- Image lightbox -->
+        <div v-if="showImageModal && imageUrl" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" @click="showImageModal = false">
+            <div class="relative max-h-full max-w-full">
+                <button @click.stop="showImageModal = false" class="absolute -right-3 -top-3 rounded-full bg-white p-1.5 shadow-lg hover:bg-gray-100">
+                    <XMarkIcon class="h-5 w-5 text-gray-700" />
+                </button>
+                <img :src="imageUrl" class="max-h-[85vh] max-w-[85vw] rounded-xl object-contain shadow-2xl" @click.stop />
             </div>
         </div>
     </StockFlowLayout>

@@ -17,6 +17,7 @@ use App\Domain\StockFlow\Repositories\CashRegisterRepositoryInterface;
 use App\Domain\StockFlow\ValueObjects\SaleId;
 use App\Domain\StockFlow\ValueObjects\CompanyId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
+use App\Domain\StockFlow\ValueObjects\LotId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use App\Domain\StockFlow\ValueObjects\PaymentMethod;
 use App\Domain\StockFlow\ValueObjects\MovementType;
@@ -78,16 +79,19 @@ class SalesService
                     changeDue: Money::fromFloat(max(0, (float) $data['amount_tendered'] - $subtotal)),
                     soldBy: $userId,
                     notes: $data['notes'] ?? null,
+                    currency: $data['currency'] ?? 'USD',
+                    exchangeRate: isset($data['exchange_rate']) ? (float) $data['exchange_rate'] : null,
                 );
 
                 $savedSale = $this->saleRepository->save($sale);
 
                 $eventItems = [];
 
-                foreach ($saleItems as $si) {
+                foreach ($saleItems as $i => $si) {
                     $saleItem = SaleItem::create(
                         saleId: SaleId::fromInt($savedSale->id()),
                         itemId: $si['item']->getId(),
+                        lotId: isset($items[$i]['sa_lot_id']) ? LotId::fromInt((int) $items[$i]['sa_lot_id']) : null,
                         itemName: $si['item']->getName(),
                         quantity: $si['quantity'],
                         unitPrice: Money::fromFloat($si['unit_price']),

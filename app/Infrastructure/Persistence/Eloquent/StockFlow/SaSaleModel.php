@@ -12,7 +12,7 @@ class SaSaleModel extends Model
     protected $fillable = [
         'sa_company_id', 'receipt_number', 'sale_date', 'sale_time',
         'payment_method', 'subtotal', 'discount', 'tax', 'total',
-        'amount_tendered', 'change_due', 'sold_by', 'notes',
+        'amount_tendered', 'change_due', 'sold_by', 'notes', 'currency', 'exchange_rate',
     ];
     protected $casts = [
         'sale_date' => 'date',

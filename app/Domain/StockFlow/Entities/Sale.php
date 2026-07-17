@@ -29,6 +29,8 @@ class Sale implements Arrayable
         private Money $changeDue,
         private int $soldBy,
         private ?string $notes,
+        private string $currency = 'USD',
+        private ?float $exchangeRate = null,
         private DateTimeImmutable $createdAt,
         private DateTimeImmutable $updatedAt,
         /** @var SaleItem[] */
@@ -49,11 +51,13 @@ class Sale implements Arrayable
         Money $changeDue,
         int $soldBy,
         ?string $notes = null,
+        string $currency = 'USD',
+        ?float $exchangeRate = null,
     ): self {
         return new self(
             SaleId::generate(), $companyId, $receiptNumber, $saleDate, $saleTime,
             $paymentMethod, $subtotal, $discount, $tax, $total, $amountTendered, $changeDue,
-            $soldBy, $notes, new DateTimeImmutable(), new DateTimeImmutable(),
+            $soldBy, $notes, $currency, $exchangeRate, new DateTimeImmutable(), new DateTimeImmutable(),
         );
     }
 
@@ -62,11 +66,12 @@ class Sale implements Arrayable
         string $saleTime, PaymentMethod $paymentMethod, Money $subtotal,
         Money $discount, Money $tax, Money $total, Money $amountTendered,
         Money $changeDue, int $soldBy, ?string $notes,
+        string $currency = 'USD', ?float $exchangeRate = null,
         DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt,
     ): self {
         return new self($id, $companyId, $receiptNumber, $saleDate, $saleTime,
             $paymentMethod, $subtotal, $discount, $tax, $total, $amountTendered, $changeDue,
-            $soldBy, $notes, $createdAt, $updatedAt);
+            $soldBy, $notes, $currency, $exchangeRate, $createdAt, $updatedAt);
     }
 
     public function addItem(SaleItem $item): void { $this->items[] = $item; }
@@ -84,6 +89,8 @@ class Sale implements Arrayable
     public function getChangeDue(): Money { return $this->changeDue; }
     public function getSoldBy(): int { return $this->soldBy; }
     public function getNotes(): ?string { return $this->notes; }
+    public function getCurrency(): string { return $this->currency; }
+    public function getExchangeRate(): ?float { return $this->exchangeRate; }
     public function getItems(): array { return $this->items; }
 
     public function toArray(): array
@@ -103,6 +110,8 @@ class Sale implements Arrayable
             'change_due' => $this->changeDue->toFloat(),
             'sold_by' => $this->soldBy,
             'notes' => $this->notes,
+            'currency' => $this->currency,
+            'exchange_rate' => $this->exchangeRate,
             'items' => array_map(fn(SaleItem $i) => $i->toArray(), $this->items),
             'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt->format('Y-m-d H:i:s'),

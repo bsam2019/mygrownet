@@ -67,6 +67,8 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
             'tax' => 0,
             'total' => $order->getTotal()->toFloat(),
             'notes' => $order->getNotes(),
+            'currency' => $order->getCurrency(),
+            'exchange_rate' => $order->getExchangeRate(),
         ];
 
         if ($order->id() === 0) {
@@ -84,6 +86,7 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
             \App\Infrastructure\Persistence\Eloquent\StockFlow\SaPurchaseOrderItemModel::create([
                 'sa_purchase_order_id' => $model->id,
                 'sa_item_id' => $item->getItemId()->toInt(),
+                'sa_lot_id' => $item->getLotId()?->toInt(),
                 'quantity_ordered' => $item->getQuantityOrdered(),
                 'quantity_received' => $item->getQuantityReceived(),
                 'unit_cost' => $item->getUnitCost()->toFloat(),
@@ -117,6 +120,8 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
             tax: Money::fromFloat((float) ($model->tax ?? 0)),
             total: Money::fromFloat((float) $model->total),
             notes: $model->notes,
+            currency: $model->currency ?? 'USD',
+            exchangeRate: $model->exchange_rate ? (float) $model->exchange_rate : null,
             createdAt: new DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')),
             updatedAt: new DateTimeImmutable($model->updated_at->format('Y-m-d H:i:s')),
         );
@@ -127,6 +132,7 @@ class EloquentPurchaseOrderRepository implements PurchaseOrderRepositoryInterfac
                     id: new \App\Domain\StockFlow\ValueObjects\PurchaseOrderItemId($itemModel->id),
                     purchaseOrderId: PurchaseOrderId::fromInt($itemModel->sa_purchase_order_id),
                     itemId: ItemId::fromInt($itemModel->sa_item_id),
+                    lotId: $itemModel->sa_lot_id ? \App\Domain\StockFlow\ValueObjects\LotId::fromInt($itemModel->sa_lot_id) : null,
                     quantityOrdered: (float) $itemModel->quantity_ordered,
                     quantityReceived: (float) $itemModel->quantity_received,
                     unitCost: Money::fromFloat((float) $itemModel->unit_cost),

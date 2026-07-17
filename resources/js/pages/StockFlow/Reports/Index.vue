@@ -7,6 +7,9 @@ import {
     ShoppingCartIcon,
     CurrencyDollarIcon,
     ArchiveBoxIcon,
+    ChartBarIcon,
+    ClockIcon,
+    ArrowTrendingUpIcon,
 } from '@heroicons/vue/24/outline';
 import { useStockflowRoute } from '@/composables/useStockflowRoute';
 
@@ -26,6 +29,9 @@ const reports: ReportCard[] = [
     { title: 'Cash Summary', description: 'Cash register activity including sales, expenses, banking, and variance', icon: CurrencyDollarIcon, href: route('stockflow.sub.cash.summary'), color: 'amber' },
     { title: 'Inventory Report', description: 'Current stock levels, total value, low stock and out-of-stock items', icon: ArchiveBoxIcon, href: route('stockflow.sub.inventory.report'), color: 'indigo' },
     { title: 'Audit Reports', description: 'View completed audit reports and export to PDF or CSV', icon: DocumentTextIcon, href: route('stockflow.sub.audits.index'), color: 'purple' },
+    { title: 'ABC Analysis', description: 'Classify inventory by value (A=80%, B=15%, C=5%)', icon: ChartBarIcon, href: route('stockflow.sub.reports.abc'), color: 'red' },
+    { title: 'Stock Aging', description: 'Items grouped by expiry date buckets', icon: ClockIcon, href: route('stockflow.sub.reports.aging'), color: 'amber' },
+    { title: 'Inventory Turnover', description: 'Fast and slow moving items by turnover rate', icon: ArrowTrendingUpIcon, href: route('stockflow.sub.reports.turnover'), color: 'blue' },
 ];
 </script>
 
@@ -54,6 +60,7 @@ const reports: ReportCard[] = [
                                 'bg-amber-50 text-amber-600 ring-amber-200': report.color === 'amber',
                                 'bg-indigo-50 text-indigo-600 ring-indigo-200': report.color === 'indigo',
                                 'bg-purple-50 text-purple-600 ring-purple-200': report.color === 'purple',
+                                'bg-red-50 text-red-600 ring-red-200': report.color === 'red',
                             }"
                         >
                             <component :is="report.icon" class="h-6 w-6" />

@@ -4,13 +4,16 @@ import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
 import Pagination from '@/components/StockFlow/Pagination.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import {
     PlusIcon,
     MagnifyingGlassIcon,
     TrashIcon,
     DocumentArrowDownIcon,
     ArrowUpTrayIcon,
+    XMarkIcon,
+    AdjustmentsHorizontalIcon,
+    CurrencyDollarIcon,
 } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -23,6 +26,7 @@ interface Item {
     name: string;
     sku: string | null;
     description: string | null;
+    image_url: string | null;
     unit_price: number;
     unit: string;
     system_quantity: number;
@@ -46,6 +50,35 @@ const confirm = useConfirmDialog();
 
 const search = ref('');
 const csvUploading = ref(false);
+const selectedIds = ref<number[]>([]);
+const showBulkStock = ref(false);
+const showBulkPrice = ref(false);
+const bulkStockChange = ref(0);
+const bulkPriceValue = ref(0);
+const bulkReason = ref('bulk adjustment');
+const bulkProcessing = ref(false);
+
+const allSelected = computed(() => {
+    if (!items.data?.length) return false;
+    return selectedIds.value.length === items.data.length;
+});
+
+const toggleAll = () => {
+    if (allSelected.value) {
+        selectedIds.value = [];
+    } else {
+        selectedIds.value = items.data.map(i => i.id);
+    }
+};
+
+const toggleItem = (id: number) => {
+    const idx = selectedIds.value.indexOf(id);
+    if (idx > -1) {
+        selectedIds.value.splice(idx, 1);
+    } else {
+        selectedIds.value.push(id);
+    }
+};
 
 const { formatCurrency } = useCurrency();
 
@@ -63,6 +96,48 @@ const uploadItemsCsv = async (event: Event) => {
         });
     } catch { notifyError('Upload failed'); }
     csvUploading.value = false;
+};
+
+const executeBulkDelete = async () => {
+    if (selectedIds.value.length === 0) return;
+    const ok = await confirm.show(`Delete ${selectedIds.value.length} selected items? This cannot be undone.`, 'Delete Items');
+    if (!ok) return;
+    bulkProcessing.value = true;
+    router.post(route('stockflow.sub.items.bulk-delete'), { ids: selectedIds.value }, {
+        onSuccess: () => { success(`${selectedIds.value.length} items deleted`); selectedIds.value = []; },
+        onError: () => notifyError('Failed to delete items'),
+        preserveScroll: true,
+    });
+    bulkProcessing.value = false;
+};
+
+const executeBulkStock = async () => {
+    if (selectedIds.value.length === 0 || bulkProcessing.value) return;
+    bulkProcessing.value = true;
+    router.post(route('stockflow.sub.items.bulk-adjust-stock'), {
+        ids: selectedIds.value,
+        quantity_change: bulkStockChange.value,
+        reason: bulkReason.value,
+    }, {
+        onSuccess: () => { success(`Stock adjusted for ${selectedIds.value.length} items`); showBulkStock.value = false; selectedIds.value = []; },
+        onError: () => notifyError('Failed to adjust stock'),
+        preserveScroll: true,
+    });
+    bulkProcessing.value = false;
+};
+
+const executeBulkPrice = async () => {
+    if (selectedIds.value.length === 0 || bulkProcessing.value) return;
+    bulkProcessing.value = true;
+    router.post(route('stockflow.sub.items.bulk-update-price'), {
+        ids: selectedIds.value,
+        unit_price: bulkPriceValue.value,
+    }, {
+        onSuccess: () => { success(`Price updated for ${selectedIds.value.length} items`); showBulkPrice.value = false; selectedIds.value = []; },
+        onError: () => notifyError('Failed to update price'),
+        preserveScroll: true,
+    });
+    bulkProcessing.value = false;
 };
 
 const deleteItem = async (item: Item) => {
@@ -107,23 +182,105 @@ const deleteItem = async (item: Item) => {
                     </div>
                 </div>
 
+                <!-- Floating action bar -->
+                <Transition name="slide">
+                    <div v-if="selectedIds.length > 0" class="mb-4 flex items-center justify-between rounded-xl bg-emerald-600 px-6 py-3 shadow-lg">
+                        <span class="text-sm font-medium text-white">{{ selectedIds.length }} item{{ selectedIds.length !== 1 ? 's' : '' }} selected</span>
+                        <div class="flex items-center gap-2">
+                            <button @click="showBulkStock = true" class="inline-flex items-center gap-1 rounded-lg bg-white/20 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/30">
+                                <AdjustmentsHorizontalIcon class="h-4 w-4" />
+                                Adjust Stock
+                            </button>
+                            <button @click="showBulkPrice = true" class="inline-flex items-center gap-1 rounded-lg bg-white/20 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/30">
+                                <CurrencyDollarIcon class="h-4 w-4" />
+                                Change Price
+                            </button>
+                            <button @click="executeBulkDelete" class="inline-flex items-center gap-1 rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600">
+                                <TrashIcon class="h-4 w-4" />
+                                Delete
+                            </button>
+                            <button @click="selectedIds = []" class="rounded-lg p-1.5 text-white/70 hover:bg-white/20 hover:text-white">
+                                <XMarkIcon class="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+                </Transition>
+
+                <!-- Bulk stock modal -->
+                <Teleport to="body">
+                    <Transition name="modal">
+                        <div v-if="showBulkStock" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+                            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+                                <h3 class="text-lg font-semibold text-gray-900">Adjust Stock for {{ selectedIds.length }} Items</h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Quantity Change</label>
+                                        <input v-model.number="bulkStockChange" type="number" step="0.01" class="mt-1 w-full rounded-lg border-gray-300 focus:ring-emerald-500 focus:border-emerald-500" />
+                                        <p class="mt-1 text-xs text-gray-500">Use positive values to add stock, negative to remove</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Reason</label>
+                                        <input v-model="bulkReason" type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:ring-emerald-500 focus:border-emerald-500" />
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end gap-3">
+                                    <button @click="showBulkStock = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button @click="executeBulkStock" :disabled="bulkProcessing" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    </Transition>
+                </Teleport>
+
+                <!-- Bulk price modal -->
+                <Teleport to="body">
+                    <Transition name="modal">
+                        <div v-if="showBulkPrice" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4">
+                            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+                                <h3 class="text-lg font-semibold text-gray-900">Update Price for {{ selectedIds.length }} Items</h3>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700">New Unit Price</label>
+                                    <input v-model.number="bulkPriceValue" type="number" step="0.01" min="0" class="mt-1 w-full rounded-lg border-gray-300 focus:ring-emerald-500 focus:border-emerald-500" />
+                                </div>
+                                <div class="mt-6 flex justify-end gap-3">
+                                    <button @click="showBulkPrice = false" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button @click="executeBulkPrice" :disabled="bulkProcessing" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">Update</button>
+                                </div>
+                            </div>
+                        </div>
+                    </Transition>
+                </Teleport>
+
                 <LoadingSkeleton v-if="!items.data?.length" type="table" />
                 <template v-else>
                     <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Item</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Expiry</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Stock</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unit Price</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">
+                                            <input type="checkbox" :checked="allSelected" @change="toggleAll" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Image</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Item</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Expiry</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Stock</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Unit Price</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50" :class="{ 'bg-emerald-50': selectedIds.includes(item.id) }">
+                                        <td class="px-4 py-4">
+                                            <input type="checkbox" :checked="selectedIds.includes(item.id)" @change="toggleItem(item.id)" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <img v-if="item.image_url" :src="'/storage/' + item.image_url" class="h-10 w-10 rounded-lg object-cover border border-gray-200" />
+                                            <div v-else class="h-10 w-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+                                                <span class="text-xs text-gray-400">-</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
                                         <Link :href="route('stockflow.sub.items.show', item.id)" class="font-medium text-emerald-600 hover:text-emerald-700">
                                             {{ item.name }}
                                         </Link>
@@ -152,7 +309,7 @@ const deleteItem = async (item: Item) => {
                                     </td>
                                 </tr>
                                 <tr v-if="!items.data?.length">
-                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">No items found</td>
+                                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">No items found</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -163,3 +320,11 @@ const deleteItem = async (item: Item) => {
         </div>
     </StockFlowLayout>
 </template>
+
+<style scoped>
+.slide-enter-active, .slide-leave-active { transition: all 0.2s ease-out; }
+.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-10px); }
+.modal-enter-active { transition: all 0.2s ease-out; }
+.modal-leave-active { transition: all 0.15s ease-in; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+</style>

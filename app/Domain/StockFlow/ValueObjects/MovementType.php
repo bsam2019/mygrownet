@@ -15,6 +15,9 @@ class MovementType
     private const RETURN_IN = 'return_in';
     private const PHYSICAL_COUNT = 'physical_count';
     private const OPENING_BALANCE = 'opening_balance';
+    private const TRANSFER_OUT = 'transfer_out';
+    private const TRANSFER_IN = 'transfer_in';
+    private const TRANSFER_CANCELLED = 'transfer_cancelled';
 
     private function __construct(private string $value) {}
 
@@ -27,10 +30,13 @@ class MovementType
     public static function returnIn(): self { return new self(self::RETURN_IN); }
     public static function physicalCount(): self { return new self(self::PHYSICAL_COUNT); }
     public static function openingBalance(): self { return new self(self::OPENING_BALANCE); }
+    public static function transferOut(): self { return new self(self::TRANSFER_OUT); }
+    public static function transferIn(): self { return new self(self::TRANSFER_IN); }
+    public static function transferCancelled(): self { return new self(self::TRANSFER_CANCELLED); }
 
     public static function fromString(string $value): self
     {
-        $valid = [self::PURCHASE_IN, self::SALE_OUT, self::ADJUSTMENT_IN, self::ADJUSTMENT_OUT, self::DAMAGE_OUT, self::EXPIRED_OUT, self::RETURN_IN, self::PHYSICAL_COUNT, self::OPENING_BALANCE];
+        $valid = [self::PURCHASE_IN, self::SALE_OUT, self::ADJUSTMENT_IN, self::ADJUSTMENT_OUT, self::DAMAGE_OUT, self::EXPIRED_OUT, self::RETURN_IN, self::PHYSICAL_COUNT, self::OPENING_BALANCE, self::TRANSFER_OUT, self::TRANSFER_IN, self::TRANSFER_CANCELLED];
         if (!in_array($value, $valid, true)) {
             throw new \InvalidArgumentException("Invalid movement type: {$value}");
         }

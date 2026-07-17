@@ -66,10 +66,13 @@ class SaleController extends Controller
             'payment_method' => 'required|string|in:cash,mobile_money,card,credit,transfer',
             'items' => 'required|array|min:1',
             'items.*.sa_item_id' => 'required|exists:sa_items,id',
+            'items.*.sa_lot_id' => 'nullable|exists:sa_lots,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'amount_tendered' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
+            'currency' => 'nullable|string|size:3',
+            'exchange_rate' => 'nullable|numeric|min:0',
         ]);
 
         $this->salesService->createSale($companyId, $validated, $request->user()->id);

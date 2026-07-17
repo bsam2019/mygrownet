@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StockFlow\ActivityLogController;
 use App\Http\Controllers\StockFlow\AuditController;
 use App\Http\Controllers\StockFlow\BinController;
 use App\Http\Controllers\StockFlow\CashController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\StockFlow\PurchaseOrderController;
 use App\Http\Controllers\StockFlow\ReportController;
 use App\Http\Controllers\StockFlow\RoleController;
 use App\Http\Controllers\StockFlow\SaleController;
+use App\Http\Controllers\StockFlow\SearchController;
 use App\Http\Controllers\StockFlow\SettingsController;
 use App\Http\Controllers\StockFlow\StockMovementController;
 use App\Http\Controllers\StockFlow\QuotationController;
@@ -32,7 +34,12 @@ use App\Http\Controllers\StockFlow\CategoryController;
 use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
+use App\Http\Controllers\StockFlow\TransferController;
+use App\Http\Controllers\StockFlow\AdvancedReportController;
 use App\Http\Controllers\StockFlow\ImportController;
+use App\Http\Controllers\StockFlow\ItemSupplierController;
+use App\Http\Controllers\StockFlow\ItemBulkController;
+use App\Http\Controllers\StockFlow\LabelController;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
@@ -82,6 +89,12 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::middleware('stockflow.feature:suppliers')->post('/suppliers/import-csv', [ImportController::class, 'importSuppliers'])->name('suppliers.import-csv');
     Route::middleware('stockflow.feature:bins')->post('/bins/import-csv', [ImportController::class, 'importBins'])->name('bins.import-csv');
 
+    // Activity Log
+    Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+
+    // Search
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
+
     // Help
     Route::get('/help', fn() => Inertia::render('StockFlow/Help/Index'))->name('help.index');
     Route::get('/help/{topic}', fn() => Inertia::render('StockFlow/Help/Index'))->name('help.topic');
@@ -89,6 +102,13 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     // Reports hub
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/{type}', [ReportController::class, 'show'])->name('reports.show');
+
+    // Advanced Reports
+    Route::middleware('stockflow.feature:reports')->group(function () {
+        Route::get('/reports/abc', [AdvancedReportController::class, 'abcAnalysis'])->name('reports.abc');
+        Route::get('/reports/aging', [AdvancedReportController::class, 'stockAging'])->name('reports.aging');
+        Route::get('/reports/turnover', [AdvancedReportController::class, 'inventoryTurnover'])->name('reports.turnover');
+    });
 
     // Inventory report (inside items feature)
     Route::middleware('stockflow.feature:items')->group(function () {
@@ -139,6 +159,17 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::put('/items/{item}', [ItemController::class, 'update'])->name('items.update');
     Route::delete('/items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
     Route::post('/items/import', [ItemController::class, 'import'])->name('items.import');
+        Route::get('/items/{item}/label', [LabelController::class, 'printLabel'])->name('items.label');
+
+        // Bulk operations
+        Route::post('/items/bulk-delete', [ItemBulkController::class, 'bulkDelete'])->name('items.bulk-delete');
+        Route::post('/items/bulk-adjust-stock', [ItemBulkController::class, 'bulkAdjustStock'])->name('items.bulk-adjust-stock');
+        Route::post('/items/bulk-update-price', [ItemBulkController::class, 'bulkUpdatePrice'])->name('items.bulk-update-price');
+
+        // Supplier linking
+        Route::get('/items/{item}/suppliers', [ItemSupplierController::class, 'index'])->name('items.suppliers');
+        Route::post('/items/{item}/suppliers', [ItemSupplierController::class, 'store'])->name('items.suppliers.store');
+        Route::delete('/items/{item}/suppliers/{supplier}', [ItemSupplierController::class, 'destroy'])->name('items.suppliers.destroy');
     });
 
     // Customers
@@ -182,6 +213,8 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
         Route::put('/lots/{id}', [LotController::class, 'update'])->name('lots.update');
         Route::delete('/lots/{id}', [LotController::class, 'destroy'])->name('lots.destroy');
         Route::get('/lots/by-item/{itemId}', [LotController::class, 'byItem'])->name('lots.by-item');
+        Route::get('/lots/{lot}/traceability', [LotController::class, 'traceability'])->name('lots.traceability');
+        Route::get('/items/{item}/lots', [LotController::class, 'byItem'])->name('items.lots');
     });
 
     // Purchase Requisitions
@@ -299,6 +332,16 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::middleware('stockflow.feature:movements')->group(function () {
         Route::get('/movements', [StockMovementController::class, 'index'])->name('movements.index');
     Route::get('/api/movements/by-item/{item}', [StockMovementController::class, 'byItem'])->name('movements.by-item');
+    });
+
+    // Transfers
+    Route::middleware('stockflow.feature:transfers')->group(function () {
+        Route::get('/transfers', [TransferController::class, 'index'])->name('transfers.index');
+        Route::get('/transfers/create', [TransferController::class, 'create'])->name('transfers.create');
+        Route::post('/transfers', [TransferController::class, 'store'])->name('transfers.store');
+        Route::get('/transfers/{transfer}', [TransferController::class, 'show'])->name('transfers.show');
+        Route::post('/transfers/{transfer}/receive', [TransferController::class, 'receive'])->name('transfers.receive');
+        Route::post('/transfers/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfers.cancel');
     });
 
     // Stock Adjustments (covered by items feature)

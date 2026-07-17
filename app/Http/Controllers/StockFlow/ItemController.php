@@ -11,6 +11,7 @@ use App\Domain\StockFlow\ValueObjects\ItemId;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaItemModel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ItemController extends Controller
@@ -72,9 +73,15 @@ class ItemController extends Controller
             'is_expirable' => 'boolean',
             'expiry_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
-        $this->inventoryService->createItem($companyId, $validated);
+        $item = $this->inventoryService->createItem($companyId, $validated);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('items', 'public');
+            SaItemModel::where('id', $item->id())->update(['image_url' => $path]);
+        }
 
         return redirect()->sfRoute('stockflow.items.index')->with('success', 'Item created successfully.');
     }
@@ -108,9 +115,15 @@ class ItemController extends Controller
             'is_expirable' => 'boolean',
             'expiry_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $this->inventoryService->updateItem($itemId, $companyId, $validated);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('items', 'public');
+            SaItemModel::where('id', $itemId)->update(['image_url' => $path]);
+        }
 
         return redirect()->sfRoute('stockflow.items.index')->with('success', 'Item updated successfully.');
     }

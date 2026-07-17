@@ -26,6 +26,8 @@ interface Sale {
     amount_tendered: number;
     change_due: number;
     notes: string | null;
+    currency: string;
+    exchange_rate: number | null;
     sold_by: string;
     items: SaleItem[];
     created_at: string;
@@ -56,9 +58,14 @@ const { formatCurrency } = useCurrency();
                             <h1 class="text-xl font-bold text-gray-900">{{ sale.receipt_number }}</h1>
                             <p class="text-sm text-gray-500">{{ sale.sale_date }} at {{ sale.sale_time }}</p>
                         </div>
-                        <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700 capitalize">
-                            {{ sale.payment_method.replace('_', ' ') }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span v-if="sale.currency && sale.currency !== 'ZMW'" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
+                                {{ sale.currency }} @ {{ sale.exchange_rate }}
+                            </span>
+                            <span class="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700 capitalize">
+                                {{ sale.payment_method.replace('_', ' ') }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Items -->

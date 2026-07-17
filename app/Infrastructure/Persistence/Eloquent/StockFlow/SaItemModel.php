@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\Eloquent\StockFlow;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaItemModel extends Model
@@ -11,7 +12,7 @@ class SaItemModel extends Model
     protected $table = 'sa_items';
     protected $fillable = [
         'sa_company_id', 'sa_department_id', 'sa_bin_id',
-        'name', 'sku', 'description', 'unit_price', 'unit',
+        'name', 'sku', 'description', 'image_url', 'unit_price', 'unit',
         'system_quantity', 'reorder_level', 'category',
         'is_expirable', 'expiry_date', 'notes',
     ];
@@ -27,4 +28,10 @@ class SaItemModel extends Model
     public function department(): BelongsTo { return $this->belongsTo(SaDepartmentModel::class, 'sa_department_id'); }
     public function bin(): BelongsTo { return $this->belongsTo(SaBinModel::class, 'sa_bin_id'); }
     public function stockMovements(): HasMany { return $this->hasMany(SaStockMovementModel::class, 'sa_item_id'); }
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(SaSupplierModel::class, 'sa_item_suppliers', 'sa_item_id', 'sa_supplier_id')
+            ->withPivot('supplier_sku', 'supplier_price', 'lead_time_days', 'is_preferred')
+            ->withTimestamps();
+    }
 }

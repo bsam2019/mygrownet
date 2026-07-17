@@ -77,6 +77,8 @@ class EloquentSaleRepository implements SaleRepositoryInterface
             'change_due' => $sale->getChangeDue()->toFloat(),
             'sold_by' => $sale->getSoldBy(),
             'notes' => $sale->getNotes(),
+            'currency' => $sale->getCurrency(),
+            'exchange_rate' => $sale->getExchangeRate(),
         ];
 
         if ($sale->id() === 0) {
@@ -92,6 +94,7 @@ class EloquentSaleRepository implements SaleRepositoryInterface
             SaSaleItemModel::create([
                 'sa_sale_id' => $model->id,
                 'sa_item_id' => $item->getItemId()->toInt(),
+                'sa_lot_id' => $item->getLotId()?->toInt(),
                 'item_name' => $item->getItemName(),
                 'quantity' => $item->getQuantity(),
                 'unit_price' => $item->getUnitPrice()->toFloat(),
@@ -130,6 +133,8 @@ class EloquentSaleRepository implements SaleRepositoryInterface
             changeDue: Money::fromFloat((float) $model->change_due),
             soldBy: $model->sold_by,
             notes: $model->notes,
+            currency: $model->currency ?? 'USD',
+            exchangeRate: $model->exchange_rate ? (float) $model->exchange_rate : null,
             createdAt: new DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')),
             updatedAt: new DateTimeImmutable($model->updated_at->format('Y-m-d H:i:s')),
         );
@@ -140,6 +145,7 @@ class EloquentSaleRepository implements SaleRepositoryInterface
                     id: new \App\Domain\StockFlow\ValueObjects\SaleItemId($itemModel->id),
                     saleId: SaleId::fromInt($itemModel->sa_sale_id),
                     itemId: ItemId::fromInt($itemModel->sa_item_id),
+                    lotId: $itemModel->sa_lot_id ? \App\Domain\StockFlow\ValueObjects\LotId::fromInt($itemModel->sa_lot_id) : null,
                     itemName: $itemModel->item_name,
                     quantity: (float) $itemModel->quantity,
                     unitPrice: Money::fromFloat((float) $itemModel->unit_price),

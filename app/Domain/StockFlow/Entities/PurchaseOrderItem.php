@@ -9,6 +9,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use App\Domain\StockFlow\ValueObjects\PurchaseOrderItemId;
 use App\Domain\StockFlow\ValueObjects\PurchaseOrderId;
 use App\Domain\StockFlow\ValueObjects\ItemId;
+use App\Domain\StockFlow\ValueObjects\LotId;
 use App\Domain\StockFlow\ValueObjects\Money;
 use DateTimeImmutable;
 
@@ -18,6 +19,7 @@ class PurchaseOrderItem implements Arrayable
         private PurchaseOrderItemId $id,
         private PurchaseOrderId $purchaseOrderId,
         private ItemId $itemId,
+        private ?LotId $lotId,
         private float $quantityOrdered,
         private float $quantityReceived,
         private Money $unitCost,
@@ -27,15 +29,17 @@ class PurchaseOrderItem implements Arrayable
         private DateTimeImmutable $updatedAt,
     ) {}
 
-    public static function create(PurchaseOrderId $purchaseOrderId, ItemId $itemId, float $quantityOrdered, Money $unitCost, ?string $itemName = null): self
+    public static function create(PurchaseOrderId $purchaseOrderId, ItemId $itemId, ?LotId $lotId, float $quantityOrdered, Money $unitCost, ?string $itemName = null): self
     {
-        return new self(PurchaseOrderItemId::generate(), $purchaseOrderId, $itemId, $quantityOrdered, 0, $unitCost, $unitCost->multiply($quantityOrdered), $itemName, new DateTimeImmutable(), new DateTimeImmutable());
+        return new self(PurchaseOrderItemId::generate(), $purchaseOrderId, $itemId, $lotId, $quantityOrdered, 0, $unitCost, $unitCost->multiply($quantityOrdered), $itemName, new DateTimeImmutable(), new DateTimeImmutable());
     }
 
-    public static function reconstitute(PurchaseOrderItemId $id, PurchaseOrderId $purchaseOrderId, ItemId $itemId, float $quantityOrdered, float $quantityReceived, Money $unitCost, Money $totalCost, ?string $itemName, DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt): self
+    public static function reconstitute(PurchaseOrderItemId $id, PurchaseOrderId $purchaseOrderId, ItemId $itemId, ?LotId $lotId, float $quantityOrdered, float $quantityReceived, Money $unitCost, Money $totalCost, ?string $itemName, DateTimeImmutable $createdAt, DateTimeImmutable $updatedAt): self
     {
-        return new self($id, $purchaseOrderId, $itemId, $quantityOrdered, $quantityReceived, $unitCost, $totalCost, $itemName, $createdAt, $updatedAt);
+        return new self($id, $purchaseOrderId, $itemId, $lotId, $quantityOrdered, $quantityReceived, $unitCost, $totalCost, $itemName, $createdAt, $updatedAt);
     }
+
+    public function getLotId(): ?LotId { return $this->lotId; }
 
     public function receive(float $quantity): void
     {
@@ -59,6 +63,7 @@ class PurchaseOrderItem implements Arrayable
             'id' => $this->id->toInt(),
             'sa_purchase_order_id' => $this->purchaseOrderId->toInt(),
             'sa_item_id' => $this->itemId->toInt(),
+            'sa_lot_id' => $this->lotId?->toInt(),
             'item_name' => $this->itemName,
             'quantity_ordered' => $this->quantityOrdered,
             'quantity_received' => $this->quantityReceived,

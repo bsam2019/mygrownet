@@ -63,9 +63,12 @@ class PurchaseOrderController extends Controller
             'order_date' => 'required|date',
             'items' => 'required|array|min:1',
             'items.*.sa_item_id' => 'required|exists:sa_items,id',
+            'items.*.sa_lot_id' => 'nullable|exists:sa_lots,id',
             'items.*.quantity_ordered' => 'required|numeric|min:0.01',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
+            'currency' => 'nullable|string|size:3',
+            'exchange_rate' => 'nullable|numeric|min:0',
         ]);
 
         $this->purchasingService->createPurchaseOrder($companyId, $validated);

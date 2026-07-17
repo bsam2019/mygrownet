@@ -27,6 +27,8 @@ const form = ref({
     payment_method: 'cash',
     amount_tendered: 0,
     notes: '',
+    currency: 'USD',
+    exchange_rate: null as number | null,
 });
 
 interface SaleLineItem {
@@ -114,6 +116,18 @@ const { formatCurrency } = useCurrency();
                                     <label class="block text-sm font-medium text-gray-700">Amount Tendered *</label>
                                     <input v-model.number="form.amount_tendered" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
                                     <p v-if="errors.amount_tendered" class="mt-1 text-sm text-red-600">{{ errors.amount_tendered }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Currency</label>
+                                    <select v-model="form.currency" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                        <option value="USD">USD</option>
+                                        <option value="ZMW">ZMW</option>
+                                    </select>
+                                </div>
+                                <div v-if="form.currency !== 'ZMW'">
+                                    <label class="block text-sm font-medium text-gray-700">Exchange Rate (to ZMW)</label>
+                                    <input v-model.number="form.exchange_rate" type="number" step="0.000001" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.exchange_rate" class="mt-1 text-sm text-red-600">{{ errors.exchange_rate }}</p>
                                 </div>
                             </div>
                         </div>

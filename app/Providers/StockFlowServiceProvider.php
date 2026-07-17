@@ -30,6 +30,7 @@ use App\Domain\StockFlow\Repositories\PurchaseRequisitionRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PaymentTransactionRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CategoryRepositoryInterface;
 use App\Domain\StockFlow\Repositories\BranchRepositoryInterface;
+use App\Domain\StockFlow\Repositories\TransferRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleReturnRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SupplierReturnRepositoryInterface;
 use App\Domain\StockFlow\Services\CompanyRoleService;
@@ -63,6 +64,7 @@ use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPurchaseRequis
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPaymentTransactionRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCategoryRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBranchRepository;
+use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentTransferRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSaleReturnRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSupplierReturnRepository;
 use Illuminate\Support\ServiceProvider;
@@ -119,6 +121,7 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->app->bind(PaymentTransactionRepositoryInterface::class, EloquentPaymentTransactionRepository::class);
         $this->app->bind(CategoryRepositoryInterface::class, EloquentCategoryRepository::class);
         $this->app->bind(BranchRepositoryInterface::class, EloquentBranchRepository::class);
+        $this->app->bind(TransferRepositoryInterface::class, EloquentTransferRepository::class);
         $this->app->bind(SaleReturnRepositoryInterface::class, EloquentSaleReturnRepository::class);
         $this->app->bind(SupplierReturnRepositoryInterface::class, EloquentSupplierReturnRepository::class);
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { ref } from 'vue';
 import { useNotifications } from '@/composables/useNotifications';
@@ -7,15 +7,15 @@ import { useStockflowRoute } from '@/composables/useStockflowRoute';
 
 const props = defineProps<{ lots: any[] }>();
 const { success } = useNotifications();
-const { sf } = useStockflowRoute();
+const { route } = useStockflowRoute();
 const showForm = ref(false);
 const form = useForm({ sa_item_id: '', lot_number: '', quantity: 0, manufacturing_date: '', expiry_date: '', received_date: '' });
 
 function reset() { form.reset(); showForm.value = false; }
 function submit() {
-    form.post(sf('lots.store'), { onSuccess: () => { reset(); success('Lot created.'); } });
+    form.post(route('stockflow.sub.lots.store'), { onSuccess: () => { reset(); success('Lot created.'); } });
 }
-function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.destroy', { id }), { preserveState: true, onSuccess: () => success('Lot deleted.') }); }
+function remove(id: number) { if (confirm('Delete?')) router.delete(route('stockflow.sub.lots.destroy', { id }), { preserveState: true, onSuccess: () => success('Lot deleted.') }); }
 </script>
 
 <template>
@@ -47,7 +47,10 @@ function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.des
                             <td class="px-4 py-3">{{ l.current_quantity }} / {{ l.initial_quantity }}</td>
                             <td class="px-4 py-3">{{ l.expiry_date }}</td>
                             <td class="px-4 py-3"><span :class="l.status === 'active' ? 'text-green-600' : 'text-red-600'" class="capitalize">{{ l.status }}</span></td>
-                            <td class="px-4 py-3 text-right"><button @click="remove(l.id)" class="text-red-600">Delete</button></td>
+                            <td class="px-4 py-3 text-right space-x-2">
+                                <Link :href="route('stockflow.sub.lots.traceability', { lot: l.id })" class="text-emerald-600 hover:text-emerald-700">Trace</Link>
+                                <button @click="remove(l.id)" class="text-red-600 hover:text-red-700">Delete</button>
+                            </td>
                         </tr>
                         <tr v-if="!lots.length"><td colspan="6" class="px-4 py-8 text-center text-gray-500">No lots tracked.</td></tr>
                     </tbody>

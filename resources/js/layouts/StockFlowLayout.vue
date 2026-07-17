@@ -39,6 +39,7 @@ import {
 import NotificationToast from '@/components/StockFlow/NotificationToast.vue';
 import NotificationBell from '@/components/StockFlow/NotificationBell.vue';
 import ConfirmDialog from '@/components/StockFlow/ConfirmDialog.vue';
+import GlobalSearch from '@/components/StockFlow/GlobalSearch.vue';
 
 interface Props {
     title?: string;
@@ -116,6 +117,7 @@ const navigation = computed(() => {
                 { name: 'Lots', href: isSubdomain.value ? '/lots' : '/stockflow/lots', icon: CubeIcon, routeName: `${base}.lots.index`, feature: f('lots') },
                 { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stockflow/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
                 { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stockflow/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
+                { name: 'Transfers', href: isSubdomain.value ? '/transfers' : '/stockflow/transfers', icon: ArrowsRightLeftIcon, routeName: `${base}.transfers.index`, feature: f('transfers') },
                 { name: 'Stock Ledger', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: DocumentTextIcon, routeName: `${base}.items.index`, feature: f('items') },
             ],
         },
@@ -170,6 +172,7 @@ const navigation = computed(() => {
                 { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stockflow/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
                 { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stockflow/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
                 { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stockflow/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
+                { name: 'Activity Log', href: isSubdomain.value ? '/activity-log' : '/stockflow/activity-log', icon: DocumentChartBarIcon, routeName: `${base}.activity-log.index`, feature: true },
                 { name: 'Settings', href: isSubdomain.value ? '/settings' : '/stockflow/settings', icon: Cog6ToothIcon, routeName: `${base}.settings.index`, feature: true },
                 { name: 'Help', href: isSubdomain.value ? '/help' : '/stockflow/help', icon: BookOpenIcon, routeName: `${base}.help.index`, feature: true },
             ],
@@ -424,7 +427,9 @@ onUnmounted(() => {
                     <div class="flex flex-1 items-center">
                         <h1 class="text-lg font-semibold text-gray-900">{{ title || 'StockFlow' }}</h1>
                     </div>
-                    <div class="flex items-center gap-x-2 lg:gap-x-4">
+                    <div class="flex items-center gap-x-2 lg:gap-x-4 flex-1 justify-end">
+                        <!-- Global Search -->
+                        <GlobalSearch />
                         <!-- Notification Bell -->
                         <NotificationBell />
 
