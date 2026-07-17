@@ -124,6 +124,7 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     // Bins
     Route::middleware('stockflow.feature:bins')->group(function () {
         Route::get('/bins', [BinController::class, 'index'])->name('bins.index');
+    Route::get('/bins/{bin}', [BinController::class, 'show'])->name('bins.show');
     Route::post('/bins', [BinController::class, 'store'])->name('bins.store');
     Route::put('/bins/{bin}', [BinController::class, 'update'])->name('bins.update');
     Route::delete('/bins/{bin}', [BinController::class, 'destroy'])->name('bins.destroy');

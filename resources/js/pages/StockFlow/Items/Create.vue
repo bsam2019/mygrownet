@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import { ref } from 'vue';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const { route } = useStockflowRoute();
 
@@ -49,85 +50,103 @@ const submit = () => {
         <Head title="Create Item - StockFlow" />
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-                <div class="mb-6">
+                <div class="mb-4">
                     <Link :href="route('stockflow.sub.items.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Items</Link>
-                    <h1 class="mt-2 text-2xl font-bold text-gray-900">Create New Item</h1>
                 </div>
 
-                <form @submit.prevent="submit" class="space-y-6 rounded-xl bg-white p-6 shadow-sm">
-                    <div class="grid gap-6 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Name *</label>
-                            <input v-model="form.name" type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                            <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+                <div class="mb-6 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-5 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
+                            <PlusIcon class="h-6 w-6 text-white" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">SKU</label>
-                            <input v-model="form.sku" type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Category</label>
-                            <input v-model="form.category" type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Unit</label>
-                            <select v-model="form.unit" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
-                                <option value="pcs">Pieces (pcs)</option>
-                                <option value="kg">Kilograms (kg)</option>
-                                <option value="g">Grams (g)</option>
-                                <option value="l">Liters (l)</option>
-                                <option value="ml">Milliliters (ml)</option>
-                                <option value="box">Box</option>
-                                <option value="pack">Pack</option>
-                                <option value="bottle">Bottle</option>
-                                <option value="unit">Unit</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Unit Price *</label>
-                            <input v-model.number="form.unit_price" type="number" step="0.01" min="0" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                            <p v-if="errors.unit_price" class="mt-1 text-sm text-red-600">{{ errors.unit_price }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">System Quantity *</label>
-                            <input v-model.number="form.system_quantity" type="number" step="0.01" min="0" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                            <p v-if="errors.system_quantity" class="mt-1 text-sm text-red-600">{{ errors.system_quantity }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Bin</label>
-                            <select v-model="form.sa_bin_id" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
-                                <option value="">No bin</option>
-                                <option v-for="bin in bins" :key="bin.id" :value="bin.id">{{ bin.label || bin.name }}</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <label class="flex items-center gap-2">
-                                <input v-model="form.is_expirable" type="checkbox" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
-                                <span class="text-sm font-medium text-gray-700">Expirable item</span>
-                            </label>
+                            <h1 class="text-lg font-semibold text-white">Create Item</h1>
+                            <p class="text-sm text-emerald-100">Add a new product to your inventory</p>
                         </div>
                     </div>
+                </div>
 
-                    <div v-if="form.is_expirable">
-                        <label class="block text-sm font-medium text-gray-700">Expiry Date</label>
-                        <input v-model="form.expiry_date" type="date" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                    </div>
+                <form @submit.prevent="submit" class="space-y-6">
+                    <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+                        <div class="border-b border-gray-100 px-6 py-4">
+                            <h2 class="text-base font-semibold text-gray-900">Item Details</h2>
+                        </div>
+                        <div class="px-6 py-5">
+                            <div class="grid gap-6 sm:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Name *</label>
+                                    <input v-model="form.name" type="text" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">SKU</label>
+                                    <input v-model="form.sku" type="text" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                                    <input v-model="form.category" type="text" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Unit</label>
+                                    <select v-model="form.unit" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                        <option value="pcs">Pieces (pcs)</option>
+                                        <option value="kg">Kilograms (kg)</option>
+                                        <option value="g">Grams (g)</option>
+                                        <option value="l">Liters (l)</option>
+                                        <option value="ml">Milliliters (ml)</option>
+                                        <option value="box">Box</option>
+                                        <option value="pack">Pack</option>
+                                        <option value="bottle">Bottle</option>
+                                        <option value="unit">Unit</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Unit Price *</label>
+                                    <input v-model.number="form.unit_price" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.unit_price" class="mt-1 text-sm text-red-600">{{ errors.unit_price }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">System Quantity *</label>
+                                    <input v-model.number="form.system_quantity" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.system_quantity" class="mt-1 text-sm text-red-600">{{ errors.system_quantity }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Bin</label>
+                                    <select v-model="form.sa_bin_id" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                        <option value="">No bin</option>
+                                        <option v-for="bin in bins" :key="bin.id" :value="bin.id">{{ bin.label || bin.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <label class="flex items-center gap-2">
+                                        <input v-model="form.is_expirable" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                                        <span class="text-sm font-medium text-gray-700">Expirable item</span>
+                                    </label>
+                                </div>
+                            </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Description</label>
-                        <textarea v-model="form.description" rows="3" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"></textarea>
-                    </div>
+                            <div v-if="form.is_expirable" class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700">Expiry Date</label>
+                                <input v-model="form.expiry_date" type="date" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                            </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Notes</label>
-                        <textarea v-model="form.notes" rows="2" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"></textarea>
-                    </div>
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea v-model="form.description" rows="3" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600"></textarea>
+                            </div>
 
-                    <div class="flex items-center gap-4">
-                        <button type="submit" :disabled="processing" class="rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
-                            {{ processing ? 'Creating...' : 'Create Item' }}
-                        </button>
-                        <Link :href="route('stockflow.sub.items.index')" class="text-sm text-gray-600 hover:text-gray-800">Cancel</Link>
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700">Notes</label>
+                                <textarea v-model="form.notes" rows="2" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+                            <Link :href="route('stockflow.sub.items.index')" class="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</Link>
+                            <button type="submit" :disabled="processing" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                {{ processing ? 'Creating...' : 'Create Item' }}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

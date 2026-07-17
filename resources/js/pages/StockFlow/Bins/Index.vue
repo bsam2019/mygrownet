@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
@@ -177,7 +177,9 @@ const uploadBinsCsv = async (event: Event) => {
                             </thead>
                             <tbody class="divide-y divide-gray-200">
                                 <tr v-for="bin in bins.data" :key="bin.id" class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 font-medium text-gray-900">{{ bin.name }}</td>
+                                    <td class="px-6 py-4 font-medium">
+                                        <Link :href="route('stockflow.sub.bins.show', bin.id)" class="text-emerald-600 hover:text-emerald-700">{{ bin.name }}</Link>
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ bin.label || '-' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ departmentName(bin.sa_department_id) }}</td>
                                     <td class="px-6 py-4 text-right text-sm text-gray-700">{{ bin.sort_order }}</td>

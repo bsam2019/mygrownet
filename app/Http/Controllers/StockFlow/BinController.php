@@ -5,6 +5,7 @@ namespace App\Http\Controllers\StockFlow;
 use App\Http\Controllers\Controller;
 use App\Domain\StockFlow\Services\DepartmentBinService;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaBinModel;
+use App\Infrastructure\Persistence\Eloquent\StockFlow\SaItemModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -39,6 +40,23 @@ class BinController extends Controller
         return Inertia::render('StockFlow/Bins/Index', [
             'bins' => $bins,
             'departments' => $departments,
+        ]);
+    }
+
+    public function show(int $binId)
+    {
+        $bin = SaBinModel::with('department')->findOrFail($binId);
+        $items = SaItemModel::where('sa_bin_id', $binId)->orderBy('name')->get()->toArray();
+
+        return Inertia::render('StockFlow/Bins/Show', [
+            'bin' => [
+                'id' => $bin->id,
+                'name' => $bin->name,
+                'label' => $bin->label,
+                'description' => $bin->description,
+                'department_name' => $bin->department?->name ?? 'N/A',
+            ],
+            'items' => $items,
         ]);
     }
 

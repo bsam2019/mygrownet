@@ -145,6 +145,7 @@ Route::domain('{account}.mygrownet.com')
             // Bins
             Route::middleware('stockflow.feature:bins')->group(function () {
                 Route::get('/bins', [BinController::class, 'index'])->name('stockflow.sub.bins.index');
+                Route::get('/bins/{bin}', [BinController::class, 'show'])->name('stockflow.sub.bins.show');
                 Route::post('/bins', [BinController::class, 'store'])->name('stockflow.sub.bins.store');
                 Route::put('/bins/{bin}', [BinController::class, 'update'])->name('stockflow.sub.bins.update');
                 Route::delete('/bins/{bin}', [BinController::class, 'destroy'])->name('stockflow.sub.bins.destroy');

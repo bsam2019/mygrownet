@@ -71,103 +71,124 @@ const { formatCurrency } = useCurrency();
         <Head title="New Sale - StockFlow" />
         <div class="min-h-screen bg-gray-50 py-6">
             <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                <div class="mb-6">
+                <div class="mb-4">
                     <Link :href="route('stockflow.sub.sales.index')" class="text-sm text-emerald-600 hover:text-emerald-700">&larr; Back to Sales</Link>
-                    <h1 class="mt-2 text-2xl font-bold text-gray-900">New Sale</h1>
+                </div>
+
+                <div class="mb-6 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-5 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
+                            <PlusIcon class="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-semibold text-white">New Sale</h1>
+                            <p class="text-sm text-emerald-100">Record a new sale transaction</p>
+                        </div>
+                    </div>
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Sale Info -->
-                    <div class="rounded-xl bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-gray-900">Sale Information</h2>
-                        <div class="mt-4 grid gap-4 sm:grid-cols-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Sale Date *</label>
-                                <input v-model="form.sale_date" type="date" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                                <p v-if="errors.sale_date" class="mt-1 text-sm text-red-600">{{ errors.sale_date }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Payment Method *</label>
-                                <select v-model="form.payment_method" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
-                                    <option value="cash">Cash</option>
-                                    <option value="mobile_money">Mobile Money</option>
-                                    <option value="card">Card</option>
-                                    <option value="credit">Credit</option>
-                                    <option value="transfer">Transfer</option>
-                                </select>
-                                <p v-if="errors.payment_method" class="mt-1 text-sm text-red-600">{{ errors.payment_method }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Amount Tendered *</label>
-                                <input v-model.number="form.amount_tendered" type="number" step="0.01" min="0" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                                <p v-if="errors.amount_tendered" class="mt-1 text-sm text-red-600">{{ errors.amount_tendered }}</p>
+                    <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+                        <div class="border-b border-gray-100 px-6 py-4">
+                            <h2 class="text-base font-semibold text-gray-900">Sale Information</h2>
+                        </div>
+                        <div class="px-6 py-5">
+                            <div class="grid gap-4 sm:grid-cols-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Sale Date *</label>
+                                    <input v-model="form.sale_date" type="date" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.sale_date" class="mt-1 text-sm text-red-600">{{ errors.sale_date }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Payment Method *</label>
+                                    <select v-model="form.payment_method" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                        <option value="cash">Cash</option>
+                                        <option value="mobile_money">Mobile Money</option>
+                                        <option value="card">Card</option>
+                                        <option value="credit">Credit</option>
+                                        <option value="transfer">Transfer</option>
+                                    </select>
+                                    <p v-if="errors.payment_method" class="mt-1 text-sm text-red-600">{{ errors.payment_method }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Amount Tendered *</label>
+                                    <input v-model.number="form.amount_tendered" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    <p v-if="errors.amount_tendered" class="mt-1 text-sm text-red-600">{{ errors.amount_tendered }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Line Items -->
-                    <div class="rounded-xl bg-white p-6 shadow-sm">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900">Items</h2>
-                            <button type="button" @click="addLineItem" class="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700">
-                                <PlusIcon class="h-4 w-4" aria-hidden="true" />
-                                Add Item
-                            </button>
-                        </div>
-
-                        <div v-if="lineItems.length === 0" class="mt-4 py-8 text-center text-gray-500">
-                            <p>No items added yet. Click "Add Item" to start.</p>
-                        </div>
-
-                        <div v-for="(lineItem, index) in lineItems" :key="index" class="mt-4 border-t border-gray-100 pt-4">
-                            <div class="flex items-start gap-4">
-                                <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700">Item *</label>
-                                    <select v-model="lineItem.sa_item_id" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
-                                        <option :value="null">Select item</option>
-                                        <option v-for="item in items" :key="item.id" :value="item.id">
-                                            {{ item.name }} ({{ item.system_quantity }} {{ item.unit }} in stock)
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="w-24">
-                                    <label class="block text-sm font-medium text-gray-700">Qty *</label>
-                                    <input v-model.number="lineItem.quantity" type="number" step="0.01" min="0.01" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                                </div>
-                                <div class="w-32">
-                                    <label class="block text-sm font-medium text-gray-700">Unit Price *</label>
-                                    <input v-model.number="lineItem.unit_price" type="number" step="0.01" min="0" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
-                                </div>
-                                <div class="w-24 pt-6 text-right">
-                                    <p class="text-sm font-semibold text-gray-900">{{ formatCurrency(lineItem.quantity * lineItem.unit_price) }}</p>
-                                </div>
-                                <button type="button" @click="removeLineItem(index)" class="mt-6 p-1 text-gray-400 hover:text-red-600">
-                                    <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                    <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+                        <div class="border-b border-gray-100 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-base font-semibold text-gray-900">Items</h2>
+                                <button type="button" @click="addLineItem" class="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 hover:text-emerald-700">
+                                    <PlusIcon class="h-4 w-4" aria-hidden="true" />
+                                    Add Item
                                 </button>
                             </div>
                         </div>
+                        <div class="px-6 py-5">
+                            <div v-if="lineItems.length === 0" class="py-8 text-center text-gray-500">
+                                <p>No items added yet. Click "Add Item" to start.</p>
+                            </div>
 
-                        <div v-if="lineItems.length > 0" class="mt-6 border-t border-gray-200 pt-4">
-                            <div class="flex justify-end">
-                                <div class="text-right">
-                                    <p class="text-sm text-gray-500">Total</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(totalAmount) }}</p>
+                            <div v-for="(lineItem, index) in lineItems" :key="index" class="border-t border-gray-100 pt-4">
+                                <div class="mt-4 flex items-start gap-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700">Item *</label>
+                                        <select v-model="lineItem.sa_item_id" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600">
+                                            <option :value="null">Select item</option>
+                                            <option v-for="item in items" :key="item.id" :value="item.id">
+                                                {{ item.name }} ({{ item.system_quantity }} {{ item.unit }} in stock)
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="w-24">
+                                        <label class="block text-sm font-medium text-gray-700">Qty *</label>
+                                        <input v-model.number="lineItem.quantity" type="number" step="0.01" min="0.01" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    </div>
+                                    <div class="w-32">
+                                        <label class="block text-sm font-medium text-gray-700">Unit Price *</label>
+                                        <input v-model.number="lineItem.unit_price" type="number" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600" />
+                                    </div>
+                                    <div class="w-24 pt-6 text-right">
+                                        <p class="text-sm font-semibold text-gray-900">{{ formatCurrency(lineItem.quantity * lineItem.unit_price) }}</p>
+                                    </div>
+                                    <button type="button" @click="removeLineItem(index)" class="mt-6 p-1 text-gray-400 hover:text-red-600">
+                                        <TrashIcon class="h-5 w-5" aria-hidden="true" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="lineItems.length > 0" class="mt-6 border-t border-gray-200 pt-4">
+                                <div class="flex justify-end">
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-500">Total</p>
+                                        <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(totalAmount) }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Notes -->
-                    <div class="rounded-xl bg-white p-6 shadow-sm">
-                        <label class="block text-sm font-medium text-gray-700">Notes</label>
-                        <textarea v-model="form.notes" rows="2" class="mt-1 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                    <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+                        <div class="border-b border-gray-100 px-6 py-4">
+                            <h2 class="text-base font-semibold text-gray-900">Notes</h2>
+                        </div>
+                        <div class="px-6 py-5">
+                            <textarea v-model="form.notes" rows="2" class="mt-1 block w-full rounded-lg border-0 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600"></textarea>
+                        </div>
                     </div>
 
-                    <div class="flex items-center gap-4">
-                        <button type="submit" :disabled="processing" class="rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
-                            {{ processing ? 'Recording Sale...' : 'Record Sale' }}
-                        </button>
-                        <Link :href="route('stockflow.sub.sales.index')" class="text-sm text-gray-600 hover:text-gray-800">Cancel</Link>
+                    <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+                        <div class="flex items-center justify-end gap-3 px-6 py-4">
+                            <Link :href="route('stockflow.sub.sales.index')" class="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</Link>
+                            <button type="submit" :disabled="processing" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                {{ processing ? 'Recording Sale...' : 'Record Sale' }}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
