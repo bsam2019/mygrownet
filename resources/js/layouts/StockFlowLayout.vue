@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import {
     HomeIcon,
@@ -244,14 +244,6 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
 });
 
-watch(() => page.props.routeName, () => {
-    nextTick(() => {
-        const nav = desktopNavRef.value;
-        if (!nav) return;
-        const active = nav.querySelector('[data-active="true"]') as HTMLElement | null;
-        if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    });
-});
 </script>
 
 <template>
