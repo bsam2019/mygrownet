@@ -35,6 +35,7 @@ use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
 use App\Http\Controllers\StockFlow\ImportController;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -102,6 +103,10 @@ Route::domain('{account}.mygrownet.com')
             Route::middleware('stockflow.feature:items')->post('/items/import-csv', [ImportController::class, 'importItems'])->name('stockflow.sub.items.import-csv');
             Route::middleware('stockflow.feature:suppliers')->post('/suppliers/import-csv', [ImportController::class, 'importSuppliers'])->name('stockflow.sub.suppliers.import-csv');
             Route::middleware('stockflow.feature:bins')->post('/bins/import-csv', [ImportController::class, 'importBins'])->name('stockflow.sub.bins.import-csv');
+
+            // Help
+            Route::get('/help', fn() => Inertia::render('StockFlow/Help/Index'))->name('stockflow.sub.help.index');
+            Route::get('/help/{topic}', fn() => Inertia::render('StockFlow/Help/Index'))->name('stockflow.sub.help.topic');
 
             // Reports hub
             Route::get('/reports', [ReportController::class, 'index'])->name('stockflow.sub.reports.index');

@@ -76,50 +76,105 @@ const handleKeydown = (e: KeyboardEvent) => {
     }
 };
 
+interface NavItem {
+    name: string;
+    href: string;
+    icon: any;
+    routeName: string;
+    feature: boolean;
+    badge?: number;
+}
+
+interface NavGroup {
+    name: string;
+    items: NavItem[];
+}
+
 const navigation = computed(() => {
     const base = isSubdomain.value ? 'stockflow.sub' : 'stockflow';
     const features = companyFeatures.value;
     const f = (key: string) => features[key] !== false;
 
-    const items = [
-        { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stockflow', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
-        { name: 'Items', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
-        { name: 'Categories', href: isSubdomain.value ? '/categories' : '/stockflow/categories', icon: ListBulletIcon, routeName: `${base}.categories.index`, feature: f('items') },
-        { name: 'Customers', href: isSubdomain.value ? '/customers' : '/stockflow/customers', icon: UsersIcon, routeName: `${base}.customers.index`, feature: f('customers') },
-        { name: 'Tax Rates', href: isSubdomain.value ? '/tax-rates' : '/stockflow/tax-rates', icon: PercentBadgeIcon, routeName: `${base}.tax-rates.index`, feature: f('tax') },
-        { name: 'Exchange Rates', href: isSubdomain.value ? '/exchange-rates' : '/stockflow/exchange-rates', icon: ArrowsRightLeftIcon, routeName: `${base}.exchange-rates.index`, feature: f('currency') },
-        { name: 'Warehouses', href: isSubdomain.value ? '/warehouses' : '/stockflow/warehouses', icon: BuildingOffice2Icon, routeName: `${base}.warehouses.index`, feature: f('warehouses') },
-        { name: 'Lots', href: isSubdomain.value ? '/lots' : '/stockflow/lots', icon: CubeIcon, routeName: `${base}.lots.index`, feature: f('lots') },
-        { name: 'Controlled Medicines', href: isSubdomain.value ? '/controlled-medicines' : '/stockflow/controlled-medicines', icon: ShieldCheckIcon, routeName: `${base}.controlled-medicines.index`, feature: f('controlled-medicines') && routeExists(`${base}.controlled-medicines.index`) },
-        { name: 'BOMs', href: isSubdomain.value ? '/boms' : '/stockflow/boms', icon: CubeIcon, routeName: `${base}.boms.index`, feature: f('bill-of-material') && routeExists(`${base}.boms.index`) },
-        { name: 'Work Orders', href: isSubdomain.value ? '/work-orders' : '/stockflow/work-orders', icon: WrenchIcon, routeName: `${base}.work-orders.index`, feature: f('work-orders') && routeExists(`${base}.work-orders.index`) },
-        { name: 'Recipes', href: isSubdomain.value ? '/recipes' : '/stockflow/recipes', icon: DocumentTextIcon, routeName: `${base}.recipes.index`, feature: f('recipes') && routeExists(`${base}.recipes.index`) },
-        { name: 'Wastage', href: isSubdomain.value ? '/wastage' : '/stockflow/wastage', icon: TrashIcon, routeName: `${base}.wastage.index`, feature: f('wastage') && routeExists(`${base}.wastage.index`) },
-        { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stockflow/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
-        { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stockflow/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
-        { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stockflow/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
-        { name: 'Receipts', href: isSubdomain.value ? '/receipts' : '/stockflow/receipts', icon: DocumentArrowUpIcon, routeName: `${base}.receipts.index`, feature: f('receipts') },
-        { name: 'Sales Returns', href: isSubdomain.value ? '/sale-returns' : '/stockflow/sale-returns', icon: ArrowUturnLeftIcon, routeName: `${base}.sale-returns.index`, feature: f('sales') },
-        { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stockflow/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
-        { name: 'Supplier Returns', href: isSubdomain.value ? '/supplier-returns' : '/stockflow/supplier-returns', icon: ArrowUturnLeftIcon, routeName: `${base}.supplier-returns.index`, feature: f('purchases') },
-        { name: 'Requisitions', href: isSubdomain.value ? '/requisitions' : '/stockflow/requisitions', icon: ClipboardDocumentCheckIcon, routeName: `${base}.requisitions.index`, feature: f('requisitions') },
-        { name: 'Payments', href: isSubdomain.value ? '/payments' : '/stockflow/payments', icon: CreditCardIcon, routeName: `${base}.payments.index`, feature: f('payments') },
-        { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stockflow/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
-        { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stockflow/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
-        { name: 'Stock Ledger', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: DocumentTextIcon, routeName: `${base}.items.index`, feature: f('items') },
-        { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stockflow/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index`, feature: f('counts') },
-        { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stockflow/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index`, feature: f('audits') },
-        { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stockflow/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index`, feature: f('suppliers') },
-        { name: 'Supplier Portal', href: isSubdomain.value ? '/supplier-portal' : '/stockflow/supplier-portal', icon: BuildingStorefrontIcon, routeName: `${base}.supplier-portal.dashboard`, feature: f('suppliers') },
-        { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stockflow/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index`, feature: f('departments') },
-        { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stockflow/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
-        { name: 'Branches', href: isSubdomain.value ? '/branches' : '/stockflow/branches', icon: BuildingOffice2Icon, routeName: `${base}.branches.index`, feature: f('branches') },
-        { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stockflow/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
-        { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stockflow/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
-        { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stockflow/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
-        { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stockflow/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
+    const all: NavGroup[] = [
+        {
+            name: 'Overview',
+            items: [
+                { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stockflow', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
+            ],
+        },
+        {
+            name: 'Inventory',
+            items: [
+                { name: 'Items', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: ArchiveBoxIcon, routeName: `${base}.items.index`, feature: f('items') },
+                { name: 'Categories', href: isSubdomain.value ? '/categories' : '/stockflow/categories', icon: ListBulletIcon, routeName: `${base}.categories.index`, feature: f('items') },
+                { name: 'Warehouses', href: isSubdomain.value ? '/warehouses' : '/stockflow/warehouses', icon: BuildingOffice2Icon, routeName: `${base}.warehouses.index`, feature: f('warehouses') },
+                { name: 'Lots', href: isSubdomain.value ? '/lots' : '/stockflow/lots', icon: CubeIcon, routeName: `${base}.lots.index`, feature: f('lots') },
+                { name: 'Bins', href: isSubdomain.value ? '/bins' : '/stockflow/bins', icon: CubeIcon, routeName: `${base}.bins.index`, feature: f('bins') },
+                { name: 'Stock Movements', href: isSubdomain.value ? '/movements' : '/stockflow/movements', icon: ArrowTrendingUpIcon, routeName: `${base}.movements.index`, feature: f('movements') },
+                { name: 'Stock Ledger', href: isSubdomain.value ? '/items' : '/stockflow/items', icon: DocumentTextIcon, routeName: `${base}.items.index`, feature: f('items') },
+            ],
+        },
+        {
+            name: 'Sales & Customers',
+            items: [
+                { name: 'Customers', href: isSubdomain.value ? '/customers' : '/stockflow/customers', icon: UsersIcon, routeName: `${base}.customers.index`, feature: f('customers') },
+                { name: 'Tax Rates', href: isSubdomain.value ? '/tax-rates' : '/stockflow/tax-rates', icon: PercentBadgeIcon, routeName: `${base}.tax-rates.index`, feature: f('tax') },
+                { name: 'Exchange Rates', href: isSubdomain.value ? '/exchange-rates' : '/stockflow/exchange-rates', icon: ArrowsRightLeftIcon, routeName: `${base}.exchange-rates.index`, feature: f('currency') },
+                { name: 'Quotations', href: isSubdomain.value ? '/quotations' : '/stockflow/quotations', icon: DocumentTextIcon, routeName: `${base}.quotations.index`, feature: f('quotations') },
+                { name: 'Sales', href: isSubdomain.value ? '/sales' : '/stockflow/sales', icon: CreditCardIcon, routeName: `${base}.sales.index`, feature: f('sales') },
+                { name: 'Invoices', href: isSubdomain.value ? '/invoices' : '/stockflow/invoices', icon: DocumentCheckIcon, routeName: `${base}.invoices.index`, feature: f('invoices') },
+                { name: 'Receipts', href: isSubdomain.value ? '/receipts' : '/stockflow/receipts', icon: DocumentArrowUpIcon, routeName: `${base}.receipts.index`, feature: f('receipts') },
+                { name: 'Sales Returns', href: isSubdomain.value ? '/sale-returns' : '/stockflow/sale-returns', icon: ArrowUturnLeftIcon, routeName: `${base}.sale-returns.index`, feature: f('sales') },
+            ],
+        },
+        {
+            name: 'Purchasing',
+            items: [
+                { name: 'Suppliers', href: isSubdomain.value ? '/suppliers' : '/stockflow/suppliers', icon: BuildingStorefrontIcon, routeName: `${base}.suppliers.index`, feature: f('suppliers') },
+                { name: 'Supplier Portal', href: isSubdomain.value ? '/supplier-portal' : '/stockflow/supplier-portal', icon: BuildingStorefrontIcon, routeName: `${base}.supplier-portal.dashboard`, feature: f('suppliers') },
+                { name: 'Purchases', href: isSubdomain.value ? '/purchases' : '/stockflow/purchases', icon: ShoppingCartIcon, routeName: `${base}.purchases.index`, feature: f('purchases') },
+                { name: 'Supplier Returns', href: isSubdomain.value ? '/supplier-returns' : '/stockflow/supplier-returns', icon: ArrowUturnLeftIcon, routeName: `${base}.supplier-returns.index`, feature: f('purchases') },
+            ],
+        },
+        {
+            name: 'Operations',
+            items: [
+                { name: 'Requisitions', href: isSubdomain.value ? '/requisitions' : '/stockflow/requisitions', icon: ClipboardDocumentCheckIcon, routeName: `${base}.requisitions.index`, feature: f('requisitions') },
+                { name: 'Payments', href: isSubdomain.value ? '/payments' : '/stockflow/payments', icon: CreditCardIcon, routeName: `${base}.payments.index`, feature: f('payments') },
+                { name: 'Cash Register', href: isSubdomain.value ? '/cash' : '/stockflow/cash', icon: CurrencyDollarIcon, routeName: `${base}.cash.index`, feature: f('cash') },
+                { name: 'Physical Counts', href: isSubdomain.value ? '/physical-counts' : '/stockflow/physical-counts', icon: ClipboardDocumentListIcon, routeName: `${base}.physical-counts.index`, feature: f('counts') },
+                { name: 'Audits', href: isSubdomain.value ? '/audits' : '/stockflow/audits', icon: DocumentTextIcon, routeName: `${base}.audits.index`, feature: f('audits') },
+            ],
+        },
+        {
+            name: 'Extensions',
+            items: [
+                { name: 'Controlled Medicines', href: isSubdomain.value ? '/controlled-medicines' : '/stockflow/controlled-medicines', icon: ShieldCheckIcon, routeName: `${base}.controlled-medicines.index`, feature: f('controlled-medicines') && routeExists(`${base}.controlled-medicines.index`) },
+                { name: 'BOMs', href: isSubdomain.value ? '/boms' : '/stockflow/boms', icon: CubeIcon, routeName: `${base}.boms.index`, feature: f('bill-of-material') && routeExists(`${base}.boms.index`) },
+                { name: 'Work Orders', href: isSubdomain.value ? '/work-orders' : '/stockflow/work-orders', icon: WrenchIcon, routeName: `${base}.work-orders.index`, feature: f('work-orders') && routeExists(`${base}.work-orders.index`) },
+                { name: 'Recipes', href: isSubdomain.value ? '/recipes' : '/stockflow/recipes', icon: DocumentTextIcon, routeName: `${base}.recipes.index`, feature: f('recipes') && routeExists(`${base}.recipes.index`) },
+                { name: 'Wastage', href: isSubdomain.value ? '/wastage' : '/stockflow/wastage', icon: TrashIcon, routeName: `${base}.wastage.index`, feature: f('wastage') && routeExists(`${base}.wastage.index`) },
+            ],
+        },
+        {
+            name: 'Administration',
+            items: [
+                { name: 'Departments', href: isSubdomain.value ? '/departments' : '/stockflow/departments', icon: BuildingOfficeIcon, routeName: `${base}.departments.index`, feature: f('departments') },
+                { name: 'Branches', href: isSubdomain.value ? '/branches' : '/stockflow/branches', icon: BuildingOffice2Icon, routeName: `${base}.branches.index`, feature: f('branches') },
+                { name: 'Employees', href: isSubdomain.value ? '/employees' : '/stockflow/employees', icon: UsersIcon, routeName: `${base}.employees.index`, feature: f('employees') },
+                { name: 'Roles', href: isSubdomain.value ? '/roles' : '/stockflow/roles', icon: ShieldCheckIcon, routeName: `${base}.roles.index`, feature: f('roles') },
+                { name: 'Messages', href: isSubdomain.value ? '/messages' : '/stockflow/messages', icon: EnvelopeIcon, routeName: `${base}.messages.inbox`, feature: f('messages'), badge: messageUnreadCount.value },
+                { name: 'Reports', href: isSubdomain.value ? '/reports' : '/stockflow/reports', icon: DocumentChartBarIcon, routeName: `${base}.reports.index`, feature: f('reports') },
+                { name: 'Settings', href: isSubdomain.value ? '/settings' : '/stockflow/settings', icon: Cog6ToothIcon, routeName: `${base}.settings.index`, feature: true },
+                { name: 'Help', href: isSubdomain.value ? '/help' : '/stockflow/help', icon: BookOpenIcon, routeName: `${base}.help.index`, feature: true },
+            ],
+        },
     ];
-    return items.filter(i => i.feature);
+
+    return all.map(group => ({
+        ...group,
+        items: group.items.filter(i => i.feature),
+    })).filter(group => group.items.length > 0);
 });
 
 const routeExists = (routeName: string): boolean => {
@@ -152,6 +207,8 @@ const logout = () => {
         router.post(route('stockflow.sub.logout'));
     }
 };
+
+const flatNav = computed(() => navigation.value.flatMap(g => g.items));
 
 const closeUserMenu = () => {
     showUserMenu.value = false;
@@ -202,10 +259,11 @@ onUnmounted(() => {
                             </Link>
                         </div>
                         <nav class="flex flex-1 flex-col">
-                            <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                                <li>
+                            <ul role="list" class="flex flex-1 flex-col gap-y-6">
+                                <li v-for="group in navigation" :key="group.name">
+                                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-2">{{ group.name }}</p>
                                     <ul role="list" class="-mx-2 space-y-1">
-                                        <li v-for="item in navigation" :key="item.name">
+                                        <li v-for="item in group.items" :key="item.name">
                                             <Link
                                                 :href="item.href"
                                                 :class="[
@@ -265,35 +323,42 @@ onUnmounted(() => {
                 </div>
 
                 <nav :class="['flex flex-1 flex-col', sidebarCollapsed ? 'px-3' : 'px-4']">
-                    <ul role="list" class="flex flex-1 flex-col gap-y-2">
-                    <li v-for="item in navigation" :key="item.name">
-                        <Link
-                            :href="item.href"
-                            :class="[
-                                isCurrentRoute(item.routeName)
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    : 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border border-transparent',
-                                'group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold transition-all',
-                                sidebarCollapsed && 'justify-center'
-                            ]"
-                            :title="sidebarCollapsed ? item.name : ''"
-                        >
-                            <div class="relative">
-                                <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
-                                <span
-                                    v-if="item.name === 'Messages' && messageUnreadCount > 0 && sidebarCollapsed"
-                                    class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
-                                >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
+                    <ul role="list" class="flex flex-1 flex-col gap-y-4">
+                        <li v-for="group in navigation" :key="group.name">
+                            <div v-if="!sidebarCollapsed" class="px-2.5 mb-1">
+                                <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{{ group.name }}</p>
                             </div>
-                            <div v-if="!sidebarCollapsed" class="flex items-center gap-2 flex-1">
-                                <span>{{ item.name }}</span>
-                                <span
-                                    v-if="item.name === 'Messages' && messageUnreadCount > 0"
-                                    class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold"
-                                >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
-                            </div>
-                        </Link>
-                    </li>
+                            <ul role="list" class="flex flex-col gap-y-0.5">
+                                <li v-for="item in group.items" :key="item.name">
+                                    <Link
+                                        :href="item.href"
+                                        :class="[
+                                            isCurrentRoute(item.routeName)
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                : 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border border-transparent',
+                                            'group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold transition-all',
+                                            sidebarCollapsed && 'justify-center'
+                                        ]"
+                                        :title="sidebarCollapsed ? item.name : ''"
+                                    >
+                                        <div class="relative">
+                                            <component :is="item.icon" class="h-5 w-5 shrink-0" aria-hidden="true" />
+                                            <span
+                                                v-if="item.name === 'Messages' && messageUnreadCount > 0 && sidebarCollapsed"
+                                                class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center"
+                                            >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
+                                        </div>
+                                        <div v-if="!sidebarCollapsed" class="flex items-center gap-2 flex-1">
+                                            <span>{{ item.name }}</span>
+                                            <span
+                                                v-if="item.name === 'Messages' && messageUnreadCount > 0"
+                                                class="ml-auto inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold"
+                                            >{{ messageUnreadCount > 99 ? '99+' : messageUnreadCount }}</span>
+                                        </div>
+                                    </Link>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -374,7 +439,7 @@ onUnmounted(() => {
         <div class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white lg:hidden">
             <nav class="flex items-center justify-around py-2">
                 <Link
-                    v-for="item in navigation.slice(0, 5)"
+                    v-for="item in flatNav.slice(0, 5)"
                     :key="item.name"
                     :href="item.href"
                     :class="[

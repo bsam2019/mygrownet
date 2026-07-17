@@ -33,6 +33,7 @@ use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
 use App\Http\Controllers\StockFlow\ImportController;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')->group(function () {
@@ -80,6 +81,10 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
     Route::middleware('stockflow.feature:items')->post('/items/import-csv', [ImportController::class, 'importItems'])->name('items.import-csv');
     Route::middleware('stockflow.feature:suppliers')->post('/suppliers/import-csv', [ImportController::class, 'importSuppliers'])->name('suppliers.import-csv');
     Route::middleware('stockflow.feature:bins')->post('/bins/import-csv', [ImportController::class, 'importBins'])->name('bins.import-csv');
+
+    // Help
+    Route::get('/help', fn() => Inertia::render('StockFlow/Help/Index'))->name('help.index');
+    Route::get('/help/{topic}', fn() => Inertia::render('StockFlow/Help/Index'))->name('help.topic');
 
     // Reports hub
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

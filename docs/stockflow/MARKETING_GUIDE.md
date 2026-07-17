@@ -30,17 +30,35 @@ Full physical count and audit system with reconciliation reports. Know your actu
 ### 8. Quotations, Invoices, Receipts
 Create professional quotes, send invoices, and automatically generate receipts. Track everything from quote to payment.
 
+### 9. Industry-Specific Extensions
+StockFlow grows with your business. Add vertical-specific features through extensions:
+- **Pharmacy** — controlled medicine tracking with dosage and schedule records
+- **Manufacturing** — bill of materials, work orders, production costing
+- **Restaurant** — recipe management, menu costing, wastage tracking
+- More extensions in development (SuperMarket, Hardware, Electronics)
+
+### 10. CSV Bulk Import
+Download templates and import your inventory, suppliers, and bins via CSV. No manual data entry for large catalogs.
+
+### 11. Free Trials
+Each extension comes with a free trial period (default: 14 days). Companies can test features before subscribing.
+
+### 12. Dual-Currency Pricing
+Pricing available in both USD (international) and ZMW (Zambia) — pay in your local currency.
+
 ## Target Industries
 
-| Industry | Use Case |
-|----------|----------|
-| Retail Shops | POS, stock tracking, daily cashup |
-| Dental/Medical Clinics | Patient supplies, consumables tracking |
-| Pharmacies | Medicine stock, expiry tracking |
-| Wholesale/Distribution | Purchase orders, bulk sales |
-| Hardware Stores | Inventory categories, bins |
-| Restaurants | Ingredient stock, daily sales |
-| Manufacturers | Raw materials, finished goods |
+| Industry | Use Case | Extension |
+|----------|----------|-----------|
+| Retail Shops | POS, stock tracking, daily cashup | Core |
+| Dental/Medical Clinics | Patient supplies, consumables tracking | Core |
+| Pharmacies | Controlled medicines, expiry tracking | **Pharmacy** |
+| Wholesale/Distribution | Purchase orders, bulk sales | Core |
+| Hardware Stores | Inventory categories, bins | Hardware (coming) |
+| Restaurants | Recipe costing, ingredient tracking, wastage | **Restaurant** |
+| Manufacturers | BOMs, work orders, production costing | **Manufacturing** |
+| Electronics | Serialized inventory, warranty tracking | Electronics (coming) |
+| Supermarkets | Multi-department stock, promotions | SuperMarket (coming) |
 
 ## Competitive Advantages
 
@@ -87,7 +105,18 @@ Create professional quotes, send invoices, and automatically generate receipts. 
 
 ## Pricing Model
 
-StockFlow uses a per-company subscription model. Contact sales for current pricing tiers.
+StockFlow core is included with the subscription. Industry extensions are priced separately:
+
+| Extension | Monthly (USD) | Yearly (USD) | Monthly (ZMW) | Yearly (ZMW) |
+|-----------|--------------|--------------|---------------|---------------|
+| Pharmacy | $29 | $299 | K725 | K7,475 |
+| Manufacturing | $49 | $499 | K1,225 | K12,475 |
+| Restaurant | $39 | $399 | K975 | K9,975 |
+| SuperMarket | $49 | $499 | K1,225 | K12,475 |
+| Hardware | $39 | $399 | K975 | K9,975 |
+| Electronics | $34 | $349 | K850 | K8,725 |
+
+Each extension includes a **14-day free trial** so companies can test before subscribing. Pricing is set by the administrator and can be customized per client.
 
 ## Getting Started for New Clients
 

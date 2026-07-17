@@ -16,6 +16,9 @@
 13. Stock Movements
 14. Reports
 15. Settings
+16. Industry Extensions
+17. CSV Import & Templates
+18. Pricing & Trial Periods
 
 ## Getting Started
 
@@ -168,3 +171,70 @@ Complete history of every stock change: date, item, type, quantity before/after,
 
 ## Settings
 Configure company details (name, address, logo) and profile (name, password). Feature flags enable/disable modules.
+
+## Industry Extensions
+
+StockFlow supports industry-specific extensions that add features beyond core inventory management. Extensions are assigned to companies by an administrator.
+
+### Pharmacy Extension — Controlled Medicines
+Track controlled medicines by name, dosage, schedule (e.g. 2/2 for Second Schedule), quantity, and expiry date. Helps pharmacies comply with regulatory requirements.
+
+- Navigate to Controlled Medicines in the sidebar
+- Click Add Controlled Medicine
+- Enter medicine name, dosage, schedule, quantity, and expiry
+- Click Save
+
+### Manufacturing Extension — BOMs & Work Orders
+Bill of Materials (BOM) management and work order production scheduling.
+
+**BOMs:**
+1. Go to BOMs in the sidebar
+2. Click Create BOM
+3. Enter product name, output quantity, and raw materials with costs
+4. Click Save — total cost is auto-calculated
+
+**Work Orders:**
+1. Go to Work Orders
+2. Click Create Work Order
+3. Select a BOM, enter quantity, set due date
+4. Click Save — material requirements auto-calculated
+5. When production starts, issue materials from inventory
+
+### Restaurant Extension — Recipes & Wastage
+
+**Recipes:**
+1. Go to Recipes
+2. Click Create Recipe
+3. Add ingredients with quantities
+4. Set selling price — cost and profit margin auto-calculated
+5. Save for menu costing
+
+**Wastage:**
+1. Go to Wastage
+2. Click Record Wastage
+3. Enter item, quantity, reason (spoilage, return, expired), and cost
+4. Click Save to track losses
+
+## CSV Import & Templates
+
+### Downloading Templates
+On any list page (Items, Suppliers, Bins), click the **Template** button to download a CSV with the correct column headers.
+
+### Bulk Import
+1. Fill in the template with your data using Excel or Google Sheets
+2. On the list page, click **Import CSV**
+3. Select your prepared CSV file
+4. The system imports records in bulk
+   - Items: bin names are auto-resolved to bin IDs
+   - Bins: department names are auto-resolved
+   - Errors are reported per row
+
+## Pricing & Trial Periods
+
+### Dual-Currency Pricing
+Each extension has pricing in both USD and Zambian Kwacha (ZMW):
+- **USD** — applies internationally
+- **ZMW** — applies for Zambian businesses
+
+### Free Trials
+When an extension is assigned to your company, if a trial period is configured (default: 14 days), your company receives full access to all extension features during the trial. The sidebar shows a "Trial" badge with the expiry date. After the trial, an active subscription is required to continue using the extension.
