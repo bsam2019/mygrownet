@@ -14,7 +14,7 @@ export function useStockflowRoute() {
 
     function getRouteParamName(name: string): string | null {
         try {
-            const ziggyRoutes = (window as any).Ziggy?.routes;
+            const ziggyRoutes = (page.props as any).ziggy?.routes ?? (window as any).Ziggy?.routes;
             if (!ziggyRoutes?.[name]) return null;
             if (ziggyRoutes[name].parameters?.length) {
                 return ziggyRoutes[name].parameters[0];
