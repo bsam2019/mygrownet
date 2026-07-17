@@ -11,8 +11,10 @@ interface Extension {
     description: string | null;
     version: string | null;
     is_active: boolean;
-    price_monthly: number;
-    price_yearly: number;
+    price_monthly_usd: number;
+    price_yearly_usd: number;
+    price_monthly_zmw: number;
+    price_yearly_zmw: number;
     companies_count: number;
 }
 
@@ -63,12 +65,14 @@ const getCompanyExtensions = (companyId: number) => {
 
 // Pricing
 const editingPrice = ref<number | null>(null);
-const priceForm = useForm({ price_monthly: 0, price_yearly: 0 });
+const priceForm = useForm({ price_monthly_usd: 0, price_yearly_usd: 0, price_monthly_zmw: 0, price_yearly_zmw: 0 });
 
 const startEditPrice = (ext: Extension) => {
     editingPrice.value = ext.id;
-    priceForm.price_monthly = ext.price_monthly;
-    priceForm.price_yearly = ext.price_yearly;
+    priceForm.price_monthly_usd = ext.price_monthly_usd;
+    priceForm.price_yearly_usd = ext.price_yearly_usd;
+    priceForm.price_monthly_zmw = ext.price_monthly_zmw;
+    priceForm.price_yearly_zmw = ext.price_yearly_zmw;
 };
 
 const savePrice = (ext: Extension) => {
@@ -100,8 +104,8 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Extension</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Code</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Version</th>
-                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Monthly</th>
-                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Yearly</th>
+                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Monthly <span class="text-gray-400">(USD/ZMW)</span></th>
+                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Yearly <span class="text-gray-400">(USD/ZMW)</span></th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Companies</th>
                                 <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -117,18 +121,34 @@ const cancelEditPrice = () => { editingPrice.value = null; };
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ ext.version || '-' }}</td>
                                 <td class="px-6 py-4 text-center text-sm">
                                     <template v-if="editingPrice === ext.id">
-                                        <input v-model="priceForm.price_monthly" type="number" step="0.01" class="w-20 rounded border border-gray-200 px-2 py-1 text-xs text-center" />
+                                        <div class="flex items-center justify-center gap-1">
+                                            <span class="text-xs text-gray-400">$</span>
+                                            <input v-model="priceForm.price_monthly_usd" type="number" step="0.01" class="w-16 rounded border border-gray-200 px-1 py-1 text-xs text-center" />
+                                            <span class="text-xs text-gray-400">K</span>
+                                            <input v-model="priceForm.price_monthly_zmw" type="number" step="0.01" class="w-16 rounded border border-gray-200 px-1 py-1 text-xs text-center" />
+                                        </div>
                                     </template>
                                     <template v-else>
-                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">${{ Number(ext.price_monthly).toFixed(2) }}</span>
+                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">
+                                            ${{ Number(ext.price_monthly_usd).toFixed(2) }} /
+                                            K{{ Number(ext.price_monthly_zmw).toFixed(2) }}
+                                        </span>
                                     </template>
                                 </td>
                                 <td class="px-6 py-4 text-center text-sm">
                                     <template v-if="editingPrice === ext.id">
-                                        <input v-model="priceForm.price_yearly" type="number" step="0.01" class="w-20 rounded border border-gray-200 px-2 py-1 text-xs text-center" />
+                                        <div class="flex items-center justify-center gap-1">
+                                            <span class="text-xs text-gray-400">$</span>
+                                            <input v-model="priceForm.price_yearly_usd" type="number" step="0.01" class="w-16 rounded border border-gray-200 px-1 py-1 text-xs text-center" />
+                                            <span class="text-xs text-gray-400">K</span>
+                                            <input v-model="priceForm.price_yearly_zmw" type="number" step="0.01" class="w-16 rounded border border-gray-200 px-1 py-1 text-xs text-center" />
+                                        </div>
                                     </template>
                                     <template v-else>
-                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">${{ Number(ext.price_yearly).toFixed(2) }}</span>
+                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">
+                                            ${{ Number(ext.price_yearly_usd).toFixed(2) }} /
+                                            K{{ Number(ext.price_yearly_zmw).toFixed(2) }}
+                                        </span>
                                     </template>
                                 </td>
                                 <td class="px-6 py-4 text-center">

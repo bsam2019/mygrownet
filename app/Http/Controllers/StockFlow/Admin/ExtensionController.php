@@ -25,8 +25,10 @@ class ExtensionController extends Controller
             'description' => $e->description,
             'version' => $e->version,
             'is_active' => $e->is_active,
-            'price_monthly' => $e->price_monthly,
-            'price_yearly' => $e->price_yearly,
+            'price_monthly_usd' => $e->price_monthly_usd,
+            'price_yearly_usd' => $e->price_yearly_usd,
+            'price_monthly_zmw' => $e->price_monthly_zmw,
+            'price_yearly_zmw' => $e->price_yearly_zmw,
             'companies_count' => $e->company_subscriptions_count,
         ]);
 
@@ -54,8 +56,10 @@ class ExtensionController extends Controller
     public function updatePrice(Request $request, Extension $extension)
     {
         $validated = $request->validate([
-            'price_monthly' => 'required|numeric|min:0',
-            'price_yearly' => 'required|numeric|min:0',
+            'price_monthly_usd' => 'required|numeric|min:0',
+            'price_yearly_usd' => 'required|numeric|min:0',
+            'price_monthly_zmw' => 'required|numeric|min:0',
+            'price_yearly_zmw' => 'required|numeric|min:0',
         ]);
 
         $extension->update($validated);

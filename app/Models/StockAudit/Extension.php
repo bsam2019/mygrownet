@@ -17,15 +17,19 @@ class Extension extends Model
         'provider_class',
         'default_settings',
         'is_active',
-        'price_monthly',
-        'price_yearly',
+        'price_monthly_usd',
+        'price_yearly_usd',
+        'price_monthly_zmw',
+        'price_yearly_zmw',
     ];
 
     protected $casts = [
         'default_settings' => 'array',
         'is_active' => 'boolean',
-        'price_monthly' => 'decimal:2',
-        'price_yearly' => 'decimal:2',
+        'price_monthly_usd' => 'decimal:2',
+        'price_yearly_usd' => 'decimal:2',
+        'price_monthly_zmw' => 'decimal:2',
+        'price_yearly_zmw' => 'decimal:2',
     ];
 
     public function companySubscriptions(): HasMany
