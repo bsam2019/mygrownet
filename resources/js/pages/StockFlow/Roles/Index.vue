@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
-import { useStockflowRoute } from '@/composables/useStockflowRoute';
+import { useStockflowRoute } from '@/composables/useStockFlowRoute';
 import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
 import Pagination from '@/components/StockFlow/Pagination.vue';
 import { ref, computed } from 'vue';
@@ -28,7 +28,7 @@ interface Role {
 
 interface Props {
     roles: Role[];
-    permissions: string[];
+    availablePermissions: string[];
 }
 
 const props = defineProps<Props>();
@@ -75,7 +75,7 @@ const permissionCategories = computed(() => {
         'dashboard.': 'Dashboard',
     };
 
-    props.permissions.forEach(perm => {
+    props.availablePermissions.forEach(perm => {
         let category = 'Other';
         for (const [prefix, cat] of Object.entries(categoryMap)) {
             if (perm.startsWith(prefix)) {
