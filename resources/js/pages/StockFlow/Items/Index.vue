@@ -9,6 +9,8 @@ import {
     PlusIcon,
     MagnifyingGlassIcon,
     TrashIcon,
+    DocumentArrowDownIcon,
+    ArrowUpTrayIcon,
 } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -43,8 +45,25 @@ const { success, error: notifyError } = useNotifications();
 const confirm = useConfirmDialog();
 
 const search = ref('');
+const csvUploading = ref(false);
 
 const { formatCurrency } = useCurrency();
+
+const uploadItemsCsv = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    csvUploading.value = true;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+        await router.post(route('stockflow.sub.items.import-csv'), formData, {
+            onSuccess: () => { success('Items imported'); input.value = ''; },
+            onError: (err) => { notifyError(Object.values(err).join(', ')); input.value = ''; },
+        });
+    } catch { notifyError('Upload failed'); }
+    csvUploading.value = false;
+};
 
 const deleteItem = async (item: Item) => {
     const ok = await confirm.show(`Delete "${item.name}"? This cannot be undone.`, 'Delete Item');
@@ -64,7 +83,16 @@ const deleteItem = async (item: Item) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Inventory Items</h1>
-                    <div class="flex gap-3">
+                    <div class="flex gap-2">
+                        <a :href="route('stockflow.sub.templates.items')" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:border-emerald-200">
+                            <DocumentArrowDownIcon class="h-4 w-4" />
+                            Template
+                        </a>
+                        <label class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:border-emerald-200 cursor-pointer">
+                            <ArrowUpTrayIcon class="h-4 w-4" />
+                            Import CSV
+                            <input type="file" accept=".csv,.txt" class="hidden" @change="uploadItemsCsv" />
+                        </label>
                         <Link :href="route('stockflow.sub.items.create')" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                             <PlusIcon class="h-5 w-5" aria-hidden="true" />
                             Add Item

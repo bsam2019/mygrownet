@@ -32,6 +32,7 @@ use App\Http\Controllers\StockFlow\CategoryController;
 use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
+use App\Http\Controllers\StockFlow\ImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')->group(function () {
@@ -67,6 +68,18 @@ Route::middleware(['auth', 'verified'])->prefix('stockflow')->name('stockflow.')
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Import/Export (cross-cutting, no feature flag — templates always downloadable)
+    Route::prefix('templates')->name('templates.')->group(function () {
+        Route::get('/items', [ImportController::class, 'downloadItemTemplate'])->name('items');
+        Route::get('/suppliers', [ImportController::class, 'downloadSupplierTemplate'])->name('suppliers');
+        Route::get('/bins', [ImportController::class, 'downloadBinTemplate'])->name('bins');
+    });
+
+    // CSV imports (gated by respective features)
+    Route::middleware('stockflow.feature:items')->post('/items/import-csv', [ImportController::class, 'importItems'])->name('items.import-csv');
+    Route::middleware('stockflow.feature:suppliers')->post('/suppliers/import-csv', [ImportController::class, 'importSuppliers'])->name('suppliers.import-csv');
+    Route::middleware('stockflow.feature:bins')->post('/bins/import-csv', [ImportController::class, 'importBins'])->name('bins.import-csv');
 
     // Reports hub
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

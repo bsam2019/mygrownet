@@ -34,6 +34,7 @@ use App\Http\Controllers\StockFlow\CategoryController;
 use App\Http\Controllers\StockFlow\SaleReturnController;
 use App\Http\Controllers\StockFlow\SupplierReturnController;
 use App\Http\Controllers\StockFlow\BranchController;
+use App\Http\Controllers\StockFlow\ImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -91,6 +92,16 @@ Route::domain('{account}.mygrownet.com')
                 Route::post('/{notificationId}/read', [StockFlowNotificationController::class, 'markAsRead'])->name('read');
                 Route::post('/read-all', [StockFlowNotificationController::class, 'markAllAsRead'])->name('read-all');
             });
+
+            // Import/Export (cross-cutting, no feature flag — templates always downloadable)
+            Route::prefix('templates')->name('stockflow.sub.templates.')->group(function () {
+                Route::get('/items', [ImportController::class, 'downloadItemTemplate'])->name('items');
+                Route::get('/suppliers', [ImportController::class, 'downloadSupplierTemplate'])->name('suppliers');
+                Route::get('/bins', [ImportController::class, 'downloadBinTemplate'])->name('bins');
+            });
+            Route::middleware('stockflow.feature:items')->post('/items/import-csv', [ImportController::class, 'importItems'])->name('stockflow.sub.items.import-csv');
+            Route::middleware('stockflow.feature:suppliers')->post('/suppliers/import-csv', [ImportController::class, 'importSuppliers'])->name('stockflow.sub.suppliers.import-csv');
+            Route::middleware('stockflow.feature:bins')->post('/bins/import-csv', [ImportController::class, 'importBins'])->name('stockflow.sub.bins.import-csv');
 
             // Reports hub
             Route::get('/reports', [ReportController::class, 'index'])->name('stockflow.sub.reports.index');

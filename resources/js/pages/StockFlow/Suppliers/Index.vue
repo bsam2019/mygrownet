@@ -5,7 +5,7 @@ import { useStockflowRoute } from '@/composables/useStockflowRoute';
 import LoadingSkeleton from '@/components/StockFlow/LoadingSkeleton.vue';
 import Pagination from '@/components/StockFlow/Pagination.vue';
 import { ref } from 'vue';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, DocumentArrowDownIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline';
 import { useNotifications } from '@/composables/useNotifications';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
@@ -88,6 +88,17 @@ const deleteSupplier = async (id: number, name: string) => {
         });
     }
 };
+
+const uploadSuppliersCsv = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+    await router.post(route('stockflow.sub.suppliers.import-csv'), formData, {
+        onSuccess: () => { success('Suppliers imported'); input.value = ''; },
+        onError: (err) => { notifyError(Object.values(err).join(', ')); input.value = ''; },
+    });
+};
 </script>
 
 <template>
@@ -97,10 +108,21 @@ const deleteSupplier = async (id: number, name: string) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">Suppliers</h1>
-                    <button @click="resetForm(); showCreateForm = true" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-                        <PlusIcon class="h-5 w-5" aria-hidden="true" />
-                        Add Supplier
-                    </button>
+                    <div class="flex gap-2">
+                        <a :href="route('stockflow.sub.templates.suppliers')" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:border-emerald-200">
+                            <DocumentArrowDownIcon class="h-4 w-4" />
+                            Template
+                        </a>
+                        <label class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:border-emerald-200 cursor-pointer">
+                            <ArrowUpTrayIcon class="h-4 w-4" />
+                            Import CSV
+                            <input type="file" accept=".csv,.txt" class="hidden" @change="uploadSuppliersCsv" />
+                        </label>
+                        <button @click="resetForm(); showCreateForm = true" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+                            Add Supplier
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="showCreateForm" class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-emerald-200">
