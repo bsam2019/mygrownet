@@ -87,10 +87,10 @@ Route::domain('{account}.mygrownet.com')
 
             // Notifications API
             Route::prefix('notifications')->name('stockflow.sub.notifications.')->group(function () {
-                Route::get('/count', [StockAuditNotificationController::class, 'count'])->name('count');
-                Route::get('/list', [StockAuditNotificationController::class, 'list'])->name('list');
-                Route::post('/{notificationId}/read', [StockAuditNotificationController::class, 'markAsRead'])->name('read');
-                Route::post('/read-all', [StockAuditNotificationController::class, 'markAllAsRead'])->name('read-all');
+                Route::get('/count', [StockFlowNotificationController::class, 'count'])->name('count');
+                Route::get('/list', [StockFlowNotificationController::class, 'list'])->name('list');
+                Route::post('/{notificationId}/read', [StockFlowNotificationController::class, 'markAsRead'])->name('read');
+                Route::post('/read-all', [StockFlowNotificationController::class, 'markAllAsRead'])->name('read-all');
             });
 
             // Reports hub
