@@ -338,7 +338,7 @@ onUnmounted(() => {
                     </button>
                 </div>
 
-                <nav ref="desktopNavRef" :class="['flex flex-1 flex-col overflow-y-auto', sidebarCollapsed ? 'px-3' : 'px-4']">
+                <nav ref="desktopNavRef" data-sf-scroll="sidebar" :class="['flex flex-1 flex-col overflow-y-auto', sidebarCollapsed ? 'px-3' : 'px-4']">
                     <ul role="list" class="flex flex-1 flex-col gap-y-3">
                         <li v-for="group in navigation" :key="group.name">
                             <div v-if="!sidebarCollapsed" class="flex items-center justify-between px-2.5 mb-0.5">
@@ -450,7 +450,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Page content -->
-            <main class="h-[calc(100vh-4rem)] overflow-y-auto pb-20 lg:pb-0">
+            <main data-sf-scroll="content" class="h-[calc(100vh-4rem)] overflow-y-auto pb-20 lg:pb-0">
                 <slot />
             </main>
         </div>
@@ -482,4 +482,24 @@ onUnmounted(() => {
 .dropdown-leave-active { transition: all 0.1s ease-in; }
 .dropdown-enter-from { opacity: 0; transform: translateY(-4px); }
 .dropdown-leave-to { opacity: 0; transform: translateY(-4px); }
+</style>
+
+<style>
+[data-sf-scroll]::-webkit-scrollbar {
+    width: 5px;
+}
+[data-sf-scroll]::-webkit-scrollbar-track {
+    background: transparent;
+}
+[data-sf-scroll]::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 999px;
+}
+[data-sf-scroll]::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+[data-sf-scroll] {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+}
 </style>
