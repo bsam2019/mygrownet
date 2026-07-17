@@ -4,20 +4,36 @@ Comprehensive audit of the StockFlow module against world-class inventory manage
 
 ---
 
+## COMPLETED — High Priority Must-Fix Items ✓
+
+All 10 high-priority gaps identified in the original audit have been implemented (commit `ba0fba7`):
+
+| # | Feature | What Was Built |
+|---|---------|---------------|
+| 1 | **Barcode scanning & label printing** | Camera scanner (`BarcodeDetector` API + manual fallback), printable label view (PDF/HTML), scan buttons on Items pages |
+| 2 | **Inter-warehouse transfers** | Full DDD entity + service + controller + migrations + Vue pages (Index/Create/Show). In-transit/received workflow with stock movement tracking |
+| 3 | **Multi-currency transactions** | `currency` + `exchange_rate` columns on `sa_sales` / `sa_purchase_orders`, currency dropdown on create forms, dual-currency display |
+| 4 | **Bulk operations** | `ItemBulkController` (bulk delete, bulk adjust stock, bulk update price), checkbox multi-select + floating action bar on Items Index |
+| 5 | **Global search** | `SearchController` (Items/Customers/Suppliers/POs), `GlobalSearch.vue` component with debounced input + grouped dropdown in top bar |
+| 6 | **Advanced reporting** | ABC analysis (A/B/C classification), stock aging (expiry buckets), inventory turnover — dedicated Vue pages linked from Reports |
+| 7 | **Batch / serial traceability** | `sa_lot_id` on `sale_items` / `purchase_order_items`, `Traceability.vue` for full lot chain (purchase → stock → sale) |
+| 8 | **Supplier-item linking** | Pivot table `sa_item_suppliers` (supplier_sku, price, lead_time, is_preferred), `ItemSuppliers` component in Items Show |
+| 9 | **Product images** | `image_url` column on `sa_items`, file upload in controller, thumbnails in Index/Show/Create with lightbox |
+| 10 | **Activity log viewer** | `ActivityLogController` + `ActivityLog/Index.vue` — filterable table of all system events with user, event badge, details |
+
+---
+
 ## HIGH PRIORITY — Core Functional Gaps
+
+*All 10 original high-priority items are now implemented. Next highest priorities:*
 
 | # | Feature | Why It Matters | Current State |
 |---|---------|---------------|---------------|
-| 1 | **Barcode scanning & label printing** | Warehouse operations rely on scanning. No system is world-class without it. | No scanning support. Items have a `barcode` field but it's never populated or used. No label generation (ZPL/PDF). |
-| 2 | **Inter-warehouse / inter-branch transfers** | Stock moves between locations constantly. Transfer orders with in-transit status are table stakes. | Warehouses exist but are isolated. No `TransferOrder` entity, no in-transit stock status, no transfer workflow. Items don't link to a warehouse. |
-| 3 | **Multi-currency transactions** | Businesses deal in multiple currencies daily. Exchange rates exist but aren't applied to sales/purchases. | `ExchangeRate` entity exists, `CurrencyService` can convert, but no sale/purchase/invoice stores amounts in a foreign currency with a rate reference. |
-| 4 | **Bulk operations** | Editing 200 items one-by-one is not viable. Batch price updates, bulk delete, bulk status change are essential. | All CRUD is single-item. No `POST /items/bulk-update`, no bulk select in tables, no batch stock adjustment. |
-| 5 | **Global search** | Users need to find items, customers, orders instantly from anywhere. | No search bar. Each page has its own filter, but no cross-entity quick search. |
-| 6 | **Advanced reporting** | Margin analysis, ABC classification, stock aging, turnover, supplier performance — these drive business decisions. | Reports page exists but has minimal exports (inventory report, sales/purchase PDFs). No ABC analysis, no aging report, no profitability by customer/item. |
-| 7 | **Batch / serial number tracking** | Traceability is non-negotiable for pharma/food/manufacturing. | Lot entity exists but doesn't integrate with sales (a sale doesn't record which lot was sold). No full lot traceability. |
-| 8 | **Supplier-item linking** | Each item typically has a preferred supplier with supplier-specific SKU, lead time, and cost. | No link between items and suppliers. Purchases select items manually. |
-| 9 | **Product images** | Visual identification is critical in warehousing. | Item has no image field. No media upload for products. |
-| 10 | **Activity log viewer** | Who changed what and when — essential for compliance and debugging. | `sa_activity_log` table exists, `ActivityLogService` records events, but there's **no UI** to browse the log. |
+| 11 | **Pick / Pack / Ship workflow** | Fulfillment centers need picking waves, packing verification, and shipment tracking. | Not present. Sales record items but there's no fulfillment workflow. No shipment tracking. |
+| 12 | **Cycle counting (ABC analysis)** | Full physical counts are disruptive. ABC analysis enables daily cycle counts of high-value items. | ABC report exists but no automated cycle count scheduling. |
+| 13 | **Automated reorder points & POs** | "Auto-reorder" when stock hits minimum level saves buyer time. | Items have `reorderLevel` but no automation triggers it. No suggested PO generation. |
+| 14 | **Backorder / preorder management** | Handle demand exceeding supply without losing sales. | Not supported. Sales fail if stock is insufficient (InsufficientStockException). |
+| 15 | **Customer portal** | Let customers view their orders, invoices, and account status. | Only a supplier portal exists. No customer self-service portal. |
 
 ---
 
@@ -25,11 +41,6 @@ Comprehensive audit of the StockFlow module against world-class inventory manage
 
 | # | Feature | Why It Matters | Current State |
 |---|---------|---------------|---------------|
-| 11 | **Pick / Pack / Ship workflow** | Fulfillment centers need picking waves, packing verification, and shipment tracking. | Not present. Sales record items but there's no fulfillment workflow. No shipment tracking. |
-| 12 | **Cycle counting (ABC analysis)** | Full physical counts are disruptive. ABC analysis enables daily cycle counts of high-value items. | Only full physical counts exist. No ABC classification on items. No cycle count scheduling. |
-| 13 | **Automated reorder points & POs** | "Auto-reorder" when stock hits minimum level saves buyer time. | Items have `reorderLevel` but no automation triggers it. No suggested PO generation. |
-| 14 | **Backorder / preorder management** | Handle demand exceeding supply without losing sales. | Not supported. Sales fail if stock is insufficient (InsufficientStockException). |
-| 15 | **Customer portal** | Let customers view their orders, invoices, and account status. | Only a supplier portal exists. No customer self-service portal. |
 | 16 | **Product variants** | Same product in multiple sizes/colors needs variant linking. | `ProductVariantModel` exists but is unused — no UI, no controller, no workflow. |
 | 17 | **Bin-to-bin transfers** | Stock moves between bins daily without a purchase/sale. | No bin transfer workflow. Users must do a stock adjustment instead. |
 | 18 | **Column customization & saved filters** | Power users need to customize table views and save filter presets. | All tables are fixed-column. No drag-to-reorder columns, no show/hide, no saved filter presets. |
@@ -72,12 +83,12 @@ Comprehensive audit of the StockFlow module against world-class inventory manage
 
 ## WHAT ALREADY EXISTS (Strength Inventory)
 
-These areas are already strong and don't need immediate investment:
+These areas are already strong:
 
 - **DDD architecture** — Clean separation Domain/Infrastructure/Controllers with typed IDs, value objects, repository pattern
 - **Multi-tenant isolation** — `sa_company_id` on every table, feature flags per company
 - **Extension system** — Pharmacy, Manufacturing, Restaurant extensions with subscription gating
-- **Core workflows** — Purchase → Receive → Stock+ → Sale → Stock− → Cash Register → Count → Audit is complete
+- **Core workflows** — Purchase → Receive → Stock+ → Sale → Stock− → Cash Register → Count → Audit → Transfer
 - **CSV import** — Items, Suppliers, Bins bulk import
 - **PDF export** — Inventory report, sales report, purchase report, cash summary, audit export
 - **Role-based access** — 46 permissions across 12 categories
@@ -88,35 +99,39 @@ These areas are already strong and don't need immediate investment:
 - **Help page** — In-app documentation with accordion sections
 - **Pagination, loading skeletons, confirm dialogs** — Consistent UX patterns
 - **Responsive layout** — Mobile sidebar, bottom nav, collapsible desktop sidebar
+- **Global search** — Cross-entity quick search in top bar
+- **Activity log** — Full audit trail viewer
+- **Product images** — Upload and display
+- **Barcode scanning** — Camera-based scanner
+- **Barcode labels** — Printable label generation
+- **Supplier-item linking** — Preferred suppliers with SKU/price/lead-time per item
+- **Bulk operations** — Multi-select delete/stock/price updates
+- **Multi-currency** — Currency + exchange rate on sales/purchases
+- **Inter-warehouse transfers** — Transfer orders with in-transit/received workflow
+- **Advanced reports** — ABC analysis, stock aging, inventory turnover
+- **Lot traceability** — Full chain from purchase through sale
 
 ---
 
 ## RECOMMENDED ROADMAP
 
 ### Phase 1 — Quick Wins (1-2 weeks each)
-1. Activity log viewer (UI is missing, data is already recorded)
-2. Product images (add `image_url` to items, media upload)
-3. Global search bar (cross-entity quick search)
-4. Bulk operations (multi-select + batch actions on list pages)
-5. Dark mode toggle
+1. Dark mode toggle
+2. Bin-to-bin transfers
+3. Product variants (model already exists)
 
-### Phase 2 — Core Warehouse (2-4 weeks each)
-6. Inter-warehouse transfers
-7. Barcode scanning (camera-based, plus label generation)
-8. Supplier-item linking
-9. Bin-to-bin transfers
-10. Backorder/preorder support
+### Phase 2 — Core Operations (2-4 weeks each)
+4. Pick/Pack/Ship workflow
+5. Cycle counting with ABC scheduling
+6. Automated reorder suggestions
+7. Backorder/preorder support
 
-### Phase 3 — Advanced Operations (3-6 weeks each)
-11. Pick/Pack/Ship workflow
-12. Cycle counting with ABC analysis
-13. Automated reorder suggestions
-14. Customer portal
-15. Multi-currency transactions
+### Phase 3 — Ecosystem (3-6 weeks each)
+8. Customer portal
+9. E-commerce integration (Shopify)
+10. Accounting integration (QuickBooks)
 
-### Phase 4 — Ecosystem (ongoing)
-16. E-commerce integration (Shopify)
-17. Accounting integration (QuickBooks)
-18. Advanced reporting (BI-style dashboards)
-19. Webhook system
-20. Mobile app (Capacitor-based)
+### Phase 4 — Enterprise (ongoing)
+11. Webhook system
+12. Mobile app (Capacitor-based)
+13. Advanced BI dashboards
