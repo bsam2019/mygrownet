@@ -25,6 +25,8 @@ class ExtensionController extends Controller
             'description' => $e->description,
             'version' => $e->version,
             'is_active' => $e->is_active,
+            'price_monthly' => $e->price_monthly,
+            'price_yearly' => $e->price_yearly,
             'companies_count' => $e->company_subscriptions_count,
         ]);
 
@@ -47,6 +49,18 @@ class ExtensionController extends Controller
             'companies' => $companies,
             'assignments' => $assignments,
         ]);
+    }
+
+    public function updatePrice(Request $request, Extension $extension)
+    {
+        $validated = $request->validate([
+            'price_monthly' => 'required|numeric|min:0',
+            'price_yearly' => 'required|numeric|min:0',
+        ]);
+
+        $extension->update($validated);
+
+        return redirect()->back()->with('success', "Pricing updated for '{$extension->name}'");
     }
 
     public function toggle(Extension $extension)

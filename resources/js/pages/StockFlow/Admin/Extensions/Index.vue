@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import StockFlowLayout from '@/layouts/StockFlowLayout.vue';
 import { ref } from 'vue';
+import { useNotifications } from '@/composables/useNotifications';
 
 interface Extension {
     id: number;
@@ -10,6 +11,8 @@ interface Extension {
     description: string | null;
     version: string | null;
     is_active: boolean;
+    price_monthly: number;
+    price_yearly: number;
     companies_count: number;
 }
 
@@ -31,6 +34,8 @@ const props = defineProps<{
     companies: Company[];
     assignments: Assignments;
 }>();
+
+const { success } = useNotifications();
 
 const selectedCompany = ref<number | null>(null);
 const selectedExtension = ref<number | null>(null);
@@ -55,6 +60,24 @@ const submitAssign = () => {
 const getCompanyExtensions = (companyId: number) => {
     return props.assignments[companyId] || [];
 };
+
+// Pricing
+const editingPrice = ref<number | null>(null);
+const priceForm = useForm({ price_monthly: 0, price_yearly: 0 });
+
+const startEditPrice = (ext: Extension) => {
+    editingPrice.value = ext.id;
+    priceForm.price_monthly = ext.price_monthly;
+    priceForm.price_yearly = ext.price_yearly;
+};
+
+const savePrice = (ext: Extension) => {
+    priceForm.put(route('stockflow.admin.extensions.pricing', ext.id), {
+        onSuccess: () => { editingPrice.value = null; success('Pricing saved'); },
+    });
+};
+
+const cancelEditPrice = () => { editingPrice.value = null; };
 </script>
 
 <template>
@@ -77,6 +100,8 @@ const getCompanyExtensions = (companyId: number) => {
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Extension</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Code</th>
                                 <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Version</th>
+                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Monthly</th>
+                                <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Yearly</th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase">Companies</th>
                                 <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -90,20 +115,43 @@ const getCompanyExtensions = (companyId: number) => {
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ ext.code }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ ext.version || '-' }}</td>
+                                <td class="px-6 py-4 text-center text-sm">
+                                    <template v-if="editingPrice === ext.id">
+                                        <input v-model="priceForm.price_monthly" type="number" step="0.01" class="w-20 rounded border border-gray-200 px-2 py-1 text-xs text-center" />
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">${{ Number(ext.price_monthly).toFixed(2) }}</span>
+                                    </template>
+                                </td>
+                                <td class="px-6 py-4 text-center text-sm">
+                                    <template v-if="editingPrice === ext.id">
+                                        <input v-model="priceForm.price_yearly" type="number" step="0.01" class="w-20 rounded border border-gray-200 px-2 py-1 text-xs text-center" />
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-gray-700 cursor-pointer hover:text-emerald-600" @click="startEditPrice(ext)">${{ Number(ext.price_yearly).toFixed(2) }}</span>
+                                    </template>
+                                </td>
                                 <td class="px-6 py-4 text-center">
                                     <span :class="['inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', ext.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500']">
                                         {{ ext.is_active ? 'Active' : 'Disabled' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center text-sm text-gray-500">{{ ext.companies_count }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <Link :href="route('stockflow.admin.extensions.toggle', ext.id)" method="post" as="button" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-                                        {{ ext.is_active ? 'Disable' : 'Enable' }}
-                                    </Link>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <template v-if="editingPrice === ext.id">
+                                        <button @click="savePrice(ext)" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">Save</button>
+                                        <button @click="cancelEditPrice" class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                                    </template>
+                                    <template v-else>
+                                        <button @click="startEditPrice(ext)" class="text-sm text-gray-500 hover:text-emerald-600 font-medium">Pricing</button>
+                                        <Link :href="route('stockflow.admin.extensions.toggle', ext.id)" method="post" as="button" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                                            {{ ext.is_active ? 'Disable' : 'Enable' }}
+                                        </Link>
+                                    </template>
                                 </td>
                             </tr>
                             <tr v-if="!extensions.length">
-                                <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-400">
                                     No extensions registered. Add extension providers to config/stockflow.php
                                 </td>
                             </tr>

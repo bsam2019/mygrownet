@@ -17,11 +17,15 @@ class Extension extends Model
         'provider_class',
         'default_settings',
         'is_active',
+        'price_monthly',
+        'price_yearly',
     ];
 
     protected $casts = [
         'default_settings' => 'array',
         'is_active' => 'boolean',
+        'price_monthly' => 'decimal:2',
+        'price_yearly' => 'decimal:2',
     ];
 
     public function companySubscriptions(): HasMany

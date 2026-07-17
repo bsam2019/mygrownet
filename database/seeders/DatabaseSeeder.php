@@ -44,6 +44,9 @@ class DatabaseSeeder extends Seeder
 
             // Stock Audit Module — first client
             StockAuditSeeder::class,
+
+            // StockFlow extension pricing
+            ExtensionPricingSeeder::class,
         ]);
     }
 }

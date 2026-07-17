@@ -30,5 +30,6 @@ Route::prefix('stockflow-admin')
             Route::post('/extensions/{extension}/toggle', [AdminExtensionController::class, 'toggle'])->name('extensions.toggle');
             Route::post('/extensions/assign', [AdminExtensionController::class, 'assign'])->name('extensions.assign');
             Route::post('/extensions/{companyExtension}/revoke', [AdminExtensionController::class, 'revoke'])->name('extensions.revoke');
+            Route::put('/extensions/{extension}/pricing', [AdminExtensionController::class, 'updatePrice'])->name('extensions.pricing');
         });
     });
