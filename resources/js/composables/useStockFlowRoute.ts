@@ -17,11 +17,18 @@ export function useStockflowRoute() {
             const ziggyRoutes = (page.props as any).ziggy?.routes ?? (window as any).Ziggy?.routes;
             if (!ziggyRoutes?.[name]) return null;
             if (ziggyRoutes[name].parameters?.length) {
-                return ziggyRoutes[name].parameters[0];
+                // Return the LAST parameter (skip 'account' subdomain parameter)
+                const params = ziggyRoutes[name].parameters;
+                return params[params.length - 1];
             }
             const uri = ziggyRoutes[name].uri;
-            const match = uri.match(/\{([^}]+)\}/);
-            return match ? match[1] : null;
+            // Match all parameters, return the last one (skip {account})
+            const matches = uri.matchAll(/\{([^}]+)\}/g);
+            const allMatches = Array.from(matches);
+            if (allMatches.length > 0) {
+                return allMatches[allMatches.length - 1][1];
+            }
+            return null;
         } catch {
             return null;
         }
