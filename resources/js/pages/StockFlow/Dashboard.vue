@@ -334,37 +334,62 @@ const recentActivity = computed(() => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-4 relative z-10 pb-10">
                 <!-- Stats Bar -->
                 <div v-if="company" class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
-                        <ArchiveBoxIcon class="h-6 w-6 mx-auto mb-2 text-emerald-600" aria-hidden="true" />
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Items</p>
-                        <p class="text-xl font-bold text-gray-900">{{ stats.total_items }}</p>
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="rounded-lg bg-emerald-50 p-2.5 shrink-0">
+                                <ArchiveBoxIcon class="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Items</p>
+                                <p class="text-lg font-bold text-gray-900">{{ stats.total_items }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
-                        <CurrencyDollarIcon class="h-6 w-6 mx-auto mb-2 text-blue-600" aria-hidden="true" />
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Stock Value</p>
-                        <p class="text-xl font-bold text-gray-900" :title="formatCurrency(stats.total_system_value)">
-                            {{ formatCompactCurrency(stats.total_system_value) }}
-                        </p>
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="rounded-lg bg-blue-50 p-2.5 shrink-0">
+                                <CurrencyDollarIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Stock Value</p>
+                                <p class="text-lg font-bold text-gray-900" :title="formatCurrency(stats.total_system_value)">
+                                    {{ formatCompactCurrency(stats.total_system_value) }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
-                        <ClipboardDocumentListIcon class="h-6 w-6 mx-auto mb-2 text-violet-600" aria-hidden="true" />
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Counts</p>
-                        <p class="text-xl font-bold text-gray-900">{{ stats.total_physical_counts }}</p>
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="rounded-lg bg-violet-50 p-2.5 shrink-0">
+                                <ClipboardDocumentListIcon class="h-5 w-5 text-violet-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Counts</p>
+                                <p class="text-lg font-bold text-gray-900">{{ stats.total_physical_counts }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
-                        <DocumentTextIcon class="h-6 w-6 mx-auto mb-2 text-indigo-600" aria-hidden="true" />
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Audits</p>
-                        <p class="text-xl font-bold text-gray-900">{{ stats.total_audits }}</p>
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="rounded-lg bg-indigo-50 p-2.5 shrink-0">
+                                <DocumentTextIcon class="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Audits</p>
+                                <p class="text-lg font-bold text-gray-900">{{ stats.total_audits }}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
-                        <CurrencyDollarIcon class="h-6 w-6 mx-auto mb-2 text-teal-600" aria-hidden="true" />
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Today's Sales</p>
-                        <p class="text-xl font-bold text-gray-900" :title="formatCurrency(stats.todays_sales)">
-                            {{ formatCompactCurrency(stats.todays_sales) }}
-                        </p>
-                    </div>
-                </div>
-                                <p class="text-lg font-bold text-gray-900 truncate">{{ formatCurrency(stats.todays_sales) }}</p>
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="rounded-lg bg-teal-50 p-2.5 shrink-0">
+                                <CurrencyDollarIcon class="h-5 w-5 text-teal-600" aria-hidden="true" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Today's Sales</p>
+                                <p class="text-lg font-bold text-gray-900" :title="formatCurrency(stats.todays_sales)">
+                                    {{ formatCompactCurrency(stats.todays_sales) }}
+                                </p>
                             </div>
                         </div>
                     </div>
