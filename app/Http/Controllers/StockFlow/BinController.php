@@ -43,10 +43,17 @@ class BinController extends Controller
         ]);
     }
 
-    public function show(int $binId)
+    public function show(Request $request, int $binId)
     {
-        $bin = SaBinModel::with('department')->findOrFail($binId);
-        $items = SaItemModel::where('sa_bin_id', $binId)->orderBy('name')->get()->toArray();
+        $companyId = $request->session()->get('stockflow_company_id');
+        $bin = SaBinModel::with('department')
+            ->where('sa_company_id', $companyId)
+            ->findOrFail($binId);
+        $items = SaItemModel::where('sa_bin_id', $binId)
+            ->where('sa_company_id', $companyId)
+            ->orderBy('name')
+            ->get()
+            ->toArray();
 
         return Inertia::render('StockFlow/Bins/Show', [
             'bin' => [

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import {
     HomeIcon,
@@ -52,6 +52,7 @@ const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 const showUserMenu = ref(false);
 const collapsedGroups = ref<Set<string>>(new Set(['Overview', 'Inventory', 'Sales & Customers', 'Purchasing', 'Operations', 'Extensions', 'Administration']));
+const manuallyToggled = ref<Set<string>>(new Set());
 const desktopNavRef = ref<HTMLElement | null>(null);
 
 const isSubdomain = computed(() => {
@@ -218,6 +219,7 @@ const toggleGroup = (name: string) => {
     const s = new Set(collapsedGroups.value);
     if (s.has(name)) s.delete(name); else s.add(name);
     collapsedGroups.value = s;
+    manuallyToggled.value = new Set([...manuallyToggled.value, name]);
 };
 
 const isGroupCollapsed = (name: string) => collapsedGroups.value.has(name);
@@ -226,7 +228,26 @@ const closeUserMenu = () => {
     showUserMenu.value = false;
 };
 
+const expandGroupForRoute = (routeName: string) => {
+    if (!routeName) return;
+    for (const group of navigation.value) {
+        if (manuallyToggled.value.has(group.name)) continue;
+        const match = group.items.some(item => {
+            try {
+                return routeName === item.routeName || routeName.startsWith(item.routeName.replace(/\.\w+$/, '.'));
+            } catch { return false; }
+        });
+        if (match) {
+            const s = new Set(collapsedGroups.value);
+            s.delete(group.name);
+            collapsedGroups.value = s;
+            break;
+        }
+    }
+};
+
 onMounted(() => {
+    expandGroupForRoute(page.props.routeName ?? '');
     fetchMessageUnreadCount();
     const interval = setInterval(fetchMessageUnreadCount, 30000);
     onUnmounted(() => clearInterval(interval));
@@ -238,6 +259,10 @@ onMounted(() => {
             showUserMenu.value = false;
         }
     });
+});
+
+watch(() => page.props.routeName, (newRoute) => {
+    if (newRoute) expandGroupForRoute(newRoute);
 });
 
 onUnmounted(() => {
