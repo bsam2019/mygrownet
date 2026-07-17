@@ -16,9 +16,9 @@ function edit(b: any) { editingId.value = b.id; form.name = b.name; form.code = 
 function reset() { form.reset(); editingId.value = null; showForm.value = false; }
 function submit() {
     const route = editingId.value ? sf('branches.update', { id: editingId.value }) : sf('branches.store');
-    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success.value = 'Branch saved.'; } });
+    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success('Branch saved.'); } });
 }
-function remove(id: number) { if (confirm('Delete?')) router.delete(sf('branches.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Branch deleted.' }); }
+function remove(id: number) { if (confirm('Delete?')) router.delete(sf('branches.destroy', { id }), { preserveState: true, onSuccess: () => success('Branch deleted.') }); }
 </script>
 
 <template>

@@ -9,13 +9,13 @@ const { success } = useNotifications();
 const { sf } = useStockflowRoute();
 
 function approve(id: number) {
-    router.post(sf('requisitions.approve', { id }), {}, { preserveState: true, onSuccess: () => success.value = 'Approved.' });
+    router.post(sf('requisitions.approve', { id }), {}, { preserveState: true, onSuccess: () => success('Approved.') });
 }
 function reject(id: number) {
-    router.post(sf('requisitions.reject', { id }), {}, { preserveState: true, onSuccess: () => success.value = 'Rejected.' });
+    router.post(sf('requisitions.reject', { id }), {}, { preserveState: true, onSuccess: () => success('Rejected.') });
 }
 function remove(id: number) {
-    if (confirm('Delete?')) router.delete(sf('requisitions.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Deleted.' });
+    if (confirm('Delete?')) router.delete(sf('requisitions.destroy', { id }), { preserveState: true, onSuccess: () => success('Deleted.') });
 }
 const badgeClass = (s: string) => s === 'approved' ? 'bg-green-100 text-green-800' : s === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
 </script>

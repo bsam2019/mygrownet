@@ -29,12 +29,12 @@ use App\Domain\StockFlow\Repositories\LotRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PurchaseRequisitionRepositoryInterface;
 use App\Domain\StockFlow\Repositories\PaymentTransactionRepositoryInterface;
 use App\Domain\StockFlow\Repositories\CategoryRepositoryInterface;
-use App\Domain\StockFlow\Repositories\ControlledMedicineRepositoryInterface;
 use App\Domain\StockFlow\Repositories\BranchRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SaleReturnRepositoryInterface;
 use App\Domain\StockFlow\Repositories\SupplierReturnRepositoryInterface;
 use App\Domain\StockFlow\Services\CompanyRoleService;
 use App\Domain\StockFlow\Services\CompanyUserService;
+use App\Extensions\ExtensionServiceProvider;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentAuditRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBinRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCashRegisterRepository;
@@ -62,7 +62,6 @@ use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentLotRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPurchaseRequisitionRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentPaymentTransactionRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentCategoryRepository;
-use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentControlledMedicineRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentBranchRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSaleReturnRepository;
 use App\Infrastructure\Persistence\Repositories\StockFlow\EloquentSupplierReturnRepository;
@@ -84,6 +83,15 @@ class StockFlowServiceProvider extends ServiceProvider
             
             return $this->route($name, $parameters, $status, $headers);
         });
+
+        // Seed extension records in boot() — DB is available here
+        foreach (config('stockflow.extensions', []) as $providerClass) {
+            if (!class_exists($providerClass)) continue;
+            $provider = $this->app->getProvider($providerClass);
+            if ($provider instanceof ExtensionServiceProvider) {
+                $this->seedExtension($provider);
+            }
+        }
     }
 
     public function register(): void
@@ -143,5 +151,30 @@ class StockFlowServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Domain\StockFlow\Services\SaleReturnService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\SupplierReturnService::class);
         $this->app->singleton(\App\Domain\StockFlow\Services\BranchService::class);
+
+        // Register enabled extension providers
+        foreach (config('stockflow.extensions', []) as $providerClass) {
+            if (class_exists($providerClass)) {
+                $this->app->register($providerClass);
+            }
+        }
+    }
+
+    protected function seedExtension(ExtensionServiceProvider $extension): void
+    {
+        try {
+            \App\Models\StockAudit\Extension::firstOrCreate(
+                ['code' => $extension->getCode()],
+                [
+                    'name' => $extension->getName(),
+                    'description' => $extension->getDescription(),
+                    'version' => $extension->getVersion(),
+                    'provider_class' => get_class($extension),
+                    'default_settings' => $extension->getDefaultSettings(),
+                ]
+            );
+        } catch (\Exception $e) {
+            // Table may not exist during migrations
+        }
     }
 }

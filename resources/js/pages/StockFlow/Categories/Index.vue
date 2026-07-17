@@ -16,9 +16,9 @@ function edit(c: any) { editingId.value = c.id; form.name = c.name; form.descrip
 function reset() { form.reset(); editingId.value = null; showForm.value = false; }
 function submit() {
     const route = editingId.value ? sf('categories.update', { id: editingId.value }) : sf('categories.store');
-    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success.value = 'Category saved.'; } });
+    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success('Category saved.'); } });
 }
-function remove(id: number) { if (confirm('Delete category and all children?')) router.delete(sf('categories.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Category deleted.' }); }
+function remove(id: number) { if (confirm('Delete category and all children?')) router.delete(sf('categories.destroy', { id }), { preserveState: true, onSuccess: () => success('Category deleted.') }); }
 
 function renderTree(nodes: any[], depth = 0): any[] {
     return nodes.flatMap((n: any) => {

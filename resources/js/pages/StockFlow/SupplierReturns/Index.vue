@@ -13,7 +13,7 @@ const form = useForm({ sa_supplier_id: '', sa_purchase_order_id: '', reason: '',
 function addItem() { form.items.push({ sa_item_id: '', quantity: 0, unit_cost: 0, subtotal: 0 }); }
 function removeItem(i: number) { form.items.splice(i, 1); }
 function reset() { form.reset(); form.items = [{ sa_item_id: '', quantity: 0, unit_cost: 0, subtotal: 0 }]; showForm.value = false; }
-function submit() { form.post(sf('supplier-returns.store'), { onSuccess: () => { reset(); success.value = 'Return processed.'; } }); }
+function submit() { form.post(sf('supplier-returns.store'), { onSuccess: () => { reset(); success('Return processed.'); } }); }
 </script>
 
 <template>

@@ -93,8 +93,8 @@ class EloquentCompanyUserRepository implements CompanyUserRepositoryInterface
             joinedAt: $model->joined_at ? new \DateTimeImmutable($model->joined_at->format('Y-m-d H:i:s')) : null,
             removedAt: $model->removed_at ? new \DateTimeImmutable($model->removed_at->format('Y-m-d H:i:s')) : null,
             removalReason: $model->removal_reason,
-            createdAt: new \DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')),
-            updatedAt: new \DateTimeImmutable($model->updated_at->format('Y-m-d H:i:s')),
+            createdAt: $model->created_at ? new \DateTimeImmutable($model->created_at->format('Y-m-d H:i:s')) : new \DateTimeImmutable(),
+            updatedAt: $model->updated_at ? new \DateTimeImmutable($model->updated_at->format('Y-m-d H:i:s')) : new \DateTimeImmutable(),
         );
     }
 }

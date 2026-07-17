@@ -20,11 +20,11 @@ function reset() { form.reset(); editingId.value = null; showForm.value = false;
 
 function submit() {
     const route = editingId.value ? sf('exchange-rates.update', { id: editingId.value }) : sf('exchange-rates.store');
-    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success.value = 'Rate saved.'; } });
+    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success('Rate saved.'); } });
 }
 
 function remove(id: number) {
-    if (confirm('Delete?')) router.delete(sf('exchange-rates.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Rate deleted.' });
+    if (confirm('Delete?')) router.delete(sf('exchange-rates.destroy', { id }), { preserveState: true, onSuccess: () => success('Rate deleted.') });
 }
 </script>
 

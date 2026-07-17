@@ -29,12 +29,12 @@ function reset() {
 
 function submit() {
     const route = editingId.value ? sf('tax-rates.update', { id: editingId.value }) : sf('tax-rates.store');
-    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success.value = 'Tax rate saved.'; } });
+    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success('Tax rate saved.'); } });
 }
 
 function remove(id: number) {
     if (confirm('Delete this tax rate?')) {
-        router.delete(sf('tax-rates.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Tax rate deleted.' });
+        router.delete(sf('tax-rates.destroy', { id }), { preserveState: true, onSuccess: () => success('Tax rate deleted.') });
     }
 }
 </script>

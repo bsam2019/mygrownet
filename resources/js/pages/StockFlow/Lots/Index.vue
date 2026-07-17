@@ -13,9 +13,9 @@ const form = useForm({ sa_item_id: '', lot_number: '', quantity: 0, manufacturin
 
 function reset() { form.reset(); showForm.value = false; }
 function submit() {
-    form.post(sf('lots.store'), { onSuccess: () => { reset(); success.value = 'Lot created.'; } });
+    form.post(sf('lots.store'), { onSuccess: () => { reset(); success('Lot created.'); } });
 }
-function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Lot deleted.' }); }
+function remove(id: number) { if (confirm('Delete?')) router.delete(sf('lots.destroy', { id }), { preserveState: true, onSuccess: () => success('Lot deleted.') }); }
 </script>
 
 <template>

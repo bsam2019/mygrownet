@@ -16,9 +16,9 @@ function edit(w: any) { editingId.value = w.id; form.name = w.name; form.code = 
 function reset() { form.reset(); editingId.value = null; showForm.value = false; }
 function submit() {
     const route = editingId.value ? sf('warehouses.update', { id: editingId.value }) : sf('warehouses.store');
-    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success.value = 'Warehouse saved.'; } });
+    form[editingId.value ? 'put' : 'post'](route, { onSuccess: () => { reset(); success('Warehouse saved.'); } });
 }
-function remove(id: number) { if (confirm('Delete?')) router.delete(sf('warehouses.destroy', { id }), { preserveState: true, onSuccess: () => success.value = 'Warehouse deleted.' }); }
+function remove(id: number) { if (confirm('Delete?')) router.delete(sf('warehouses.destroy', { id }), { preserveState: true, onSuccess: () => success('Warehouse deleted.') }); }
 </script>
 
 <template>
