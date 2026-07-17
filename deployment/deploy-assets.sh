@@ -16,6 +16,19 @@ fi
 echo "🚀 Deploying assets to MyGrowNet droplet..."
 echo "📍 Server: $DROPLET_IP"
 
+# Clean up old build files on production first
+echo "🧹 Cleaning up old build files on production..."
+ssh ${DROPLET_USER}@${DROPLET_IP} << 'CLEANUP'
+cd ${PROJECT_PATH}
+if [ -d "public/build" ]; then
+    echo "Removing old build directory..."
+    rm -rf public/build/*
+    echo "✅ Old build files removed"
+else
+    echo "ℹ️  No existing build directory to clean"
+fi
+CLEANUP
+
 # Ensure manifest is in correct location before upload
 echo "📦 Ensuring Vite manifest is in correct location..."
 mkdir -p public/build/.vite
