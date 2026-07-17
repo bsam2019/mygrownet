@@ -365,7 +365,7 @@ const applyProviderPreset = () => {
                         </button>
                         <span class="text-sm font-medium text-gray-700">{{ backupForm.enabled ? 'Backups are enabled' : 'Backups are disabled' }}</span>
                     </div>
-                    <div v-if="backup.last_backup_at" class="text-xs text-gray-500">Last backup: {{ backup.last_backup_at }}</div>
+                    <div v-if="backup?.last_backup_at" class="text-xs text-gray-500">Last backup: {{ backup.last_backup_at }}</div>
                     <div class="flex justify-end border-t border-gray-100 pt-5">
                         <button type="submit" :disabled="backupForm.processing" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50">
                             <CloudArrowDownIcon class="h-4 w-4" />
