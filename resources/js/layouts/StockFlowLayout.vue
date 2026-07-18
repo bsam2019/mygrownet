@@ -52,7 +52,7 @@ const user = computed(() => page.props.auth?.user);
 const sidebarOpen = ref(false);
 const sidebarCollapsed = ref(false);
 const showUserMenu = ref(false);
-const collapsedGroups = ref<Set<string>>(new Set(['Overview', 'Inventory', 'Sales & Customers', 'Purchasing', 'Operations', 'Extensions', 'Administration']));
+const collapsedGroups = ref<Set<string>>(new Set(['Inventory', 'Sales & Customers', 'Purchasing', 'Operations', 'Extensions', 'Administration']));
 const manuallyToggled = ref<Set<string>>(new Set());
 const desktopNavRef = ref<HTMLElement | null>(null);
 
@@ -102,12 +102,6 @@ const navigation = computed(() => {
     const f = (key: string) => features[key] !== false;
 
     const all: NavGroup[] = [
-        {
-            name: 'Overview',
-            items: [
-                { name: 'Dashboard', href: isSubdomain.value ? '/' : '/stockflow', icon: HomeIcon, routeName: `${base}.dashboard`, feature: true },
-            ],
-        },
         {
             name: 'Inventory',
             items: [
@@ -368,6 +362,26 @@ onUnmounted(() => {
 
                 <nav ref="desktopNavRef" data-sf-scroll="sidebar" :class="['flex flex-1 flex-col overflow-y-auto', sidebarCollapsed ? 'px-3' : 'px-4']">
                     <ul role="list" class="flex flex-1 flex-col gap-y-3">
+                        <!-- Dashboard (standalone) -->
+                        <li>
+                            <Link
+                                :href="isSubdomain ? '/' : '/stockflow'"
+                                :data-active="isCurrentRoute(isSubdomain ? 'stockflow.sub.dashboard' : 'stockflow.dashboard') ? 'true' : undefined"
+                                :class="[
+                                    isCurrentRoute(isSubdomain ? 'stockflow.sub.dashboard' : 'stockflow.dashboard')
+                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        : 'text-gray-700 hover:text-emerald-600 hover:bg-gray-50 border border-transparent',
+                                    'group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold transition-all',
+                                    sidebarCollapsed && 'justify-center'
+                                ]"
+                                :title="sidebarCollapsed ? 'Dashboard' : ''"
+                            >
+                                <HomeIcon class="h-5 w-5 shrink-0" aria-hidden="true" />
+                                <span v-if="!sidebarCollapsed">Dashboard</span>
+                            </Link>
+                        </li>
+
+                        <!-- Navigation Groups -->
                         <li v-for="group in navigation" :key="group.name">
                             <div v-if="!sidebarCollapsed" class="flex items-center justify-between px-2.5 mb-0.5">
                                 <button @click="toggleGroup(group.name)" class="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400 hover:text-gray-600">
