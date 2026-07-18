@@ -7,7 +7,6 @@ import {
     DocumentArrowDownIcon, EnvelopeIcon, ChatBubbleLeftIcon,
     XMarkIcon, CheckCircleIcon, PencilIcon, BookmarkIcon, DocumentTextIcon
 } from '@heroicons/vue/24/outline';
-import { useAutoSave } from '@/composables/useAutoSave';
 
 const axios = (window as any).axios;
 
@@ -184,142 +183,136 @@ const attachmentToSave = ref<{ file: File; index: number } | null>(null);
 const saveToLibraryName = ref('');
 const saveToLibraryDescription = ref('');
 
-// Auto-save setup — reactive form data object for useAutoSave
-// Use a fixed key based on document type only, not the ID (which changes)
-const autoSaveKey = `invoice_${props.documentType}_draft`;
-const autoSaveData = reactive({
-    selectedTemplate: '',
-    primaryColor: '#059669',
-    businessName: '',
-    businessAddress: '',
-    businessPhone: '',
-    businessEmail: '',
-    businessTaxNumber: '',
-    preparedByName: '',
-    clientName: '',
-    clientAddress: '',
-    clientPhone: '',
-    clientEmail: '',
-    documentNumber: '',
-    issueDate: '',
-    dueDate: '',
-    currency: 'ZMW',
-    taxRate: 0,
-    discountRate: 0,
-    notes: '',
-    terms: '',
-    items: [] as LineItem[],
-});
+// ==================== NEW SIMPLE AUTOSAVE ====================
+const STORAGE_KEY = `quick_invoice_${props.documentType}_draft`;
+const autoSaveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
-const autoSave = useAutoSave(autoSaveKey, autoSaveData, { debounce: 3000 });
+// Save current form state to localStorage
+const saveDraft = () => {
+    try {
+        const draftData = {
+            selectedTemplate: selectedTemplate.value,
+            primaryColor: primaryColor.value,
+            businessName: businessName.value,
+            businessAddress: businessAddress.value,
+            businessPhone: businessPhone.value,
+            businessEmail: businessEmail.value,
+            businessTaxNumber: businessTaxNumber.value,
+            preparedByName: preparedByName.value,
+            clientName: clientName.value,
+            clientAddress: clientAddress.value,
+            clientPhone: clientPhone.value,
+            clientEmail: clientEmail.value,
+            documentNumber: documentNumber.value,
+            issueDate: issueDate.value,
+            dueDate: dueDate.value,
+            currency: currency.value,
+            taxRate: taxRate.value,
+            discountRate: discountRate.value,
+            notes: notes.value,
+            terms: terms.value,
+            items: items.value,
+            timestamp: Date.now(),
+        };
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+        autoSaveStatus.value = 'saved';
+        
+        // Reset to idle after 2 seconds
+        setTimeout(() => {
+            if (autoSaveStatus.value === 'saved') {
+                autoSaveStatus.value = 'idle';
+            }
+        }, 2000);
+    } catch (error) {
+        console.error('Failed to save draft:', error);
+    }
+};
 
-// Watch form refs and sync to autoSaveData whenever anything changes
+// Debounced save function
+const debouncedSave = () => {
+    autoSaveStatus.value = 'saving';
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(saveDraft, 1500);
+};
+
+// Load draft from localStorage
+const loadDraft = () => {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const draftData = JSON.parse(saved);
+            
+            selectedTemplate.value = draftData.selectedTemplate || selectedTemplate.value;
+            primaryColor.value = draftData.primaryColor || primaryColor.value;
+            businessName.value = draftData.businessName || '';
+            businessAddress.value = draftData.businessAddress || '';
+            businessPhone.value = draftData.businessPhone || '';
+            businessEmail.value = draftData.businessEmail || '';
+            businessTaxNumber.value = draftData.businessTaxNumber || '';
+            preparedByName.value = draftData.preparedByName || '';
+            clientName.value = draftData.clientName || '';
+            clientAddress.value = draftData.clientAddress || '';
+            clientPhone.value = draftData.clientPhone || '';
+            clientEmail.value = draftData.clientEmail || '';
+            documentNumber.value = draftData.documentNumber || '';
+            issueDate.value = draftData.issueDate || issueDate.value;
+            dueDate.value = draftData.dueDate || '';
+            currency.value = draftData.currency || 'ZMW';
+            taxRate.value = draftData.taxRate || 0;
+            discountRate.value = draftData.discountRate || 0;
+            notes.value = draftData.notes || '';
+            terms.value = draftData.terms || '';
+            items.value = draftData.items || items.value;
+            
+            return true;
+        }
+    } catch (error) {
+        console.error('Failed to load draft:', error);
+    }
+    return false;
+};
+
+// Check if draft exists
+const hasDraft = () => {
+    try {
+        return localStorage.getItem(STORAGE_KEY) !== null;
+    } catch {
+        return false;
+    }
+};
+
+// Clear draft
+const clearDraft = () => {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        showRestorePrompt.value = false;
+    } catch (error) {
+        console.error('Failed to clear draft:', error);
+    }
+};
+
+// Watch all form fields and trigger autosave
 watch([
     selectedTemplate, primaryColor,
     businessName, businessAddress, businessPhone, businessEmail, businessTaxNumber,
     preparedByName,
     clientName, clientAddress, clientPhone, clientEmail,
     documentNumber, issueDate, dueDate, currency,
-    taxRate, discountRate, notes, terms,
-], () => {
-    // Directly update autoSaveData properties to trigger reactivity
-    Object.assign(autoSaveData, {
-        selectedTemplate: selectedTemplate.value,
-        primaryColor: primaryColor.value,
-        businessName: businessName.value,
-        businessAddress: businessAddress.value,
-        businessPhone: businessPhone.value,
-        businessEmail: businessEmail.value,
-        businessTaxNumber: businessTaxNumber.value,
-        preparedByName: preparedByName.value,
-        clientName: clientName.value,
-        clientAddress: clientAddress.value,
-        clientPhone: clientPhone.value,
-        clientEmail: clientEmail.value,
-        documentNumber: documentNumber.value,
-        issueDate: issueDate.value,
-        dueDate: dueDate.value,
-        currency: currency.value,
-        taxRate: taxRate.value,
-        discountRate: discountRate.value,
-        notes: notes.value,
-        terms: terms.value,
-        items: items.value,
-    });
-}, { deep: true });
-
-watch(items, () => {
-    autoSaveData.items = [...items.value]; // Create new array to trigger reactivity
-}, { deep: true });
-
-// Sync function for manual calls
-const syncAutoSaveData = () => {
-    Object.assign(autoSaveData, {
-        selectedTemplate: selectedTemplate.value,
-        primaryColor: primaryColor.value,
-        businessName: businessName.value,
-        businessAddress: businessAddress.value,
-        businessPhone: businessPhone.value,
-        businessEmail: businessEmail.value,
-        businessTaxNumber: businessTaxNumber.value,
-        preparedByName: preparedByName.value,
-        clientName: clientName.value,
-        clientAddress: clientAddress.value,
-        clientPhone: clientPhone.value,
-        clientEmail: clientEmail.value,
-        documentNumber: documentNumber.value,
-        issueDate: issueDate.value,
-        dueDate: dueDate.value,
-        currency: currency.value,
-        taxRate: taxRate.value,
-        discountRate: discountRate.value,
-        notes: notes.value,
-        terms: terms.value,
-        items: [...items.value],
-    });
-};
+    taxRate, discountRate, notes, terms, items,
+], debouncedSave, { deep: true });
 
 const restoreSavedData = () => {
-    const savedData = autoSave.loadDraft();
-    if (savedData) {
-        if (savedData.selectedTemplate) selectedTemplate.value = savedData.selectedTemplate;
-        if (savedData.primaryColor) primaryColor.value = savedData.primaryColor;
-        if (savedData.businessName) businessName.value = savedData.businessName;
-        if (savedData.businessAddress) businessAddress.value = savedData.businessAddress;
-        if (savedData.businessPhone) businessPhone.value = savedData.businessPhone;
-        if (savedData.businessEmail) businessEmail.value = savedData.businessEmail;
-        if (savedData.businessTaxNumber) businessTaxNumber.value = savedData.businessTaxNumber;
-        if (savedData.preparedByName) preparedByName.value = savedData.preparedByName;
-        if (savedData.clientName) clientName.value = savedData.clientName;
-        if (savedData.clientAddress) clientAddress.value = savedData.clientAddress;
-        if (savedData.clientPhone) clientPhone.value = savedData.clientPhone;
-        if (savedData.clientEmail) clientEmail.value = savedData.clientEmail;
-        if (savedData.documentNumber) documentNumber.value = savedData.documentNumber;
-        if (savedData.issueDate) issueDate.value = savedData.issueDate;
-        if (savedData.dueDate) dueDate.value = savedData.dueDate;
-        if (savedData.currency) currency.value = savedData.currency;
-        if (typeof savedData.taxRate === 'number') taxRate.value = savedData.taxRate;
-        if (typeof savedData.discountRate === 'number') discountRate.value = savedData.discountRate;
-        if (savedData.notes) notes.value = savedData.notes;
-        if (savedData.terms) terms.value = savedData.terms;
-        if (savedData.items && savedData.items.length > 0) items.value = savedData.items;
+    if (loadDraft()) {
         showRestorePrompt.value = false;
         successMessage.value = 'Draft restored successfully!';
-        syncAutoSaveData();
         setTimeout(() => successMessage.value = '', 3000);
     }
 };
 
 const discardSavedData = () => {
-    autoSave.clearDraft();
-    showRestorePrompt.value = false;
-};
-
-const tryShowRestorePrompt = () => {
-    if (!isEditing.value && !props.savedProfile && autoSave.hasDraft()) {
-        showRestorePrompt.value = true;
-        lastSaveTime.value = new Date();
-    }
+    clearDraft();
 };
 
 onMounted(() => { 
@@ -334,14 +327,17 @@ onMounted(() => {
     } else if (props.savedProfile) {
         loadSavedProfile(props.savedProfile);
         hasSavedProfile.value = true;
-        syncAutoSaveData();
-    } else if (isAuthenticated.value) {
-        // Show setup wizard for logged-in users without a saved profile
-        showSetupWizard.value = true;
+    } else {
+        // Check for draft only if not editing and no saved profile
+        if (!isEditing.value && hasDraft()) {
+            showRestorePrompt.value = true;
+        }
+        
+        if (isAuthenticated.value) {
+            // Show setup wizard for logged-in users without a saved profile
+            showSetupWizard.value = true;
+        }
     }
-    
-    syncAutoSaveData();
-    tryShowRestorePrompt();
     
     // Load attachment library for authenticated users
     if (isAuthenticated.value) {
@@ -828,7 +824,7 @@ const generateDocument = async () => {
         shareData.value = response.data.share; showShareModal.value = true; successMessage.value = isEditing.value ? 'Document updated!' : 'Document generated!';
         
         // Clear auto-saved data and attachments on successful generation
-        autoSave.clearDraft();
+        clearDraft();
         attachments.value = [];
         libraryAttachmentIds.value = [];
     } catch (error: any) {
@@ -953,14 +949,14 @@ const skipSetupWizard = () => {
                         <div>
                             <div class="flex items-center gap-2">
                                 <h1 class="text-2xl font-bold text-gray-900">{{ isEditing ? 'Edit' : 'Create' }} {{ documentTypeLabels[documentType] }}</h1>
-                                <span v-if="autoSave.autoSaveStatus.value === 'saving'" class="text-xs text-amber-500 flex items-center gap-1">
+                                <span v-if="autoSaveStatus === 'saving'" class="text-xs text-amber-500 flex items-center gap-1">
                                     <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     Saving...
                                 </span>
-                                <span v-else-if="autoSave.autoSaveStatus.value === 'saved'" class="text-xs text-emerald-600 flex items-center gap-1">
+                                <span v-else-if="autoSaveStatus === 'saved'" class="text-xs text-emerald-600 flex items-center gap-1">
                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
