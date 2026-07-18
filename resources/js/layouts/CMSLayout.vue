@@ -1999,6 +1999,7 @@ const handleFormSuccess = () => {
   router.reload({
     only: ['stats', 'recentJobs', 'recentInvoices', 'customers'],
     preserveScroll: true,
+    preserveState: true,
   })
 }
 
