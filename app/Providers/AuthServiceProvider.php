@@ -18,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
         Investment::class => InvestmentPolicy::class,
         EmployeeCommissionModel::class => CommissionPolicy::class,
         EmployeeModel::class => EmployeePolicy::class,
+        Organization::class => \App\Policies\OrganizationPolicy::class,
     ];
 
     public function boot(): void

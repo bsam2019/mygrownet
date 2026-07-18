@@ -1,9 +1,22 @@
 <?php
 
+use App\Domain\Core\Services\WorkspaceResolver;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Settings\ProfileController;
+
+// Platform diagnostic route — returns resolved workspace info for the current host
+Route::get('/_platform/workspace', function (WorkspaceResolver $resolver) {
+    return $resolver->resolve(request()->getHost());
+});
+
+// Unified platform auth (behind feature flag)
+Route::prefix('platform')->name('platform.')->group(function () {
+    Route::get('/login', [\App\Http\Controllers\Platform\UnifiedAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\Platform\UnifiedAuthController::class, 'login'])->name('login.store');
+    Route::post('/logout', [\App\Http\Controllers\Platform\UnifiedAuthController::class, 'logout'])->name('logout');
+});
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Referral\ReferralController;
 use App\Http\Controllers\TransactionController;

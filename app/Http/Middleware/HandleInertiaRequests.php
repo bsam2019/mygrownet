@@ -139,6 +139,7 @@ class HandleInertiaRequests extends Middleware
                     return [
                         'roles' => $roles,
                         'permissions' => $permissions,
+                        'application_roles' => $user->getAllApplicationRoles(),
                     ];
                 });
 

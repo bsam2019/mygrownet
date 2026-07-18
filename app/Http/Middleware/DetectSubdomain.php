@@ -2,20 +2,25 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Core\Services\WorkspaceResolver;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
 use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
 use App\Infrastructure\GrowBuilder\Models\GrowBuilderSite;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 class DetectSubdomain
 {
+    private string $routingBranch = 'fallthrough';
+
     public function __construct(
         private SiteRepositoryInterface $siteRepository,
         private CompanyRepositoryInterface $companyRepository,
+        private WorkspaceResolver $workspaceResolver,
     ) {}
 
     /**
@@ -25,178 +30,213 @@ class DetectSubdomain
     public function handle(Request $request, Closure $next): Response
     {
         $host = $request->getHost();
+        $branch = 'fallthrough';
         
-        // First, check if this is a custom domain
-        $customDomainSite = $this->findSiteByCustomDomain($host);
-        if ($customDomainSite) {
-            return $this->renderSite($request, $customDomainSite, $host, true);
-        }
-        
-        // Check if this is a subdomain request (including www.subdomain.mygrownet.com)
-        if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
-            $subdomain = strtolower($matches[1]);
-            
-            // Skip main domain variations (but not www.subdomain)
-            if ($subdomain === 'mygrownet') {
-                return $next($request);
+        try {
+            // First, check if this is a custom domain
+            $customDomainSite = $this->findSiteByCustomDomain($host);
+            if ($customDomainSite) {
+                $branch = 'custom_domain';
+                return $this->renderSite($request, $customDomainSite, $host, true);
             }
             
-            // If it's just www.mygrownet.com (no subdomain), skip
-            if ($subdomain === 'www' && $host === 'www.mygrownet.com') {
-                return $next($request);
-            }
-            
-            // Handle geopamu subdomain - dispatch directly to controller
-            if ($subdomain === 'geopamu') {
-                return $this->handleGeopamuSubdomain($request);
-            }
-            
-            // Handle wowthem subdomain - dispatch directly to controller
-            if ($subdomain === 'wowthem') {
-                return $this->handleWowthemSubdomain($request);
-            }
-            
-            // Handle CMS subdomain - dispatch directly to controller
-            if ($subdomain === 'cms') {
-                return $this->handleCmsSubdomain($request, $next);
-            }
-            
-            // Handle GrowMart subdomain
-            // Routes are defined via Route::domain('growmart.mygrownet.com') in growmart.php
-            if ($subdomain === 'growmart') {
-                $baseUrl = "https://{$subdomain}.mygrownet.com";
-                URL::forceRootUrl($baseUrl);
-                URL::useAssetOrigin($baseUrl);
-                config(['app.url' => $baseUrl]);
-                config(['app.asset_url' => $baseUrl]);
-
-                // Block main-site routes from leaking onto the subdomain.
-                // Only allow routes with name prefix "growmart." (e.g. growmart.home, growmart.products.index).
-                // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
-                $route = $request->route();
-                if ($route) {
-                    $name = $route->getName();
-                    if ($name) {
-                        $isGrowmartSubdomain = str_starts_with($name, 'growmart.')
-                            && !str_starts_with($name, 'growmart.main.');
-                        if (!$isGrowmartSubdomain) {
-                            abort(404);
-                        }
-                    }
-                }
-
-                return $next($request);
-            }
-
-            // Handle BizBoost subdomain
-            if ($subdomain === 'bizboost') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle BizDocs subdomain
-            if ($subdomain === 'bizdocs') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle GrowBuilder subdomain
-            if ($subdomain === 'growbuilder') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle Venture subdomain
-            if ($subdomain === 'venture') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle GrowNet subdomain
-            if ($subdomain === 'grownet') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle GrowStorage subdomain
-            if ($subdomain === 'growstorage') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle ZamStay subdomain
-            if ($subdomain === 'zamstay') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle PrimeEdge subdomain
-            if ($subdomain === 'primeedge') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Handle StockFlow subdomain
-            if ($subdomain === 'stockflow') {
-                $this->configureSubdomainUrl($subdomain);
-                return $next($request);
-            }
-
-            // Skip other reserved subdomains
-            $reserved = [
-                'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
-                'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
-                'app', 'dashboard', 'portal', 'staging', 'dev'
-            ];
-            
-            if (in_array($subdomain, $reserved)) {
-                return $next($request);
-            }
-            
-            // Check if it's a StockFlow company subdomain
-            $company = $this->companyRepository->findBySubdomain($subdomain);
-            if ($company && $company->getStatus() === 'active') {
-                $this->configureSubdomainUrl($subdomain);
-                $request->attributes->set('stockflow_company_id', $company->id());
-
-                return $next($request);
-            }
-            
-            // Check if site exists
-            try {
-                $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
+            // Check if this is a subdomain request (including www.subdomain.mygrownet.com)
+            if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
+                $subdomain = strtolower($matches[1]);
                 
-                if ($site) {
-                    // Handle manifest.json request
-                    if ($request->path() === 'manifest.json') {
-                        return $this->handleManifest($request, $site);
-                    }
-                    
-                    // Handle auth routes (login, register, etc.)
-                    if ($this->isAuthRoute($request->path())) {
-                        return $this->handleAuthRoute($request, $subdomain);
-                    }
-                    
-                    // Only render site if published
-                    if ($site->isPublished()) {
-                        try {
-                            return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
-                        } catch (\Exception $renderException) {
-                            // Re-throw to show error instead of falling back to main site
-                            throw $renderException;
+                // Skip main domain variations (but not www.subdomain)
+                if ($subdomain === 'mygrownet') {
+                    $branch = 'main_domain';
+                    return $next($request);
+                }
+                
+                // If it's just www.mygrownet.com (no subdomain), skip
+                if ($subdomain === 'www' && $host === 'www.mygrownet.com') {
+                    $branch = 'www_domain';
+                    return $next($request);
+                }
+                
+                // Handle geopamu subdomain - dispatch directly to controller
+                if ($subdomain === 'geopamu') {
+                    $branch = 'geopamu';
+                    return $this->handleGeopamuSubdomain($request);
+                }
+                
+                // Handle wowthem subdomain - dispatch directly to controller
+                if ($subdomain === 'wowthem') {
+                    $branch = 'wowthem';
+                    return $this->handleWowthemSubdomain($request);
+                }
+                
+                // Handle CMS subdomain - dispatch directly to controller
+                if ($subdomain === 'cms') {
+                    $branch = 'cms';
+                    return $this->handleCmsSubdomain($request, $next);
+                }
+                
+                // Handle GrowMart subdomain
+                // Routes are defined via Route::domain('growmart.mygrownet.com') in growmart.php
+                if ($subdomain === 'growmart') {
+                    $branch = 'growmart';
+                    $baseUrl = "https://{$subdomain}.mygrownet.com";
+                    URL::forceRootUrl($baseUrl);
+                    URL::useAssetOrigin($baseUrl);
+                    config(['app.url' => $baseUrl]);
+                    config(['app.asset_url' => $baseUrl]);
+
+                    // Block main-site routes from leaking onto the subdomain.
+                    // Only allow routes with name prefix "growmart." (e.g. growmart.home, growmart.products.index).
+                    // This prevents /dashboard, /login, /admin, etc. from matching web.php routes.
+                    $route = $request->route();
+                    if ($route) {
+                        $name = $route->getName();
+                        if ($name) {
+                            $isGrowmartSubdomain = str_starts_with($name, 'growmart.')
+                                && !str_starts_with($name, 'growmart.main.');
+                            if (!$isGrowmartSubdomain) {
+                                abort(404);
+                            }
                         }
                     }
-                }
-            } catch (\Exception $e) {
-                // If it's a render exception, re-throw it
-                if (isset($renderException)) {
-                    throw $e;
-                }
-                // Site not found or error, continue to main site
-            }
-        }
 
-        return $next($request);
+                    return $next($request);
+                }
+
+                // Handle BizBoost subdomain
+                if ($subdomain === 'bizboost') {
+                    $branch = 'bizboost';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle BizDocs subdomain
+                if ($subdomain === 'bizdocs') {
+                    $branch = 'bizdocs';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle GrowBuilder subdomain
+                if ($subdomain === 'growbuilder') {
+                    $branch = 'growbuilder';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle Venture subdomain
+                if ($subdomain === 'venture') {
+                    $branch = 'venture';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle GrowNet subdomain
+                if ($subdomain === 'grownet') {
+                    $branch = 'grownet';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle GrowStorage subdomain
+                if ($subdomain === 'growstorage') {
+                    $branch = 'growstorage';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle ZamStay subdomain
+                if ($subdomain === 'zamstay') {
+                    $branch = 'zamstay';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle PrimeEdge subdomain
+                if ($subdomain === 'primeedge') {
+                    $branch = 'primeedge';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Handle StockFlow subdomain
+                if ($subdomain === 'stockflow') {
+                    $branch = 'stockflow';
+                    $this->configureSubdomainUrl($subdomain);
+                    return $next($request);
+                }
+
+                // Skip other reserved subdomains
+                $reserved = [
+                    'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
+                    'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
+                    'app', 'dashboard', 'portal', 'staging', 'dev'
+                ];
+                
+                if (in_array($subdomain, $reserved)) {
+                    $branch = 'reserved';
+                    return $next($request);
+                }
+                
+                // Check if it's a StockFlow company subdomain
+                $company = $this->companyRepository->findBySubdomain($subdomain);
+                if ($company && $company->getStatus() === 'active') {
+                    $branch = 'stockflow_company';
+                    $this->configureSubdomainUrl($subdomain);
+                    $request->attributes->set('stockflow_company_id', $company->id());
+
+                    return $next($request);
+                }
+                
+                // Check if site exists
+                try {
+                    $site = $this->siteRepository->findBySubdomain(Subdomain::fromString($subdomain));
+                    
+                    if ($site) {
+                        // Handle manifest.json request
+                        if ($request->path() === 'manifest.json') {
+                            $branch = 'site_manifest';
+                            return $this->handleManifest($request, $site);
+                        }
+                        
+                        // Handle auth routes (login, register, etc.)
+                        if ($this->isAuthRoute($request->path())) {
+                            $branch = 'site_auth';
+                            return $this->handleAuthRoute($request, $subdomain);
+                        }
+                        
+                        // Only render site if published
+                        if ($site->isPublished()) {
+                            $branch = 'site_render';
+                            try {
+                                return $this->renderSite($request, $site, "https://{$subdomain}.mygrownet.com", false);
+                            } catch (\Exception $renderException) {
+                                // Re-throw to show error instead of falling back to main site
+                                throw $renderException;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // If it's a render exception, re-throw it
+                    if (isset($renderException)) {
+                        throw $e;
+                    }
+                    // Site not found or error, continue to main site
+                }
+            }
+
+            return $next($request);
+        } finally {
+            $workspace = $this->workspaceResolver->resolve($host);
+            Log::debug('DetectSubdomain.routing_comparison', [
+                'host' => $host,
+                'branch' => $branch,
+                'resolved' => $workspace !== null,
+                'workspace_type' => $workspace?->type,
+                'workspace_app' => $workspace?->application?->slug,
+                'workspace_org' => $workspace?->organization?->slug,
+                'domain' => $workspace?->domain?->domain,
+            ]);
+        }
     }
     
     /**

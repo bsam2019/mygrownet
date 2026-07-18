@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 const MODULE = process.env.MODULE;
+const isDev = process.argv.includes('dev') || process.argv[1]?.includes('vite') && !process.argv.includes('build');
 
 const knownBuildModules = ['stockflow', 'bizboost', 'bizdocs', 'grownet', 'growbuilder', 'growmart', 'zamstay', 'cms', 'primeedge', 'venture', 'growfinance', 'marketplace', 'admin', 'growbiz', 'lifephus', 'employee'];
 const buildSubdir = MODULE && knownBuildModules.includes(MODULE) ? MODULE : null;
@@ -14,9 +15,13 @@ const buildDir = buildSubdir ? `build/${buildSubdir}` : 'build';
 const basePath = buildSubdir ? `/build/${buildSubdir}/` : '/build/';
 
 // Debug: Log the MODULE value during build
-if (process.env.NODE_ENV === 'production' || process.argv.includes('build')) {
-    console.log(`\n🔧 Vite Build Configuration:`);
-    console.log(`   MODULE: ${MODULE || '(not set - will build ALL)'}`);
+if (process.env.NODE_ENV === 'production' || process.argv.includes('build') || process.argv.includes('dev')) {
+    console.log(`\n🔧 Vite Configuration:`);
+    console.log(`   MODE: ${isDev ? 'DEV SERVER' : 'BUILD'}`);
+    console.log(`   MODULE: ${MODULE || '(not set - will use ALL)'}`);
+    if (isDev) {
+        console.log(`   DEV OPTIMIZATIONS: minify=OFF, sourcemap=OFF, manualChunks=OFF`);
+    }
 }
 
 const ALL_INPUTS: Record<string, string[]> = {
@@ -61,10 +66,11 @@ const ALL_INPUTS: Record<string, string[]> = {
 const inputs = MODULE && MODULE !== 'all' ? ALL_INPUTS[MODULE] ?? ALL_INPUTS.all : ALL_INPUTS.all;
 
 // Debug: Log inputs being built
-if (process.env.NODE_ENV === 'production' || process.argv.includes('build')) {
+if (process.env.NODE_ENV === 'production' || process.argv.includes('build') || process.argv.includes('dev')) {
     console.log(`   Inputs: ${inputs.length} file(s)`);
     inputs.forEach(input => console.log(`     - ${input}`));
-    console.log(`   Output: public/${buildDir}\n`);
+    console.log(`   Output: public/${buildDir}`);
+    console.log(`   Memory: ${process.env.NODE_OPTIONS || 'default'}\n`);
 }
 
 export default defineConfig({
@@ -102,6 +108,7 @@ export default defineConfig({
             'ziggy-js',
         ],
         exclude: ['@vueuse/core'], // Large packages that change often
+        force: false, // Don't force re-optimization on every start
     },
     cacheDir: '.vite', // Explicit cache directory
     server: {
@@ -109,9 +116,26 @@ export default defineConfig({
         port: 5173,
         hmr: {
             host: '127.0.0.1',
+            overlay: false, // Disable error overlay to save memory
         },
         watch: {
             usePolling: false,
+            ignored: [
+                '**/node_modules/**',
+                '**/vendor/**',
+                '**/storage/**',
+                '**/public/build/**',
+            ],
+        },
+        fs: {
+            strict: false,
+            allow: ['.'],
+        },
+        warmup: {
+            // Pre-warm only the most common files to reduce initial memory spike
+            clientFiles: [
+                './resources/js/app.ts',
+            ],
         },
     },
     base: basePath,
@@ -119,14 +143,15 @@ export default defineConfig({
         outDir: `public/${buildDir}`,
         chunkSizeWarningLimit: 1000,
         emptyOutDir: buildSubdir ? true : false,
-        reportCompressedSize: false, // Disable gzip size reporting to save memory
-        sourcemap: false, // Disable sourcemaps in production to save memory
-        minify: 'esbuild', // esbuild is faster than terser
-        target: 'es2020', // Modern target = smaller output + faster build
-        cssCodeSplit: true, // Split CSS for faster loading
+        reportCompressedSize: false,
+        sourcemap: isDev ? false : false, // No sourcemaps in dev or production to save memory
+        minify: isDev ? false : 'esbuild', // Skip minification in dev for speed
+        target: 'es2020',
+        cssCodeSplit: true,
         rollupOptions: {
             output: {
-                manualChunks(id) {
+                manualChunks: isDev ? undefined : (id) => {
+                    // Only split chunks in production builds
                     if (id.includes('node_modules')) {
                         const m = id.match(/node_modules\/((?:@[^/]+\/)?[^/]+)/);
                         if (!m) return 'vendor';
@@ -147,7 +172,7 @@ export default defineConfig({
                         return 'vendor';
                     }
                 },
-                // Reduce chunk size to lower memory footprint
+                // Standard chunk naming (separate directories prevent conflicts)
                 chunkFileNames: 'assets/[name]-[hash].js',
                 entryFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',

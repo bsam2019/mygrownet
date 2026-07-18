@@ -91,6 +91,16 @@ class EventServiceProvider extends ServiceProvider
         \App\Domain\StockFlow\Events\CashDiscrepancyDetected::class => [
             [\App\Domain\StockFlow\Listeners\ActivityLogListener::class, 'onCashDiscrepancyDetected'],
         ],
+
+        // Platform Core Events
+        \App\Domain\Core\Events\OrganizationCreated::class => [
+            \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
+            \App\Domain\CMS\Listeners\SyncOrganizationToCmsCompany::class,
+        ],
+        \App\Domain\Core\Events\OrganizationArchived::class => [
+            \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
+            \App\Domain\CMS\Listeners\SyncOrganizationToCmsCompany::class,
+        ],
     ];
 
     public function boot(): void

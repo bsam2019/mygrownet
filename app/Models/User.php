@@ -23,7 +23,7 @@ use App\Models\Community\CommunityProject;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasActivityLogs, HasRoles;
+    use HasFactory, Notifiable, HasActivityLogs, HasRoles, \App\Domain\Core\Traits\HasApplicationRoles;
 
     /**
      * Boot the model - handles account type and role assignment
@@ -626,6 +626,16 @@ class User extends Authenticatable
         }
     }
 
+    public function identity(): HasOne
+    {
+        return $this->hasOne(\App\Domain\Core\Models\UserIdentity::class);
+    }
+
+    public function growNetData(): HasOne
+    {
+        return $this->hasOne(\App\Domain\GrowNet\Models\GrowNetUser::class);
+    }
+
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
@@ -1142,6 +1152,64 @@ class User extends Authenticatable
     {
         return $this->activeSubscription;
     }
+
+    // ──────────────────────────────────────────────
+    // Accessor shims — delegate to grow_net_users
+    // These keep existing $user->field calls working
+    // after fields were extracted from the users table.
+    // ──────────────────────────────────────────────
+    public function getBalanceAttribute()          { return $this->growNetData?->balance ?? 0; }
+    public function getTotalEarningsAttribute()    { return $this->growNetData?->total_earnings ?? 0; }
+    public function getTotalInvestmentAmountAttribute() { return $this->growNetData?->total_investment_amount ?? 0; }
+    public function getTotalReferralEarningsAttribute()  { return $this->growNetData?->total_referral_earnings ?? 0; }
+    public function getTotalProfitEarningsAttribute()    { return $this->growNetData?->total_profit_earnings ?? 0; }
+    public function getBonusBalanceAttribute()     { return $this->growNetData?->bonus_balance ?? 0; }
+    public function getReferralCodeAttribute()     { return $this->growNetData?->referral_code; }
+    public function getReferralCountAttribute()    { return $this->growNetData?->referral_count ?? 0; }
+    public function getDirectReferralsAttribute()  { return $this->growNetData?->direct_referrals ?? 0; }
+    public function getRankAttribute()             { return $this->growNetData?->rank; }
+    public function getNetworkPathAttribute()      { return $this->growNetData?->network_path; }
+    public function getNetworkLevelAttribute()     { return $this->growNetData?->network_level ?? 0; }
+    public function getCurrentTeamVolumeAttribute()    { return $this->growNetData?->current_team_volume ?? 0; }
+    public function getCurrentPersonalVolumeAttribute() { return $this->growNetData?->current_personal_volume ?? 0; }
+    public function getCurrentTeamDepthAttribute()  { return $this->growNetData?->current_team_depth ?? 0; }
+    public function getActiveReferralsCountAttribute() { return $this->growNetData?->active_referrals_count ?? 0; }
+    public function getLoyaltyPointsAttribute()    { return $this->growNetData?->loyalty_points ?? 0; }
+    public function getLoyaltyPointsAwardedTotalAttribute() { return $this->growNetData?->loyalty_points_awarded_total ?? 0; }
+    public function getLoyaltyPointsWithdrawnTotalAttribute() { return $this->growNetData?->loyalty_points_withdrawn_total ?? 0; }
+    public function getHasStarterKitAttribute()    { return $this->growNetData?->has_starter_kit ?? false; }
+    public function getStarterKitTierAttribute()    { return $this->growNetData?->starter_kit_tier; }
+    public function getStarterKitShopCreditAttribute() { return $this->growNetData?->starter_kit_shop_credit ?? 0; }
+    public function getLoanBalanceAttribute()      { return $this->growNetData?->loan_balance ?? 0; }
+    public function getTotalLoanIssuedAttribute()  { return $this->growNetData?->total_loan_issued ?? 0; }
+    public function getTotalLoanRepaidAttribute()  { return $this->growNetData?->total_loan_repaid ?? 0; }
+    public function getMonthlySubscriptionFeeAttribute() { return $this->growNetData?->monthly_subscription_fee ?? 0; }
+    public function getSubscriptionStatusAttribute()    { return $this->growNetData?->subscription_status; }
+    public function getLifePointsAttribute()       { return $this->growNetData?->life_points ?? 0; }
+    public function getPerformanceTierAttribute()   { return $this->growNetData?->performance_tier; }
+    public function getReferrerIdAttribute()        { return $this->growNetData?->referrer_id; }
+    public function getLastReferralAtAttribute()    { return $this->growNetData?->last_referral_at; }
+    public function getMatrixPositionAttribute()    { return $this->growNetData?->matrix_position; }
+    public function getTierUpgradedAtAttribute()    { return $this->growNetData?->tier_upgraded_at; }
+    public function getTierHistoryAttribute()       { return $this->growNetData?->tier_history; }
+    public function getIsCurrentlyActiveAttribute()  { return $this->growNetData?->is_currently_active ?? true; }
+    public function getWalletPolicyAcceptedAttribute()    { return $this->growNetData?->wallet_policy_accepted ?? false; }
+    public function getWalletPolicyAcceptedAtAttribute()  { return $this->growNetData?->wallet_policy_accepted_at; }
+    public function getVerificationLevelAttribute()       { return $this->growNetData?->verification_level ?? 0; }
+    public function getVerificationCompletedAtAttribute() { return $this->growNetData?->verification_completed_at; }
+    public function getDailyWithdrawalUsedAttribute()     { return $this->growNetData?->daily_withdrawal_used ?? 0; }
+    public function getDailyWithdrawalResetDateAttribute(){ return $this->growNetData?->daily_withdrawal_reset_date; }
+    public function getStarterKitPurchasedAtAttribute()   { return $this->growNetData?->starter_kit_purchased_at; }
+    public function getStarterKitTermsAcceptedAttribute()  { return $this->growNetData?->starter_kit_terms_accepted ?? false; }
+    public function getStarterKitTermsAcceptedAtAttribute(){ return $this->growNetData?->starter_kit_terms_accepted_at; }
+    public function getStarterKitCreditExpiryAttribute()  { return $this->growNetData?->starter_kit_credit_expiry; }
+    public function getLibraryAccessUntilAttribute()      { return $this->growNetData?->library_access_until; }
+    public function getBonusPointsAttribute()        { return $this->growNetData?->bonus_points ?? 0; }
+    public function getPointsLastResetAtAttribute()   { return $this->growNetData?->points_last_reset_at; }
+    public function getCurrentStreakMonthsAttribute() { return $this->growNetData?->current_streak_months ?? 0; }
+    public function getLongestStreakMonthsAttribute() { return $this->growNetData?->longest_streak_months ?? 0; }
+    public function getCoursesCompletedCountAttribute(){ return $this->growNetData?->courses_completed_count ?? 0; }
+    public function getDaysActiveCountAttribute()     { return $this->growNetData?->days_active_count ?? 0; }
 
     /**
      * Get member payments (subscriptions, workshops, products, etc.)

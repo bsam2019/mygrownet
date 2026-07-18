@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Policies;
+
+use App\Domain\Core\Models\Organization;
+use App\Models\User;
+
+class OrganizationPolicy
+{
+    public function view(User $user, Organization $organization): bool
+    {
+        return $user->id === $organization->owner_id
+            || $organization->members()->where('user_id', $user->id)->exists();
+    }
+
+    public function update(User $user, Organization $organization): bool
+    {
+        return $user->id === $organization->owner_id;
+    }
+
+    public function delete(User $user, Organization $organization): bool
+    {
+        return $user->id === $organization->owner_id;
+    }
+}

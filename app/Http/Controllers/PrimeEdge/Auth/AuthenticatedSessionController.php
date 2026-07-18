@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+/** @deprecated Use App\Http\Controllers\Platform\UnifiedAuthController instead. Will be removed after Phase 8 validation. */
 class AuthenticatedSessionController extends Controller
 {
     public function create()

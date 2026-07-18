@@ -181,6 +181,7 @@ return [
         App\Providers\PaymentServiceProvider::class, // Payment gateway integration
         App\Providers\ZamStayServiceProvider::class, // ZamStay module
         App\Providers\StockFlowServiceProvider::class, // StockFlow module
+        App\Providers\CoreServiceProvider::class, // Platform Core (organizations, applications, etc.)
     ])->toArray(),
 
     /*

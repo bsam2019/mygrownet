@@ -91,6 +91,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->group(base_path('routes/ubumi.php'));
             Route::middleware('web')
                 ->group(base_path('routes/portal.php'));
+
+            // Platform API — authenticated via Sanctum
+            Route::middleware('web')
+                ->group(base_path('routes/platform-api.php'));
         },
     )
     // Broadcasting auth is handled by custom BroadcastAuthController
@@ -128,6 +132,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
             'portal.auth' => \App\Http\Middleware\RedirectIfNotPortalUser::class,
+            'routing.engine' => \App\Http\Middleware\RoutingEngine::class,
             'stockflow.company' => \App\Http\Middleware\StockFlowCompany::class,
             'stockflow.admin' => \App\Http\Middleware\StockFlowAdminMiddleware::class,
             'stockflow.permission' => \App\Http\Middleware\StockFlowPermission::class,
@@ -144,6 +149,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         $middleware->web(append: [
+            \App\Http\Middleware\RoutingEngine::class,
+            \App\Http\Middleware\ResolveSubdomainAuth::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\ShareModulesData::class,
             \App\Http\Middleware\ResolveStockFlowCompany::class,

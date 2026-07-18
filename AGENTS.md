@@ -6,6 +6,19 @@
 - `public/build/` is untracked from git — deployment of built assets must be handled separately
 - No duplicate user accounts — single MyGrowNet user database
 
+## Conventions
+- **Migrations**: Each module/domain owns its schema in `database/migrations/{module}/`. Load via `->loadMigrationsFrom()` in the module's ServiceProvider. Never put domain-scoped migrations in `database/migrations/` root (root is for global-only migrations). **Always check the table below before creating a migration folder.**
+
+### Canonical Migration Folders
+| Folder | Module | Loaded By | Status |
+|---|---|---|---|
+| `core/` | Platform Core (orgs, apps, org_id FK) | `CoreServiceProvider` | ✅ Active |
+| `zamstay/` | ZamStay | `ZamStayServiceProvider` | ✅ Active |
+| `prime_edge/` | PrimeEdge | (check ServiceProvider) | ✅ Active |
+| (root) | StockFlow, CMS, BizBoost, GrowBuilder, GrowMart, GrowBiz, Employee, etc. | Laravel auto-loader | ⚠️ Legacy — migrate to subfolders later |
+
+**Rule:** Before creating `database/migrations/{name}/`, check this table. If the module already has a folder, use it. If root, create a new folder with the exact module slug. Register via ServiceProvider. **Never** use a different name for the same module (e.g. `stock-audit/` instead of `stockflow/`, or `platform/` instead of `core/`).
+
 ## Common Issues & Fixes
 - **Login modal 404 or redirects to old page**: Cached routes in production don't include POST /login. **Fix**: SSH to server, run `php artisan route:clear && php artisan route:cache`. See `DEPLOYMENT_FIX.md` and `docs/LOGIN_MODAL_TROUBLESHOOTING.md`.
 - **CMS company creation redirects to old login**: `EnsureCmsAccess` middleware was redirecting to main site login instead of CMS login. **Fix**: Changed to `route('cms.login')` and ensure session is saved after transaction.
@@ -116,3 +129,12 @@ Taradasi Dental Clinic (run `StockAuditSeeder`)
 
 ## Removed Files
 - `resources/js/Pages/GrowNet/Dashboard.vue` — classic desktop GrowNet dashboard, replaced by `GrowNet/GrowNet.vue` (modern mobile SPA)
+- `routes/debug-analytics.php` — orphaned dev utility, deleted Phase 11
+- `routes/debug.php` — orphaned dev utility, deleted Phase 11
+- `routes/subdomain.php` — superseded by DetectSubdomain middleware, deleted Phase 11
+
+## Platform Evolution
+- 11-phase roadmap at `docs/platform-evolution/FULL_IMPLEMENTATION_ROADMAP.md` (phases 1-9 implemented, 10-11 design/cleanup)
+- Architecture Decision Records at `docs/adr/ADR-001` through `ADR-007`
+- Platform event bus: OrganizationCreated, OrganizationArchived, MemberAdded, ApplicationSubscribed events dispatch automatically; listeners live in target modules (StockFlow, CMS)
+- Shared services contracts reserved at `docs/platform-evolution/SHARED_SERVICES.md` (Storage, Search, Payment, Audit, AI, Reporting)
