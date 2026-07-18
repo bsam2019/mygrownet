@@ -29,7 +29,7 @@ const search = async () => {
     const q = query.value.trim();
     if (q.length < 2) {
         results.value = [];
-        showDropdown = false;
+        showDropdown.value = false;
         return;
     }
     loading.value = true;
@@ -37,7 +37,7 @@ const search = async () => {
         const res = await fetch(`${apiPrefix}?q=${encodeURIComponent(q)}`);
         const data = await res.json();
         results.value = data ?? [];
-        showDropdown = true;
+        showDropdown.value = true;
     } catch {
         results.value = [];
     }
