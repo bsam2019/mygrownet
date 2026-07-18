@@ -34,7 +34,11 @@
                             </div>
                             <div>
                                 <h2 class="text-lg font-semibold text-gray-900">Quick Invoice</h2>
-                                <p class="text-xs text-gray-500">Simple single-item invoice</p>
+                                <p class="text-xs text-gray-500">
+                                    <span v-if="autoSaveStatus === 'saving'" class="text-amber-600">Saving draft...</span>
+                                    <span v-else-if="autoSaveStatus === 'saved'" class="text-emerald-600">✓ Draft saved</span>
+                                    <span v-else>Simple single-item invoice</span>
+                                </p>
                             </div>
                         </div>
                         <button @click="close" class="p-2 rounded-full hover:bg-gray-100" aria-label="Close modal">
@@ -173,12 +177,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import {
     DocumentTextIcon,
     XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import { useAutoSave } from '@/composables/useAutoSave';
 
 interface Customer {
     id: number;
@@ -216,6 +221,10 @@ const form = ref({
 
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
+
+// Auto-save to localStorage
+const AUTOSAVE_KEY = 'quick_invoice_draft';
+const { autoSaveStatus, loadDraft, hasDraft, clearDraft } = useAutoSave(AUTOSAVE_KEY, form.value, { debounce: 1500 });
 
 const totalAmount = computed(() => {
     const qty = form.value.quantity || 0;
@@ -272,6 +281,7 @@ const submit = () => {
     router.post(route('growfinance.invoices.store'), submitData, {
         preserveScroll: true,
         onSuccess: () => {
+            clearDraft(); // Clear saved draft on success
             resetForm();
             emit('success');
             emit('close');
@@ -290,10 +300,29 @@ const goToFullPage = () => {
     router.visit(route('growfinance.invoices.create'));
 };
 
-// Reset form when modal opens
+// Load draft when modal opens
+onMounted(() => {
+    if (hasDraft()) {
+        const draft = loadDraft();
+        if (draft) {
+            Object.assign(form.value, draft);
+        }
+    }
+});
+
+// Reset form when modal opens/closes
 watch(() => props.show, (newVal) => {
     if (newVal) {
-        resetForm();
+        // Load draft if exists, otherwise reset
+        if (hasDraft()) {
+            const draft = loadDraft();
+            if (draft) {
+                Object.assign(form.value, draft);
+            }
+        }
+    } else {
+        // Don't reset on close - keep the draft
+        errors.value = {};
     }
 });
 </script>

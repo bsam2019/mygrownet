@@ -135,7 +135,12 @@ const openInvoiceModal = () => {
 };
 
 const handleModalSuccess = () => {
-    router.reload({ only: ['financialSummary', 'recentTransactions', 'invoiceStats'] });
+    // Don't reload the entire page - just refresh specific data
+    router.reload({ 
+        only: ['financialSummary', 'recentTransactions', 'invoiceStats'],
+        preserveScroll: true,
+        preserveState: true,
+    });
 };
 
 // Toggle sidebar and persist to localStorage

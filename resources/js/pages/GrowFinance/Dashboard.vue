@@ -435,7 +435,12 @@ const openExpenseModal = () => { showExpenseModal.value = true; };
 const openInvoiceModal = () => { showInvoiceModal.value = true; };
 
 const handleModalSuccess = () => {
-    router.reload({ only: ['financialSummary', 'recentTransactions', 'invoiceStats'] });
+    // Don't reload the entire page - just refresh specific data
+    router.reload({ 
+        only: ['financialSummary', 'recentTransactions', 'invoiceStats'],
+        preserveScroll: true,
+        preserveState: true,
+    });
 };
 
 const userName = computed(() => {
