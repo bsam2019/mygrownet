@@ -10,7 +10,7 @@
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800" rel="stylesheet" />
         <style>html { background-color: #f0fdf4; }</style>
         @routes
-        @vite(['resources/js/app-primeedge.ts'])
+        @vite(['resources/js/app-primeedge.ts'], 'build/primeedge')
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

@@ -37,18 +37,41 @@ class HandleInertiaRequests extends Middleware
         ];
 
         // Check if this is a StockFlow company subdomain
-        if (!isset($map[$host]) && preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)) {
-            $subdomain = strtolower(explode('.', $host)[0]);
-            // If not a known subdomain, check if it's a StockFlow company
-            $knownSubdomains = array_keys($map);
-            if (!in_array($subdomain . '.mygrownet.com', $knownSubdomains) && $subdomain !== 'www') {
-                return 'app';
-            }
+        if ($request->attributes->has('stockflow_company_id')) {
+            return 'stockflow';
         }
 
         // Main domain path detection
-        if (!isset($map[$host]) && str_starts_with($request->path(), 'primeedge')) {
-            return 'primeedge';
+        if (!isset($map[$host])) {
+            $path = $request->path();
+
+            if (str_starts_with($path, 'primeedge')) {
+                return 'primeedge';
+            }
+
+            if (str_starts_with($path, 'admin')) {
+                return 'admin';
+            }
+
+            if (str_starts_with($path, 'employee') || str_starts_with($path, 'employees')) {
+                return 'employee';
+            }
+
+            if (str_starts_with($path, 'growbiz')) {
+                return 'growbiz';
+            }
+
+            if (str_starts_with($path, 'lifeplus')) {
+                return 'lifephus';
+            }
+
+            if (str_starts_with($path, 'growfinance')) {
+                return 'growfinance';
+            }
+
+            if (str_starts_with($path, 'growmarket')) {
+                return 'marketplace';
+            }
         }
 
         return $map[$host] ?? $this->rootView;

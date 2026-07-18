@@ -31,7 +31,7 @@
             .splash-tagline { color: rgba(255,255,255,0.85); font-size: 15px; font-weight: 500; text-align: center; max-width: 280px; }
         </style>
         @routes
-        @vite(['resources/js/app.ts'])
+        @vite(['resources/js/app-venture.ts'], 'build/venture')
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

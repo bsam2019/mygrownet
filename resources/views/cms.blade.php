@@ -10,7 +10,7 @@
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800" rel="stylesheet" />
         <style>html { background-color: #f5f3ff; }</style>
         @routes
-        @vite(['resources/js/app-cms.ts'])
+        @vite(['resources/js/app-cms.ts'], 'build/cms')
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

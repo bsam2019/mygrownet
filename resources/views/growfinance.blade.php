@@ -144,7 +144,7 @@
         </style>
 
         @routes
-        @vite(['resources/js/app.ts'])
+        @vite(['resources/js/app-growfinance.ts'], 'build/growfinance')
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
