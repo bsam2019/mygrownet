@@ -185,7 +185,8 @@ const saveToLibraryName = ref('');
 const saveToLibraryDescription = ref('');
 
 // Auto-save setup — reactive form data object for useAutoSave
-const autoSaveKey = computed(() => `invoice_${props.documentType}_${isEditing.value ? props.editDocument?.id : 'new'}`);
+// Use a fixed key based on document type only, not the ID (which changes)
+const autoSaveKey = `invoice_${props.documentType}_draft`;
 const autoSaveData = reactive({
     selectedTemplate: '',
     primaryColor: '#059669',
