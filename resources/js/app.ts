@@ -11,7 +11,7 @@ registerModuleSW('/sw.js', 'MyGrowNet');
 // Module-specific pages are handled by their own entry points
 const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
     ...import.meta.glob<DefineComponent>('./pages/*.vue'), // Root level pages
-    ...import.meta.glob<DefineComponent>('./pages/Dashboard/**/*.vue'), // Dashboard pages
+    ...import.meta.glob<DefineComponent>('./pages/Workspace/**/*.vue'), // Workspace pages
     ...import.meta.glob<DefineComponent>('./pages/Auth/**/*.vue'), // Auth pages
     ...import.meta.glob<DefineComponent>('./pages/BMS/**/*.vue'), // BMS pages
     ...import.meta.glob<DefineComponent>('./pages/Department/**/*.vue'), // Department pages

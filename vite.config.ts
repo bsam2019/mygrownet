@@ -85,6 +85,15 @@ export default defineConfig({
                     base: null,
                     includeAbsolute: false,
                 },
+                compilerOptions: {
+                    // Speed up dev by disabling some checks
+                    hoistStatic: isDev ? false : true,
+                    cacheHandlers: isDev ? false : true,
+                },
+            },
+            script: {
+                defineModel: true,
+                propsDestructure: true,
             },
         }),
     ],
@@ -108,12 +117,20 @@ export default defineConfig({
             'ziggy-js',
         ],
         exclude: ['@vueuse/core'], // Large packages that change often
-        force: false, // Don't force re-optimization on every start
+        esbuildOptions: {
+            target: 'es2020',
+        },
+        // Speed up dev server startup
+        entries: [
+            'resources/js/app.ts',
+        ],
     },
     cacheDir: '.vite', // Explicit cache directory
     server: {
         host: '127.0.0.1',
         port: 5173,
+        strictPort: false,
+        cors: true,
         hmr: {
             host: '127.0.0.1',
             overlay: false, // Disable error overlay to save memory
@@ -125,18 +142,16 @@ export default defineConfig({
                 '**/vendor/**',
                 '**/storage/**',
                 '**/public/build/**',
+                '**/tests/**',
+                '**/.git/**',
             ],
         },
         fs: {
             strict: false,
             allow: ['.'],
         },
-        warmup: {
-            // Pre-warm only the most common files to reduce initial memory spike
-            clientFiles: [
-                './resources/js/app.ts',
-            ],
-        },
+        // Disable warmup in dev for faster startup
+        preTransformRequests: isDev ? false : true,
     },
     base: basePath,
     build: {
