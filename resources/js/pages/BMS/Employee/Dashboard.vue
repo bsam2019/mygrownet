@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { 
   CalendarDaysIcon, 
   ClockIcon, 
@@ -25,7 +25,7 @@ const formatDate = (date: string) => {
 <template>
   <Head title="Employee Portal" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Welcome Header -->
       <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
@@ -148,5 +148,5 @@ const formatDate = (date: string) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

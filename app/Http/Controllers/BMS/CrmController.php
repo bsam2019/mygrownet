@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\CrmService;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeadModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OpportunityModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\FollowUpModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerSegmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CampaignModel;
+use App\Domain\BMS\Core\Services\CrmService;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeadModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OpportunityModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\FollowUpModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerSegmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CampaignModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,7 +28,7 @@ class CrmController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/CRM/Leads/Index', ['leads' => $leads]);
+        return Inertia::render('BMS/CRM/Leads/Index', ['leads' => $leads]);
     }
 
     public function storeL ead(Request $request)
@@ -55,7 +55,7 @@ class CrmController extends Controller
     public function convertLead(Request $request, LeadModel $lead)
     {
         $customer = $this->crmService->convertLeadToCustomer($lead, $request->user()->id);
-        return redirect()->route('cms.customers.show', $customer)->with('success', 'Lead converted to customer.');
+        return redirect()->route('bms.customers.show', $customer)->with('success', 'Lead converted to customer.');
     }
 
     // Opportunities
@@ -69,7 +69,7 @@ class CrmController extends Controller
 
         $pipeline = $this->crmService->getSalesPipeline($request->user()->company_id);
 
-        return Inertia::render('CMS/CRM/Opportunities/Index', [
+        return Inertia::render('BMS/CRM/Opportunities/Index', [
             'opportunities' => $opportunities,
             'pipeline' => $pipeline,
         ]);
@@ -105,7 +105,7 @@ class CrmController extends Controller
             ->orderBy('due_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/CRM/FollowUps/Index', ['followUps' => $followUps]);
+        return Inertia::render('BMS/CRM/FollowUps/Index', ['followUps' => $followUps]);
     }
 
     public function storeFollowUp(Request $request)
@@ -130,12 +130,12 @@ class CrmController extends Controller
     // Customer Metrics
     public function customerMetrics(Request $request)
     {
-        $metrics = \App\Infrastructure\Persistence\Eloquent\CMS\CustomerMetricModel::where('company_id', $request->user()->company_id)
+        $metrics = \App\Infrastructure\Persistence\Eloquent\BMS\CustomerMetricModel::where('company_id', $request->user()->company_id)
             ->with('customer')
             ->orderBy('lifetime_value', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/CRM/CustomerMetrics/Index', ['metrics' => $metrics]);
+        return Inertia::render('BMS/CRM/CustomerMetrics/Index', ['metrics' => $metrics]);
     }
 
     public function calculateMetrics(Request $request, int $customerId)

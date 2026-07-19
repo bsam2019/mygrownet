@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\RecurringInvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\RecurringInvoiceHistoryModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Services\CMS\EmailService;
+use App\Services\BMS\EmailService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

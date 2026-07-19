@@ -2,14 +2,14 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { ChartBarIcon, ClockIcon, CheckCircleIcon, TruckIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import DoughnutChart from '@/components/BMS/Charts/DoughnutChart.vue'
 import LineChart from '@/components/BMS/Charts/LineChart.vue'
 import BarChart from '@/components/BMS/Charts/BarChart.vue'
 import GaugeChart from '@/components/BMS/Charts/GaugeChart.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -36,7 +36,7 @@ const selectedPeriod = ref(props.period)
 
 const changePeriod = (period: string) => {
   selectedPeriod.value = period
-  router.get(route('cms.analytics.operations'), { period }, {
+  router.get(route('bms.analytics.operations'), { period }, {
     preserveState: true,
     preserveScroll: true,
   })

@@ -75,7 +75,7 @@
               <!-- Show Dashboard if logged in, otherwise Login -->
               <Link
                 v-if="isAuthenticated"
-                :href="route('dashboard')"
+                :href="route('workspace')"
                 class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300 shadow-md"
               >
                 Dashboard
@@ -102,7 +102,7 @@
             <!-- Mobile Auth Links (visible on mobile) -->
             <template v-if="isAuthenticated">
               <Link
-                :href="route('dashboard')"
+                :href="route('workspace')"
                 class="hidden sm:inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
               >
                 Dashboard
@@ -225,7 +225,7 @@
           <div class="flex gap-2 mt-4 pt-4 border-t border-gray-700">
             <template v-if="isAuthenticated">
               <Link
-                :href="route('dashboard')"
+                :href="route('workspace')"
                 class="flex-1 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-md text-base font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
               >
                 Dashboard

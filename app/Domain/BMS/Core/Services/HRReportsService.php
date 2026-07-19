@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;

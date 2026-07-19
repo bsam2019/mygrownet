@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Subcontractors\Services\SubcontractorService;
-use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorModel;
+use App\Domain\BMS\Subcontractors\Services\SubcontractorService;
+use App\Infrastructure\Persistence\Eloquent\BMS\SubcontractorModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,7 +27,7 @@ class SubcontractorController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        return Inertia::render('CMS/Subcontractors/Index', [
+        return Inertia::render('BMS/Subcontractors/Index', [
             'subcontractors' => $subcontractors,
             'filters' => $request->only(['search', 'trade']),
         ]);
@@ -35,7 +35,7 @@ class SubcontractorController extends Controller
 
     public function create()
     {
-        return Inertia::render('CMS/Subcontractors/Create');
+        return Inertia::render('BMS/Subcontractors/Create');
     }
 
     public function store(Request $request)
@@ -59,7 +59,7 @@ class SubcontractorController extends Controller
 
         $subcontractor = $this->subcontractorService->createSubcontractor($validated);
 
-        return redirect()->route('cms.subcontractors.show', $subcontractor->id)
+        return redirect()->route('bms.subcontractors.show', $subcontractor->id)
             ->with('success', 'Subcontractor created successfully');
     }
 
@@ -68,7 +68,7 @@ class SubcontractorController extends Controller
         $subcontractor->load(['assignments.project', 'assignments.job', 'payments', 'ratings']);
         $stats = $this->subcontractorService->getSubcontractorStats($subcontractor);
 
-        return Inertia::render('CMS/Subcontractors/Show', [
+        return Inertia::render('BMS/Subcontractors/Show', [
             'subcontractor' => $subcontractor,
             'stats' => $stats,
         ]);
@@ -76,7 +76,7 @@ class SubcontractorController extends Controller
 
     public function edit(SubcontractorModel $subcontractor)
     {
-        return Inertia::render('CMS/Subcontractors/Edit', [
+        return Inertia::render('BMS/Subcontractors/Edit', [
             'subcontractor' => $subcontractor,
         ]);
     }
@@ -99,7 +99,7 @@ class SubcontractorController extends Controller
 
         $this->subcontractorService->updateSubcontractor($subcontractor, $validated);
 
-        return redirect()->route('cms.subcontractors.show', $subcontractor->id)
+        return redirect()->route('bms.subcontractors.show', $subcontractor->id)
             ->with('success', 'Subcontractor updated successfully');
     }
 
@@ -107,7 +107,7 @@ class SubcontractorController extends Controller
     {
         $subcontractor->delete();
 
-        return redirect()->route('cms.subcontractors.index')
+        return redirect()->route('bms.subcontractors.index')
             ->with('success', 'Subcontractor deleted successfully');
     }
 

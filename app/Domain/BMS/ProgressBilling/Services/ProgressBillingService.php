@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\ProgressBilling\Services;
+namespace App\Domain\BMS\ProgressBilling\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\ProjectModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\ProgressCertificateModel;

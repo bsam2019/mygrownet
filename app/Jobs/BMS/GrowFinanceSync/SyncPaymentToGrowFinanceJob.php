@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Jobs\CMS\GrowFinanceSync;
+namespace App\Jobs\BMS\GrowFinanceSync;
 
-use App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService;
+use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

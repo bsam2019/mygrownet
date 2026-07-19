@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ref } from 'vue';
 
 const props = defineProps<{ plan: any; userTier: string }>();
@@ -9,7 +9,7 @@ const exporting = ref(false);
 
 const exportPlan = (type: string) => {
     exporting.value = true;
-    router.post(route('cms.business-plans.export'), { business_plan_id: props.plan.id, export_type: type }, {
+    router.post(route('bms.business-plans.export'), { business_plan_id: props.plan.id, export_type: type }, {
         preserveScroll: true, onFinish: () => { exporting.value = false; }
     });
 };
@@ -21,12 +21,12 @@ const hasVal = (v: any) => v != null && v !== '';
 
 <template>
     <Head :title="plan.business_name" />
-    <CMSLayout>
+    <BMSLayout>
         <div class="p-6 max-w-4xl mx-auto">
             <div class="flex items-center justify-between mb-6">
-                <Link :href="route('cms.business-plans.index')" class="text-sm text-blue-600 hover:text-blue-800 font-medium">&larr; Back to Plans</Link>
+                <Link :href="route('bms.business-plans.index')" class="text-sm text-blue-600 hover:text-blue-800 font-medium">&larr; Back to Plans</Link>
                 <div class="flex items-center gap-2">
-                    <Link :href="route('cms.business-plans.edit', plan.id)" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Edit</Link>
+                    <Link :href="route('bms.business-plans.edit', plan.id)" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Edit</Link>
                     <button @click="exportPlan('pdf')" :disabled="exporting" class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{{ exporting ? 'Exporting...' : 'Export PDF' }}</button>
                 </div>
             </div>
@@ -290,5 +290,5 @@ const hasVal = (v: any) => v != null && v !== '';
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

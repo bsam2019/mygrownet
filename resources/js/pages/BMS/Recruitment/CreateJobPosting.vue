@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Post New Job">
+  <BMSLayout title="Post New Job">
     <div class="max-w-3xl mx-auto">
       <div class="bg-white rounded-lg shadow p-6">
         <h1 class="text-2xl font-bold text-gray-900 mb-6">Post New Job</h1>
@@ -89,7 +89,7 @@
 
           <div class="flex justify-end gap-4">
             <Link
-              :href="route('cms.recruitment.job-postings.index')"
+              :href="route('bms.recruitment.job-postings.index')"
               class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               Cancel
@@ -105,12 +105,12 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const form = useForm({
   job_title: '',
@@ -124,6 +124,6 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('cms.recruitment.job-postings.store'));
+  form.post(route('bms.recruitment.job-postings.store'));
 };
 </script>

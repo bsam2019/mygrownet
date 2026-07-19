@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\BOQ\Services;
+namespace App\Domain\BMS\BOQ\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\BOQModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\BOQItemModel;

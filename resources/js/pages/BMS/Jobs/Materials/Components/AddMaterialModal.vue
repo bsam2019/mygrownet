@@ -295,7 +295,7 @@ const clearFilters = () => {
 }
 
 const submit = () => {
-  form.post(route('cms.jobs.materials.store', props.job.id), {
+  form.post(route('bms.jobs.materials.store', props.job.id), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

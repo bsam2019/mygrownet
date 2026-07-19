@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\CMS\Operations\Services\AnalyticsService;
+use App\Domain\BMS\Core\Services\AnalyticsService;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use Illuminate\Console\Command;
 

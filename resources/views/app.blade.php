@@ -91,6 +91,7 @@
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
+                padding: 16px;
             }
             
             .splash-text {
@@ -189,8 +190,10 @@
             <div class="splash-logo">
                 @if($sfCompany && !empty($sfCompany->settings['logo_url']))
                 <img src="{{ $sfCompany->settings['logo_url'] }}" alt="{{ $companyName }} Logo">
-                @else
+                @elseif($sfCompany)
                 <span class="splash-initial">{{ $companyInitial }}</span>
+                @else
+                <img src="/logo.png" alt="MyGrowNet">
                 @endif
             </div>
             <div class="splash-text">{{ $companyName }}</div>

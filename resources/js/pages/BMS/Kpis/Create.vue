@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 
 const form = ref({
@@ -24,7 +24,7 @@ const submitting = ref(false);
 function submit() {
     if (!form.value.name.trim()) { toast.warning('Validation', 'Name is required'); return; }
     submitting.value = true;
-    router.post(route('cms.kpis.store'), form.value, {
+    router.post(route('bms.kpis.store'), form.value, {
         onSuccess: () => toast.success('Created', 'KPI created'),
         onError: () => { toast.error('Failed', 'Could not create KPI'); submitting.value = false; },
         onFinish: () => { submitting.value = false; },
@@ -43,10 +43,10 @@ const categories = [
 <template>
     <Head title="Create KPI" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-2xl mx-auto space-y-6">
             <div>
-                <Link :href="route('cms.kpis.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to KPIs</Link>
+                <Link :href="route('bms.kpis.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to KPIs</Link>
                 <h1 class="text-2xl font-bold text-gray-900 mt-2">New KPI</h1>
             </div>
 
@@ -117,12 +117,12 @@ const categories = [
                 </div>
 
                 <div class="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                    <Link :href="route('cms.kpis.index')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</Link>
+                    <Link :href="route('bms.kpis.index')" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</Link>
                     <button type="submit" :disabled="submitting" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
                         {{ submitting ? 'Creating...' : 'Create KPI' }}
                     </button>
                 </div>
             </form>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

@@ -124,7 +124,7 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('cms.expense-categories.store'), {
+  form.post(route('bms.expense-categories.store'), {
     preserveScroll: true,
     onSuccess: (page) => {
       // Get the newly created category from the response

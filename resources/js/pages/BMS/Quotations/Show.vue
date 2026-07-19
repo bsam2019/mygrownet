@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, router, Link } from '@inertiajs/vue3';
 import { PaperAirplaneIcon, ArrowPathIcon, ChartBarIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { route } from 'ziggy-js';
 import { toast } from '@/utils/bizboost-toast';
 import { ref } from 'vue';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface QuotationItem { id: number; description: string; quantity: number; unit_price: number; tax_rate: number; discount_rate: number; line_total: number; }
 interface MeasurementItem { id: number; location_name: string; type: string; final_width: number; final_height: number; total_area: number; quantity: number; }
@@ -50,7 +50,7 @@ const openSendModal = () => {
 const doSendEmail = () => {
     if (!sendEmail.value) return;
     sending.value = true;
-    router.post(route('cms.quotations.send-email', props.quotation.id), {
+    router.post(route('bms.quotations.send-email', props.quotation.id), {
         email:   sendEmail.value,
         message: sendMessage.value,
     }, {
@@ -70,7 +70,7 @@ const doSendEmail = () => {
 const doSendWhatsApp = async () => {
     whatsappLoading.value = true;
     try {
-        const res = await fetch(route('cms.quotations.whatsapp-link', props.quotation.id), {
+        const res = await fetch(route('bms.quotations.whatsapp-link', props.quotation.id), {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         });
         const data = await res.json();
@@ -86,7 +86,7 @@ const doSendWhatsApp = async () => {
 
 const convertToJob = () => {
     showConfirmConvert.value = false;
-    router.post(route('cms.quotations.convert', props.quotation.id), {}, { 
+    router.post(route('bms.quotations.convert', props.quotation.id), {}, { 
         preserveScroll: true,
         onSuccess: () => toast.success('Converted to job', 'Work order has been created'),
         onError:   () => toast.error('Conversion failed', 'Could not create work order'),
@@ -114,7 +114,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2
             </div>
             <div class="flex flex-wrap gap-2">
                 <a
-                    :href="route('cms.quotations.pdf', quotation.id)"
+                    :href="route('bms.quotations.pdf', quotation.id)"
                     target="_blank"
                     class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                 >
@@ -142,12 +142,12 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2
                 <!-- Already converted: link to the job -->
                 <Link
                     v-if="quotation.convertedToJob"
-                    :href="route('cms.jobs.show', quotation.convertedToJob.id)"
+                    :href="route('bms.jobs.show', quotation.convertedToJob.id)"
                     class="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 transition">
                     <ArrowPathIcon class="h-4 w-4" aria-hidden="true" />
                     View Job {{ quotation.convertedToJob.job_number }}
                 </Link>
-                <Link :href="route('cms.quotations.index')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Back</Link>
+                <Link :href="route('bms.quotations.index')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Back</Link>
             </div>
         </div>
 
@@ -161,7 +161,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2
                 <p class="text-xs text-green-600 mt-0.5">This quotation has been converted to job {{ quotation.convertedToJob.job_number }}</p>
             </div>
             <Link
-                :href="route('cms.jobs.show', quotation.convertedToJob.id)"
+                :href="route('bms.jobs.show', quotation.convertedToJob.id)"
                 class="flex-shrink-0 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition"
             >
                 View Job →
@@ -176,7 +176,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2
                     <div class="flex items-center gap-2 mb-3">
                         <ChartBarIcon class="h-4 w-4 text-blue-600" aria-hidden="true" />
                         <h2 class="text-sm font-semibold text-gray-900">Source Measurement</h2>
-                        <Link :href="route('cms.measurements.show', quotation.measurement.id)" class="ml-auto text-xs text-blue-600 hover:underline">View →</Link>
+                        <Link :href="route('bms.measurements.show', quotation.measurement.id)" class="ml-auto text-xs text-blue-600 hover:underline">View →</Link>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm mb-3">
                         <div><span class="text-gray-500">Number:</span> <span class="font-mono font-medium">{{ quotation.measurement.measurement_number }}</span></div>
@@ -265,7 +265,7 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2
                     </h2>
                     <p class="text-sm font-bold text-green-900 mb-3">{{ quotation.convertedToJob.job_number }}</p>
                     <Link
-                        :href="route('cms.jobs.show', quotation.convertedToJob.id)"
+                        :href="route('bms.jobs.show', quotation.convertedToJob.id)"
                         class="block w-full text-center px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition"
                     >
                         Open Job →

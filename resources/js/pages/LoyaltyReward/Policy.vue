@@ -283,7 +283,7 @@
         <!-- Footer -->
         <div class="mt-8 text-center">
           <Link
-            :href="route('dashboard')"
+            :href="route('workspace')"
             class="text-blue-600 hover:text-blue-800 underline"
           >
             ← Back to Dashboard

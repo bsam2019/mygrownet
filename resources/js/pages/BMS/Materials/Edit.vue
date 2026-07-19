@@ -1,10 +1,10 @@
 <template>
-  <CMSLayout title="Edit Material">
+  <BMSLayout title="Edit Material">
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
       <div class="mb-6">
         <Link
-          :href="route('cms.materials.index')"
+          :href="route('bms.materials.index')"
           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -222,7 +222,7 @@
         <!-- Form Actions -->
         <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 rounded-b-lg">
           <Link
-            :href="route('cms.materials.index')"
+            :href="route('bms.materials.index')"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Cancel
@@ -304,13 +304,13 @@
         </Dialog>
       </TransitionRoot>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useForm, Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
@@ -344,7 +344,7 @@ const priceChanged = computed(() => {
 })
 
 const submit = () => {
-  form.put(route('cms.materials.update', props.material.id), {
+  form.put(route('bms.materials.update', props.material.id), {
     onSuccess: () => {
       // Redirect handled by controller
     },
@@ -352,7 +352,7 @@ const submit = () => {
 }
 
 const deleteMaterial = () => {
-  deleteForm.delete(route('cms.materials.destroy', props.material.id), {
+  deleteForm.delete(route('bms.materials.destroy', props.material.id), {
     onSuccess: () => {
       showDeleteConfirm.value = false
     },

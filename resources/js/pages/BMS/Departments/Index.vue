@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Departments">
+  <BMSLayout title="Departments">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage company departments and organizational structure</p>
         </div>
         <Link
-          :href="route('cms.departments.create')"
+          :href="route('bms.departments.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm space-x-3">
                 <Link
-                  :href="route('cms.departments.edit', dept.id)"
+                  :href="route('bms.departments.edit', dept.id)"
                   class="text-blue-600 hover:text-blue-900"
                 >
                   Edit
@@ -171,13 +171,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   departments: any;
@@ -201,7 +201,7 @@ const departmentToDelete = ref<any>(null);
 const deleteForm = useForm({});
 
 const applyFilters = () => {
-  router.get(route('cms.departments.index'), filters.value, {
+  router.get(route('bms.departments.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   });
@@ -215,7 +215,7 @@ const confirmDelete = (department: any) => {
 const deleteDepartment = () => {
   if (!departmentToDelete.value) return;
   
-  deleteForm.delete(route('cms.departments.destroy', departmentToDelete.value.id), {
+  deleteForm.delete(route('bms.departments.destroy', departmentToDelete.value.id), {
     onSuccess: () => {
       showDeleteModal.value = false;
       departmentToDelete.value = null;

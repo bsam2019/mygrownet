@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { computed, ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PencilSquareIcon, TrashIcon, PlusIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from '@heroicons/vue/24/outline';
 import { toast } from '@/utils/bizboost-toast';
 import LineChart from '@/components/BMS/Charts/LineChart.vue';
@@ -45,7 +45,7 @@ function openValueForm() {
 
 function submitValue() {
     if (valueForm.value.value === null) { toast.warning('Validation', 'Value is required'); return; }
-    router.post(route('cms.kpis.values.store', props.kpi.id), valueForm.value, {
+    router.post(route('bms.kpis.values.store', props.kpi.id), valueForm.value, {
         preserveScroll: true,
         onSuccess: () => { showValueForm.value = false; toast.success('Recorded', 'Value recorded'); },
         onError: () => toast.error('Failed', 'Could not record value'),
@@ -54,7 +54,7 @@ function submitValue() {
 
 function confirmDeleteValue(valueId: number) {
     if (confirm('Delete this value?')) {
-        router.delete(route('cms.kpis.values.delete', { id: props.kpi.id, valueId }), {
+        router.delete(route('bms.kpis.values.delete', { id: props.kpi.id, valueId }), {
             preserveScroll: true,
             onSuccess: () => toast.success('Deleted', 'Value removed'),
         });
@@ -63,7 +63,7 @@ function confirmDeleteValue(valueId: number) {
 
 function confirmDeleteKpi() {
     if (confirm(`Delete KPI "${props.kpi.name}"?`)) {
-        router.delete(route('cms.kpis.delete', props.kpi.id), {
+        router.delete(route('bms.kpis.delete', props.kpi.id), {
             onSuccess: () => toast.success('Deleted', 'KPI deleted'),
         });
     }
@@ -120,14 +120,14 @@ const chartValues = computed(() =>
 <template>
     <Head :title="kpi.name" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-4xl mx-auto space-y-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <Link :href="route('cms.kpis.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to KPIs</Link>
+                    <Link :href="route('bms.kpis.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to KPIs</Link>
                 </div>
                 <div class="flex items-center gap-2">
-                    <Link :href="route('cms.kpis.edit', kpi.id)" class="px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 flex items-center gap-2">
+                    <Link :href="route('bms.kpis.edit', kpi.id)" class="px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 flex items-center gap-2">
                         <PencilSquareIcon class="h-4 w-4" /> Edit
                     </Link>
                     <button @click="confirmDeleteKpi" class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 flex items-center gap-2">
@@ -268,5 +268,5 @@ const chartValues = computed(() =>
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

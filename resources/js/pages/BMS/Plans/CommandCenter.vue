@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 
@@ -79,7 +79,7 @@ function totalWithChildren(breakdown: Breakdown): number {
 <template>
     <Head title="Command Center - Planning" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="space-y-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Command Center</h1>
@@ -141,7 +141,7 @@ function totalWithChildren(breakdown: Breakdown): number {
                             <span v-else class="w-4" />
                         </button>
 
-                        <Link :href="route('cms.plans.show', node.id)" class="flex-1 min-w-0" @click.stop>
+                        <Link :href="route('bms.plans.show', node.id)" class="flex-1 min-w-0" @click.stop>
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ node.title }}</p>
                             <p class="text-xs text-gray-500">{{ node.start_date || '' }}{{ node.start_date && node.end_date ? ' — ' : '' }}{{ node.end_date || '' }}</p>
                         </Link>
@@ -214,7 +214,7 @@ function totalWithChildren(breakdown: Breakdown): number {
                             class="flex items-center gap-3 px-4 md:px-6 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-100"
                             :style="{ paddingLeft: '48px' }"
                         >
-                            <Link :href="route('cms.plans.show', child.id)" class="flex-1 min-w-0" @click.stop>
+                            <Link :href="route('bms.plans.show', child.id)" class="flex-1 min-w-0" @click.stop>
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ child.title }}</p>
                                 <p class="text-xs text-gray-500">{{ child.type }}</p>
                             </Link>
@@ -253,5 +253,5 @@ function totalWithChildren(breakdown: Breakdown): number {
                 </template>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

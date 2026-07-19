@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import { ExclamationTriangleIcon, ArrowRightIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -39,7 +39,7 @@ const getAlertClass = (percentage: number) => {
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <!-- Page Header -->
     <div class="mb-6">
-      <Link :href="route('cms.inventory.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.inventory.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Inventory
       </Link>
       <div class="flex items-center justify-between">
@@ -117,7 +117,7 @@ const getAlertClass = (percentage: number) => {
             </div>
             <div class="flex-shrink-0 ml-4">
               <Link
-                :href="route('cms.inventory.show', alert.inventory_item.id)"
+                :href="route('bms.inventory.show', alert.inventory_item.id)"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
               >
                 View Item
@@ -137,7 +137,7 @@ const getAlertClass = (percentage: number) => {
         All inventory items are above their minimum stock levels
       </p>
       <Link
-        :href="route('cms.inventory.index')"
+        :href="route('bms.inventory.index')"
         class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
       >
         View All Inventory

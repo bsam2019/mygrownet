@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RoleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use App\Models\User;
-use App\Domain\CMS\Core\Services\IndustryPresetService;
-use App\Services\CMS\SecurityService;
+use App\Domain\BMS\Core\Services\IndustryPresetService;
+use App\Services\BMS\SecurityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +28,7 @@ class AuthController extends Controller
      */
     public function showLogin()
     {
-        return Inertia::render('CMS/Auth/Login');
+        return Inertia::render('BMS/Auth/Login');
     }
 
     /**
@@ -74,7 +74,7 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'The provided credentials do not match our records.'])->onlyInput('email');
             }
             $request->session()->regenerate();
-            return redirect()->route('cms.companies.hub');
+            return redirect()->route('bms.companies.hub');
         }
 
         // Check if account is locked
@@ -139,7 +139,7 @@ class AuthController extends Controller
 
         // Check if password change is required
         if ($user->force_password_change || $this->securityService->isPasswordExpired($user, $cmsUser->company_id)) {
-            return redirect()->route('cms.password.change')
+            return redirect()->route('bms.password.change')
                 ->with('warning', 'Your password has expired. Please change it to continue.');
         }
 
@@ -148,15 +148,15 @@ class AuthController extends Controller
         $companyCount = $activeCompanies->count();
 
         if ($companyCount === 0) {
-            return redirect()->route('cms.companies.hub');
+            return redirect()->route('bms.companies.hub');
         }
 
         // Multi-company user with no default set → hub to choose
         if ($companyCount > 1 && !$user->default_company_id) {
-            return redirect()->route('cms.companies.hub');
+            return redirect()->route('bms.companies.hub');
         }
 
-        return redirect()->intended(route('cms.dashboard'));
+        return redirect()->intended(route('bms.dashboard'));
     }
 
     /**
@@ -164,11 +164,11 @@ class AuthController extends Controller
      */
     public function showRegister()
     {
-        $presets = \App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel::active()->ordered()->get([
+        $presets = \App\Infrastructure\Persistence\Eloquent\BMS\IndustryPresetModel::active()->ordered()->get([
             'id', 'code', 'name', 'description', 'icon', 'sort_order',
         ]);
 
-        return Inertia::render('CMS/Auth/Register', [
+        return Inertia::render('BMS/Auth/Register', [
             'presets' => $presets,
         ]);
     }
@@ -252,7 +252,7 @@ class AuthController extends Controller
                 userAgent: $request->userAgent()
             );
 
-            return redirect()->route('cms.dashboard')
+            return redirect()->route('bms.dashboard')
                 ->with('success', "Welcome to {$company->name}! Your company is ready.");
 
         } catch (\Exception $e) {
@@ -290,7 +290,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('cms.landing');
+        return redirect()->route('bms.landing');
     }
 
     /**
@@ -298,7 +298,7 @@ class AuthController extends Controller
      */
     public function showPasswordChange()
     {
-        return Inertia::render('CMS/Auth/ChangePassword', [
+        return Inertia::render('BMS/Auth/ChangePassword', [
             'forced' => Auth::user()->force_password_change ?? false,
         ]);
     }
@@ -363,7 +363,7 @@ class AuthController extends Controller
             severity: 'info'
         );
 
-        return redirect()->route('cms.dashboard')
+        return redirect()->route('bms.dashboard')
             ->with('success', 'Password changed successfully.');
     }
 
@@ -394,7 +394,7 @@ class AuthController extends Controller
         // Clear cached user data so the new company loads fresh
         $user->unsetRelation('cmsUsers');
 
-        return redirect()->route('cms.dashboard')
+        return redirect()->route('bms.dashboard')
             ->with('success', "Switched to {$membership->company->name}.");
     }
 }

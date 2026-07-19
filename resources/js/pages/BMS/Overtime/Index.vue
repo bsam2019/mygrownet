@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Overtime Management">
+  <BMSLayout title="Overtime Management">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Review and approve overtime records</p>
         </div>
         <Link
-          :href="route('cms.overtime.summary')"
+          :href="route('bms.overtime.summary')"
           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
         >
           View Summary
@@ -144,13 +144,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   records: any;
@@ -173,7 +173,7 @@ const filters = ref({
 });
 
 const applyFilters = () => {
-  router.get(route('cms.overtime.index'), filters.value, {
+  router.get(route('bms.overtime.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   });
@@ -181,13 +181,13 @@ const applyFilters = () => {
 
 const approve = (id: number) => {
   if (confirm('Approve this overtime record?')) {
-    router.post(route('cms.overtime.approve', id));
+    router.post(route('bms.overtime.approve', id));
   }
 };
 
 const reject = (id: number) => {
   if (confirm('Reject this overtime record?')) {
-    router.post(route('cms.overtime.reject', id));
+    router.post(route('bms.overtime.reject', id));
   }
 };
 

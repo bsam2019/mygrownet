@@ -1,9 +1,9 @@
 <template>
-  <CMSLayout :title="`Leave Request ${leaveRequest.leave_request_number}`">
+  <BMSLayout :title="`Leave Request ${leaveRequest.leave_request_number}`">
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Back Button -->
       <div>
-        <Link :href="route('cms.leave.index')" class="text-blue-600 hover:text-blue-800 text-sm">
+        <Link :href="route('bms.leave.index')" class="text-blue-600 hover:text-blue-800 text-sm">
           ← Back to Leave Requests
         </Link>
       </div>
@@ -233,13 +233,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   leaveRequest: any;
@@ -260,7 +260,7 @@ const rejectForm = useForm({
 });
 
 const approve = () => {
-  approveForm.post(route('cms.leave.approve', props.leaveRequest.id), {
+  approveForm.post(route('bms.leave.approve', props.leaveRequest.id), {
     onSuccess: () => {
       showApproveModal.value = false;
     },
@@ -268,7 +268,7 @@ const approve = () => {
 };
 
 const reject = () => {
-  rejectForm.post(route('cms.leave.reject', props.leaveRequest.id), {
+  rejectForm.post(route('bms.leave.reject', props.leaveRequest.id), {
     onSuccess: () => {
       showRejectModal.value = false;
     },

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import FormInput from '@/components/BMS/FormInput.vue'
 import FormSelect from '@/components/BMS/FormSelect.vue'
 import { CheckCircleIcon, XCircleIcon, EnvelopeIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -57,7 +57,7 @@ const testConnection = async () => {
   testResult.value = null
 
   try {
-    const response = await fetch(route('cms.settings.email.test-connection'), {
+    const response = await fetch(route('bms.settings.email.test-connection'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ const testConnection = async () => {
 }
 
 const submit = () => {
-  form.post(route('cms.settings.email.update'), {
+  form.post(route('bms.settings.email.update'), {
     preserveScroll: true,
     onSuccess: () => {
       if (form.email_provider === 'platform') {

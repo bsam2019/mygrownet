@@ -1,5 +1,5 @@
 <template>
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-6xl mx-auto space-y-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
@@ -11,13 +11,13 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <Link
-                        :href="route('cms.budgets.edit', budget.id)"
+                        :href="route('bms.budgets.edit', budget.id)"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         Edit Budget
                     </Link>
                     <Link
-                        :href="route('cms.budgets.index')"
+                        :href="route('bms.budgets.index')"
                         class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
                     >
                         Back to Budgets
@@ -159,12 +159,12 @@
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import CMSLayout from '@/layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface BudgetItem {
     id: number;

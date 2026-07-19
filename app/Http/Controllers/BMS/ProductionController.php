@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Production\Services\ProductionService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductionOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CuttingListModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WasteTrackingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Domain\BMS\Production\Services\ProductionService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductionOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CuttingListModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WasteTrackingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,7 +38,7 @@ class ProductionController extends Controller
         
         $statistics = $this->productionService->getProductionStatistics($companyId);
         
-        return Inertia::render('CMS/Production/Index', [
+        return Inertia::render('BMS/Production/Index', [
             'orders' => $orders,
             'statistics' => $statistics,
             'filters' => $request->only(['search', 'status']),
@@ -53,7 +53,7 @@ class ProductionController extends Controller
             ->whereIn('status', ['confirmed', 'in_progress'])
             ->get(['id', 'job_number', 'title']);
         
-        return Inertia::render('CMS/Production/Create', [
+        return Inertia::render('BMS/Production/Create', [
             'jobs' => $jobs,
         ]);
     }
@@ -73,7 +73,7 @@ class ProductionController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $order = $this->productionService->createProductionOrder($companyId, $validated);
         
-        return redirect()->route('cms.production.show', $order->id)
+        return redirect()->route('bms.production.show', $order->id)
             ->with('success', 'Production order created successfully');
     }
 
@@ -89,7 +89,7 @@ class ProductionController extends Controller
             'wasteRecords.material',
         ])->findOrFail($id);
         
-        return Inertia::render('CMS/Production/Show', [
+        return Inertia::render('BMS/Production/Show', [
             'order' => $order,
         ]);
     }
@@ -115,7 +115,7 @@ class ProductionController extends Controller
     {
         $this->productionService->deleteProductionOrder($id);
         
-        return redirect()->route('cms.production.index')
+        return redirect()->route('bms.production.index')
             ->with('success', 'Production order deleted successfully');
     }
 
@@ -132,7 +132,7 @@ class ProductionController extends Controller
             ->latest()
             ->paginate(20);
         
-        return Inertia::render('CMS/Production/CuttingLists/Index', [
+        return Inertia::render('BMS/Production/CuttingLists/Index', [
             'lists' => $lists,
             'filters' => $request->only(['search']),
         ]);
@@ -143,7 +143,7 @@ class ProductionController extends Controller
         $order = ProductionOrderModel::with('job.materialPlan.materials.material')
             ->findOrFail($productionOrderId);
         
-        return Inertia::render('CMS/Production/CuttingLists/Create', [
+        return Inertia::render('BMS/Production/CuttingLists/Create', [
             'order' => $order,
         ]);
     }
@@ -164,7 +164,7 @@ class ProductionController extends Controller
             $validated['items']
         );
         
-        return redirect()->route('cms.production.cutting-lists.show', $cuttingList->id)
+        return redirect()->route('bms.production.cutting-lists.show', $cuttingList->id)
             ->with('success', 'Cutting list created successfully');
     }
 
@@ -176,7 +176,7 @@ class ProductionController extends Controller
             'items.cutByUser',
         ])->findOrFail($id);
         
-        return Inertia::render('CMS/Production/CuttingLists/Show', [
+        return Inertia::render('BMS/Production/CuttingLists/Show', [
             'list' => $list,
         ]);
     }
@@ -213,7 +213,7 @@ class ProductionController extends Controller
             'end_date' => $request->end_date,
         ]);
         
-        return Inertia::render('CMS/Production/Waste/Index', [
+        return Inertia::render('BMS/Production/Waste/Index', [
             'waste' => $waste,
             'statistics' => $statistics,
             'filters' => $request->only(['start_date', 'end_date']),

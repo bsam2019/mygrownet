@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
-use App\Domain\CMS\Core\Events\JobCreated;
-use App\Domain\CMS\Core\Events\JobCompleted;
-use App\Domain\CMS\Core\Events\JobAssigned;
-use App\Domain\CMS\Core\ValueObjects\JobNumber;
+use App\Domain\BMS\Core\Events\JobCreated;
+use App\Domain\BMS\Core\Events\JobCompleted;
+use App\Domain\BMS\Core\Events\JobAssigned;
+use App\Domain\BMS\Core\ValueObjects\JobNumber;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobStatusHistoryModel;
 use App\Notifications\CMS\JobStatusChangedNotification;

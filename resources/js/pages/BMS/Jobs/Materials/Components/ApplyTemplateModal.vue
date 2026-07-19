@@ -193,7 +193,7 @@ const onTemplateChange = () => {
 }
 
 const submit = () => {
-  form.post(route('cms.jobs.materials.apply-template', props.job.id), {
+  form.post(route('bms.jobs.materials.apply-template', props.job.id), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

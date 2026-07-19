@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\ExpenseService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Notifications\CMS\ExpenseApprovalRequiredNotification;
+use App\Domain\BMS\Core\Services\ExpenseService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Notifications\BMS\ExpenseApprovalRequiredNotification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -63,11 +63,11 @@ class ExpenseController extends Controller
                 ->sum('amount'),
         ];
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Expenses/Index', [
+        return Inertia::render('BMS/Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
             'summary' => $summary,
@@ -90,7 +90,7 @@ class ExpenseController extends Controller
             ->orderBy('job_number', 'desc')
             ->get(['id', 'job_number', 'description']);
 
-        return Inertia::render('CMS/Expenses/Create', [
+        return Inertia::render('BMS/Expenses/Create', [
             'categories' => $categories,
             'jobs' => $jobs,
         ]);
@@ -145,7 +145,7 @@ class ExpenseController extends Controller
             }
         }
 
-        return redirect()->route('cms.expenses.index')
+        return redirect()->route('bms.expenses.index')
             ->with('success', 'Expense recorded successfully');
     }
 

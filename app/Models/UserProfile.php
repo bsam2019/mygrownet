@@ -9,10 +9,15 @@ class UserProfile extends Model
 {
     protected $fillable = [
         'user_id',
+        'first_name',
+        'last_name',
         'phone_number',
         'address',
         'city',
         'country',
+        'timezone',
+        'language',
+        'avatar',
         'preferred_payment_method',
         'payment_details',
         'kyc_status',

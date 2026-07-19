@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Infrastructure\Persistence\Eloquent\CMS\KpiModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\KpiValueModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Infrastructure\Persistence\Eloquent\BMS\KpiModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\KpiValueModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class KpiController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     public function index(Request $request): Response
     {
@@ -43,20 +43,20 @@ class KpiController extends Controller
                 'sparkline' => $kpi->values->sortBy('period_end')->values()->map(fn ($v) => $v->value),
             ]);
 
-        return Inertia::render('CMS/Kpis/Index', [
+        return Inertia::render('BMS/Kpis/Index', [
             'kpis' => $kpis,
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Kpis/Create');
+        return Inertia::render('BMS/Kpis/Create');
     }
 
     public function store(Request $request)
     {
         $companyId = $this->getCompanyId($request);
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -90,7 +90,7 @@ class KpiController extends Controller
             'created_by' => $cmsUser->user_id,
         ]);
 
-        return redirect()->route('cms.kpis.show', $kpi->id)
+        return redirect()->route('bms.kpis.show', $kpi->id)
             ->with('success', 'KPI created.');
     }
 
@@ -104,7 +104,7 @@ class KpiController extends Controller
 
         $values = $kpi->values()->orderBy('period_end', 'desc')->get();
 
-        return Inertia::render('CMS/Kpis/Show', [
+        return Inertia::render('BMS/Kpis/Show', [
             'kpi' => $kpi,
             'values' => $values,
         ]);
@@ -115,7 +115,7 @@ class KpiController extends Controller
         $companyId = $this->getCompanyId($request);
         $kpi = KpiModel::forCompany($companyId)->findOrFail($id);
 
-        return Inertia::render('CMS/Kpis/Edit', [
+        return Inertia::render('BMS/Kpis/Edit', [
             'kpi' => $kpi,
         ]);
     }
@@ -154,7 +154,7 @@ class KpiController extends Controller
             'is_active' => ($validated['status'] ?? 'active') === 'active',
         ]);
 
-        return redirect()->route('cms.kpis.show', $kpi->id)
+        return redirect()->route('bms.kpis.show', $kpi->id)
             ->with('success', 'KPI updated.');
     }
 
@@ -164,7 +164,7 @@ class KpiController extends Controller
         $kpi = KpiModel::forCompany($companyId)->findOrFail($id);
         $kpi->delete();
 
-        return redirect()->route('cms.kpis.index')
+        return redirect()->route('bms.kpis.index')
             ->with('success', 'KPI deleted.');
     }
 
@@ -172,7 +172,7 @@ class KpiController extends Controller
     {
         $companyId = $this->getCompanyId($request);
         $kpi = KpiModel::forCompany($companyId)->findOrFail($id);
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $validated = $request->validate([
             'value' => 'required|numeric',
@@ -190,7 +190,7 @@ class KpiController extends Controller
             'recorded_by' => $cmsUser->user_id,
         ]);
 
-        return redirect()->route('cms.kpis.show', $kpi->id)
+        return redirect()->route('bms.kpis.show', $kpi->id)
             ->with('success', 'Value recorded.');
     }
 
@@ -200,7 +200,7 @@ class KpiController extends Controller
         $kpi = KpiModel::forCompany($companyId)->findOrFail($id);
         $kpi->values()->where('id', $valueId)->delete();
 
-        return redirect()->route('cms.kpis.show', $kpi->id)
+        return redirect()->route('bms.kpis.show', $kpi->id)
             ->with('success', 'Value removed.');
     }
 }

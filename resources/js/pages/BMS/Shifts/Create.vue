@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="p-6 max-w-3xl mx-auto">
       <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-900">Create New Shift</h1>
@@ -135,7 +135,7 @@
             {{ form.processing ? 'Creating...' : 'Create Shift' }}
           </button>
           <Link
-            :href="route('cms.shifts.index')"
+            :href="route('bms.shifts.index')"
             class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             Cancel
@@ -143,12 +143,12 @@
         </div>
       </form>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const form = useForm({
   shift_name: '',
@@ -164,6 +164,6 @@ const form = useForm({
 });
 
 const submit = () => {
-  form.post(route('cms.shifts.store'));
+  form.post(route('bms.shifts.store'));
 };
 </script>

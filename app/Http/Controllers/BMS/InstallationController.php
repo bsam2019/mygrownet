@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Installation\Services\InstallationService;
-use App\Infrastructure\Persistence\Eloquent\CMS\InstallationScheduleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DefectModel;
+use App\Domain\BMS\Installation\Services\InstallationService;
+use App\Infrastructure\Persistence\Eloquent\BMS\InstallationScheduleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DefectModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -27,7 +27,7 @@ class InstallationController extends Controller
 
         $statistics = $this->installationService->getScheduleStatistics($companyId);
 
-        return Inertia::render('CMS/Installation/Index', [
+        return Inertia::render('BMS/Installation/Index', [
             'schedules' => $schedules,
             'statistics' => $statistics,
             'filters' => $request->only('status'),
@@ -57,7 +57,7 @@ class InstallationController extends Controller
             $validated
         );
 
-        return redirect()->route('cms.installation.show', $schedule->id)
+        return redirect()->route('bms.installation.show', $schedule->id)
             ->with('success', 'Installation scheduled successfully');
     }
 
@@ -73,7 +73,7 @@ class InstallationController extends Controller
             'defects.photos'
         ])->findOrFail($id);
 
-        return Inertia::render('CMS/Installation/Show', [
+        return Inertia::render('BMS/Installation/Show', [
             'schedule' => $schedule,
         ]);
     }
@@ -148,7 +148,7 @@ class InstallationController extends Controller
             ->latest('reported_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Installation/Defects/Index', [
+        return Inertia::render('BMS/Installation/Defects/Index', [
             'defects' => $defects,
             'filters' => $request->only(['status', 'severity']),
         ]);

@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import { PencilIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon, DocumentArrowDownIcon, PaperAirplaneIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import SignaturePad from '@/components/BMS/SignaturePad.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   contract: any
@@ -28,7 +28,7 @@ const openRenewModal = () => {
 }
 
 const submitRenew = () => {
-  renewForm.post(route('cms.contracts.renew', props.contract.id), {
+  renewForm.post(route('bms.contracts.renew', props.contract.id), {
     onSuccess: () => { showRenewModal.value = false }
   })
 }
@@ -40,7 +40,7 @@ const openSignModal = (party: 'customer' | 'company') => {
 
 const handleSignatureDone = (dataUrl: string) => {
   signing.value = true
-  router.post(route('cms.contracts.sign', props.contract.id), {
+  router.post(route('bms.contracts.sign', props.contract.id), {
     party: signParty.value,
     signature_data: dataUrl,
   }, {
@@ -54,11 +54,11 @@ const handleSignatureDone = (dataUrl: string) => {
 }
 
 const sendForSigning = () => {
-  router.post(route('cms.contracts.send-for-signing', props.contract.id), {}, { preserveScroll: true })
+  router.post(route('bms.contracts.send-for-signing', props.contract.id), {}, { preserveScroll: true })
 }
 
-const activate = () => router.post(route('cms.contracts.activate', props.contract.id), {}, { preserveScroll: true })
-const terminate = () => router.post(route('cms.contracts.terminate', props.contract.id), {}, { preserveScroll: true })
+const activate = () => router.post(route('bms.contracts.activate', props.contract.id), {}, { preserveScroll: true })
+const terminate = () => router.post(route('bms.contracts.terminate', props.contract.id), {}, { preserveScroll: true })
 
 const formatMoney = (amount: number) => 'K' + amount.toLocaleString('en-US', { minimumFractionDigits: 2 })
 const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'
@@ -77,7 +77,7 @@ const isFullySigned = props.contract.signed_by_customer && props.contract.signed
 
 <template>
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <Link :href="route('cms.contracts.index')" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">← Back to Contracts</Link>
+    <Link :href="route('bms.contracts.index')" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">← Back to Contracts</Link>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
@@ -88,7 +88,7 @@ const isFullySigned = props.contract.signed_by_customer && props.contract.signed
         <div class="flex items-center gap-2">
           <span v-if="isOverdue" class="px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700">OVERDUE</span>
           <span :class="['px-3 py-1 text-sm font-medium rounded-full', statusColors[contract.status] || 'bg-gray-100']">{{ contract.status }}</span>
-          <Link v-if="contract.status === 'draft'" :href="route('cms.contracts.edit', contract.id)" class="p-2 text-gray-400 hover:text-gray-600">
+          <Link v-if="contract.status === 'draft'" :href="route('bms.contracts.edit', contract.id)" class="p-2 text-gray-400 hover:text-gray-600">
             <PencilIcon class="h-5 w-5" />
           </Link>
         </div>
@@ -169,7 +169,7 @@ const isFullySigned = props.contract.signed_by_customer && props.contract.signed
             <p v-if="r.notes" class="text-xs text-gray-500">{{ r.notes }}</p>
           </div>
           <span v-if="r.renewed_contract" class="text-sm">
-            <Link :href="route('cms.contracts.show', r.renewed_contract.id)" class="text-blue-600 hover:text-blue-700">View Renewed</Link>
+            <Link :href="route('bms.contracts.show', r.renewed_contract.id)" class="text-blue-600 hover:text-blue-700">View Renewed</Link>
           </span>
         </div>
       </div>

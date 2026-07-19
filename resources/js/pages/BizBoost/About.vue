@@ -4,7 +4,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const user = computed(() => usePage().props.auth?.user);
-const homeUrl = computed(() => user.value ? '/dashboard' : route('bizboost.sub.welcome'));
+const homeUrl = computed(() => user.value ? '/workspace' : route('bizboost.sub.welcome'));
 </script>
 
 <template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -36,7 +36,7 @@ const saveSettings = async () => {
     isSaving.value = true;
 
     try {
-        const response = await fetch(route('cms.settings.sms.update'), {
+        const response = await fetch(route('bms.settings.sms.update'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ const testConnection = async () => {
     isTesting.value = true;
 
     try {
-        const response = await fetch(route('cms.settings.sms.test-connection'), {
+        const response = await fetch(route('bms.settings.sms.test-connection'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ const testConnection = async () => {
 <template>
     <Head title="SMS Settings - CMS" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="p-6">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">SMS Settings</h1>
@@ -230,10 +230,10 @@ const testConnection = async () => {
 
             <!-- View Logs Link -->
             <div v-if="isEnabled" class="mt-6 text-center">
-                <a :href="route('cms.settings.sms.logs')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                <a :href="route('bms.settings.sms.logs')" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                     View SMS Logs →
                 </a>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

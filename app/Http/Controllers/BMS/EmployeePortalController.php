@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\EmployeeSelfServiceService;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Domain\BMS\Core\Services\EmployeeSelfServiceService;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,12 +19,12 @@ class EmployeePortalController extends Controller
         $workerId = session('employee_worker_id');
         
         if (!$workerId) {
-            return redirect()->route('cms.employee.login');
+            return redirect()->route('bms.employee.login');
         }
 
         $data = $this->service->getEmployeeDashboard($workerId);
 
-        return Inertia::render('CMS/Employee/Dashboard', $data);
+        return Inertia::render('BMS/Employee/Dashboard', $data);
     }
 
     public function profile(Request $request)
@@ -33,7 +33,7 @@ class EmployeePortalController extends Controller
         $worker = WorkerModel::with(['department', 'leaveBalances', 'skills.skill', 'certifications'])
             ->findOrFail($workerId);
 
-        return Inertia::render('CMS/Employee/Profile', [
+        return Inertia::render('BMS/Employee/Profile', [
             'worker' => $worker,
         ]);
     }
@@ -53,7 +53,7 @@ class EmployeePortalController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Employee/Documents', [
+        return Inertia::render('BMS/Employee/Documents', [
             'documents' => $documents,
             'requests' => $requests,
         ]);

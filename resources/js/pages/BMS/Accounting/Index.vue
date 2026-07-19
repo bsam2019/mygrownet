@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="p-6">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
@@ -9,13 +9,13 @@
         </div>
         <div class="flex gap-3">
           <Link
-            :href="route('cms.accounting.trial-balance')"
+            :href="route('bms.accounting.trial-balance')"
             class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             Trial Balance
           </Link>
           <Link
-            :href="route('cms.accounting.create')"
+            :href="route('bms.accounting.create')"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
           >
             <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -48,7 +48,7 @@
             v-for="account in filteredAccounts"
             :key="account.id"
             class="p-4 hover:bg-gray-50 transition cursor-pointer"
-            @click="router.visit(route('cms.accounting.show', account.id))"
+            @click="router.visit(route('bms.accounting.show', account.id))"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-4">
@@ -89,7 +89,7 @@
           </div>
           <p class="text-gray-500 text-sm">No accounts in this category</p>
           <Link
-            :href="route('cms.accounting.create')"
+            :href="route('bms.accounting.create')"
             class="inline-block mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
             Create your first account
@@ -119,13 +119,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { PlusIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
 
 interface Account {

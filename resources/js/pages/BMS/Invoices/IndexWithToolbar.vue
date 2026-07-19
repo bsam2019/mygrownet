@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import PageToolbar from '@/components/BMS/PageToolbar.vue'
 import { MenuItem } from '@headlessui/vue'
 import { 
@@ -33,7 +33,7 @@ const filteredInvoices = computed(() => {
 })
 
 const handleSearch = () => {
-  router.get(route('cms.invoices.index'), {
+  router.get(route('bms.invoices.index'), {
     search: searchQuery.value,
     status: selectedStatus.value
   }, { preserveState: true })
@@ -41,7 +41,7 @@ const handleSearch = () => {
 
 const handleStatusFilter = (status: string) => {
   selectedStatus.value = status
-  router.get(route('cms.invoices.index'), {
+  router.get(route('bms.invoices.index'), {
     search: searchQuery.value,
     status: status
   }, { preserveState: true })
@@ -56,14 +56,14 @@ const handleBulkDelete = () => {
 }
 
 const handleCreateInvoice = () => {
-  router.visit(route('cms.invoices.create'))
+  router.visit(route('bms.invoices.create'))
 }
 </script>
 
 <template>
   <Head title="Invoices" />
   
-  <CMSLayout>
+  <BMSLayout>
     <PageToolbar 
       title="Invoices" 
       :subtitle="`${invoices.total || 0} total invoices`"
@@ -237,5 +237,5 @@ const handleCreateInvoice = () => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

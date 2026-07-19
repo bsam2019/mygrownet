@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
@@ -7,7 +7,7 @@
           <p class="text-sm text-gray-500 mt-1">Verify accounting accuracy</p>
         </div>
         <Link
-          :href="route('cms.accounting.index')"
+          :href="route('bms.accounting.index')"
           class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
         >
           Back to Accounts
@@ -91,12 +91,12 @@
         </table>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 interface Account {

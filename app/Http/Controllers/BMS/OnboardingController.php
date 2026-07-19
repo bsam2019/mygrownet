@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\OnboardingService;
+use App\Domain\BMS\Core\Services\OnboardingService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -18,11 +18,11 @@ class OnboardingController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $templates = \App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTemplateModel::where('company_id', $companyId)
+        $templates = \App\Infrastructure\Persistence\Eloquent\BMS\OnboardingTemplateModel::where('company_id', $companyId)
             ->with(['department', 'tasks'])
             ->get();
 
-        return Inertia::render('CMS/Onboarding/Templates', [
+        return Inertia::render('BMS/Onboarding/Templates', [
             'templates' => $templates,
         ]);
     }
@@ -61,14 +61,14 @@ class OnboardingController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $onboardings = \App\Infrastructure\Persistence\Eloquent\CMS\EmployeeOnboardingModel::whereHas('worker', function ($query) use ($companyId) {
+        $onboardings = \App\Infrastructure\Persistence\Eloquent\BMS\EmployeeOnboardingModel::whereHas('worker', function ($query) use ($companyId) {
             $query->where('company_id', $companyId);
         })
             ->with(['worker', 'template', 'taskProgress'])
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Onboarding/EmployeeOnboarding', [
+        return Inertia::render('BMS/Onboarding/EmployeeOnboarding', [
             'onboardings' => $onboardings,
         ]);
     }
@@ -109,7 +109,7 @@ class OnboardingController extends Controller
     {
         $onboarding = $this->onboardingService->getOnboardingProgress($workerId);
 
-        return Inertia::render('CMS/Onboarding/Show', [
+        return Inertia::render('BMS/Onboarding/Show', [
             'onboarding' => $onboarding,
         ]);
     }

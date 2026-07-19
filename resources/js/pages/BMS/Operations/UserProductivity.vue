@@ -1,11 +1,11 @@
 <template>
-  <CMSLayout :page-title="`${user.name} - Productivity`">
+  <BMSLayout :page-title="`${user.name} - Productivity`">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <Link
-            :href="route('cms.operations.analytics')"
+            :href="route('bms.operations.analytics')"
             class="p-2 hover:bg-gray-100 rounded-lg transition"
             aria-label="Back to analytics"
           >
@@ -211,13 +211,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   CheckCircleIcon,
   ClockIcon,

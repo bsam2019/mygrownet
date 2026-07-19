@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { PlusIcon, CheckCircleIcon, ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface CountItem {
@@ -68,7 +68,7 @@ const removeItem = (index: number) => {
 }
 
 const submitForm = () => {
-  form.post(route('cms.inventory.counts.store'), {
+  form.post(route('bms.inventory.counts.store'), {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false
@@ -78,7 +78,7 @@ const submitForm = () => {
 }
 
 const completeCount = (id: number) => {
-  useForm({}).post(route('cms.inventory.counts.complete', id), {
+  useForm({}).post(route('bms.inventory.counts.complete', id), {
     preserveScroll: true,
   })
 }

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\ShiftManagementService;
+use App\Domain\BMS\Core\Services\ShiftManagementService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\ShiftModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ShiftModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,7 +20,7 @@ class ShiftController extends Controller
         $shifts = $this->shiftService->getShifts($companyId, activeOnly: false);
         $statistics = $this->shiftService->getShiftStatistics($companyId);
 
-        return Inertia::render('CMS/Shifts/Index', [
+        return Inertia::render('BMS/Shifts/Index', [
             'shifts' => $shifts,
             'statistics' => $statistics,
         ]);
@@ -28,7 +28,7 @@ class ShiftController extends Controller
 
     public function create()
     {
-        return Inertia::render('CMS/Shifts/Create');
+        return Inertia::render('BMS/Shifts/Create');
     }
 
     public function store(Request $request)
@@ -55,13 +55,13 @@ class ShiftController extends Controller
             'company_id' => $request->user()->cmsUser->company_id,
         ]);
 
-        return redirect()->route('cms.shifts.index')
+        return redirect()->route('bms.shifts.index')
             ->with('success', 'Shift created successfully.');
     }
 
     public function edit(ShiftModel $shift)
     {
-        return Inertia::render('CMS/Shifts/Edit', [
+        return Inertia::render('BMS/Shifts/Edit', [
             'shift' => $shift,
         ]);
     }
@@ -88,7 +88,7 @@ class ShiftController extends Controller
 
         $this->shiftService->updateShift($shift, $validated);
 
-        return redirect()->route('cms.shifts.index')
+        return redirect()->route('bms.shifts.index')
             ->with('success', 'Shift updated successfully.');
     }
 
@@ -96,7 +96,7 @@ class ShiftController extends Controller
     {
         try {
             $this->shiftService->deleteShift($shift);
-            return redirect()->route('cms.shifts.index')
+            return redirect()->route('bms.shifts.index')
                 ->with('success', 'Shift deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

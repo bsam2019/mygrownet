@@ -10,14 +10,14 @@ import {
   ArrowRightIcon,
   ArrowDownOnSquareIcon,
 } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import DoughnutChart from '@/components/BMS/Charts/DoughnutChart.vue'
 import LineChart from '@/components/BMS/Charts/LineChart.vue'
 import BarChart from '@/components/BMS/Charts/BarChart.vue'
 import StackedBarChart from '@/components/BMS/Charts/StackedBarChart.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -60,7 +60,7 @@ const selectedPeriod = ref(props.period)
 
 const changePeriod = (period: string) => {
   selectedPeriod.value = period
-  router.get(route('cms.analytics.finance'), { period }, {
+  router.get(route('bms.analytics.finance'), { period }, {
     preserveState: true,
     preserveScroll: true,
   })
@@ -169,14 +169,14 @@ const paymentTrendsChartData = computed(() => {
         </div>
         <div class="flex items-center gap-2">
           <Link
-            :href="route('cms.analytics.finance.export-csv', { period: selectedPeriod })"
+            :href="route('bms.analytics.finance.export-csv', { period: selectedPeriod })"
             class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
           >
             <ArrowDownOnSquareIcon class="h-5 w-5" aria-hidden="true" />
             Export CSV
           </Link>
           <Link
-            :href="route('cms.reports.index')"
+            :href="route('bms.reports.index')"
             class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm"
           >
             <DocumentTextIcon class="h-5 w-5" aria-hidden="true" />

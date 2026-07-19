@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Services\CMS\SmsService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Services\BMS\SmsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -35,7 +35,7 @@ class SmsSettingsController extends Controller
 
         $statistics = $this->smsService->getStatistics($companyId);
 
-        return Inertia::render('CMS/Settings/Sms', [
+        return Inertia::render('BMS/Settings/Sms', [
             'settings' => $smsSettings,
             'statistics' => $statistics,
             'isEnabled' => $this->smsService->isEnabled($companyId),
@@ -112,7 +112,7 @@ class SmsSettingsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $logs = $this->smsService->getLogs($companyId);
 
-        return Inertia::render('CMS/Settings/SmsLogs', [
+        return Inertia::render('BMS/Settings/SmsLogs', [
             'logs' => $logs,
         ]);
     }

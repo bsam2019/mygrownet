@@ -31,7 +31,7 @@ const aboutUrl = computed(() => isSubdomain.value ? route('bizboost.sub.about') 
                     <!-- Right section -->
                     <div v-if="isSubdomain" class="flex items-center gap-3">
                         <template v-if="user">
-                            <Link href="/dashboard" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                            <Link href="/workspace" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                                 Dashboard
                             </Link>
                         </template>
@@ -92,7 +92,7 @@ const aboutUrl = computed(() => isSubdomain.value ? route('bizboost.sub.about') 
                         <h3 class="text-white text-sm font-semibold uppercase tracking-wider mb-4">Get Started</h3>
                         <ul class="space-y-2">
                             <li v-if="isSubdomain && user">
-                                <Link href="/dashboard" class="text-sm hover:text-white transition-colors">Dashboard</Link>
+                                <Link href="/workspace" class="text-sm hover:text-white transition-colors">Dashboard</Link>
                             </li>
                             <li v-if="isSubdomain && !user">
                                 <Link :href="registerUrl" class="text-sm hover:text-white transition-colors">Create Account</Link>

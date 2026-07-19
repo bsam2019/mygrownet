@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { DocumentChartBarIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface ValuationRecord {

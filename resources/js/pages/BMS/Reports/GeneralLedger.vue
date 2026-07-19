@@ -2,10 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { BookOpenIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -39,7 +39,7 @@ const applyFilter = () => {
         params.account_id = selectedAccountId.value;
     }
     
-    window.location.href = route('cms.reports.general-ledger', params);
+    window.location.href = route('bms.reports.general-ledger', params);
 };
 
 const totalDebits = computed(() => {
@@ -59,7 +59,7 @@ const totalCredits = computed(() => {
     <div class="px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-6">
-            <Link :href="route('cms.reports.index')" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
+            <Link :href="route('bms.reports.index')" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
                 <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                 Back to Reports
             </Link>
@@ -144,7 +144,7 @@ const totalCredits = computed(() => {
                     <p class="mt-1 text-sm text-amber-700">
                         Enable the GrowFinance (Full Accounting) module in Settings → Modules to view general ledger.
                     </p>
-                    <Link :href="route('cms.settings.index')" class="mt-2 inline-flex items-center text-sm font-medium text-amber-800 hover:text-amber-900">
+                    <Link :href="route('bms.settings.index')" class="mt-2 inline-flex items-center text-sm font-medium text-amber-800 hover:text-amber-900">
                         Go to Settings →
                     </Link>
                 </div>

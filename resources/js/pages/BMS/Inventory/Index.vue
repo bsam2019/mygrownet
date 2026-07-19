@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -34,7 +34,7 @@ const formatNumber = (value: number) => {
       </div>
       <div class="mt-4 sm:mt-0">
         <Link
-          :href="route('cms.inventory.create')"
+          :href="route('bms.inventory.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
         >
           Add Item
@@ -52,7 +52,7 @@ const formatNumber = (value: number) => {
           </p>
         </div>
         <Link
-          :href="route('cms.inventory.low-stock-alerts')"
+          :href="route('bms.inventory.low-stock-alerts')"
           class="text-sm font-medium text-amber-700 hover:text-amber-800"
         >
           View Alerts →
@@ -78,7 +78,7 @@ const formatNumber = (value: number) => {
             <tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <Link
-                  :href="route('cms.inventory.show', item.id)"
+                  :href="route('bms.inventory.show', item.id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
                   {{ item.item_code }}
@@ -114,7 +114,7 @@ const formatNumber = (value: number) => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <Link
-                  :href="route('cms.inventory.show', item.id)"
+                  :href="route('bms.inventory.show', item.id)"
                   class="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   View
@@ -126,7 +126,7 @@ const formatNumber = (value: number) => {
                 <CubeIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
                 <p class="mt-2 text-sm text-gray-500">No inventory items yet</p>
                 <Link
-                  :href="route('cms.inventory.create')"
+                  :href="route('bms.inventory.create')"
                   class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
                   Add your first item →

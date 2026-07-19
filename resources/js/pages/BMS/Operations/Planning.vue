@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Planning">
+  <BMSLayout page-title="Planning">
     <div class="space-y-6">
       <!-- Page Header -->
       <div>
@@ -128,11 +128,11 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   workload: Array<{

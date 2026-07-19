@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage work shifts and assignments</p>
         </div>
         <Link
-          :href="route('cms.shifts.create')"
+          :href="route('bms.shifts.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@
 
           <div class="mt-4 pt-4 border-t flex gap-2">
             <Link
-              :href="route('cms.shifts.edit', shift.id)"
+              :href="route('bms.shifts.edit', shift.id)"
               class="flex-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg text-center"
             >
               Edit
@@ -82,12 +82,12 @@
         <p class="mt-1 text-sm text-gray-500">Get started by creating a new shift.</p>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   shifts: any[];

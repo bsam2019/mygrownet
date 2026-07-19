@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\BizDocs\Exceptions;
+namespace App\Domain\BMS\BizDocs\Exceptions;
 
 class DocumentConversionException extends \Exception
 {

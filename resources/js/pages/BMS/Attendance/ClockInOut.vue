@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Clock In/Out">
+  <BMSLayout title="Clock In/Out">
     <div class="max-w-2xl mx-auto">
       <div class="bg-white rounded-lg shadow p-6">
         <h1 class="text-2xl font-semibold text-gray-900 mb-6">Attendance</h1>
@@ -114,13 +114,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   todayRecord?: any;
@@ -140,9 +140,9 @@ const form = useForm({
 
 const submit = () => {
   if (!props.todayRecord || !props.todayRecord.clock_in_time) {
-    form.post(route('cms.attendance.clock-in'));
+    form.post(route('bms.attendance.clock-in'));
   } else {
-    form.post(route('cms.attendance.clock-out', props.todayRecord.id));
+    form.post(route('bms.attendance.clock-out', props.todayRecord.id));
   }
 };
 

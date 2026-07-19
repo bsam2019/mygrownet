@@ -30,7 +30,7 @@ const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('e
           <a v-if="signedPdfUrl" :href="signedPdfUrl" target="_blank" class="px-6 py-3 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700">
             Download Signed PDF
           </a>
-          <Link :href="route('cms.contracts.show', contract.id)" class="px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">
+          <Link :href="route('bms.contracts.show', contract.id)" class="px-6 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">
             View Contract Details
           </Link>
         </div>

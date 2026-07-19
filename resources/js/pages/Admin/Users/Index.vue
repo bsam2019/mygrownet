@@ -243,7 +243,7 @@ const impersonateUser = (userId) => {
               <h2 class="text-xl font-semibold text-gray-900">User Management</h2>
               <div class="flex items-center gap-2">
                 <Link
-                  href="/dashboard"
+                  href="/workspace"
                   class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 >
                   User Dashboard

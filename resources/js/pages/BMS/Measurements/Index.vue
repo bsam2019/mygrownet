@@ -2,14 +2,14 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { route } from 'ziggy-js';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import {
     PlusIcon, MagnifyingGlassIcon, RulerIcon,
     CheckCircleIcon, ClockIcon, DocumentTextIcon,
     ChevronRightIcon,
 } from '@heroicons/vue/24/outline';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface Customer { id: number; name: string; }
 interface Item { id: number; type: string; total_area: number; }
@@ -35,7 +35,7 @@ const props = defineProps<{
 const filters = ref({ ...props.filters });
 
 function applyFilters() {
-    router.get(route('cms.measurements.index'), filters.value, { preserveState: true, replace: true });
+    router.get(route('bms.measurements.index'), filters.value, { preserveState: true, replace: true });
 }
 
 function clearFilters() {
@@ -69,7 +69,7 @@ function fmt(date: string) {
                 <p class="mt-1 text-sm text-gray-500">Site measurements for aluminium fabrication</p>
             </div>
             <Link
-                :href="route('cms.measurements.create')"
+                :href="route('bms.measurements.create')"
                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center gap-2"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -160,13 +160,13 @@ function fmt(date: string) {
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <Link :href="route('cms.measurements.show', m.id)" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</Link>
+                            <Link :href="route('bms.measurements.show', m.id)" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View</Link>
                         </td>
                     </tr>
                     <tr v-if="measurements.data.length === 0">
                         <td colspan="8" class="px-4 py-12 text-center text-sm text-gray-400">
                             No measurements found.
-                            <Link :href="route('cms.measurements.create')" class="text-blue-600 ml-1">Create one</Link>
+                            <Link :href="route('bms.measurements.create')" class="text-blue-600 ml-1">Create one</Link>
                         </td>
                     </tr>
                 </tbody>
@@ -178,7 +178,7 @@ function fmt(date: string) {
             <Link
                 v-for="m in measurements.data"
                 :key="m.id"
-                :href="route('cms.measurements.show', m.id)"
+                :href="route('bms.measurements.show', m.id)"
                 class="block bg-white rounded-xl border border-gray-100 shadow-sm p-4"
             >
                 <div class="flex items-start justify-between gap-2 mb-2">

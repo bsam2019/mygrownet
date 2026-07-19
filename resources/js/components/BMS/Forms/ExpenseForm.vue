@@ -278,7 +278,7 @@ const handleCategoryAdded = (newCategory: Category) => {
 };
 
 const submit = () => {
-  form.post(route('cms.expenses.store'), {
+  form.post(route('bms.expenses.store'), {
     preserveScroll: true,
     onSuccess: () => {
       emit('success');

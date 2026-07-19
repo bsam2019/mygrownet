@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Labour\Services;
+namespace App\Domain\BMS\Labour\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\CrewModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\LabourTimesheetModel;

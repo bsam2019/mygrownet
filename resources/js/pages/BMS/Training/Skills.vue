@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { SparklesIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -13,7 +13,7 @@ const search = ref(props.filters.search || '');
 const categoryFilter = ref(props.filters.category || '');
 
 const applyFilters = () => {
-  router.get(route('cms.training.skills'), {
+  router.get(route('bms.training.skills'), {
     search: search.value,
     category: categoryFilter.value,
   }, { preserveState: true });
@@ -35,7 +35,7 @@ const getCategoryColor = (category: string) => {
 <template>
   <Head title="Skills Catalog" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -107,5 +107,5 @@ const getCategoryColor = (category: string) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

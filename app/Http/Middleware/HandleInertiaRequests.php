@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Core\Models\Domain;
 use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Inspiring;
@@ -23,58 +24,44 @@ class HandleInertiaRequests extends Middleware
     public function rootView(Request $request): string
     {
         $host = $request->getHost();
-        $map = [
-            'bizboost.mygrownet.com'    => 'bizboost',
-            'bizdocs.mygrownet.com'     => 'bizdocs',
-            'growbuilder.mygrownet.com' => 'growbuilder',
-            'venture.mygrownet.com'     => 'venture',
-            'grownet.mygrownet.com'     => 'grownet',
-            'growstorage.mygrownet.com' => 'growstorage',
-            'growmart.mygrownet.com'    => 'growmart',
-            'zamstay.mygrownet.com'     => 'zamstay',
-            'cms.mygrownet.com'         => 'cms',
-            'primeedge.mygrownet.com'   => 'primeedge',
-        ];
 
         // Check if this is a StockFlow company subdomain
         if ($request->attributes->has('stockflow_company_id')) {
             return 'stockflow';
         }
 
-        // Main domain path detection
-        if (!isset($map[$host])) {
-            $path = $request->path();
-
-            if (str_starts_with($path, 'primeedge')) {
-                return 'primeedge';
-            }
-
-            if (str_starts_with($path, 'admin')) {
-                return 'admin';
-            }
-
-            if (str_starts_with($path, 'employee') || str_starts_with($path, 'employees')) {
-                return 'employee';
-            }
-
-            if (str_starts_with($path, 'growbiz')) {
-                return 'growbiz';
-            }
-
-            if (str_starts_with($path, 'lifeplus')) {
-                return 'lifephus';
-            }
-
-            if (str_starts_with($path, 'growfinance')) {
-                return 'growfinance';
-            }
-
-            if (str_starts_with($path, 'growmarket')) {
-                return 'marketplace';
+        // Resolve subdomain blade view from domains table
+        $domain = Domain::where('domain', $host)
+            ->where('is_active', true)
+            ->first();
+        if ($domain && $domain->application) {
+            $view = $domain->application->slug;
+            if (view()->exists($view)) {
+                return $view;
             }
         }
 
-        return $map[$host] ?? $this->rootView;
+        // Main domain path detection
+        $path = $request->path();
+
+        $pathMap = [
+            'primeedge'                         => 'primeedge',
+            'admin'                             => 'admin',
+            'employee'                          => 'employee',
+            'employees'                         => 'employee',
+            'growbiz'                           => 'growbiz',
+            'lifeplus'                          => 'lifephus',
+            'growfinance'                       => 'growfinance',
+            'growmarket'                        => 'marketplace',
+        ];
+
+        foreach ($pathMap as $prefix => $view) {
+            if (str_starts_with($path, $prefix)) {
+                return $view;
+            }
+        }
+
+        return $this->rootView;
     }
 
     /**

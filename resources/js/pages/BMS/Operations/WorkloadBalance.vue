@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Workload Balance">
+  <BMSLayout page-title="Workload Balance">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Monitor team workload distribution and utilization</p>
         </div>
         <Link
-          :href="route('cms.operations.scenarios.index')"
+          :href="route('bms.operations.scenarios.index')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <BeakerIcon class="h-5 w-5" aria-hidden="true" />
@@ -134,7 +134,7 @@
                 class="flex items-center justify-between text-sm"
               >
                 <Link
-                  :href="route('cms.operations.tasks.show', task.id)"
+                  :href="route('bms.operations.tasks.show', task.id)"
                   class="text-blue-600 hover:text-blue-800 truncate flex-1"
                 >
                   {{ task.title }}
@@ -153,12 +153,12 @@
         <p class="mt-1 text-sm text-gray-500">Assign tasks to team members to see workload distribution.</p>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   UserGroupIcon,
   ChartBarIcon,

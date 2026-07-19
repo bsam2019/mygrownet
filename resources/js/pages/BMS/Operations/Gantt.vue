@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Gantt Chart">
+  <BMSLayout page-title="Gantt Chart">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -23,7 +23,7 @@
             </option>
           </select>
           <Link
-            :href="route('cms.operations.analytics')"
+            :href="route('bms.operations.analytics')"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <ChartBarIcon class="h-5 w-5" aria-hidden="true" />
@@ -92,7 +92,7 @@
               <!-- Task Info -->
               <div class="w-64 flex-shrink-0 pr-4">
                 <Link
-                  :href="route('cms.operations.tasks.show', task.id)"
+                  :href="route('bms.operations.tasks.show', task.id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-800 truncate block"
                 >
                   {{ task.title }}
@@ -172,13 +172,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   ChartBarIcon,
   CalendarIcon,
@@ -258,7 +258,7 @@ const calculateWidth = (startDate: string, endDate: string) => {
 }
 
 const updateWorkflow = () => {
-  router.get(route('cms.operations.gantt'), { workflow: selectedWorkflow.value }, {
+  router.get(route('bms.operations.gantt'), { workflow: selectedWorkflow.value }, {
     preserveState: true,
   })
 }

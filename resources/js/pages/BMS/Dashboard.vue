@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   BriefcaseIcon,
   UsersIcon,
@@ -17,7 +17,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -151,7 +151,7 @@ const getStatusClass = (status: string) => {
 
     <!-- Fabrication Pipeline Stats (aluminium/fabrication tenants only) -->
     <div v-if="hasFabrication" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <Link :href="route('cms.measurements.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
+      <Link :href="route('bms.measurements.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition">
             <ScissorsIcon class="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition" aria-hidden="true" />
@@ -162,7 +162,7 @@ const getStatusClass = (status: string) => {
           </div>
         </div>
       </Link>
-      <Link :href="route('cms.measurements.index', { status: 'completed' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
+      <Link :href="route('bms.measurements.index', { status: 'completed' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-blue-300 transition group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
             <ClipboardDocumentCheckIcon class="h-5 w-5 text-blue-600" aria-hidden="true" />
@@ -173,7 +173,7 @@ const getStatusClass = (status: string) => {
           </div>
         </div>
       </Link>
-      <Link :href="route('cms.quotations.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-amber-300 transition group">
+      <Link :href="route('bms.quotations.index', { status: 'draft' })" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-amber-300 transition group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
             <DocumentTextIcon class="h-5 w-5 text-amber-600" aria-hidden="true" />
@@ -184,7 +184,7 @@ const getStatusClass = (status: string) => {
           </div>
         </div>
       </Link>
-      <Link :href="route('cms.jobs.index')" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-purple-300 transition group">
+      <Link :href="route('bms.jobs.index')" class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-purple-300 transition group">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
             <BriefcaseIcon class="h-5 w-5 text-purple-600" aria-hidden="true" />
@@ -255,7 +255,7 @@ const getStatusClass = (status: string) => {
         <!-- New Measurement — fabrication tenants only -->
         <Link
           v-if="hasFabrication"
-          :href="route('cms.measurements.create')"
+          :href="route('bms.measurements.create')"
           class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-teal-500 transition-all shadow-sm hover:shadow-md text-left"
         >
           <div class="flex items-center gap-4">
@@ -272,7 +272,7 @@ const getStatusClass = (status: string) => {
         </Link>
 
         <Link
-          :href="route('cms.reports.index')"
+          :href="route('bms.reports.index')"
           class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-indigo-500 transition-all shadow-sm hover:shadow-md text-left"
         >
           <div class="flex items-center gap-4">
@@ -289,7 +289,7 @@ const getStatusClass = (status: string) => {
         </Link>
 
         <Link
-          :href="route('cms.business-plans.index')"
+          :href="route('bms.business-plans.index')"
           class="relative group bg-white p-6 rounded-lg border-2 border-gray-200 hover:border-yellow-500 transition-all shadow-sm hover:shadow-md text-left"
         >
           <div class="flex items-center gap-4">
@@ -311,12 +311,12 @@ const getStatusClass = (status: string) => {
     <div v-if="hasFabrication && recentMeasurements?.length > 0" class="bg-white shadow-sm rounded-lg border border-gray-200 mb-8">
       <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 class="text-lg font-semibold text-gray-900">Recent Measurements</h2>
-        <Link :href="route('cms.measurements.index')" class="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</Link>
+        <Link :href="route('bms.measurements.index')" class="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</Link>
       </div>
       <div class="divide-y divide-gray-100">
         <div v-for="m in recentMeasurements" :key="m.id" class="px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition">
           <div>
-            <Link :href="route('cms.measurements.show', m.id)" class="text-sm font-medium text-gray-900 hover:text-blue-600">{{ m.project_name }}</Link>
+            <Link :href="route('bms.measurements.show', m.id)" class="text-sm font-medium text-gray-900 hover:text-blue-600">{{ m.project_name }}</Link>
             <p class="text-xs text-gray-500 font-mono">{{ m.measurement_number }} · {{ m.customer?.name }}</p>
           </div>
           <span class="px-2 py-1 rounded-full text-xs font-medium"
@@ -336,7 +336,7 @@ const getStatusClass = (status: string) => {
       <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 class="text-lg font-semibold text-gray-900">Recent Jobs</h2>
         <Link
-          :href="route('cms.jobs.index')"
+          :href="route('bms.jobs.index')"
           class="text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           View All →
@@ -359,7 +359,7 @@ const getStatusClass = (status: string) => {
             <tr v-for="job in recentJobs.slice(0, 5)" :key="job.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <Link
-                  :href="route('cms.jobs.show', job.id)"
+                  :href="route('bms.jobs.show', job.id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
                   {{ job.job_number }}
@@ -381,7 +381,7 @@ const getStatusClass = (status: string) => {
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <Link
-                  :href="route('cms.jobs.show', job.id)"
+                  :href="route('bms.jobs.show', job.id)"
                   class="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   View

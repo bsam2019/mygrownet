@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncConfigModel;
-use App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceReportService;
+use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceReportService;
 
 class DiagnoseGrowFinance extends Command
 {
@@ -78,10 +78,10 @@ class DiagnoseGrowFinance extends Command
             $this->info('✓ GrowFinance Reports WILL BE VISIBLE in CMS Reports page');
             $this->newLine();
             $this->info('Available Reports:');
-            $this->line('  - Balance Sheet: ' . route('cms.reports.balance-sheet'));
-            $this->line('  - Cash Flow Statement: ' . route('cms.reports.cash-flow-statement'));
-            $this->line('  - General Ledger: ' . route('cms.reports.general-ledger'));
-            $this->line('  - Trial Balance: ' . route('cms.reports.trial-balance'));
+            $this->line('  - Balance Sheet: ' . route('bms.reports.balance-sheet'));
+            $this->line('  - Cash Flow Statement: ' . route('bms.reports.cash-flow-statement'));
+            $this->line('  - General Ledger: ' . route('bms.reports.general-ledger'));
+            $this->line('  - Trial Balance: ' . route('bms.reports.trial-balance'));
         } else {
             $this->error('✗ GrowFinance Reports WILL NOT BE VISIBLE');
             $this->warn('  The module is disabled in the config.');

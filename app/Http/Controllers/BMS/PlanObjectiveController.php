@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanObjectiveModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanLinkModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\GoalModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanObjectiveModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanLinkModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GoalModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
 use Illuminate\Http\Request;
 
 class PlanObjectiveController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     private function findPlan(Request $request, int $planId): PlanModel
     {
@@ -51,7 +51,7 @@ class PlanObjectiveController extends Controller
 
         $objective = $plan->objectives()->create($validated);
 
-        return redirect()->route('cms.plans.show', $plan->id)
+        return redirect()->route('bms.plans.show', $plan->id)
             ->with('success', 'Objective added.');
     }
 
@@ -75,7 +75,7 @@ class PlanObjectiveController extends Controller
 
         $objective->update($validated);
 
-        return redirect()->route('cms.plans.show', $objective->plan_id)
+        return redirect()->route('bms.plans.show', $objective->plan_id)
             ->with('success', 'Objective updated.');
     }
 
@@ -85,7 +85,7 @@ class PlanObjectiveController extends Controller
         $planId = $objective->plan_id;
         $objective->delete();
 
-        return redirect()->route('cms.plans.show', $planId)
+        return redirect()->route('bms.plans.show', $planId)
             ->with('success', 'Objective removed.');
     }
 
@@ -94,7 +94,7 @@ class PlanObjectiveController extends Controller
         $objective = $this->findObjective($request, $planId, $id);
         $synced = $objective->syncFromKpi();
 
-        return redirect()->route('cms.plans.show', $objective->plan_id)
+        return redirect()->route('bms.plans.show', $objective->plan_id)
             ->with('success', $synced ? 'Value synced from linked KPI.' : 'No KPI linked or no values found.');
     }
 
@@ -123,7 +123,7 @@ class PlanObjectiveController extends Controller
             $link->syncValue();
         }
 
-        return redirect()->route('cms.plans.show', $objective->plan_id)
+        return redirect()->route('bms.plans.show', $objective->plan_id)
             ->with('success', 'Entity linked to objective.');
     }
 
@@ -132,7 +132,7 @@ class PlanObjectiveController extends Controller
         $objective = $this->findObjective($request, $planId, $id);
         $objective->links()->where('id', $linkId)->delete();
 
-        return redirect()->route('cms.plans.show', $objective->plan_id)
+        return redirect()->route('bms.plans.show', $objective->plan_id)
             ->with('success', 'Link removed.');
     }
 
@@ -143,7 +143,7 @@ class PlanObjectiveController extends Controller
         $link->load('linkable');
         $link->syncValue();
 
-        return redirect()->route('cms.plans.show', $objective->plan_id)
+        return redirect()->route('bms.plans.show', $objective->plan_id)
             ->with('success', 'Value synced from linked entity.');
     }
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\BranchModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DepartmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BranchModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DepartmentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -29,7 +29,7 @@ class DepartmentController extends Controller
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Departments/Index', [
+        return Inertia::render('BMS/Departments/Index', [
             'departments' => $departments,
             'branches' => $branches,
             'filters' => $request->only(['branch_id', 'search']),
@@ -44,12 +44,12 @@ class DepartmentController extends Controller
             ->where('is_active', true)
             ->get(['id', 'branch_name as name']);
 
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $companyId)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::where('company_id', $companyId)
             ->where('employment_status', 'active')
             ->get(['id', 'first_name', 'last_name'])
             ->map(fn($w) => ['id' => $w->id, 'name' => trim($w->first_name . ' ' . $w->last_name)]);
 
-        return Inertia::render('CMS/Departments/Create', [
+        return Inertia::render('BMS/Departments/Create', [
             'branches' => $branches,
             'workers' => $workers,
         ]);
@@ -76,7 +76,7 @@ class DepartmentController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.departments.index')
+            ->route('bms.departments.index')
             ->with('success', 'Department created successfully');
     }
 
@@ -88,12 +88,12 @@ class DepartmentController extends Controller
             ->where('is_active', true)
             ->get(['id', 'branch_name as name']);
 
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $department->company_id)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::where('company_id', $department->company_id)
             ->where('employment_status', 'active')
             ->get(['id', 'first_name', 'last_name'])
             ->map(fn($w) => ['id' => $w->id, 'name' => trim($w->first_name . ' ' . $w->last_name)]);
 
-        return Inertia::render('CMS/Departments/Edit', [
+        return Inertia::render('BMS/Departments/Edit', [
             'department' => [
                 'id' => $department->id,
                 'name' => $department->department_name,
@@ -126,7 +126,7 @@ class DepartmentController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.departments.index')
+            ->route('bms.departments.index')
             ->with('success', 'Department updated successfully');
     }
 
@@ -140,7 +140,7 @@ class DepartmentController extends Controller
         $department->delete();
 
         return redirect()
-            ->route('cms.departments.index')
+            ->route('bms.departments.index')
             ->with('success', 'Department deleted successfully');
     }
 }

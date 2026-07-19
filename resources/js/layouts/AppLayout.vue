@@ -79,7 +79,7 @@ const logout = () => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo - Top Left -->
-                    <Link :href="route('dashboard')" class="flex items-center hover:opacity-80 transition-opacity">
+                    <Link :href="route('workspace')" class="flex items-center hover:opacity-80 transition-opacity">
                         <AppLogoIcon class="h-10 w-10" />
                     </Link>
 

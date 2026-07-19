@@ -42,6 +42,10 @@ class DatabaseSeeder extends Seeder
             // ZamStay Module
             ZamStayPropertySeeder::class,
 
+            // Core Platform (applications registry, domains)
+            ApplicationRegistrySeeder::class,
+            DomainRegistrySeeder::class,
+
             // Stock Audit Module — first client
             StockAuditSeeder::class,
 

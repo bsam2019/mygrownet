@@ -1,5 +1,5 @@
 <template>
-    <CMSLayout>
+    <BMSLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
@@ -10,7 +10,7 @@
                     </p>
                 </div>
                 <Link
-                    :href="route('cms.budgets.create')"
+                    :href="route('bms.budgets.create')"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -68,13 +68,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <Link
-                                        :href="route('cms.budgets.show', budget.id)"
+                                        :href="route('bms.budgets.show', budget.id)"
                                         class="text-blue-600 hover:text-blue-900"
                                     >
                                         View
                                     </Link>
                                     <Link
-                                        :href="route('cms.budgets.edit', budget.id)"
+                                        :href="route('bms.budgets.edit', budget.id)"
                                         class="text-indigo-600 hover:text-indigo-900"
                                     >
                                         Edit
@@ -121,7 +121,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">No Budgets Yet</h3>
                 <p class="text-gray-600 mb-6">Get started by creating your first budget</p>
                 <Link
-                    :href="route('cms.budgets.create')"
+                    :href="route('bms.budgets.create')"
                     class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -129,12 +129,12 @@
                 </Link>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { router, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, CalendarIcon } from '@heroicons/vue/24/outline';
 
 interface Budget {
@@ -162,7 +162,7 @@ const props = defineProps<Props>();
 
 const confirmDelete = (budget: Budget) => {
     if (confirm(`Are you sure you want to delete "${budget.name}"?`)) {
-        router.delete(route('cms.budgets.destroy', budget.id), {
+        router.delete(route('bms.budgets.destroy', budget.id), {
             onSuccess: () => {
                 // Success message handled by backend
             },

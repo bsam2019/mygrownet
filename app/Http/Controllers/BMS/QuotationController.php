@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Domain\CMS\Core\Services\QuotationService;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Domain\BMS\Core\Services\QuotationService;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class QuotationController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
     public function __construct(
         private QuotationService $quotationService
     ) {}
@@ -68,11 +68,11 @@ class QuotationController extends Controller
             'total_value' => QuotationModel::where('company_id', $companyId)->sum('total_amount'),
         ];
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Quotations/Index', [
+        return Inertia::render('BMS/Quotations/Index', [
             'quotations' => $quotations,
             'summary' => $summary,
             'filters' => $request->only(['status', 'search', 'branch_id']),
@@ -90,10 +90,10 @@ class QuotationController extends Controller
             ->get();
 
         // Get document defaults from company settings
-        $settingsService = app(\App\Domain\CMS\Core\Services\CompanySettingsService::class);
+        $settingsService = app(\App\Domain\BMS\Core\Services\CompanySettingsService::class);
         $defaults = $settingsService->getDocumentDefaults($companyId, 'quotation');
 
-        return Inertia::render('CMS/Quotations/Create', [
+        return Inertia::render('BMS/Quotations/Create', [
             'customers'        => $customers,
             'defaultNotes'     => $defaults['notes'] ?? '',
             'defaultTerms'     => $defaults['terms'] ?? '',
@@ -126,7 +126,7 @@ class QuotationController extends Controller
 
         $quotation = $this->quotationService->createQuotation($validated, $companyId, $userId);
 
-        return redirect()->route('cms.quotations.show', $quotation->id)
+        return redirect()->route('bms.quotations.show', $quotation->id)
             ->with('success', 'Quotation created successfully');
     }
 
@@ -144,11 +144,11 @@ class QuotationController extends Controller
         // Profit summary if linked to a measurement
         $profitSummary = null;
         if ($quotation->measurement) {
-            $measurementService = app(\App\Domain\CMS\Core\Services\MeasurementService::class);
+            $measurementService = app(\App\Domain\BMS\Core\Services\MeasurementService::class);
             $profitSummary = $measurementService->getProfitSummary($quotation->measurement);
         }
 
-        return Inertia::render('CMS/Quotations/Show', [
+        return Inertia::render('BMS/Quotations/Show', [
             'quotation'     => $quotation,
             'profitSummary' => $profitSummary,
         ]);
@@ -187,7 +187,7 @@ class QuotationController extends Controller
         }
         file_put_contents($tmpPath, $pdfContent);
 
-        $emailService = app(\App\Services\CMS\EmailService::class);
+        $emailService = app(\App\Services\BMS\EmailService::class);
         $sent = $emailService->sendEmail(
             company:       $quotation->company,
             to:            $validated['email'],
@@ -277,7 +277,7 @@ class QuotationController extends Controller
 
         if ($quotation->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 return $adapter->generateQuotationPdf($quotation);
             } catch (\Exception $e) {
                 \Log::error('BizDocs quotation PDF failed', ['id' => $quotation->id, 'error' => $e->getMessage()]);
@@ -295,7 +295,7 @@ class QuotationController extends Controller
         
         $job = $this->quotationService->convertToJob($id, $userId);
 
-        return redirect()->route('cms.jobs.show', $job->id)
+        return redirect()->route('bms.jobs.show', $job->id)
             ->with('success', 'Quotation converted to job successfully');
     }
 

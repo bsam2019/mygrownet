@@ -37,7 +37,7 @@ const submit = () => {
         return;
     }
 
-    form.post(route('cms.jobs.attachments.upload', props.jobId), {
+    form.post(route('bms.jobs.attachments.upload', props.jobId), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();

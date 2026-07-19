@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use App\Services\Integration\GrowMarketIntegrationService;
-use App\Services\Integration\CMSIntegrationService;
+use App\Services\Integration\BMSIntegrationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,7 +12,7 @@ class IntegrationController extends Controller
 {
     public function __construct(
         private GrowMarketIntegrationService $marketIntegration,
-        private CMSIntegrationService $cmsIntegration
+        private BMSIntegrationService $bmsIntegration
     ) {}
 
     /**
@@ -32,7 +32,7 @@ class IntegrationController extends Controller
         // Get GrowMarket sync status
         $marketSyncStatus = $this->marketIntegration->getSyncStatus($companyId);
 
-        return Inertia::render('CMS/Integrations/Index', [
+        return Inertia::render('BMS/Integrations/Index', [
             'company' => $company,
             'integrationSettings' => $integrationSettings,
             'marketSyncStatus' => $marketSyncStatus,
@@ -102,7 +102,7 @@ class IntegrationController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $company = \App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::find($companyId);
+        $company = \App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::find($companyId);
 
         $company->update([
             'integration_settings' => $validated,

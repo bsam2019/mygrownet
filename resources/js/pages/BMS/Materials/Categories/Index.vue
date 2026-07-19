@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 interface Category {
@@ -61,11 +61,11 @@ const closeModal = () => {
 
 const submit = () => {
   if (editingCategory.value) {
-    form.put(route('cms.material-categories.update', editingCategory.value.id), {
+    form.put(route('bms.material-categories.update', editingCategory.value.id), {
       onSuccess: () => closeModal(),
     });
   } else {
-    form.post(route('cms.material-categories.store'), {
+    form.post(route('bms.material-categories.store'), {
       onSuccess: () => closeModal(),
     });
   }
@@ -78,7 +78,7 @@ const deleteCategory = (category: Category) => {
   }
 
   if (confirm(`Are you sure you want to delete the category "${category.name}"?`)) {
-    router.delete(route('cms.material-categories.destroy', category.id));
+    router.delete(route('bms.material-categories.destroy', category.id));
   }
 };
 
@@ -106,7 +106,7 @@ const getColorClass = (color: string) => {
 </script>
 
 <template>
-  <CMSLayout title="Material Categories">
+  <BMSLayout title="Material Categories">
     <Head title="Material Categories" />
 
     <div class="space-y-6">
@@ -118,7 +118,7 @@ const getColorClass = (color: string) => {
         </div>
         <div class="flex items-center gap-3">
           <Link
-            :href="route('cms.materials.index')"
+            :href="route('bms.materials.index')"
             class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             Back to Materials
@@ -313,5 +313,5 @@ const getColorClass = (color: string) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

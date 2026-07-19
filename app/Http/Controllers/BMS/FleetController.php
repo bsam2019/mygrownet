@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\VehicleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\FuelRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\VehicleMaintenanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TripLogModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\VehicleExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VehicleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\FuelRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VehicleMaintenanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TripLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VehicleExpenseModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,7 +19,7 @@ class FleetController extends Controller
             ->with('currentDriver')
             ->paginate(20);
 
-        return Inertia::render('CMS/Fleet/Index', ['vehicles' => $vehicles]);
+        return Inertia::render('BMS/Fleet/Index', ['vehicles' => $vehicles]);
     }
 
     public function store(Request $request)
@@ -50,7 +50,7 @@ class FleetController extends Controller
         $vehicle = VehicleModel::with(['fuelRecords', 'maintenanceRecords', 'tripLogs', 'expenses'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Fleet/Show', ['vehicle' => $vehicle]);
+        return Inertia::render('BMS/Fleet/Show', ['vehicle' => $vehicle]);
     }
 
     public function update(Request $request, int $id)
@@ -89,7 +89,7 @@ class FleetController extends Controller
             $q->where('company_id', $request->user()->current_company_id)
         )->with('vehicle')->latest()->paginate(20);
 
-        return Inertia::render('CMS/Fleet/Maintenance', ['maintenance' => $maintenance]);
+        return Inertia::render('BMS/Fleet/Maintenance', ['maintenance' => $maintenance]);
     }
 
     public function scheduleMaintenance(Request $request, int $vehicleId)

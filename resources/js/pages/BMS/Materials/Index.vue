@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Materials">
+  <BMSLayout title="Materials">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -9,14 +9,14 @@
         </div>
         <div class="flex items-center gap-3">
           <Link
-            :href="route('cms.material-categories.index')"
+            :href="route('bms.material-categories.index')"
             class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             <FolderIcon class="h-5 w-5 mr-2" aria-hidden="true" />
             Manage Categories
           </Link>
           <Link
-            :href="route('cms.materials.create')"
+            :href="route('bms.materials.create')"
             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -138,13 +138,13 @@
                 </td>
                 <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
                   <Link
-                    :href="route('cms.materials.edit', material.id)"
+                    :href="route('bms.materials.edit', material.id)"
                     class="text-blue-600 hover:text-blue-900"
                   >
                     Edit
                   </Link>
                   <Link
-                    :href="route('cms.materials.price-history', material.id)"
+                    :href="route('bms.materials.price-history', material.id)"
                     class="text-indigo-600 hover:text-indigo-900"
                   >
                     History
@@ -156,7 +156,7 @@
                   <CubeIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
                   <p class="mt-2">No materials found</p>
                   <Link
-                    :href="route('cms.materials.create')"
+                    :href="route('bms.materials.create')"
                     class="mt-4 inline-flex items-center text-blue-600 hover:text-blue-700"
                   >
                     <PlusIcon class="h-5 w-5 mr-1" aria-hidden="true" />
@@ -174,13 +174,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 import { PlusIcon, CubeIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import { debounce } from 'lodash'
@@ -198,7 +198,7 @@ const filters = reactive({
 })
 
 const applyFilters = () => {
-  router.get(route('cms.materials.index'), filters, {
+  router.get(route('bms.materials.index'), filters, {
     preserveState: true,
     preserveScroll: true,
   })

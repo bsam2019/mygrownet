@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Listeners\CMS\GrowFinanceSync;
+namespace App\Listeners\BMS\GrowFinanceSync;
 
 use App\Events\CMS\ExpenseCreated;
-use App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService;
+use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
 use App\Jobs\CMS\GrowFinanceSync\SyncExpenseToGrowFinanceJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;

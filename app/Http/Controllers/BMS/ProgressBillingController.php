@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\ProgressBilling\Services\ProgressBillingService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProgressCertificateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentApplicationModel;
+use App\Domain\BMS\ProgressBilling\Services\ProgressBillingService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProgressCertificateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentApplicationModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -26,7 +26,7 @@ class ProgressBillingController extends Controller
             ->orderBy('certificate_number', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/ProgressBilling/Certificates/Index', [
+        return Inertia::render('BMS/ProgressBilling/Certificates/Index', [
             'certificates' => $certificates,
             'filters' => $request->only(['status']),
         ]);
@@ -34,7 +34,7 @@ class ProgressBillingController extends Controller
 
     public function certificatesCreate()
     {
-        return Inertia::render('CMS/ProgressBilling/Certificates/Create');
+        return Inertia::render('BMS/ProgressBilling/Certificates/Create');
     }
 
     public function certificatesStore(Request $request)
@@ -56,7 +56,7 @@ class ProgressBillingController extends Controller
 
         $certificate = $this->progressBillingService->createProgressCertificate($validated);
 
-        return redirect()->route('cms.progress-billing.certificates.show', $certificate->id)
+        return redirect()->route('bms.progress-billing.certificates.show', $certificate->id)
             ->with('success', 'Progress certificate created successfully');
     }
 
@@ -65,7 +65,7 @@ class ProgressBillingController extends Controller
         $certificate->load(['project', 'boq', 'workCompleted.boqItem', 'approvedBy']);
         $summary = $this->progressBillingService->getCertificateSummary($certificate);
 
-        return Inertia::render('CMS/ProgressBilling/Certificates/Show', [
+        return Inertia::render('BMS/ProgressBilling/Certificates/Show', [
             'certificate' => $certificate,
             'summary' => $summary,
         ]);
@@ -112,7 +112,7 @@ class ProgressBillingController extends Controller
             ->orderBy('application_number', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/ProgressBilling/Applications/Index', [
+        return Inertia::render('BMS/ProgressBilling/Applications/Index', [
             'applications' => $applications,
             'filters' => $request->only(['status']),
         ]);
@@ -152,7 +152,7 @@ class ProgressBillingController extends Controller
             'status' => $request->status,
         ]);
 
-        return Inertia::render('CMS/ProgressBilling/Retention/Index', [
+        return Inertia::render('BMS/ProgressBilling/Retention/Index', [
             'retentions' => $retentions,
             'filters' => $request->only(['project_id', 'status']),
         ]);

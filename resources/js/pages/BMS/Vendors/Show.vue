@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import { PencilIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   vendor: any
@@ -17,7 +17,7 @@ const formatMoney = (amount: number) => 'K' + (amount || 0).toLocaleString('en-U
 
 <template>
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <Link :href="route('cms.vendors.index')" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">← Back to Vendors</Link>
+    <Link :href="route('bms.vendors.index')" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">← Back to Vendors</Link>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <div class="flex items-center justify-between mb-4">
@@ -27,7 +27,7 @@ const formatMoney = (amount: number) => 'K' + (amount || 0).toLocaleString('en-U
         </div>
         <div class="flex items-center gap-2">
           <span :class="['px-3 py-1 text-sm font-medium rounded-full', vendor.status === 'active' ? 'bg-green-100 text-green-700' : vendor.status === 'blacklisted' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500']">{{ vendor.status }}</span>
-          <Link :href="route('cms.vendors.edit', vendor.id)" class="p-2 text-gray-400 hover:text-gray-600"><PencilIcon class="h-5 w-5" /></Link>
+          <Link :href="route('bms.vendors.edit', vendor.id)" class="p-2 text-gray-400 hover:text-gray-600"><PencilIcon class="h-5 w-5" /></Link>
         </div>
       </div>
 

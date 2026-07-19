@@ -5,6 +5,7 @@ namespace App\Domain\Core\Models;
 use App\Domain\Core\Events\OrganizationArchived;
 use App\Domain\Core\Events\OrganizationCreated;
 use App\Models\User;
+use App\Domain\Core\Models\ApplicationInstallation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,6 +28,7 @@ class Organization extends Model
 
     protected $fillable = [
         'uuid', 'name', 'slug', 'type', 'status', 'owner_id', 'settings',
+        'country', 'currency', 'timezone', 'language',
     ];
 
     protected function casts(): array
@@ -59,5 +61,15 @@ class Organization extends Model
     public function applications(): BelongsToMany
     {
         return $this->belongsToMany(Application::class, 'organization_applications');
+    }
+
+    public function installations(): HasMany
+    {
+        return $this->hasMany(ApplicationInstallation::class);
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(OrganizationInvitation::class);
     }
 }

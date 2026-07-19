@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\BizDocs\Contracts;
+namespace App\Domain\BMS\BizDocs\Contracts;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;

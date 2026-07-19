@@ -33,20 +33,20 @@ Schedule::command('points:check-advancements')
     ->dailyAt('10:00')
     ->description('Check for level advancements');
 
-// CMS Scheduled Tasks
-Schedule::command('cms:generate-recurring-invoices')
+// BMS Scheduled Tasks
+Schedule::command('bms:generate-recurring-invoices')
     ->dailyAt('06:00')
     ->description('Generate invoices from recurring templates');
 
-Schedule::command('cms:send-payment-reminders')
+Schedule::command('bms:send-payment-reminders')
     ->dailyAt('08:00')
     ->description('Send payment reminder emails');
 
-Schedule::command('cms:send-scheduled-reports')
+Schedule::command('bms:send-scheduled-reports')
     ->hourly()
     ->description('Send scheduled reports');
 
-Schedule::command('cms:generate-recurring-tasks')
+Schedule::command('bms:generate-recurring-tasks')
     ->dailyAt('00:00')
     ->description('Generate tasks from recurring task definitions');
 
@@ -146,23 +146,23 @@ Schedule::command('delegations:expire')
     ->description('Expire delegations that have passed their expiration date');
 
 // ========================================
-// CMS Scheduled Tasks
+// BMS Scheduled Tasks
 // ========================================
 
 // Send payment reminders and overdue notices - runs daily at 8 AM
-Schedule::command('cms:send-payment-reminders')
+Schedule::command('bms:send-payment-reminders')
     ->dailyAt('08:00')
     ->description('Send automated payment reminders and overdue notices');
 
 // Send scheduled reports - runs every hour to check for due reports
-Schedule::command('cms:send-scheduled-reports')
+Schedule::command('bms:send-scheduled-reports')
     ->hourly()
-    ->description('Send scheduled CMS reports via email');
+    ->description('Send scheduled BMS reports via email');
 
 // Check and handle expired complimentary access - runs daily at 1 AM
-Schedule::command('cms:check-expired-complimentary')
+Schedule::command('bms:check-expired-complimentary')
     ->dailyAt('01:00')
-    ->description('Check and suspend expired complimentary CMS access');
+    ->description('Check and suspend expired complimentary BMS access');
 
 // ========================================
 // GrowNet Market Scheduled Tasks
@@ -276,10 +276,10 @@ Schedule::command('stockflow:send-backup')
 //             }
 //         }
 //         
-//         $this->info('✅ Controller test successful');
+//         $this->info('Ã¢Å“â€¦ Controller test successful');
 //         
 //     } catch (Exception $e) {
-//         $this->error('❌ Error: ' . $e->getMessage());
+//         $this->error('Ã¢ÂÅ’ Error: ' . $e->getMessage());
 //         $this->error('File: ' . $e->getFile() . ':' . $e->getLine());
 //     }
 // })->purpose('Test the RewardAnalyticsController');

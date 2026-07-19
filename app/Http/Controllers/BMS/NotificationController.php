@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -37,7 +37,7 @@ class NotificationController extends Controller
             'unread' => $notifications->where('read_at', null)->count(),
         ];
 
-        return Inertia::render('CMS/Notifications/Index', [
+        return Inertia::render('BMS/Notifications/Index', [
             'notifications' => $notifications,
             'stats' => $stats,
         ]);

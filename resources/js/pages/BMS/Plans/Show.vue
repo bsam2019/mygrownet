@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import axios from 'axios';
 import { PencilSquareIcon, TrashIcon, PlusIcon, CheckCircleIcon, LinkIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import { toast } from '@/utils/bizboost-toast';
@@ -100,13 +100,13 @@ function submit() {
     }
     const payload = { ...form.value };
     if (editing.value) {
-        router.put(route('cms.plans.objectives.update', { planId: props.plan.id, id: editing.value.id }), payload, {
+        router.put(route('bms.plans.objectives.update', { planId: props.plan.id, id: editing.value.id }), payload, {
             preserveScroll: true,
             onSuccess: () => { showForm.value = false; toast.success('Updated', 'Objective updated'); },
             onError: () => toast.error('Failed', 'Could not update objective'),
         });
     } else {
-        router.post(route('cms.plans.objectives.store', { planId: props.plan.id }), payload, {
+        router.post(route('bms.plans.objectives.store', { planId: props.plan.id }), payload, {
             preserveScroll: true,
             onSuccess: () => { showForm.value = false; toast.success('Added', 'Objective added'); },
             onError: () => toast.error('Failed', 'Could not add objective'),
@@ -116,7 +116,7 @@ function submit() {
 
 function confirmDelete(obj: Objective) {
     if (confirm(`Delete objective "${obj.title}"?`)) {
-        router.delete(route('cms.plans.objectives.delete', { planId: props.plan.id, id: obj.id }), {
+        router.delete(route('bms.plans.objectives.delete', { planId: props.plan.id, id: obj.id }), {
             preserveScroll: true,
             onSuccess: () => toast.success('Deleted', 'Objective removed'),
             onError: () => toast.error('Failed', 'Could not delete objective'),
@@ -153,7 +153,7 @@ function openLinkForm(obj: Objective) {
 }
 
 function fetchFields(type: string) {
-    axios.get(route('cms.plans.entity-fields'), { params: { type } })
+    axios.get(route('bms.plans.entity-fields'), { params: { type } })
         .then((r: any) => { availableFields.value = r.data?.fields ?? []; })
         .catch(() => { availableFields.value = []; });
 }
@@ -173,7 +173,7 @@ function doSearch() {
     if (!searchQ.value.trim()) { searchResults.value = []; return; }
     searchTimer = setTimeout(() => {
         searching.value = true;
-        axios.get(route('cms.plans.entity-search'), { params: { type: linkForm.value.entityType, q: searchQ.value } })
+        axios.get(route('bms.plans.entity-search'), { params: { type: linkForm.value.entityType, q: searchQ.value } })
             .then((r: any) => { searchResults.value = r.data?.results ?? []; searching.value = false; })
             .catch(() => { searchResults.value = []; searching.value = false; });
     }, 300);
@@ -192,7 +192,7 @@ function submitLink() {
         return;
     }
     router.post(
-        route('cms.plans.objectives.link', { planId: props.plan.id, id: linkForm.value.objectiveId }),
+        route('bms.plans.objectives.link', { planId: props.plan.id, id: linkForm.value.objectiveId }),
         {
             linkable_type: linkForm.value.entityType,
             linkable_id: linkForm.value.entityId,
@@ -210,7 +210,7 @@ function submitLink() {
 
 function confirmUnlink(objId: number, linkId: number) {
     if (confirm('Remove this link?')) {
-        router.delete(route('cms.plans.objectives.unlink', { planId: props.plan.id, id: objId, linkId }), {
+        router.delete(route('bms.plans.objectives.unlink', { planId: props.plan.id, id: objId, linkId }), {
             preserveScroll: true,
             onSuccess: () => toast.success('Removed', 'Link removed'),
         });
@@ -218,7 +218,7 @@ function confirmUnlink(objId: number, linkId: number) {
 }
 
 function syncLink(objId: number, linkId: number) {
-    router.post(route('cms.plans.objectives.sync-link', { planId: props.plan.id, id: objId, linkId }), {}, {
+    router.post(route('bms.plans.objectives.sync-link', { planId: props.plan.id, id: objId, linkId }), {}, {
         preserveScroll: true,
         onSuccess: () => toast.success('Synced', 'Value synced from linked entity'),
     });
@@ -277,15 +277,15 @@ function linkLabel(link: Link): string {
 <template>
     <Head :title="plan.title" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-4xl mx-auto space-y-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <Link :href="route('cms.plans.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to Plans</Link>
+                    <Link :href="route('bms.plans.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to Plans</Link>
                 </div>
                 <div class="flex items-center gap-2">
                     <Link
-                        :href="route('cms.plans.edit', plan.id)"
+                        :href="route('bms.plans.edit', plan.id)"
                         class="px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 flex items-center gap-2"
                     >
                         <PencilSquareIcon class="h-4 w-4" />
@@ -325,7 +325,7 @@ function linkLabel(link: Link): string {
                     </div>
                     <div v-if="plan.parent">
                         <span class="text-gray-500">Parent:</span>
-                        <Link :href="route('cms.plans.show', plan.parent.id)" class="font-medium text-blue-600 hover:text-blue-800">
+                        <Link :href="route('bms.plans.show', plan.parent.id)" class="font-medium text-blue-600 hover:text-blue-800">
                             {{ plan.parent.title }}
                         </Link>
                     </div>
@@ -448,7 +448,7 @@ function linkLabel(link: Link): string {
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Sub-plans ({{ plan.children.length }})</h2>
                 <div class="space-y-2">
                     <div v-for="child in plan.children" :key="child.id" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
-                        <Link :href="route('cms.plans.show', child.id)" class="flex-1 min-w-0">
+                        <Link :href="route('bms.plans.show', child.id)" class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 truncate">{{ child.title }}</p>
                         </Link>
                         <span :class="`px-2 py-0.5 text-xs font-medium rounded-full ${typeColors[child.type]}`">{{ child.type }}</span>
@@ -583,5 +583,5 @@ function linkLabel(link: Link): string {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

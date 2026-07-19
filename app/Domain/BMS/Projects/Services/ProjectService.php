@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Projects\Services;
+namespace App\Domain\BMS\Projects\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\ProjectModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\ProjectMilestoneModel;

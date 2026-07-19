@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface Customer { id: number; customer_number: string; name: string; }
 interface Worker { id: number; user: { name: string }; }
@@ -36,7 +36,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.put(route('cms.measurements.update', props.measurement.id));
+    form.put(route('bms.measurements.update', props.measurement.id));
 }
 </script>
 
@@ -44,7 +44,7 @@ function submit() {
     <Head :title="`Edit ${measurement.measurement_number} - CMS`" />
 
     <div class="max-w-2xl mx-auto">
-        <Link :href="route('cms.measurements.show', measurement.id)" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
+        <Link :href="route('bms.measurements.show', measurement.id)" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
             <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
             Back to Measurement
         </Link>
@@ -92,7 +92,7 @@ function submit() {
             </div>
 
             <div class="flex justify-end gap-3 pt-2">
-                <Link :href="route('cms.measurements.show', measurement.id)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">Cancel</Link>
+                <Link :href="route('bms.measurements.show', measurement.id)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">Cancel</Link>
                 <button type="submit" :disabled="form.processing" class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition">
                     {{ form.processing ? 'Saving…' : 'Save Changes' }}
                 </button>

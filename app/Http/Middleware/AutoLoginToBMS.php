@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
  * Automatically creates/links CMS user for admins accessing CMS features
  * from the admin dashboard. Provides seamless access without separate login.
  */
-class AutoLoginToCMS
+class AutoLoginToBMS
 {
     /**
      * Handle an incoming request.
@@ -24,7 +24,7 @@ class AutoLoginToCMS
     {
         $user = $request->user();
         
-        Log::info("AutoLoginToCMS: Middleware called", [
+        Log::info("AutoLoginToBMS: Middleware called", [
             'user_id' => $user?->id,
             'has_user' => $user !== null,
             'is_admin' => $user ? ($user->hasRole('admin') || $user->hasRole('Administrator')) : false,
@@ -33,19 +33,19 @@ class AutoLoginToCMS
         // Only process for authenticated users with admin role
         if ($user && ($user->hasRole('admin') || $user->hasRole('Administrator'))) {
             try {
-                Log::info("AutoLoginToCMS: Processing admin user {$user->id}");
+                Log::info("AutoLoginToBMS: Processing admin user {$user->id}");
                 
                 // Get or create platform company
                 $platformCompany = $this->getPlatformCompany();
-                Log::info("AutoLoginToCMS: Platform company", ['id' => $platformCompany->id]);
+                Log::info("AutoLoginToBMS: Platform company", ['id' => $platformCompany->id]);
                 
                 // Get or create CMS user for this admin
                 $cmsUser = $this->ensureCmsUser($user, $platformCompany);
-                Log::info("AutoLoginToCMS: CMS user", ['id' => $cmsUser->id]);
+                Log::info("AutoLoginToBMS: CMS user", ['id' => $cmsUser->id]);
                 
                 // Refresh the user's cmsUser relationship
                 $user->load('cmsUser');
-                Log::info("AutoLoginToCMS: User relationship refreshed");
+                Log::info("AutoLoginToBMS: User relationship refreshed");
                 
                 // Set CMS session variables
                 session([
@@ -66,7 +66,7 @@ class AutoLoginToCMS
                 // User can still access admin features
             }
         } else {
-            Log::info("AutoLoginToCMS: Skipping - not admin or not authenticated");
+            Log::info("AutoLoginToBMS: Skipping - not admin or not authenticated");
         }
         
         return $next($request);

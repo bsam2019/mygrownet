@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import { PencilIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -36,13 +36,13 @@ const openDeprModal = () => {
 }
 
 const submitDepr = () => {
-  deprForm.post(route('cms.assets.setup-depreciation', props.asset.id), {
+  deprForm.post(route('bms.assets.setup-depreciation', props.asset.id), {
     onSuccess: () => { showDeprModal.value = false }
   })
 }
 
 const applyDepreciation = () => {
-  router.post(route('cms.assets.apply-depreciation', props.asset.id), {}, {
+  router.post(route('bms.assets.apply-depreciation', props.asset.id), {}, {
     preserveScroll: true,
   })
 }
@@ -82,7 +82,7 @@ const methodLabels: Record<string, string> = {
 <template>
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
-      <Link :href="route('cms.assets.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.assets.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Assets
       </Link>
       <div class="flex items-center justify-between">
@@ -95,7 +95,7 @@ const methodLabels: Record<string, string> = {
             {{ asset.status.replace('_', ' ').toUpperCase() }}
           </span>
           <Link
-            :href="route('cms.assets.edit', asset.id)"
+            :href="route('bms.assets.edit', asset.id)"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
           >
             <PencilIcon class="h-4 w-4" aria-hidden="true" />

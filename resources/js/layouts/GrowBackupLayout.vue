@@ -19,12 +19,12 @@ defineProps<Props>();
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo & Brand -->
                     <div class="flex items-center gap-2 sm:gap-3">
-                        <a href="/dashboard" class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                        <a href="/workspace" class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                             <span class="text-sm sm:text-base font-medium">MyGrowNet</span>
                         </a>
                         <span class="text-gray-300 hidden sm:inline">/</span>
                         <div class="flex items-center gap-1 sm:gap-2">
-                            <span class="text-xl sm:text-2xl">☁️</span>
+                            <span class="text-xl sm:text-2xl">â˜ï¸</span>
                             <div class="hidden sm:block">
                                 <h1 class="text-lg font-semibold text-gray-900">GrowBackup</h1>
                                 <p class="text-xs text-gray-500">Secure Cloud Storage</p>

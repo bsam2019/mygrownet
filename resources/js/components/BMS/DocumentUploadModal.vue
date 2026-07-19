@@ -38,7 +38,7 @@ const submit = () => {
         return;
     }
 
-    form.post(route('cms.customers.documents.upload', props.customerId), {
+    form.post(route('bms.customers.documents.upload', props.customerId), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();

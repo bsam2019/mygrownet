@@ -17,7 +17,7 @@ class SocialiteController extends Controller
         $domain = $request->getHost();
         $callbackUrl = match ($domain) {
             'bizboost.mygrownet.com' => route('bizboost.sub.auth.google.callback', [], true),
-            'cms.mygrownet.com' => route('cms.subdomain.auth.google.callback', [], true),
+            'cms.mygrownet.com' => route('bms.subdomain.auth.google.callback', [], true),
             'growmart.mygrownet.com' => route('growmart.auth.google.callback', [], true),
             'zamstay.mygrownet.com' => route('zamstay.sub.auth.google.callback', [], true),
             default => route('auth.google.callback', [], true),

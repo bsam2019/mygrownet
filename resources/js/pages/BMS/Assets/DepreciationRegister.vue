@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   assets: { data: any[]; links: any }
@@ -66,7 +66,7 @@ const methodLabels: Record<string, string> = {
           <tbody class="divide-y divide-gray-200">
             <tr v-for="a in assets.data" :key="a.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
-                <Link :href="route('cms.assets.show', a.id)" class="text-sm font-medium text-blue-600 hover:text-blue-700">{{ a.name }}</Link>
+                <Link :href="route('bms.assets.show', a.id)" class="text-sm font-medium text-blue-600 hover:text-blue-700">{{ a.name }}</Link>
                 <p class="text-xs text-gray-500">{{ a.asset_number }}</p>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ a.category }}</td>

@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrganizationMember extends Model
 {
     protected $fillable = [
-        'organization_id', 'user_id', 'status', 'joined_at',
+        'organization_id', 'user_id', 'role', 'status', 'permissions', 'joined_at',
     ];
 
     protected function casts(): array
     {
         return [
             'joined_at' => 'datetime',
+            'permissions' => 'array',
         ];
     }
 

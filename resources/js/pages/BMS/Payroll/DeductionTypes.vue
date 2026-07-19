@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Deduction Types">
+  <BMSLayout title="Deduction Types">
     <div class="space-y-6">
       <div class="flex justify-between items-center">
         <div>
@@ -157,13 +157,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   deductionTypes: any[];
@@ -204,12 +204,12 @@ function closeModal() {
 function submitForm() {
   if (editingDeduction.value) {
     router.put(
-      route('cms.payroll.configuration.deduction-types.update', editingDeduction.value.id),
+      route('bms.payroll.configuration.deduction-types.update', editingDeduction.value.id),
       form.value,
       { onSuccess: closeModal }
     );
   } else {
-    router.post(route('cms.payroll.configuration.deduction-types.store'), form.value, {
+    router.post(route('bms.payroll.configuration.deduction-types.store'), form.value, {
       onSuccess: closeModal,
     });
   }

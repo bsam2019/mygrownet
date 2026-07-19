@@ -2,10 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { ArrowTrendingUpIcon, ArrowLeftIcon, CalendarIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -25,7 +25,7 @@ const formatCurrency = (amount: number) => {
 };
 
 const applyFilter = () => {
-    window.location.href = route('cms.reports.cash-flow-statement', { 
+    window.location.href = route('bms.reports.cash-flow-statement', { 
         start_date: startDate.value,
         end_date: endDate.value 
     });
@@ -38,7 +38,7 @@ const applyFilter = () => {
     <div class="px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-6">
-            <Link :href="route('cms.reports.index')" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
+            <Link :href="route('bms.reports.index')" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
                 <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
                 Back to Reports
             </Link>
@@ -106,7 +106,7 @@ const applyFilter = () => {
                     <p class="mt-1 text-sm text-amber-700">
                         Enable the GrowFinance (Full Accounting) module in Settings → Modules to view complete cash flow statement.
                     </p>
-                    <Link :href="route('cms.settings.index')" class="mt-2 inline-flex items-center text-sm font-medium text-amber-800 hover:text-amber-900">
+                    <Link :href="route('bms.settings.index')" class="mt-2 inline-flex items-center text-sm font-medium text-amber-800 hover:text-amber-900">
                         Go to Settings →
                     </Link>
                 </div>

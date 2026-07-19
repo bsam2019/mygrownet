@@ -51,7 +51,7 @@ class AuthenticatedSessionController extends Controller
             'grownet.mygrownet.com'      => 'grownet.sub.dashboard',
             'growstorage.mygrownet.com'  => 'growstorage.sub.dashboard',
         ];
-        $fallback = $redirectMap[$host] ?? 'dashboard';
+        $fallback = $redirectMap[$host] ?? 'workspace';
 
         // Persist session before redirect so auth middleware on next request finds it
         $request->session()->save();

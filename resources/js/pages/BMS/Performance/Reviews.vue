@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Performance Reviews">
+  <BMSLayout title="Performance Reviews">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -8,7 +8,7 @@
           <p class="text-sm text-gray-600 mt-1">Manage employee performance reviews</p>
         </div>
         <Link
-          :href="route('cms.performance.reviews.create')"
+          :href="route('bms.performance.reviews.create')"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Create Review
@@ -61,7 +61,7 @@
               </td>
               <td class="px-6 py-4 text-right text-sm">
                 <Link
-                  :href="route('cms.performance.reviews.show', review.id)"
+                  :href="route('bms.performance.reviews.show', review.id)"
                   class="text-blue-600 hover:text-blue-800"
                 >
                   {{ review.status === 'pending' ? 'Start Review' : 'View' }}
@@ -72,12 +72,12 @@
         </table>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineProps<{
   reviews: any[];

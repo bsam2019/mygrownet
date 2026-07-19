@@ -1,0 +1,145 @@
+{
+  "hash": "86ccda93",
+  "configHash": "6457698e",
+  "lockfileHash": "f1697cd2",
+  "browserHash": "e7e9f12f",
+  "optimized": {
+    "vue": {
+      "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
+      "file": "vue.js",
+      "fileHash": "2221ba52",
+      "needsInterop": false
+    },
+    "@inertiajs/vue3": {
+      "src": "../../node_modules/@inertiajs/vue3/dist/index.esm.js",
+      "file": "@inertiajs_vue3.js",
+      "fileHash": "c6006206",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "61e86166",
+      "needsInterop": false
+    },
+    "ziggy-js": {
+      "src": "../../vendor/tightenco/ziggy/dist/index.js",
+      "file": "ziggy-js.js",
+      "fileHash": "211a1395",
+      "needsInterop": false
+    },
+    "@headlessui/vue": {
+      "src": "../../node_modules/@headlessui/vue/dist/headlessui.esm.js",
+      "file": "@headlessui_vue.js",
+      "fileHash": "4b5a2a72",
+      "needsInterop": false
+    },
+    "@heroicons/vue/24/outline": {
+      "src": "../../node_modules/@heroicons/vue/24/outline/esm/index.js",
+      "file": "@heroicons_vue_24_outline.js",
+      "fileHash": "fe58fd3f",
+      "needsInterop": false
+    },
+    "@heroicons/vue/24/solid": {
+      "src": "../../node_modules/@heroicons/vue/24/solid/esm/index.js",
+      "file": "@heroicons_vue_24_solid.js",
+      "fileHash": "31552cc3",
+      "needsInterop": false
+    },
+    "@laravel/echo-vue": {
+      "src": "../../node_modules/@laravel/echo-vue/dist/index.js",
+      "file": "@laravel_echo-vue.js",
+      "fileHash": "ea655749",
+      "needsInterop": false
+    },
+    "aos": {
+      "src": "../../node_modules/aos/dist/aos.esm.js",
+      "file": "aos.js",
+      "fileHash": "d3713a5f",
+      "needsInterop": false
+    },
+    "chart.js": {
+      "src": "../../node_modules/chart.js/dist/chart.js",
+      "file": "chart__js.js",
+      "fileHash": "e6f154e7",
+      "needsInterop": false
+    },
+    "class-variance-authority": {
+      "src": "../../node_modules/class-variance-authority/dist/index.mjs",
+      "file": "class-variance-authority.js",
+      "fileHash": "cdd1be11",
+      "needsInterop": false
+    },
+    "clsx": {
+      "src": "../../node_modules/clsx/dist/clsx.mjs",
+      "file": "clsx.js",
+      "fileHash": "1529a8c0",
+      "needsInterop": false
+    },
+    "laravel-echo": {
+      "src": "../../node_modules/laravel-echo/dist/echo.js",
+      "file": "laravel-echo.js",
+      "fileHash": "efc6541f",
+      "needsInterop": false
+    },
+    "laravel-vite-plugin/inertia-helpers": {
+      "src": "../../node_modules/laravel-vite-plugin/inertia-helpers/index.js",
+      "file": "laravel-vite-plugin_inertia-helpers.js",
+      "fileHash": "f2aa9e0c",
+      "needsInterop": false
+    },
+    "lucide-vue-next": {
+      "src": "../../node_modules/lucide-vue-next/dist/esm/lucide-vue-next.js",
+      "file": "lucide-vue-next.js",
+      "fileHash": "e7f3f2de",
+      "needsInterop": false
+    },
+    "pinia": {
+      "src": "../../node_modules/pinia/dist/pinia.mjs",
+      "file": "pinia.js",
+      "fileHash": "00881ede",
+      "needsInterop": false
+    },
+    "pusher-js": {
+      "src": "../../node_modules/pusher-js/dist/web/pusher.js",
+      "file": "pusher-js.js",
+      "fileHash": "26627b5e",
+      "needsInterop": true
+    },
+    "radix-vue": {
+      "src": "../../node_modules/radix-vue/dist/index.js",
+      "file": "radix-vue.js",
+      "fileHash": "53234130",
+      "needsInterop": false
+    },
+    "tailwind-merge": {
+      "src": "../../node_modules/tailwind-merge/dist/bundle-mjs.mjs",
+      "file": "tailwind-merge.js",
+      "fileHash": "cfaf5a82",
+      "needsInterop": false
+    },
+    "sweetalert2": {
+      "src": "../../node_modules/sweetalert2/dist/sweetalert2.esm.all.js",
+      "file": "sweetalert2.js",
+      "fileHash": "2ddd18cf",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-KDVGFZWC": {
+      "file": "chunk-KDVGFZWC.js"
+    },
+    "chunk-WEC475PH": {
+      "file": "chunk-WEC475PH.js"
+    },
+    "chunk-HTPP2NTQ": {
+      "file": "chunk-HTPP2NTQ.js"
+    },
+    "chunk-CEBIFPJU": {
+      "file": "chunk-CEBIFPJU.js"
+    },
+    "chunk-DC5AMYBS": {
+      "file": "chunk-DC5AMYBS.js"
+    }
+  }
+}

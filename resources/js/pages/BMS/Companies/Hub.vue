@@ -30,12 +30,12 @@ const props = defineProps<{
 const fmt = (n: number) => n.toLocaleString('en-ZM', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function enter(companyId: number) {
-    router.post(route('cms.companies.enter', companyId));
+    router.post(route('bms.companies.enter', companyId));
 }
 
 function toggleDefault(companyId: number) {
     const newId = props.defaultCompanyId === companyId ? null : companyId;
-    router.post(route('cms.companies.set-default'), {
+    router.post(route('bms.companies.set-default'), {
         company_id: newId,
     });
 }
@@ -121,7 +121,7 @@ function toggleDefault(companyId: number) {
 
             <!-- Create new company -->
             <Link
-                :href="route('cms.companies.create')"
+                :href="route('bms.companies.create')"
                 class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white rounded-xl py-4 font-semibold hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />

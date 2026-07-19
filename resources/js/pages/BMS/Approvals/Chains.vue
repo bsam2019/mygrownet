@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import {
     PlusIcon,
     PencilSquareIcon,
@@ -90,7 +90,7 @@ const submit = () => {
         return;
     }
     if (editingChain.value) {
-        router.put(route('cms.approvals.chains.update', editingChain.value.id), form.value, {
+        router.put(route('bms.approvals.chains.update', editingChain.value.id), form.value, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Updated', 'Approval chain updated');
@@ -99,7 +99,7 @@ const submit = () => {
             onError: () => toast.error('Failed', 'Could not update chain'),
         });
     } else {
-        router.post(route('cms.approvals.chains.store'), form.value, {
+        router.post(route('bms.approvals.chains.store'), form.value, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Created', 'Approval chain created');
@@ -118,7 +118,7 @@ const executeDelete = () => {
     if (!deletingChain.value) return;
     const chain = deletingChain.value;
     deletingChain.value = null;
-    router.delete(route('cms.approvals.chains.delete', chain.id), {
+    router.delete(route('bms.approvals.chains.delete', chain.id), {
         preserveScroll: true,
         onSuccess: () => toast.success('Deleted', 'Approval chain deleted'),
         onError: () => toast.error('Failed', 'Could not delete chain'),
@@ -133,7 +133,7 @@ const getTypeLabel = (type: string) => {
 <template>
     <Head title="Approval Chains" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex items-center justify-between mb-8">
                 <div>
@@ -300,5 +300,5 @@ const getTypeLabel = (type: string) => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

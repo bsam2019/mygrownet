@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon, PencilIcon, StarIcon } from '@heroicons/vue/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid';
 
@@ -33,11 +33,11 @@ const props = defineProps<{
 <template>
   <Head :title="subcontractor.name" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <div class="flex items-start justify-between">
         <div class="flex items-start gap-4">
-          <Link :href="route('cms.subcontractors.index')" class="p-2 hover:bg-gray-100 rounded-lg">
+          <Link :href="route('bms.subcontractors.index')" class="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeftIcon class="h-5 w-5" aria-hidden="true" />
           </Link>
           <div>
@@ -45,7 +45,7 @@ const props = defineProps<{
             <p class="mt-1 text-sm text-gray-500">{{ subcontractor.company_name }}</p>
           </div>
         </div>
-        <Link :href="route('cms.subcontractors.edit', subcontractor.id)" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+        <Link :href="route('bms.subcontractors.edit', subcontractor.id)" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
           <PencilIcon class="h-5 w-5" aria-hidden="true" />
           Edit
         </Link>
@@ -141,5 +141,5 @@ const props = defineProps<{
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

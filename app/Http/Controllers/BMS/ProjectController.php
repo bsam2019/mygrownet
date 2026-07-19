@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Projects\Services\ProjectService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProjectModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProjectMilestoneModel;
+use App\Domain\BMS\Projects\Services\ProjectService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProjectModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProjectMilestoneModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -30,11 +30,11 @@ class ProjectController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Projects/Index', [
+        return Inertia::render('BMS/Projects/Index', [
             'projects' => $projects,
             'filters' => $request->only(['status', 'search', 'branch_id']),
             'branches' => $branches,
@@ -45,7 +45,7 @@ class ProjectController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
         
-        return Inertia::render('CMS/Projects/Create', [
+        return Inertia::render('BMS/Projects/Create', [
             'projectNumber' => $this->projectService->generateProjectNumber($companyId),
         ]);
     }
@@ -75,7 +75,7 @@ class ProjectController extends Controller
 
         $project = $this->projectService->createProject($validated);
 
-        return redirect()->route('cms.projects.show', $project->id)
+        return redirect()->route('bms.projects.show', $project->id)
             ->with('success', 'Project created successfully');
     }
 
@@ -92,7 +92,7 @@ class ProjectController extends Controller
 
         $stats = $this->projectService->getProjectStats($project);
 
-        return Inertia::render('CMS/Projects/Show', [
+        return Inertia::render('BMS/Projects/Show', [
             'project' => $project,
             'stats' => $stats,
         ]);
@@ -102,7 +102,7 @@ class ProjectController extends Controller
     {
         $project->load(['customer', 'projectManager', 'milestones']);
 
-        return Inertia::render('CMS/Projects/Edit', [
+        return Inertia::render('BMS/Projects/Edit', [
             'project' => $project,
         ]);
     }
@@ -124,7 +124,7 @@ class ProjectController extends Controller
 
         $this->projectService->updateProject($project, $validated);
 
-        return redirect()->route('cms.projects.show', $project->id)
+        return redirect()->route('bms.projects.show', $project->id)
             ->with('success', 'Project updated successfully');
     }
 
@@ -143,7 +143,7 @@ class ProjectController extends Controller
     {
         $project->delete();
 
-        return redirect()->route('cms.projects.index')
+        return redirect()->route('bms.projects.index')
             ->with('success', 'Project deleted successfully');
     }
 

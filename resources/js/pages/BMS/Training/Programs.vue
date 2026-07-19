@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { AcademicCapIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -15,7 +15,7 @@ const typeFilter = ref(props.filters.type || '');
 const statusFilter = ref(props.filters.status || '');
 
 const applyFilters = () => {
-  router.get(route('cms.training.programs'), {
+  router.get(route('bms.training.programs'), {
     search: search.value,
     type: typeFilter.value,
     status: statusFilter.value,
@@ -48,7 +48,7 @@ const getStatusColor = (status: string) => {
 <template>
   <Head title="Training Programs" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -57,7 +57,7 @@ const getStatusColor = (status: string) => {
           <p class="mt-1 text-sm text-gray-500">Manage training programs and courses</p>
         </div>
         <button
-          @click="router.visit(route('cms.training.programs.create'))"
+          @click="router.visit(route('bms.training.programs.create'))"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -172,5 +172,5 @@ const getStatusColor = (status: string) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Core\Models\Domain;
 use App\Domain\Core\Services\WorkspaceResolver;
 use App\Domain\GrowBuilder\Repositories\SiteRepositoryInterface;
 use App\Domain\GrowBuilder\ValueObjects\Subdomain;
@@ -68,10 +69,10 @@ class DetectSubdomain
                     return $this->handleWowthemSubdomain($request);
                 }
                 
-                // Handle CMS subdomain - dispatch directly to controller
-                if ($subdomain === 'cms') {
-                    $branch = 'cms';
-                    return $this->handleCmsSubdomain($request, $next);
+                // Handle BMS subdomain - dispatch directly to controller
+                if ($subdomain === 'bms') {
+                    $branch = 'bms';
+                    return $this->handleBmsSubdomain($request, $next);
                 }
                 
                 // Handle GrowMart subdomain
@@ -102,70 +103,19 @@ class DetectSubdomain
                     return $next($request);
                 }
 
-                // Handle BizBoost subdomain
-                if ($subdomain === 'bizboost') {
-                    $branch = 'bizboost';
+                // Resolve standard application subdomains via domains table
+                $domainHost = "{$subdomain}.mygrownet.com";
+                $domainRecord = Domain::where('domain', $domainHost)
+                    ->where('type', 'application')
+                    ->where('is_active', true)
+                    ->first();
+                if ($domainRecord) {
+                    $branch = $domainRecord->application?->slug ?? $subdomain;
                     $this->configureSubdomainUrl($subdomain);
                     return $next($request);
                 }
 
-                // Handle BizDocs subdomain
-                if ($subdomain === 'bizdocs') {
-                    $branch = 'bizdocs';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle GrowBuilder subdomain
-                if ($subdomain === 'growbuilder') {
-                    $branch = 'growbuilder';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle Venture subdomain
-                if ($subdomain === 'venture') {
-                    $branch = 'venture';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle GrowNet subdomain
-                if ($subdomain === 'grownet') {
-                    $branch = 'grownet';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle GrowStorage subdomain
-                if ($subdomain === 'growstorage') {
-                    $branch = 'growstorage';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle ZamStay subdomain
-                if ($subdomain === 'zamstay') {
-                    $branch = 'zamstay';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle PrimeEdge subdomain
-                if ($subdomain === 'primeedge') {
-                    $branch = 'primeedge';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Handle StockFlow subdomain
-                if ($subdomain === 'stockflow') {
-                    $branch = 'stockflow';
-                    $this->configureSubdomainUrl($subdomain);
-                    return $next($request);
-                }
-
-                // Skip other reserved subdomains
+                // Skip reserved subdomains
                 $reserved = [
                     'api', 'admin', 'mail', 'ftp', 'smtp', 'pop', 'imap', 
                     'webmail', 'cpanel', 'whm', 'ns1', 'ns2', 'mx', 'email',
@@ -240,122 +190,122 @@ class DetectSubdomain
     }
     
     /**
-     * Handle CMS subdomain requests
+     * Handle BMS subdomain requests
      */
-    private function handleCmsSubdomain(Request $request, Closure $next): Response
+    private function handleBmsSubdomain(Request $request, Closure $next): Response
     {
         $path = $request->path();
         
         // Landing page - render directly with routePrefix
         if ($path === '/') {
-            return \Inertia\Inertia::render('CMS/Landing', [
-                'routePrefix' => 'cms.subdomain'
+            return \Inertia\Inertia::render('BMS/Landing', [
+                'routePrefix' => 'bms.subdomain'
             ])->toResponse($request);
         }
         
         // Login routes
         if ($path === 'login' && $request->method() === 'GET') {
-            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\AuthController::class);
             $result = $controller->showLogin();
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
         if ($path === 'login' && $request->method() === 'POST') {
-            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\AuthController::class);
             return $controller->login($request);
         }
         
         // Register routes
         if ($path === 'register' && $request->method() === 'GET') {
-            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\AuthController::class);
             $result = $controller->showRegister();
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
         if ($path === 'register' && $request->method() === 'POST') {
-            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\AuthController::class);
             return $controller->register($request);
         }
         
         // Logout
         if ($path === 'logout' && $request->method() === 'POST') {
-            $controller = app()->make(\App\Http\Controllers\CMS\AuthController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\AuthController::class);
             return $controller->logout($request);
         }
         
         // Dashboard (requires auth)
         if ($path === 'dashboard') {
-            $controller = app()->make(\App\Http\Controllers\CMS\DashboardController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\DashboardController::class);
             $result = $controller->index();
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
         // Jobs routes
         if (str_starts_with($path, 'jobs')) {
-            return $this->handleCmsJobs($request, $path);
+            return $this->handleBmsJobs($request, $path);
         }
         
         // Customers routes
         if (str_starts_with($path, 'customers')) {
-            return $this->handleCmsCustomers($request, $path);
+            return $this->handleBmsCustomers($request, $path);
         }
         
         // Invoices routes
         if (str_starts_with($path, 'invoices')) {
-            return $this->handleCmsInvoices($request, $path);
+            return $this->handleBmsInvoices($request, $path);
         }
         
         // Payments routes
         if (str_starts_with($path, 'payments')) {
-            return $this->handleCmsPayments($request, $path);
+            return $this->handleBmsPayments($request, $path);
         }
         
         // Quotations routes
         if (str_starts_with($path, 'quotations')) {
-            return $this->handleCmsQuotations($request, $path);
+            return $this->handleBmsQuotations($request, $path);
         }
         
         // Inventory routes
         if (str_starts_with($path, 'inventory')) {
-            return $this->handleCmsInventory($request, $path);
+            return $this->handleBmsInventory($request, $path);
         }
         
         // Expenses routes
         if (str_starts_with($path, 'expenses')) {
-            return $this->handleCmsExpenses($request, $path);
+            return $this->handleBmsExpenses($request, $path);
         }
         
         // Reports
         if ($path === 'reports') {
-            $controller = app()->make(\App\Http\Controllers\CMS\ReportController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\ReportController::class);
             $result = $controller->index();
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
         // Budgets routes
         if (str_starts_with($path, 'budgets')) {
-            return $this->handleCmsBudgets($request, $path);
+            return $this->handleBmsBudgets($request, $path);
         }
         
         // Settings
         if (str_starts_with($path, 'settings')) {
-            $controller = app()->make(\App\Http\Controllers\CMS\SettingsController::class);
+            $controller = app()->make(\App\Http\Controllers\BMS\SettingsController::class);
             $result = $controller->index();
             return $result instanceof \Inertia\Response ? $result->toResponse($request) : $result;
         }
         
         // Fallback to landing page - pass route prefix for subdomain
-        return \Inertia\Inertia::render('CMS/Landing', [
-            'routePrefix' => 'cms.subdomain'
+        return \Inertia\Inertia::render('BMS/Landing', [
+            'routePrefix' => 'bms.subdomain'
         ])->toResponse($request);
     }
     
     /**
      * Handle CMS Jobs routes
      */
-    private function handleCmsJobs(Request $request, string $path): Response
+    private function handleBmsJobs(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\JobController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\JobController::class);
         
         $result = match(true) {
             $path === 'jobs' => $controller->index(),
@@ -374,9 +324,9 @@ class DetectSubdomain
     /**
      * Handle CMS Customers routes
      */
-    private function handleCmsCustomers(Request $request, string $path): Response
+    private function handleBmsCustomers(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\CustomerController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\CustomerController::class);
         
         $result = match(true) {
             $path === 'customers' => $controller->index(),
@@ -395,9 +345,9 @@ class DetectSubdomain
     /**
      * Handle CMS Invoices routes
      */
-    private function handleCmsInvoices(Request $request, string $path): Response
+    private function handleBmsInvoices(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\InvoiceController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\InvoiceController::class);
         
         $result = match(true) {
             $path === 'invoices' => $controller->index(),
@@ -417,9 +367,9 @@ class DetectSubdomain
     /**
      * Handle CMS Payments routes
      */
-    private function handleCmsPayments(Request $request, string $path): Response
+    private function handleBmsPayments(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\PaymentController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\PaymentController::class);
         
         $result = match(true) {
             $path === 'payments' => $controller->index(),
@@ -434,9 +384,9 @@ class DetectSubdomain
     /**
      * Handle CMS Quotations routes
      */
-    private function handleCmsQuotations(Request $request, string $path): Response
+    private function handleBmsQuotations(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\QuotationController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\QuotationController::class);
         
         $result = match(true) {
             $path === 'quotations' => $controller->index(),
@@ -451,9 +401,9 @@ class DetectSubdomain
     /**
      * Handle CMS Inventory routes
      */
-    private function handleCmsInventory(Request $request, string $path): Response
+    private function handleBmsInventory(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\InventoryController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\InventoryController::class);
         
         $result = match(true) {
             $path === 'inventory' => $controller->index(),
@@ -468,9 +418,9 @@ class DetectSubdomain
     /**
      * Handle CMS Expenses routes
      */
-    private function handleCmsExpenses(Request $request, string $path): Response
+    private function handleBmsExpenses(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\ExpenseController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\ExpenseController::class);
         
         $result = match(true) {
             $path === 'expenses' => $controller->index(),
@@ -485,9 +435,9 @@ class DetectSubdomain
     /**
      * Handle CMS Budgets routes
      */
-    private function handleCmsBudgets(Request $request, string $path): Response
+    private function handleBmsBudgets(Request $request, string $path): Response
     {
-        $controller = app()->make(\App\Http\Controllers\CMS\BudgetController::class);
+        $controller = app()->make(\App\Http\Controllers\BMS\BudgetController::class);
         
         $result = match(true) {
             $path === 'budgets' => $controller->index(),

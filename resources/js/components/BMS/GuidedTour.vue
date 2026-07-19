@@ -108,7 +108,7 @@ const nextStep = async () => {
 
     // Send to backend
     try {
-        await fetch(route('cms.onboarding.tour.complete-step'), {
+        await fetch(route('bms.onboarding.tour.complete-step'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ const skipTour = async () => {
 
     // Send to backend
     try {
-        await fetch(route('cms.onboarding.tour.skip'), {
+        await fetch(route('bms.onboarding.tour.skip'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

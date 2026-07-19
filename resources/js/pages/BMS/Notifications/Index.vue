@@ -2,10 +2,10 @@
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { BellIcon, CheckIcon, TrashIcon, FunnelIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Notification {
@@ -48,20 +48,20 @@ const filteredNotifications = computed(() => {
 })
 
 const markAsRead = (notificationId: number) => {
-  router.post(route('cms.notifications.mark-read', notificationId), {}, {
+  router.post(route('bms.notifications.mark-read', notificationId), {}, {
     preserveScroll: true,
   })
 }
 
 const markAllAsRead = () => {
-  router.post(route('cms.notifications.mark-all-read'), {}, {
+  router.post(route('bms.notifications.mark-all-read'), {}, {
     preserveScroll: true,
   })
 }
 
 const deleteNotification = (notificationId: number) => {
   if (confirm('Are you sure you want to delete this notification?')) {
-    router.delete(route('cms.notifications.destroy', notificationId), {
+    router.delete(route('bms.notifications.destroy', notificationId), {
       preserveScroll: true,
     })
   }

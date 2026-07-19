@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\BizDocs\Adapters;
+namespace App\Domain\BMS\BizDocs\Adapters;
 
 class CmsBusinessProfileWrapper
 {

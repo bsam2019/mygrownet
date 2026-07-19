@@ -167,7 +167,7 @@ const saveProgressToServer = async () => {
             break;
     }
     try {
-        await fetch(route('cms.onboarding.save-progress'), {
+        await fetch(route('bms.onboarding.save-progress'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ const saveProgressToServer = async () => {
 const loadSavedProgress = async () => {
     try {
         const response = await fetch(
-            route('cms.onboarding.saved-progress', { step_id: currentStep.value })
+            route('bms.onboarding.saved-progress', { step_id: currentStep.value })
         );
         const data = await response.json();
         if (data.success && data.data) {
@@ -224,7 +224,7 @@ onUnmounted(() => {
 const saveStep1 = async () => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.company-info'), {
+        const response = await fetch(route('bms.onboarding.company-info'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ const saveStep1 = async () => {
 const saveStep2 = async () => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.apply-preset'), {
+        const response = await fetch(route('bms.onboarding.apply-preset'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -276,7 +276,7 @@ const saveStep2 = async () => {
 const saveStep3 = async () => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.configure-settings'), {
+        const response = await fetch(route('bms.onboarding.configure-settings'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -301,7 +301,7 @@ const saveStep3 = async () => {
 const generateSampleData = async () => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.generate-sample-data'), {
+        const response = await fetch(route('bms.onboarding.generate-sample-data'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -329,7 +329,7 @@ const clearSampleData = async () => {
     }
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.clear-sample-data'), {
+        const response = await fetch(route('bms.onboarding.clear-sample-data'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -354,7 +354,7 @@ const clearSampleData = async () => {
 const skipStep = async (stepId: number) => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.skip-step'), {
+        const response = await fetch(route('bms.onboarding.skip-step'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -380,7 +380,7 @@ const skipStep = async (stepId: number) => {
 const completeOnboarding = async () => {
     isLoading.value = true;
     try {
-        const response = await fetch(route('cms.onboarding.complete'), {
+        const response = await fetch(route('bms.onboarding.complete'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -391,7 +391,7 @@ const completeOnboarding = async () => {
         if (data.success) {
             showCelebration.value = true;
             setTimeout(() => {
-                router.visit(route('cms.dashboard'));
+                router.visit(route('bms.dashboard'));
             }, 3000);
         }
     } catch (error) {

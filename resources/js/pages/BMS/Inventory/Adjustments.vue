@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { PlusIcon, CheckIcon, XCircleIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface AdjustmentItem {
@@ -75,7 +75,7 @@ const removeItem = (index: number) => {
 }
 
 const submitForm = () => {
-  form.post(route('cms.inventory.adjustments.store'), {
+  form.post(route('bms.inventory.adjustments.store'), {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false
@@ -85,7 +85,7 @@ const submitForm = () => {
 }
 
 const approveAdjustment = (id: number) => {
-  useForm({}).post(route('cms.inventory.adjustments.approve', id), {
+  useForm({}).post(route('bms.inventory.adjustments.approve', id), {
     preserveScroll: true,
   })
 }

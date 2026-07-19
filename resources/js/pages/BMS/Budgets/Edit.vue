@@ -1,5 +1,5 @@
 <template>
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-4xl mx-auto space-y-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
@@ -10,7 +10,7 @@
                     </p>
                 </div>
                 <Link
-                    :href="route('cms.budgets.index')"
+                    :href="route('bms.budgets.index')"
                     class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
                 >
                     Back to Budgets
@@ -236,7 +236,7 @@
                     <!-- Actions -->
                     <div class="flex items-center justify-end gap-3">
                         <Link
-                            :href="route('cms.budgets.index')"
+                            :href="route('bms.budgets.index')"
                             class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
                         >
                             Cancel
@@ -252,13 +252,13 @@
                 </form>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface BudgetItem {
     category: string;
@@ -335,6 +335,6 @@ const submit = () => {
         }
     });
     
-    form.put(route('cms.budgets.update', props.budget.id));
+    form.put(route('bms.budgets.update', props.budget.id));
 };
 </script>

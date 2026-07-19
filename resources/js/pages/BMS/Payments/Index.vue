@@ -2,10 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, BanknotesIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Payment {
@@ -86,7 +86,7 @@ const getPaymentMethodLabel = (method: string) => {
                 <p class="mt-1 text-sm text-gray-600">Record and manage customer payments</p>
             </div>
             <Link
-                :href="route('cms.payments.create')"
+                :href="route('bms.payments.create')"
                 class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -185,7 +185,7 @@ const getPaymentMethodLabel = (method: string) => {
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
                             <Link
-                                :href="route('cms.payments.show', payment.id)"
+                                :href="route('bms.payments.show', payment.id)"
                                 class="text-blue-600 hover:text-blue-800"
                             >
                                 View

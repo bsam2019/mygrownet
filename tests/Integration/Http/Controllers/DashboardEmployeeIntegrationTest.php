@@ -52,7 +52,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
     {
         $this->actingAs($this->user);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -72,7 +72,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         $nonEmployeeUser = User::factory()->create();
         $this->actingAs($nonEmployeeUser);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -95,7 +95,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         
         $this->actingAs($this->user);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -128,7 +128,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         
         $this->actingAs($this->user);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -157,7 +157,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         
         $this->actingAs($this->user);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -186,7 +186,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         
         $this->actingAs($this->user);
         
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -302,7 +302,7 @@ class DashboardEmployeeIntegrationTest extends TestCase
         $this->actingAs($this->user);
         
         $startTime = microtime(true);
-        $response = $this->get(route('dashboard'));
+        $response = $this->get(route('workspace'));
         $endTime = microtime(true);
         
         $response->assertStatus(200);

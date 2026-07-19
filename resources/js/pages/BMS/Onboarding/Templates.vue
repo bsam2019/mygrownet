@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Onboarding Templates">
+  <BMSLayout title="Onboarding Templates">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -198,13 +198,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   templates: any[];
@@ -227,7 +227,7 @@ const taskForm = ref({
 });
 
 const createTemplate = () => {
-  router.post(route('cms.hrms-onboarding.templates.store'), templateForm.value, {
+  router.post(route('bms.hrms-onboarding.templates.store'), templateForm.value, {
     onSuccess: () => {
       showCreateModal.value = false;
       templateForm.value = { template_name: '', is_default: false };
@@ -237,7 +237,7 @@ const createTemplate = () => {
 
 const addTask = () => {
   router.post(
-    route('cms.hrms-onboarding.tasks.store', selectedTemplate.value.id),
+    route('bms.hrms-onboarding.tasks.store', selectedTemplate.value.id),
     taskForm.value,
     {
       onSuccess: () => {

@@ -7,7 +7,7 @@
     ]">
       <!-- Sidebar Header -->
       <div class="flex-shrink-0 px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <Link href="/dashboard" class="flex items-center gap-3 mb-4 text-white hover:text-blue-100 transition-colors">
+        <Link href="/workspace" class="flex items-center gap-3 mb-4 text-white hover:text-blue-100 transition-colors">
           <ArrowLeft class="w-5 h-5" aria-hidden="true" />
           <span class="text-sm font-medium">Back to Dashboard</span>
         </Link>

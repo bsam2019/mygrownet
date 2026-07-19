@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Job Postings">
+  <BMSLayout title="Job Postings">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -8,7 +8,7 @@
           <p class="text-sm text-gray-600 mt-1">Manage job openings and recruitment</p>
         </div>
         <Link
-          :href="route('cms.recruitment.job-postings.create')"
+          :href="route('bms.recruitment.job-postings.create')"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Post New Job
@@ -56,7 +56,7 @@
               </td>
               <td class="px-6 py-4 text-sm text-gray-900">
                 <Link
-                  :href="route('cms.recruitment.applications.index', job.id)"
+                  :href="route('bms.recruitment.applications.index', job.id)"
                   class="text-blue-600 hover:text-blue-800"
                 >
                   {{ job.applications?.length || 0 }} applications
@@ -85,13 +85,13 @@
         </table>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   jobPostings: any[];

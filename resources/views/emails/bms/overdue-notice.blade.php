@@ -158,7 +158,7 @@
             @if($company->email)Email: {{ $company->email }}@endif
         </p>
         <p style="margin-top: 15px; font-size: 0.75rem; color: #9ca3af;">
-            <a href="{{ route('cms.email.unsubscribe', ['company' => $company->id, 'email' => $customer->email, 'type' => 'reminders']) }}" style="color: #6b7280;">
+            <a href="{{ route('bms.email.unsubscribe', ['company' => $company->id, 'email' => $customer->email, 'type' => 'reminders']) }}" style="color: #6b7280;">
                 Unsubscribe from payment reminders
             </a>
         </p>

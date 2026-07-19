@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Recurring Invoices">
+  <BMSLayout page-title="Recurring Invoices">
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="text-sm text-gray-600 mt-1">Automate invoice generation with recurring templates</p>
         </div>
         <Link
-          :href="route('cms.recurring-invoices.create')"
+          :href="route('bms.recurring-invoices.create')"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -43,7 +43,7 @@
           <h3 class="text-lg font-medium text-gray-900 mb-2">No recurring invoices</h3>
           <p class="text-gray-600 mb-4">Create your first recurring invoice template to automate billing</p>
           <Link
-            :href="route('cms.recurring-invoices.create')"
+            :href="route('bms.recurring-invoices.create')"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -73,7 +73,7 @@
               >
                 <td class="px-6 py-4">
                   <Link
-                    :href="route('cms.recurring-invoices.show', invoice.id)"
+                    :href="route('bms.recurring-invoices.show', invoice.id)"
                     class="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
                     {{ invoice.title }}
@@ -110,7 +110,7 @@
                       <div class="py-1">
                         <MenuItem v-slot="{ active }">
                           <Link
-                            :href="route('cms.recurring-invoices.show', invoice.id)"
+                            :href="route('bms.recurring-invoices.show', invoice.id)"
                             :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']"
                           >
                             View Details
@@ -142,7 +142,7 @@
                         </MenuItem>
                         <MenuItem v-slot="{ active }">
                           <Link
-                            :href="route('cms.recurring-invoices.edit', invoice.id)"
+                            :href="route('bms.recurring-invoices.edit', invoice.id)"
                             :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']"
                           >
                             Edit
@@ -166,7 +166,7 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
@@ -174,7 +174,7 @@ import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { PlusIcon, DocumentTextIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   recurringInvoices: any[];
@@ -188,7 +188,7 @@ const props = defineProps<Props>();
 const selectedStatus = ref(props.filters.status || '');
 
 const filterByStatus = () => {
-  router.get(route('cms.recurring-invoices.index'), {
+  router.get(route('bms.recurring-invoices.index'), {
     status: selectedStatus.value || undefined,
   }, {
     preserveState: true,
@@ -234,21 +234,21 @@ const getStatusClass = (status: string) => {
 
 const generateNow = (id: number) => {
   if (confirm('Generate invoice now?')) {
-    router.post(route('cms.recurring-invoices.generate', id));
+    router.post(route('bms.recurring-invoices.generate', id));
   }
 };
 
 const pauseInvoice = (id: number) => {
-  router.post(route('cms.recurring-invoices.pause', id));
+  router.post(route('bms.recurring-invoices.pause', id));
 };
 
 const resumeInvoice = (id: number) => {
-  router.post(route('cms.recurring-invoices.resume', id));
+  router.post(route('bms.recurring-invoices.resume', id));
 };
 
 const cancelInvoice = (id: number) => {
   if (confirm('Are you sure you want to cancel this recurring invoice? This action cannot be undone.')) {
-    router.post(route('cms.recurring-invoices.cancel', id));
+    router.post(route('bms.recurring-invoices.cancel', id));
   }
 };
 </script>

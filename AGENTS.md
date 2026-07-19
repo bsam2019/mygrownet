@@ -44,6 +44,28 @@
 - Auth: `GET|HEAD auth/google` and `GET|HEAD auth/google/callback` — no prefix, no subdomain
 - Each subdomain needs its own callback URL registered in Google Cloud Console
 
+### Workspace Routes (authenticated)
+| Method | URI | Name | Controller |
+|---|---|---|---|
+| GET | `/workspace` | `workspace` | `WorkspaceController@index` |
+| POST | `/workspace/switch-context` | `workspace.switch-context` | `WorkspaceController@switchContext` |
+| GET | `/org/{slug}` | `workspace.organization` | `OrganizationWorkspaceController@show` |
+| GET | `/dashboard` | — | 301 → `/workspace` |
+| GET | `/_platform/workspace` | — | `WorkspaceResolver` diagnostic |
+
+### Middleware Stack (web group order)
+```
+... standard Laravel web middleware ...
+\App\Http\Middleware\ResolveDomainContext::class   ← resolves host → DomainResolution + WorkspaceContext
+\App\Http\Middleware\SetPlatformContext::class      ← shares workspace context/apps/orgs to Inertia
+```
+
+### Route Middleware Aliases
+| Alias | Class |
+|---|---|
+| `ensure.organization.access` | `EnsureOrganizationAccess` |
+| `ensure.application.access` | `EnsureApplicationAccess` |
+
 ## PrimeEdge Advisory Subdomain Setup
 - **DNS**: Create `CNAME primeedge` pointing to `mygrownet.com` (or A record to droplet IP)
 - **Middleware**: Handler added in `DetectSubdomain.php` at line 131 — calls `configureSubdomainUrl()` (same as bizboost/zamstay)
@@ -132,9 +154,81 @@ Taradasi Dental Clinic (run `StockAuditSeeder`)
 - `routes/debug-analytics.php` — orphaned dev utility, deleted Phase 11
 - `routes/debug.php` — orphaned dev utility, deleted Phase 11
 - `routes/subdomain.php` — superseded by DetectSubdomain middleware, deleted Phase 11
+- `app/Http/Middleware/DashboardRedirect.php` — no-op middleware, removed after workspace route switch
+
+## Workspace Domain Layer (Domain-Driven Design)
+
+The Workspace bounded context lives under `app/Domain/Workspace/`:
+
+```
+app/Domain/Workspace/
+├── ValueObjects/           DomainResolution, WorkspaceContext (immutable data carriers)
+├── Services/               DomainResolverService, ContextResolverService,
+│                           ApplicationAccessService, OrganizationAccessService, AppLaunchService
+└── Exceptions/             DomainNotFoundException, WorkspaceException
+```
+
+No repository interfaces yet — services query Eloquent models directly (Core models remain thin Eloquent, not pure DDD entities). If needed, repository pattern can be extracted later.
+
+**New Core tables** (migrations in `database/migrations/core/`, prefixed `2400xx`):
+- `application_installations` — per-org app settings and provisioning status
+- `user_application_subscriptions` — user-level app subscriptions
+- `domains` — routing authority (all subdomains, org domains, platform)
+- `organization_invitations` — org membership invitations
+- `application_roles` — app-specific role/permission definitions
+- `feature_flags` — feature toggles per app
+- `platform_roles` — platform-level admin roles (super_admin, support, etc.)
+
+**Enhanced existing tables:**
+- `applications` — added category, access_model, context_support, lifecycle, operational_status, etc.
+- `organizations` — added country, currency, timezone, language
+- `organization_members` — added role, permissions
+- `user_profiles` — added first_name, last_name, avatar, timezone, language
+
+**Workspace services** are singletons registered in `WorkspaceServiceProvider`:
+- `DomainResolverService::resolve(string $host): DomainResolution` — looks up `domains` table
+- `ContextResolverService::resolve(?User, ?string $domainType, ?Organization $orgHint): WorkspaceContext`
+- `ApplicationAccessService::getAvailableApps(User, WorkspaceContext): Collection` — filtered by context
+- `OrganizationAccessService::getAccessibleOrganizations(User): Collection`
+- `AppLaunchService::buildPayload(Application, WorkspaceContext, User): array`
+
+### Vue Component Tree
+```
+resources/js/
+  Layouts/WorkspaceLayout.vue        ← header + ContextSwitcher + slot
+  Pages/Workspace/
+    Index.vue                        ← Platform Workspace launcher
+    Organization.vue                  ← Org Workspace (apps + members)
+  Components/Workspace/
+    ContextSwitcher.vue              ← "Personal Workspace ▼" dropdown with orgs
+    AppGrid.vue                      ← categorized app tiles
+    AppTile.vue                      ← single app icon + name + launch
+    OrganizationList.vue             ← list of user's orgs
+    OrganizationCard.vue             ← single org card → /org/{slug}
+    GlobalAppSwitcher.vue            ← cross-subdomain flyout menu
+    LegacyAppBadge.vue               ← migration status badge
+    IntendedAppHighlight.vue         ← auto-highlight for app-first entry
+```
+
+### Inertia Shared Data (from SetPlatformContext)
+```typescript
+interface WorkspaceShared {
+    context: {
+        type: 'personal' | 'organization' | 'guest';
+        organization_id: number | null;
+        organization_slug: string | null;
+        organization_name: string | null;
+        application_id: number | null;
+    };
+    apps: Record<string, App[]>;   // keyed by category (business, consumer, shared)
+    organizations: Organization[];
+}
+```
+Available in Vue as `usePage().props.workspace`.
 
 ## Platform Evolution
 - 11-phase roadmap at `docs/platform-evolution/FULL_IMPLEMENTATION_ROADMAP.md` (phases 1-9 implemented, 10-11 design/cleanup)
+- Implementation plan at `docs/platform-evolution/IMPLEMENTATION_PLAN.md` (12 migrations, 5 services, 4 middleware, 2 controllers, Vue tree)
 - Architecture Decision Records at `docs/adr/ADR-001` through `ADR-007`
 - Platform event bus: OrganizationCreated, OrganizationArchived, MemberAdded, ApplicationSubscribed events dispatch automatically; listeners live in target modules (StockFlow, CMS)
 - Shared services contracts reserved at `docs/platform-evolution/SHARED_SERVICES.md` (Storage, Search, Payment, Audit, AI, Reporting)

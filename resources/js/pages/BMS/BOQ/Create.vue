@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm, Head, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 const form = useForm({
@@ -39,17 +39,17 @@ const calculateTotal = () => {
 };
 
 const submit = () => {
-  form.post(route('cms.boq.store'));
+  form.post(route('bms.boq.store'));
 };
 </script>
 
 <template>
   <Head title="Create BOQ" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="max-w-6xl mx-auto space-y-6">
       <div class="flex items-center gap-4">
-        <Link :href="route('cms.boq.index')" class="p-2 hover:bg-gray-100 rounded-lg">
+        <Link :href="route('bms.boq.index')" class="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeftIcon class="h-5 w-5" aria-hidden="true" />
         </Link>
         <h1 class="text-2xl font-bold text-gray-900">Create Bill of Quantities</h1>
@@ -139,7 +139,7 @@ const submit = () => {
         </div>
 
         <div class="flex items-center justify-end gap-3">
-          <Link :href="route('cms.boq.index')" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+          <Link :href="route('bms.boq.index')" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
             Cancel
           </Link>
           <button type="submit" :disabled="form.processing || form.items.length === 0" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
@@ -148,5 +148,5 @@ const submit = () => {
         </div>
       </form>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

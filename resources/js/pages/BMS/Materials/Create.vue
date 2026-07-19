@@ -1,10 +1,10 @@
 <template>
-  <CMSLayout title="Add Material">
+  <BMSLayout title="Add Material">
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
       <div class="mb-6">
         <Link
-          :href="route('cms.materials.index')"
+          :href="route('bms.materials.index')"
           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -209,7 +209,7 @@
         <!-- Form Actions -->
         <div class="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 rounded-b-lg">
           <Link
-            :href="route('cms.materials.index')"
+            :href="route('bms.materials.index')"
             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Cancel
@@ -225,12 +225,12 @@
         </div>
       </form>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -253,7 +253,7 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.materials.store'), {
+  form.post(route('bms.materials.store'), {
     onSuccess: () => {
       // Redirect handled by controller
     },

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { 
     CheckCircleIcon, 
     XCircleIcon, 
@@ -37,7 +37,7 @@ const getTypeLabel = (type: string) => {
 };
 
 const viewDetails = (id: number) => {
-    router.visit(route('cms.approvals.show', id));
+    router.visit(route('bms.approvals.show', id));
 };
 
 const approve = (id: number) => {
@@ -47,7 +47,7 @@ const approve = (id: number) => {
 
 const confirmApprove = () => {
     if (pendingApprovalId.value) {
-        router.post(route('cms.approvals.approve', pendingApprovalId.value), {
+        router.post(route('bms.approvals.approve', pendingApprovalId.value), {
             comments: null
         }, {
             preserveScroll: true,
@@ -70,7 +70,7 @@ const reject = (id: number) => {
 
 const confirmReject = () => {
     if (pendingApprovalId.value && rejectReason.value.trim()) {
-        router.post(route('cms.approvals.reject', pendingApprovalId.value), {
+        router.post(route('bms.approvals.reject', pendingApprovalId.value), {
             reason: rejectReason.value
         }, {
             preserveScroll: true,
@@ -91,7 +91,7 @@ const confirmReject = () => {
 <template>
     <Head title="Approvals" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
             <div class="mb-8">
@@ -207,7 +207,7 @@ const confirmReject = () => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 
     <!-- Approve Confirmation Modal -->
     <div v-if="showApproveConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showApproveConfirm = false">

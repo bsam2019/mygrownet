@@ -134,7 +134,7 @@
 
             <!-- Back Button -->
             <div class="mt-8 text-center">
-                <Link :href="route('dashboard')" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
+                <Link :href="route('workspace')" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
                     <ArrowLeftIcon class="h-4 w-4" />
                     Back to Dashboard
                 </Link>

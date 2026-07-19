@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\BudgetService;
+use App\Domain\BMS\Core\Services\BudgetService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,14 +25,14 @@ class BudgetController extends Controller
             ->orderBy('start_date', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Budgets/Index', [
+        return Inertia::render('BMS/Budgets/Index', [
             'budgets' => $budgets,
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Budgets/Create');
+        return Inertia::render('BMS/Budgets/Create');
     }
 
     public function store(Request $request)
@@ -60,7 +60,7 @@ class BudgetController extends Controller
             $cmsUser->id
         );
 
-        return redirect()->route('cms.budgets.show', $budget->id)
+        return redirect()->route('bms.budgets.show', $budget->id)
             ->with('success', 'Budget created successfully.');
     }
 
@@ -75,7 +75,7 @@ class BudgetController extends Controller
         // Get budget vs actual comparison
         $comparison = $this->budgetService->getBudgetVsActual($id);
 
-        return Inertia::render('CMS/Budgets/Show', [
+        return Inertia::render('BMS/Budgets/Show', [
             'budget' => $budget,
             'comparison' => $comparison,
         ]);
@@ -89,7 +89,7 @@ class BudgetController extends Controller
             ->with('items')
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Budgets/Edit', [
+        return Inertia::render('BMS/Budgets/Edit', [
             'budget' => $budget,
         ]);
     }
@@ -118,7 +118,7 @@ class BudgetController extends Controller
 
         $this->budgetService->updateBudget($id, $validated);
 
-        return redirect()->route('cms.budgets.show', $id)
+        return redirect()->route('bms.budgets.show', $id)
             ->with('success', 'Budget updated successfully.');
     }
 
@@ -131,7 +131,7 @@ class BudgetController extends Controller
 
         $this->budgetService->deleteBudget($id);
 
-        return redirect()->route('cms.budgets.index')
+        return redirect()->route('bms.budgets.index')
             ->with('success', 'Budget deleted successfully.');
     }
 }

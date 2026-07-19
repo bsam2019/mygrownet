@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon, PencilIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/outline';
 
 interface Project {
@@ -52,24 +52,24 @@ const statusColors = {
 };
 
 const updateStatus = (status: string) => {
-  router.post(route('cms.projects.status', props.project.id), { status });
+  router.post(route('bms.projects.status', props.project.id), { status });
 };
 
 const completeMilestone = (milestoneId: number) => {
-  router.post(route('cms.projects.milestones.complete', [props.project.id, milestoneId]));
+  router.post(route('bms.projects.milestones.complete', [props.project.id, milestoneId]));
 };
 </script>
 
 <template>
   <Head :title="project.name" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex items-start gap-4">
           <Link
-            :href="route('cms.projects.index')"
+            :href="route('bms.projects.index')"
             class="p-2 hover:bg-gray-100 rounded-lg"
           >
             <ArrowLeftIcon class="h-5 w-5" aria-hidden="true" />
@@ -85,7 +85,7 @@ const completeMilestone = (milestoneId: number) => {
           </div>
         </div>
         <Link
-          :href="route('cms.projects.edit', project.id)"
+          :href="route('bms.projects.edit', project.id)"
           class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
         >
           <PencilIcon class="h-5 w-5" aria-hidden="true" />
@@ -180,7 +180,7 @@ const completeMilestone = (milestoneId: number) => {
               <Link
                 v-for="job in project.jobs"
                 :key="job.id"
-                :href="route('cms.jobs.show', job.id)"
+                :href="route('bms.jobs.show', job.id)"
                 class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100"
               >
                 <div class="flex items-center justify-between">
@@ -248,7 +248,7 @@ const completeMilestone = (milestoneId: number) => {
             </select>
 
             <Link
-              :href="route('cms.projects.timeline', project.id)"
+              :href="route('bms.projects.timeline', project.id)"
               class="block w-full px-4 py-2 text-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
             >
               <ClockIcon class="h-5 w-5 inline mr-2" aria-hidden="true" />
@@ -258,5 +258,5 @@ const completeMilestone = (milestoneId: number) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

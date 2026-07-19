@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DepartmentModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DepartmentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OrgChartController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     public function index(Request $request): Response
     {
@@ -31,7 +31,7 @@ class OrgChartController extends Controller
 
         $tree = $this->buildTree($workers, $departments);
 
-        return Inertia::render('CMS/OrgChart/Index', [
+        return Inertia::render('BMS/OrgChart/Index', [
             'orgTree' => $tree,
             'workers' => $workers->map(fn ($w) => [
                 'id' => $w->id,

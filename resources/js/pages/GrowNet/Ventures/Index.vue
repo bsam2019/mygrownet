@@ -47,7 +47,7 @@ const goBack = () => {
   if (window.history.length > 1) {
     window.history.back();
   } else {
-    router.visit(route('dashboard'));
+    router.visit(route('workspace'));
   }
 };
 

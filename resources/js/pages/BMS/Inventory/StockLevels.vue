@@ -2,10 +2,10 @@
 import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { ExclamationTriangleIcon, CubeIcon, MapPinIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface StockLevel {
@@ -60,14 +60,14 @@ const formatNumber = (value: number) =>
       </div>
       <div class="mt-4 sm:mt-0 flex items-center gap-3">
         <Link
-          :href="route('cms.inventory.low-stock-alerts')"
+          :href="route('bms.inventory.low-stock-alerts')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 text-sm font-medium"
         >
           <ExclamationTriangleIcon class="h-5 w-5" aria-hidden="true" />
           Low Stock Alerts
         </Link>
         <Link
-          :href="route('cms.inventory.locations.index')"
+          :href="route('bms.inventory.locations.index')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 text-sm font-medium"
         >
           <MapPinIcon class="h-5 w-5" aria-hidden="true" />

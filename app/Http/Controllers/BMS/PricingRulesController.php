@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\PricingRulesService;
+use App\Domain\BMS\Core\Services\PricingRulesService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,7 +19,7 @@ class PricingRulesController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $rules = $this->pricingRulesService->getOrCreate($companyId);
 
-        return Inertia::render('CMS/Settings/PricingRules', [
+        return Inertia::render('BMS/Settings/PricingRules', [
             'pricingRules' => $rules,
         ]);
     }

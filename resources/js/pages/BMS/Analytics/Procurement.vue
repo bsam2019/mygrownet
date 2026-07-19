@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import DoughnutChart from '@/components/BMS/Charts/DoughnutChart.vue'
 import BarChart from '@/components/BMS/Charts/BarChart.vue'
 import {
@@ -10,7 +10,7 @@ import {
   BuildingLibraryIcon, DocumentCheckIcon,
 } from '@heroicons/vue/24/outline'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface VendorSpend {
   vendor_name: string
@@ -51,7 +51,7 @@ const selectedPeriod = ref(props.period)
 
 const changePeriod = (period: string) => {
   selectedPeriod.value = period
-  router.get(route('cms.analytics.procurement'), { period }, {
+  router.get(route('bms.analytics.procurement'), { period }, {
     preserveState: true,
     preserveScroll: true,
   })

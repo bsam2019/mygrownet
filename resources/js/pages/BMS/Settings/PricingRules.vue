@@ -2,10 +2,10 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { route } from 'ziggy-js';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface PricingRules {
     id: number;
@@ -50,7 +50,7 @@ const sellingRates = [
 ] as const;
 
 function submit() {
-    form.put(route('cms.settings.pricing-rules.update'));
+    form.put(route('bms.settings.pricing-rules.update'));
 }
 </script>
 
@@ -58,7 +58,7 @@ function submit() {
     <Head title="Pricing Rules - Settings" />
 
     <div class="max-w-3xl mx-auto">
-        <Link :href="route('cms.dashboard')" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
+        <Link :href="route('bms.dashboard')" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
             <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
             Back to Dashboard
         </Link>
@@ -190,7 +190,7 @@ function submit() {
 
             <!-- Save -->
             <div class="flex justify-end gap-3">
-                <Link :href="route('cms.dashboard')" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">Cancel</Link>
+                <Link :href="route('bms.dashboard')" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition">Cancel</Link>
                 <button
                     type="submit"
                     :disabled="form.processing"

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\LeaveManagementService;
+use App\Domain\BMS\Core\Services\LeaveManagementService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveTypeModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -32,7 +32,7 @@ class LeaveController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'worker_number']);
 
-        return Inertia::render('CMS/Leave/Index', [
+        return Inertia::render('BMS/Leave/Index', [
             'leaveRequests' => $leaveRequests,
             'workers' => $workers,
             'filters' => $request->only(['status', 'worker_id']),
@@ -52,7 +52,7 @@ class LeaveController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return Inertia::render('CMS/Leave/Create', [
+        return Inertia::render('BMS/Leave/Create', [
             'workers' => $workers,
             'leaveTypes' => $leaveTypes,
         ]);
@@ -76,7 +76,7 @@ class LeaveController extends Controller
         $leaveRequest = $this->leaveService->createLeaveRequest($validated);
 
         return redirect()
-            ->route('cms.leave.show', $leaveRequest->id)
+            ->route('bms.leave.show', $leaveRequest->id)
             ->with('success', 'Leave request created successfully');
     }
 
@@ -91,7 +91,7 @@ class LeaveController extends Controller
             date('Y')
         );
 
-        return Inertia::render('CMS/Leave/Show', [
+        return Inertia::render('BMS/Leave/Show', [
             'leaveRequest' => $leave,
             'leaveBalance' => $balance,
         ]);
@@ -110,7 +110,7 @@ class LeaveController extends Controller
         );
 
         return redirect()
-            ->route('cms.leave.show', $leave->id)
+            ->route('bms.leave.show', $leave->id)
             ->with('success', 'Leave request approved successfully');
     }
 
@@ -127,7 +127,7 @@ class LeaveController extends Controller
         );
 
         return redirect()
-            ->route('cms.leave.show', $leave->id)
+            ->route('bms.leave.show', $leave->id)
             ->with('success', 'Leave request rejected');
     }
 
@@ -144,7 +144,7 @@ class LeaveController extends Controller
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('CMS/Leave/Balance', [
+        return Inertia::render('BMS/Leave/Balance', [
             'workers' => $workers,
             'year' => $year,
         ]);

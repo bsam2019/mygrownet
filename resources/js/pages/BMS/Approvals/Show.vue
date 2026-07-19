@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import {
     CheckCircleIcon,
     XCircleIcon,
@@ -74,7 +74,7 @@ const canAction = (step: Step) => {
 };
 
 const approveStep = (stepId: number) => {
-    router.post(route('cms.approvals.approve', props.approval.id), {
+    router.post(route('bms.approvals.approve', props.approval.id), {
         comments: null
     }, {
         preserveScroll: true,
@@ -93,7 +93,7 @@ const confirmReject = () => {
         toast.warning('Reason required', 'Please provide a reason for rejection');
         return;
     }
-    router.post(route('cms.approvals.reject', props.approval.id), {
+    router.post(route('bms.approvals.reject', props.approval.id), {
         reason: rejectReason.value
     }, {
         preserveScroll: true,
@@ -108,14 +108,14 @@ const confirmReject = () => {
 };
 
 const goBack = () => {
-    router.visit(route('cms.approvals.index'));
+    router.visit(route('bms.approvals.index'));
 };
 </script>
 
 <template>
     <Head title="Approval Details" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <button @click="goBack" class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6">
                 <ArrowLeftIcon class="h-4 w-4" />
@@ -263,7 +263,7 @@ const goBack = () => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 
     <div v-if="showRejectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="showRejectModal = false">
         <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">

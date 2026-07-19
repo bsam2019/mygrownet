@@ -2,11 +2,11 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { PencilIcon, ExclamationTriangleIcon, ClockIcon, BriefcaseIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import StockMovementModal from '@/components/BMS/StockMovementModal.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -59,7 +59,7 @@ const isLowStock = props.item.current_stock <= props.item.minimum_stock
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <!-- Page Header -->
     <div class="mb-6">
-      <Link :href="route('cms.inventory.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.inventory.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Inventory
       </Link>
       <div class="flex items-center justify-between">
@@ -82,7 +82,7 @@ const isLowStock = props.item.current_stock <= props.item.minimum_stock
             Inactive
           </span>
           <Link
-            :href="route('cms.inventory.edit', item.id)"
+            :href="route('bms.inventory.edit', item.id)"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
           >
             <PencilIcon class="h-4 w-4" aria-hidden="true" />
@@ -238,7 +238,7 @@ const isLowStock = props.item.current_stock <= props.item.minimum_stock
                   </div>
                 </div>
                 <Link
-                  :href="route('cms.jobs.show', usage.job.id)"
+                  :href="route('bms.jobs.show', usage.job.id)"
                   class="flex-shrink-0 ml-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
                 >
                   View Job

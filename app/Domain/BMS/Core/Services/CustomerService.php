@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
-use App\Domain\CMS\Core\ValueObjects\CustomerNumber;
+use App\Domain\BMS\Core\ValueObjects\CustomerNumber;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use Illuminate\Support\Facades\DB;
 

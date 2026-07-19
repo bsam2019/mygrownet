@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\CMS\Services\GrowFinanceSync;
+namespace App\Domain\BMS\Services\GrowFinanceSync;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncLogModel;
 use Illuminate\Database\Eloquent\Model;

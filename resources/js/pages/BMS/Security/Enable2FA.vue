@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Enable Two-Factor Authentication">
+  <BMSLayout title="Enable Two-Factor Authentication">
     <div class="max-w-2xl mx-auto">
       <div class="bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-2xl font-semibold text-gray-900 mb-4">
@@ -94,13 +94,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   secret: string;
@@ -116,7 +116,7 @@ const processing = ref(false);
 
 const verify = () => {
   processing.value = true;
-  router.post(route('cms.security.2fa.verify'), form, {
+  router.post(route('bms.security.2fa.verify'), form, {
     onFinish: () => {
       processing.value = false;
     },
@@ -124,6 +124,6 @@ const verify = () => {
 };
 
 const cancel = () => {
-  router.visit(route('cms.dashboard'));
+  router.visit(route('bms.dashboard'));
 };
 </script>

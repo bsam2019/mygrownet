@@ -2,10 +2,10 @@
 
 namespace App\Services\Integration;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductModel as CMSProduct;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductModel as CMSProduct;
 use App\Models\Marketplace\MarketplaceProduct;
 use App\Models\Marketplace\MarketplaceSeller;
-use App\Events\CMS\ProductSynced;
+use App\Events\BMS\ProductSynced;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -173,14 +173,14 @@ class GrowMarketIntegrationService
     private function getOrCreateSellerForCompany(int $companyId): ?MarketplaceSeller
     {
         // Get company
-        $company = \App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::find($companyId);
+        $company = \App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::find($companyId);
         
         if (!$company) {
             return null;
         }
 
         // Get user from company
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('company_id', $companyId)
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $companyId)
             ->where('role', 'owner')
             ->first();
 

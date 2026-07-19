@@ -204,7 +204,7 @@ class BladeAuthController extends Controller
                 return to_route('growbiz.invitation.pending');
             }
 
-            return redirect()->route('dashboard');
+            return redirect()->route('workspace');
 
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
@@ -236,29 +236,7 @@ class BladeAuthController extends Controller
      */
     private function getDefaultRouteForUser($user): string
     {
-        if (!$user) {
-            return route('dashboard', absolute: false);
-        }
-
-        if ($user->hasRole('Administrator') || $user->hasRole('admin') || $user->hasRole('superadmin')) {
-            return route('admin.dashboard', absolute: false);
-        }
-
-        $hasActiveEmployee = \App\Models\Employee\Employee::where('user_id', $user->id)
-            ->where('employment_status', 'active')
-            ->exists();
-
-        if ($hasActiveEmployee) {
-            return route('employee.portal.dashboard', absolute: false);
-        }
-
-        $accountType = $user->getPrimaryAccountType();
-
-        if ($accountType === \App\Enums\AccountType::MEMBER) {
-            return route('dashboard', absolute: false);
-        }
-
-        return route('dashboard', absolute: false);
+        return route('workspace', absolute: false);
     }
 }
 

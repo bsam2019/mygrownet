@@ -8,7 +8,19 @@ use App\Http\Controllers\Settings\ProfileController;
 
 // Platform diagnostic route — returns resolved workspace info for the current host
 Route::get('/_platform/workspace', function (WorkspaceResolver $resolver) {
-    return $resolver->resolve(request()->getHost());
+    $host = request()->getHost();
+    $workspace = $resolver->resolve($host);
+
+    return response()->json([
+        'host' => $host,
+        'resolved' => $workspace !== null,
+        'workspace' => $workspace ? [
+            'type' => $workspace->type,
+            'application' => $workspace->application?->only(['slug', 'name', 'type']),
+            'organization' => $workspace->organization?->only(['slug', 'name']),
+            'domain' => $workspace->domain?->domain,
+        ] : null,
+    ]);
 });
 
 // Unified platform auth (behind feature flag)
@@ -344,6 +356,21 @@ Route::get('/compliance', [ComplianceController::class, 'information'])->name('c
 //     return Inertia::render('Membership/Index');
 // })->name('membership.index');
 
+// Workspace routes (defined before auth group so route() helper resolves during login)
+Route::post('/workspace/switch-context', [\App\Http\Controllers\WorkspaceController::class, 'switchContext'])
+    ->middleware(['auth', 'verified'])
+    ->name('workspace.switch-context');
+
+Route::redirect('/dashboard', '/workspace', 301);
+
+Route::get('/workspace', [\App\Http\Controllers\WorkspaceController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('workspace');
+
+Route::get('/org/{slug}', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'show'])
+    ->middleware(['auth', 'verified', 'ensure.organization.access'])
+    ->name('workspace.organization');
+
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Home Hub - Main entry point after login (defined later with Presentation controller)
@@ -368,11 +395,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             })->values(),
         ]);
     });
-    
-    // Dashboard - Role-based routing (MLM Dashboard)
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware(\App\Http\Middleware\DashboardRedirect::class)
-        ->name('dashboard');
     
     // Tools page
     Route::get('/tools', function () {
@@ -746,11 +768,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/clear-cache', [App\Http\Controllers\Admin\ModuleController::class, 'clearCache'])->name('clear-cache');
     });
     
-    // Admin CMS Companies Management Routes
-    Route::middleware(['admin'])->prefix('admin/cms-companies')->name('admin.cms-companies.')->group(function () {
-        Route::get('/', [App\Http\Controllers\Admin\CmsCompanyController::class, 'index'])->name('index');
-        Route::get('/{company}/edit', [App\Http\Controllers\Admin\CmsCompanyController::class, 'edit'])->name('edit');
-        Route::put('/{company}', [App\Http\Controllers\Admin\CmsCompanyController::class, 'update'])->name('update');
+    // Admin BMS Companies Management Routes
+    Route::middleware(['admin'])->prefix('admin/bms-companies')->name('admin.bms-companies.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\BmsCompanyController::class, 'index'])->name('index');
+        Route::get('/{company}/edit', [App\Http\Controllers\Admin\BmsCompanyController::class, 'edit'])->name('edit');
+        Route::put('/{company}', [App\Http\Controllers\Admin\BmsCompanyController::class, 'update'])->name('update');
     });
     
     // Admin Email Marketing Routes
@@ -1301,10 +1323,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $employee = $employeeModel::where('user_id', $user->id)->first();
             
             if (!$employee) {
-                return redirect()->route('dashboard')->with('error', 'Employee profile not found.');
+                return redirect()->route('workspace')->with('error', 'Employee profile not found.');
             }
             
-            return redirect()->route('dashboard'); // Employee data is integrated into main dashboard
+            return redirect()->route('workspace'); // Employee data is integrated into main dashboard
         })->name('dashboard');
         
         Route::get('/profile/edit', function () {
@@ -1595,14 +1617,14 @@ Route::get('/{path}', function ($path) {
     if (preg_match('/^[a-zA-Z0-9_-]+$/', $path) && strlen($path) >= 3 && strlen($path) <= 50) {
         // Check if user is authenticated
         if (auth()->check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('workspace');
         } else {
             return redirect()->route('login');
         }
     }
     // If it doesn't look like a username, let it fall through to 404
     abort(404);
-})->where('path', '^(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|cms|lifeplus|pos|inventory|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions)[a-zA-Z0-9\/_-]+$');
+})->where('path', '^(?!growbuilder|quick-invoice|growfinance|growbiz|bizboost|marketplace|bms|lifeplus|pos|inventory|growmart|zamstay|grownet|bizdocs|growbackup|services|products|solutions)[a-zA-Z0-9\/_-]+$');
 
 // Fallback route for GrowBuilder custom domains
 // This catches any unmatched routes and checks if they should be handled by GrowBuilder
@@ -1633,9 +1655,9 @@ Route::fallback(function (Illuminate\Http\Request $request) {
 });
 
 // Public contract signing routes (token-authenticated, no login required)
-Route::get('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'showSigningPage'])->name('public.contracts.sign');
-Route::post('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\CMS\ContractController::class, 'submitCustomerSignature'])->name('public.contracts.submit-signature');
-Route::get('/contracts/signed/{contract}', [\App\Http\Controllers\CMS\ContractController::class, 'signedConfirmation'])->name('public.contracts.signed');
+Route::get('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\BMS\ContractController::class, 'showSigningPage'])->name('public.contracts.sign');
+Route::post('/contracts/sign/{contract}/{token}', [\App\Http\Controllers\BMS\ContractController::class, 'submitCustomerSignature'])->name('public.contracts.submit-signature');
+Route::get('/contracts/signed/{contract}', [\App\Http\Controllers\BMS\ContractController::class, 'signedConfirmation'])->name('public.contracts.signed');
 
 // Quick Invoice Admin Routes
 require __DIR__.'/admin-quick-invoice.php';

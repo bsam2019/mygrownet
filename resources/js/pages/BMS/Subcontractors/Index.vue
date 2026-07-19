@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { MagnifyingGlassIcon, PlusIcon, StarIcon } from '@heroicons/vue/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/vue/24/solid';
 
@@ -33,7 +33,7 @@ const search = ref(props.filters.search || '');
 const tradeFilter = ref(props.filters.trade || '');
 
 const applyFilters = () => {
-  router.get(route('cms.subcontractors.index'), {
+  router.get(route('bms.subcontractors.index'), {
     search: search.value,
     trade: tradeFilter.value,
   }, { preserveState: true });
@@ -43,7 +43,7 @@ const applyFilters = () => {
 <template>
   <Head title="Subcontractors" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -52,7 +52,7 @@ const applyFilters = () => {
           <p class="mt-1 text-sm text-gray-500">Manage subcontractors and track performance</p>
         </div>
         <Link
-          :href="route('cms.subcontractors.create')"
+          :href="route('bms.subcontractors.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -94,7 +94,7 @@ const applyFilters = () => {
         <Link
           v-for="subcontractor in subcontractors.data"
           :key="subcontractor.id"
-          :href="route('cms.subcontractors.show', subcontractor.id)"
+          :href="route('bms.subcontractors.show', subcontractor.id)"
           class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div class="flex items-start justify-between mb-4">
@@ -141,7 +141,7 @@ const applyFilters = () => {
       <div v-if="subcontractors.data.length === 0" class="bg-white rounded-lg shadow p-12 text-center">
         <p class="text-gray-500">No subcontractors found</p>
         <Link
-          :href="route('cms.subcontractors.create')"
+          :href="route('bms.subcontractors.create')"
           class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -149,5 +149,5 @@ const applyFilters = () => {
         </Link>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

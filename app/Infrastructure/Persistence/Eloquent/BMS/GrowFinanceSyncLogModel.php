@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Eloquent\CMS;
+namespace App\Infrastructure\Persistence\Eloquent\BMS;
 
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
 use Illuminate\Database\Eloquent\Model;

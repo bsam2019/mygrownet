@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref, computed } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/outline';
 import { toast } from '@/utils/bizboost-toast';
 import OrgTreeNode from './OrgTreeNode.vue';
@@ -99,7 +99,7 @@ const viewMode = ref<'tree' | 'cards'>('tree');
 <template>
     <Head title="Org Chart" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="space-y-6">
             <!-- Header -->
             <div class="flex items-center justify-between flex-wrap gap-4">
@@ -184,5 +184,5 @@ const viewMode = ref<'tree' | 'cards'>('tree');
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

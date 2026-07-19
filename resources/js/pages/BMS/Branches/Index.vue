@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { BuildingOffice2Icon, PlusIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/vue/24/outline';
 import { toast } from '@/utils/bizboost-toast';
 
@@ -31,7 +31,7 @@ const search = ref(props.filters.search || '');
 const statusFilter = ref(props.filters.status || '');
 
 const applyFilters = () => {
-    router.get(route('cms.branches.index'), {
+    router.get(route('bms.branches.index'), {
         search: search.value || undefined,
         status: statusFilter.value || undefined,
     }, { preserveState: true, preserveScroll: true });
@@ -40,12 +40,12 @@ const applyFilters = () => {
 const clearFilters = () => {
     search.value = '';
     statusFilter.value = '';
-    router.get(route('cms.branches.index'), {}, { preserveState: true });
+    router.get(route('bms.branches.index'), {}, { preserveState: true });
 };
 
 const confirmDelete = (branch: Branch) => {
     if (confirm(`Delete branch "${branch.branch_name}"?`)) {
-        router.delete(route('cms.branches.destroy', branch.id), {
+        router.delete(route('bms.branches.destroy', branch.id), {
             preserveScroll: true,
             onSuccess: () => toast.success('Deleted', 'Branch deleted'),
             onError: (e) => toast.error('Error', e?.response?.data?.message || 'Could not delete branch'),
@@ -57,14 +57,14 @@ const confirmDelete = (branch: Branch) => {
 <template>
     <Head title="Branches" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Branches</h1>
                     <p class="mt-1 text-sm text-gray-500">Manage business locations and branches</p>
                 </div>
-                <Link :href="route('cms.branches.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                <Link :href="route('bms.branches.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
                     <PlusIcon class="h-5 w-5" />
                     New Branch
                 </Link>
@@ -139,7 +139,7 @@ const confirmDelete = (branch: Branch) => {
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link :href="route('cms.branches.edit', branch.id)" class="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
+                                    <Link :href="route('bms.branches.edit', branch.id)" class="text-blue-600 hover:text-blue-900 mr-3">Edit</Link>
                                     <button @click="confirmDelete(branch)" class="text-red-600 hover:text-red-900">Delete</button>
                                 </td>
                             </tr>
@@ -148,5 +148,5 @@ const confirmDelete = (branch: Branch) => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

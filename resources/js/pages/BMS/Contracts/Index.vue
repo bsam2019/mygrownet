@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { PlusIcon, FunnelIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   contracts: { data: any[]; links: any }
@@ -19,7 +19,7 @@ const search = ref(props.filters.search || '')
 const selectedStatus = ref(props.filters.status || '')
 
 const applyFilters = () => {
-  router.get(route('cms.contracts.index'), { search: search.value, status: selectedStatus.value }, { preserveState: true })
+  router.get(route('bms.contracts.index'), { search: search.value, status: selectedStatus.value }, { preserveState: true })
 }
 
 const formatMoney = (amount: number) => 'K' + amount.toLocaleString('en-US', { minimumFractionDigits: 2 })
@@ -38,7 +38,7 @@ const statusColors: Record<string, string> = {
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">Contracts</h1>
-      <Link :href="route('cms.contracts.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+      <Link :href="route('bms.contracts.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
         <PlusIcon class="h-5 w-5" /> New Contract
       </Link>
     </div>
@@ -96,7 +96,7 @@ const statusColors: Record<string, string> = {
             <tr v-for="c in contracts.data" :key="c.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ c.contract_number }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
-                <Link :href="route('cms.contracts.show', c.id)">{{ c.title }}</Link>
+                <Link :href="route('bms.contracts.show', c.id)">{{ c.title }}</Link>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.customer?.name || '-' }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ formatDate(c.start_date) }}</td>
@@ -106,7 +106,7 @@ const statusColors: Record<string, string> = {
                 <span :class="['px-2 py-1 text-xs font-medium rounded-full', statusColors[c.status] || 'bg-gray-100']">{{ c.status }}</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <Link :href="route('cms.contracts.show', c.id)" class="text-blue-600 hover:text-blue-700 font-medium">View</Link>
+                <Link :href="route('bms.contracts.show', c.id)" class="text-blue-600 hover:text-blue-700 font-medium">View</Link>
               </td>
             </tr>
             <tr v-if="contracts.data.length === 0">

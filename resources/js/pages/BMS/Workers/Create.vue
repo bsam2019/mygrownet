@@ -2,14 +2,14 @@
 import { useForm } from '@inertiajs/vue3'
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import FormInput from '@/components/BMS/FormInput.vue'
 import FormSelect from '@/components/BMS/FormSelect.vue'
 import FormSection from '@/components/BMS/FormSection.vue'
 import { toast } from '@/utils/bizboost-toast'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
 })
 
 const submit = () => {
-  form.post(route('cms.payroll.workers.store'), {
+  form.post(route('bms.payroll.workers.store'), {
     onSuccess: () => {
       // Clear draft on successful submission
       localStorage.removeItem(STORAGE_KEY)
@@ -185,7 +185,7 @@ const formatLastSaved = () => {
       <!-- Header -->
       <div class="mb-6">
         <button
-          @click="$inertia.visit(route('cms.payroll.workers.index'))"
+          @click="$inertia.visit(route('bms.payroll.workers.index'))"
           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
         >
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -556,7 +556,7 @@ const formatLastSaved = () => {
         <div class="bg-gray-50 px-6 sm:px-8 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
           <button
             type="button"
-            @click="$inertia.visit(route('cms.payroll.workers.index'))"
+            @click="$inertia.visit(route('bms.payroll.workers.index'))"
             class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             Cancel

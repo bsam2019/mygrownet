@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Eloquent\CMS;
+namespace App\Infrastructure\Persistence\Eloquent\BMS;
 
 use App\Models\User;
 use App\Models\Transaction;

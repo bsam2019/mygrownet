@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface PortalUser {
   id: number
@@ -81,7 +81,7 @@ const selectCustomer = (customer: { id: number; name: string; email: string; pho
 }
 
 const submitLink = () => {
-  form.post(route('cms.portal-users.link'), {
+  form.post(route('bms.portal-users.link'), {
     onSuccess: () => {
       showLinkForm.value = false
       form.reset()
@@ -91,7 +91,7 @@ const submitLink = () => {
 
 const unlinkUser = (userId: number, customerId: number) => {
   if (confirm('Remove this customer link?')) {
-    router.delete(route('cms.portal-users.unlink', [userId, customerId]))
+    router.delete(route('bms.portal-users.unlink', [userId, customerId]))
   }
 }
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\AnalyticsService;
+use App\Domain\BMS\Core\Services\AnalyticsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,7 +20,7 @@ class AnalyticsController extends Controller
 
         $metrics = $this->analyticsService->getOverviewMetrics($companyId);
 
-        return Inertia::render('CMS/Analytics/Overview', [
+        return Inertia::render('BMS/Analytics/Overview', [
             'metrics' => $metrics,
         ]);
     }
@@ -32,7 +32,7 @@ class AnalyticsController extends Controller
 
         $metrics = $this->analyticsService->getOperationsMetrics($companyId, $period);
 
-        return Inertia::render('CMS/Analytics/Operations', [
+        return Inertia::render('BMS/Analytics/Operations', [
             'metrics' => $metrics,
             'period' => $period,
         ]);
@@ -45,7 +45,7 @@ class AnalyticsController extends Controller
 
         $metrics = $this->analyticsService->getFinanceMetrics($companyId, $period);
 
-        return Inertia::render('CMS/Analytics/Finance', [
+        return Inertia::render('BMS/Analytics/Finance', [
             'metrics' => $metrics,
             'period' => $period,
         ]);
@@ -60,7 +60,7 @@ class AnalyticsController extends Controller
         $contracts = $this->analyticsService->getContractMetrics($companyId);
         $assets = $this->analyticsService->getAssetMetrics($companyId);
 
-        return Inertia::render('CMS/Analytics/Procurement', [
+        return Inertia::render('BMS/Analytics/Procurement', [
             'metrics' => $metrics,
             'contracts' => $contracts,
             'assets' => $assets,

@@ -101,7 +101,7 @@ class DashboardController extends Controller
             })
             ->toArray();
         
-        return Inertia::render('Dashboard/Index', [
+        return Inertia::render('Workspace/Index', [
             'walletBalance' => $walletBreakdown['balance'],
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'totalDeposits' => $walletBreakdown['credits']['deposits'],
@@ -170,7 +170,7 @@ class DashboardController extends Controller
             ->where('status', 'paid')
             ->sum('amount');
         
-        return Inertia::render('Dashboard/Index', [
+        return Inertia::render('Workspace/Index', [
             'walletBalance' => (float) $walletBalance,
             'bonusBalance' => (float) ($user->bonus_balance ?? 0),
             'totalDeposits' => (float) ($user->total_deposits ?? 0),

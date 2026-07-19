@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Equipment\Services;
+namespace App\Domain\BMS\Equipment\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentMaintenanceModel;

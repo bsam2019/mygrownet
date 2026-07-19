@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\DocumentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DocumentVersionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DocumentShareModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DocumentSignatureModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DocumentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DocumentVersionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DocumentShareModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DocumentSignatureModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,7 +20,7 @@ class DocumentController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Documents/Index', ['documents' => $documents]);
+        return Inertia::render('BMS/Documents/Index', ['documents' => $documents]);
     }
 
     public function store(Request $request)
@@ -60,7 +60,7 @@ class DocumentController extends Controller
             'ip_address' => request()->ip(),
         ]);
 
-        return Inertia::render('CMS/Documents/Show', ['document' => $document]);
+        return Inertia::render('BMS/Documents/Show', ['document' => $document]);
     }
 
     public function update(Request $request, int $id)
@@ -81,7 +81,7 @@ class DocumentController extends Controller
         $document = DocumentModel::findOrFail($id);
         $document->delete();
 
-        return redirect()->route('cms.documents.index')
+        return redirect()->route('bms.documents.index')
             ->with('success', 'Document deleted');
     }
 

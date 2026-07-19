@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Services\CMS\EmailService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Services\BMS\EmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -25,7 +25,7 @@ class EmailSettingsController extends Controller
         // Get email statistics
         $stats = $this->emailService->getEmailStats($company->id);
 
-        return Inertia::render('CMS/Settings/Email', [
+        return Inertia::render('BMS/Settings/Email', [
             'company' => [
                 'id' => $company->id,
                 'name' => $company->name,
@@ -119,7 +119,7 @@ class EmailSettingsController extends Controller
 
         $logs = $this->emailService->getEmailLogs($cmsUser->company_id, $filters);
 
-        return Inertia::render('CMS/Settings/EmailLogs', [
+        return Inertia::render('BMS/Settings/EmailLogs', [
             'logs' => $logs,
             'filters' => $filters,
         ]);
@@ -133,7 +133,7 @@ class EmailSettingsController extends Controller
             'type' => 'required|in:all,marketing,reminders',
         ]);
 
-        \App\Infrastructure\Persistence\Eloquent\CMS\EmailUnsubscribeModel::updateOrCreate(
+        \App\Infrastructure\Persistence\Eloquent\BMS\EmailUnsubscribeModel::updateOrCreate(
             [
                 'company_id' => $validated['company'],
                 'email_address' => $validated['email'],
@@ -144,7 +144,7 @@ class EmailSettingsController extends Controller
             ]
         );
 
-        return Inertia::render('CMS/EmailUnsubscribed', [
+        return Inertia::render('BMS/EmailUnsubscribed', [
             'type' => $validated['type'],
         ]);
     }
@@ -154,7 +154,7 @@ class EmailSettingsController extends Controller
         $cmsUser = $request->user()->cmsUser;
         $companyId = $cmsUser->company_id;
 
-        $templates = \App\Infrastructure\Persistence\Eloquent\CMS\EmailTemplateModel::where('company_id', $companyId)
+        $templates = \App\Infrastructure\Persistence\Eloquent\BMS\EmailTemplateModel::where('company_id', $companyId)
             ->get();
 
         // Default templates structure
@@ -186,7 +186,7 @@ class EmailSettingsController extends Controller
             ],
         ];
 
-        return Inertia::render('CMS/Settings/EmailTemplates', [
+        return Inertia::render('BMS/Settings/EmailTemplates', [
             'templates' => $templates,
             'defaultTemplates' => $defaultTemplates,
         ]);
@@ -202,7 +202,7 @@ class EmailSettingsController extends Controller
 
         $cmsUser = $request->user()->cmsUser;
 
-        $template = \App\Infrastructure\Persistence\Eloquent\CMS\EmailTemplateModel::where('company_id', $cmsUser->company_id)
+        $template = \App\Infrastructure\Persistence\Eloquent\BMS\EmailTemplateModel::where('company_id', $cmsUser->company_id)
             ->findOrFail($id);
 
         $template->update($validated);

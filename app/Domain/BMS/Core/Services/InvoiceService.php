@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
-use App\Domain\CMS\Core\ValueObjects\InvoiceNumber;
-use App\Domain\CMS\Core\ValueObjects\InvoiceStatus;
+use App\Domain\BMS\Core\ValueObjects\InvoiceNumber;
+use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
 use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceItemModel;

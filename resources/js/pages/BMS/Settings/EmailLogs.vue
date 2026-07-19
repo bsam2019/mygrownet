@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import FormInput from '@/components/BMS/FormInput.vue'
 import FormSelect from '@/components/BMS/FormSelect.vue'
 import { 
@@ -14,7 +14,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface EmailLog {
@@ -54,7 +54,7 @@ const selectedType = ref(props.filters.type || 'all')
 const selectedStatus = ref(props.filters.status || 'all')
 
 const applyFilters = () => {
-  router.get(route('cms.settings.email.logs'), {
+  router.get(route('bms.settings.email.logs'), {
     type: selectedType.value !== 'all' ? selectedType.value : undefined,
     status: selectedStatus.value !== 'all' ? selectedStatus.value : undefined,
     search: search.value || undefined,
@@ -278,7 +278,7 @@ const formatDate = (date: string) => {
               <button
                 v-for="page in logs.last_page"
                 :key="page"
-                @click="router.get(route('cms.settings.email.logs', { ...filters, page }))"
+                @click="router.get(route('bms.settings.email.logs', { ...filters, page }))"
                 :class="[
                   'px-3 py-1 text-sm rounded',
                   page === logs.current_page

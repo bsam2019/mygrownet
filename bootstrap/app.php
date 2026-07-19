@@ -59,10 +59,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Load BOTH CMS route files with different name prefixes
             // This ensures Ziggy has all routes available regardless of environment
             Route::middleware('web')
-                ->group(base_path('routes/cms-subdomain.php'));
+                ->group(base_path('routes/bms-subdomain.php'));
             
             Route::middleware('web')
-                ->group(base_path('routes/cms.php'));
+                ->group(base_path('routes/bms.php'));
             
             // GrowBuilder subdomain routes - NO LONGER LOADED
             // All subdomain handling (including CMS, geopamu, wowthem, and GrowBuilder sites)
@@ -127,9 +127,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'site.permission' => \App\Http\Middleware\SiteUserPermission::class,
             'subdomain.check' => \App\Http\Middleware\SubdomainCheck::class,
             'geopamu.admin' => \App\Http\Middleware\GeopamuAdmin::class,
-            // CMS middleware
-            'cms.access' => \App\Http\Middleware\EnsureCmsAccess::class,
-            'cms.auto-login' => \App\Http\Middleware\AutoLoginToCMS::class,
+            // BMS middleware
+            'bms.access' => \App\Http\Middleware\EnsureBmsAccess::class,
+            'bms.auto-login' => \App\Http\Middleware\AutoLoginToBMS::class,
             'module' => \App\Http\Middleware\CheckModuleEnabled::class,
             'portal.auth' => \App\Http\Middleware\RedirectIfNotPortalUser::class,
             'routing.engine' => \App\Http\Middleware\RoutingEngine::class,
@@ -171,7 +171,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $isStockFlowSubdomain = preg_match('/^[a-z0-9-]+\.mygrownet\.com$/i', $host)
                 && !in_array(strtolower(explode('.', $host)[0]), [
                     'bizboost', 'bizdocs', 'growbuilder', 'venture', 'grownet',
-                    'growstorage', 'growmart', 'zamstay', 'cms', 'primeedge',
+                    'growstorage', 'growmart', 'zamstay', 'bms', 'primeedge',
                     'stockflow', 'geopamu', 'wowthem', 'www',
                 ]);
 

@@ -77,7 +77,7 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
     Route::post('loans/applications/{application}/approve', [LoanManagementController::class, 'approveApplication'])->name('loans.applications.approve');
     Route::post('loans/applications/{application}/reject', [LoanManagementController::class, 'rejectApplication'])->name('loans.applications.reject');
 
-    // Platform Loans (CMS-based accounting system)
+    // Platform Loans (BMS-based accounting system)
     Route::prefix('platform-loans')->name('platform-loans.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\LoanController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\Admin\LoanController::class, 'create'])->name('create');
@@ -395,7 +395,7 @@ Route::group(['middleware' => ['auth', 'admin'], 'prefix' => 'admin', 'as' => 'a
         Route::get('/export-pdf', [App\Http\Controllers\Admin\ProfitLossController::class, 'exportPdf'])->name('export-pdf');
     });
     
-    // Budget Management (CMS Integration - Phase 2)
+    // Budget Management (BMS Integration - Phase 2)
     Route::prefix('budget')->name('budget.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\BudgetController::class, 'index'])->name('index');
         Route::get('/comparison', [App\Http\Controllers\Admin\BudgetController::class, 'getComparison'])->name('comparison');

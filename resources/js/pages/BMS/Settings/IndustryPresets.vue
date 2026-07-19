@@ -11,10 +11,10 @@ import {
   CheckCircleIcon,
   ScissorsIcon,
 } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Preset {
@@ -68,7 +68,7 @@ const viewPreset = async (code: string) => {
   showPreview.value = true
 
   try {
-    const response = await fetch(route('cms.settings.industry-presets.show', code))
+    const response = await fetch(route('bms.settings.industry-presets.show', code))
     previewData.value = await response.json()
   } catch (error) {
     console.error('Failed to load preset details:', error)
@@ -132,7 +132,7 @@ const applyPreset = async (code: string) => {
   isLoading.value = true
 
   try {
-    const response = await fetch(route('cms.settings.industry-presets.apply'), {
+    const response = await fetch(route('bms.settings.industry-presets.apply'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

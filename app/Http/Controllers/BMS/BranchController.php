@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\BranchModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BranchModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +29,7 @@ class BranchController extends Controller
             ->orderBy('branch_name')
             ->paginate(20);
 
-        return Inertia::render('CMS/Branches/Index', [
+        return Inertia::render('BMS/Branches/Index', [
             'branches' => $branches,
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -44,7 +44,7 @@ class BranchController extends Controller
             ->get()
             ->map(fn($u) => ['id' => $u->id, 'name' => $u->user?->name ?? "User #{$u->id}"]);
 
-        return Inertia::render('CMS/Branches/Create', [
+        return Inertia::render('BMS/Branches/Create', [
             'managers' => $managers,
         ]);
     }
@@ -71,7 +71,7 @@ class BranchController extends Controller
         BranchModel::create($validated);
 
         return redirect()
-            ->route('cms.branches.index')
+            ->route('bms.branches.index')
             ->with('success', 'Branch created successfully');
     }
 
@@ -87,7 +87,7 @@ class BranchController extends Controller
             ->get()
             ->map(fn($u) => ['id' => $u->id, 'name' => $u->user?->name ?? "User #{$u->id}"]);
 
-        return Inertia::render('CMS/Branches/Edit', [
+        return Inertia::render('BMS/Branches/Edit', [
             'branch' => [
                 'id' => $branch->id,
                 'branch_code' => $branch->branch_code,
@@ -137,7 +137,7 @@ class BranchController extends Controller
         $branch->update($validated);
 
         return redirect()
-            ->route('cms.branches.index')
+            ->route('bms.branches.index')
             ->with('success', 'Branch updated successfully');
     }
 
@@ -157,7 +157,7 @@ class BranchController extends Controller
         $branch->delete();
 
         return redirect()
-            ->route('cms.branches.index')
+            ->route('bms.branches.index')
             ->with('success', 'Branch deleted successfully');
     }
 }

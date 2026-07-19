@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\ChartOfAccountsService;
-use App\Domain\CMS\Core\ValueObjects\AccountType;
+use App\Domain\BMS\Core\Services\ChartOfAccountsService;
+use App\Domain\BMS\Core\ValueObjects\AccountType;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\AccountModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JournalEntryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AccountModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JournalEntryModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +27,7 @@ class AccountingController extends Controller
             ->get()
             ->groupBy('type');
 
-        return Inertia::render('CMS/Accounting/Index', [
+        return Inertia::render('BMS/Accounting/Index', [
             'accounts' => $accounts,
             'accountTypes' => collect(AccountType::cases())->map(fn($type) => [
                 'value' => $type->value,
@@ -39,7 +39,7 @@ class AccountingController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Accounting/Create', [
+        return Inertia::render('BMS/Accounting/Create', [
             'accountTypes' => collect(AccountType::cases())->map(fn($type) => [
                 'value' => $type->value,
                 'label' => $type->label(),
@@ -74,7 +74,7 @@ class AccountingController extends Controller
             ...$validated,
         ]);
 
-        return redirect()->route('cms.accounting.index')
+        return redirect()->route('bms.accounting.index')
             ->with('success', 'Account created successfully!');
     }
 
@@ -92,7 +92,7 @@ class AccountingController extends Controller
             ->limit(50)
             ->get();
 
-        return Inertia::render('CMS/Accounting/Show', [
+        return Inertia::render('BMS/Accounting/Show', [
             'account' => $account,
             'recentTransactions' => $recentTransactions,
         ]);
@@ -117,7 +117,7 @@ class AccountingController extends Controller
 
         $account->update($validated);
 
-        return redirect()->route('cms.accounting.index')
+        return redirect()->route('bms.accounting.index')
             ->with('success', 'Account updated successfully!');
     }
 
@@ -146,7 +146,7 @@ class AccountingController extends Controller
 
         $trialBalance = $this->chartService->getTrialBalance($companyId);
 
-        return Inertia::render('CMS/Accounting/TrialBalance', [
+        return Inertia::render('BMS/Accounting/TrialBalance', [
             'trialBalance' => $trialBalance,
         ]);
     }
@@ -160,7 +160,7 @@ class AccountingController extends Controller
             ->latest('entry_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Accounting/JournalEntries', [
+        return Inertia::render('BMS/Accounting/JournalEntries', [
             'entries' => $entries,
         ]);
     }

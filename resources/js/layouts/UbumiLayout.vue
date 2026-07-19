@@ -163,7 +163,7 @@
                         </div>
                         <div class="space-y-2">
                             <Link
-                                :href="route('dashboard')"
+                                :href="route('workspace')"
                                 class="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors"
                                 @click="showMoreMenu = false"
                             >

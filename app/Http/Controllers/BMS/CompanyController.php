@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Domain\CMS\Core\Services\IndustryPresetService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RoleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\IndustryPresetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Domain\BMS\Core\Services\IndustryPresetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -85,7 +85,7 @@ class CompanyController extends Controller
             ],
         ]);
 
-        return Inertia::render('CMS/Companies/Hub', [
+        return Inertia::render('BMS/Companies/Hub', [
             'companies' => $companies,
             'defaultCompanyId' => $user->default_company_id,
         ]);
@@ -100,7 +100,7 @@ class CompanyController extends Controller
             'id', 'code', 'name', 'description', 'icon', 'sort_order',
         ]);
 
-        return Inertia::render('CMS/Companies/Create', [
+        return Inertia::render('BMS/Companies/Create', [
             'presets' => $presets,
         ]);
     }
@@ -182,7 +182,7 @@ class CompanyController extends Controller
         // Save session explicitly
         $request->session()->save();
 
-        return redirect()->route('cms.dashboard')
+        return redirect()->route('bms.dashboard')
             ->with('success', "Welcome to {$validated['name']}! Your company is ready.");
     }
 
@@ -204,7 +204,7 @@ class CompanyController extends Controller
 
         session(['active_cms_company_id' => $companyId]);
 
-        return redirect()->route('cms.dashboard');
+        return redirect()->route('bms.dashboard');
     }
 
     /**

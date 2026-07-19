@@ -105,7 +105,7 @@
           <!-- Cancel Link (only if not forced) -->
           <div v-if="!forced" class="text-center">
             <Link
-              :href="route('cms.dashboard')"
+              :href="route('bms.dashboard')"
               class="text-sm text-gray-600 hover:text-gray-900"
             >
               Cancel and return to dashboard
@@ -135,7 +135,7 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.password.update'), {
+  form.post(route('bms.password.update'), {
     preserveScroll: true,
   })
 }

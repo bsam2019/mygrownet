@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Materials\Services\MaterialService;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialCategoryModel;
+use App\Domain\BMS\Materials\Services\MaterialService;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialCategoryModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +37,7 @@ class MaterialController extends Controller
             ->ordered()
             ->get();
 
-        return Inertia::render('CMS/Materials/Index', [
+        return Inertia::render('BMS/Materials/Index', [
             'materials' => $materials,
             'categories' => $categories,
             'filters' => $request->only(['category_id', 'search', 'active']),
@@ -53,7 +53,7 @@ class MaterialController extends Controller
             ->ordered()
             ->get();
 
-        return Inertia::render('CMS/Materials/Create', [
+        return Inertia::render('BMS/Materials/Create', [
             'categories' => $categories,
         ]);
     }
@@ -84,7 +84,7 @@ class MaterialController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.materials.index')
+            ->route('bms.materials.index')
             ->with('success', 'Material created successfully');
     }
 
@@ -100,7 +100,7 @@ class MaterialController extends Controller
             ->ordered()
             ->get();
 
-        return Inertia::render('CMS/Materials/Edit', [
+        return Inertia::render('BMS/Materials/Edit', [
             'material' => $material,
             'categories' => $categories,
         ]);
@@ -134,7 +134,7 @@ class MaterialController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.materials.index')
+            ->route('bms.materials.index')
             ->with('success', 'Material updated successfully');
     }
 
@@ -161,7 +161,7 @@ class MaterialController extends Controller
             ->orderBy('effective_date', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Materials/PriceHistory', [
+        return Inertia::render('BMS/Materials/PriceHistory', [
             'material' => $material,
             'history' => $history,
         ]);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import FormInput from '@/components/BMS/FormInput.vue'
 import { 
   EnvelopeIcon, 
@@ -11,7 +11,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface EmailTemplate {
@@ -60,7 +60,7 @@ const resetToDefault = () => {
 }
 
 const submit = () => {
-  form.put(route('cms.settings.email.templates.update', selectedTemplate.value?.id), {
+  form.put(route('bms.settings.email.templates.update', selectedTemplate.value?.id), {
     preserveScroll: true,
   })
 }

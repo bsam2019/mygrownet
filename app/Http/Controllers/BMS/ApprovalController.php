@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\ApprovalWorkflowService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalChainModel;
+use App\Domain\BMS\Core\Services\ApprovalWorkflowService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalChainModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +32,7 @@ class ApprovalController extends Controller
             ->orderBy('submitted_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Approvals/Index', [
+        return Inertia::render('BMS/Approvals/Index', [
             'pendingApprovals' => $pendingApprovals,
             'allRequests' => $allRequests,
         ]);
@@ -49,7 +49,7 @@ class ApprovalController extends Controller
             ->with(['requestedBy.user', 'approvable', 'steps.approver.user'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Approvals/Show', [
+        return Inertia::render('BMS/Approvals/Show', [
             'approval' => $approval,
         ]);
     }
@@ -126,7 +126,7 @@ class ApprovalController extends Controller
             ->orderBy('entity_type')
             ->get();
 
-        return Inertia::render('CMS/Approvals/Chains', [
+        return Inertia::render('BMS/Approvals/Chains', [
             'chains' => $chains,
         ]);
     }

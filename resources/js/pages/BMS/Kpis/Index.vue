@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref, onMounted } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from '@heroicons/vue/24/outline';
 
 interface KpiItem {
@@ -98,7 +98,7 @@ function trendColor(trend: string) {
 <template>
     <Head title="KPIs" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -108,7 +108,7 @@ function trendColor(trend: string) {
                     </p>
                 </div>
                 <Link
-                    :href="route('cms.kpis.create')"
+                    :href="route('bms.kpis.create')"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
                     <PlusIcon class="h-5 w-5" />
@@ -137,7 +137,7 @@ function trendColor(trend: string) {
                                     {{ kpi.frequency }}
                                 </span>
                             </div>
-                            <Link :href="route('cms.kpis.show', kpi.id)" class="text-sm font-semibold text-gray-900 hover:text-blue-600">
+                            <Link :href="route('bms.kpis.show', kpi.id)" class="text-sm font-semibold text-gray-900 hover:text-blue-600">
                                 {{ kpi.name }}
                             </Link>
                             <p v-if="kpi.description" class="text-xs text-gray-500 mt-0.5 truncate">{{ kpi.description }}</p>
@@ -164,5 +164,5 @@ function trendColor(trend: string) {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

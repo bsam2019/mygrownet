@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\TrainingService;
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingProgramModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingSessionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SkillModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CertificationModel;
+use App\Domain\BMS\Core\Services\TrainingService;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingProgramModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingSessionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SkillModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CertificationModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -35,7 +35,7 @@ class TrainingController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Training/Programs', [
+        return Inertia::render('BMS/Training/Programs', [
             'programs' => $programs,
             'filters' => $request->only(['search', 'type', 'status']),
             'statistics' => $this->trainingService->getTrainingStatistics($companyId),
@@ -66,7 +66,7 @@ class TrainingController extends Controller
             array_merge($validated, ['created_by' => $request->user()->id])
         );
 
-        return redirect()->route('cms.training.programs')
+        return redirect()->route('bms.training.programs')
             ->with('success', 'Training program created successfully');
     }
 
@@ -84,7 +84,7 @@ class TrainingController extends Controller
             ->orderBy('start_date', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Training/Sessions', [
+        return Inertia::render('BMS/Training/Sessions', [
             'sessions' => $sessions,
             'filters' => $request->only(['status']),
         ]);
@@ -104,7 +104,7 @@ class TrainingController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Training/Skills', [
+        return Inertia::render('BMS/Training/Skills', [
             'skills' => $skills,
             'filters' => $request->only(['search', 'category']),
         ]);
@@ -126,7 +126,7 @@ class TrainingController extends Controller
 
         $expiring = $this->trainingService->getExpiringCertifications($companyId);
 
-        return Inertia::render('CMS/Training/Certifications', [
+        return Inertia::render('BMS/Training/Certifications', [
             'certifications' => $certifications,
             'expiring' => $expiring,
             'filters' => $request->only(['status']),

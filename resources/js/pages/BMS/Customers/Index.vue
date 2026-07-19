@@ -88,7 +88,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <Link
-                  :href="route('cms.customers.show', customer.id)"
+                  :href="route('bms.customers.show', customer.id)"
                   class="text-blue-600 hover:text-blue-800"
                 >
                   View
@@ -135,11 +135,11 @@
 <script setup lang="ts">
 import { ref, inject } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -158,7 +158,7 @@ const slideOver: any = inject('slideOver')
 const filters = ref({ ...props.filters })
 
 const applyFilters = () => {
-  router.get(route('cms.customers.index'), filters.value, {
+  router.get(route('bms.customers.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   })

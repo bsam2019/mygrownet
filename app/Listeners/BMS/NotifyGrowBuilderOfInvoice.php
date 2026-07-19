@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Listeners\CMS;
+namespace App\Listeners\BMS;
 
 use App\Events\CMS\InvoiceCreated;
 use Illuminate\Support\Facades\Log;

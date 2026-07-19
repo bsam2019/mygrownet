@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\RecruitmentService;
+use App\Domain\BMS\Core\Services\RecruitmentService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,14 +20,14 @@ class RecruitmentController extends Controller
         
         $jobPostings = $this->recruitmentService->getJobPostings($companyId, $status);
 
-        return Inertia::render('CMS/Recruitment/JobPostings', [
+        return Inertia::render('BMS/Recruitment/JobPostings', [
             'jobPostings' => $jobPostings,
         ]);
     }
 
     public function jobPostingsCreate()
     {
-        return Inertia::render('CMS/Recruitment/CreateJobPosting');
+        return Inertia::render('BMS/Recruitment/CreateJobPosting');
     }
 
     public function jobPostingsStore(Request $request)
@@ -51,7 +51,7 @@ class RecruitmentController extends Controller
             $validated
         );
 
-        return redirect()->route('cms.recruitment.job-postings.index')
+        return redirect()->route('bms.recruitment.job-postings.index')
             ->with('success', 'Job posting created successfully');
     }
 
@@ -59,7 +59,7 @@ class RecruitmentController extends Controller
     {
         $applications = $this->recruitmentService->getApplications($jobPostingId);
 
-        return Inertia::render('CMS/Recruitment/Applications', [
+        return Inertia::render('BMS/Recruitment/Applications', [
             'applications' => $applications,
             'jobPostingId' => $jobPostingId,
         ]);
@@ -81,7 +81,7 @@ class RecruitmentController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $interviews = $this->recruitmentService->getUpcomingInterviews($companyId);
 
-        return Inertia::render('CMS/Recruitment/Interviews', [
+        return Inertia::render('BMS/Recruitment/Interviews', [
             'interviews' => $interviews,
         ]);
     }

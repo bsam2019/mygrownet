@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Domain\CMS\Core\Services\ApprovalWorkflowService;
-use App\Domain\CMS\Core\Services\PdfPurchaseOrderService;
-use App\Domain\CMS\Materials\Services\PurchaseOrderService;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Domain\BMS\Core\Services\ApprovalWorkflowService;
+use App\Domain\BMS\Core\Services\PdfPurchaseOrderService;
+use App\Domain\BMS\Materials\Services\PurchaseOrderService;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialPurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PurchaseOrderController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     public function __construct(
         private PurchaseOrderService $purchaseOrderService,
@@ -35,11 +35,11 @@ class PurchaseOrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/PurchaseOrders/Index', [
+        return Inertia::render('BMS/PurchaseOrders/Index', [
             'purchaseOrders' => $purchaseOrders,
             'filters' => $request->only(['status', 'job_id', 'branch_id']),
             'branches' => $branches,
@@ -56,7 +56,7 @@ class PurchaseOrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('CMS/PurchaseOrders/Create', [
+        return Inertia::render('BMS/PurchaseOrders/Create', [
             'jobs' => $jobs,
         ]);
     }
@@ -85,11 +85,11 @@ class PurchaseOrderController extends Controller
         $po = $this->purchaseOrderService->createPurchaseOrder([
             ...$validated,
             'company_id' => $companyId,
-            'created_by' => $this->getCmsUserOrFail($request)->id,
+            'created_by' => $this->getBmsUserOrFail($request)->id,
         ]);
 
         return redirect()
-            ->route('cms.purchase-orders.show', $po->id)
+            ->route('bms.purchase-orders.show', $po->id)
             ->with('success', 'Purchase order created successfully');
     }
 
@@ -106,7 +106,7 @@ class PurchaseOrderController extends Controller
             'approvedBy.user',
         ]);
 
-        return Inertia::render('CMS/PurchaseOrders/Show', [
+        return Inertia::render('BMS/PurchaseOrders/Show', [
             'purchaseOrder' => $purchaseOrder,
         ]);
     }
@@ -120,7 +120,7 @@ class PurchaseOrderController extends Controller
             $q->where('status', 'planned')->with('material');
         }]);
 
-        return Inertia::render('CMS/PurchaseOrders/CreateFromJob', [
+        return Inertia::render('BMS/PurchaseOrders/CreateFromJob', [
             'job' => $job,
         ]);
     }
@@ -153,18 +153,18 @@ class PurchaseOrderController extends Controller
                 'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
-                'created_by' => $this->getCmsUserOrFail($request)->id,
+                'created_by' => $this->getBmsUserOrFail($request)->id,
             ]
         );
 
         return redirect()
-            ->route('cms.purchase-orders.show', $po->id)
+            ->route('bms.purchase-orders.show', $po->id)
             ->with('success', 'Purchase order created from job materials');
     }
 
     public function approve(MaterialPurchaseOrderModel $purchaseOrder)
     {
-        $user = $this->getCmsUserOrFail(request());
+        $user = $this->getBmsUserOrFail(request());
         $companyId = $user->company_id;
         if ($purchaseOrder->company_id !== $companyId) abort(403);
 
@@ -232,7 +232,7 @@ class PurchaseOrderController extends Controller
 
         if ($purchaseOrder->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generatePurchaseOrderPdf($purchaseOrder);
 
                 return response($pdfContent)
@@ -258,7 +258,7 @@ class PurchaseOrderController extends Controller
 
         if ($purchaseOrder->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generatePurchaseOrderPdf($purchaseOrder);
 
                 return response($pdfContent)

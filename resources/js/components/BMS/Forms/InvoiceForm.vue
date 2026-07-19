@@ -187,7 +187,7 @@ const formatCurrency = (amount: number) => {
 }
 
 const submit = () => {
-  form.post(route('cms.invoices.store'), {
+  form.post(route('bms.invoices.store'), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

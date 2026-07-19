@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTemplateModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTaskModel;

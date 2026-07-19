@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Task Templates">
+  <BMSLayout page-title="Task Templates">
     <div class="max-w-7xl mx-auto space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -167,13 +167,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   templates: any[]
@@ -199,7 +199,7 @@ const useForm = ref({
 })
 
 const createTemplate = () => {
-  router.post(route('cms.operations.templates.store'), form.value, {
+  router.post(route('bms.operations.templates.store'), form.value, {
     onSuccess: () => {
       showCreateModal.value = false
       form.value = {
@@ -220,7 +220,7 @@ const createFromTemplate = (template: any) => {
 }
 
 const submitCreateFromTemplate = () => {
-  router.post(route('cms.operations.templates.create-task', selectedTemplate.value.id), useForm.value, {
+  router.post(route('bms.operations.templates.create-task', selectedTemplate.value.id), useForm.value, {
     onSuccess: () => {
       showUseModal.value = false
       useForm.value = { title: '', due_date: '' }

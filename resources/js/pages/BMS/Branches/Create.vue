@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 
 interface Manager {
@@ -28,7 +28,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('cms.branches.store'), {
+    form.post(route('bms.branches.store'), {
         onError: () => {},
     });
 };
@@ -37,9 +37,9 @@ const submit = () => {
 <template>
     <Head title="Create Branch" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Link :href="route('cms.branches.index')" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6">
+            <Link :href="route('bms.branches.index')" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6">
                 <ArrowLeftIcon class="h-4 w-4" />
                 Back to Branches
             </Link>
@@ -112,7 +112,7 @@ const submit = () => {
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <Link :href="route('cms.branches.index')"
+                        <Link :href="route('bms.branches.index')"
                             class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                             Cancel
                         </Link>
@@ -124,5 +124,5 @@ const submit = () => {
                 </form>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

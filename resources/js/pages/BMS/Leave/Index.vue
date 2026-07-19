@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Leave Management">
+  <BMSLayout title="Leave Management">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage employee leave requests and balances</p>
         </div>
         <Link
-          :href="route('cms.leave.create')"
+          :href="route('bms.leave.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +50,7 @@
           </div>
           <div class="flex items-end">
             <Link
-              :href="route('cms.leave.balance')"
+              :href="route('bms.leave.balance')"
               class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-center"
             >
               View Leave Balances
@@ -105,7 +105,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <Link
-                  :href="route('cms.leave.show', leave.id)"
+                  :href="route('bms.leave.show', leave.id)"
                   class="text-blue-600 hover:text-blue-900"
                 >
                   View
@@ -148,13 +148,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   leaveRequests: any;
@@ -173,7 +173,7 @@ const filters = ref({
 });
 
 const applyFilters = () => {
-  router.get(route('cms.leave.index'), filters.value, {
+  router.get(route('bms.leave.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   });

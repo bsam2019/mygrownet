@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { MagnifyingGlassIcon, PlusIcon, FunnelIcon } from '@heroicons/vue/24/outline';
 
 interface Project {
@@ -49,7 +49,7 @@ const priorityColors = {
 };
 
 const applyFilters = () => {
-  router.get(route('cms.projects.index'), {
+  router.get(route('bms.projects.index'), {
     search: search.value,
     status: statusFilter.value,
   }, { preserveState: true });
@@ -59,7 +59,7 @@ const applyFilters = () => {
 <template>
   <Head title="Projects" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -68,7 +68,7 @@ const applyFilters = () => {
           <p class="mt-1 text-sm text-gray-500">Manage construction projects and timelines</p>
         </div>
         <Link
-          :href="route('cms.projects.create')"
+          :href="route('bms.projects.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -134,7 +134,7 @@ const applyFilters = () => {
             <tr v-for="project in projects.data" :key="project.id" class="hover:bg-gray-50">
               <td class="px-6 py-4">
                 <div>
-                  <Link :href="route('cms.projects.show', project.id)" class="font-medium text-blue-600 hover:text-blue-800">
+                  <Link :href="route('bms.projects.show', project.id)" class="font-medium text-blue-600 hover:text-blue-800">
                     {{ project.name }}
                   </Link>
                   <div class="text-sm text-gray-500">{{ project.project_number }}</div>
@@ -173,7 +173,7 @@ const applyFilters = () => {
               </td>
               <td class="px-6 py-4 text-right text-sm">
                 <Link
-                  :href="route('cms.projects.show', project.id)"
+                  :href="route('bms.projects.show', project.id)"
                   class="text-blue-600 hover:text-blue-800"
                 >
                   View
@@ -189,7 +189,7 @@ const applyFilters = () => {
         <button
           v-for="page in projects.last_page"
           :key="page"
-          @click="router.get(route('cms.projects.index', { page }))"
+          @click="router.get(route('bms.projects.index', { page }))"
           :class="[
             'px-4 py-2 rounded-lg',
             page === projects.current_page
@@ -201,5 +201,5 @@ const applyFilters = () => {
         </button>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

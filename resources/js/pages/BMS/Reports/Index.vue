@@ -3,10 +3,10 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { ChartBarIcon, BanknotesIcon, DocumentTextIcon, BriefcaseIcon, CalculatorIcon, BookOpenIcon, ReceiptPercentIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon, ScaleIcon, ArrowTrendingUpIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -84,7 +84,7 @@ const setDatePreset = (preset: string) => {
 };
 
 const exportReport = (reportType: string) => {
-    const url = route('cms.reports.export', {
+    const url = route('bms.reports.export', {
         report_type: reportType,
         format: 'csv',
         start_date: startDate.value,
@@ -106,7 +106,7 @@ const exportReport = (reportType: string) => {
                     <p class="mt-1 text-sm text-gray-600">View financial performance and analytics</p>
                 </div>
                 <Link
-                    :href="route('cms.analytics.finance')"
+                    :href="route('bms.analytics.finance')"
                     class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow border border-gray-300"
                 >
                     <ArrowLeftIcon class="h-4 w-4" aria-hidden="true" />
@@ -300,7 +300,7 @@ const exportReport = (reportType: string) => {
                     <tbody class="divide-y divide-gray-200 bg-white">
                         <tr v-for="invoice in outstandingInvoices.invoices" :key="invoice.id" class="hover:bg-gray-50">
                             <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-blue-600">
-                                <a :href="route('cms.invoices.show', invoice.id)">{{ invoice.invoice_number }}</a>
+                                <a :href="route('bms.invoices.show', invoice.id)">{{ invoice.invoice_number }}</a>
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{{ invoice.customer_name }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
@@ -641,7 +641,7 @@ const exportReport = (reportType: string) => {
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Balance Sheet Card -->
                 <Link
-                    :href="route('cms.reports.balance-sheet')"
+                    :href="route('bms.reports.balance-sheet')"
                     class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-emerald-500 hover:border-emerald-600"
                 >
                     <div class="flex items-center gap-3 mb-3">
@@ -665,7 +665,7 @@ const exportReport = (reportType: string) => {
 
                 <!-- Cash Flow Statement Card -->
                 <Link
-                    :href="route('cms.reports.cash-flow-statement')"
+                    :href="route('bms.reports.cash-flow-statement')"
                     class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-blue-500 hover:border-blue-600"
                 >
                     <div class="flex items-center gap-3 mb-3">
@@ -689,7 +689,7 @@ const exportReport = (reportType: string) => {
 
                 <!-- General Ledger Card -->
                 <Link
-                    :href="route('cms.reports.general-ledger')"
+                    :href="route('bms.reports.general-ledger')"
                     class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-purple-500 hover:border-purple-600"
                 >
                     <div class="flex items-center gap-3 mb-3">
@@ -713,7 +713,7 @@ const exportReport = (reportType: string) => {
 
                 <!-- Trial Balance Card -->
                 <Link
-                    :href="route('cms.reports.trial-balance')"
+                    :href="route('bms.reports.trial-balance')"
                     class="group rounded-lg bg-white p-6 shadow hover:shadow-lg transition-all border-l-4 border-indigo-500 hover:border-indigo-600"
                 >
                     <div class="flex items-center gap-3 mb-3">

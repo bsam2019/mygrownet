@@ -40,7 +40,7 @@
       <Link
         v-for="job in jobs.data"
         :key="job.id"
-        :href="route('cms.jobs.show', job.id)"
+        :href="route('bms.jobs.show', job.id)"
         class="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 active:bg-gray-50 transition"
       >
         <div class="flex items-start justify-between gap-3 mb-2">
@@ -76,7 +76,7 @@
         <BriefcaseIcon class="h-12 w-12 text-gray-300 mx-auto mb-2" aria-hidden="true" />
         <p class="text-sm text-gray-500 mb-3">No jobs found</p>
         <Link
-          :href="route('cms.jobs.create')"
+          :href="route('bms.jobs.create')"
           class="inline-block text-sm text-blue-600 font-medium"
         >
           Create your first job
@@ -127,7 +127,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
                 <Link
-                  :href="route('cms.jobs.show', job.id)"
+                  :href="route('bms.jobs.show', job.id)"
                   class="text-blue-600 hover:text-blue-800"
                 >
                   View
@@ -197,7 +197,7 @@
 <script setup lang="ts">
 import { ref, inject } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   BriefcaseIcon,
   ChevronRightIcon,
@@ -205,7 +205,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -224,7 +224,7 @@ const slideOver: any = inject('slideOver')
 const filters = ref({ ...props.filters })
 
 const applyFilters = () => {
-  router.get(route('cms.jobs.index'), filters.value, {
+  router.get(route('bms.jobs.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   })

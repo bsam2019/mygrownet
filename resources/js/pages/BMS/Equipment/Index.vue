@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { MagnifyingGlassIcon, PlusIcon, WrenchIcon } from '@heroicons/vue/24/outline';
 
 interface Equipment {
@@ -36,7 +36,7 @@ const statusColors = {
 <template>
   <Head title="Equipment" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
@@ -44,7 +44,7 @@ const statusColors = {
           <p class="mt-1 text-sm text-gray-500">Manage equipment and maintenance</p>
         </div>
         <Link
-          :href="route('cms.equipment.create')"
+          :href="route('bms.equipment.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -68,7 +68,7 @@ const statusColors = {
             <tr v-for="item in equipment.data" :key="item.id" class="hover:bg-gray-50">
               <td class="px-6 py-4">
                 <div>
-                  <Link :href="route('cms.equipment.show', item.id)" class="font-medium text-blue-600 hover:text-blue-800">
+                  <Link :href="route('bms.equipment.show', item.id)" class="font-medium text-blue-600 hover:text-blue-800">
                     {{ item.name }}
                   </Link>
                   <div class="text-sm text-gray-500">{{ item.equipment_code }}</div>
@@ -83,7 +83,7 @@ const statusColors = {
               <td class="px-6 py-4 text-sm text-gray-900">K{{ item.current_value?.toLocaleString() }}</td>
               <td class="px-6 py-4 text-sm text-gray-500">{{ item.last_maintenance_date || 'N/A' }}</td>
               <td class="px-6 py-4 text-right text-sm">
-                <Link :href="route('cms.equipment.show', item.id)" class="text-blue-600 hover:text-blue-800">
+                <Link :href="route('bms.equipment.show', item.id)" class="text-blue-600 hover:text-blue-800">
                   View
                 </Link>
               </td>
@@ -92,5 +92,5 @@ const statusColors = {
         </table>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

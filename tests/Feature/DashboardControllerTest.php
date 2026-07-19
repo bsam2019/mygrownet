@@ -66,7 +66,7 @@ class DashboardControllerTest extends TestCase
             'status' => 'paid'
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('dashboard'));
+        $response = $this->actingAs($this->user)->get(route('workspace'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 
@@ -441,11 +441,11 @@ class DashboardControllerTest extends TestCase
     public function it_caches_dashboard_data_for_performance()
     {
         // First request should hit the database
-        $response1 = $this->actingAs($this->user)->get(route('dashboard'));
+        $response1 = $this->actingAs($this->user)->get(route('workspace'));
         $response1->assertStatus(200);
 
         // Second request should use cached data
-        $response2 = $this->actingAs($this->user)->get(route('dashboard'));
+        $response2 = $this->actingAs($this->user)->get(route('workspace'));
         $response2->assertStatus(200);
 
         // Both responses should be identical
@@ -465,7 +465,7 @@ class DashboardControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($userWithoutInvestments)
-            ->get(route('dashboard'));
+            ->get(route('workspace'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => 

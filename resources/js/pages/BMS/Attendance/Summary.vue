@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Attendance Summary">
+  <BMSLayout title="Attendance Summary">
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
@@ -7,7 +7,7 @@
           <p class="mt-1 text-sm text-gray-500">View attendance statistics and trends</p>
         </div>
         <Link
-          :href="route('cms.attendance.index')"
+          :href="route('bms.attendance.index')"
           class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
         >
           Back to Records
@@ -115,13 +115,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   summary?: any;
@@ -142,7 +142,7 @@ const filters = ref({
 });
 
 const loadSummary = () => {
-  router.get(route('cms.attendance.summary'), filters.value, {
+  router.get(route('bms.attendance.summary'), filters.value, {
     preserveState: true,
   });
 };

@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 
 const form = ref({
@@ -23,7 +23,7 @@ function submit() {
         return;
     }
     submitting.value = true;
-    router.post(route('cms.plans.store'), form.value, {
+    router.post(route('bms.plans.store'), form.value, {
         onSuccess: () => {
             toast.success('Created', 'Plan created successfully');
         },
@@ -48,10 +48,10 @@ const typeOptions = [
 <template>
     <Head title="Create Plan" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-2xl mx-auto space-y-6">
             <div>
-                <Link :href="route('cms.plans.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to Plans</Link>
+                <Link :href="route('bms.plans.index')" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to Plans</Link>
                 <h1 class="text-2xl font-bold text-gray-900 mt-2">New Plan</h1>
             </div>
 
@@ -148,7 +148,7 @@ const typeOptions = [
 
                 <div class="flex gap-3 justify-end pt-4 border-t border-gray-100">
                     <Link
-                        :href="route('cms.plans.index')"
+                        :href="route('bms.plans.index')"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                     >
                         Cancel
@@ -163,5 +163,5 @@ const typeOptions = [
                 </div>
             </form>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

@@ -78,7 +78,7 @@ const hasPermission = (permission: string) => isAdmin.value || props.user.permis
 const isCurrentPage = (href: string) => {
     const currentUrl = page.url;
     // Exact match for dashboard, prefix match for others
-    if (href.endsWith('/dashboard')) {
+    if (href.endsWith('/workspace')) {
         return currentUrl === href || currentUrl === href + '/';
     }
     return currentUrl.startsWith(href);

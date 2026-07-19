@@ -2215,15 +2215,15 @@ class User extends Authenticatable
      */
     public function cmsUsers(): HasMany
     {
-        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::class);
+        return $this->hasMany(\App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::class);
     }
 
     /**
      * The currently active CMS user record, resolved from session.
-     * Falls back to the first active membership.
+     *
      * This is what all CMS controllers use via $request->user()->cmsUser
      */
-    public function getCmsUserAttribute(): ?\App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel
+    public function getCmsUserAttribute(): ?\App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel
     {
         // 1. Session-set company (highest priority — active working session)
         $activeCompanyId = session('active_cms_company_id');
@@ -2261,7 +2261,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get user's CMS company (if they have CMS access)
+     * Get user's BMS company (if they have BMS access)
      */
     public function cmsCompany()
     {
@@ -2390,7 +2390,7 @@ class User extends Authenticatable
     public function portalCustomers(): BelongsToMany
     {
         return $this->belongsToMany(
-            \App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel::class,
+            \App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel::class,
             'portal_user_customers',
             'user_id',
             'customer_id'

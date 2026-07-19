@@ -109,7 +109,7 @@ async function submit() {
     form.transform((data) => ({
         ...data,
         phone: fullPhone,
-    })).post(route('cms.companies.store'), {
+    })).post(route('bms.companies.store'), {
         onSuccess: () => clearStorage(),
         onError: (errors) => {
             // If 419 somehow still happens, reload the page to get a fresh token
@@ -278,7 +278,7 @@ const iconMap: Record<string, string> = {
             </form>
 
             <div class="text-center mt-5">
-                <Link :href="route('cms.companies.hub')" class="text-sm text-gray-500 hover:text-gray-700 transition">
+                <Link :href="route('bms.companies.hub')" class="text-sm text-gray-500 hover:text-gray-700 transition">
                     ← Back to My Companies
                 </Link>
             </div>

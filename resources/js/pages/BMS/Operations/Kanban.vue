@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Task Board">
+  <BMSLayout page-title="Task Board">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -19,7 +19,7 @@
             </option>
           </select>
           <Link
-            :href="route('cms.operations.tasks.create')"
+            :href="route('bms.operations.tasks.create')"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -64,7 +64,7 @@
               class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 cursor-move hover:shadow-md transition"
             >
               <Link
-                :href="route('cms.operations.tasks.show', task.id)"
+                :href="route('bms.operations.tasks.show', task.id)"
                 class="block"
               >
                 <div class="flex items-start justify-between mb-2">
@@ -117,13 +117,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   PlusIcon,
   UserCircleIcon,
@@ -162,7 +162,7 @@ const onDrop = (event: DragEvent, stageId: number) => {
   }
 
   // Update task stage
-  router.patch(route('cms.operations.tasks.update', draggedTask.value.id), {
+  router.patch(route('bms.operations.tasks.update', draggedTask.value.id), {
     workflow_stage_id: stageId,
   }, {
     preserveScroll: true,
@@ -173,7 +173,7 @@ const onDrop = (event: DragEvent, stageId: number) => {
 }
 
 const loadTasks = () => {
-  router.get(route('cms.operations.kanban'), {
+  router.get(route('bms.operations.kanban'), {
     workflow_id: selectedWorkflow.value,
   }, {
     preserveState: true,

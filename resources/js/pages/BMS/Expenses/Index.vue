@@ -2,11 +2,11 @@
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, inject } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, BanknotesIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Expense {
@@ -80,7 +80,7 @@ const approveExpense = (id: number) => {
 
 const confirmApprove = () => {
     if (pendingExpenseId.value) {
-        router.post(route('cms.expenses.approve', pendingExpenseId.value), {}, {
+        router.post(route('bms.expenses.approve', pendingExpenseId.value), {}, {
             preserveScroll: true,
             onSuccess: () => {
                 toast.success('Expense approved', 'The expense has been approved');
@@ -96,7 +96,7 @@ const confirmApprove = () => {
 const rejectExpense = (id: number) => {
     const reason = prompt('Enter rejection reason:');
     if (reason) {
-        router.post(route('cms.expenses.reject', id), { reason }, {
+        router.post(route('bms.expenses.reject', id), { reason }, {
             preserveScroll: true,
         });
     }

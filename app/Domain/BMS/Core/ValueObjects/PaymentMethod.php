@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\CMS\Core\ValueObjects;
+namespace App\Domain\BMS\Core\ValueObjects;
 
 enum PaymentMethod: string
 {

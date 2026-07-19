@@ -6,7 +6,7 @@ return [
     | GrowBuilder Integration
     |--------------------------------------------------------------------------
     |
-    | Configuration for GrowBuilder e-commerce integration with CMS
+    | Configuration for GrowBuilder e-commerce integration with BMS
     |
     */
     'growbuilder' => [
@@ -21,7 +21,7 @@ return [
     | GrowMarket Integration
     |--------------------------------------------------------------------------
     |
-    | Configuration for GrowMarket marketplace integration with CMS
+    | Configuration for GrowMarket marketplace integration with BMS
     |
     */
     'growmarket' => [

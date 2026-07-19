@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Purchase Orders">
+  <BMSLayout title="Purchase Orders">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage material purchase orders</p>
         </div>
         <Link
-          :href="route('cms.purchase-orders.create')"
+          :href="route('bms.purchase-orders.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -88,7 +88,7 @@
               <tr v-for="po in purchaseOrders.data" :key="po.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4">
                   <Link
-                    :href="route('cms.purchase-orders.show', po.id)"
+                    :href="route('bms.purchase-orders.show', po.id)"
                     class="text-sm font-medium text-blue-600 hover:text-blue-900"
                   >
                     {{ po.po_number }}
@@ -103,7 +103,7 @@
                 <td class="px-6 py-4 text-sm text-gray-900">
                   <Link
                     v-if="po.job"
-                    :href="route('cms.jobs.show', po.job.id)"
+                    :href="route('bms.jobs.show', po.job.id)"
                     class="text-blue-600 hover:text-blue-900"
                   >
                     {{ po.job.job_number }}
@@ -128,7 +128,7 @@
                 </td>
                 <td class="px-6 py-4 text-right text-sm font-medium">
                   <Link
-                    :href="route('cms.purchase-orders.show', po.id)"
+                    :href="route('bms.purchase-orders.show', po.id)"
                     class="text-blue-600 hover:text-blue-900"
                   >
                     View
@@ -140,7 +140,7 @@
                   <DocumentTextIcon class="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
                   <p class="mt-2">No purchase orders found</p>
                   <Link
-                    :href="route('cms.purchase-orders.create')"
+                    :href="route('bms.purchase-orders.create')"
                     class="mt-4 inline-flex items-center text-blue-600 hover:text-blue-700"
                   >
                     <PlusIcon class="h-5 w-5 mr-1" aria-hidden="true" />
@@ -158,13 +158,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup>
 import { reactive } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 import { PlusIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
 import { debounce } from 'lodash'
@@ -180,7 +180,7 @@ const filters = reactive({
 })
 
 const applyFilters = () => {
-  router.get(route('cms.purchase-orders.index'), filters, {
+  router.get(route('bms.purchase-orders.index'), filters, {
     preserveState: true,
     preserveScroll: true,
   })

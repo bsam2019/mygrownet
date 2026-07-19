@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\TimeTrackingService;
-use App\Infrastructure\Persistence\Eloquent\CMS\TimeEntryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TimesheetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Domain\BMS\Core\Services\TimeTrackingService;
+use App\Infrastructure\Persistence\Eloquent\BMS\TimeEntryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TimesheetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -40,7 +40,7 @@ class TimeTrackingController extends Controller
             ->orderBy('job_number')
             ->get(['id', 'job_number', 'description']);
 
-        return Inertia::render('CMS/TimeTracking/Index', [
+        return Inertia::render('BMS/TimeTracking/Index', [
             'entries' => $entries,
             'workers' => $workers,
             'jobs' => $jobs,
@@ -176,7 +176,7 @@ class TimeTrackingController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'worker_number']);
 
-        return Inertia::render('CMS/TimeTracking/Timesheets', [
+        return Inertia::render('BMS/TimeTracking/Timesheets', [
             'timesheets' => $timesheets,
             'workers' => $workers,
             'filters' => $request->only(['worker_id', 'status']),
@@ -256,7 +256,7 @@ class TimeTrackingController extends Controller
             ->orderBy('job_number')
             ->get(['id', 'job_number', 'description']);
 
-        return Inertia::render('CMS/TimeTracking/Reports', [
+        return Inertia::render('BMS/TimeTracking/Reports', [
             'report' => $report,
             'workers' => $workers,
             'jobs' => $jobs,

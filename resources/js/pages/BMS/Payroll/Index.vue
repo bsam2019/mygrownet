@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { PlusIcon, FunnelIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -19,7 +19,7 @@ const selectedStatus = ref(props.filters.status || '')
 const selectedPeriodType = ref(props.filters.period_type || '')
 
 const applyFilters = () => {
-  router.get(route('cms.payroll.index'), {
+  router.get(route('bms.payroll.index'), {
     status: selectedStatus.value,
     period_type: selectedPeriodType.value,
   }, {
@@ -69,7 +69,7 @@ const formatDate = (date: string) => {
       </div>
       <div class="mt-4 sm:mt-0">
         <Link
-          :href="route('cms.payroll.create')"
+          :href="route('bms.payroll.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -179,7 +179,7 @@ const formatDate = (date: string) => {
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <Link
-                :href="route('cms.payroll.show', payroll.id)"
+                :href="route('bms.payroll.show', payroll.id)"
                 class="text-blue-600 hover:text-blue-900"
               >
                 View

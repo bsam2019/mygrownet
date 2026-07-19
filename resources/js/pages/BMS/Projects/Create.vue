@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -39,19 +39,19 @@ const removeMilestone = (index: number) => {
 };
 
 const submit = () => {
-  form.post(route('cms.projects.store'));
+  form.post(route('bms.projects.store'));
 };
 </script>
 
 <template>
   <Head title="Create Project" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Header -->
       <div class="flex items-center gap-4">
         <Link
-          :href="route('cms.projects.index')"
+          :href="route('bms.projects.index')"
           class="p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeftIcon class="h-5 w-5" aria-hidden="true" />
@@ -227,7 +227,7 @@ const submit = () => {
         <!-- Actions -->
         <div class="flex items-center justify-end gap-3">
           <Link
-            :href="route('cms.projects.index')"
+            :href="route('bms.projects.index')"
             class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Cancel
@@ -242,5 +242,5 @@ const submit = () => {
         </div>
       </form>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Operations\Services;
+namespace App\Domain\BMS\Operations\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
 use App\Models\User;
@@ -19,7 +19,7 @@ class TaskNotificationService
         $this->sendEmail($task->assignedUser, [
             'subject' => "New Task Assigned: {$task->title}",
             'message' => "You have been assigned a new task: {$task->title}",
-            'action_url' => route('cms.operations.tasks.show', $task->id),
+            'action_url' => route('bms.operations.tasks.show', $task->id),
             'action_text' => 'View Task',
         ]);
 
@@ -31,7 +31,7 @@ class TaskNotificationService
             'data' => [
                 'task_id' => $task->id,
                 'task_title' => $task->title,
-                'url' => route('cms.operations.tasks.show', $task->id),
+                'url' => route('bms.operations.tasks.show', $task->id),
             ],
         ]);
     }
@@ -74,7 +74,7 @@ class TaskNotificationService
                     'task_id' => $task->id,
                     'task_title' => $task->title,
                     'due_date' => $task->due_date->toDateString(),
-                    'url' => route('cms.operations.tasks.show', $task->id),
+                    'url' => route('bms.operations.tasks.show', $task->id),
                 ],
             ]);
         }
@@ -94,7 +94,7 @@ class TaskNotificationService
                 'task_id' => $task->id,
                 'task_title' => $task->title,
                 'due_date' => $task->due_date->toDateString(),
-                'url' => route('cms.operations.tasks.show', $task->id),
+                'url' => route('bms.operations.tasks.show', $task->id),
             ],
         ]);
     }
@@ -111,7 +111,7 @@ class TaskNotificationService
                     'task_id' => $task->id,
                     'task_title' => $task->title,
                     'completed_by' => $task->assignedUser->name,
-                    'url' => route('cms.operations.tasks.show', $task->id),
+                    'url' => route('bms.operations.tasks.show', $task->id),
                 ],
             ]);
         }
@@ -126,7 +126,7 @@ class TaskNotificationService
                     'data' => [
                         'task_id' => $task->id,
                         'task_title' => $task->title,
-                        'url' => route('cms.operations.tasks.show', $task->id),
+                        'url' => route('bms.operations.tasks.show', $task->id),
                     ],
                 ]);
             }
@@ -145,7 +145,7 @@ class TaskNotificationService
                     'task_id' => $task->id,
                     'task_title' => $task->title,
                     'reason' => $reason,
-                    'url' => route('cms.operations.tasks.show', $task->id),
+                    'url' => route('bms.operations.tasks.show', $task->id),
                 ],
             ]);
         }
@@ -185,7 +185,7 @@ class TaskNotificationService
                     'task_title' => $task->title,
                     'commenter' => $commenter->name,
                     'comment' => substr($comment, 0, 100),
-                    'url' => route('cms.operations.tasks.show', $task->id),
+                    'url' => route('bms.operations.tasks.show', $task->id),
                 ],
             ]);
         }

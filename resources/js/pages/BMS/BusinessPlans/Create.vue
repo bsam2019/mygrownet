@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ref, computed, watch, nextTick } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useAlert } from '@/composables/useAlert';
@@ -269,7 +269,7 @@ const triggerAutoSave = () => {
         autoSaving.value = true;
         form.value.current_step = currentStep.value;
         try {
-            const res = await fetch(route('cms.business-plans.save'), {
+            const res = await fetch(route('bms.business-plans.save'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '' },
                 body: JSON.stringify(form.value),
@@ -277,7 +277,7 @@ const triggerAutoSave = () => {
             const data = await res.json();
             if (data.success && data.business_plan_id && data.business_plan_id !== form.value.id) {
                 form.value.id = data.business_plan_id;
-                router.replace(route('cms.business-plans.edit', form.value.id));
+                router.replace(route('bms.business-plans.edit', form.value.id));
             }
             lastSavedAt.value = new Date().toLocaleTimeString();
         } catch {}
@@ -319,7 +319,7 @@ const saveDraft = async () => {
     saveToLocalStorage();
     form.value.current_step = currentStep.value;
     try {
-        const res = await fetch(route('cms.business-plans.save'), {
+        const res = await fetch(route('bms.business-plans.save'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '' },
             body: JSON.stringify(form.value),
@@ -328,7 +328,7 @@ const saveDraft = async () => {
         if (data.success && data.business_plan_id) {
             if (data.business_plan_id !== form.value.id) {
                 form.value.id = data.business_plan_id;
-                router.replace(route('cms.business-plans.edit', form.value.id));
+                router.replace(route('bms.business-plans.edit', form.value.id));
             }
         }
     } catch {}
@@ -349,7 +349,7 @@ const prevStep = () => {
 const completePlan = () => {
     if (!form.value.id) return;
     clearLocalStorage();
-    router.post(route('cms.business-plans.complete'), { id: form.value.id });
+    router.post(route('bms.business-plans.complete'), { id: form.value.id });
 };
 
 const generateAIContent = async (field: string) => {
@@ -359,7 +359,7 @@ const generateAIContent = async (field: string) => {
     currentAIField.value = field;
     const ctx = { business_name: form.value.business_name, industry: form.value.industry, ...form.value };
     try {
-        const res = await fetch(route('cms.business-plans.generate-ai'), {
+        const res = await fetch(route('bms.business-plans.generate-ai'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({
@@ -396,7 +396,7 @@ const generateAllFields = async () => {
     for (const f of empty) {
         try {
             const ctx = { business_name: form.value.business_name, industry: form.value.industry, ...form.value };
-            const res = await fetch(route('cms.business-plans.generate-ai'), {
+            const res = await fetch(route('bms.business-plans.generate-ai'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '', 'X-Requested-With': 'XMLHttpRequest' },
                 body: JSON.stringify({ business_plan_id: form.value.id, field: f, context: ctx }),
@@ -429,7 +429,7 @@ const clearField = async (field: string) => {
     saveToLocalStorage();
     form.value.current_step = currentStep.value;
     try {
-        const res = await fetch(route('cms.business-plans.save'), {
+        const res = await fetch(route('bms.business-plans.save'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '' },
             body: JSON.stringify(form.value),
@@ -454,7 +454,7 @@ const sendChatMessage = () => {
     chatInput.value = '';
     chatMessages.value.push({ role: 'user', content: msg });
     chatLoading.value = true;
-    router.post(route('cms.business-plans.chat'), {
+    router.post(route('bms.business-plans.chat'), {
         message: msg,
         context: { business_name: form.value.business_name, industry: form.value.industry, current_step: currentStep.value, current_step_label: steps[currentStep.value - 1]?.label || '', total_steps: totalSteps, ...form.value },
     }, {
@@ -609,7 +609,7 @@ const stepFields: Record<number, { key: string; label: string }[]> = {
         { key: 'supplier_list', label: 'Supplier List' },
         { key: 'operational_workflow', label: 'Operational Workflow' },
     ],
-    11: [], // USP — merged into step 4
+    11: [], // USP ï¿½ merged into step 4
     12: [
         { key: 'marketing_channels', label: 'Marketing Channels' },
         { key: 'promotion_channels', label: 'Promotion Channels' },
@@ -725,7 +725,7 @@ const previewAsHtml = (key: string, value: any): string => {
 
 <template>
     <Head title="Business Plan Generator" />
-    <CMSLayout>
+    <BMSLayout>
         <div class="p-6 max-w-5xl mx-auto">
             <div v-if="$page.props.flash?.error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ $page.props.flash.error }}</div>
             <div v-if="$page.props.flash?.success" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">{{ $page.props.flash.success }}</div>
@@ -882,12 +882,12 @@ const previewAsHtml = (key: string, value: any): string => {
                     <div v-if="wizardStep === 4" class="space-y-4">
                         <p class="text-sm text-gray-600">Review what you've entered before we start building your plan.</p>
                         <div class="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                            <div><span class="font-medium">Business:</span> {{ form.business_name || '—' }}</div>
-                            <div><span class="font-medium">Industry:</span> {{ form.industry || '—' }}</div>
-                            <div><span class="font-medium">Country:</span> {{ form.country || '—' }}</div>
-                            <div><span class="font-medium">Legal Structure:</span> {{ form.legal_structure ? form.legal_structure.replace(/_/g, ' ') : '—' }}</div>
-                            <div><span class="font-medium">Tagline:</span> {{ form.tagline || '—' }}</div>
-                            <div><span class="font-medium">Snapshot:</span> {{ form.business_description ? form.business_description.substring(0, 100) + '...' : '—' }}</div>
+                            <div><span class="font-medium">Business:</span> {{ form.business_name || 'ï¿½' }}</div>
+                            <div><span class="font-medium">Industry:</span> {{ form.industry || 'ï¿½' }}</div>
+                            <div><span class="font-medium">Country:</span> {{ form.country || 'ï¿½' }}</div>
+                            <div><span class="font-medium">Legal Structure:</span> {{ form.legal_structure ? form.legal_structure.replace(/_/g, ' ') : 'ï¿½' }}</div>
+                            <div><span class="font-medium">Tagline:</span> {{ form.tagline || 'ï¿½' }}</div>
+                            <div><span class="font-medium">Snapshot:</span> {{ form.business_description ? form.business_description.substring(0, 100) + '...' : 'ï¿½' }}</div>
                         </div>
                         <div class="pt-2 flex gap-2">
                             <button @click="wizardStep--" class="px-4 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50 font-medium">Back</button>
@@ -1418,5 +1418,5 @@ const previewAsHtml = (key: string, value: any): string => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

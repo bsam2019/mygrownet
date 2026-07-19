@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="All Tasks">
+  <BMSLayout page-title="All Tasks">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage all tasks across workflows</p>
         </div>
         <Link
-          :href="route('cms.operations.tasks.create')"
+          :href="route('bms.operations.tasks.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -90,7 +90,7 @@
             <tr v-for="task in tasks.data" :key="task.id" class="hover:bg-gray-50">
               <td class="px-6 py-4">
                 <Link
-                  :href="route('cms.operations.tasks.show', task.id)"
+                  :href="route('bms.operations.tasks.show', task.id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
                   {{ task.title }}
@@ -129,7 +129,7 @@
               </td>
               <td class="px-6 py-4">
                 <Link
-                  :href="route('cms.operations.tasks.show', task.id)"
+                  :href="route('bms.operations.tasks.show', task.id)"
                   class="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   View
@@ -168,13 +168,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 
 interface Props {
@@ -211,7 +211,7 @@ let filterTimeout: ReturnType<typeof setTimeout>
 const applyFilters = () => {
   clearTimeout(filterTimeout)
   filterTimeout = setTimeout(() => {
-    router.get(route('cms.operations.tasks.index'), filterForm.value, {
+    router.get(route('bms.operations.tasks.index'), filterForm.value, {
       preserveState: true,
       preserveScroll: true,
     })

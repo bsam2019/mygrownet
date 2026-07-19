@@ -286,7 +286,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdowns));
 
                 <!-- Back to Main App -->
                 <div class="flex-shrink-0 p-2 border-t border-gray-200">
-                    <Link :href="route('dashboard')" :class="['flex items-center rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-50', sidebarCollapsed ? 'justify-center p-2' : 'px-3 py-2 text-sm']" :title="sidebarCollapsed ? 'Back to MyGrowNet' : undefined">
+                    <Link :href="route('workspace')" :class="['flex items-center rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-50', sidebarCollapsed ? 'justify-center p-2' : 'px-3 py-2 text-sm']" :title="sidebarCollapsed ? 'Back to MyGrowNet' : undefined">
                         <ArrowRightOnRectangleIcon class="h-5 w-5 rotate-180" :class="{ 'mr-3': !sidebarCollapsed }" aria-hidden="true" />
                         <span v-if="!sidebarCollapsed">Back to MyGrowNet</span>
                     </Link>
@@ -368,7 +368,7 @@ onUnmounted(() => document.removeEventListener('click', closeDropdowns));
                                             <BellIcon class="h-5 w-5 mr-3 text-gray-400" aria-hidden="true" />Notifications
                                             <span v-if="unreadCount > 0" class="ml-auto text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{{ unreadCount }}</span>
                                         </Link>
-                                        <Link :href="route('dashboard')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" @click="userDropdownOpen = false">
+                                        <Link :href="route('workspace')" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" @click="userDropdownOpen = false">
                                             <HomeIcon class="h-5 w-5 mr-3 text-gray-400" aria-hidden="true" />Back to MyGrowNet
                                         </Link>
                                     </div>

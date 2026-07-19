@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\RecurringTaskModel;
-use App\Domain\CMS\Operations\Services\OperationsService;
+use App\Domain\BMS\Operations\Services\OperationsService;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 

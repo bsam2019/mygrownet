@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Workflows">
+  <BMSLayout page-title="Workflows">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -221,13 +221,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   PlusIcon,
   ArrowPathIcon,
@@ -290,18 +290,18 @@ const closeStageModal = () => {
 
 const saveWorkflow = () => {
   if (editingWorkflow.value) {
-    router.put(route('cms.operations.workflows.update', editingWorkflow.value.id), form.value, {
+    router.put(route('bms.operations.workflows.update', editingWorkflow.value.id), form.value, {
       onSuccess: () => closeModal()
     })
   } else {
-    router.post(route('cms.operations.workflows.store'), form.value, {
+    router.post(route('bms.operations.workflows.store'), form.value, {
       onSuccess: () => closeModal()
     })
   }
 }
 
 const saveStage = () => {
-  router.post(route('cms.operations.workflows.stages.store', selectedWorkflow.value.id), stageForm.value, {
+  router.post(route('bms.operations.workflows.stages.store', selectedWorkflow.value.id), stageForm.value, {
     onSuccess: () => closeStageModal()
   })
 }

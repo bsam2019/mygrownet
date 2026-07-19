@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 interface Timesheet {
@@ -27,13 +27,13 @@ const statusColors = {
 };
 
 const approve = (id: number) => {
-  router.post(route('cms.labour.timesheets.approve', id));
+  router.post(route('bms.labour.timesheets.approve', id));
 };
 
 const reject = (id: number) => {
   const notes = prompt('Rejection reason:');
   if (notes) {
-    router.post(route('cms.labour.timesheets.reject', id), { notes });
+    router.post(route('bms.labour.timesheets.reject', id), { notes });
   }
 };
 </script>
@@ -41,7 +41,7 @@ const reject = (id: number) => {
 <template>
   <Head title="Timesheets" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
@@ -49,7 +49,7 @@ const reject = (id: number) => {
           <p class="mt-1 text-sm text-gray-500">Track labour hours and approve timesheets</p>
         </div>
         <Link
-          :href="route('cms.labour.timesheets.create')"
+          :href="route('bms.labour.timesheets.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -101,5 +101,5 @@ const reject = (id: number) => {
         </table>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

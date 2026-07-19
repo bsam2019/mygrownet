@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Performance Cycles">
+  <BMSLayout title="Performance Cycles">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -61,7 +61,7 @@
             </div>
             <div>
               <Link
-                :href="route('cms.performance.reviews.index', { cycle_id: cycle.id })"
+                :href="route('bms.performance.reviews.index', { cycle_id: cycle.id })"
                 class="text-blue-600 hover:text-blue-800 font-medium"
               >
                 View Reviews →
@@ -149,13 +149,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   cycles: any[];
@@ -171,7 +171,7 @@ const cycleForm = ref({
 });
 
 const createCycle = () => {
-  router.post(route('cms.performance.cycles.store'), cycleForm.value, {
+  router.post(route('bms.performance.cycles.store'), cycleForm.value, {
     onSuccess: () => {
       showCreateModal.value = false;
       cycleForm.value = {
@@ -187,7 +187,7 @@ const createCycle = () => {
 
 const activateCycle = (cycleId: number) => {
   if (confirm('Activate this performance cycle?')) {
-    router.post(route('cms.performance.cycles.activate', cycleId));
+    router.post(route('bms.performance.cycles.activate', cycleId));
   }
 };
 </script>

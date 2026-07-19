@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,7 +18,7 @@ class ExpenseCategoryController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        return Inertia::render('CMS/ExpenseCategories/Index', [
+        return Inertia::render('BMS/ExpenseCategories/Index', [
             'categories' => $categories,
         ]);
     }

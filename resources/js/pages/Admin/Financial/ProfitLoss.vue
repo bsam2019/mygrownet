@@ -192,7 +192,7 @@
                         <!-- CMS Drill-down Link -->
                         <a 
                           v-if="item.source === 'cms'"
-                          :href="route('cms.expenses.index')"
+                          :href="route('bms.expenses.index')"
                           class="text-blue-600 hover:underline text-xs flex items-center gap-1"
                           title="View in CMS"
                         >

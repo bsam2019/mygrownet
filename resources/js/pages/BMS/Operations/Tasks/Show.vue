@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout :page-title="`Task: ${task.title}`">
+  <BMSLayout :page-title="`Task: ${task.title}`">
     <div class="max-w-7xl mx-auto space-y-6">
       <!-- Task Header -->
       <div class="bg-white rounded-lg shadow p-6">
@@ -339,13 +339,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   task: any
@@ -365,15 +365,15 @@ const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const startTask = () => {
-  router.post(route('cms.operations.tasks.start', props.task.id))
+  router.post(route('bms.operations.tasks.start', props.task.id))
 }
 
 const completeTask = () => {
-  router.post(route('cms.operations.tasks.complete', props.task.id))
+  router.post(route('bms.operations.tasks.complete', props.task.id))
 }
 
 const blockTask = () => {
-  router.post(route('cms.operations.tasks.block', props.task.id), {
+  router.post(route('bms.operations.tasks.block', props.task.id), {
     reason: blockReason.value,
   }, {
     onSuccess: () => {
@@ -386,7 +386,7 @@ const blockTask = () => {
 const addComment = () => {
   if (!newComment.value.trim()) return
 
-  router.post(route('cms.operations.tasks.comments.store', props.task.id), {
+  router.post(route('bms.operations.tasks.comments.store', props.task.id), {
     comment: newComment.value,
   }, {
     onSuccess: () => {
@@ -409,7 +409,7 @@ const uploadAttachment = () => {
   const formData = new FormData()
   formData.append('file', selectedFile.value)
 
-  router.post(route('cms.operations.tasks.attachments.store', props.task.id), formData, {
+  router.post(route('bms.operations.tasks.attachments.store', props.task.id), formData, {
     onSuccess: () => {
       selectedFile.value = null
       if (fileInput.value) {
@@ -421,12 +421,12 @@ const uploadAttachment = () => {
 
 const deleteAttachment = (attachmentId: number) => {
   if (confirm('Are you sure you want to delete this attachment?')) {
-    router.delete(route('cms.operations.tasks.attachments.delete', [props.task.id, attachmentId]))
+    router.delete(route('bms.operations.tasks.attachments.delete', [props.task.id, attachmentId]))
   }
 }
 
 const logTime = () => {
-  router.post(route('cms.operations.tasks.time-entries.store', props.task.id), {
+  router.post(route('bms.operations.tasks.time-entries.store', props.task.id), {
     started_at: new Date().toISOString(),
     hours: timeEntry.value.hours,
     description: timeEntry.value.description,

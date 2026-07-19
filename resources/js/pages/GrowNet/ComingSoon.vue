@@ -27,7 +27,7 @@
                         
                         <div class="flex justify-center gap-4">
                             <Link 
-                                :href="route('dashboard')" 
+                                :href="route('workspace')" 
                                 class="inline-flex items-center px-6 py-3 bg-blue-600 border border-transparent rounded-lg font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                             >
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +43,7 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                                 <Link 
-                                    :href="route('dashboard')" 
+                                    :href="route('workspace')" 
                                     class="p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                                 >
                                     <div class="text-blue-600 mb-2">

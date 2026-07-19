@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Equipment\Services\EquipmentService;
-use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentModel;
+use App\Domain\BMS\Equipment\Services\EquipmentService;
+use App\Infrastructure\Persistence\Eloquent\BMS\EquipmentModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -30,11 +30,11 @@ class EquipmentController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Equipment/Index', [
+        return Inertia::render('BMS/Equipment/Index', [
             'equipment' => $equipment,
             'filters' => $request->only(['search', 'type', 'status', 'branch_id']),
             'branches' => $branches,
@@ -43,7 +43,7 @@ class EquipmentController extends Controller
 
     public function create()
     {
-        return Inertia::render('CMS/Equipment/Create');
+        return Inertia::render('BMS/Equipment/Create');
     }
 
     public function store(Request $request)
@@ -69,7 +69,7 @@ class EquipmentController extends Controller
 
         $equipment = $this->equipmentService->createEquipment($validated);
 
-        return redirect()->route('cms.equipment.show', $equipment->id)
+        return redirect()->route('bms.equipment.show', $equipment->id)
             ->with('success', 'Equipment created successfully');
     }
 
@@ -78,7 +78,7 @@ class EquipmentController extends Controller
         $equipment->load(['maintenanceRecords', 'usageRecords', 'rentals']);
         $stats = $this->equipmentService->getEquipmentStats($equipment);
 
-        return Inertia::render('CMS/Equipment/Show', [
+        return Inertia::render('BMS/Equipment/Show', [
             'equipment' => $equipment,
             'stats' => $stats,
         ]);
@@ -86,7 +86,7 @@ class EquipmentController extends Controller
 
     public function edit(EquipmentModel $equipment)
     {
-        return Inertia::render('CMS/Equipment/Edit', [
+        return Inertia::render('BMS/Equipment/Edit', [
             'equipment' => $equipment,
         ]);
     }
@@ -109,7 +109,7 @@ class EquipmentController extends Controller
 
         $this->equipmentService->updateEquipment($equipment, $validated);
 
-        return redirect()->route('cms.equipment.show', $equipment->id)
+        return redirect()->route('bms.equipment.show', $equipment->id)
             ->with('success', 'Equipment updated successfully');
     }
 
@@ -117,7 +117,7 @@ class EquipmentController extends Controller
     {
         $equipment->delete();
 
-        return redirect()->route('cms.equipment.index')
+        return redirect()->route('bms.equipment.index')
             ->with('success', 'Equipment deleted successfully');
     }
 

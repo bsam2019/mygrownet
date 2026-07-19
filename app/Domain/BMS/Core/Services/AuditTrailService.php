@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use Illuminate\Support\Facades\DB;
 

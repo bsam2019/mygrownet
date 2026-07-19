@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\ScheduledReportService;
+use App\Domain\BMS\Core\Services\ScheduledReportService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\ScheduledReportModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ScheduledReportModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,14 +27,14 @@ class ScheduledReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/ScheduledReports/Index', [
+        return Inertia::render('BMS/ScheduledReports/Index', [
             'scheduledReports' => $scheduledReports,
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('CMS/ScheduledReports/Create');
+        return Inertia::render('BMS/ScheduledReports/Create');
     }
 
     public function store(Request $request)
@@ -60,7 +60,7 @@ class ScheduledReportController extends Controller
             $cmsUser->id
         );
 
-        return redirect()->route('cms.scheduled-reports.index')
+        return redirect()->route('bms.scheduled-reports.index')
             ->with('success', 'Scheduled report created successfully.');
     }
 
@@ -71,7 +71,7 @@ class ScheduledReportController extends Controller
         $scheduledReport = ScheduledReportModel::where('company_id', $cmsUser->company_id)
             ->findOrFail($id);
 
-        return Inertia::render('CMS/ScheduledReports/Edit', [
+        return Inertia::render('BMS/ScheduledReports/Edit', [
             'scheduledReport' => $scheduledReport,
         ]);
     }
@@ -98,7 +98,7 @@ class ScheduledReportController extends Controller
 
         $this->scheduledReportService->updateScheduledReport($id, $validated);
 
-        return redirect()->route('cms.scheduled-reports.index')
+        return redirect()->route('bms.scheduled-reports.index')
             ->with('success', 'Scheduled report updated successfully.');
     }
 
@@ -111,7 +111,7 @@ class ScheduledReportController extends Controller
 
         $this->scheduledReportService->deleteScheduledReport($id);
 
-        return redirect()->route('cms.scheduled-reports.index')
+        return redirect()->route('bms.scheduled-reports.index')
             ->with('success', 'Scheduled report deleted successfully.');
     }
 

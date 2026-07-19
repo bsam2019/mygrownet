@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -27,7 +27,7 @@ const attendanceForm = useForm({
 })
 
 const submitAttendance = () => {
-  attendanceForm.post(route('cms.payroll.attendance.store'), {
+  attendanceForm.post(route('bms.payroll.attendance.store'), {
     onSuccess: () => {
       showAttendanceModal.value = false
       attendanceForm.reset()
@@ -36,7 +36,7 @@ const submitAttendance = () => {
 }
 
 const approveAttendance = (attendanceId: number) => {
-  useForm({}).post(route('cms.payroll.attendance.approve', attendanceId))
+  useForm({}).post(route('bms.payroll.attendance.approve', attendanceId))
 }
 
 const formatNumber = (value: number) => {
@@ -67,7 +67,7 @@ const getStatusClass = (status: string) => {
 <template>
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
-      <Link :href="route('cms.payroll.workers.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.payroll.workers.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Workers
       </Link>
       <div class="flex items-center justify-between">

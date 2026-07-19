@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\RecurringInvoiceService;
-use App\Domain\CMS\Core\Services\CustomerService;
-use App\Domain\CMS\Core\Services\JobService;
+use App\Domain\BMS\Core\Services\RecurringInvoiceService;
+use App\Domain\BMS\Core\Services\CustomerService;
+use App\Domain\BMS\Core\Services\JobService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,7 +24,7 @@ class RecurringInvoiceController extends Controller
 
         $recurringInvoices = $this->recurringInvoiceService->getAll($companyId, $status);
 
-        return Inertia::render('CMS/RecurringInvoices/Index', [
+        return Inertia::render('BMS/RecurringInvoices/Index', [
             'recurringInvoices' => $recurringInvoices,
             'filters' => [
                 'status' => $status,
@@ -39,7 +39,7 @@ class RecurringInvoiceController extends Controller
         $customers = $this->customerService->getAllForCompany($companyId);
         $jobs = $this->jobService->getAllForCompany($companyId);
 
-        return Inertia::render('CMS/RecurringInvoices/Create', [
+        return Inertia::render('BMS/RecurringInvoices/Create', [
             'customers' => $customers,
             'jobs' => $jobs,
         ]);
@@ -75,7 +75,7 @@ class RecurringInvoiceController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $recurringInvoice = $this->recurringInvoiceService->create($companyId, $validated);
 
-        return redirect()->route('cms.recurring-invoices.show', $recurringInvoice->id)
+        return redirect()->route('bms.recurring-invoices.show', $recurringInvoice->id)
             ->with('success', 'Recurring invoice created successfully');
     }
 
@@ -91,7 +91,7 @@ class RecurringInvoiceController extends Controller
 
         $history = $this->recurringInvoiceService->getHistory($recurringInvoice);
 
-        return Inertia::render('CMS/RecurringInvoices/Show', [
+        return Inertia::render('BMS/RecurringInvoices/Show', [
             'recurringInvoice' => $recurringInvoice,
             'history' => $history,
         ]);
@@ -109,7 +109,7 @@ class RecurringInvoiceController extends Controller
         $customers = $this->customerService->getAllForCompany($companyId);
         $jobs = $this->jobService->getAllForCompany($companyId);
 
-        return Inertia::render('CMS/RecurringInvoices/Edit', [
+        return Inertia::render('BMS/RecurringInvoices/Edit', [
             'recurringInvoice' => $recurringInvoice,
             'customers' => $customers,
             'jobs' => $jobs,
@@ -152,7 +152,7 @@ class RecurringInvoiceController extends Controller
 
         $this->recurringInvoiceService->update($recurringInvoice, $validated);
 
-        return redirect()->route('cms.recurring-invoices.show', $id)
+        return redirect()->route('bms.recurring-invoices.show', $id)
             ->with('success', 'Recurring invoice updated successfully');
     }
 
@@ -167,7 +167,7 @@ class RecurringInvoiceController extends Controller
 
         $this->recurringInvoiceService->delete($recurringInvoice);
 
-        return redirect()->route('cms.recurring-invoices.index')
+        return redirect()->route('bms.recurring-invoices.index')
             ->with('success', 'Recurring invoice deleted successfully');
     }
 
@@ -225,7 +225,7 @@ class RecurringInvoiceController extends Controller
         $invoice = $this->recurringInvoiceService->generateInvoice($recurringInvoice);
 
         if ($invoice) {
-            return redirect()->route('cms.invoices.show', $invoice->id)
+            return redirect()->route('bms.invoices.show', $invoice->id)
                 ->with('success', 'Invoice generated successfully');
         }
 

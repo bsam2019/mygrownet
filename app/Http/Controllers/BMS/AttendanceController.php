@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\AttendanceService;
+use App\Domain\BMS\Core\Services\AttendanceService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AttendanceRecordModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +21,7 @@ class AttendanceController extends Controller
     private function getCompanyId(Request $request): ?int
     {
         $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
         
         return $cmsUser?->company_id;
     }
@@ -34,7 +34,7 @@ class AttendanceController extends Controller
         $companyId = $this->getCompanyId($request);
         
         if (!$companyId) {
-            return redirect()->route('cms.dashboard')
+            return redirect()->route('bms.dashboard')
                 ->with('error', 'You must be associated with a company to access this feature.');
         }
         
@@ -57,13 +57,13 @@ class AttendanceController extends Controller
 
         $records = $this->attendanceService->getAttendanceRecords($companyId, $filters);
         
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $companyId)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::where('company_id', $companyId)
             ->active()
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('CMS/Attendance/Index', [
+        return Inertia::render('BMS/Attendance/Index', [
             'title' => 'Attendance Records',
             'records' => $records,
             'workers' => $workers,
@@ -162,7 +162,7 @@ class AttendanceController extends Controller
                 'company_id' => $companyId,
             ]);
 
-            return redirect()->route('cms.attendance.index')
+            return redirect()->route('bms.attendance.index')
                 ->with('success', 'Attendance record created successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -208,7 +208,7 @@ class AttendanceController extends Controller
             'end_date' => $endDate,
         ]);
 
-        return Inertia::render('CMS/Attendance/Calendar', [
+        return Inertia::render('BMS/Attendance/Calendar', [
             'records' => $records,
             'month' => $month,
         ]);

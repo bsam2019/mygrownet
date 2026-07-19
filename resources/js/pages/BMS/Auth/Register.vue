@@ -109,7 +109,7 @@
           <div class="text-center pt-4 border-t border-gray-100">
             <p class="text-sm text-gray-600">
               Already have an account?
-              <Link :href="route('cms.login')" class="text-blue-600 hover:text-blue-700 font-semibold">
+              <Link :href="route('bms.login')" class="text-blue-600 hover:text-blue-700 font-semibold">
                 Sign in instead
               </Link>
             </p>
@@ -119,7 +119,7 @@
 
       <!-- Back to Home -->
       <div class="text-center mt-6">
-        <Link :href="route('cms.landing')" class="text-sm text-gray-600 hover:text-gray-900 font-medium">
+        <Link :href="route('bms.landing')" class="text-sm text-gray-600 hover:text-gray-900 font-medium">
           ← Back to home
         </Link>
       </div>
@@ -139,7 +139,7 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.register'), {
+  form.post(route('bms.register'), {
     onFinish: () => {
       form.password = ''
       form.password_confirmation = ''

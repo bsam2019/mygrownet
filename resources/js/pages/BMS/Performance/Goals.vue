@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Goals & Objectives">
+  <BMSLayout title="Goals & Objectives">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -138,13 +138,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   goals: any[];
@@ -163,7 +163,7 @@ const goalForm = ref({
 });
 
 const createGoal = () => {
-  router.post(route('cms.performance.goals.store'), goalForm.value, {
+  router.post(route('bms.performance.goals.store'), goalForm.value, {
     onSuccess: () => {
       showCreateModal.value = false;
       goalForm.value = {
@@ -185,7 +185,7 @@ const updateProgress = (goal: any) => {
   const notes = prompt('Progress notes:');
   
   if (progress !== null && notes !== null) {
-    router.post(route('cms.performance.goals.update-progress', goal.id), {
+    router.post(route('bms.performance.goals.update-progress', goal.id), {
       progress_percentage: parseInt(progress),
       notes: notes,
     });

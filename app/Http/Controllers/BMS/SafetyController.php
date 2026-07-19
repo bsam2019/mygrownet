@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\SafetyIncidentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SafetyInspectionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PPEItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PPEDistributionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SafetyTrainingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SafetyIncidentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SafetyInspectionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PPEItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PPEDistributionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SafetyTrainingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingRecordModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,7 +21,7 @@ class SafetyController extends Controller
             ->latest('incident_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Safety/Incidents/Index', ['incidents' => $incidents]);
+        return Inertia::render('BMS/Safety/Incidents/Index', ['incidents' => $incidents]);
     }
 
     public function storeIncident(Request $request)
@@ -58,7 +58,7 @@ class SafetyController extends Controller
         $incident = SafetyIncidentModel::with(['involvedPersons', 'reportedBy', 'investigatedBy'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Safety/Incidents/Show', ['incident' => $incident]);
+        return Inertia::render('BMS/Safety/Incidents/Show', ['incident' => $incident]);
     }
 
     public function inspections(Request $request)
@@ -68,7 +68,7 @@ class SafetyController extends Controller
             ->latest('inspection_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Safety/Inspections/Index', ['inspections' => $inspections]);
+        return Inertia::render('BMS/Safety/Inspections/Index', ['inspections' => $inspections]);
     }
 
     public function storeInspection(Request $request)
@@ -97,7 +97,7 @@ class SafetyController extends Controller
             ->withCount('distributions')
             ->paginate(20);
 
-        return Inertia::render('CMS/Safety/PPE/Index', ['ppe' => $ppe]);
+        return Inertia::render('BMS/Safety/PPE/Index', ['ppe' => $ppe]);
     }
 
     public function storePPE(Request $request)
@@ -151,7 +151,7 @@ class SafetyController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('CMS/Safety/Training/Index', ['training' => $training]);
+        return Inertia::render('BMS/Safety/Training/Index', ['training' => $training]);
     }
 
     public function storeTraining(Request $request)

@@ -161,7 +161,7 @@ const updatedCost = computed(() => {
 })
 
 const submit = () => {
-  form.put(route('cms.jobs.materials.update', [props.job.id, props.plan.id]), {
+  form.put(route('bms.jobs.materials.update', [props.job.id, props.plan.id]), {
     preserveScroll: true,
     onSuccess: () => {
       emit('updated')

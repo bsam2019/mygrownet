@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 import { CheckCircleIcon, EyeIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface Template {
   id: number;
@@ -76,7 +76,7 @@ const getPreviewUrl = async (templateId: number): Promise<string> => {
 
   loadingPreviewIds.value.add(templateId)
   try {
-    const res = await fetch(route('cms.settings.document-templates.preview-url', { id: templateId }), {
+    const res = await fetch(route('bms.settings.document-templates.preview-url', { id: templateId }), {
       headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
     if (res.ok) {
@@ -104,7 +104,7 @@ watch(filteredTemplates, initPreviewUrls, { immediate: true });
 
 const selectTemplate = (template: Template) => {
   saving.value = template.id;
-  router.post(route('cms.settings.document-templates.set'), {
+  router.post(route('bms.settings.document-templates.set'), {
     document_type: activeDocType.value,
     template_id: template.id,
   }, {

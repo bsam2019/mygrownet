@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\LoanAccountingService;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanReceivableModel;
+use App\Domain\BMS\Core\Services\LoanAccountingService;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanReceivableModel;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,7 +62,7 @@ class LoanController extends Controller
             'defaulted_loans' => LoanReceivableModel::where('company_id', $companyId)->where('status', 'defaulted')->count(),
         ];
         
-        return Inertia::render('CMS/Loans/Index', [
+        return Inertia::render('BMS/Loans/Index', [
             'loans' => $loans,
             'summary' => $summary,
             'filters' => $filters ?? [
@@ -88,7 +88,7 @@ class LoanController extends Controller
             ->orderBy('name')
             ->get();
         
-        return Inertia::render('CMS/Loans/Create', [
+        return Inertia::render('BMS/Loans/Create', [
             'users' => $users,
         ]);
     }
@@ -126,7 +126,7 @@ class LoanController extends Controller
             );
             
             return redirect()
-                ->route('cms.loans.show', $loan->id)
+                ->route('bms.loans.show', $loan->id)
                 ->with('success', 'Loan created and disbursed successfully!');
                 
         } catch (\Exception $e) {
@@ -147,7 +147,7 @@ class LoanController extends Controller
             ->with(['user', 'repayments', 'schedules'])
             ->findOrFail($id);
         
-        return Inertia::render('CMS/Loans/Show', [
+        return Inertia::render('BMS/Loans/Show', [
             'loan' => [
                 'id' => $loan->id,
                 'loan_number' => $loan->loan_number,
@@ -212,7 +212,7 @@ class LoanController extends Controller
             ->with('user')
             ->findOrFail($id);
         
-        return Inertia::render('CMS/Loans/RecordPayment', [
+        return Inertia::render('BMS/Loans/RecordPayment', [
             'loan' => [
                 'id' => $loan->id,
                 'loan_number' => $loan->loan_number,
@@ -259,7 +259,7 @@ class LoanController extends Controller
             );
             
             return redirect()
-                ->route('cms.loans.show', $loan->id)
+                ->route('bms.loans.show', $loan->id)
                 ->with('success', 'Payment recorded successfully!');
                 
         } catch (\Exception $e) {
@@ -279,7 +279,7 @@ class LoanController extends Controller
         $aging = $this->loanService->getAgingReport($companyId);
         $loansByCategory = $this->loanService->getLoansByRiskCategory($companyId);
         
-        return Inertia::render('CMS/Loans/AgingReport', [
+        return Inertia::render('BMS/Loans/AgingReport', [
             'aging' => $aging,
             'loans_by_category' => $loansByCategory,
         ]);

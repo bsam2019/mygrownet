@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, UserGroupIcon } from '@heroicons/vue/24/outline';
 
 interface Crew {
@@ -21,7 +21,7 @@ const props = defineProps<{
 <template>
   <Head title="Crews" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
@@ -29,7 +29,7 @@ const props = defineProps<{
           <p class="mt-1 text-sm text-gray-500">Manage labour crews and assignments</p>
         </div>
         <Link
-          :href="route('cms.labour.crews.create')"
+          :href="route('bms.labour.crews.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -41,7 +41,7 @@ const props = defineProps<{
         <Link
           v-for="crew in crews.data"
           :key="crew.id"
-          :href="route('cms.labour.crews.show', crew.id)"
+          :href="route('bms.labour.crews.show', crew.id)"
           class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div class="flex items-center gap-3 mb-4">
@@ -67,5 +67,5 @@ const props = defineProps<{
         </Link>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

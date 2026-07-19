@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import FormSection from '@/components/BMS/FormSection.vue';
 import FormInput from '@/components/BMS/FormInput.vue';
 import FormSelect from '@/components/BMS/FormSelect.vue';
@@ -107,7 +107,7 @@ const dayLabels: Record<string, string> = {
 };
 
 const updateBusinessHours = () => {
-    businessHoursForm.post(route('cms.settings.business-hours.update'), {
+    businessHoursForm.post(route('bms.settings.business-hours.update'), {
         preserveScroll: true,
         onSuccess: () => {
             // Success handled by flash message
@@ -121,7 +121,7 @@ const taxForm = useForm({
 });
 
 const updateTaxSettings = () => {
-    taxForm.post(route('cms.settings.tax.update'), {
+    taxForm.post(route('bms.settings.tax.update'), {
         preserveScroll: true
     });
 };
@@ -132,7 +132,7 @@ const approvalForm = useForm({
 });
 
 const updateApprovalThresholds = () => {
-    approvalForm.post(route('cms.settings.approval-thresholds.update'), {
+    approvalForm.post(route('bms.settings.approval-thresholds.update'), {
         preserveScroll: true
     });
 };
@@ -143,7 +143,7 @@ const invoiceForm = useForm({
 });
 
 const updateInvoiceSettings = () => {
-    invoiceForm.post(route('cms.settings.invoice.update'), {
+    invoiceForm.post(route('bms.settings.invoice.update'), {
         preserveScroll: true
     });
 };
@@ -154,7 +154,7 @@ const notificationForm = useForm({
 });
 
 const updateNotificationSettings = () => {
-    notificationForm.post(route('cms.settings.notifications.update'), {
+    notificationForm.post(route('bms.settings.notifications.update'), {
         preserveScroll: true
     });
 };
@@ -162,7 +162,7 @@ const updateNotificationSettings = () => {
 // Reset to defaults
 const resetToDefaults = () => {
     if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
-        router.post(route('cms.settings.reset-defaults'));
+        router.post(route('bms.settings.reset-defaults'));
     }
 };
 
@@ -172,7 +172,7 @@ const paymentForm = useForm({
 });
 
 const updatePaymentInstructions = () => {
-    paymentForm.post(route('cms.settings.payment-instructions.update'), {
+    paymentForm.post(route('bms.settings.payment-instructions.update'), {
         preserveScroll: true
     });
 };
@@ -199,7 +199,7 @@ const uploadLogo = () => {
     const formData = new FormData();
     formData.append('logo', logoFile.value);
     
-    router.post(route('cms.settings.logo.upload'), formData, {
+    router.post(route('bms.settings.logo.upload'), formData, {
         preserveScroll: true,
         forceFormData: true,
         headers: {
@@ -218,14 +218,14 @@ const uploadLogo = () => {
 
 const deleteLogo = () => {
     if (confirm('Are you sure you want to delete the logo?')) {
-        router.delete(route('cms.settings.logo.delete'), {
+        router.delete(route('bms.settings.logo.delete'), {
             preserveScroll: true
         });
     }
 };
 
 const updateBrandingSettings = () => {
-    brandingForm.post(route('cms.settings.branding.update'), {
+    brandingForm.post(route('bms.settings.branding.update'), {
         preserveScroll: true
     });
 };
@@ -236,7 +236,7 @@ const smsForm = useForm({
 });
 
 const updateSmsSettings = () => {
-    smsForm.post(route('cms.settings.sms.update'), {
+    smsForm.post(route('bms.settings.sms.update'), {
         preserveScroll: true
     });
 };
@@ -260,7 +260,7 @@ const documentDefaultsForm = useForm({
 });
 
 const updateDocumentDefaults = () => {
-    documentDefaultsForm.post(route('cms.settings.document-defaults.update'), {
+    documentDefaultsForm.post(route('bms.settings.document-defaults.update'), {
         preserveScroll: true
     });
 };
@@ -274,13 +274,13 @@ const uploadSignature = (e: Event) => {
     if (!file) return;
     signaturePreview.value = URL.createObjectURL(file);
     const form = useForm({ signature: file });
-    form.post(route('cms.settings.signature.upload'), { preserveScroll: true });
+    form.post(route('bms.settings.signature.upload'), { preserveScroll: true });
 };
 
 const deleteSignature = () => {
     if (!confirm('Remove signature?')) return;
     signaturePreview.value = null;
-    router.delete(route('cms.settings.signature.delete'), { preserveScroll: true });
+    router.delete(route('bms.settings.signature.delete'), { preserveScroll: true });
 };
 
 const tabs = [
@@ -299,7 +299,7 @@ const tabs = [
 // Fabrication module toggle
 const fabricationEnabled = ref(!!(props.company?.settings?.fabrication_module));
 function toggleFabrication() {
-    router.post(route('cms.settings.fabrication-module.toggle'), {
+    router.post(route('bms.settings.fabrication-module.toggle'), {
         enabled: fabricationEnabled.value,
     }, { preserveScroll: true });
 }
@@ -314,7 +314,7 @@ const bizdocsFeatures = ref({
 });
 
 function toggleBizDocs() {
-    router.post(route('cms.settings.bizdocs-module.toggle'), {
+    router.post(route('bms.settings.bizdocs-module.toggle'), {
         enabled: bizdocsEnabled.value,
         features: bizdocsFeatures.value,
     }, { preserveScroll: true });
@@ -323,7 +323,7 @@ function toggleBizDocs() {
 // Material Planning module toggle
 const materialPlanningEnabled = ref(!!(props.company?.has_material_planning_module));
 function toggleMaterialPlanning() {
-    router.post(route('cms.settings.material-planning-module.toggle'), {
+    router.post(route('bms.settings.material-planning-module.toggle'), {
         enabled: materialPlanningEnabled.value,
     }, { preserveScroll: true });
 }
@@ -331,7 +331,7 @@ function toggleMaterialPlanning() {
 // Construction Modules toggle
 const constructionModulesEnabled = ref(!!(props.company?.has_construction_modules));
 function toggleConstructionModules() {
-    router.post(route('cms.settings.construction-modules.toggle'), {
+    router.post(route('bms.settings.construction-modules.toggle'), {
         enabled: constructionModulesEnabled.value,
     }, { preserveScroll: true });
 }
@@ -339,7 +339,7 @@ function toggleConstructionModules() {
 // GrowFinance Module toggle
 const growfinanceEnabled = ref(!!(props.company?.has_growfinance_module));
 function toggleGrowFinance() {
-    router.post(route('cms.settings.growfinance-module.toggle'), {
+    router.post(route('bms.settings.growfinance-module.toggle'), {
         enabled: growfinanceEnabled.value,
     }, { preserveScroll: true });
 }
@@ -347,7 +347,7 @@ function toggleGrowFinance() {
 // Operations Module toggle
 const operationsModuleEnabled = ref(!!(props.company?.has_operations_module));
 function toggleOperationsModule() {
-    router.post(route('cms.settings.operations-module.toggle'), {
+    router.post(route('bms.settings.operations-module.toggle'), {
         enabled: operationsModuleEnabled.value,
     }, { preserveScroll: true });
 }
@@ -356,7 +356,7 @@ function toggleOperationsModule() {
 <template>
     <Head title="Settings" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
             <div class="mb-8">
@@ -1665,5 +1665,5 @@ function toggleOperationsModule() {
                 </FormSection>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use Barryvdh\DomPDF\Facade\Pdf;

@@ -31,15 +31,15 @@ return [
             'build_dir' => 'stockflow',
         ],
 
-        'cms' => [
+        'bms' => [
             'name' => 'BMS',
-            'domain_slug' => 'cms',
+            'domain_slug' => 'bms',
             'service_provider' => null,
             'middleware' => ['web', 'auth'],
             'uses_inertia' => true,
-            'blade_layout' => 'cms',
+            'blade_layout' => 'bms',
             'session_prefix' => null,
-            'build_dir' => 'cms',
+            'build_dir' => 'bms',
         ],
 
         'growmart' => [

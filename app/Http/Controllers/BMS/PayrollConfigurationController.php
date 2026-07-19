@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Infrastructure\Persistence\Eloquent\CMS\AllowanceTypeModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DeductionTypeModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAllowanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerDeductionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AllowanceTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DeductionTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerAllowanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerDeductionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 
 class PayrollConfigurationController extends Controller
 {
@@ -22,7 +22,7 @@ class PayrollConfigurationController extends Controller
             ->orderBy('allowance_name')
             ->get();
 
-        return Inertia::render('CMS/Payroll/AllowanceTypes', [
+        return Inertia::render('BMS/Payroll/AllowanceTypes', [
             'allowanceTypes' => $allowanceTypes,
         ]);
     }
@@ -74,7 +74,7 @@ class PayrollConfigurationController extends Controller
             ->orderBy('deduction_name')
             ->get();
 
-        return Inertia::render('CMS/Payroll/DeductionTypes', [
+        return Inertia::render('BMS/Payroll/DeductionTypes', [
             'deductionTypes' => $deductionTypes,
         ]);
     }
@@ -128,7 +128,7 @@ class PayrollConfigurationController extends Controller
             ->where('is_active', true)
             ->get();
 
-        return Inertia::render('CMS/Workers/Allowances', [
+        return Inertia::render('BMS/Workers/Allowances', [
             'worker' => $worker,
             'allowances' => $worker->allowances,
             'availableAllowanceTypes' => $availableAllowanceTypes,
@@ -194,7 +194,7 @@ class PayrollConfigurationController extends Controller
             ->where('is_statutory', false) // Only non-statutory deductions can be manually added
             ->get();
 
-        return Inertia::render('CMS/Workers/Deductions', [
+        return Inertia::render('BMS/Workers/Deductions', [
             'worker' => $worker,
             'deductions' => $worker->deductions,
             'availableDeductionTypes' => $availableDeductionTypes,

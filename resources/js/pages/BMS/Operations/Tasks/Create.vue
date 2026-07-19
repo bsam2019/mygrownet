@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Create Task">
+  <BMSLayout page-title="Create Task">
     <div class="max-w-3xl mx-auto">
       <div class="bg-white rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -124,7 +124,7 @@
           <!-- Actions -->
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
             <Link
-              :href="route('cms.operations.tasks.index')"
+              :href="route('bms.operations.tasks.index')"
               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               Cancel
@@ -140,12 +140,12 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   workflows: any[]
@@ -166,6 +166,6 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.operations.tasks.store'))
+  form.post(route('bms.operations.tasks.store'))
 }
 </script>

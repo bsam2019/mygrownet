@@ -4,9 +4,31 @@ namespace App\Domain\Core\Services;
 
 use App\Domain\Core\Models\Application;
 use App\Domain\Core\Models\CustomDomain;
+use App\Domain\Core\Models\Domain;
 
 class WorkspaceResolver
 {
+    public function resolveFromDomainsTable(string $host): ?ResolvedWorkspace
+    {
+        try {
+            $domain = Domain::where('domain', $host)
+                ->where('is_active', true)
+                ->first();
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        if (!$domain) {
+            return null;
+        }
+
+        return new ResolvedWorkspace(
+            type: $domain->type,
+            application: $domain->application,
+            organization: $domain->organization,
+        );
+    }
+
     public function resolveFromSubdomain(string $host): ?ResolvedWorkspace
     {
         if (!str_contains($host, '.mygrownet.com')) {
@@ -15,7 +37,6 @@ class WorkspaceResolver
 
         $subdomain = explode('.', $host)[0];
 
-        // Resolve subdomain → application slug via config/platform.php
         $apps = config('platform.applications', []);
         $slug = null;
 
@@ -30,7 +51,6 @@ class WorkspaceResolver
             return null;
         }
 
-        // Try database first (if migrated), fall back to config-only resolution
         $app = Application::where('slug', $slug)->where('is_active', true)->first();
 
         return new ResolvedWorkspace(
@@ -60,7 +80,8 @@ class WorkspaceResolver
 
     public function resolve(string $host): ?ResolvedWorkspace
     {
-        return $this->resolveFromCustomDomain($host)
+        return $this->resolveFromDomainsTable($host)
+            ?? $this->resolveFromCustomDomain($host)
             ?? $this->resolveFromSubdomain($host);
     }
 }

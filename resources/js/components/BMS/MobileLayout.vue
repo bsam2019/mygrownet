@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between">
           <div class="flex-1">
             <Link
-              :href="route('cms.dashboard')"
+              :href="route('bms.dashboard')"
               class="text-xs text-blue-600 hover:text-blue-800 mb-1 inline-block md:hidden"
             >
               ← Dashboard
@@ -33,14 +33,14 @@
       <div v-if="showMenu" class="border-t border-gray-200 bg-white md:hidden">
         <div class="px-4 py-3 space-y-1">
           <Link
-            :href="route('cms.dashboard')"
+            :href="route('bms.dashboard')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
             Dashboard
           </Link>
           <Link
-            :href="route('cms.jobs.index')"
+            :href="route('bms.jobs.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
@@ -48,35 +48,35 @@
           </Link>
           <Link
             v-if="hasFabrication"
-            :href="route('cms.measurements.index')"
+            :href="route('bms.measurements.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
             Measurements
           </Link>
           <Link
-            :href="route('cms.customers.index')"
+            :href="route('bms.customers.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
             Customers
           </Link>
           <Link
-            :href="route('cms.invoices.index')"
+            :href="route('bms.invoices.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
             Invoices
           </Link>
           <Link
-            :href="route('cms.payments.index')"
+            :href="route('bms.payments.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
             Payments
           </Link>
           <Link
-            :href="route('cms.reports.index')"
+            :href="route('bms.reports.index')"
             class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
             @click="showMenu = false"
           >
@@ -95,7 +95,7 @@
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
       <div class="grid grid-cols-5 h-16">
         <Link
-          :href="route('cms.dashboard')"
+          :href="route('bms.dashboard')"
           :class="[
             'flex flex-col items-center justify-center gap-1',
             currentRoute === 'cms.dashboard' ? 'text-blue-600' : 'text-gray-600'
@@ -106,7 +106,7 @@
         </Link>
         
         <Link
-          :href="route('cms.jobs.index')"
+          :href="route('bms.jobs.index')"
           :class="[
             'flex flex-col items-center justify-center gap-1',
             currentRoute === 'cms.jobs.index' ? 'text-blue-600' : 'text-gray-600'
@@ -117,7 +117,7 @@
         </Link>
         
         <Link
-          :href="route('cms.invoices.index')"
+          :href="route('bms.invoices.index')"
           :class="[
             'flex flex-col items-center justify-center gap-1',
             currentRoute === 'cms.invoices.index' ? 'text-blue-600' : 'text-gray-600'
@@ -128,7 +128,7 @@
         </Link>
         
         <Link
-          :href="route('cms.customers.index')"
+          :href="route('bms.customers.index')"
           :class="[
             'flex flex-col items-center justify-center gap-1',
             currentRoute === 'cms.customers.index' ? 'text-blue-600' : 'text-gray-600'
@@ -139,7 +139,7 @@
         </Link>
         
         <Link
-          :href="route('cms.reports.index')"
+          :href="route('bms.reports.index')"
           :class="[
             'flex flex-col items-center justify-center gap-1',
             currentRoute === 'cms.reports.index' ? 'text-blue-600' : 'text-gray-600'

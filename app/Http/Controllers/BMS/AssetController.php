@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\AssetService;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetAssignmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetMaintenanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
+use App\Domain\BMS\Core\Services\AssetService;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetAssignmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetMaintenanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +34,7 @@ class AssetController extends Controller
             $totalAccumulatedDep += $this->assetService->getAccumulatedDepreciation($a);
         }
 
-        return Inertia::render('CMS/Assets/DepreciationRegister', [
+        return Inertia::render('BMS/Assets/DepreciationRegister', [
             'assets' => $assets,
             'summary' => [
                 'total_cost' => $totalCost,
@@ -93,11 +93,11 @@ class AssetController extends Controller
             ->with('user')
             ->get();
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Assets/Index', [
+        return Inertia::render('BMS/Assets/Index', [
             'assets' => $assets,
             'categories' => $categories,
             'staff' => $staff,
@@ -108,7 +108,7 @@ class AssetController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Assets/Create');
+        return Inertia::render('BMS/Assets/Create');
     }
 
     public function store(Request $request)
@@ -138,7 +138,7 @@ class AssetController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.assets.show', $asset->id)
+            ->route('bms.assets.show', $asset->id)
             ->with('success', 'Asset created successfully');
     }
 
@@ -152,7 +152,7 @@ class AssetController extends Controller
 
         $history = $this->assetService->getAssetHistory($asset->id);
 
-        return Inertia::render('CMS/Assets/Show', [
+        return Inertia::render('BMS/Assets/Show', [
             'asset' => $asset,
             'assignments' => $history['assignments'],
             'maintenance' => $history['maintenance'],
@@ -161,7 +161,7 @@ class AssetController extends Controller
 
     public function edit(AssetModel $asset): Response
     {
-        return Inertia::render('CMS/Assets/Edit', [
+        return Inertia::render('BMS/Assets/Edit', [
             'asset' => $asset,
         ]);
     }
@@ -189,7 +189,7 @@ class AssetController extends Controller
         $this->assetService->updateAsset($asset, $validated, $userId);
 
         return redirect()
-            ->route('cms.assets.show', $asset->id)
+            ->route('bms.assets.show', $asset->id)
             ->with('success', 'Asset updated successfully');
     }
 
@@ -278,7 +278,7 @@ class AssetController extends Controller
         $upcoming = $this->assetService->getUpcomingMaintenance($companyId, 30);
         $overdue = $this->assetService->getOverdueMaintenance($companyId);
 
-        return Inertia::render('CMS/Assets/Maintenance', [
+        return Inertia::render('BMS/Assets/Maintenance', [
             'upcoming' => $upcoming,
             'overdue' => $overdue,
         ]);

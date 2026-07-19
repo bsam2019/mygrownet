@@ -2,10 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Quotation {
@@ -104,7 +104,7 @@ const getStatusLabel = (status: string) => {
                 <p class="mt-1 text-sm text-gray-600">Create and manage customer quotations</p>
             </div>
             <Link
-                :href="route('cms.quotations.create')"
+                :href="route('bms.quotations.create')"
                 class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -205,7 +205,7 @@ const getStatusLabel = (status: string) => {
                     <tr v-for="quotation in quotations.data" :key="quotation.id" class="hover:bg-gray-50">
                         <td class="whitespace-nowrap px-6 py-4">
                             <Link
-                                :href="route('cms.quotations.show', quotation.id)"
+                                :href="route('bms.quotations.show', quotation.id)"
                                 class="font-medium text-blue-600 hover:text-blue-800"
                             >
                                 {{ quotation.quotation_number }}
@@ -240,7 +240,7 @@ const getStatusLabel = (status: string) => {
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
                             <Link
-                                :href="route('cms.quotations.show', quotation.id)"
+                                :href="route('bms.quotations.show', quotation.id)"
                                 class="text-blue-600 hover:text-blue-800"
                             >
                                 View

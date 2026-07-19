@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified', 'employee', 'inject.delegated.nav'])->prefix('workspace')->name('employee.portal.')->group(function () {
+Route::middleware(['auth', 'verified', 'employee', 'inject.delegated.nav'])->prefix('employee')->name('employee.portal.')->group(function () {
     
     // Dashboard
     Route::get('/', [PortalController::class, 'dashboard'])->name('dashboard');

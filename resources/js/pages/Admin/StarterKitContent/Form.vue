@@ -230,7 +230,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import FileUpload from '@/components/CMS/FileUpload.vue';
+import FileUpload from '@/components/BMS/FileUpload.vue';
 
 interface Content {
   id: number;

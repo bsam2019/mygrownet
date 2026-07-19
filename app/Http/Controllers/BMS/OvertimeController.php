@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\OvertimeService;
+use App\Domain\BMS\Core\Services\OvertimeService;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\OvertimeRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OvertimeRecordModel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,13 +29,13 @@ class OvertimeController extends Controller
 
         $records = $this->overtimeService->getOvertimeRecords($companyId, $filters);
         
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $companyId)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::where('company_id', $companyId)
             ->active()
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        return Inertia::render('CMS/Overtime/Index', [
+        return Inertia::render('BMS/Overtime/Index', [
             'records' => $records,
             'workers' => $workers,
             'filters' => $filters,
@@ -60,7 +60,7 @@ class OvertimeController extends Controller
             'company_id' => $request->user()->cmsUser->company_id,
         ]);
 
-        return redirect()->route('cms.overtime.index')
+        return redirect()->route('bms.overtime.index')
             ->with('success', 'Overtime record created successfully.');
     }
 

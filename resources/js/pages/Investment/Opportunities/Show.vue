@@ -58,7 +58,7 @@ const getRiskLevelColor = (riskLevel) => {
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <!-- Breadcrumb -->
                 <div class="mb-6 flex items-center text-sm text-gray-500">
-                    <Link :href="route('dashboard')" class="hover:text-gray-700">Dashboard</Link>
+                    <Link :href="route('workspace')" class="hover:text-gray-700">Dashboard</Link>
                     <span class="mx-2">/</span>
                     <Link :href="route('opportunities')" class="hover:text-gray-700">Opportunities</Link>
                     <span class="mx-2">/</span>

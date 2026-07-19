@@ -28,7 +28,7 @@ const page = usePage();
 const currencySymbol = computed(() => (props.userCurrency || (page.props as any).userCurrency || 'ZMW') === 'USD' ? '$' : 'K');
 
 const breadcrumbs = [
-    { label: 'Dashboard', href: route('dashboard') },
+    { label: 'Dashboard', href: route('workspace') },
     { label: 'My Earnings', href: route('mygrownet.earnings.hub') }
 ];
 

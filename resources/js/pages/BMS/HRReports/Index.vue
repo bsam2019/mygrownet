@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -298,13 +298,13 @@
         </Dialog>
       </TransitionRoot>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
   UsersIcon,
@@ -357,7 +357,7 @@ const generateReport = async () => {
   generating.value = true
   
   try {
-    const response = await fetch(route('cms.hr-reports.generate'), {
+    const response = await fetch(route('bms.hr-reports.generate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -395,7 +395,7 @@ const deleteReport = async (id: number) => {
   if (!confirm('Are you sure you want to delete this report?')) return
 
   try {
-    await fetch(route('cms.hr-reports.destroy', id), {
+    await fetch(route('bms.hr-reports.destroy', id), {
       method: 'DELETE',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Services\CMS\SecurityService;
-use App\Infrastructure\Persistence\Eloquent\CMS\SuspiciousActivityModel;
+use App\Services\BMS\SecurityService;
+use App\Infrastructure\Persistence\Eloquent\BMS\SuspiciousActivityModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -29,7 +29,7 @@ class SecurityController extends Controller
             'enable_security_alerts' => $company->enable_security_alerts ?? true,
         ];
 
-        return Inertia::render('CMS/Security/Settings', [
+        return Inertia::render('BMS/Security/Settings', [
             'settings' => $settings,
         ]);
     }
@@ -54,17 +54,17 @@ class SecurityController extends Controller
     // Audit Log Viewer
     public function auditLogs(Request $request)
     {
-        $logs = \App\Infrastructure\Persistence\Eloquent\CMS\SecurityAuditLogModel::where('company_id', $request->user()->company_id)
+        $logs = \App\Infrastructure\Persistence\Eloquent\BMS\SecurityAuditLogModel::where('company_id', $request->user()->company_id)
             ->when($request->event_type, fn($q) => $q->where('event_type', $request->event_type))
             ->when($request->user_id, fn($q) => $q->where('user_id', $request->user_id))
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
-        $users = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('company_id', $request->user()->company_id)
+        $users = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $request->user()->company_id)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
-        return Inertia::render('CMS/Security/AuditLogs', [
+        return Inertia::render('BMS/Security/AuditLogs', [
             'logs' => $logs,
             'users' => $users,
             'filters' => $request->only(['event_type', 'user_id']),
@@ -86,7 +86,7 @@ class SecurityController extends Controller
             'high_severity' => SuspiciousActivityModel::where('company_id', $request->user()->company_id)->where('severity', 'high')->count(),
         ];
 
-        return Inertia::render('CMS/Security/SuspiciousActivity', [
+        return Inertia::render('BMS/Security/SuspiciousActivity', [
             'activities' => $activities,
             'stats' => $stats,
             'filters' => $request->only(['status', 'severity']),
@@ -116,7 +116,7 @@ class SecurityController extends Controller
         $secret = $this->securityService->generate2FASecret();
         $qrCode = $this->securityService->generate2FAQRCode($request->user()->email, $secret);
 
-        return Inertia::render('CMS/Security/Enable2FA', [
+        return Inertia::render('BMS/Security/Enable2FA', [
             'secret' => $secret,
             'qrCode' => $qrCode,
         ]);
@@ -140,7 +140,7 @@ class SecurityController extends Controller
             'two_factor_secret' => $validated['secret'],
         ]);
 
-        return redirect()->route('cms.dashboard')->with('success', '2FA enabled successfully.');
+        return redirect()->route('bms.dashboard')->with('success', '2FA enabled successfully.');
     }
 
     public function disable2FA(Request $request)

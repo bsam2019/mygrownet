@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\QualityInspectionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\NonConformanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CorrectiveActionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerComplaintModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ReworkRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QualityInspectionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\NonConformanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CorrectiveActionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerComplaintModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ReworkRecordModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -20,7 +20,7 @@ class QualityController extends Controller
             ->latest('inspection_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Quality/Inspections/Index', ['inspections' => $inspections]);
+        return Inertia::render('BMS/Quality/Inspections/Index', ['inspections' => $inspections]);
     }
 
     public function storeInspection(Request $request)
@@ -55,7 +55,7 @@ class QualityController extends Controller
         $inspection = QualityInspectionModel::with(['results.checklistItem', 'inspectedBy'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Quality/Inspections/Show', ['inspection' => $inspection]);
+        return Inertia::render('BMS/Quality/Inspections/Show', ['inspection' => $inspection]);
     }
 
     public function ncr(Request $request)
@@ -65,7 +65,7 @@ class QualityController extends Controller
             ->latest('reported_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Quality/NCR/Index', ['ncrs' => $ncrs]);
+        return Inertia::render('BMS/Quality/NCR/Index', ['ncrs' => $ncrs]);
     }
 
     public function storeNCR(Request $request)
@@ -119,7 +119,7 @@ class QualityController extends Controller
             ->latest('complaint_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Quality/Complaints/Index', ['complaints' => $complaints]);
+        return Inertia::render('BMS/Quality/Complaints/Index', ['complaints' => $complaints]);
     }
 
     public function storeComplaint(Request $request)
@@ -152,7 +152,7 @@ class QualityController extends Controller
             ->latest('rework_date')
             ->paginate(20);
 
-        return Inertia::render('CMS/Quality/Rework/Index', ['rework' => $rework]);
+        return Inertia::render('BMS/Quality/Rework/Index', ['rework' => $rework]);
     }
 
     public function storeRework(Request $request)

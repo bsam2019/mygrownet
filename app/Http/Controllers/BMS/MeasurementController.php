@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\MeasurementService;
-use App\Domain\CMS\Core\Services\PricingRulesService;
-use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
+use App\Domain\BMS\Core\Services\MeasurementService;
+use App\Domain\BMS\Core\Services\PricingRulesService;
+use App\Infrastructure\Persistence\Eloquent\BMS\MeasurementRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MeasurementItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -56,7 +56,7 @@ class MeasurementController extends Controller
 
         $customers = CustomerModel::forCompany($companyId)->active()->orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('CMS/Measurements/Index', [
+        return Inertia::render('BMS/Measurements/Index', [
             'measurements' => $measurements,
             'summary'      => $summary,
             'customers'    => $customers,
@@ -71,7 +71,7 @@ class MeasurementController extends Controller
         $customers = CustomerModel::forCompany($companyId)->active()->orderBy('name')->get(['id', 'customer_number', 'name', 'phone']);
         $workers   = CmsUserModel::forCompany($companyId)->active()->with('user')->get();
 
-        return Inertia::render('CMS/Measurements/Create', [
+        return Inertia::render('BMS/Measurements/Create', [
             'customers' => $customers,
             'workers'   => $workers,
             'itemTypes' => $this->getItemTypes(),
@@ -111,7 +111,7 @@ class MeasurementController extends Controller
             'created_by' => $request->user()->cmsUser->id,
         ]));
 
-        return redirect()->route('cms.measurements.show', $measurement->id)
+        return redirect()->route('bms.measurements.show', $measurement->id)
             ->with('success', "Measurement {$measurement->measurement_number} created successfully.");
     }
 
@@ -125,7 +125,7 @@ class MeasurementController extends Controller
 
         $profitSummary = $this->measurementService->getProfitSummary($measurement);
 
-        return Inertia::render('CMS/Measurements/Show', [
+        return Inertia::render('BMS/Measurements/Show', [
             'measurement'   => $measurement,
             'profitSummary' => $profitSummary,
             'itemTypes'     => $this->getItemTypes(),
@@ -143,7 +143,7 @@ class MeasurementController extends Controller
         $customers = CustomerModel::forCompany($companyId)->active()->orderBy('name')->get(['id', 'customer_number', 'name', 'phone']);
         $workers   = CmsUserModel::forCompany($companyId)->active()->with('user')->get();
 
-        return Inertia::render('CMS/Measurements/Edit', [
+        return Inertia::render('BMS/Measurements/Edit', [
             'measurement' => $measurement,
             'customers'   => $customers,
             'workers'     => $workers,
@@ -174,7 +174,7 @@ class MeasurementController extends Controller
             'updated_by' => $request->user()->cmsUser->id,
         ]));
 
-        return redirect()->route('cms.measurements.show', $measurement->id)
+        return redirect()->route('bms.measurements.show', $measurement->id)
             ->with('success', 'Measurement updated successfully.');
     }
 
@@ -191,7 +191,7 @@ class MeasurementController extends Controller
         $number = $measurement->measurement_number;
         $measurement->delete();
 
-        return redirect()->route('cms.measurements.index')
+        return redirect()->route('bms.measurements.index')
             ->with('success', "Measurement {$number} deleted.");
     }
 
@@ -293,7 +293,7 @@ class MeasurementController extends Controller
 
         $quotation = $this->measurementService->generateQuotation($measurement, $request->user()->cmsUser->id);
 
-        return redirect()->route('cms.quotations.show', $quotation->id)
+        return redirect()->route('bms.quotations.show', $quotation->id)
             ->with('success', "Quotation {$quotation->quotation_number} generated successfully.");
     }
 

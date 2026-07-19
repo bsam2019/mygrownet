@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Operations\Services;
+namespace App\Domain\BMS\Operations\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\TaskLogModel;

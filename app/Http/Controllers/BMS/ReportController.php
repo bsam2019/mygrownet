@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
-use App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceReportService;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceReportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response as FacadeResponse;
 use Inertia\Inertia;
@@ -56,7 +56,7 @@ class ReportController extends Controller
         $comparative = $this->getComparativeAnalysis($companyId, $startDate, $endDate);
 
         // Get active budgets for the period
-        $activeBudgets = \App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel::where('company_id', $companyId)
+        $activeBudgets = \App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel::where('company_id', $companyId)
             ->active()
             ->forPeriod($startDate, $endDate)
             ->get(['id', 'name', 'start_date', 'end_date']);
@@ -77,7 +77,7 @@ class ReportController extends Controller
             ? $this->growFinanceReportService->getTrialBalance($companyId)
             : null;
 
-        return Inertia::render('CMS/Reports/Index', [
+        return Inertia::render('BMS/Reports/Index', [
             'salesSummary' => $salesSummary,
             'paymentSummary' => $paymentSummary,
             'outstandingInvoices' => $outstandingInvoices,
@@ -343,7 +343,7 @@ class ReportController extends Controller
         $totalExpenses = $expenses->sum('amount');
 
         // Labor Costs (from payroll)
-        $laborCosts = \App\Infrastructure\Persistence\Eloquent\CMS\PayrollRunModel::where('company_id', $companyId)
+        $laborCosts = \App\Infrastructure\Persistence\Eloquent\BMS\PayrollRunModel::where('company_id', $companyId)
             ->where('status', 'paid')
             ->whereBetween('period_end', [$startDate, $endDate])
             ->sum('total_net_pay');
@@ -669,7 +669,7 @@ class ReportController extends Controller
         $balanceSheet = $this->growFinanceReportService->getBalanceSheet($companyId, $asOfDate);
         $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
 
-        return Inertia::render('CMS/Reports/BalanceSheet', [
+        return Inertia::render('BMS/Reports/BalanceSheet', [
             'balanceSheet' => $balanceSheet,
             'growFinanceEnabled' => $growFinanceEnabled,
             'asOfDate' => $asOfDate,
@@ -689,7 +689,7 @@ class ReportController extends Controller
         $cashFlow = $this->growFinanceReportService->getCashFlowStatement($companyId, $startDate, $endDate);
         $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
 
-        return Inertia::render('CMS/Reports/CashFlowStatement', [
+        return Inertia::render('BMS/Reports/CashFlowStatement', [
             'cashFlow' => $cashFlow,
             'growFinanceEnabled' => $growFinanceEnabled,
             'startDate' => $startDate,
@@ -711,7 +711,7 @@ class ReportController extends Controller
         $generalLedger = $this->growFinanceReportService->getGeneralLedger($companyId, $accountId, $startDate, $endDate);
         $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
 
-        return Inertia::render('CMS/Reports/GeneralLedger', [
+        return Inertia::render('BMS/Reports/GeneralLedger', [
             'generalLedger' => $generalLedger,
             'growFinanceEnabled' => $growFinanceEnabled,
             'startDate' => $startDate,
@@ -731,7 +731,7 @@ class ReportController extends Controller
         $trialBalance = $this->growFinanceReportService->getTrialBalance($companyId, $asOfDate);
         $growFinanceEnabled = $this->growFinanceReportService->isEnabled($companyId);
 
-        return Inertia::render('CMS/Reports/TrialBalance', [
+        return Inertia::render('BMS/Reports/TrialBalance', [
             'trialBalance' => $trialBalance,
             'growFinanceEnabled' => $growFinanceEnabled,
             'asOfDate' => $asOfDate,

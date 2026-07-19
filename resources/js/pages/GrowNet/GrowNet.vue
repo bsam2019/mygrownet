@@ -36,7 +36,7 @@
           <div class="flex items-center gap-1 flex-shrink-0">
             <NotificationBell />
             <Link
-              :href="route('dashboard')"
+              :href="route('workspace')"
               aria-label="Go to Dashboard"
               class="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-all duration-200 active:scale-95 border border-white/20"
               title="Dashboard"

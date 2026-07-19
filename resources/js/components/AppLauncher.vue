@@ -105,7 +105,7 @@ const getModuleIcon = (slug: string) => {
                     <Link
                         v-for="module in modules"
                         :key="module.id || module.key"
-                        :href="module.primary_route || module.route || '/dashboard'"
+                        :href="module.primary_route || module.route || '/workspace'"
                         @click="closeLauncher"
                         class="group flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-all duration-200"
                     >
@@ -128,7 +128,7 @@ const getModuleIcon = (slug: string) => {
                 <!-- Footer -->
                 <div class="p-3 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
                     <Link
-                        href="/dashboard"
+                        href="/workspace"
                         @click="closeLauncher"
                         class="block text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >

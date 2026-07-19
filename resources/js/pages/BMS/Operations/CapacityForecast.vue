@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Capacity Forecast">
+  <BMSLayout page-title="Capacity Forecast">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -18,7 +18,7 @@
             <option value="12">12 Weeks</option>
           </select>
           <Link
-            :href="route('cms.operations.workload-balance')"
+            :href="route('bms.operations.workload-balance')"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <ScaleIcon class="h-5 w-5" aria-hidden="true" />
@@ -169,13 +169,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   CalendarIcon,
   ExclamationTriangleIcon,
@@ -232,7 +232,7 @@ const formatDate = (dateString: string) => {
 }
 
 const updateForecast = () => {
-  router.get(route('cms.operations.capacity-forecast'), { weeks: weeksAhead.value }, {
+  router.get(route('bms.operations.capacity-forecast'), { weeks: weeksAhead.value }, {
     preserveState: true,
   })
 }

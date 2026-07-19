@@ -123,7 +123,7 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.jobs.store'), {
+  form.post(route('bms.jobs.store'), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

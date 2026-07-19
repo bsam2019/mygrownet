@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Core\ValueObjects;
+namespace App\Domain\BMS\Core\ValueObjects;
 
 enum JobStatus: string
 {

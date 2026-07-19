@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\JobService;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
+use App\Domain\BMS\Core\Services\JobService;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,11 +32,11 @@ class JobController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Jobs/Index', [
+        return Inertia::render('BMS/Jobs/Index', [
             'jobs' => $jobs,
             'filters' => $request->only(['status', 'assigned_to', 'branch_id']),
             'branches' => $branches,
@@ -52,7 +52,7 @@ class JobController extends Controller
             ->orderBy('name')
             ->get(['id', 'customer_number', 'name', 'phone']);
 
-        return Inertia::render('CMS/Jobs/Create', [
+        return Inertia::render('BMS/Jobs/Create', [
             'customers' => $customers,
         ]);
     }
@@ -79,7 +79,7 @@ class JobController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.jobs.show', $job->id)
+            ->route('bms.jobs.show', $job->id)
             ->with('success', 'Job created successfully');
     }
 
@@ -99,7 +99,7 @@ class JobController extends Controller
         ]);
 
         // Get available workers for assignment
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('company_id', $companyId)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $companyId)
             ->with('user')
             ->get()
             ->map(fn($cmsUser) => [
@@ -107,7 +107,7 @@ class JobController extends Controller
                 'name' => $cmsUser->user->name,
             ]);
 
-        return Inertia::render('CMS/Jobs/Show', [
+        return Inertia::render('BMS/Jobs/Show', [
             'job' => $job,
             'fabricationStatuses' => $this->getFabricationStatuses(),
             'workers' => $workers,

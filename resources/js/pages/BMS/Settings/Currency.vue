@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Currency Settings">
+  <BMSLayout page-title="Currency Settings">
     <div class="p-6 space-y-6">
       <!-- Header -->
       <div>
@@ -292,7 +292,7 @@
         </Dialog>
       </TransitionRoot>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
@@ -300,7 +300,7 @@ import { ref, reactive } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { Dialog, DialogPanel, TransitionRoot, TransitionChild } from '@headlessui/vue';
 import { PlusIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import axios from 'axios';
 
 interface Props {
@@ -335,7 +335,7 @@ const converter = reactive({
 });
 
 const updateSettings = () => {
-  form.post(route('cms.settings.currency.update'), {
+  form.post(route('bms.settings.currency.update'), {
     preserveScroll: true,
     onSuccess: () => {
       // Success handled by flash message
@@ -344,7 +344,7 @@ const updateSettings = () => {
 };
 
 const saveRate = () => {
-  rateForm.post(route('cms.settings.currency.exchange-rate.set'), {
+  rateForm.post(route('bms.settings.currency.exchange-rate.set'), {
     preserveScroll: true,
     onSuccess: () => {
       showAddRateModal.value = false;
@@ -366,7 +366,7 @@ const editRate = (rate: any) => {
 
 const convertCurrency = async () => {
   try {
-    const response = await axios.post(route('cms.settings.currency.convert'), {
+    const response = await axios.post(route('bms.settings.currency.convert'), {
       amount: converter.amount,
       from_currency: converter.from_currency,
       to_currency: converter.to_currency,

@@ -80,7 +80,7 @@
                             
                             <!-- Link to CMS Budget Management -->
                             <a
-                                :href="route('cms.budgets.index')"
+                                :href="route('bms.budgets.index')"
                                 class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
                             >
                                 <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />
@@ -96,7 +96,7 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Budget</h3>
                     <p class="text-gray-600 mb-6">{{ comparison.message }}</p>
                     <a
-                        :href="route('cms.budgets.index')"
+                        :href="route('bms.budgets.index')"
                         class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         <PlusCircleIcon class="h-5 w-5" aria-hidden="true" />

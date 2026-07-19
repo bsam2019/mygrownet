@@ -43,7 +43,7 @@ const getRiskLevelColor = (riskLevel) => {
         <template #header>
             <div class="flex items-center">
                 <Link 
-                    :href="route('dashboard')" 
+                    :href="route('workspace')" 
                     class="mr-4 text-gray-600 hover:text-gray-900 transition-colors"
                 >
                     <ArrowLeftIcon class="h-5 w-5" />

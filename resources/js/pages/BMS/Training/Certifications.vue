@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { ShieldCheckIcon, PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -13,7 +13,7 @@ const props = defineProps<{
 const statusFilter = ref(props.filters.status || '');
 
 const applyFilters = () => {
-  router.get(route('cms.training.certifications'), {
+  router.get(route('bms.training.certifications'), {
     status: statusFilter.value,
   }, { preserveState: true });
 };
@@ -35,7 +35,7 @@ const formatDate = (date: string) => {
 <template>
   <Head title="Certifications" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -129,5 +129,5 @@ const formatDate = (date: string) => {
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

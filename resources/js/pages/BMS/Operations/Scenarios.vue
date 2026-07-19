@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="What-If Scenarios">
+  <BMSLayout page-title="What-If Scenarios">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -198,13 +198,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   BeakerIcon,
   ArrowTrendingUpIcon,
@@ -255,7 +255,7 @@ const calculateImprovement = (scenario: Scenario) => {
 }
 
 const createScenario = () => {
-  router.post(route('cms.operations.scenarios.store'), form.value, {
+  router.post(route('bms.operations.scenarios.store'), form.value, {
     onSuccess: () => {
       showCreateModal.value = false
       form.value = {
@@ -270,11 +270,11 @@ const createScenario = () => {
 
 const applyScenario = (scenarioId: number) => {
   if (confirm('Are you sure you want to apply this scenario? This will reassign tasks.')) {
-    router.post(route('cms.operations.scenarios.apply', scenarioId))
+    router.post(route('bms.operations.scenarios.apply', scenarioId))
   }
 }
 
 const rejectScenario = (scenarioId: number) => {
-  router.post(route('cms.operations.scenarios.reject', scenarioId))
+  router.post(route('bms.operations.scenarios.reject', scenarioId))
 }
 </script>

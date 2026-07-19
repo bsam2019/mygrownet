@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Services\CMS\EmailService;
+use App\Services\BMS\EmailService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Domain\CMS\Core\Services\ChartOfAccountsService;
+use App\Domain\BMS\Core\Services\ChartOfAccountsService;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use Illuminate\Database\Seeder;
 

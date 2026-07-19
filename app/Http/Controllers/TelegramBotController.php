@@ -116,7 +116,7 @@ class TelegramBotController extends Controller
         $message .= "Level: {$user->professional_level}\n";
         $message .= "Points: " . number_format($user->lifetime_points ?? 0) . " LP\n";
         $message .= "Network: " . ($user->network_size ?? 0) . " members\n\n";
-        $message .= "Dashboard: " . route('dashboard');
+        $message .= "Dashboard: " . route('workspace');
 
         Telegram::sendMessage([
             'chat_id' => $chatId,

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\CustomerService;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
+use App\Domain\BMS\Core\Services\CustomerService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,7 +35,7 @@ class CustomerController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Customers/Index', [
+        return Inertia::render('BMS/Customers/Index', [
             'customers' => $customers,
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -43,7 +43,7 @@ class CustomerController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Customers/Create');
+        return Inertia::render('BMS/Customers/Create');
     }
 
     public function store(Request $request)
@@ -67,7 +67,7 @@ class CustomerController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.customers.show', $customer->id)
+            ->route('bms.customers.show', $customer->id)
             ->with('success', 'Customer created successfully');
     }
 
@@ -80,14 +80,14 @@ class CustomerController extends Controller
             'contacts' => fn($q) => $q->orderBy('is_primary', 'desc')->orderBy('name')
         ]);
 
-        return Inertia::render('CMS/Customers/Show', [
+        return Inertia::render('BMS/Customers/Show', [
             'customer' => $customer,
         ]);
     }
 
     public function edit(CustomerModel $customer): Response
     {
-        return Inertia::render('CMS/Customers/Edit', [
+        return Inertia::render('BMS/Customers/Edit', [
             'customer' => $customer,
         ]);
     }
@@ -109,7 +109,7 @@ class CustomerController extends Controller
         $this->customerService->updateCustomer($customer, $validated, $userId);
 
         return redirect()
-            ->route('cms.customers.show', $customer->id)
+            ->route('bms.customers.show', $customer->id)
             ->with('success', 'Customer updated successfully');
     }
 
@@ -123,7 +123,7 @@ class CustomerController extends Controller
         $customer->delete();
 
         return redirect()
-            ->route('cms.customers.index')
+            ->route('bms.customers.index')
             ->with('success', 'Customer deleted successfully');
     }
 

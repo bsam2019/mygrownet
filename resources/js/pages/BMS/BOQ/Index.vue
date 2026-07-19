@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 
 interface BOQ {
@@ -30,7 +30,7 @@ const statusColors = {
 <template>
   <Head title="Bill of Quantities" />
   
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
@@ -38,7 +38,7 @@ const statusColors = {
           <p class="mt-1 text-sm text-gray-500">Manage BOQs and track quantities</p>
         </div>
         <Link
-          :href="route('cms.boq.create')"
+          :href="route('bms.boq.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -50,7 +50,7 @@ const statusColors = {
         <Link
           v-for="boq in boqs.data"
           :key="boq.id"
-          :href="route('cms.boq.show', boq.id)"
+          :href="route('bms.boq.show', boq.id)"
           class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
         >
           <div class="flex items-start justify-between mb-4">
@@ -85,5 +85,5 @@ const statusColors = {
         </Link>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Labour\Services\LabourService;
-use App\Infrastructure\Persistence\Eloquent\CMS\CrewModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LabourTimesheetModel;
+use App\Domain\BMS\Labour\Services\LabourService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CrewModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LabourTimesheetModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -26,7 +26,7 @@ class LabourController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        return Inertia::render('CMS/Labour/Crews/Index', [
+        return Inertia::render('BMS/Labour/Crews/Index', [
             'crews' => $crews,
             'filters' => $request->only(['search']),
         ]);
@@ -34,7 +34,7 @@ class LabourController extends Controller
 
     public function crewsCreate()
     {
-        return Inertia::render('CMS/Labour/Crews/Create');
+        return Inertia::render('BMS/Labour/Crews/Create');
     }
 
     public function crewsStore(Request $request)
@@ -53,7 +53,7 @@ class LabourController extends Controller
 
         $crew = $this->labourService->createCrew($validated);
 
-        return redirect()->route('cms.labour.crews.show', $crew->id)
+        return redirect()->route('bms.labour.crews.show', $crew->id)
             ->with('success', 'Crew created successfully');
     }
 
@@ -62,7 +62,7 @@ class LabourController extends Controller
         $crew->load(['supervisor', 'members.employee', 'timesheets']);
         $stats = $this->labourService->getCrewStats($crew);
 
-        return Inertia::render('CMS/Labour/Crews/Show', [
+        return Inertia::render('BMS/Labour/Crews/Show', [
             'crew' => $crew,
             'stats' => $stats,
         ]);
@@ -113,7 +113,7 @@ class LabourController extends Controller
             ->orderBy('work_date', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Labour/Timesheets/Index', [
+        return Inertia::render('BMS/Labour/Timesheets/Index', [
             'timesheets' => $timesheets,
             'filters' => $request->only(['status', 'date_from', 'date_to']),
         ]);
@@ -121,7 +121,7 @@ class LabourController extends Controller
 
     public function timesheetsCreate()
     {
-        return Inertia::render('CMS/Labour/Timesheets/Create');
+        return Inertia::render('BMS/Labour/Timesheets/Create');
     }
 
     public function timesheetsStore(Request $request)
@@ -140,7 +140,7 @@ class LabourController extends Controller
 
         $timesheet = $this->labourService->createTimesheet($validated);
 
-        return redirect()->route('cms.labour.timesheets.index')
+        return redirect()->route('bms.labour.timesheets.index')
             ->with('success', 'Timesheet created successfully');
     }
 
@@ -177,7 +177,7 @@ class LabourController extends Controller
             'crew_id' => $request->crew_id,
         ]);
 
-        return Inertia::render('CMS/Labour/Productivity', [
+        return Inertia::render('BMS/Labour/Productivity', [
             'report' => $report,
             'filters' => $request->only(['date_from', 'date_to', 'crew_id']),
         ]);

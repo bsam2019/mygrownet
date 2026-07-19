@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Security Audit Logs">
+  <BMSLayout title="Security Audit Logs">
     <div class="space-y-6">
       <!-- Header with Filters -->
       <div class="bg-white rounded-lg shadow-sm p-6">
@@ -117,13 +117,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   logs: any;
@@ -137,7 +137,7 @@ const props = defineProps<{
 const filters = reactive({ ...props.filters });
 
 const applyFilters = () => {
-  router.get(route('cms.security.audit-logs'), filters, {
+  router.get(route('bms.security.audit-logs'), filters, {
     preserveState: true,
     preserveScroll: true,
   });

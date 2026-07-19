@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Domain\CMS\BizDocs\Services;
+namespace App\Domain\BMS\BizDocs\Services;
 
 use App\Domain\BizDocs\DocumentManagement\Entities\Document;
 use App\Domain\BizDocs\DocumentManagement\Entities\DocumentItem;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentNumber;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
-use App\Domain\CMS\BizDocs\Exceptions\DocumentConversionException;
+use App\Domain\BMS\BizDocs\Exceptions\DocumentConversionException;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;

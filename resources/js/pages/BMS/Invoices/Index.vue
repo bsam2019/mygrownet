@@ -2,10 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { MagnifyingGlassIcon, PlusIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Invoice {
@@ -85,7 +85,7 @@ const formatDate = (date: string) => {
                 <p class="mt-1 text-sm text-gray-600">Manage customer invoices and billing</p>
             </div>
             <Link
-                :href="route('cms.invoices.create')"
+                :href="route('bms.invoices.create')"
                 class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
                 <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -188,7 +188,7 @@ const formatDate = (date: string) => {
                     <tr v-for="invoice in invoices.data" :key="invoice.id" class="hover:bg-gray-50">
                         <td class="whitespace-nowrap px-6 py-4">
                             <Link
-                                :href="route('cms.invoices.show', invoice.id)"
+                                :href="route('bms.invoices.show', invoice.id)"
                                 class="font-medium text-blue-600 hover:text-blue-800"
                             >
                                 {{ invoice.invoice_number }}
@@ -225,7 +225,7 @@ const formatDate = (date: string) => {
                         </td>
                         <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
                             <Link
-                                :href="route('cms.invoices.show', invoice.id)"
+                                :href="route('bms.invoices.show', invoice.id)"
                                 class="text-blue-600 hover:text-blue-800"
                             >
                                 View

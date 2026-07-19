@@ -2,10 +2,10 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { CalendarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -67,7 +67,7 @@ const getProgressColor = (percentage: number) => {
             <p class="mt-1 text-sm text-gray-500">{{ worker.name }} - {{ worker.job_title }}</p>
           </div>
           <Link
-            :href="route('cms.leave.create')"
+            :href="route('bms.leave.create')"
             class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Request Leave

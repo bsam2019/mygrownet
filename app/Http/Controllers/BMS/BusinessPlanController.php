@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
 use App\Models\BusinessPlan;
 use App\Models\BusinessPlanExport;
 use App\Services\BusinessPlan\AIGenerationService;
@@ -15,7 +15,7 @@ use Inertia\Inertia;
 
 class BusinessPlanController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     public function __construct(
         private AIGenerationService $aiService,
@@ -24,14 +24,14 @@ class BusinessPlanController extends Controller
 
     public function index(Request $request)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $plans = BusinessPlan::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return Inertia::render('CMS/BusinessPlans/Index', [
+        return Inertia::render('BMS/BusinessPlans/Index', [
             'plans' => $plans,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -39,12 +39,12 @@ class BusinessPlanController extends Controller
 
     public function create(Request $request)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $existingPlan = null;
 
-        return Inertia::render('CMS/BusinessPlans/Create', [
+        return Inertia::render('BMS/BusinessPlans/Create', [
             'existingPlan' => $existingPlan,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -52,14 +52,14 @@ class BusinessPlanController extends Controller
 
     public function edit(Request $request, int $planId)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $existingPlan = BusinessPlan::where('id', $planId)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return Inertia::render('CMS/BusinessPlans/Create', [
+        return Inertia::render('BMS/BusinessPlans/Create', [
             'existingPlan' => $existingPlan,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -67,7 +67,7 @@ class BusinessPlanController extends Controller
 
     public function save(Request $request)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $validated = $request->validate([
@@ -211,7 +211,7 @@ class BusinessPlanController extends Controller
 
     public function complete(Request $request)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $validated = $request->validate([
@@ -228,20 +228,20 @@ class BusinessPlanController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.business-plans.show', $plan->id)
+            ->route('bms.business-plans.show', $plan->id)
             ->with('success', 'Congratulations! Your business plan is complete!');
     }
 
     public function show(Request $request, int $planId)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $plan = BusinessPlan::where('id', $planId)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        return Inertia::render('CMS/BusinessPlans/Show', [
+        return Inertia::render('BMS/BusinessPlans/Show', [
             'plan' => $plan,
             'userTier' => $user->starter_kit_tier ?? 'basic',
         ]);
@@ -250,7 +250,7 @@ class BusinessPlanController extends Controller
     public function generateAI(Request $request)
     {
         set_time_limit(120);
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $validated = $request->validate([
@@ -302,7 +302,7 @@ class BusinessPlanController extends Controller
     public function chat(Request $request)
     {
         set_time_limit(120);
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
 
         $validated = $request->validate([
             'message' => 'required|string|max:2000',
@@ -323,7 +323,7 @@ class BusinessPlanController extends Controller
 
     public function export(Request $request)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $validated = $request->validate([
@@ -373,7 +373,7 @@ class BusinessPlanController extends Controller
 
     public function delete(Request $request, int $planId)
     {
-        $this->getCmsUserOrFail($request);
+        $this->getBmsUserOrFail($request);
         $user = $request->user();
 
         $plan = BusinessPlan::where('id', $planId)
@@ -384,7 +384,7 @@ class BusinessPlanController extends Controller
         $plan->delete();
 
         return redirect()
-            ->route('cms.business-plans.index')
+            ->route('bms.business-plans.index')
             ->with('success', 'Business plan deleted successfully');
     }
 }

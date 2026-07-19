@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Materials\Services;
+namespace App\Domain\BMS\Materials\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JobMaterialPlanModel;

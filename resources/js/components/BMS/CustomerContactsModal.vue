@@ -67,7 +67,7 @@ const cancelForm = () => {
 
 const submit = () => {
     if (isEditing.value && editingContact.value) {
-        form.put(route('cms.customers.contacts.update', {
+        form.put(route('bms.customers.contacts.update', {
             customer: props.customerId,
             contact: editingContact.value.id
         }), {
@@ -77,7 +77,7 @@ const submit = () => {
             },
         });
     } else {
-        form.post(route('cms.customers.contacts.store', props.customerId), {
+        form.post(route('bms.customers.contacts.store', props.customerId), {
             preserveScroll: true,
             onSuccess: () => {
                 cancelForm();
@@ -88,7 +88,7 @@ const submit = () => {
 
 const deleteContact = (contact: Contact) => {
     if (confirm(`Are you sure you want to delete ${contact.name}?`)) {
-        form.delete(route('cms.customers.contacts.delete', {
+        form.delete(route('bms.customers.contacts.delete', {
             customer: props.customerId,
             contact: contact.id
         }), {

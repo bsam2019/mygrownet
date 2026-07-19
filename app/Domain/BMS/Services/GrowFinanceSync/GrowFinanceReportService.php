@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Services\GrowFinanceSync;
+namespace App\Domain\BMS\Services\GrowFinanceSync;
 
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;

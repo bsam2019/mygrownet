@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\CurrencyService;
+use App\Domain\BMS\Core\Services\CurrencyService;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,7 +23,7 @@ class CurrencyController extends Controller
         $multiCurrencyEnabled = $this->currencyService->isMultiCurrencyEnabled($companyId);
         $exchangeRates = $this->currencyService->getAllExchangeRates($companyId);
 
-        return Inertia::render('CMS/Settings/Currency', [
+        return Inertia::render('BMS/Settings/Currency', [
             'currencies' => $currencies,
             'baseCurrency' => $baseCurrency,
             'multiCurrencyEnabled' => $multiCurrencyEnabled,

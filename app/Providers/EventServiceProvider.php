@@ -37,23 +37,23 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\ProcessMLMCommissions::class,
         ],
         
-        // CMS Integration Events
-        \App\Events\CMS\ExpenseApproved::class => [
+        // BMS Integration Events
+        \App\Events\BMS\ExpenseApproved::class => [
             \App\Listeners\SyncApprovedExpenseToTransaction::class, // Sync approved expenses to transactions table
         ],
-        \App\Events\CMS\InvoiceCreated::class => [
-            \App\Listeners\CMS\NotifyGrowBuilderOfInvoice::class,
-            \App\Listeners\CMS\NotifyGrowMarketOfInvoice::class,
-            \App\Listeners\CMS\GrowFinanceSync\InvoiceCreatedListener::class, // Sync to GrowFinance
+        \App\Events\BMS\InvoiceCreated::class => [
+            \App\Listeners\BMS\NotifyGrowBuilderOfInvoice::class,
+            \App\Listeners\BMS\NotifyGrowMarketOfInvoice::class,
+            \App\Listeners\BMS\GrowFinanceSync\InvoiceCreatedListener::class, // Sync to GrowFinance
         ],
-        \App\Events\CMS\ExpenseCreated::class => [
-            \App\Listeners\CMS\GrowFinanceSync\ExpenseCreatedListener::class, // Sync to GrowFinance
+        \App\Events\BMS\ExpenseCreated::class => [
+            \App\Listeners\BMS\GrowFinanceSync\ExpenseCreatedListener::class, // Sync to GrowFinance
         ],
-        \App\Events\CMS\PaymentRecorded::class => [
-            \App\Listeners\CMS\GrowFinanceSync\PaymentRecordedListener::class, // Sync to GrowFinance
+        \App\Events\BMS\PaymentRecorded::class => [
+            \App\Listeners\BMS\GrowFinanceSync\PaymentRecordedListener::class, // Sync to GrowFinance
         ],
-        \App\Events\CMS\InventoryUpdated::class => [
-            \App\Listeners\CMS\SyncInventoryToGrowMarket::class,
+        \App\Events\BMS\InventoryUpdated::class => [
+            \App\Listeners\BMS\SyncInventoryToGrowMarket::class,
         ],
 
         // Backup Events
@@ -95,11 +95,11 @@ class EventServiceProvider extends ServiceProvider
         // Platform Core Events
         \App\Domain\Core\Events\OrganizationCreated::class => [
             \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
-            \App\Domain\CMS\Listeners\SyncOrganizationToCmsCompany::class,
+            \App\Domain\BMS\Listeners\SyncOrganizationToBmsCompany::class,
         ],
         \App\Domain\Core\Events\OrganizationArchived::class => [
             \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
-            \App\Domain\CMS\Listeners\SyncOrganizationToCmsCompany::class,
+            \App\Domain\BMS\Listeners\SyncOrganizationToBmsCompany::class,
         ],
     ];
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   CurrencyDollarIcon, BanknotesIcon, ChartBarIcon,
   CheckCircleIcon, ClockIcon, TruckIcon, UsersIcon,
@@ -8,7 +8,7 @@ import {
   ArrowRightIcon,
 } from '@heroicons/vue/24/outline'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   metrics: {
@@ -42,7 +42,7 @@ const formatCurrency = (value: number) =>
         </div>
         <div class="flex items-center gap-3">
           <Link
-            :href="route('cms.analytics.finance')"
+            :href="route('bms.analytics.finance')"
             class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm"
           >
             <ArrowTrendingUpIcon class="h-5 w-5" />
@@ -50,7 +50,7 @@ const formatCurrency = (value: number) =>
             <ArrowRightIcon class="h-4 w-4" />
           </Link>
           <Link
-            :href="route('cms.analytics.operations')"
+            :href="route('bms.analytics.operations')"
             class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
           >
             <ClockIcon class="h-5 w-5" />
@@ -136,15 +136,15 @@ const formatCurrency = (value: number) =>
     <!-- Quick Links / Module Navigation -->
     <h2 class="text-lg font-semibold text-gray-900 mb-3">Quick Access</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-      <Link :href="route('cms.analytics.finance')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
+      <Link :href="route('bms.analytics.finance')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
         <div class="p-2 rounded-lg bg-blue-100"><ArrowTrendingUpIcon class="h-6 w-6 text-blue-600" /></div>
         <div><div class="font-semibold text-gray-900">Finance Analytics</div><div class="text-xs text-gray-500">Revenue, expenses, cash flow</div></div>
       </Link>
-      <Link :href="route('cms.analytics.operations')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
+      <Link :href="route('bms.analytics.operations')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
         <div class="p-2 rounded-lg bg-emerald-100"><ClockIcon class="h-6 w-6 text-emerald-600" /></div>
         <div><div class="font-semibold text-gray-900">Operations Analytics</div><div class="text-xs text-gray-500">Jobs, productivity, inventory</div></div>
       </Link>
-      <Link :href="route('cms.analytics.procurement')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
+      <Link :href="route('bms.analytics.procurement')" class="rounded-lg bg-white p-4 shadow hover:shadow-md transition-shadow flex items-center gap-3">
         <div class="p-2 rounded-lg bg-purple-100"><TruckIcon class="h-6 w-6 text-purple-600" /></div>
         <div><div class="font-semibold text-gray-900">Procurement Analytics</div><div class="text-xs text-gray-500">Vendors, POs, contracts</div></div>
       </Link>

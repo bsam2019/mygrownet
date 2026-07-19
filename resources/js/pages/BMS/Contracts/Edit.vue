@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   contract: any
@@ -28,13 +28,13 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.put(route('cms.contracts.update', props.contract.id))
+  form.put(route('bms.contracts.update', props.contract.id))
 }
 </script>
 
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <Link :href="route('cms.contracts.show', contract.id)" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">
+    <Link :href="route('bms.contracts.show', contract.id)" class="text-sm text-blue-600 hover:text-blue-700 mb-4 inline-flex items-center gap-1">
       <ArrowLeftIcon class="h-4 w-4" /> Back to Contract
     </Link>
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Edit Contract</h1>
@@ -98,7 +98,7 @@ const submit = () => {
         </div>
       </div>
       <div class="flex justify-end gap-3 pt-2">
-        <Link :href="route('cms.contracts.show', contract.id)" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Cancel</Link>
+        <Link :href="route('bms.contracts.show', contract.id)" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">Cancel</Link>
         <button type="submit" :disabled="form.processing" class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
           {{ form.processing ? 'Saving...' : 'Save Changes' }}
         </button>

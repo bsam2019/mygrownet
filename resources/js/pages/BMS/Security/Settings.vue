@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Security Settings">
+  <BMSLayout title="Security Settings">
     <div class="max-w-4xl mx-auto space-y-6">
       <!-- Header -->
       <div class="bg-white rounded-lg shadow-sm p-6">
@@ -156,13 +156,13 @@
         </button>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   settings: {
@@ -185,7 +185,7 @@ const resetForm = () => {
 
 const saveSettings = () => {
   processing.value = true;
-  router.post(route('cms.security.settings.update'), form, {
+  router.post(route('bms.security.settings.update'), form, {
     onFinish: () => {
       processing.value = false;
     },

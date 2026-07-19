@@ -2,12 +2,12 @@
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import { PlusIcon, TrashIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 import { useAutoSave } from '@/composables/useAutoSave';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Customer {
@@ -126,7 +126,7 @@ const recalculateTotals = () => {
 };
 
 const submit = () => {
-    form.post(route('cms.invoices.store'), {
+    form.post(route('bms.invoices.store'), {
         onSuccess: () => {
             clearDraft();
             toast.success('Invoice created', 'The invoice has been created successfully');
@@ -163,7 +163,7 @@ const formatCurrency = (amount: number) => {
             <!-- Header -->
             <div class="mb-6">
                 <button
-                    @click="router.visit(route('cms.invoices.index'))"
+                    @click="router.visit(route('bms.invoices.index'))"
                     class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
                 >
                     <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -417,7 +417,7 @@ const formatCurrency = (amount: number) => {
                 <div class="flex justify-end gap-3">
                     <button
                         type="button"
-                        @click="router.visit(route('cms.invoices.index'))"
+                        @click="router.visit(route('bms.invoices.index'))"
                         class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
                         Cancel

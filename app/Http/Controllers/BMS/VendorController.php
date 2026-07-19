@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\VendorModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VendorModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,7 +27,7 @@ class VendorController extends Controller
 
         $vendorTypes = VendorModel::forCompany($companyId)->select('vendor_type')->distinct()->pluck('vendor_type');
 
-        return Inertia::render('CMS/Vendors/Index', [
+        return Inertia::render('BMS/Vendors/Index', [
             'vendors' => $vendors,
             'filters' => $request->only(['search', 'vendor_type', 'status']),
             'vendorTypes' => $vendorTypes,
@@ -36,7 +36,7 @@ class VendorController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Vendors/Create');
+        return Inertia::render('BMS/Vendors/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -74,7 +74,7 @@ class VendorController extends Controller
             'created_by' => $request->user()->cmsUser->id,
         ]);
 
-        return redirect()->route('cms.vendors.index')->with('success', 'Vendor created.');
+        return redirect()->route('bms.vendors.index')->with('success', 'Vendor created.');
     }
 
     public function show(VendorModel $vendor): Response
@@ -83,12 +83,12 @@ class VendorController extends Controller
             $q->latest()->limit(10);
         }]);
 
-        return Inertia::render('CMS/Vendors/Show', ['vendor' => $vendor]);
+        return Inertia::render('BMS/Vendors/Show', ['vendor' => $vendor]);
     }
 
     public function edit(VendorModel $vendor): Response
     {
-        return Inertia::render('CMS/Vendors/Edit', ['vendor' => $vendor]);
+        return Inertia::render('BMS/Vendors/Edit', ['vendor' => $vendor]);
     }
 
     public function update(Request $request, VendorModel $vendor): RedirectResponse
@@ -115,6 +115,6 @@ class VendorController extends Controller
 
         $vendor->update($validated);
 
-        return redirect()->route('cms.vendors.show', $vendor->id)->with('success', 'Vendor updated.');
+        return redirect()->route('bms.vendors.show', $vendor->id)->with('success', 'Vendor updated.');
     }
 }

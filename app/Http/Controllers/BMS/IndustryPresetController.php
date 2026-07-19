@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\IndustryPresetService;
+use App\Domain\BMS\Core\Services\IndustryPresetService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +21,7 @@ class IndustryPresetController extends Controller
     {
         $presets = $this->presetService->getAllPresets();
 
-        return Inertia::render('CMS/Settings/IndustryPresets', [
+        return Inertia::render('BMS/Settings/IndustryPresets', [
             'presets' => $presets,
             'currentIndustry' => auth()->user()->cmsUser?->company?->industry_type,
         ]);

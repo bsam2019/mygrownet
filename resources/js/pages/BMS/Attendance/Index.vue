@@ -8,13 +8,13 @@
         </div>
         <div class="flex gap-3">
           <Link
-            :href="route('cms.attendance.summary')"
+            :href="route('bms.attendance.summary')"
             class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             View Summary
           </Link>
           <Link
-            :href="route('cms.attendance.index') + '?action=clock'"
+            :href="route('bms.attendance.index') + '?action=clock'"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Clock In/Out
@@ -168,10 +168,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 defineOptions({
-  layout: CMSLayout,
+  layout: BMSLayout,
 });
 
 interface Props {
@@ -205,7 +205,7 @@ const filters = ref({
 });
 
 const applyFilters = () => {
-  router.get(route('cms.attendance.index'), filters.value, {
+  router.get(route('bms.attendance.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   });

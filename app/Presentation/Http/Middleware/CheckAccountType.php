@@ -28,7 +28,7 @@ class CheckAccountType
 
         if (!$hasAccess) {
             return redirect()
-                ->route('dashboard')
+                ->route('workspace')
                 ->with('error', 'Your account type does not have access to this feature.');
         }
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanObjectiveModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanObjectiveModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -13,7 +13,7 @@ use Inertia\Response;
 
 class PlanController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
 
     public function index(Request $request): Response
     {
@@ -26,20 +26,20 @@ class PlanController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Plans/Index', [
+        return Inertia::render('BMS/Plans/Index', [
             'plans' => $plans,
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('CMS/Plans/Create');
+        return Inertia::render('BMS/Plans/Create');
     }
 
     public function store(Request $request)
     {
         $companyId = $this->getCompanyId($request);
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $validated = $request->validate([
             'type' => 'required|in:strategic,business,operational,schedule',
@@ -67,7 +67,7 @@ class PlanController extends Controller
             'created_by' => $cmsUser->user_id,
         ]);
 
-        return redirect()->route('cms.plans.show', $plan->id)
+        return redirect()->route('bms.plans.show', $plan->id)
             ->with('success', 'Plan created successfully.');
     }
 
@@ -79,7 +79,7 @@ class PlanController extends Controller
             ->with(['children', 'parent', 'createdBy', 'objectives.links.linkable'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Plans/Show', [
+        return Inertia::render('BMS/Plans/Show', [
             'plan' => $plan,
         ]);
     }
@@ -90,7 +90,7 @@ class PlanController extends Controller
 
         $plan = PlanModel::forCompany($companyId)->findOrFail($id);
 
-        return Inertia::render('CMS/Plans/Edit', [
+        return Inertia::render('BMS/Plans/Edit', [
             'plan' => $plan,
         ]);
     }
@@ -115,7 +115,7 @@ class PlanController extends Controller
 
         $plan->update($validated);
 
-        return redirect()->route('cms.plans.show', $plan->id)
+        return redirect()->route('bms.plans.show', $plan->id)
             ->with('success', 'Plan updated successfully.');
     }
 
@@ -127,7 +127,7 @@ class PlanController extends Controller
 
         $plan->delete();
 
-        return redirect()->route('cms.plans.index')
+        return redirect()->route('bms.plans.index')
             ->with('success', 'Plan deleted.');
     }
 
@@ -178,7 +178,7 @@ class PlanController extends Controller
             'completed_objectives' => collect($progressData)->sum(fn ($d) => $d['breakdown']['completed']),
         ];
 
-        return Inertia::render('CMS/Plans/CommandCenter', [
+        return Inertia::render('BMS/Plans/CommandCenter', [
             'tree' => $tree,
             'summary' => $summary,
         ]);

@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import { ArrowPathIcon, PlusIcon, TruckIcon, CheckIcon, XCircleIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface TransferItem {
@@ -70,7 +70,7 @@ const removeItem = (index: number) => {
 }
 
 const submitForm = () => {
-  form.post(route('cms.inventory.transfers.store'), {
+  form.post(route('bms.inventory.transfers.store'), {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false
@@ -80,7 +80,7 @@ const submitForm = () => {
 }
 
 const approveTransfer = (id: number) => {
-  useForm({}).post(route('cms.inventory.transfers.approve', id), {
+  useForm({}).post(route('bms.inventory.transfers.approve', id), {
     preserveScroll: true,
   })
 }
@@ -97,7 +97,7 @@ const openReceiveModal = (transfer: Transfer) => {
 const submitReceive = () => {
   if (!selectedTransfer.value) return
   useForm({ items: receiveQuantities.value }).post(
-    route('cms.inventory.transfers.receive', selectedTransfer.value.id),
+    route('bms.inventory.transfers.receive', selectedTransfer.value.id),
     { preserveScroll: true, onSuccess: () => { showReceiveModal.value = false } },
   )
 }

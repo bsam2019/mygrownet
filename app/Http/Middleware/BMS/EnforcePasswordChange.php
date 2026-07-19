@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Middleware\CMS;
+namespace App\Http\Middleware\BMS;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
 use App\Services\CMS\SecurityService;
@@ -27,7 +27,7 @@ class EnforcePasswordChange
         }
 
         // Skip check for password change routes
-        if ($request->routeIs('cms.password.*') || $request->routeIs('cms.logout')) {
+        if ($request->routeIs('bms.password.*') || $request->routeIs('bms.logout')) {
             return $next($request);
         }
 
@@ -39,7 +39,7 @@ class EnforcePasswordChange
 
         // Check if password change is forced
         if ($user->force_password_change) {
-            return redirect()->route('cms.password.change')
+            return redirect()->route('bms.password.change')
                 ->with('warning', 'You must change your password before continuing.');
         }
 
@@ -47,7 +47,7 @@ class EnforcePasswordChange
         if ($this->securityService->isPasswordExpired($user, $cmsUser->company_id)) {
             $user->update(['force_password_change' => true]);
             
-            return redirect()->route('cms.password.change')
+            return redirect()->route('bms.password.change')
                 ->with('warning', 'Your password has expired. Please change it to continue.');
         }
 

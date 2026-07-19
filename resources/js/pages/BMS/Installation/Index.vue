@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -110,7 +110,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <Link
-                  :href="route('cms.installation.show', schedule.id)"
+                  :href="route('bms.installation.show', schedule.id)"
                   class="text-blue-600 hover:text-blue-900"
                 >
                   View
@@ -137,13 +137,13 @@
         </nav>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, CalendarIcon, WrenchIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 
 interface Props {
@@ -183,7 +183,7 @@ const getStatusClass = (status: string) => {
 };
 
 const applyFilters = () => {
-  router.get(route('cms.installation.index'), filters.value, {
+  router.get(route('bms.installation.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   });

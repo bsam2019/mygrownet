@@ -1,8 +1,8 @@
 <template>
-  <CMSLayout title="New Leave Request">
+  <BMSLayout title="New Leave Request">
     <div class="max-w-3xl mx-auto">
       <div class="mb-6">
-        <Link :href="route('cms.leave.index')" class="text-blue-600 hover:text-blue-800 text-sm">
+        <Link :href="route('bms.leave.index')" class="text-blue-600 hover:text-blue-800 text-sm">
           ← Back to Leave Requests
         </Link>
       </div>
@@ -142,7 +142,7 @@
           <!-- Actions -->
           <div class="flex items-center justify-end gap-3">
             <Link
-              :href="route('cms.leave.index')"
+              :href="route('bms.leave.index')"
               class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
             >
               Cancel
@@ -158,13 +158,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 interface Props {
   workers: any[];
@@ -193,6 +193,6 @@ const loadLeaveBalance = async () => {
 };
 
 const submit = () => {
-  form.post(route('cms.leave.store'));
+  form.post(route('bms.leave.store'));
 };
 </script>

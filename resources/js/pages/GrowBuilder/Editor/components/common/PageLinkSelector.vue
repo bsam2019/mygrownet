@@ -43,7 +43,7 @@ const customUrl = ref('');
 const detectLinkType = (url: string) => {
     if (!url) return 'page';
     if (url.startsWith('#')) return 'anchor';
-    if (['/login', '/register', '/dashboard'].includes(url)) return 'system';
+    if (['/login', '/register', '/workspace'].includes(url)) return 'system';
     if (url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('tel:')) return 'custom';
     return 'page';
 };
@@ -81,7 +81,7 @@ const commonAnchors = [
 const systemLinks = [
     { label: 'Login Page', value: '/login', icon: '🔐' },
     { label: 'Register Page', value: '/register', icon: '📝' },
-    { label: 'Member Dashboard', value: '/dashboard', icon: '📊' },
+    { label: 'Member Dashboard', value: '/workspace', icon: '📊' },
 ];
 
 // Initialize state from modelValue

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
-use App\Domain\CMS\Core\ValueObjects\AccountType;
+use App\Domain\BMS\Core\ValueObjects\AccountType;
 use App\Infrastructure\Persistence\Eloquent\CMS\AccountModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JournalEntryModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\JournalLineModel;

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Operations\Services\OperationsService;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowStageModel;
+use App\Domain\BMS\Operations\Services\OperationsService;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowStageModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +32,7 @@ class OperationsController extends Controller
             ->limit(10)
             ->get();
 
-        return Inertia::render('CMS/Operations/Dashboard', [
+        return Inertia::render('BMS/Operations/Dashboard', [
             'statistics' => $statistics,
             'workload' => $workload,
             'bottlenecks' => $bottlenecks,
@@ -70,7 +70,7 @@ class OperationsController extends Controller
             })
             ->get(['id', 'name']);
 
-        return Inertia::render('CMS/Operations/Tasks/Index', [
+        return Inertia::render('BMS/Operations/Tasks/Index', [
             'tasks' => $tasks,
             'workflows' => $workflows,
             'users' => $users,
@@ -93,7 +93,7 @@ class OperationsController extends Controller
             })
             ->get(['id', 'name']);
 
-        return Inertia::render('CMS/Operations/Tasks/Create', [
+        return Inertia::render('BMS/Operations/Tasks/Create', [
             'workflows' => $workflows,
             'users' => $users,
         ]);
@@ -118,7 +118,7 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $task = $this->operationsService->createTask($companyId, $validated);
 
-        return redirect()->route('cms.operations.tasks.show', $task->id)
+        return redirect()->route('bms.operations.tasks.show', $task->id)
             ->with('success', 'Task created successfully');
     }
 
@@ -143,7 +143,7 @@ class OperationsController extends Controller
             'template',
         ])->findOrFail($id);
 
-        return Inertia::render('CMS/Operations/Tasks/Show', [
+        return Inertia::render('BMS/Operations/Tasks/Show', [
             'task' => $task,
         ]);
     }
@@ -239,7 +239,7 @@ class OperationsController extends Controller
             'overdue' => TaskModel::where('assigned_to', $userId)->overdue()->count(),
         ];
 
-        return Inertia::render('CMS/Operations/MyTasks', [
+        return Inertia::render('BMS/Operations/MyTasks', [
             'tasks' => $tasks,
             'statistics' => $statistics,
             'filter' => $request->filter,
@@ -256,7 +256,7 @@ class OperationsController extends Controller
             ->with('stages')
             ->get();
 
-        return Inertia::render('CMS/Operations/Workflows/Index', [
+        return Inertia::render('BMS/Operations/Workflows/Index', [
             'workflows' => $workflows,
         ]);
     }
@@ -342,7 +342,7 @@ class OperationsController extends Controller
             ->whereBetween('due_date', [now()->startOfWeek(), now()->endOfWeek()->addWeeks(2)])
             ->get();
 
-        return Inertia::render('CMS/Operations/Planning', [
+        return Inertia::render('BMS/Operations/Planning', [
             'workload' => $workload,
             'bottlenecks' => $bottlenecks,
             'tasks' => $tasks,
@@ -380,7 +380,7 @@ class OperationsController extends Controller
             ->when($workflowId, fn($q) => $q->where('workflow_id', $workflowId))
             ->get();
 
-        return Inertia::render('CMS/Operations/Kanban', [
+        return Inertia::render('BMS/Operations/Kanban', [
             'workflows' => $workflows,
             'stages' => $stages,
             'tasks' => $tasks,
@@ -441,7 +441,7 @@ class OperationsController extends Controller
 
     public function deleteAttachment(int $taskId, int $attachmentId)
     {
-        $attachment = \App\Infrastructure\Persistence\Eloquent\CMS\TaskAttachmentModel::findOrFail($attachmentId);
+        $attachment = \App\Infrastructure\Persistence\Eloquent\BMS\TaskAttachmentModel::findOrFail($attachmentId);
         
         // Delete file from storage
         \Storage::disk('public')->delete($attachment->file_path);
@@ -485,7 +485,7 @@ class OperationsController extends Controller
 
     public function stopTimeEntry(int $taskId, int $entryId)
     {
-        $entry = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTimeEntryModel::findOrFail($entryId);
+        $entry = \App\Infrastructure\Persistence\Eloquent\BMS\TaskTimeEntryModel::findOrFail($entryId);
         
         $entry->update([
             'ended_at' => now(),
@@ -500,11 +500,11 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
 
-        $templates = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTemplateModel::where('company_id', $companyId)
+        $templates = \App\Infrastructure\Persistence\Eloquent\BMS\TaskTemplateModel::where('company_id', $companyId)
             ->with('workflow')
             ->get();
 
-        return Inertia::render('CMS/Operations/Templates/Index', [
+        return Inertia::render('BMS/Operations/Templates/Index', [
             'templates' => $templates,
         ]);
     }
@@ -525,15 +525,15 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $validated['company_id'] = $companyId;
 
-        $template = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTemplateModel::create($validated);
+        $template = \App\Infrastructure\Persistence\Eloquent\BMS\TaskTemplateModel::create($validated);
 
-        return redirect()->route('cms.operations.templates.index')
+        return redirect()->route('bms.operations.templates.index')
             ->with('success', 'Template created');
     }
 
     public function createFromTemplate(Request $request, int $templateId)
     {
-        $template = \App\Infrastructure\Persistence\Eloquent\CMS\TaskTemplateModel::findOrFail($templateId);
+        $template = \App\Infrastructure\Persistence\Eloquent\BMS\TaskTemplateModel::findOrFail($templateId);
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -556,7 +556,7 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $task = $this->operationsService->createTask($companyId, $taskData);
 
-        return redirect()->route('cms.operations.tasks.show', $task->id)
+        return redirect()->route('bms.operations.tasks.show', $task->id)
             ->with('success', 'Task created from template');
     }
 
@@ -565,11 +565,11 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
 
-        $recurringTasks = \App\Infrastructure\Persistence\Eloquent\CMS\RecurringTaskModel::where('company_id', $companyId)
+        $recurringTasks = \App\Infrastructure\Persistence\Eloquent\BMS\RecurringTaskModel::where('company_id', $companyId)
             ->with(['template', 'assignedUser'])
             ->get();
 
-        return Inertia::render('CMS/Operations/RecurringTasks/Index', [
+        return Inertia::render('BMS/Operations/RecurringTasks/Index', [
             'recurringTasks' => $recurringTasks,
         ]);
     }
@@ -598,15 +598,15 @@ class OperationsController extends Controller
         // Calculate next generation date
         $validated['next_generation_at'] = \Carbon\Carbon::parse($validated['start_date']);
 
-        $recurringTask = \App\Infrastructure\Persistence\Eloquent\CMS\RecurringTaskModel::create($validated);
+        $recurringTask = \App\Infrastructure\Persistence\Eloquent\BMS\RecurringTaskModel::create($validated);
 
-        return redirect()->route('cms.operations.recurring-tasks.index')
+        return redirect()->route('bms.operations.recurring-tasks.index')
             ->with('success', 'Recurring task created');
     }
 
     public function toggleRecurringTask(int $id)
     {
-        $recurringTask = \App\Infrastructure\Persistence\Eloquent\CMS\RecurringTaskModel::findOrFail($id);
+        $recurringTask = \App\Infrastructure\Persistence\Eloquent\BMS\RecurringTaskModel::findOrFail($id);
         
         $recurringTask->update([
             'is_active' => !$recurringTask->is_active,
@@ -633,7 +633,7 @@ class OperationsController extends Controller
 
     public function deleteDependency(int $taskId, int $dependencyId)
     {
-        $dependency = \App\Infrastructure\Persistence\Eloquent\CMS\TaskDependencyModel::findOrFail($dependencyId);
+        $dependency = \App\Infrastructure\Persistence\Eloquent\BMS\TaskDependencyModel::findOrFail($dependencyId);
         $dependency->delete();
 
         return back()->with('success', 'Dependency removed');
@@ -657,7 +657,7 @@ class OperationsController extends Controller
 
     public function removeWatcher(int $taskId, int $watcherId)
     {
-        $watcher = \App\Infrastructure\Persistence\Eloquent\CMS\TaskWatcherModel::findOrFail($watcherId);
+        $watcher = \App\Infrastructure\Persistence\Eloquent\BMS\TaskWatcherModel::findOrFail($watcherId);
         $watcher->delete();
 
         return back()->with('success', 'Watcher removed');
@@ -704,10 +704,10 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
         
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $planningService = app(\App\Domain\BMS\Operations\Services\PlanningService::class);
         $data = $planningService->getWorkloadBalance($companyId);
 
-        return Inertia::render('CMS/Operations/WorkloadBalance', [
+        return Inertia::render('BMS/Operations/WorkloadBalance', [
             'workloadData' => [
                 'users' => $data['users'],
                 'overloaded_users' => $data['summary']['overloaded_users'],
@@ -726,15 +726,15 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         $weeksAhead = $request->input('weeks', 8);
         
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $planningService = app(\App\Domain\BMS\Operations\Services\PlanningService::class);
         $weeks = $planningService->getCapacityForecast($companyId, $weeksAhead);
 
         // Get workflows for filter
-        $workflows = \App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel::where('company_id', $companyId)
+        $workflows = \App\Infrastructure\Persistence\Eloquent\BMS\WorkflowModel::where('company_id', $companyId)
             ->select('id', 'name')
             ->get();
 
-        return Inertia::render('CMS/Operations/CapacityForecast', [
+        return Inertia::render('BMS/Operations/CapacityForecast', [
             'forecastData' => [
                 'weeks_ahead' => $weeksAhead,
                 'weeks' => $weeks,
@@ -755,7 +755,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $planningService = app(\App\Domain\BMS\Operations\Services\PlanningService::class);
         
         $result = $planningService->bulkReassignTasks(
             $companyId,
@@ -779,7 +779,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $planningService = app(\App\Domain\BMS\Operations\Services\PlanningService::class);
         
         $result = $planningService->bulkUpdatePriority(
             $companyId,
@@ -803,7 +803,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $planningService = app(\App\Domain\CMS\Operations\Services\PlanningService::class);
+        $planningService = app(\App\Domain\BMS\Operations\Services\PlanningService::class);
         
         $result = $planningService->bulkRescheduleTasks(
             $companyId,
@@ -822,12 +822,12 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
         
-        $scenarios = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('company_id', $companyId)
+        $scenarios = \App\Infrastructure\Persistence\Eloquent\BMS\PlanningScenarioModel::where('company_id', $companyId)
             ->with('creator')
             ->latest()
             ->get();
 
-        return Inertia::render('CMS/Operations/Scenarios', [
+        return Inertia::render('BMS/Operations/Scenarios', [
             'scenarios' => $scenarios,
         ]);
     }
@@ -846,7 +846,7 @@ class OperationsController extends Controller
         $companyId = $request->user()->cmsUser->company_id;
         
         // Create scenario with empty changes for now
-        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::create([
+        $scenario = \App\Infrastructure\Persistence\Eloquent\BMS\PlanningScenarioModel::create([
             'company_id' => $companyId,
             'scenario_name' => $request->name,
             'description' => $request->description,
@@ -874,7 +874,7 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
         
-        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
+        $scenario = \App\Infrastructure\Persistence\Eloquent\BMS\PlanningScenarioModel::where('id', $scenarioId)
             ->where('company_id', $companyId)
             ->firstOrFail();
 
@@ -896,7 +896,7 @@ class OperationsController extends Controller
     {
         $companyId = $request->user()->cmsUser->company_id;
         
-        $scenario = \App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel::where('id', $scenarioId)
+        $scenario = \App\Infrastructure\Persistence\Eloquent\BMS\PlanningScenarioModel::where('id', $scenarioId)
             ->where('company_id', $companyId)
             ->firstOrFail();
 
@@ -925,7 +925,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        $resourceService = app(\App\Domain\BMS\Operations\Services\ResourceManagementService::class);
         
         $result = $resourceService->allocateResource($companyId, $request->all());
 
@@ -946,7 +946,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        $resourceService = app(\App\Domain\BMS\Operations\Services\ResourceManagementService::class);
         
         $availability = $resourceService->getResourceAvailability(
             $companyId,
@@ -972,7 +972,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $resourceService = app(\App\Domain\CMS\Operations\Services\ResourceManagementService::class);
+        $resourceService = app(\App\Domain\BMS\Operations\Services\ResourceManagementService::class);
         
         $result = $resourceService->setResourceUnavailability($companyId, $request->all());
 
@@ -989,7 +989,7 @@ class OperationsController extends Controller
     public function analytics(Request $request): Response
     {
         $companyId = $request->user()->cmsUser->company_id;
-        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        $analyticsService = app(\App\Domain\BMS\Operations\Services\AnalyticsService::class);
         
         $days = $request->input('days', 30);
         $startDate = now()->subDays($days)->toDateString();
@@ -1002,12 +1002,12 @@ class OperationsController extends Controller
         $completionRate = 85; // TODO: Calculate from actual data
         $averageCompletionTime = 24; // TODO: Calculate from actual data
         $estimationAccuracy = 78; // TODO: Calculate from actual data
-        $overdueTasks = \App\Infrastructure\Persistence\Eloquent\CMS\TaskModel::where('company_id', $companyId)
+        $overdueTasks = \App\Infrastructure\Persistence\Eloquent\BMS\TaskModel::where('company_id', $companyId)
             ->where('status', '!=', 'completed')
             ->where('due_date', '<', now())
             ->count();
 
-        return Inertia::render('CMS/Operations/Analytics', [
+        return Inertia::render('BMS/Operations/Analytics', [
             'analytics' => [
                 'completion_rate' => $completionRate,
                 'average_completion_time' => $averageCompletionTime,
@@ -1025,7 +1025,7 @@ class OperationsController extends Controller
     public function userProductivity(Request $request, int $userId): Response
     {
         $companyId = $request->user()->cmsUser->company_id;
-        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        $analyticsService = app(\App\Domain\BMS\Operations\Services\AnalyticsService::class);
         
         $days = $request->input('days', 30);
         $startDate = now()->subDays($days)->toDateString();
@@ -1048,7 +1048,7 @@ class OperationsController extends Controller
             'by_status' => $metricsData['by_status'] ?? [],
         ];
 
-        return Inertia::render('CMS/Operations/UserProductivity', [
+        return Inertia::render('BMS/Operations/UserProductivity', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -1063,7 +1063,7 @@ class OperationsController extends Controller
     public function gantt(Request $request): Response
     {
         $companyId = $request->user()->cmsUser->company_id;
-        $analyticsService = app(\App\Domain\CMS\Operations\Services\AnalyticsService::class);
+        $analyticsService = app(\App\Domain\BMS\Operations\Services\AnalyticsService::class);
         
         $ganttData = $analyticsService->getGanttChartData($companyId, $request->workflow_id);
 
@@ -1071,7 +1071,7 @@ class OperationsController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return Inertia::render('CMS/Operations/Gantt', [
+        return Inertia::render('BMS/Operations/Gantt', [
             'ganttData' => [
                 'tasks' => $ganttData,
             ],
@@ -1092,7 +1092,7 @@ class OperationsController extends Controller
             'lead_id' => 'required|exists:cms_leads,id',
         ]);
 
-        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $integrationService = app(\App\Domain\BMS\Operations\Services\IntegrationService::class);
         $result = $integrationService->createTaskFromLead($request->lead_id);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
@@ -1103,7 +1103,7 @@ class OperationsController extends Controller
      */
     public function createInvoiceFromTask(Request $request, int $taskId)
     {
-        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $integrationService = app(\App\Domain\BMS\Operations\Services\IntegrationService::class);
         $result = $integrationService->createInvoiceFromTask($taskId);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message'] ?? $result['error']);
@@ -1119,7 +1119,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $integrationService = app(\App\Domain\BMS\Operations\Services\IntegrationService::class);
         
         $employees = $integrationService->getAvailableEmployees($companyId, $request->date);
 
@@ -1140,7 +1140,7 @@ class OperationsController extends Controller
         ]);
 
         $companyId = $request->user()->cmsUser->company_id;
-        $integrationService = app(\App\Domain\CMS\Operations\Services\IntegrationService::class);
+        $integrationService = app(\App\Domain\BMS\Operations\Services\IntegrationService::class);
         
         $result = $integrationService->setupTrigger($companyId, $request->all());
 

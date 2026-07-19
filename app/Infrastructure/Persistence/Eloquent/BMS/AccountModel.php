@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Infrastructure\Persistence\Eloquent\CMS;
+namespace App\Infrastructure\Persistence\Eloquent\BMS;
 
-use App\Domain\CMS\Core\ValueObjects\AccountType;
+use App\Domain\BMS\Core\ValueObjects\AccountType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\BizDocs\Adapters;
+namespace App\Domain\BMS\BizDocs\Adapters;
 
 use App\Application\BizDocs\Services\PdfGenerationService;
 use App\Application\BizDocs\Services\FileStorageService;
@@ -11,7 +11,7 @@ use App\Domain\BizDocs\DocumentManagement\Entities\DocumentItem;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentNumber;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
-use App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface;
+use App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface;
 use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;

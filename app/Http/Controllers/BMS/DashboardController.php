@@ -1,29 +1,29 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\InvoiceService;
+use App\Domain\BMS\Core\Services\InvoiceService;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\CMS\Concerns\HasCmsAccess;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
+use App\Http\Controllers\BMS\Concerns\HasBmsAccess;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MeasurementRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    use HasCmsAccess;
+    use HasBmsAccess;
     public function __construct(
         private readonly InvoiceService $invoiceService
     ) {}
 
     public function index(Request $request): Response
     {
-        $cmsUser  = $this->getCmsUserOrFail($request);
+        $cmsUser  = $this->getBmsUserOrFail($request);
         $company  = $cmsUser->company;
         $companyId = $company->id;
 
@@ -82,7 +82,7 @@ class DashboardController extends Controller
             ->orderBy('name')
             ->get(['id', 'customer_number', 'name', 'email', 'phone', 'outstanding_balance']);
 
-        return Inertia::render('CMS/Dashboard', [
+        return Inertia::render('BMS/Dashboard', [
             'company'            => $company,
             'user'               => $request->user(),
             'cmsUser'            => $cmsUser->load('role'),

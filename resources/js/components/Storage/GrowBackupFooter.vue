@@ -29,7 +29,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="/dashboard" class="text-gray-600 hover:text-blue-600 transition-colors">
+                            <a href="/workspace" class="text-gray-600 hover:text-blue-600 transition-colors">
                                 MyGrowNet Dashboard
                             </a>
                         </li>
@@ -80,7 +80,7 @@
             <div class="pt-6 border-t border-gray-200">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <p class="text-sm text-gray-500">
-                        © {{ new Date().getFullYear() }} MyGrowNet. All rights reserved.
+                        Â© {{ new Date().getFullYear() }} MyGrowNet. All rights reserved.
                     </p>
                     <div class="flex items-center gap-2 text-sm text-gray-500">
                         <span>Powered by</span>

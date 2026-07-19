@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { MapPinIcon, PlusIcon, BuildingOffice2Icon, WrenchScrewdriverIcon, TruckIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Location {
@@ -54,7 +54,7 @@ const typeColors: Record<string, string> = {
 }
 
 const submitForm = () => {
-  form.post(route('cms.inventory.locations.store'), {
+  form.post(route('bms.inventory.locations.store'), {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false

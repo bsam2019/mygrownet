@@ -57,12 +57,12 @@ return [
         ],
 
         // Business Tools
-        'cms' => [
+        'bms' => [
             'enabled' => true,
             'name' => 'Company Management',
             'description' => 'Invoicing, inventory, and business management',
             'icon' => 'BuildingOfficeIcon',
-            'route' => 'cms.dashboard',
+            'route' => 'bms.dashboard',
             'nav_group' => 'business',
             'requires_subscription' => true,
             'category' => 'business',

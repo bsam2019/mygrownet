@@ -2,10 +2,10 @@
 import { ref, computed, watch } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
 import { ArrowLeftIcon, BanknotesIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import { toast } from '@/utils/bizboost-toast'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Customer {
   id: number
@@ -65,7 +65,7 @@ watch(() => form.customer_id, async (customerId) => {
   loadingInvoices.value = true
   try {
     const res = await fetch(
-      route('cms.payments.customer-invoices', { customer: customerId }),
+      route('bms.payments.customer-invoices', { customer: customerId }),
       { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }
     )
     if (res.ok) availableInvoices.value = await res.json()
@@ -87,7 +87,7 @@ const formatCurrency = (n: number) =>
   `K${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
 
 const submit = () => {
-  form.post(route('cms.payments.store'), {
+  form.post(route('bms.payments.store'), {
     onSuccess: () => toast.success('Payment recorded', 'Payment has been recorded successfully'),
     onError: () => toast.error('Failed to record payment', 'Please check the form and try again'),
   })
@@ -101,7 +101,7 @@ const submit = () => {
       <!-- Header -->
       <div class="mb-6">
         <button
-          @click="router.visit(route('cms.payments.index'))"
+          @click="router.visit(route('bms.payments.index'))"
           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
         >
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -282,7 +282,7 @@ const submit = () => {
         <div class="flex items-center justify-end gap-3">
           <button
             type="button"
-            @click="router.visit(route('cms.payments.index'))"
+            @click="router.visit(route('bms.payments.index'))"
             class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Cancel

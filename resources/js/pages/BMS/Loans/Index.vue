@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { MagnifyingGlassIcon, PlusIcon, FunnelIcon, DocumentArrowDownIcon } from '@heroicons/vue/24/outline';
 import { ExclamationTriangleIcon, CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid';
 
@@ -83,7 +83,7 @@ const safeSummary = computed(() => ({
 }));
 
 const applyFilters = () => {
-    router.get(route('cms.loans.index'), {
+    router.get(route('bms.loans.index'), {
         search: search.value,
         status: statusFilter.value,
         risk_category: riskFilter.value,
@@ -142,7 +142,7 @@ const formatDate = (date: string | null) => {
 <template>
     <Head title="Loans Receivable" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
@@ -157,14 +157,14 @@ const formatDate = (date: string | null) => {
                     </div>
                     <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
                         <Link
-                            :href="route('cms.loans.reports.aging')"
+                            :href="route('bms.loans.reports.aging')"
                             class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             <DocumentArrowDownIcon class="h-5 w-5 mr-2" aria-hidden="true" />
                             Aging Report
                         </Link>
                         <Link
-                            :href="route('cms.loans.create')"
+                            :href="route('bms.loans.create')"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                         >
                             <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -396,14 +396,14 @@ const formatDate = (date: string | null) => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <Link
-                                        :href="route('cms.loans.show', loan.id)"
+                                        :href="route('bms.loans.show', loan.id)"
                                         class="text-blue-600 hover:text-blue-900 mr-3"
                                     >
                                         View
                                     </Link>
                                     <Link
                                         v-if="loan.status === 'active'"
-                                        :href="route('cms.loans.payment', loan.id)"
+                                        :href="route('bms.loans.payment', loan.id)"
                                         class="text-green-600 hover:text-green-900"
                                     >
                                         Record Payment
@@ -418,14 +418,14 @@ const formatDate = (date: string | null) => {
                         <div class="flex-1 flex justify-between sm:hidden">
                             <Link
                                 v-if="loans.current_page > 1"
-                                :href="route('cms.loans.index', { ...filters, page: loans.current_page - 1 })"
+                                :href="route('bms.loans.index', { ...filters, page: loans.current_page - 1 })"
                                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Previous
                             </Link>
                             <Link
                                 v-if="loans.current_page < loans.last_page"
-                                :href="route('cms.loans.index', { ...filters, page: loans.current_page + 1 })"
+                                :href="route('bms.loans.index', { ...filters, page: loans.current_page + 1 })"
                                 class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                             >
                                 Next
@@ -448,5 +448,5 @@ const formatDate = (date: string | null) => {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Suspicious Activity">
+  <BMSLayout title="Suspicious Activity">
     <div class="space-y-6">
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -224,13 +224,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   activities: any;
@@ -255,7 +255,7 @@ const reviewForm = reactive({
 });
 
 const applyFilters = () => {
-  router.get(route('cms.security.suspicious-activity'), filters, {
+  router.get(route('bms.security.suspicious-activity'), filters, {
     preserveState: true,
     preserveScroll: true,
   });
@@ -292,7 +292,7 @@ const submitReview = () => {
   
   processing.value = true;
   router.post(
-    route('cms.security.suspicious-activity.review', selectedActivity.value.id),
+    route('bms.security.suspicious-activity.review', selectedActivity.value.id),
     reviewForm,
     {
       onFinish: () => {

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +30,7 @@ class PortalUserController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone']);
 
-        return Inertia::render('CMS/Portal/Users', [
+        return Inertia::render('BMS/Portal/Users', [
             'users' => $users,
             'allUsers' => $allUsers,
             'customers' => $customers,

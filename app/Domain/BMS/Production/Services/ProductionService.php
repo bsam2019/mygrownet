@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Production\Services;
+namespace App\Domain\BMS\Production\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\ProductionOrderModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\CuttingListModel;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Inventory\Services;
+namespace App\Domain\BMS\Inventory\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\StockLocationModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\StockLevelModel;

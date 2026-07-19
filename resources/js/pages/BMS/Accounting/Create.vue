@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout>
+  <BMSLayout>
     <div class="p-6 max-w-3xl mx-auto">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Create Account</h1>
@@ -104,7 +104,7 @@
         <!-- Actions -->
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <Link
-            :href="route('cms.accounting.index')"
+            :href="route('bms.accounting.index')"
             class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
           >
             Cancel
@@ -119,12 +119,12 @@
         </div>
       </form>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { useForm, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   accountTypes: Array<{ value: string; label: string }>
@@ -142,6 +142,6 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.accounting.store'))
+  form.post(route('bms.accounting.store'))
 }
 </script>

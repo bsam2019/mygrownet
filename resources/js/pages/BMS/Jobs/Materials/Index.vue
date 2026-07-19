@@ -1,10 +1,10 @@
 <template>
-  <CMSLayout :title="`Job Materials - ${job.job_number}`">
+  <BMSLayout :title="`Job Materials - ${job.job_number}`">
     <div class="space-y-6">
       <!-- Header -->
       <div>
         <Link
-          :href="route('cms.jobs.show', job.id)"
+          :href="route('bms.jobs.show', job.id)"
           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
@@ -271,13 +271,13 @@
         @applied="handleTemplateApplied"
       />
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import AddMaterialModal from './Components/AddMaterialModal.vue'
 import EditMaterialModal from './Components/EditMaterialModal.vue'
 import ApplyTemplateModal from './Components/ApplyTemplateModal.vue'
@@ -346,14 +346,14 @@ const editMaterial = (plan) => {
 
 const deleteMaterial = (plan) => {
   if (confirm('Are you sure you want to remove this material?')) {
-    router.delete(route('cms.jobs.materials.destroy', [props.job.id, plan.id]), {
+    router.delete(route('bms.jobs.materials.destroy', [props.job.id, plan.id]), {
       preserveScroll: true,
     })
   }
 }
 
 const createPurchaseOrder = () => {
-  router.get(route('cms.purchase-orders.create-from-job', props.job.id))
+  router.get(route('bms.purchase-orders.create-from-job', props.job.id))
 }
 
 const handleMaterialAdded = () => {

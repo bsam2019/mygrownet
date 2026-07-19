@@ -32,7 +32,7 @@ const movementTypes = [
 ];
 
 const submit = () => {
-    form.post(route('cms.inventory.movement', props.inventoryId), {
+    form.post(route('bms.inventory.movement', props.inventoryId), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();

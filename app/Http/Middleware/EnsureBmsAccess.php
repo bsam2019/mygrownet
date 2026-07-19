@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureCmsAccess
+class EnsureBmsAccess
 {
     public function handle(Request $request, Closure $next): Response
     {
@@ -14,7 +14,7 @@ class EnsureCmsAccess
 
         if (!$user) {
             // Not authenticated - redirect to CMS login (not main site login)
-            return redirect()->route('cms.login');
+            return redirect()->route('bms.login');
         }
 
         // Resolve active CMS user via the accessor (session-aware)
@@ -22,7 +22,7 @@ class EnsureCmsAccess
 
         if (!$cmsUser) {
             // User is authenticated but has no company yet — send to hub
-            return redirect()->route('cms.companies.hub');
+            return redirect()->route('bms.companies.hub');
         }
 
         if (!$cmsUser->isActive()) {

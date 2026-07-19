@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel;
@@ -36,7 +36,7 @@ class DocumentTemplatesController extends Controller
         // Current preferences per document type
         $preferences = $company->settings['bizdocs_template_preferences'] ?? [];
 
-        return Inertia::render('CMS/Settings/DocumentTemplates', [
+        return Inertia::render('BMS/Settings/DocumentTemplates', [
             'templates'      => $templates,
             'documentType'   => $documentType,
             'preferences'    => $preferences,
@@ -106,7 +106,7 @@ class DocumentTemplatesController extends Controller
 
     private function buildSampleDataAnonymous($template, $company = null, bool $isSpecificTemplate = true): array
     {
-        $document = new \App\Domain\CMS\BizDocs\Adapters\CmsDocumentWrapper([
+        $document = new \App\Domain\BMS\BizDocs\Adapters\CmsDocumentWrapper([
             'type'                => 'invoice',
             'number'              => 'INV-2026-001',
             'issueDate'           => new \DateTimeImmutable(),
@@ -141,9 +141,9 @@ class DocumentTemplatesController extends Controller
             'id'            => 0,
         ];
 
-        $businessProfile = new \App\Domain\CMS\BizDocs\Adapters\CmsBusinessProfileWrapper($mockCompany);
+        $businessProfile = new \App\Domain\BMS\BizDocs\Adapters\CmsBusinessProfileWrapper($mockCompany);
 
-        $customer = new \App\Domain\CMS\BizDocs\Adapters\CmsCustomerWrapper((object)[
+        $customer = new \App\Domain\BMS\BizDocs\Adapters\CmsCustomerWrapper((object)[
             'name'       => 'Sample Customer Ltd',
             'email'      => 'customer@example.com',
             'phone'      => '+260 97 9876543',
@@ -169,10 +169,10 @@ class DocumentTemplatesController extends Controller
             ];
         } else {
             $totals = [
-                'subtotal'       => new \App\Domain\CMS\BizDocs\Adapters\CmsMoneyWrapper(2200.00),
-                'tax_total'      => new \App\Domain\CMS\BizDocs\Adapters\CmsMoneyWrapper(272.00),
-                'discount_total' => new \App\Domain\CMS\BizDocs\Adapters\CmsMoneyWrapper(0.00),
-                'grand_total'    => new \App\Domain\CMS\BizDocs\Adapters\CmsMoneyWrapper(2472.00),
+                'subtotal'       => new \App\Domain\BMS\BizDocs\Adapters\CmsMoneyWrapper(2200.00),
+                'tax_total'      => new \App\Domain\BMS\BizDocs\Adapters\CmsMoneyWrapper(272.00),
+                'discount_total' => new \App\Domain\BMS\BizDocs\Adapters\CmsMoneyWrapper(0.00),
+                'grand_total'    => new \App\Domain\BMS\BizDocs\Adapters\CmsMoneyWrapper(2472.00),
             ];
         }
 

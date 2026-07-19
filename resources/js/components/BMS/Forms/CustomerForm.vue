@@ -97,7 +97,7 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('cms.customers.store'), {
+  form.post(route('bms.customers.store'), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset()

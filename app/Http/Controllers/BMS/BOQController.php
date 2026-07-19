@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\BOQ\Services\BOQService;
-use App\Infrastructure\Persistence\Eloquent\CMS\BOQModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BOQTemplateModel;
+use App\Domain\BMS\BOQ\Services\BOQService;
+use App\Infrastructure\Persistence\Eloquent\BMS\BOQModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BOQTemplateModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -26,7 +26,7 @@ class BOQController extends Controller
             ->orderBy('name')
             ->paginate(20);
 
-        return Inertia::render('CMS/BOQ/Templates/Index', [
+        return Inertia::render('BMS/BOQ/Templates/Index', [
             'templates' => $templates,
             'filters' => $request->only(['search']),
         ]);
@@ -65,7 +65,7 @@ class BOQController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/BOQ/Index', [
+        return Inertia::render('BMS/BOQ/Index', [
             'boqs' => $boqs,
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -73,7 +73,7 @@ class BOQController extends Controller
 
     public function create()
     {
-        return Inertia::render('CMS/BOQ/Create');
+        return Inertia::render('BMS/BOQ/Create');
     }
 
     public function store(Request $request)
@@ -99,7 +99,7 @@ class BOQController extends Controller
 
         $boq = $this->boqService->createBOQ($validated);
 
-        return redirect()->route('cms.boq.show', $boq->id)
+        return redirect()->route('bms.boq.show', $boq->id)
             ->with('success', 'BOQ created successfully');
     }
 
@@ -108,7 +108,7 @@ class BOQController extends Controller
         $boq->load(['project', 'job', 'items', 'variations']);
         $summary = $this->boqService->getBOQSummary($boq);
 
-        return Inertia::render('CMS/BOQ/Show', [
+        return Inertia::render('BMS/BOQ/Show', [
             'boq' => $boq,
             'summary' => $summary,
         ]);
@@ -118,7 +118,7 @@ class BOQController extends Controller
     {
         $boq->load(['items']);
 
-        return Inertia::render('CMS/BOQ/Edit', [
+        return Inertia::render('BMS/BOQ/Edit', [
             'boq' => $boq,
         ]);
     }
@@ -138,7 +138,7 @@ class BOQController extends Controller
 
         $this->boqService->updateBOQ($boq, $validated);
 
-        return redirect()->route('cms.boq.show', $boq->id)
+        return redirect()->route('bms.boq.show', $boq->id)
             ->with('success', 'BOQ updated successfully');
     }
 
@@ -146,7 +146,7 @@ class BOQController extends Controller
     {
         $boq->delete();
 
-        return redirect()->route('cms.boq.index')
+        return redirect()->route('bms.boq.index')
             ->with('success', 'BOQ deleted successfully');
     }
 

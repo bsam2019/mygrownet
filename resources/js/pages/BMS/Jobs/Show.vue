@@ -3,10 +3,10 @@ import { ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { DocumentIcon, PaperClipIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface FabStatus { value: string; label: string; color: string; }
 interface Worker { id: number; name: string; }
@@ -33,7 +33,7 @@ function updateStatus(newStatus: string) {
 function confirmStatusUpdate() {
     showStatusConfirm.value = false;
     statusForm.status = pendingStatus.value;
-    statusForm.post(route('cms.jobs.status', props.job.id), { 
+    statusForm.post(route('bms.jobs.status', props.job.id), { 
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Status updated', `Job moved to ${pendingStatus.value.replace(/_/g, ' ')}`);
@@ -47,7 +47,7 @@ function confirmStatusUpdate() {
 // Complete form
 const completeForm = useForm({ actual_value: props.job.quoted_value ?? 0, material_cost: 0, labor_cost: 0, overhead_cost: 0 });
 function submitComplete() {
-    completeForm.post(route('cms.jobs.complete', props.job.id), {
+    completeForm.post(route('bms.jobs.complete', props.job.id), {
         onSuccess: () => { 
             showCompleteModal.value = false;
             toast.success('Job completed', 'Job has been marked as completed');
@@ -61,7 +61,7 @@ function submitComplete() {
 // Assign form
 const assignForm = useForm({ assigned_to: props.job.assigned_to?.id ?? null });
 function submitAssign() {
-    assignForm.post(route('cms.jobs.assign', props.job.id), {
+    assignForm.post(route('bms.jobs.assign', props.job.id), {
         onSuccess: () => { 
             showAssignModal.value = false;
             toast.success('Job assigned', 'Worker has been assigned to this job');
@@ -122,7 +122,7 @@ function nextStatus(): FabStatus | null {
         <!-- Header -->
         <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <Link :href="route('cms.jobs.index')" class="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">← Back to Jobs</Link>
+                <Link :href="route('bms.jobs.index')" class="text-sm text-gray-500 hover:text-gray-700 mb-1 inline-block">← Back to Jobs</Link>
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl font-bold text-gray-900">{{ job.job_number }}</h1>
                     <span class="px-2.5 py-1 rounded-full text-xs font-medium" :class="statusBadgeClass(job.status)">
@@ -203,11 +203,11 @@ function nextStatus(): FabStatus | null {
                             <span class="font-mono font-medium text-gray-900">{{ job.quotation.quotation_number }}</span>
                             <span class="ml-3 text-gray-500">{{ fmtK(job.quotation.total_amount) }}</span>
                         </div>
-                        <Link :href="route('cms.quotations.show', job.quotation.id)" class="text-blue-600 hover:underline text-xs">View Quotation →</Link>
+                        <Link :href="route('bms.quotations.show', job.quotation.id)" class="text-blue-600 hover:underline text-xs">View Quotation →</Link>
                     </div>
                     <div v-if="job.quotation.measurement" class="mt-2 text-xs text-gray-500">
                         Measurement:
-                        <Link :href="route('cms.measurements.show', job.quotation.measurement.id)" class="text-blue-600 hover:underline ml-1">
+                        <Link :href="route('bms.measurements.show', job.quotation.measurement.id)" class="text-blue-600 hover:underline ml-1">
                             {{ job.quotation.measurement.measurement_number }} – {{ job.quotation.measurement.project_name }}
                         </Link>
                     </div>
@@ -217,7 +217,7 @@ function nextStatus(): FabStatus | null {
                 <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class="text-sm font-semibold text-gray-900">Material Planning</h2>
-                        <Link :href="route('cms.jobs.materials.index', job.id)" 
+                        <Link :href="route('bms.jobs.materials.index', job.id)" 
                             class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition">
                             Manage Materials →
                         </Link>

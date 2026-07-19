@@ -42,7 +42,7 @@ function isPWAModule(): string | null {
     if (path.startsWith('/bizboost')) return 'bizboost';
     if (path.startsWith('/growbiz')) return 'growbiz';
     if (path.startsWith('/growfinance')) return 'growfinance';
-    if (path === '/' || path.startsWith('/dashboard') || path.startsWith('/member')) return 'mygrownet';
+    if (path === '/' || path.startsWith('/workspace') || path.startsWith('/member')) return 'mygrownet';
     return null;
 }
 

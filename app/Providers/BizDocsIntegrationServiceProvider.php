@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Domain\CMS\BizDocs\Adapters\BizDocsAdapter;
-use App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface;
+use App\Domain\BMS\BizDocs\Adapters\BizDocsAdapter;
+use App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface;
 use Illuminate\Support\ServiceProvider;
 
 class BizDocsIntegrationServiceProvider extends ServiceProvider

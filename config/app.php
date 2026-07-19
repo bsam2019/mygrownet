@@ -182,6 +182,7 @@ return [
         App\Providers\ZamStayServiceProvider::class, // ZamStay module
         App\Providers\StockFlowServiceProvider::class, // StockFlow module
         App\Providers\CoreServiceProvider::class, // Platform Core (organizations, applications, etc.)
+        App\Providers\WorkspaceServiceProvider::class, // Workspace services (context, domain resolution, app launch)
     ])->toArray(),
 
     /*

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\PerformanceManagementService;
+use App\Domain\BMS\Core\Services\PerformanceManagementService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,12 +18,12 @@ class PerformanceController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $cycles = \App\Infrastructure\Persistence\Eloquent\CMS\PerformanceCycleModel::where('company_id', $companyId)
+        $cycles = \App\Infrastructure\Persistence\Eloquent\BMS\PerformanceCycleModel::where('company_id', $companyId)
             ->with('reviews')
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Performance/Cycles', [
+        return Inertia::render('BMS/Performance/Cycles', [
             'cycles' => $cycles,
         ]);
     }
@@ -56,14 +56,14 @@ class PerformanceController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $reviews = \App\Infrastructure\Persistence\Eloquent\CMS\PerformanceReviewModel::whereHas('cycle', function ($query) use ($companyId) {
+        $reviews = \App\Infrastructure\Persistence\Eloquent\BMS\PerformanceReviewModel::whereHas('cycle', function ($query) use ($companyId) {
             $query->where('company_id', $companyId);
         })
             ->with(['worker', 'reviewer', 'cycle'])
             ->orderBy('due_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Performance/Reviews', [
+        return Inertia::render('BMS/Performance/Reviews', [
             'reviews' => $reviews,
         ]);
     }
@@ -72,15 +72,15 @@ class PerformanceController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $cycles = \App\Infrastructure\Persistence\Eloquent\CMS\PerformanceCycleModel::where('company_id', $companyId)
+        $cycles = \App\Infrastructure\Persistence\Eloquent\BMS\PerformanceCycleModel::where('company_id', $companyId)
             ->active()
             ->get();
         
-        $workers = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::where('company_id', $companyId)
+        $workers = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get();
 
-        return Inertia::render('CMS/Performance/CreateReview', [
+        return Inertia::render('BMS/Performance/CreateReview', [
             'cycles' => $cycles,
             'workers' => $workers,
         ]);
@@ -99,24 +99,24 @@ class PerformanceController extends Controller
 
         $this->performanceService->createReview($validated['cycle_id'], $validated);
 
-        return redirect()->route('cms.performance.reviews.index')
+        return redirect()->route('bms.performance.reviews.index')
             ->with('success', 'Performance review created successfully');
     }
 
     public function reviewsShow(Request $request, int $reviewId)
     {
-        $review = \App\Infrastructure\Persistence\Eloquent\CMS\PerformanceReviewModel::with([
+        $review = \App\Infrastructure\Persistence\Eloquent\BMS\PerformanceReviewModel::with([
             'worker',
             'reviewer',
             'cycle',
             'ratings.criteria'
         ])->findOrFail($reviewId);
 
-        $criteria = \App\Infrastructure\Persistence\Eloquent\CMS\PerformanceCriteriaModel::where('company_id', $request->user()->company_id)
+        $criteria = \App\Infrastructure\Persistence\Eloquent\BMS\PerformanceCriteriaModel::where('company_id', $request->user()->company_id)
             ->active()
             ->get();
 
-        return Inertia::render('CMS/Performance/ReviewForm', [
+        return Inertia::render('BMS/Performance/ReviewForm', [
             'review' => $review,
             'criteria' => $criteria,
         ]);
@@ -139,7 +139,7 @@ class PerformanceController extends Controller
 
         $this->performanceService->submitReview($reviewId, $validated);
 
-        return redirect()->route('cms.performance.reviews.index')
+        return redirect()->route('bms.performance.reviews.index')
             ->with('success', 'Performance review submitted successfully');
     }
 
@@ -148,12 +148,12 @@ class PerformanceController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $goals = \App\Infrastructure\Persistence\Eloquent\CMS\GoalModel::where('company_id', $companyId)
+        $goals = \App\Infrastructure\Persistence\Eloquent\BMS\GoalModel::where('company_id', $companyId)
             ->with(['worker', 'setBy'])
             ->orderBy('target_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Performance/Goals', [
+        return Inertia::render('BMS/Performance/Goals', [
             'goals' => $goals,
         ]);
     }
@@ -202,12 +202,12 @@ class PerformanceController extends Controller
     {
         $companyId = $request->user()->company_id;
         
-        $pips = \App\Infrastructure\Persistence\Eloquent\CMS\ImprovementPlanModel::where('company_id', $companyId)
+        $pips = \App\Infrastructure\Persistence\Eloquent\BMS\ImprovementPlanModel::where('company_id', $companyId)
             ->with(['worker', 'createdBy', 'milestones'])
             ->orderBy('start_date', 'desc')
             ->get();
 
-        return Inertia::render('CMS/Performance/ImprovementPlans', [
+        return Inertia::render('BMS/Performance/ImprovementPlans', [
             'pips' => $pips,
         ]);
     }

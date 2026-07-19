@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Core\Services;
+namespace App\Domain\BMS\Core\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementRecordModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementItemModel;
@@ -202,7 +202,7 @@ class MeasurementService
             $quotationNumber = 'QUO-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
             // Get company document defaults (notes/terms)
-            $settingsService = app(\App\Domain\CMS\Core\Services\CompanySettingsService::class);
+            $settingsService = app(\App\Domain\BMS\Core\Services\CompanySettingsService::class);
             $docDefaults = $settingsService->getDocumentDefaults($companyId, 'quotation');
 
             // Create quotation

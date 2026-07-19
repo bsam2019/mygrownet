@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\ApprovalWorkflowService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractTemplateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Services\CMS\EmailService;
+use App\Domain\BMS\Core\Services\ApprovalWorkflowService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractTemplateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Services\BMS\EmailService;
 use App\Services\ContractSignatureService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,11 +41,11 @@ class ContractController extends Controller
         $overdueCount = ContractModel::forCompany($companyId)->overdue()->count();
         $activeCount = ContractModel::forCompany($companyId)->active()->count();
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Contracts/Index', [
+        return Inertia::render('BMS/Contracts/Index', [
             'contracts' => $contracts,
             'filters' => $request->only(['search', 'status', 'branch_id']),
             'stats' => [
@@ -64,7 +64,7 @@ class ContractController extends Controller
         $customers = CustomerModel::forCompany($companyId)->active()->orderBy('name')->get(['id', 'name', 'email']);
         $templates = ContractTemplateModel::where('company_id', $companyId)->where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('CMS/Contracts/Create', [
+        return Inertia::render('BMS/Contracts/Create', [
             'customers' => $customers,
             'templates' => $templates,
         ]);
@@ -99,7 +99,7 @@ class ContractController extends Controller
             'created_by' => $request->user()->cmsUser->id,
         ]);
 
-        return redirect()->route('cms.contracts.index')->with('success', 'Contract created successfully.');
+        return redirect()->route('bms.contracts.index')->with('success', 'Contract created successfully.');
     }
 
     /**
@@ -120,7 +120,7 @@ class ContractController extends Controller
 
         $signedPdfUrl = app(ContractSignatureService::class)->getSignedPdfUrl($contract);
 
-        return Inertia::render('CMS/Contracts/Show', [
+        return Inertia::render('BMS/Contracts/Show', [
             'contract' => $contract,
             'signedPdfUrl' => $signedPdfUrl,
         ]);
@@ -135,7 +135,7 @@ class ContractController extends Controller
         $customers = CustomerModel::forCompany($companyId)->active()->orderBy('name')->get(['id', 'name']);
         $templates = ContractTemplateModel::where('company_id', $companyId)->where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('CMS/Contracts/Edit', [
+        return Inertia::render('BMS/Contracts/Edit', [
             'contract' => $contract,
             'customers' => $customers,
             'templates' => $templates,
@@ -162,7 +162,7 @@ class ContractController extends Controller
 
         $contract->update($validated);
 
-        return redirect()->route('cms.contracts.show', $contract->id)->with('success', 'Contract updated.');
+        return redirect()->route('bms.contracts.show', $contract->id)->with('success', 'Contract updated.');
     }
 
     public function activate(Request $request, ContractModel $contract): RedirectResponse
@@ -279,7 +279,7 @@ class ContractController extends Controller
 
         $contract->load(['customer', 'template']);
 
-        return Inertia::render('CMS/Contracts/CustomerSign', [
+        return Inertia::render('BMS/Contracts/CustomerSign', [
             'contract' => $contract,
             'token' => $token,
         ]);
@@ -318,7 +318,7 @@ class ContractController extends Controller
         $contract->load('signatures');
         $signedPdfUrl = $this->signatureService->getSignedPdfUrl($contract);
 
-        return Inertia::render('CMS/Contracts/SignedConfirmation', [
+        return Inertia::render('BMS/Contracts/SignedConfirmation', [
             'contract' => $contract,
             'signedPdfUrl' => $signedPdfUrl,
         ]);
@@ -371,6 +371,6 @@ class ContractController extends Controller
             'created_by' => $request->user()->cmsUser->id,
         ]);
 
-        return redirect()->route('cms.contracts.show', $newContract->id)->with('success', 'Contract renewed.');
+        return redirect()->route('bms.contracts.show', $newContract->id)->with('success', 'Contract renewed.');
     }
 }

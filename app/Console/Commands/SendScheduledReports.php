@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\CMS\Core\Services\ScheduledReportService;
+use App\Domain\BMS\Core\Services\ScheduledReportService;
 use App\Http\Controllers\CMS\ReportController;
 use App\Infrastructure\Persistence\Eloquent\CMS\ScheduledReportModel;
-use App\Services\CMS\EmailService;
+use App\Services\BMS\EmailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;

@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { MagnifyingGlassIcon, PlusIcon, FunnelIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -20,7 +20,7 @@ const selectedWorkerType = ref(props.filters.worker_type || '')
 const selectedStatus = ref(props.filters.status || '')
 
 const applyFilters = () => {
-  router.get(route('cms.payroll.workers.index'), {
+  router.get(route('bms.payroll.workers.index'), {
     search: search.value,
     worker_type: selectedWorkerType.value,
     status: selectedStatus.value,
@@ -72,7 +72,7 @@ const formatNumber = (value: number) => {
       </div>
       <div class="mt-4 sm:mt-0">
         <Link
-          :href="route('cms.payroll.workers.create')"
+          :href="route('bms.payroll.workers.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -203,7 +203,7 @@ const formatNumber = (value: number) => {
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <Link
-                :href="route('cms.payroll.workers.show', worker.id)"
+                :href="route('bms.payroll.workers.show', worker.id)"
                 class="text-blue-600 hover:text-blue-900"
               >
                 View

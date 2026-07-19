@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Services\CmsExpenseSyncService;
+use App\Services\BmsExpenseSyncService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +21,7 @@ class SyncApprovedExpenseToTransaction implements ShouldQueue
      * Create the event listener.
      */
     public function __construct(
-        private CmsExpenseSyncService $syncService
+        private BmsExpenseSyncService $syncService
     ) {}
 
     /**

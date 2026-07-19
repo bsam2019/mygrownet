@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { toast } from '@/utils/bizboost-toast';
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -21,7 +21,7 @@ const cancelReason = ref('');
 
 const sendInvoice = () => {
     showConfirmSend.value = false;
-    router.post(route('cms.invoices.send', props.invoice.id), {}, {
+    router.post(route('bms.invoices.send', props.invoice.id), {}, {
         preserveScroll: true,
         onSuccess: () => {
             toast.success('Invoice sent', 'The invoice has been marked as sent');
@@ -34,7 +34,7 @@ const sendInvoice = () => {
 
 const cancelInvoice = () => {
     if (cancelReason.value.trim()) {
-        router.post(route('cms.invoices.cancel', props.invoice.id), {
+        router.post(route('bms.invoices.cancel', props.invoice.id), {
             reason: cancelReason.value,
         }, {
             preserveScroll: true,
@@ -77,7 +77,7 @@ const getStatusColor = (status: string) => {
             </div>
             <div class="flex gap-2">
                 <a
-                    :href="route('cms.invoices.pdf', invoice.id)"
+                    :href="route('bms.invoices.pdf', invoice.id)"
                     target="_blank"
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
@@ -85,7 +85,7 @@ const getStatusColor = (status: string) => {
                 </a>
                 <Link
                     v-if="invoice.status === 'draft'"
-                    :href="route('cms.invoices.edit', invoice.id)"
+                    :href="route('bms.invoices.edit', invoice.id)"
                     class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
                     Edit
@@ -98,7 +98,7 @@ const getStatusColor = (status: string) => {
                     Send Invoice
                 </button>
                 <Link
-                    :href="route('cms.payments.create', { customer_id: invoice.customer_id })"
+                    :href="route('bms.payments.create', { customer_id: invoice.customer_id })"
                     class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                 >
                     Record Payment

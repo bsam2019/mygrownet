@@ -2,7 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { ref } from 'vue';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import { PlusIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 interface Plan {
@@ -54,7 +54,7 @@ function hasChildren(plan: Plan): boolean {
 <template>
     <Head title="Plans" />
 
-    <CMSLayout>
+    <BMSLayout>
         <div class="space-y-6">
             <div class="flex items-center justify-between">
                 <div>
@@ -64,7 +64,7 @@ function hasChildren(plan: Plan): boolean {
                     </p>
                 </div>
                 <Link
-                    :href="route('cms.plans.create')"
+                    :href="route('bms.plans.create')"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
                     <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -90,7 +90,7 @@ function hasChildren(plan: Plan): boolean {
                         </button>
 
                         <Link
-                            :href="route('cms.plans.show', plan.id)"
+                            :href="route('bms.plans.show', plan.id)"
                             class="flex-1 min-w-0"
                             @click.stop
                         >
@@ -107,7 +107,7 @@ function hasChildren(plan: Plan): boolean {
                         </span>
 
                         <Link
-                            :href="route('cms.plans.edit', plan.id)"
+                            :href="route('bms.plans.edit', plan.id)"
                             class="text-xs text-indigo-600 hover:text-indigo-800"
                             @click.stop
                         >
@@ -122,7 +122,7 @@ function hasChildren(plan: Plan): boolean {
                             class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-100"
                             :style="{ paddingLeft: '48px' }"
                         >
-                            <Link :href="route('cms.plans.show', child.id)" class="flex-1 min-w-0">
+                            <Link :href="route('bms.plans.show', child.id)" class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ child.title }}</p>
                             </Link>
 
@@ -135,7 +135,7 @@ function hasChildren(plan: Plan): boolean {
                             </span>
 
                             <Link
-                                :href="route('cms.plans.edit', child.id)"
+                                :href="route('bms.plans.edit', child.id)"
                                 class="text-xs text-indigo-600 hover:text-indigo-800"
                             >
                                 Edit
@@ -145,5 +145,5 @@ function hasChildren(plan: Plan): boolean {
                 </div>
             </div>
         </div>
-    </CMSLayout>
+    </BMSLayout>
 </template>

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Domain\CMS\Core\Services\RecurringInvoiceService;
+use App\Domain\BMS\Core\Services\RecurringInvoiceService;
 use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\RecurringInvoiceModel;
 use Carbon\Carbon;

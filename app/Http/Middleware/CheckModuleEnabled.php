@@ -25,7 +25,7 @@ class CheckModuleEnabled
             }
 
             // For web requests, redirect to dashboard with message
-            return redirect()->route('dashboard')
+            return redirect()->route('workspace')
                 ->with('error', 'This feature is currently unavailable.');
         }
 

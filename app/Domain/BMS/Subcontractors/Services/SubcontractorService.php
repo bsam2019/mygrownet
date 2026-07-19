@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Subcontractors\Services;
+namespace App\Domain\BMS\Subcontractors\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorAssignmentModel;

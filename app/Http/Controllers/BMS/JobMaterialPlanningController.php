@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Materials\Services\JobMaterialPlanningService;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobMaterialPlanModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialTemplateModel;
+use App\Domain\BMS\Materials\Services\JobMaterialPlanningService;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobMaterialPlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialTemplateModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,7 +39,7 @@ class JobMaterialPlanningController extends Controller
 
         $summary = $this->planningService->getJobMaterialSummary($job->id);
 
-        return Inertia::render('CMS/Jobs/Materials/Index', [
+        return Inertia::render('BMS/Jobs/Materials/Index', [
             'job' => $job,
             'materials' => $materials,
             'templates' => $templates,

@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Allowance Types">
+  <BMSLayout title="Allowance Types">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -164,13 +164,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   allowanceTypes: any[];
@@ -210,12 +210,12 @@ function closeModal() {
 function submitForm() {
   if (editingAllowance.value) {
     router.put(
-      route('cms.payroll.configuration.allowance-types.update', editingAllowance.value.id),
+      route('bms.payroll.configuration.allowance-types.update', editingAllowance.value.id),
       form.value,
       { onSuccess: closeModal }
     );
   } else {
-    router.post(route('cms.payroll.configuration.allowance-types.store'), form.value, {
+    router.post(route('bms.payroll.configuration.allowance-types.store'), form.value, {
       onSuccess: closeModal,
     });
   }

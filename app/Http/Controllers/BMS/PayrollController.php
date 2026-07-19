@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\PayrollService;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAttendanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CommissionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PayrollRunModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Domain\BMS\Core\Services\PayrollService;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerAttendanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CommissionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PayrollRunModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,7 +40,7 @@ class PayrollController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Workers/Index', [
+        return Inertia::render('BMS/Workers/Index', [
             'workers' => $workers,
             'filters' => $request->only(['search', 'worker_type', 'status']),
         ]);
@@ -50,11 +50,11 @@ class PayrollController extends Controller
     {
         $companyId = auth()->user()->cmsUser->company_id;
         
-        $departments = \App\Infrastructure\Persistence\Eloquent\CMS\DepartmentModel::where('company_id', $companyId)
+        $departments = \App\Infrastructure\Persistence\Eloquent\BMS\DepartmentModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'department_name as name']);
 
-        return Inertia::render('CMS/Workers/Create', [
+        return Inertia::render('BMS/Workers/Create', [
             'departments' => $departments,
         ]);
     }
@@ -126,7 +126,7 @@ class PayrollController extends Controller
         $worker = $this->payrollService->createWorker($validated);
 
         return redirect()
-            ->route('cms.payroll.workers.show', $worker->id)
+            ->route('bms.payroll.workers.show', $worker->id)
             ->with('success', 'Worker registered successfully');
     }
 
@@ -146,7 +146,7 @@ class PayrollController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Workers/Show', [
+        return Inertia::render('BMS/Workers/Show', [
             'worker' => $worker,
             'attendance' => $attendance,
             'commissions' => $commissions,
@@ -231,7 +231,7 @@ class PayrollController extends Controller
             ->orderBy('period_end', 'desc')
             ->paginate(20);
 
-        return Inertia::render('CMS/Payroll/Index', [
+        return Inertia::render('BMS/Payroll/Index', [
             'payrollRuns' => $payrollRuns,
             'filters' => $request->only(['status', 'period_type']),
         ]);
@@ -239,7 +239,7 @@ class PayrollController extends Controller
 
     public function payrollCreate(): Response
     {
-        return Inertia::render('CMS/Payroll/Create');
+        return Inertia::render('BMS/Payroll/Create');
     }
 
     public function payrollStore(Request $request)
@@ -261,7 +261,7 @@ class PayrollController extends Controller
         ]);
 
         return redirect()
-            ->route('cms.payroll.show', $payrollRun->id)
+            ->route('bms.payroll.show', $payrollRun->id)
             ->with('success', 'Payroll run created successfully');
     }
 
@@ -274,7 +274,7 @@ class PayrollController extends Controller
             'approvedBy.user',
         ]);
 
-        return Inertia::render('CMS/Payroll/Show', [
+        return Inertia::render('BMS/Payroll/Show', [
             'payrollRun' => $payrollRun,
         ]);
     }

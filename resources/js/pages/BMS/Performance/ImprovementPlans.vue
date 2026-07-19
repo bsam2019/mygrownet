@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout title="Performance Improvement Plans">
+  <BMSLayout title="Performance Improvement Plans">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex justify-between items-center">
@@ -174,13 +174,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 
 const props = defineProps<{
   pips: any[];
@@ -198,7 +198,7 @@ const pipForm = ref({
 });
 
 const createPip = () => {
-  router.post(route('cms.performance.pips.store'), pipForm.value, {
+  router.post(route('bms.performance.pips.store'), pipForm.value, {
     onSuccess: () => {
       showCreateModal.value = false;
       pipForm.value = {
@@ -215,7 +215,7 @@ const createPip = () => {
 };
 
 const completeMilestone = (milestoneId: number) => {
-  router.post(route('cms.performance.pips.milestone-complete', milestoneId), {
+  router.post(route('bms.performance.pips.milestone-complete', milestoneId), {
     notes: 'Milestone completed',
   });
 };
@@ -225,7 +225,7 @@ const closePip = (pip: any) => {
   const notes = prompt('Outcome notes:');
   
   if (status && notes) {
-    router.post(route('cms.performance.pips.close', pip.id), {
+    router.post(route('bms.performance.pips.close', pip.id), {
       status: status,
       outcome_notes: notes,
     });

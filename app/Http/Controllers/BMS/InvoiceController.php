@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\InvoiceService;
-use App\Domain\CMS\Core\Services\PdfInvoiceService;
-use App\Domain\CMS\Core\ValueObjects\InvoiceStatus;
+use App\Domain\BMS\Core\Services\InvoiceService;
+use App\Domain\BMS\Core\Services\PdfInvoiceService;
+use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Notifications\CMS\InvoiceSentNotification;
-use App\Services\CMS\EmailService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Notifications\BMS\InvoiceSentNotification;
+use App\Services\BMS\EmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,7 +29,7 @@ class InvoiceController extends Controller
     private function getCompanyId(Request $request): ?int
     {
         $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
         
         return $cmsUser?->company_id;
     }
@@ -37,10 +37,10 @@ class InvoiceController extends Controller
     /**
      * Get CMS user or fail with redirect
      */
-    private function getCmsUserOrFail(Request $request)
+    private function getBmsUserOrFail(Request $request)
     {
         $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
         
         if (!$cmsUser || !$cmsUser->company_id) {
             abort(403, 'You must be associated with a company.');
@@ -52,10 +52,10 @@ class InvoiceController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
         
         if (!$cmsUser || !$cmsUser->company_id) {
-            return Inertia::render('CMS/Invoices/Index', [
+            return Inertia::render('BMS/Invoices/Index', [
                 'invoices' => ['data' => [], 'links' => [], 'meta' => []],
                 'summary' => [
                     'total_invoices' => 0,
@@ -102,11 +102,11 @@ class InvoiceController extends Controller
         // Get summary stats
         $summary = $this->invoiceService->getInvoiceSummary($companyId);
 
-        $branches = \App\Infrastructure\Persistence\Eloquent\CMS\BranchModel::where('company_id', $companyId)
+        $branches = \App\Infrastructure\Persistence\Eloquent\BMS\BranchModel::where('company_id', $companyId)
             ->where('is_active', true)
             ->get(['id', 'branch_name']);
 
-        return Inertia::render('CMS/Invoices/Index', [
+        return Inertia::render('BMS/Invoices/Index', [
             'invoices' => $invoices,
             'summary' => $summary,
             'filters' => [
@@ -122,10 +122,10 @@ class InvoiceController extends Controller
     public function create(Request $request): Response
     {
         $user = $request->user();
-        $cmsUser = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('user_id', $user->id)->first();
+        $cmsUser = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('user_id', $user->id)->first();
         
         if (!$cmsUser || !$cmsUser->company_id) {
-            return redirect()->route('cms.invoices.index')->with('error', 'You must be associated with a company.');
+            return redirect()->route('bms.invoices.index')->with('error', 'You must be associated with a company.');
         }
         
         $companyId = $cmsUser->company_id;
@@ -135,10 +135,10 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone', 'outstanding_balance']);
 
-        return Inertia::render('CMS/Invoices/Create', [
+        return Inertia::render('BMS/Invoices/Create', [
             'customers'    => $customers,
-            'defaultNotes' => app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['notes'] ?? '',
-            'defaultTerms' => app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['terms'] ?? '',
+            'defaultNotes' => app(\App\Domain\BMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['notes'] ?? '',
+            'defaultTerms' => app(\App\Domain\BMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($companyId, 'invoice')['terms'] ?? '',
         ]);
     }
 
@@ -156,7 +156,7 @@ class InvoiceController extends Controller
             'items.*.dimensions_value' => 'nullable|numeric|min:0',
         ]);
 
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->createInvoice(
@@ -169,7 +169,7 @@ class InvoiceController extends Controller
             );
 
             return redirect()
-                ->route('cms.invoices.show', $invoice->id)
+                ->route('bms.invoices.show', $invoice->id)
                 ->with('success', 'Invoice created successfully');
         } catch (\Exception $e) {
             return back()
@@ -180,13 +180,13 @@ class InvoiceController extends Controller
 
     public function show(Request $request, int $id): Response
     {
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'payments.allocations'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Invoices/Show', [
+        return Inertia::render('BMS/Invoices/Show', [
             'invoice' => $invoice,
             'statuses' => InvoiceStatus::all(),
         ]);
@@ -194,7 +194,7 @@ class InvoiceController extends Controller
 
     public function edit(Request $request, int $id): Response
     {
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
         $companyId = $cmsUser->company_id;
 
         $invoice = InvoiceModel::where('company_id', $companyId)
@@ -204,7 +204,7 @@ class InvoiceController extends Controller
         // Only draft invoices can be edited
         if ($invoice->status !== InvoiceStatus::DRAFT->value) {
             return redirect()
-                ->route('cms.invoices.show', $id)
+                ->route('bms.invoices.show', $id)
                 ->with('error', 'Only draft invoices can be edited');
         }
 
@@ -213,7 +213,7 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'phone']);
 
-        return Inertia::render('CMS/Invoices/Edit', [
+        return Inertia::render('BMS/Invoices/Edit', [
             'invoice' => $invoice,
             'customers' => $customers,
         ]);
@@ -232,7 +232,7 @@ class InvoiceController extends Controller
             'items.*.dimensions_value' => 'nullable|numeric|min:0',
         ]);
 
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->updateInvoice(
@@ -244,7 +244,7 @@ class InvoiceController extends Controller
             );
 
             return redirect()
-                ->route('cms.invoices.show', $invoice->id)
+                ->route('bms.invoices.show', $invoice->id)
                 ->with('success', 'Invoice updated successfully');
         } catch (\Exception $e) {
             return back()
@@ -255,7 +255,7 @@ class InvoiceController extends Controller
 
     public function send(Request $request, int $id): RedirectResponse
     {
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $invoice = $this->invoiceService->sendInvoice($id, $cmsUser->id);
@@ -331,7 +331,7 @@ class InvoiceController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $this->invoiceService->cancelInvoice($id, $validated['reason'], $cmsUser->id);
@@ -348,7 +348,7 @@ class InvoiceController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         try {
             $this->invoiceService->voidInvoice($id, $validated['reason'], $cmsUser->id);
@@ -361,7 +361,7 @@ class InvoiceController extends Controller
 
     public function downloadPdf(Request $request, int $id)
     {
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])
@@ -370,7 +370,7 @@ class InvoiceController extends Controller
         // Check if company has BizDocs module enabled
         if ($invoice->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateInvoicePdf($invoice);
                 
                 return response($pdfContent)
@@ -391,7 +391,7 @@ class InvoiceController extends Controller
 
     public function previewPdf(Request $request, int $id)
     {
-        $cmsUser = $this->getCmsUserOrFail($request);
+        $cmsUser = $this->getBmsUserOrFail($request);
 
         $invoice = InvoiceModel::where('company_id', $cmsUser->company_id)
             ->with(['customer', 'items', 'company'])
@@ -400,7 +400,7 @@ class InvoiceController extends Controller
         // Check if company has BizDocs module enabled
         if ($invoice->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateInvoicePdf($invoice);
                 
                 return response($pdfContent)

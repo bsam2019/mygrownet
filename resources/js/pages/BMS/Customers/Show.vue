@@ -2,7 +2,7 @@
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <!-- Page Header -->
     <div class="mb-6">
-      <Link :href="route('cms.customers.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.customers.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Customers
       </Link>
       <div class="flex items-center justify-between">
@@ -29,7 +29,7 @@
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h2 class="text-lg font-semibold text-gray-900">Customer Information</h2>
               <Link
-                :href="route('cms.customers.edit', customer.id)"
+                :href="route('bms.customers.edit', customer.id)"
                 class="text-sm text-blue-600 hover:text-blue-800"
               >
                 Edit
@@ -93,7 +93,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                       <Link
-                        :href="route('cms.jobs.show', job.id)"
+                        :href="route('bms.jobs.show', job.id)"
                         class="text-blue-600 hover:text-blue-800"
                       >
                         View
@@ -237,7 +237,7 @@
             <h3 class="text-sm font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div class="space-y-3">
               <Link
-                :href="route('cms.jobs.create', { customer_id: customer.id })"
+                :href="route('bms.jobs.create', { customer_id: customer.id })"
                 class="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700"
               >
                 Create Job
@@ -284,12 +284,12 @@
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { DocumentIcon, PaperClipIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import DocumentUploadModal from '@/components/BMS/DocumentUploadModal.vue'
 import CustomerContactsModal from '@/components/BMS/CustomerContactsModal.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {

@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { PlusIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 
-defineOptions({ layout: CMSLayout })
+defineOptions({ layout: BMSLayout })
 
 interface Props {
   vendors: { data: any[]; links: any }
@@ -20,7 +20,7 @@ const typeFilter = ref(props.filters.vendor_type || '')
 const statusFilter = ref(props.filters.status || '')
 
 const applyFilters = () => {
-  router.get(route('cms.vendors.index'), { search: search.value, vendor_type: typeFilter.value, status: statusFilter.value }, { preserveState: true })
+  router.get(route('bms.vendors.index'), { search: search.value, vendor_type: typeFilter.value, status: statusFilter.value }, { preserveState: true })
 }
 
 const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'
@@ -30,7 +30,7 @@ const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('e
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">Vendors</h1>
-      <Link :href="route('cms.vendors.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+      <Link :href="route('bms.vendors.create')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
         <PlusIcon class="h-5 w-5" /> New Vendor
       </Link>
     </div>
@@ -68,7 +68,7 @@ const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('e
           <tbody class="divide-y divide-gray-200">
             <tr v-for="v in vendors.data" :key="v.id" class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
-                <Link :href="route('cms.vendors.show', v.id)" class="text-sm font-medium text-blue-600 hover:text-blue-700">{{ v.name }}</Link>
+                <Link :href="route('bms.vendors.show', v.id)" class="text-sm font-medium text-blue-600 hover:text-blue-700">{{ v.name }}</Link>
                 <p class="text-xs text-gray-500">{{ v.vendor_number }}</p>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -82,7 +82,7 @@ const formatDate = (date: string) => date ? new Date(date).toLocaleDateString('e
                 <span :class="['px-2 py-1 text-xs font-medium rounded-full', v.status === 'active' ? 'bg-green-100 text-green-700' : v.status === 'blacklisted' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500']">{{ v.status }}</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <Link :href="route('cms.vendors.show', v.id)" class="text-blue-600 hover:text-blue-700 font-medium">View</Link>
+                <Link :href="route('bms.vendors.show', v.id)" class="text-blue-600 hover:text-blue-700 font-medium">View</Link>
               </td>
             </tr>
             <tr v-if="vendors.data.length === 0">

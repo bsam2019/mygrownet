@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\CMS\Installation\Services;
+namespace App\Domain\BMS\Installation\Services;
 
 use App\Infrastructure\Persistence\Eloquent\CMS\InstallationScheduleModel;
 use App\Infrastructure\Persistence\Eloquent\CMS\SiteVisitModel;

@@ -33,6 +33,8 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\RefreshCsrfToken::class, // Refresh CSRF token on every request for PWA
             // \App\Http\Middleware\DetectFraudulentActivity::class, // DISABLED - potential circular dependency
             // \App\Http\Middleware\PerformanceMonitoring::class, // DISABLED - constructor injection causing early service resolution
+            \App\Http\Middleware\ResolveDomainContext::class,
+            \App\Http\Middleware\SetPlatformContext::class,
         ],
 
         'api' => [
@@ -65,5 +67,7 @@ class Kernel extends HttpKernel
         'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
         'stockflow.permission' => \App\Http\Middleware\StockFlowPermission::class,
         'stockflow.feature' => \App\Http\Middleware\CheckFeatureEnabled::class,
+        'ensure.organization.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
+        'ensure.application.access' => \App\Http\Middleware\EnsureApplicationAccess::class,
     ];
 }

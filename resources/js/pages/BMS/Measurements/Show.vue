@@ -2,13 +2,13 @@
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { route } from 'ziggy-js';
-import CMSLayout from '@/Layouts/CMSLayout.vue';
+import BMSLayout from '@/Layouts/BMSLayout.vue';
 import {
     ArrowLeftIcon, PlusIcon, TrashIcon, PencilSquareIcon,
     CheckCircleIcon, DocumentTextIcon, ChartBarIcon,
 } from '@heroicons/vue/24/outline';
 
-defineOptions({ layout: CMSLayout });
+defineOptions({ layout: BMSLayout });
 
 interface Item {
     id: number;
@@ -80,29 +80,29 @@ function calcPreview() {
 }
 
 function submitAddItem() {
-    addItemForm.post(route('cms.measurements.items.store', props.measurement.id), {
+    addItemForm.post(route('bms.measurements.items.store', props.measurement.id), {
         onSuccess: () => { showAddItem.value = false; addItemForm.reset(); },
     });
 }
 
 function deleteItem(itemId: number) {
     if (!confirm('Remove this item?')) return;
-    router.delete(route('cms.measurements.items.destroy', { id: props.measurement.id, itemId }));
+    router.delete(route('bms.measurements.items.destroy', { id: props.measurement.id, itemId }));
 }
 
 function completeMeasurement() {
     if (!confirm('Mark this measurement as completed?')) return;
-    router.post(route('cms.measurements.complete', props.measurement.id));
+    router.post(route('bms.measurements.complete', props.measurement.id));
 }
 
 function generateQuotation() {
     if (!confirm('Generate a quotation from this measurement?')) return;
-    router.post(route('cms.measurements.generate-quotation', props.measurement.id));
+    router.post(route('bms.measurements.generate-quotation', props.measurement.id));
 }
 
 function deleteMeasurement() {
     if (!confirm(`Delete measurement ${props.measurement.measurement_number}? This cannot be undone.`)) return;
-    router.delete(route('cms.measurements.destroy', props.measurement.id));
+    router.delete(route('bms.measurements.destroy', props.measurement.id));
 }
 
 function fmt(date: string) {
@@ -123,7 +123,7 @@ function typeLabel(type: string) {
 
     <div class="max-w-5xl mx-auto">
         <!-- Back -->
-        <Link :href="route('cms.measurements.index')" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
+        <Link :href="route('bms.measurements.index')" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition">
             <ArrowLeftIcon class="h-4 w-4 mr-1" aria-hidden="true" />
             Back to Measurements
         </Link>
@@ -164,7 +164,7 @@ function typeLabel(type: string) {
                 <!-- Edit -->
                 <Link
                     v-if="measurement.status !== 'quoted'"
-                    :href="route('cms.measurements.edit', measurement.id)"
+                    :href="route('bms.measurements.edit', measurement.id)"
                     class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                 >
                     <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
@@ -315,7 +315,7 @@ function typeLabel(type: string) {
                         <Link
                             v-for="q in measurement.quotations"
                             :key="q.id"
-                            :href="route('cms.quotations.show', q.id)"
+                            :href="route('bms.quotations.show', q.id)"
                             class="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition text-sm"
                         >
                             <span class="font-mono text-gray-700">{{ q.quotation_number }}</span>

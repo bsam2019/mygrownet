@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Production Orders">
+  <BMSLayout page-title="Production Orders">
     <div class="space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Manage workshop production and cutting lists</p>
         </div>
         <Link
-          :href="route('cms.production.create')"
+          :href="route('bms.production.create')"
           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -151,7 +151,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <Link
-                  :href="route('cms.production.show', order.id)"
+                  :href="route('bms.production.show', order.id)"
                   class="text-blue-600 hover:text-blue-900 mr-3"
                 >
                   View
@@ -190,7 +190,7 @@
           <p class="mt-1 text-sm text-gray-500">Get started by creating a new production order.</p>
           <div class="mt-6">
             <Link
-              :href="route('cms.production.create')"
+              :href="route('bms.production.create')"
               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               <PlusIcon class="h-5 w-5 mr-2" aria-hidden="true" />
@@ -200,13 +200,13 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   PlusIcon,
   ClockIcon,
@@ -227,7 +227,7 @@ const searchQuery = ref(props.filters.search || '')
 const statusFilter = ref(props.filters.status || '')
 
 const search = () => {
-  router.get(route('cms.production.index'), {
+  router.get(route('bms.production.index'), {
     search: searchQuery.value,
     status: statusFilter.value,
   }, {

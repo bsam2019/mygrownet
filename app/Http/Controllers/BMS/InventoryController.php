@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Inventory\Services\InventoryService;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockLocationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockLevelModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockTransferModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockAdjustmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockCountModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockValuationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
+use App\Domain\BMS\Inventory\Services\InventoryService;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockLocationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockLevelModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockTransferModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockAdjustmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockCountModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockValuationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -24,7 +24,7 @@ class InventoryController extends Controller
             ->with('manager')
             ->get();
 
-        return Inertia::render('CMS/Inventory/Locations', ['locations' => $locations]);
+        return Inertia::render('BMS/Inventory/Locations', ['locations' => $locations]);
     }
 
     public function storeLocation(Request $request)
@@ -53,7 +53,7 @@ class InventoryController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name']);
 
-        return Inertia::render('CMS/Inventory/StockLevels', [
+        return Inertia::render('BMS/Inventory/StockLevels', [
             'levels' => $levels,
             'locations' => $locations,
         ]);
@@ -81,7 +81,7 @@ class InventoryController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'unit']);
 
-        return Inertia::render('CMS/Inventory/Transfers', [
+        return Inertia::render('BMS/Inventory/Transfers', [
             'transfers' => $transfers,
             'locations' => $locations,
             'materials' => $materials,
@@ -139,7 +139,7 @@ class InventoryController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'unit']);
 
-        return Inertia::render('CMS/Inventory/Adjustments', [
+        return Inertia::render('BMS/Inventory/Adjustments', [
             'adjustments' => $adjustments,
             'locations' => $locations,
             'materials' => $materials,
@@ -188,7 +188,7 @@ class InventoryController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name', 'unit']);
 
-        return Inertia::render('CMS/Inventory/Counts', [
+        return Inertia::render('BMS/Inventory/Counts', [
             'counts' => $counts,
             'locations' => $locations,
             'materials' => $materials,
@@ -231,7 +231,7 @@ class InventoryController extends Controller
             ->where('is_active', true)
             ->get(['id', 'name']);
 
-        return Inertia::render('CMS/Inventory/Valuation', [
+        return Inertia::render('BMS/Inventory/Valuation', [
             'valuations' => $valuations,
             'locations' => $locations,
         ]);

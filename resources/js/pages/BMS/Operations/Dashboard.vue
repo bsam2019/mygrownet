@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Operations Dashboard">
+  <BMSLayout page-title="Operations Dashboard">
     <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex items-center justify-between">
@@ -8,7 +8,7 @@
           <p class="mt-1 text-sm text-gray-500">Monitor tasks, workload, and bottlenecks</p>
         </div>
         <Link
-          :href="route('cms.operations.tasks.create')"
+          :href="route('bms.operations.tasks.create')"
           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -146,7 +146,7 @@
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900">Recent Tasks</h2>
           <Link
-            :href="route('cms.operations.tasks.index')"
+            :href="route('bms.operations.tasks.index')"
             class="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             View all
@@ -167,7 +167,7 @@
               <tr v-for="task in recentTasks" :key="task.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4">
                   <Link
-                    :href="route('cms.operations.tasks.show', task.id)"
+                    :href="route('bms.operations.tasks.show', task.id)"
                     class="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
                     {{ task.title }}
@@ -210,12 +210,12 @@
         </div>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 import {
   PlusIcon,
   ClipboardDocumentListIcon,

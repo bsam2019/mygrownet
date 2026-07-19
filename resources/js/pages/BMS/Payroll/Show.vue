@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { CheckIcon, BanknotesIcon } from '@heroicons/vue/24/outline'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 defineOptions({
-  layout: CMSLayout
+  layout: BMSLayout
 })
 
 interface Props {
@@ -20,11 +20,11 @@ const markPaidForm = useForm({
 })
 
 const approvePayroll = () => {
-  useForm({}).post(route('cms.payroll.approve', props.payrollRun.id))
+  useForm({}).post(route('bms.payroll.approve', props.payrollRun.id))
 }
 
 const submitMarkPaid = () => {
-  markPaidForm.post(route('cms.payroll.mark-paid', props.payrollRun.id), {
+  markPaidForm.post(route('bms.payroll.mark-paid', props.payrollRun.id), {
     onSuccess: () => {
       showMarkPaidModal.value = false
     }
@@ -59,7 +59,7 @@ const getStatusClass = (status: string) => {
 <template>
   <div class="px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
-      <Link :href="route('cms.payroll.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
+      <Link :href="route('bms.payroll.index')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block">
         ← Back to Payroll Runs
       </Link>
       <div class="flex items-center justify-between">

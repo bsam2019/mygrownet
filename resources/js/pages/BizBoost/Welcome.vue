@@ -188,7 +188,7 @@ const getPeriodText = (tier: PricingTier) => {
                     <div class="flex items-center gap-3">
                         <template v-if="user">
                             <Link
-                                href="/dashboard"
+                                href="/workspace"
                                 class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
                             >
                                 Dashboard
@@ -244,7 +244,7 @@ const getPeriodText = (tier: PricingTier) => {
                         <div class="mt-6 sm:mt-7 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                             <Link
                                 v-if="user"
-                                href="/dashboard"
+                                href="/workspace"
                                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-xl transition-colors shadow-lg shadow-violet-500/30"
                             >
                                 Go to Dashboard
@@ -611,7 +611,7 @@ const getPeriodText = (tier: PricingTier) => {
                                 </Link>
                                 <Link
                                     v-else
-                                    href="/dashboard"
+                                    href="/workspace"
                                     class="inline-flex items-center justify-center gap-2 px-6 py-3 text-base font-semibold text-white bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
                                 >
                                     Go to Dashboard
@@ -741,7 +741,7 @@ const getPeriodText = (tier: PricingTier) => {
                         <ul class="space-y-2 text-slate-400">
                             <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#pricing" class="hover:text-white transition-colors">Pricing</a></li>
-                            <li v-if="user"><Link href="/dashboard" class="hover:text-white transition-colors">Dashboard</Link></li>
+                            <li v-if="user"><Link href="/workspace" class="hover:text-white transition-colors">Dashboard</Link></li>
                             <li v-else><Link :href="isSubdomain ? route('bizboost.sub.login') : '/login?redirect=/bizboost'" class="hover:text-white transition-colors">Log in</Link></li>
                             <li v-if="!user"><Link :href="isSubdomain ? route('bizboost.sub.register') : '/register?redirect=/bizboost'" class="hover:text-white transition-colors">Sign up</Link></li>
                         </ul>

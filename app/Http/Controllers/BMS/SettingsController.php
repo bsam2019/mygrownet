@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\CompanySettingsService;
+use App\Domain\BMS\Core\Services\CompanySettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -41,7 +41,7 @@ class SettingsController extends Controller
         // Check if GrowFinance module is enabled
         $hasGrowFinanceModule = $company->settings['growfinance_module'] ?? false;
 
-        return Inertia::render('CMS/Settings/Index', [
+        return Inertia::render('BMS/Settings/Index', [
             'company'      => array_merge($company->toArray(), [
                 'has_material_planning_module' => $hasMaterialPlanningModule,
                 'has_construction_modules' => $hasConstructionModules,
@@ -424,11 +424,11 @@ class SettingsController extends Controller
 
         // If enabling, set up GrowFinance integration
         if ($validated['enabled']) {
-            $syncService = app(\App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
+            $syncService = app(\App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
             $syncService->enableSync($company->id);
         } else {
             // If disabling, disable sync
-            $syncService = app(\App\Domain\CMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
+            $syncService = app(\App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService::class);
             $syncService->disableSync($company->id);
         }
 
@@ -451,7 +451,7 @@ class SettingsController extends Controller
 
         // If enabling, create default workflows
         if ($validated['enabled']) {
-            $operationsService = app(\App\Domain\CMS\Operations\Services\OperationsService::class);
+            $operationsService = app(\App\Domain\BMS\Operations\Services\OperationsService::class);
             $operationsService->enableOperationsModule($company->id);
         }
 

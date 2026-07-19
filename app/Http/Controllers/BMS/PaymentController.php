@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
-use App\Domain\CMS\Core\Services\PaymentService;
-use App\Domain\CMS\Core\Services\PdfPaymentReceiptService;
-use App\Domain\CMS\Core\Services\CompanySettingsService;
-use App\Domain\CMS\Core\ValueObjects\PaymentMethod;
+use App\Domain\BMS\Core\Services\PaymentService;
+use App\Domain\BMS\Core\Services\PdfPaymentReceiptService;
+use App\Domain\BMS\Core\Services\CompanySettingsService;
+use App\Domain\BMS\Core\ValueObjects\PaymentMethod;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Notifications\CMS\PaymentReceivedNotification;
-use App\Services\CMS\EmailService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Notifications\BMS\PaymentReceivedNotification;
+use App\Services\BMS\EmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,7 +56,7 @@ class PaymentController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return Inertia::render('CMS/Payments/Index', [
+        return Inertia::render('BMS/Payments/Index', [
             'payments' => $payments,
             'customers' => $customers,
             'filters' => [
@@ -94,7 +94,7 @@ class PaymentController extends Controller
                 ]);
         }
 
-        return Inertia::render('CMS/Payments/Create', [
+        return Inertia::render('BMS/Payments/Create', [
             'customers' => $customers,
             'customerInvoices' => $customerInvoices,
             'paymentMethods' => PaymentMethod::all(),
@@ -153,7 +153,7 @@ class PaymentController extends Controller
                 amount: $validated['amount'],
                 method: PaymentMethod::from($validated['payment_method']),
                 reference: $validated['reference_number'] ?? null,
-                notes: $validated['notes'] ?? app(\App\Domain\CMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($cmsUser->company_id, 'receipt')['notes'] ?: null,
+                notes: $validated['notes'] ?? app(\App\Domain\BMS\Core\Services\CompanySettingsService::class)->getDocumentDefaults($cmsUser->company_id, 'receipt')['notes'] ?: null,
                 allocations: $allocations,
                 createdBy: $cmsUser->id
             );
@@ -212,7 +212,7 @@ class PaymentController extends Controller
             }
 
             return redirect()
-                ->route('cms.payments.show', $payment->id)
+                ->route('bms.payments.show', $payment->id)
                 ->with('success', 'Payment recorded and confirmation email sent');
         } catch (\Exception $e) {
             return back()
@@ -229,7 +229,7 @@ class PaymentController extends Controller
             ->with(['customer', 'allocations.invoice'])
             ->findOrFail($id);
 
-        return Inertia::render('CMS/Payments/Show', [
+        return Inertia::render('BMS/Payments/Show', [
             'payment' => $payment,
             'paymentMethods' => PaymentMethod::all(),
         ]);
@@ -289,7 +289,7 @@ class PaymentController extends Controller
         // Check if company has BizDocs module enabled
         if ($payment->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateReceiptPdf($payment);
                 
                 return response($pdfContent)
@@ -322,7 +322,7 @@ class PaymentController extends Controller
         // Check if company has BizDocs module enabled
         if ($payment->company->hasBizDocsModule()) {
             try {
-                $adapter = app(\App\Domain\CMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
+                $adapter = app(\App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface::class);
                 $pdfContent = $adapter->generateReceiptPdf($payment);
                 
                 return response($pdfContent)

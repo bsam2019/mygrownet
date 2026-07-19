@@ -1,5 +1,5 @@
 <template>
-  <CMSLayout page-title="Recurring Tasks">
+  <BMSLayout page-title="Recurring Tasks">
     <div class="max-w-7xl mx-auto space-y-6">
       <!-- Header -->
       <div class="flex items-center justify-between">
@@ -169,13 +169,13 @@
         </form>
       </div>
     </div>
-  </CMSLayout>
+  </BMSLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import CMSLayout from '@/Layouts/CMSLayout.vue'
+import BMSLayout from '@/Layouts/BMSLayout.vue'
 
 interface Props {
   recurringTasks: any[]
@@ -197,7 +197,7 @@ const form = ref({
 })
 
 const createRecurringTask = () => {
-  router.post(route('cms.operations.recurring-tasks.store'), form.value, {
+  router.post(route('bms.operations.recurring-tasks.store'), form.value, {
     onSuccess: () => {
       showCreateModal.value = false
       form.value = {
@@ -215,6 +215,6 @@ const createRecurringTask = () => {
 }
 
 const toggleTask = (id: number) => {
-  router.post(route('cms.operations.recurring-tasks.toggle', id))
+  router.post(route('bms.operations.recurring-tasks.toggle', id))
 }
 </script>

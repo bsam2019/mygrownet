@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Controllers\CMS;
+namespace App\Http\Controllers\BMS;
 
 use App\Http\Controllers\Controller;
-use App\Domain\CMS\Core\Services\HRReportsService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ReportTemplateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SavedReportModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DepartmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveTypeModel;
+use App\Domain\BMS\Core\Services\HRReportsService;
+use App\Infrastructure\Persistence\Eloquent\BMS\ReportTemplateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SavedReportModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DepartmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveTypeModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -56,7 +56,7 @@ class HRReportsController extends Controller
             ->select('id', 'name')
             ->get();
 
-        return Inertia::render('CMS/HRReports/Index', [
+        return Inertia::render('BMS/HRReports/Index', [
             'templates' => $templates,
             'savedReports' => $savedReports,
             'departments' => $departments,

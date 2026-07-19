@@ -1,45 +1,45 @@
 <?php
 
-use App\Http\Controllers\CMS\AuthController;
-use App\Http\Controllers\CMS\AccountingController;
-use App\Http\Controllers\CMS\CustomerController;
-use App\Http\Controllers\CMS\DashboardController;
-use App\Http\Controllers\CMS\ExpenseController;
-use App\Http\Controllers\CMS\ExpenseCategoryController;
-use App\Http\Controllers\CMS\InventoryController;
-use App\Http\Controllers\CMS\InvoiceController;
-use App\Http\Controllers\CMS\JobController;
-use App\Http\Controllers\CMS\PaymentController;
-use App\Http\Controllers\CMS\QuotationController;
-use App\Http\Controllers\CMS\ReportController;
-use App\Http\Controllers\CMS\BudgetController;
-use App\Http\Controllers\CMS\ScheduledReportController;
+use App\Http\Controllers\BMS\AuthController;
+use App\Http\Controllers\BMS\AccountingController;
+use App\Http\Controllers\BMS\CustomerController;
+use App\Http\Controllers\BMS\DashboardController;
+use App\Http\Controllers\BMS\ExpenseController;
+use App\Http\Controllers\BMS\ExpenseCategoryController;
+use App\Http\Controllers\BMS\InventoryController;
+use App\Http\Controllers\BMS\InvoiceController;
+use App\Http\Controllers\BMS\JobController;
+use App\Http\Controllers\BMS\PaymentController;
+use App\Http\Controllers\BMS\QuotationController;
+use App\Http\Controllers\BMS\ReportController;
+use App\Http\Controllers\BMS\BudgetController;
+use App\Http\Controllers\BMS\ScheduledReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| CMS Subdomain Routes
+| BMS Subdomain Routes
 |--------------------------------------------------------------------------
-| These routes handle cms.mygrownet.com subdomain
-| Routes are accessible without the /cms prefix on the subdomain
+| These routes handle bms.mygrownet.com subdomain
+| Routes are accessible without the /bms prefix on the subdomain
 */
 
-Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
+Route::domain('bms.mygrownet.com')->name('bms.subdomain.')->group(function () {
     // Landing Page
     Route::get('/', function () {
-        return Inertia::render('CMS/Landing', [
-            'routePrefix' => 'cms.subdomain'
+        return Inertia::render('BMS/Landing', [
+            'routePrefix' => 'bms.subdomain'
         ]);
     })->name('landing');
 
     // Offline Page (for PWA)
     Route::get('/offline', function () {
-        return Inertia::render('CMS/Offline');
+        return Inertia::render('BMS/Offline');
     })->name('offline');
 
     // Email Unsubscribe (Public)
-    Route::get('/email/unsubscribe', [\App\Http\Controllers\CMS\EmailSettingsController::class, 'unsubscribe'])->name('email.unsubscribe');
+    Route::get('/email/unsubscribe', [\App\Http\Controllers\BMS\EmailSettingsController::class, 'unsubscribe'])->name('email.unsubscribe');
 
     // Authentication Routes (Guest only)
     Route::middleware('guest')->group(function () {
@@ -66,8 +66,8 @@ Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
     });
 
 
-    // Protected CMS Routes
-    Route::middleware(['auth', 'verified', 'cms.auto-login', 'cms.access', \App\Http\Middleware\CMS\EnforcePasswordChange::class])
+    // Protected BMS Routes
+    Route::middleware(['auth', 'verified', 'bms.auto-login', 'bms.access', \App\Http\Middleware\BMS\EnforcePasswordChange::class])
         ->group(function () {
             
             // Dashboard
@@ -135,7 +135,7 @@ Route::domain('cms.mygrownet.com')->name('cms.subdomain.')->group(function () {
 
             // Settings
             Route::prefix('settings')->name('settings.')->group(function () {
-                Route::get('/', [\App\Http\Controllers\CMS\SettingsController::class, 'index'])->name('index');
+                Route::get('/', [\App\Http\Controllers\BMS\SettingsController::class, 'index'])->name('index');
             });
         });
 });
