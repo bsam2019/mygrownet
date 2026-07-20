@@ -2,17 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Core\Models\Application;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ApplicationRegistrySeeder extends Seeder
 {
     /**
-     * Seed application metadata for all 14 applications.
-     * Maps applications to proper categories, access models, and context support.
+     * Seed or update application metadata for all registered applications.
+     * Uses updateOrCreate to handle fresh databases and schema migrations.
      */
     public function run(): void
     {
+        $now = now();
         $applications = [
             // Business Management Apps (Organization Context)
             [
@@ -182,12 +183,36 @@ class ApplicationRegistrySeeder extends Seeder
             ],
         ];
 
+        $nameMap = [
+            'bms' => 'Business Management',
+            'stockflow' => 'StockFlow',
+            'grow-finance' => 'GrowFinance',
+            'employee-portal' => 'Employee Portal',
+            'grow-builder' => 'GrowBuilder',
+            'bizdocs' => 'BizDocs',
+            'grow-mart' => 'GrowMart',
+            'grownet' => 'GrowNet',
+            'library' => 'Library',
+            'zamstay' => 'ZamStay',
+            'prime-edge' => 'PrimeEdge Advisory',
+            'messaging' => 'Messaging',
+            'cms' => 'CMS (Legacy)',
+            'bizboost' => 'BizBoost (Legacy)',
+        ];
+
         foreach ($applications as $appData) {
-            DB::table('applications')
-                ->where('slug', $appData['slug'])
-                ->update($appData);
+            Application::updateOrCreate(
+                ['slug' => $appData['slug']],
+                array_merge([
+                    'name' => $nameMap[$appData['slug']] ?? ucfirst($appData['slug']),
+                    'type' => $appData['category'] ?? 'platform',
+                    'is_active' => true,
+                    'url' => null,
+                    'config' => null,
+                ], $appData),
+            );
         }
 
-        $this->command->info('✅ Updated ' . count($applications) . ' application records with metadata.');
+        $this->command->info('✅ Synced ' . count($applications) . ' application records.');
     }
 }

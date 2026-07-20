@@ -24,8 +24,10 @@ class ApplicationAccessService
         return Application::where('is_active', true)
             ->whereIn('context_support', ['personal', 'both'])
             ->where(function ($q) use ($user) {
-                $q->where('access_model', 'customer')
-                  ->orWhereHas('userSubscriptions', fn($q) => $q->where('user_id', $user->id));
+                $q->where(function ($sub) {
+                    $sub->where('access_model', 'customer')
+                        ->where('subscription_required', false);
+                })->orWhereHas('userSubscriptions', fn($q) => $q->where('user_id', $user->id)->where('status', 'active'));
             })
             ->where('lifecycle', '!=', 'retired')
             ->where('operational_status', 'online')
