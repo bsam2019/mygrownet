@@ -61,11 +61,47 @@ class ApplicationAccessService
         }
 
         if ($context->isOrganization()) {
-            return Organization::whereHas('installations', fn($q) => $q
+            $orgId = $context->organizationId;
+
+            $isMember = OrganizationMember::where('user_id', $user->id)
+                ->where('organization_id', $orgId)
+                ->where('status', 'active')
+                ->exists();
+
+            if (!$isMember) {
+                return false;
+            }
+
+            $hasInstallation = Organization::whereHas('installations', fn($q) => $q
                 ->where('application_id', $app->id)
-                ->where('organization_id', $context->organizationId)
+                ->where('organization_id', $orgId)
                 ->where('status', 'active')
             )->exists();
+
+            if (!$hasInstallation) {
+                return false;
+            }
+
+            $member = OrganizationMember::where('user_id', $user->id)
+                ->where('organization_id', $orgId)
+                ->first();
+
+            if ($member && $member->status !== 'active') {
+                return false;
+            }
+
+            return true;
+        }
+
+        if ($context->isPersonal()) {
+            if ($app->access_model === 'customer' && !$app->subscription_required) {
+                return true;
+            }
+
+            return $user->applicationSubscriptions()
+                ->where('application_id', $app->id)
+                ->where('status', 'active')
+                ->exists();
         }
 
         return true;

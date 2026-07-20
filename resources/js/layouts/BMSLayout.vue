@@ -1248,6 +1248,7 @@
             <p class="text-sm font-semibold text-gray-900 truncate">{{ user?.name }}</p>
             <p class="text-xs text-gray-500 truncate">{{ user?.email }}</p>
           </div>
+          <GlobalAppSwitcher />
           <Menu as="div" class="relative">
             <MenuButton class="p-1 rounded-lg hover:bg-gray-100">
               <EllipsisVerticalIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -1283,7 +1284,8 @@
             </MenuItems>
           </Menu>
         </div>
-        <div v-else class="flex justify-center py-1">
+        <div v-else class="flex flex-col items-center gap-2 py-2">
+          <GlobalAppSwitcher />
           <Menu as="div" class="relative">
             <MenuButton class="w-11 h-11 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl flex items-center justify-center hover:from-blue-100 hover:to-blue-200 transition-all duration-200 ring-2 ring-gray-100 hover:ring-blue-200">
               <UserCircleIcon class="h-7 w-7 text-gray-600 hover:text-blue-600 transition-colors" aria-hidden="true" />
@@ -1675,6 +1677,7 @@ import NavItem from '@/components/CMS/NavItem.vue'
 import { useCMSSlideOver } from '@/composables/useCMSSlideOver'
 import { useToast } from '@/composables/useToast'
 import ToastContainer from '@/components/GrowBiz/ToastContainer.vue'
+import GlobalAppSwitcher from '@/Components/Workspace/GlobalAppSwitcher.vue'
 
 interface Notification {
   id: number

@@ -12,6 +12,7 @@ import {
 } from '@heroicons/vue/24/solid';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import AppLauncher from '@/components/AppLauncher.vue';
+import GlobalAppSwitcher from '@/Components/Workspace/GlobalAppSwitcher.vue';
 import ImpersonationBanner from '@/components/ImpersonationBanner.vue';
 
 interface Props {
@@ -96,6 +97,7 @@ const logout = () => {
 
                         <!-- App Launcher -->
                         <AppLauncher :modules="page.props.modules || []" />
+                        <GlobalAppSwitcher />
 
                         <!-- Profile Menu -->
                         <Menu as="div" class="relative">

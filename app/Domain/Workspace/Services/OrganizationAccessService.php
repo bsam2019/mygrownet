@@ -12,6 +12,7 @@ class OrganizationAccessService
     public function getAccessibleOrganizations(User $user): Collection
     {
         return Organization::whereHas('members', fn($q) => $q->where('user_id', $user->id)->where('status', 'active'))
+            ->with(['installations' => fn($q) => $q->where('status', 'active')->with('application')])
             ->get();
     }
 

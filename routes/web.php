@@ -371,6 +371,10 @@ Route::get('/org/{slug}', [\App\Http\Controllers\OrganizationWorkspaceController
     ->middleware(['auth', 'verified', 'ensure.organization.access'])
     ->name('workspace.organization');
 
+Route::post('/workspace/launch/{application}', [\App\Http\Controllers\WorkspaceController::class, 'launch'])
+    ->middleware(['auth', 'verified'])
+    ->name('workspace.launch');
+
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Home Hub - Main entry point after login (defined later with Presentation controller)

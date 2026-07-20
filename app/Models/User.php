@@ -641,6 +641,11 @@ class User extends Authenticatable
         return $this->hasOne(UserProfile::class);
     }
 
+    public function applicationSubscriptions(): HasMany
+    {
+        return $this->hasMany(\App\Domain\Core\Models\UserApplicationSubscription::class);
+    }
+
     public function socialAccounts(): HasMany
     {
         return $this->hasMany(SocialAccount::class);

@@ -25,7 +25,22 @@ class SetPlatformContext
                 inertia()->share('workspace', [
                     'context' => $context->toArray(),
                     'apps' => fn() => $this->appAccess->getAvailableApps($user, $context),
-                    'organizations' => fn() => $this->orgAccess->getAccessibleOrganizations($user),
+                    'organizations' => function () use ($user) {
+                        return $this->orgAccess->getAccessibleOrganizations($user)
+                            ->map(fn($org) => [
+                                'id' => $org->id,
+                                'name' => $org->name,
+                                'slug' => $org->slug,
+                                'type' => $org->type,
+                                'country' => $org->country,
+                                'currency' => $org->currency,
+                                'apps' => $org->installations->map(fn($inst) => [
+                                    'id' => $inst->application->id,
+                                    'name' => $inst->application->name,
+                                    'slug' => $inst->application->slug,
+                                ]),
+                            ]);
+                    },
                 ]);
             }
         }

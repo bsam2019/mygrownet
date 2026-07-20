@@ -49,9 +49,12 @@
 |---|---|---|---|
 | GET | `/workspace` | `workspace` | `WorkspaceController@index` |
 | POST | `/workspace/switch-context` | `workspace.switch-context` | `WorkspaceController@switchContext` |
+| POST | `/workspace/launch/{application}` | `workspace.launch` | `WorkspaceController@launch` |
 | GET | `/org/{slug}` | `workspace.organization` | `OrganizationWorkspaceController@show` |
 | GET | `/dashboard` | — | 301 → `/workspace` |
 | GET | `/_platform/workspace` | — | `WorkspaceResolver` diagnostic |
+
+**Launch flow:** AppTile calls `router.post(route('workspace.launch', { application: app.id }))` → `WorkspaceController@launch` checks `canAccess()` → `AppLaunchService::launch()` stores payload in session and redirects to `app.url`. Never use `window.location.href = app.url` directly.
 
 ### Middleware Stack (web group order)
 ```
@@ -221,7 +224,9 @@ interface WorkspaceShared {
         application_id: number | null;
     };
     apps: Record<string, App[]>;   // keyed by category (business, consumer, shared)
-    organizations: Organization[];
+    organizations: (Organization & {
+        apps: { id: number; name: string; slug: string }[];
+    })[];                         // each org now includes its subscribed apps
 }
 ```
 Available in Vue as `usePage().props.workspace`.

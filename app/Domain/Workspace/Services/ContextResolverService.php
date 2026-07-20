@@ -58,7 +58,7 @@ class ContextResolverService
 
     protected function resolveDefault(User $user): WorkspaceContext
     {
-        $preference = $user->profile?->default_workspace_context;
+        $preference = session('workspace_preference', 'personal');
 
         if ($preference === 'organization') {
             $org = OrganizationMember::where('user_id', $user->id)

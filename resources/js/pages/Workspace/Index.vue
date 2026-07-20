@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, usePage, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import WorkspaceLayout from '@/Layouts/WorkspaceLayout.vue';
 import AppGrid from '@/Components/Workspace/AppGrid.vue';
 import OrganizationList from '@/Components/Workspace/OrganizationList.vue';
 import IntendedAppHighlight from '@/Components/Workspace/IntendedAppHighlight.vue';
 import GlobalAppSwitcher from '@/Components/Workspace/GlobalAppSwitcher.vue';
-import { RocketLaunchIcon } from '@heroicons/vue/24/solid';
+import { RocketLaunchIcon, BuildingOfficeIcon } from '@heroicons/vue/24/solid';
 
 interface WorkspaceContext {
     type: 'personal' | 'organization' | 'guest';
@@ -24,11 +24,18 @@ interface App {
     description?: string;
 }
 
+interface OrgApp {
+    id: number;
+    name: string;
+    slug: string;
+}
+
 interface Organization {
     id: number;
     name: string;
     slug: string;
     type?: string;
+    apps?: OrgApp[];
 }
 
 const page = usePage();
@@ -43,6 +50,10 @@ const context = computed(() => workspace.value?.context);
 const apps = computed(() => workspace.value?.apps ?? {});
 const organizations = computed(() => workspace.value?.organizations ?? []);
 const user = computed(() => (page.props as any).auth?.user);
+
+const hasAnyApps = computed(() => {
+    return Object.values(apps.value).some((appList) => appList.length > 0);
+});
 </script>
 
 <template>
@@ -80,13 +91,22 @@ const user = computed(() => (page.props as any).auth?.user);
                 <h2 class="text-xl font-semibold text-gray-900 mb-1">Applications</h2>
                 <p class="text-sm text-gray-500 mb-6">Launch any application from your workspace</p>
                 <AppGrid :apps="apps" />
-                <div v-if="Object.keys(apps).length === 0" class="text-center py-12 text-gray-500">
-                    No applications available in this context.
+                <div v-if="!hasAnyApps" class="text-center py-12">
+                    <RocketLaunchIcon class="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p class="text-sm font-medium text-gray-900 mb-1">No applications available yet</p>
+                    <p class="text-sm text-gray-500">
+                        <template v-if="context?.type === 'personal'">
+                            Explore our consumer apps or join an organization to access business tools.
+                        </template>
+                        <template v-else>
+                            This organization has no active applications installed.
+                        </template>
+                    </p>
                 </div>
             </section>
 
             <!-- Organizations -->
-            <section v-if="organizations.length > 0" class="mb-10">
+            <section v-if="organizations.length > 0 || context?.type !== 'organization'" class="mb-10">
                 <OrganizationList :organizations="organizations" />
             </section>
         </div>
