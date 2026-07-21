@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\EmployeePortalAccessModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AnnouncementModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EmployeePortalAccessModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AnnouncementModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AttendanceRecordModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;

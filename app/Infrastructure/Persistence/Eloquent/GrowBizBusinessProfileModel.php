@@ -11,6 +11,7 @@ class GrowBizBusinessProfileModel extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'business_name',
         'business_type',
         'industry',

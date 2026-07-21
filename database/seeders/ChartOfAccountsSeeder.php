@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\BMS\Core\Services\ChartOfAccountsService;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Illuminate\Database\Seeder;
 
 class ChartOfAccountsSeeder extends Seeder

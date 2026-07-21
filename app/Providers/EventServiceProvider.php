@@ -96,10 +96,12 @@ class EventServiceProvider extends ServiceProvider
         \App\Domain\Core\Events\OrganizationCreated::class => [
             \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
             \App\Domain\BMS\Listeners\SyncOrganizationToBmsCompany::class,
+            \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
         ],
         \App\Domain\Core\Events\OrganizationArchived::class => [
             \App\Domain\StockFlow\Listeners\SyncOrganizationToCompany::class,
             \App\Domain\BMS\Listeners\SyncOrganizationToBmsCompany::class,
+            \App\Domain\Core\Listeners\SyncOrganizationToApplicationInstallations::class,
         ],
     ];
 

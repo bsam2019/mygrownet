@@ -2,7 +2,7 @@
 
 namespace App\Events\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

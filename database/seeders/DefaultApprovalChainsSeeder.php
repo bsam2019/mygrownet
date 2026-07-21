@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalChainModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalChainModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Illuminate\Database\Seeder;
 
 class DefaultApprovalChainsSeeder extends Seeder

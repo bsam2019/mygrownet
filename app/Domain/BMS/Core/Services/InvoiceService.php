@@ -6,10 +6,10 @@ namespace App\Domain\BMS\Core\Services;
 
 use App\Domain\BMS\Core\ValueObjects\InvoiceNumber;
 use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

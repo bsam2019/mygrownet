@@ -2,7 +2,7 @@
 
 namespace App\Events\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductModel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 

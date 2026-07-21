@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveTypeModel;
 use Illuminate\Database\Seeder;
 
 class DefaultLeaveTypesSeeder extends Seeder

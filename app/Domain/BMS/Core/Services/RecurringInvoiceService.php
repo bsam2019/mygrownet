@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\RecurringInvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RecurringInvoiceHistoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RecurringInvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RecurringInvoiceHistoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use App\Services\BMS\EmailService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;

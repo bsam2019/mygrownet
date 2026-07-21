@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MeasurementItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PricingRulesModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MeasurementRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MeasurementItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PricingRulesModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationItemModel;
 use Illuminate\Support\Facades\DB;
 
 class MeasurementService

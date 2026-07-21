@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Equipment\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentMaintenanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\EquipmentUsageModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EquipmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EquipmentMaintenanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EquipmentUsageModel;
 use Illuminate\Support\Facades\DB;
 
 class EquipmentService

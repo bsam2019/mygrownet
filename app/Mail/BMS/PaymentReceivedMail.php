@@ -2,7 +2,7 @@
 
 namespace App\Mail\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;

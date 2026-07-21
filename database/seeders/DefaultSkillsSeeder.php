@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SkillModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SkillModel;
 
 class DefaultSkillsSeeder extends Seeder
 {

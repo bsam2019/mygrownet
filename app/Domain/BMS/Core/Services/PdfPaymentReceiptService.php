@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 

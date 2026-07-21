@@ -3,7 +3,7 @@
 namespace App\Jobs\BMS\GrowFinanceSync;
 
 use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

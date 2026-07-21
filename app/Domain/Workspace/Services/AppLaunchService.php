@@ -41,7 +41,15 @@ class AppLaunchService
 
         session(['app_launch_payload' => $payload]);
 
-        return redirect()->away($app->url);
+        $url = $app->url;
+        if (!$url) {
+            $url = '/' . $app->slug;
+        }
+        if (str_starts_with($url, '/')) {
+            $url = url($url);
+        }
+
+        return redirect()->away($url);
     }
 
     protected function getPermissions(User $user, Application $app, WorkspaceContext $context): array

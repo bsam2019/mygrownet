@@ -31,7 +31,7 @@ const slideOverConfigs: Record<Exclude<SlideOverType, null>, SlideOverConfig> = 
   },
 }
 
-export function useCMSSlideOver() {
+export function useBMSSlideOver() {
   const isOpen = ref(false)
   const currentType = ref<SlideOverType>(null)
 

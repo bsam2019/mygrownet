@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PricingRulesModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PricingRulesModel;
 
 class GeopamuPricingRulesSeeder extends Seeder
 {

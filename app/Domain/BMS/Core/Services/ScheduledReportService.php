@@ -2,8 +2,8 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ScheduledReportModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ScheduledReportLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ScheduledReportModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ScheduledReportLogModel;
 use Carbon\Carbon;
 
 class ScheduledReportService

@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Subcontractors\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorAssignmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorPaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SubcontractorRatingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SubcontractorModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SubcontractorAssignmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SubcontractorPaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SubcontractorRatingModel;
 use Illuminate\Support\Facades\DB;
 
 class SubcontractorService

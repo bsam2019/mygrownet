@@ -2,12 +2,12 @@
 
 namespace App\Services\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoginAttemptModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PasswordHistoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SecurityAuditLogModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SuspiciousActivityModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoginAttemptModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PasswordHistoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SecurityAuditLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SuspiciousActivityModel;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -405,7 +405,7 @@ class SecurityService
     {
         try {
             // Get admin users
-            $adminUsers = \App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel::where('company_id', $company->id)
+            $adminUsers = \App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel::where('company_id', $company->id)
                 ->whereHas('roles', function ($q) {
                     $q->where('name', 'admin');
                 })
@@ -422,7 +422,7 @@ class SecurityService
             foreach ($adminUsers as $admin) {
                 if ($admin->user && $admin->user->email) {
                     Mail::to($admin->user->email)
-                        ->send(new \App\Mail\CMS\SuspiciousActivityAlert($activityData, $company->name));
+                        ->send(new \App\Mail\BMS\SuspiciousActivityAlert($activityData, $company->name));
                 }
             }
         } catch (\Exception $e) {

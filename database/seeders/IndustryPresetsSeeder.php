@@ -1,6 +1,6 @@
 <?php
 namespace Database\Seeders;
-use App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\IndustryPresetModel;
 use Illuminate\Database\Seeder;
 class IndustryPresetsSeeder extends Seeder
 {

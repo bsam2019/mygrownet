@@ -2,9 +2,9 @@
 
 namespace App\Listeners\BMS\GrowFinanceSync;
 
-use App\Events\CMS\ExpenseCreated;
+use App\Events\BMS\ExpenseCreated;
 use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
-use App\Jobs\CMS\GrowFinanceSync\SyncExpenseToGrowFinanceJob;
+use App\Jobs\BMS\GrowFinanceSync\SyncExpenseToGrowFinanceJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;

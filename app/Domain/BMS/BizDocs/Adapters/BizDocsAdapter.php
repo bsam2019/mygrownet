@@ -12,11 +12,11 @@ use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentNumber;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\DocumentType;
 use App\Domain\BizDocs\DocumentManagement\ValueObjects\Money;
 use App\Domain\BMS\BizDocs\Contracts\DocumentGeneratorInterface;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialPurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 
 class BizDocsAdapter implements DocumentGeneratorInterface
 {

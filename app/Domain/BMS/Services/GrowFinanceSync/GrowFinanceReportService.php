@@ -6,7 +6,7 @@ use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceExpenseModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceInvoiceModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceJournalEntryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncConfigModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceSyncConfigModel;
 use App\Domain\GrowFinance\ValueObjects\AccountType;
 use Carbon\Carbon;
 

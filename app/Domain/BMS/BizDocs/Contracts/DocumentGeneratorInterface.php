@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\BizDocs\Contracts;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialPurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
 
 interface DocumentGeneratorInterface
 {

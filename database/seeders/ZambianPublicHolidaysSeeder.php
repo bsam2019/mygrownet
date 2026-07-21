@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

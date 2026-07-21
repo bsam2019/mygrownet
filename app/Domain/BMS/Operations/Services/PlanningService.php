@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowStageModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskResourceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ResourceAvailabilityModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PlanningScenarioModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowStageModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskResourceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ResourceAvailabilityModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PlanningScenarioModel;
 use Illuminate\Support\Facades\DB;
 
 class PlanningService
@@ -149,7 +149,7 @@ class PlanningService
             }
 
             // Log bulk operation
-            \App\Infrastructure\Persistence\Eloquent\CMS\BulkOperationModel::create([
+            \App\Infrastructure\Persistence\Eloquent\BMS\BulkOperationModel::create([
                 'company_id' => $companyId,
                 'user_id' => $userId,
                 'operation_type' => 'reassign',
@@ -189,7 +189,7 @@ class PlanningService
                 ->update(['priority' => $priority]);
 
             // Log bulk operation
-            \App\Infrastructure\Persistence\Eloquent\CMS\BulkOperationModel::create([
+            \App\Infrastructure\Persistence\Eloquent\BMS\BulkOperationModel::create([
                 'company_id' => $companyId,
                 'user_id' => $userId,
                 'operation_type' => 'change_priority',
@@ -226,7 +226,7 @@ class PlanningService
                 ->whereIn('id', $taskIds)
                 ->update(['due_date' => $newDueDate]);
 
-            \App\Infrastructure\Persistence\Eloquent\CMS\BulkOperationModel::create([
+            \App\Infrastructure\Persistence\Eloquent\BMS\BulkOperationModel::create([
                 'company_id' => $companyId,
                 'user_id' => $userId,
                 'operation_type' => 'reschedule',

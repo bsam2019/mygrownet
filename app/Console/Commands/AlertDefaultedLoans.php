@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\PlatformLoanService;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanReceivableModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanReceivableModel;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
 

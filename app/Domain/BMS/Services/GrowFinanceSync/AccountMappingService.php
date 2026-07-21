@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\BMS\Services\GrowFinanceSync;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceAccountMappingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceAccountMappingModel;
 use App\Infrastructure\Persistence\Eloquent\GrowFinanceAccountModel;
 use Illuminate\Support\Collection;
 

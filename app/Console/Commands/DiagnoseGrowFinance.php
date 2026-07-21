@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncConfigModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceSyncConfigModel;
 use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceReportService;
 
 class DiagnoseGrowFinance extends Command

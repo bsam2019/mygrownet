@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
 use Illuminate\Support\Facades\DB;
 
 class BudgetService

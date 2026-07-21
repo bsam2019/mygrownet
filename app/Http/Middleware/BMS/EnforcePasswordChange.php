@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Services\CMS\SecurityService;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Services\BMS\SecurityService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

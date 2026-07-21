@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetAssignmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetMaintenanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetDepreciationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetAssignmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetMaintenanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetDepreciationModel;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 

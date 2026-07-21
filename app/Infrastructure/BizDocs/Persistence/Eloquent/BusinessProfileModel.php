@@ -12,6 +12,7 @@ class BusinessProfileModel extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'business_name',
         'logo',
         'address',

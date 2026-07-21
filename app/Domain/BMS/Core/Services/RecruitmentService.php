@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\JobPostingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobApplicationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InterviewModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InterviewEvaluationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OfferLetterModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobPostingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobApplicationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InterviewModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InterviewEvaluationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OfferLetterModel;
 use Illuminate\Support\Facades\Storage;
 
 class RecruitmentService

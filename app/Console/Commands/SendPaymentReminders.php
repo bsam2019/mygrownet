@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use App\Services\BMS\EmailService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;

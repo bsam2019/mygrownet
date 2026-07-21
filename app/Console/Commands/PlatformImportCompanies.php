@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domain\Core\Models\Organization;
 use App\Infrastructure\Persistence\Eloquent\BizBoostBusinessModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel as CmsCompany;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel as CmsCompany;
 use App\Models\StockAudit\Company as StockFlowCompany;
 use App\Models\User;
 use Illuminate\Console\Command;

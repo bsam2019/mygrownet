@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Domain\BMS\Core\Services\LoanAccountingService;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanReceivableModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanRepaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanReceivableModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanRepaymentModel;
 use App\Models\User;
 use Carbon\Carbon;
 

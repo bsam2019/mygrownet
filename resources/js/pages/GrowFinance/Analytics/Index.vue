@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import GrowFinanceLayout from '@/Layouts/GrowFinanceLayout.vue'
-import BarChart from '@/components/CMS/Charts/BarChart.vue'
+import BarChart from '@/components/BMS/Charts/BarChart.vue'
 import {
   BanknotesIcon, BuildingLibraryIcon, ArrowPathIcon,
   CheckCircleIcon, ChartBarIcon,

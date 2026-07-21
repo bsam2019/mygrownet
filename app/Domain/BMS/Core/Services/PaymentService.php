@@ -6,10 +6,10 @@ namespace App\Domain\BMS\Core\Services;
 
 use App\Domain\BMS\Core\ValueObjects\InvoiceStatus;
 use App\Domain\BMS\Core\ValueObjects\PaymentMethod;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentAllocationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentAllocationModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskLogModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowStageModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowStageModel;
 use Illuminate\Support\Facades\DB;
 
 class OperationsService

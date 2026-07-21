@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel;
 use Illuminate\Database\Seeder;
 
 class MyGrowNetExpenseCategoriesSeeder extends Seeder
@@ -19,7 +19,7 @@ class MyGrowNetExpenseCategoriesSeeder extends Seeder
         if (!$company) {
             $this->command->error('MyGrowNet Platform company not found. Please create it first.');
             $this->command->info('Run: php artisan tinker');
-            $this->command->info('Then: App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::create([\'name\' => \'MyGrowNet Platform\', \'email\' => \'admin@mygrownet.com\', \'phone\' => \'+260977000000\', \'address\' => \'Lusaka, Zambia\', \'industry\' => \'Technology\', \'is_active\' => true]);');
+            $this->command->info('Then: App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::create([\'name\' => \'MyGrowNet Platform\', \'email\' => \'admin@mygrownet.com\', \'phone\' => \'+260977000000\', \'address\' => \'Lusaka, Zambia\', \'industry\' => \'Technology\', \'is_active\' => true]);');
             return;
         }
 

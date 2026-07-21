@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\ReportTemplateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ReportTemplateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 
 class DefaultReportTemplatesSeeder extends Seeder
 {

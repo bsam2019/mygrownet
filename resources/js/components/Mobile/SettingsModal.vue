@@ -161,9 +161,7 @@ watch(() => props.show, (newValue) => {
     settings.value.notifications = prefs?.push_enabled ?? true;
     settings.value.emailNotifications = prefs?.email_enabled ?? true;
     settings.value.smsNotifications = prefs?.sms_enabled ?? false;
-    settings.value.preferredLanding = ['mobile', 'desktop', 'auto', 'classic'].includes(props.user.preferred_dashboard)
-      ? ''
-      : (props.user.preferred_dashboard ?? '');
+    settings.value.preferredLanding = props.user.preferred_dashboard ?? '';
   }
 });
 

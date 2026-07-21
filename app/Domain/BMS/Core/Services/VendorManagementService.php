@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\VendorModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PurchaseOrderItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\VendorRatingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VendorModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PurchaseOrderItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VendorRatingModel;
 use Illuminate\Support\Facades\DB;
 
 class VendorManagementService
@@ -126,7 +126,7 @@ class VendorManagementService
 
                 // Update inventory if linked
                 if ($poItem->inventory_item_id) {
-                    $inventoryItem = \App\Infrastructure\Persistence\Eloquent\CMS\InventoryItemModel::find($poItem->inventory_item_id);
+                    $inventoryItem = \App\Infrastructure\Persistence\Eloquent\BMS\InventoryItemModel::find($poItem->inventory_item_id);
                     if ($inventoryItem) {
                         $inventoryItem->quantity_in_stock += $quantityReceived;
                         $inventoryItem->save();

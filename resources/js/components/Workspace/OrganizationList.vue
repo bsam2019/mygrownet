@@ -30,7 +30,7 @@ defineProps<{
             <p class="text-sm font-medium text-gray-900 mb-1">You are not a member of any organization yet</p>
             <p class="text-sm text-gray-500 mb-4">Create or join an organization to access business tools</p>
             <Link
-                href="/bms/companies/create"
+                :href="route('workspace.organization.create')"
                 class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
                 Create Organization

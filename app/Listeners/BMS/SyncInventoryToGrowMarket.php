@@ -2,7 +2,7 @@
 
 namespace App\Listeners\BMS;
 
-use App\Events\CMS\InventoryUpdated;
+use App\Events\BMS\InventoryUpdated;
 use App\Models\Marketplace\MarketplaceProduct;
 use Illuminate\Support\Facades\Log;
 
@@ -15,7 +15,7 @@ class SyncInventoryToGrowMarket
     {
         try {
             // Check if product is synced to GrowMarket
-            $product = \App\Infrastructure\Persistence\Eloquent\CMS\ProductModel::find($event->productId);
+            $product = \App\Infrastructure\Persistence\Eloquent\BMS\ProductModel::find($event->productId);
             
             if (!$product || !($product->sync_to_market ?? false)) {
                 return;

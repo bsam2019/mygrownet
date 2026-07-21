@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PublicHolidayModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AttendanceRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PublicHolidayModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

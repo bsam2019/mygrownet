@@ -2,9 +2,9 @@
 
 namespace App\Services\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\EmailLogModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\EmailUnsubscribeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EmailLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EmailUnsubscribeModel;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Config;

@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RoleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
 use App\Models\User;
 
 class AddAdminToCmsSeeder extends Seeder

@@ -2,12 +2,12 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\InventoryItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockMovementModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobInventoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LowStockAlertModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Notifications\CMS\LowStockAlertNotification;
+use App\Infrastructure\Persistence\Eloquent\BMS\InventoryItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockMovementModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobInventoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LowStockAlertModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Notifications\BMS\LowStockAlertNotification;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService

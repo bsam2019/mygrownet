@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\BMS\Services\GrowFinanceSync;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceSyncLogModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 

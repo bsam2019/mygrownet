@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractSignatureModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractSignatureModel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

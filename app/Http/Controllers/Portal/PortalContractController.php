@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

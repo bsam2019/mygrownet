@@ -22,6 +22,7 @@ class BizBoostBusinessModel extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'name',
         'slug',
         'description',

@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Illuminate\Support\Facades\DB;
 
 class QuotationService

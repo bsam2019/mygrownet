@@ -25,6 +25,19 @@ const pageGlobs: Record<string, () => Promise<DefineComponent>> = {
     ...import.meta.glob<DefineComponent>('./pages/Workshop/**/*.vue'), // Workshop pages
     ...import.meta.glob<DefineComponent>('./pages/Investor/**/*.vue'), // Investor pages
     ...import.meta.glob<DefineComponent>('./pages/ProfitSharing/**/*.vue'), // Profit sharing pages
+    ...import.meta.glob<DefineComponent>('./pages/Apps/**/*.vue'), // App catalog pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowBuilder/**/*.vue'), // GrowBuilder pages
+    ...import.meta.glob<DefineComponent>('./pages/StockFlow/**/*.vue'), // StockFlow pages
+    ...import.meta.glob<DefineComponent>('./pages/BizDocs/**/*.vue'), // BizDocs pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowBiz/**/*.vue'), // GrowBiz pages
+    ...import.meta.glob<DefineComponent>('./pages/QuickInvoice/**/*.vue'), // Quick Invoice pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowNet/**/*.vue'), // GrowNet pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowFinance/**/*.vue'), // GrowFinance pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowMart/**/*.vue'), // GrowMart pages
+    ...import.meta.glob<DefineComponent>('./pages/ZamStay/**/*.vue'), // ZamStay pages
+    ...import.meta.glob<DefineComponent>('./pages/PrimeEdge/**/*.vue'), // PrimeEdge pages
+    ...import.meta.glob<DefineComponent>('./pages/LifePlus/**/*.vue'), // LifePlus pages
+    ...import.meta.glob<DefineComponent>('./pages/GrowStorage/**/*.vue'), // GrowStorage pages
 };
 
 bootInertia(appName, (name: string) => {

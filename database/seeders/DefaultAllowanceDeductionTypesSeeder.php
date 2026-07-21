@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AllowanceTypeModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DeductionTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AllowanceTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DeductionTypeModel;
 
 class DefaultAllowanceDeductionTypesSeeder extends Seeder
 {

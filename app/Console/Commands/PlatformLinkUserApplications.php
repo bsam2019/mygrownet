@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Domain\Core\Models\Application;
 use App\Domain\Core\Models\UserApplication;
-use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use App\Models\User;
 use Illuminate\Console\Command;
 
@@ -22,8 +21,6 @@ class PlatformLinkUserApplications extends Command
         $linked = 0;
         $skipped = 0;
 
-        $stockflow = Application::where('slug', 'stockflow')->first();
-        $primeedge = Application::where('slug', 'primeedge')->first();
 
         // Main site users → web guard applications (role-based)
         $this->newLine();
@@ -48,45 +45,6 @@ class PlatformLinkUserApplications extends Command
             }
         });
 
-        // StockFlow users
-        $this->newLine();
-        $this->info('Linking StockFlow users...');
-        if ($stockflow) {
-            SaUserModel::each(function (SaUserModel $saUser) use ($dryRun, $stockflow, &$linked) {
-                // Find or create a main user record for cross-reference
-                $user = User::where('email', $saUser->email)->first();
-                if ($user && !$dryRun) {
-                    UserApplication::firstOrCreate([
-                        'user_id' => $user->id,
-                        'application_id' => $stockflow->id,
-                    ], [
-                        'relationship_type' => $saUser->is_stockflow_admin ? 'admin' : 'member',
-                        'status' => 'active',
-                    ]);
-                }
-                $linked++;
-            });
-        }
-
-        // PrimeEdge users
-        $this->newLine();
-        $this->info('Linking PrimeEdge clients...');
-        if ($primeedge) {
-            $clientModel = $primeedge->model ?? \App\Infrastructure\PrimeEdge\Persistence\ClientModel::class;
-            $clientModel::each(function ($client) use ($dryRun, $primeedge, &$linked) {
-                $user = User::where('email', $client->email)->first();
-                if ($user && !$dryRun) {
-                    UserApplication::firstOrCreate([
-                        'user_id' => $user->id,
-                        'application_id' => $primeedge->id,
-                    ], [
-                        'relationship_type' => 'customer',
-                        'status' => 'active',
-                    ]);
-                }
-                $linked++;
-            });
-        }
 
         $this->newLine();
         $this->table(

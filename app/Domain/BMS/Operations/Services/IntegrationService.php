@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskTriggerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskTriggerExecutionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeadModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskTriggerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskTriggerExecutionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeadModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
 use Illuminate\Support\Facades\DB;
 
 class IntegrationService

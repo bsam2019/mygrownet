@@ -5,8 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -128,7 +128,7 @@ class AutoLoginToBMS
      */
     private function ensureOwnerRole(CompanyModel $company)
     {
-        return \App\Infrastructure\Persistence\Eloquent\CMS\RoleModel::firstOrCreate(
+        return \App\Infrastructure\Persistence\Eloquent\BMS\RoleModel::firstOrCreate(
             [
                 'company_id' => $company->id,
                 'name' => 'Owner',

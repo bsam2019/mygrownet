@@ -6,9 +6,9 @@ use App\Domain\BMS\Core\Events\JobCreated;
 use App\Domain\BMS\Core\Events\JobCompleted;
 use App\Domain\BMS\Core\Events\JobAssigned;
 use App\Domain\BMS\Core\ValueObjects\JobNumber;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobStatusHistoryModel;
-use App\Notifications\CMS\JobStatusChangedNotification;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobStatusHistoryModel;
+use App\Notifications\BMS\JobStatusChangedNotification;
 use Illuminate\Support\Facades\DB;
 
 class JobService

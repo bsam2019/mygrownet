@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveBalanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveTypeModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveBalanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

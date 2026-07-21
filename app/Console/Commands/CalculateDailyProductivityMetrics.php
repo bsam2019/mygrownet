@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\BMS\Core\Services\AnalyticsService;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Illuminate\Console\Command;
 
 class CalculateDailyProductivityMetrics extends Command

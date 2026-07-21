@@ -2,7 +2,7 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;

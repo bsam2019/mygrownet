@@ -3,7 +3,7 @@
 namespace App\Jobs\BMS\GrowFinanceSync;
 
 use App\Domain\BMS\Services\GrowFinanceSync\GrowFinanceSyncService;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

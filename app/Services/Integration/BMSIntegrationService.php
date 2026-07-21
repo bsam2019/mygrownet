@@ -345,7 +345,7 @@ class BMSIntegrationService
         $nextNumber = $settings['invoice']['next_number'] ?? 1;
         
         // Increment next number
-        $company = \App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel::find($companyId);
+        $company = \App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel::find($companyId);
         $company->update([
             'settings' => array_merge($settings, [
                 'invoice' => array_merge($settings['invoice'], [

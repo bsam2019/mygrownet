@@ -2,14 +2,14 @@
 
 namespace App\Domain\BMS\Production\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductionOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CuttingListModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CuttingListItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductionTrackingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WasteTrackingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QualityCheckpointModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProductionMaterialsUsageModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CuttingPatternModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductionOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CuttingListModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CuttingListItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductionTrackingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WasteTrackingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QualityCheckpointModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProductionMaterialsUsageModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CuttingPatternModel;
 use Illuminate\Support\Facades\DB;
 
 class ProductionService

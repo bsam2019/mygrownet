@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use App\Infrastructure\BizDocs\Persistence\Eloquent\DocumentTemplateModel;
 use Illuminate\Console\Command;
 

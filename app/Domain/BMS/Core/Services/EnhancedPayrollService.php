@@ -2,13 +2,13 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PayrollItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PayrollItemDetailModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAllowanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerDeductionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OvertimeRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PayrollItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PayrollItemDetailModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerAllowanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerDeductionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AttendanceRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OvertimeRecordModel;
 use Carbon\Carbon;
 
 class EnhancedPayrollService

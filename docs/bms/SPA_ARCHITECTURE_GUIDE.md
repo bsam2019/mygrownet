@@ -52,7 +52,7 @@ Reusable navigation item with:
 - Click handling
 
 ### 5. Composable
-**File:** `resources/js/composables/useCMSSlideOver.ts`
+**File:** `resources/js/composables/useBMSSlideOver.ts`
 
 Manages slide-over state:
 - Open/close functionality
@@ -148,7 +148,7 @@ const handleFormSuccess = () => {
 4. `resources/js/components/CMS/Forms/CustomerForm.vue` - Customer form
 5. `resources/js/components/CMS/Forms/InvoiceForm.vue` - Invoice form
 6. `resources/js/components/CMS/NavItem.vue` - Navigation item
-7. `resources/js/composables/useCMSSlideOver.ts` - Slide-over state management
+7. `resources/js/composables/useBMSSlideOver.ts` - Slide-over state management
 
 ### Modified Files
 1. `resources/js/Pages/CMS/Dashboard.vue` - Uses new layout, removed modals

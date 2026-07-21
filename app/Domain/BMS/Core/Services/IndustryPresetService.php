@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\IndustryPresetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RoleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PricingRulesModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\IndustryPresetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RoleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PricingRulesModel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

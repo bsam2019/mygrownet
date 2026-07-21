@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BudgetItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BudgetItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Carbon\Carbon;
 
 class SampleBudgetSeeder extends Seeder

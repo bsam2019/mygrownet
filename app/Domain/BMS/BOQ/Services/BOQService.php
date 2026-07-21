@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\BOQ\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\BOQModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BOQItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\BOQVariationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BOQModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BOQItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\BOQVariationModel;
 use Illuminate\Support\Facades\DB;
 
 class BOQService

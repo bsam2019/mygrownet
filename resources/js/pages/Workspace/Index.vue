@@ -88,18 +88,30 @@ const hasAnyApps = computed(() => {
 
             <!-- Apps -->
             <section class="mb-10">
-                <h2 class="text-xl font-semibold text-gray-900 mb-1">Applications</h2>
-                <p class="text-sm text-gray-500 mb-6">Launch any application from your workspace</p>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-1">Applications</h2>
+                        <p class="text-sm text-gray-500">Your available applications</p>
+                    </div>
+                    <Link
+                        :href="route('apps.catalog')"
+                        class="text-sm font-medium text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                    >
+                        Browse All Apps
+                    </Link>
+                </div>
                 <AppGrid :apps="apps" />
                 <div v-if="!hasAnyApps" class="text-center py-12">
                     <RocketLaunchIcon class="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p class="text-sm font-medium text-gray-900 mb-1">No applications available yet</p>
                     <p class="text-sm text-gray-500">
                         <template v-if="context?.type === 'personal'">
-                            Explore our consumer apps or join an organization to access business tools.
+                            <Link :href="route('apps.catalog')" class="text-blue-600 underline underline-offset-2">Browse all apps</Link>
+                            or join an organization to access business tools.
                         </template>
                         <template v-else>
-                            This organization has no active applications installed.
+                            <Link :href="route('apps.catalog')" class="text-blue-600 underline underline-offset-2">Browse all apps</Link>
+                            to install applications for this organization.
                         </template>
                     </p>
                 </div>

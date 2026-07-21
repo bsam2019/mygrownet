@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\ProgressBilling\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ProjectModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProgressCertificateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\RetentionTrackingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentApplicationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProjectModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProgressCertificateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\RetentionTrackingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentApplicationModel;
 use Illuminate\Support\Facades\DB;
 
 class ProgressBillingService

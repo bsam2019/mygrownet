@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Materials\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobMaterialPlanModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialTemplateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobMaterialPlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialTemplateModel;
 use Illuminate\Support\Facades\DB;
 
 class JobMaterialPlanningService

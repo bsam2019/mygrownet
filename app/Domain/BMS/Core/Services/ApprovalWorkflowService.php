@@ -2,12 +2,12 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalRequestModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalStepModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ApprovalChainModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CmsUserModel;
-use App\Notifications\CMS\ApprovalRequestedNotification;
-use App\Notifications\CMS\ApprovalActionNotification;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalRequestModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalStepModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ApprovalChainModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CmsUserModel;
+use App\Notifications\BMS\ApprovalRequestedNotification;
+use App\Notifications\BMS\ApprovalActionNotification;
 use Illuminate\Support\Facades\DB;
 
 class ApprovalWorkflowService
@@ -446,11 +446,11 @@ class ApprovalWorkflowService
     private function getApprovableType(string $entityType): string
     {
         return match ($entityType) {
-            'expense' => 'App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel',
-            'quotation' => 'App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel',
-            'payment' => 'App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel',
-            'contract' => 'App\Infrastructure\Persistence\Eloquent\CMS\ContractModel',
-            'purchase_order' => 'App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel',
+            'expense' => 'App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel',
+            'quotation' => 'App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel',
+            'payment' => 'App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel',
+            'contract' => 'App\Infrastructure\Persistence\Eloquent\BMS\ContractModel',
+            'purchase_order' => 'App\Infrastructure\Persistence\Eloquent\BMS\MaterialPurchaseOrderModel',
             default => throw new \InvalidArgumentException("Unknown entity type: {$entityType}"),
         };
     }

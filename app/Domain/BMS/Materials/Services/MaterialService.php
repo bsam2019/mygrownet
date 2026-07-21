@@ -2,8 +2,8 @@
 
 namespace App\Domain\BMS\Materials\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialCategoryModel;
 use Illuminate\Support\Facades\DB;
 
 class MaterialService

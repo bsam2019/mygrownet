@@ -29,23 +29,50 @@ class WorkspaceController extends Controller
             $context = $this->contextResolver->resolve($user, null);
         }
 
+        // Auto-launch: if user landed on an app subdomain and has access, skip workspace
+        if ($request->attributes->get('auto_launch')) {
+            $resolution = $request->attributes->get('domain_resolution');
+            if ($resolution?->application && $this->appAccess->canAccess($user, $resolution->application, $context)) {
+                return $this->appLaunch->launch($resolution->application, $context, $user);
+            }
+        }
+
         return Inertia::render('Workspace/Index', [
-            'context' => $context?->toArray(),
-            'apps' => $this->appAccess->getAvailableApps($user, $context),
-            'organizations' => $this->orgAccess->getAccessibleOrganizations($user)
-                ->map(fn($org) => [
-                    'id' => $org->id,
-                    'name' => $org->name,
-                    'slug' => $org->slug,
-                    'type' => $org->type,
-                    'country' => $org->country,
-                    'currency' => $org->currency,
-                    'apps' => $org->installations->map(fn($inst) => [
-                        'id' => $inst->application->id,
-                        'name' => $inst->application->name,
-                        'slug' => $inst->application->slug,
+            'workspace' => [
+                'context' => $context?->toArray(),
+                'apps' => $this->appAccess->getAvailableApps($user, $context),
+                'organizations' => $this->orgAccess->getAccessibleOrganizations($user)
+                    ->map(fn($org) => [
+                        'id' => $org->id,
+                        'name' => $org->name,
+                        'slug' => $org->slug,
+                        'type' => $org->type,
+                        'country' => $org->country,
+                        'currency' => $org->currency,
+                        'timezone' => $org->timezone,
+                        'language' => $org->language,
+                        'apps' => $org->installations->map(fn($inst) => [
+                            'id' => $inst->application->id,
+                            'name' => $inst->application->name,
+                            'slug' => $inst->application->slug,
+                        ]),
                     ]),
-                ]),
+            ],
+            'user' => $user->only('id', 'name', 'email'),
+        ]);
+    }
+
+    public function catalog(Request $request)
+    {
+        $user = $request->user();
+        $context = $request->attributes->get('workspace_context');
+
+        if (!$context) {
+            $context = $this->contextResolver->resolve($user, null);
+        }
+
+        return Inertia::render('Apps/Catalog', [
+            'apps' => $this->appAccess->getAllVisibleApps($user, $context),
             'user' => $user->only('id', 'name', 'email'),
         ]);
     }
@@ -63,12 +90,6 @@ class WorkspaceController extends Controller
             $validated['organization_id'] ?? null,
         );
 
-        activity('workspace')
-            ->performedOn($context->isOrganization() ? \App\Domain\Core\Models\Organization::find($context->organizationId) : null)
-            ->causedBy($request->user())
-            ->withProperties(['context_type' => $validated['type'], 'organization_id' => $validated['organization_id'] ?? null])
-            ->log('context_switch');
-
         return redirect()->route('workspace');
     }
 
@@ -84,16 +105,6 @@ class WorkspaceController extends Controller
         if (!$this->appAccess->canAccess($user, $application, $context)) {
             abort(403, 'No access to this application');
         }
-
-        activity('workspace')
-            ->performedOn($application)
-            ->causedBy($user)
-            ->withProperties([
-                'context_type' => $context->type,
-                'organization_id' => $context->organizationId,
-                'application_slug' => $application->slug,
-            ])
-            ->log('app_launch');
 
         return $this->appLaunch->launch($application, $context, $user);
     }

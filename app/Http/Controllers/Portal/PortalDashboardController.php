@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\QuotationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\QuotationModel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

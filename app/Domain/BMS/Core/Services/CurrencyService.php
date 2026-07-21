@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CurrencyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExchangeRateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CurrencyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExchangeRateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 

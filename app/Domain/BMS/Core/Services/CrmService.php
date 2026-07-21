@@ -2,16 +2,16 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\LeadModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OpportunityModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CommunicationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\FollowUpModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CampaignModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerSegmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerMetricModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeadModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OpportunityModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CommunicationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\FollowUpModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CampaignModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerSegmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerMetricModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

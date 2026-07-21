@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ShiftModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerShiftModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ShiftModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerShiftModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

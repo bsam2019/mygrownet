@@ -2,12 +2,12 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingProgramModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingSessionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TrainingEnrollmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SkillModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerSkillModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CertificationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingProgramModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingSessionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TrainingEnrollmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SkillModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerSkillModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CertificationModel;
 use Illuminate\Support\Facades\DB;
 
 class TrainingService

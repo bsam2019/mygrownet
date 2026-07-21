@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Events\CMS\ExpenseApproved;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Events\BMS\ExpenseApproved;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 

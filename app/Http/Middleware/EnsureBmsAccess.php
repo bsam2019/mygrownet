@@ -59,10 +59,10 @@ class EnsureBmsAccess
                         'is_active'    => $cu->company_id === $cmsUser->company_id,
                     ]),
 
-                'expenseCategories' => fn () => \App\Infrastructure\Persistence\Eloquent\CMS\ExpenseCategoryModel::where('company_id', $cmsUser->company_id)
+                'expenseCategories' => fn () => \App\Infrastructure\Persistence\Eloquent\BMS\ExpenseCategoryModel::where('company_id', $cmsUser->company_id)
                     ->where('is_active', true)->orderBy('name')->get(['id', 'name']),
 
-                'jobs' => fn () => \App\Infrastructure\Persistence\Eloquent\CMS\JobModel::where('company_id', $cmsUser->company_id)
+                'jobs' => fn () => \App\Infrastructure\Persistence\Eloquent\BMS\JobModel::where('company_id', $cmsUser->company_id)
                     ->whereIn('status', ['in_progress', 'pending'])
                     ->orderBy('job_number', 'desc')->get(['id', 'job_number', 'description']),
             ]);

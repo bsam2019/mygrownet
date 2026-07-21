@@ -2,8 +2,8 @@
 
 namespace App\Domain\BMS\Projects\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\ProjectModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ProjectMilestoneModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProjectModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ProjectMilestoneModel;
 use Illuminate\Support\Facades\DB;
 
 class ProjectService

@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Domain\BMS\Core\Services\ScheduledReportService;
-use App\Http\Controllers\CMS\ReportController;
-use App\Infrastructure\Persistence\Eloquent\CMS\ScheduledReportModel;
+use App\Http\Controllers\BMS\ReportController;
+use App\Infrastructure\Persistence\Eloquent\BMS\ScheduledReportModel;
 use App\Services\BMS\EmailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;

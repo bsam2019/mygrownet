@@ -2,18 +2,18 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\JobModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InventoryItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAttendanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\VendorModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ContractModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\AssetDepreciationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InventoryItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerAttendanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\VendorModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ContractModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AssetDepreciationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerModel;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 

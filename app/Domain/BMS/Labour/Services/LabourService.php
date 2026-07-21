@@ -2,8 +2,8 @@
 
 namespace App\Domain\BMS\Labour\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CrewModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LabourTimesheetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CrewModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LabourTimesheetModel;
 use Illuminate\Support\Facades\DB;
 
 class LabourService

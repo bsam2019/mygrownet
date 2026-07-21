@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\AttendanceRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OvertimeRecordModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PublicHolidayModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AttendanceRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OvertimeRecordModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PublicHolidayModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Carbon\Carbon;
 
 class OvertimeService

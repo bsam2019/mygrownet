@@ -2,8 +2,8 @@
 
 namespace App\Services\BMS;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SmsLogModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SmsLogModel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 

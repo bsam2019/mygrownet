@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TimeEntryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TimesheetModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TimeEntryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TimesheetModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

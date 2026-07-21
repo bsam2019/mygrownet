@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\BMS\Services\GrowFinanceSync;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\GrowFinanceSyncConfigModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InvoiceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ExpenseModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GrowFinanceSyncConfigModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InvoiceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ExpenseModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PaymentModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 

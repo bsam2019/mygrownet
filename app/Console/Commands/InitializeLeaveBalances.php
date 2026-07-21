@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Domain\BMS\Core\Services\LeaveManagementService;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LeaveTypeModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LeaveTypeModel;
 use Illuminate\Console\Command;
 
 class InitializeLeaveBalances extends Command

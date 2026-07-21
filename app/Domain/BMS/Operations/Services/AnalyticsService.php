@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\UserProductivityMetricModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskCompletionTrendModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskTimeEntryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\UserProductivityMetricModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskCompletionTrendModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskTimeEntryModel;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsService

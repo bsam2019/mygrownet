@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkerAttendanceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CommissionModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PayrollRunModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PayrollItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkerAttendanceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CommissionModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PayrollRunModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PayrollItemModel;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 

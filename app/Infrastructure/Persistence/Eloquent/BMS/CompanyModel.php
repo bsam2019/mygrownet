@@ -10,6 +10,7 @@ class CompanyModel extends Model{
 
     protected $fillable = [
         'name',
+        'organization_id',
         'industry_type',
         'business_registration_number',
         'tax_number',

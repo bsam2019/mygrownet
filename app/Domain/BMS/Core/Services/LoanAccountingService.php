@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanReceivableModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanRepaymentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\LoanScheduleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanReceivableModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanRepaymentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\LoanScheduleModel;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Domain\Transaction\Enums\TransactionType;

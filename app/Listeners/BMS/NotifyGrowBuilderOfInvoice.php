@@ -2,7 +2,7 @@
 
 namespace App\Listeners\BMS;
 
-use App\Events\CMS\InvoiceCreated;
+use App\Events\BMS\InvoiceCreated;
 use Illuminate\Support\Facades\Log;
 
 class NotifyGrowBuilderOfInvoice

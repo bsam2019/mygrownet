@@ -2,7 +2,7 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\PricingRulesModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PricingRulesModel;
 
 class PricingRulesService
 {

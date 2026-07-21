@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Operations\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\TaskResourceModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ResourceAvailabilityModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\TaskResourceModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ResourceAvailabilityModel;
 use Illuminate\Support\Facades\DB;
 
 class ResourceManagementService
@@ -192,15 +192,15 @@ class ResourceManagementService
     {
         switch ($type) {
             case 'employee':
-                $worker = \App\Infrastructure\Persistence\Eloquent\CMS\WorkerModel::find($id);
+                $worker = \App\Infrastructure\Persistence\Eloquent\BMS\WorkerModel::find($id);
                 return ['name' => $worker ? $worker->first_name . ' ' . $worker->last_name : 'Unknown'];
             
             case 'vehicle':
-                $vehicle = \App\Infrastructure\Persistence\Eloquent\CMS\VehicleModel::find($id);
+                $vehicle = \App\Infrastructure\Persistence\Eloquent\BMS\VehicleModel::find($id);
                 return ['name' => $vehicle ? $vehicle->registration_number : 'Unknown'];
             
             case 'equipment':
-                $equipment = \App\Infrastructure\Persistence\Eloquent\CMS\EquipmentModel::find($id);
+                $equipment = \App\Infrastructure\Persistence\Eloquent\BMS\EquipmentModel::find($id);
                 return ['name' => $equipment ? $equipment->name : 'Unknown'];
             
             default:

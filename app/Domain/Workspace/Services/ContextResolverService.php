@@ -2,8 +2,10 @@
 
 namespace App\Domain\Workspace\Services;
 
+use App\Domain\Core\Models\Application;
 use App\Domain\Core\Models\Organization;
 use App\Domain\Core\Models\OrganizationMember;
+use App\Domain\Workspace\ValueObjects\DomainResolution;
 use App\Models\User;
 use App\Domain\Workspace\ValueObjects\WorkspaceContext;
 
@@ -11,7 +13,7 @@ class ContextResolverService
 {
     private const SESSION_KEY = 'workspace_context';
 
-    public function resolve(?User $user, ?string $domainType, ?Organization $orgHint = null): WorkspaceContext
+    public function resolve(?User $user, ?string $domainType, ?Organization $orgHint = null, ?DomainResolution $resolution = null): WorkspaceContext
     {
         $context = new WorkspaceContext();
 
@@ -20,14 +22,18 @@ class ContextResolverService
         }
 
         if ($cached = session(self::SESSION_KEY)) {
-            return WorkspaceContext::fromArray($cached);
+            $context = WorkspaceContext::fromArray($cached);
+        } elseif ($domainType === 'organization' && $orgHint) {
+            $context->setOrganization($orgHint);
+        } else {
+            $context = $this->resolveDefault($user);
         }
 
-        if ($domainType === 'organization' && $orgHint) {
-            return $context->setOrganization($orgHint);
+        if ($resolution?->application) {
+            $context->applicationId = $resolution->application->id;
         }
 
-        return $this->resolveDefault($user);
+        return $context;
     }
 
     public function switchContext(User $user, string $type, ?int $organizationId = null): WorkspaceContext

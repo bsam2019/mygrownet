@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\WorkflowStageModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\WorkflowStageModel;
 use Illuminate\Database\Seeder;
 
 class OperationsModuleSeeder extends Seeder

@@ -1395,7 +1395,7 @@ See `docs/cms/FINAL_IMPLEMENTATION_STATUS.md` for complete details.
 - ✅ Unified form experience across the application
 - ✅ Added form success handling with data refresh
 - ✅ Implemented modern UX pattern (like Linear, Notion, Monday.com)
-- ✅ Created useCMSSlideOver composable for state management
+- ✅ Created useBMSSlideOver composable for state management
 - ✅ Created comprehensive testing guide
 
 **Architecture Benefits:**
@@ -1413,7 +1413,7 @@ See `docs/cms/FINAL_IMPLEMENTATION_STATUS.md` for complete details.
 - `resources/js/components/CMS/Forms/CustomerForm.vue` - Complete customer form
 - `resources/js/components/CMS/Forms/InvoiceForm.vue` - Complete invoice form
 - `resources/js/components/CMS/NavItem.vue` - Reusable navigation item
-- `resources/js/composables/useCMSSlideOver.ts` - Slide-over state management
+- `resources/js/composables/useBMSSlideOver.ts` - Slide-over state management
 
 **Files Updated:**
 - `resources/js/Pages/CMS/Dashboard.vue` - Uses CMSLayoutNew, removed modals

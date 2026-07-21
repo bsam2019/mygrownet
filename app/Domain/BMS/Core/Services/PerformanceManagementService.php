@@ -2,14 +2,14 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\PerformanceCycleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PerformanceReviewModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PerformanceCriteriaModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PerformanceRatingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\GoalModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\GoalProgressModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\ImprovementPlanModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PipMilestoneModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PerformanceCycleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PerformanceReviewModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PerformanceCriteriaModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PerformanceRatingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GoalModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\GoalProgressModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\ImprovementPlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PipMilestoneModel;
 use Carbon\Carbon;
 
 class PerformanceManagementService

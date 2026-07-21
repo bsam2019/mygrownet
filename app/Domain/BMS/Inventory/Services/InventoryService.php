@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Inventory\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\StockLocationModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockLevelModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockTransferModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockAdjustmentModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\StockCountModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockLocationModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockLevelModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockTransferModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockAdjustmentModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\StockCountModel;
 use Illuminate\Support\Facades\DB;
 
 class InventoryService

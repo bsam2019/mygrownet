@@ -17,6 +17,7 @@ class GrowBuilderSite extends Model
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'client_id',
         'marketplace_seller_id',
         'marketplace_enabled',
@@ -69,6 +70,11 @@ class GrowBuilderSite extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Core\Models\Organization::class);
     }
 
     public function client(): BelongsTo

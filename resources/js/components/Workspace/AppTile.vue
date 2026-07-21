@@ -24,14 +24,13 @@ const appIcons: Record<string, any> = {
     bms: BuildingOfficeIcon,
     bizboost: MegaphoneIcon,
     growmart: ShoppingBagIcon,
-    growmarket: ShoppingBagIcon,
     growbuilder: GlobeAltIcon,
-    growbackup: CloudIcon,
+    growstorage: CloudIcon,
     zamstay: HomeModernIcon,
     primeedge: CommandLineIcon,
-    library: BookOpenIcon,
-    messaging: CubeIcon,
-    employee_portal: CubeIcon,
+    growbiz: BuildingOfficeIcon,
+    lifeplus: BookOpenIcon,
+    'quick-invoice': DocumentTextIcon,
 };
 
 const appColors: Record<string, string> = {
@@ -42,14 +41,13 @@ const appColors: Record<string, string> = {
     bms: 'from-purple-500 to-purple-600',
     bizboost: 'from-orange-500 to-orange-600',
     growmart: 'from-red-500 to-red-600',
-    growmarket: 'from-red-500 to-rose-600',
     growbuilder: 'from-cyan-500 to-cyan-600',
-    growbackup: 'from-sky-500 to-sky-600',
+    growstorage: 'from-sky-500 to-sky-600',
     zamstay: 'from-emerald-500 to-emerald-600',
     primeedge: 'from-violet-500 to-violet-600',
-    library: 'from-yellow-500 to-amber-600',
-    messaging: 'from-gray-500 to-gray-600',
-    employee_portal: 'from-lime-500 to-lime-600',
+    growbiz: 'from-amber-500 to-amber-600',
+    lifeplus: 'from-yellow-500 to-amber-600',
+    'quick-invoice': 'from-blue-500 to-blue-600',
 };
 
 interface App {

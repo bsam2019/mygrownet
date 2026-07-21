@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Infrastructure\Persistence\Eloquent\CMS\CompanyModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialCategoryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CompanyModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialCategoryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialModel;
 
 class DefaultMaterialsSeeder extends Seeder
 {

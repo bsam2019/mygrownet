@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\BMS\Core\Services;
 
 use App\Domain\BMS\Core\ValueObjects\AccountType;
-use App\Infrastructure\Persistence\Eloquent\CMS\AccountModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JournalEntryModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JournalLineModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\AccountModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JournalEntryModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JournalLineModel;
 use Illuminate\Support\Facades\DB;
 
 class ChartOfAccountsService

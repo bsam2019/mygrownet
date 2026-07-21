@@ -2,9 +2,9 @@
 
 namespace App\Domain\BMS\Materials\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\MaterialPurchaseOrderModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\PurchaseOrderItemModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\JobMaterialPlanModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\MaterialPurchaseOrderModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\PurchaseOrderItemModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\JobMaterialPlanModel;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderService

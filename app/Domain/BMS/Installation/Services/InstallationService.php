@@ -2,11 +2,11 @@
 
 namespace App\Domain\BMS\Installation\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\InstallationScheduleModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\SiteVisitModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\InstallationPhotoModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\CustomerSignoffModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\DefectModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InstallationScheduleModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\SiteVisitModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\InstallationPhotoModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\CustomerSignoffModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\DefectModel;
 use Illuminate\Support\Facades\DB;
 
 class InstallationService

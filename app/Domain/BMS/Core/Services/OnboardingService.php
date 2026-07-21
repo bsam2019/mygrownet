@@ -2,10 +2,10 @@
 
 namespace App\Domain\BMS\Core\Services;
 
-use App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTemplateModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTaskModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\EmployeeOnboardingModel;
-use App\Infrastructure\Persistence\Eloquent\CMS\OnboardingTaskProgressModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OnboardingTemplateModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OnboardingTaskModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\EmployeeOnboardingModel;
+use App\Infrastructure\Persistence\Eloquent\BMS\OnboardingTaskProgressModel;
 use Carbon\Carbon;
 
 class OnboardingService
