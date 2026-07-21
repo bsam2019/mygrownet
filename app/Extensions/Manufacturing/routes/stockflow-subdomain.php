@@ -8,7 +8,7 @@ Route::domain('{account}.mygrownet.com')
     ->middleware(['web', 'stockflow.company'])
     ->where(['account' => '^(?!stockflow$)[a-z0-9-]+$'])
     ->group(function () {
-        Route::middleware('auth:stockflow')->group(function () {
+        Route::middleware('auth:web')->group(function () {
             Route::middleware('stockflow.feature:bill-of-materials')->group(function () {
                 Route::get('/boms', [BillOfMaterialsController::class, 'index'])->name('stockflow.sub.boms.index');
                 Route::post('/boms', [BillOfMaterialsController::class, 'store'])->name('stockflow.sub.boms.store');

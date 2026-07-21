@@ -13,15 +13,7 @@ return [
             'provider' => 'users',
         ],
 
-        'primeedge' => [
-            'driver' => 'session',
-            'provider' => 'primeedge_clients',
-        ],
-
-        'stockflow' => [
-            'driver' => 'session',
-            'provider' => 'stockflow_users',
-        ],
+        // 'stockflow' removed Phase 8d — no real users existed
     ],
 
     'providers' => [
@@ -30,15 +22,7 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
-        'primeedge_clients' => [
-            'driver' => 'eloquent',
-            'model' => App\Infrastructure\PrimeEdge\Persistence\ClientModel::class,
-        ],
-
-        'stockflow_users' => [
-            'driver' => 'eloquent',
-            'model' => App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel::class,
-        ],
+        // 'stockflow_users' removed Phase 8d — no real users existed
     ],
 
     'passwords' => [

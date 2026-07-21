@@ -3,48 +3,36 @@
 namespace App\Http\Controllers\StockFlow\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request): RedirectResponse
     {
-        return Inertia::render('StockFlow/Admin/Login');
+        $returnUrl = $request->fullUrl();
+        $expires = time() + config('platform.identity.return_url_ttl', 300);
+        $payload = $returnUrl . '|' . $expires;
+        $signingKey = config('platform.identity.signing_key') ?? '';
+        $signature = hash_hmac('sha256', $payload, $signingKey);
+
+        return redirect()->away(config('platform.identity.login_url')
+            . '?return_url=' . urlencode($returnUrl)
+            . '&expires=' . $expires
+            . '&signature=' . $signature
+            . '&app=stockflow');
     }
 
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
-            $user = Auth::guard('stockflow')->user();
-            if (!$user->is_stockflow_admin) {
-                Auth::guard('stockflow')->logout();
-                return back()->withErrors([
-                    'email' => 'You do not have admin access.',
-                ])->onlyInput('email');
-            }
-
-            $request->session()->regenerate();
-            return redirect()->intended(route('stockflow.admin.dashboard'));
-        }
-
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        return $this->showLogin($request);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
-        Auth::guard('stockflow')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('stockflow.admin.login');
+        return redirect()->away(config('platform.identity.login_url'));
     }
 }

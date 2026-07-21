@@ -20,44 +20,12 @@ class LaravelIdentityProvider implements IdentityProvider
 
     public function getUserByEmail(string $email): ?User
     {
-        // Check main users table first
-        $user = User::where('email', $email)->first();
-        if ($user) {
-            return $user;
-        }
-
-        // Fall back to StockFlow users
-        $saUser = \App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel::where('email', $email)->first();
-        if ($saUser) {
-            return $this->syncToMainUser($saUser);
-        }
-
-        // Fall back to PrimeEdge clients
-        $client = \App\Infrastructure\PrimeEdge\Persistence\ClientModel::where('email', $email)->first();
-        if ($client) {
-            return $this->syncToMainUser($client);
-        }
-
-        return null;
+        // StockFlow sa_users table was dropped in Phase 8d — only platform users table exists
+        return User::where('email', $email)->first();
     }
 
     public function getProviderName(): string
     {
         return 'laravel';
-    }
-
-    private function syncToMainUser($authRecord): ?User
-    {
-        $user = User::where('email', $authRecord->email)->first();
-        if ($user) {
-            return $user;
-        }
-
-        return User::create([
-            'name' => $authRecord->name,
-            'email' => $authRecord->email,
-            'password' => $authRecord->password,
-            'status' => 'active',
-        ]);
     }
 }

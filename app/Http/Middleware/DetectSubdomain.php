@@ -57,6 +57,21 @@ class DetectSubdomain
                     return $next($request);
                 }
                 
+                // Handle auth.mygrownet.com — MyGrow Identity Gateway (Phase 8b)
+                if ($subdomain === 'auth') {
+                    $branch = 'identity';
+                    $baseUrl = 'https://auth.mygrownet.com';
+                    URL::forceRootUrl($baseUrl);
+                    URL::useAssetOrigin($baseUrl);
+                    config(['app.url' => $baseUrl]);
+                    config(['app.asset_url' => $baseUrl]);
+                    
+                    // Mark request so HandleInertiaRequests knows to skip Inertia
+                    $request->attributes->set('identity_gateway', true);
+                    
+                    return $next($request);
+                }
+                
                 // Handle geopamu subdomain - dispatch directly to controller
                 if ($subdomain === 'geopamu') {
                     $branch = 'geopamu';

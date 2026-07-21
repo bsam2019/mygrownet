@@ -3,71 +3,36 @@
 namespace App\Http\Controllers\StockFlow;
 
 use App\Http\Controllers\Controller;
-use App\Domain\StockFlow\Repositories\CompanyRepositoryInterface;
-use App\Domain\StockFlow\ValueObjects\CompanyId;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
-/** @deprecated Use App\Http\Controllers\Platform\UnifiedAuthController instead. Will be removed after Phase 8 validation. */
 class AuthController extends Controller
 {
-    public function showLogin(Request $request)
+    public function showLogin(Request $request): RedirectResponse
     {
-        $companyId = $request->attributes->get('stockflow_company_id');
-        $company = $companyId
-            ? app(CompanyRepositoryInterface::class)->findById(CompanyId::fromInt($companyId))
-            : null;
+        $returnUrl = $request->fullUrl();
+        $expires = time() + config('platform.identity.return_url_ttl', 300);
+        $payload = $returnUrl . '|' . $expires;
+        $signingKey = config('platform.identity.signing_key') ?? '';
+        $signature = hash_hmac('sha256', $payload, $signingKey);
 
-        return Inertia::render('StockFlow/Login', [
-            'company' => $company ? $company->toArray() : null,
-        ]);
+        return redirect()->away(config('platform.identity.login_url')
+            . '?return_url=' . urlencode($returnUrl)
+            . '&expires=' . $expires
+            . '&signature=' . $signature
+            . '&app=stockflow');
     }
 
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        if (Auth::guard('stockflow')->attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect('/');
-        }
-
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        return $this->showLogin($request);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
-        Auth::guard('stockflow')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
-    }
-
-    private function getAccountFromRequest(Request $request): string
-    {
-        // First try to get from company ID in request attributes (set by DetectSubdomain middleware)
-        $companyId = $request->attributes->get('stockflow_company_id');
-        if ($companyId) {
-            $company = app(CompanyRepositoryInterface::class)
-                ->findById(CompanyId::fromInt($companyId));
-            if ($company && $company->getSubdomain()) {
-                return $company->getSubdomain();
-            }
-        }
-
-        // Fallback: extract from host
-        $host = $request->getHost();
-        if (preg_match('/^(?:www\.)?([a-z0-9-]+)\.mygrownet\.com$/i', $host, $matches)) {
-            return strtolower($matches[1]);
-        }
-
-        return 'stockflow';
+        return redirect()->away(config('platform.identity.login_url'));
     }
 }

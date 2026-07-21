@@ -23,15 +23,18 @@ class ResolveDomainContext
         try {
             $resolution = $this->domainResolver->resolve($host);
             $request->attributes->set('domain_resolution', $resolution);
+            $request->attributes->set('auto_launch', $resolution->shouldAutoLaunch);
 
             $context = $this->contextResolver->resolve(
                 user: $request->user(),
                 domainType: $resolution->type,
                 orgHint: $resolution->organization,
+                resolution: $resolution,
             );
             $request->attributes->set('workspace_context', $context);
         } catch (DomainNotFoundException) {
             $request->attributes->set('domain_resolution', null);
+            $request->attributes->set('auto_launch', false);
 
             $context = $this->contextResolver->resolve(
                 user: $request->user(),

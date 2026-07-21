@@ -25,7 +25,7 @@ $registerPrimeEdgeRoutes = function (string $prefix, string $namePrefix) {
     });
 
     // Guest routes
-    Route::prefix($prefix)->name($namePrefix)->middleware('guest:primeedge')->group(function () {
+    Route::prefix($prefix)->name($namePrefix)->middleware('guest')->group(function () {
         Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
         Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
         Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
@@ -33,7 +33,7 @@ $registerPrimeEdgeRoutes = function (string $prefix, string $namePrefix) {
     });
 
     // Authenticated routes
-    Route::prefix($prefix)->name($namePrefix)->middleware('auth:primeedge')->group(function () {
+    Route::prefix($prefix)->name($namePrefix)->middleware(['identity.redirect:primeedge', 'auth:web'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Services (authenticated users can browse)

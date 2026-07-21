@@ -23,7 +23,7 @@ class RegisteredUserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:prime_edge_clients'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'phone' => ['nullable', 'string', 'max:20'],
             'company' => ['nullable', 'string', 'max:255'],
@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             companyName: $validated['company'] ?? null,
         );
 
-        Auth::guard('primeedge')->loginUsingId($clientDTO->id);
+        Auth::guard('web')->loginUsingId($clientDTO->id);
 
         return redirect()->route('primeedge.dashboard');
     }

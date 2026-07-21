@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +14,8 @@ class ShareModulesData
      */
     public function handle(Request $request, Closure $next)
     {
-        // Only share modules data for authenticated main-site users (skip stockflow users)
         $user = $request->user();
-        if ($user && !($user instanceof SaUserModel)) {
+        if ($user) {
             Inertia::share([
                 'modules' => function () use ($request) {
                     $modules = $this->getModulesData($request);

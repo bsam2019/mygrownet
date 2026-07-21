@@ -104,6 +104,9 @@ Route::get('/growfinance', function () {
 })->name('growfinance.welcome');
 
 Route::get('/growbiz', function () {
+    if (auth()->check()) {
+        return redirect()->route('growbiz.dashboard');
+    }
     return Inertia::render('GrowBiz/Welcome');
 })->name('growbiz.welcome');
 
@@ -124,6 +127,9 @@ Route::get('/products', function () {
 })->name('platform.products');
 
 Route::get('/grownet', function () {
+    if (auth()->check()) {
+        return redirect()->route('grownet.dashboard');
+    }
     return Inertia::render('GrowNet/Welcome');
 })->name('grownet.welcome');
 
@@ -135,6 +141,9 @@ Route::get('/bizdocs', function () {
 })->name('bizdocs.welcome');
 
 Route::get('/growbuilder', function () {
+    if (auth()->check()) {
+        return redirect()->route('growbuilder.dashboard');
+    }
     return Inertia::render('GrowBuilder/Welcome');
 })->name('growbuilder.welcome');
 
@@ -375,6 +384,22 @@ Route::post('/workspace/launch/{application}', [\App\Http\Controllers\WorkspaceC
     ->middleware(['auth', 'verified'])
     ->name('workspace.launch');
 
+Route::get('/apps', [\App\Http\Controllers\WorkspaceController::class, 'catalog'])
+    ->middleware(['auth', 'verified'])
+    ->name('apps.catalog');
+
+Route::get('/organizations/create', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'create'])
+    ->middleware(['auth', 'verified'])
+    ->name('workspace.organization.create');
+
+Route::post('/organizations', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('workspace.organization.store');
+
+Route::post('/org/{slug}/install/{application}', [\App\Http\Controllers\OrganizationWorkspaceController::class, 'install'])
+    ->middleware(['auth', 'verified', 'ensure.organization.access'])
+    ->name('workspace.organization.install');
+
 // Investor routes
 Route::middleware(['auth', 'verified'])->group(function () {
     // Home Hub - Main entry point after login (defined later with Presentation controller)
@@ -437,11 +462,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{token}/download', [App\Http\Controllers\Storage\FileShareController::class, 'download'])->name('download');
     });
     
-    // Redirect old mobile-dashboard route to new dashboard route
-    Route::get('/mobile-dashboard', function () {
-        return redirect('/dashboard');
-    });
-
     // Points System Routes
     Route::prefix('points')->name('points.')->group(function () {
         Route::get('/', [App\Http\Controllers\PointsController::class, 'index'])->name('index');

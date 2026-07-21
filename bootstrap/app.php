@@ -52,6 +52,13 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('web')
                 ->group(base_path('routes/stockflow-admin.php'));
 
+            // MyGrow Identity Gateway routes — served exclusively by auth.mygrownet.com
+            // These must be loaded so route names (identity.login, etc.) are available
+            // for all environments. The DetectSubdomain middleware handles routing to
+            // the correct subdomain. The session/validate endpoint is accessible from any domain.
+            Route::middleware('web')
+                ->group(base_path('routes/my-grow-identity.php'));
+
             // Main web routes
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
@@ -140,6 +147,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'stockflow.api' => \App\Http\Middleware\StockFlowApiAuth::class,
             'has_starter_kit' => \App\Http\Middleware\EnsureHasStarterKit::class,
             'premium_tier' => \App\Http\Middleware\EnsurePremiumTier::class,
+            'ensure.organization.access' => \App\Http\Middleware\EnsureOrganizationAccess::class,
+            'ensure.application.access' => \App\Http\Middleware\EnsureApplicationAccess::class,
         ]);
 
         // Add Inertia and cache prevention to web middleware group
@@ -150,7 +159,6 @@ return Application::configure(basePath: dirname(__DIR__))
         
         $middleware->web(append: [
             \App\Http\Middleware\RoutingEngine::class,
-            \App\Http\Middleware\ResolveSubdomainAuth::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\ShareModulesData::class,
             \App\Http\Middleware\ResolveStockFlowCompany::class,

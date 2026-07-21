@@ -70,8 +70,8 @@ Route::domain('{account}.mygrownet.com')
         // Root — show company landing page if unauthenticated, dashboard if authenticated
         Route::get('/', [LandingController::class, 'index'])->name('stockflow.sub.dashboard');
 
-        // Authenticated routes (using stockflow guard)
-        Route::middleware('auth:stockflow')->group(function () {
+        // Authenticated routes (using web guard — stockflow guard removed Phase 8d)
+        Route::middleware(['identity.redirect:stockflow', 'auth:web'])->group(function () {
 
             // Comments API (cross-cutting, no feature flag)
             Route::prefix('comments')->name('stockflow.sub.comments.')->group(function () {

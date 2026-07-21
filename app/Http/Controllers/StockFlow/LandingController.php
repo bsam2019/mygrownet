@@ -17,7 +17,7 @@ class LandingController extends Controller
 
     public function index(Request $request)
     {
-        if (Auth::guard('stockflow')->check()) {
+        if (Auth::guard('web')->check()) {
             return app(DashboardController::class)->index($request);
         }
 

@@ -24,7 +24,7 @@ return [
             'name' => 'StockFlow',
             'domain_slug' => 'stockflow',
             'service_provider' => App\Providers\StockAuditServiceProvider::class,
-            'middleware' => ['web', 'auth', 'stockflow'],
+            'middleware' => ['web', 'auth'],
             'uses_inertia' => true,
             'blade_layout' => 'stockflow',
             'session_prefix' => 'stockflow',
@@ -182,5 +182,63 @@ return [
     */
     'features' => [
         'unified_auth' => env('PLATFORM_UNIFIED_AUTH', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MyGrow Identity (Phase 8)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the centralized authentication gateway at auth.mygrownet.com.
+    | All platform authentication flows through this gateway.
+    |
+    */
+    'identity' => [
+        'login_url'            => env('IDENTITY_LOGIN_URL', 'https://auth.mygrownet.com/login'),
+        'register_url'         => env('IDENTITY_REGISTER_URL', 'https://auth.mygrownet.com/register'),
+        'logout_url'           => env('IDENTITY_LOGOUT_URL', 'https://auth.mygrownet.com/logout'),
+        'password_reset_url'   => env('IDENTITY_PASSWORD_RESET_URL', 'https://auth.mygrownet.com/password/reset'),
+        'email_verify_url'     => env('IDENTITY_EMAIL_VERIFY_URL', 'https://auth.mygrownet.com/email/verify'),
+        'signing_key'          => env('IDENTITY_SIGNING_KEY'),
+        'return_url_ttl'       => (int) env('IDENTITY_RETURN_URL_TTL', 300),
+        'allowed_return_hosts' => ['*.mygrownet.com', '127.0.0.1', 'localhost'],
+        'app_redirect_enabled' => [
+            'stockflow'   => env('IDENTITY_REDIRECT_STOCKFLOW', false),
+            'primeedge'   => env('IDENTITY_REDIRECT_PRIMEEDGE', false),
+            'growbuilder' => env('IDENTITY_REDIRECT_GROWBUILDER', false),
+        ],
+        'rate_limiting' => [
+            'per_ip'       => (int) env('IDENTITY_RATE_LIMIT_PER_IP', 20),
+            'per_user'     => (int) env('IDENTITY_RATE_LIMIT_PER_USER', 5),
+            'lockout_after' => (int) env('IDENTITY_LOCKOUT_AFTER', 5),
+            'lockout_duration' => (int) env('IDENTITY_LOCKOUT_DURATION', 60),
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Session Configuration
+        |--------------------------------------------------------------------------
+        |
+        | The SESSION_DOMAIN must include a leading dot for cross-subdomain cookies.
+        | In production: .mygrownet.com
+        | In development: .mygrow.test
+        |
+        */
+        'session_domain' => env('SESSION_DOMAIN', '.mygrow.test'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Custom Domain SSO (Phase 8f — deferred)
+        |--------------------------------------------------------------------------
+        |
+        | JWT configuration for organizations using custom domains that cannot
+        | share the platform session cookie.
+        |
+        */
+        'jwt' => [
+            'ttl'           => (int) env('IDENTITY_JWT_TTL', 300),
+            'signing_key'   => env('IDENTITY_JWT_SIGNING_KEY'),
+            'use_jti'       => env('IDENTITY_JWT_USE_JTI', true),
+        ],
     ],
 ];

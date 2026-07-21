@@ -22,8 +22,11 @@ class SetPlatformContext
             $user = $request->user();
 
             if ($user && $context) {
+                $autoLaunch = $request->attributes->get('auto_launch', false);
+
                 inertia()->share('workspace', [
                     'context' => $context->toArray(),
+                    'auto_launch' => $autoLaunch,
                     'apps' => fn() => $this->appAccess->getAvailableApps($user, $context),
                     'organizations' => function () use ($user) {
                         return $this->orgAccess->getAccessibleOrganizations($user)

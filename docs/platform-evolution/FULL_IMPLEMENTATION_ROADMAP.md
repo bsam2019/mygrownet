@@ -28,42 +28,45 @@ All phases build toward a **Platform Core** — a dependency-free center that ev
 
 ```
 Platform Core
-├── Identity             (user record, core auth data — not profile, not OAuth)
-├── Profile              (avatar, preferences, timezone, language, linked apps)
-├── Authentication       (passwords, sessions, OAuth — deferred to Phase 8)
-├── Organizations        (org structure, members)
-├── Applications         (registry, routing metadata)
-├── Routing              (workspace resolver, subdomain → app/org)
-├── Permissions          (application-aware roles)
-├── Notifications        (channel-agnostic delivery: email, SMS, push, in-app)
-├── Events               (platform-wide event bus)
-├── Settings             (platform, org, application settings)
-└── Audit                (centralized audit trail)
+
+Implemented in early phases (1-7):
+├── Identity
+│   ├── User              (id, email, phone, status — bare record)
+│   ├── Profile           (avatar, preferences, timezone, language)
+│   ├── Organizations     (org structure, memberships)
+│   ├── User Applications (which apps a user can access)
+│   └── Identity Links    (OAuth provider links, legacy user references)
+│
+├── Access
+│   ├── Roles             (application-aware roles via Spatie)
+│   ├── Permissions       (scoped per application)
+│   └── Workspace Resolver (which app/org the user sees)
+│
+├── Platform
+│   ├── Applications      (registry, routing metadata)
+│   ├── Routing           (workspace resolver, subdomain → app/org)
+│   ├── Notifications     (channel-agnostic delivery)
+│   ├── Events            (platform-wide event bus)
+│   ├── Settings          (platform, org, application settings)
+│   └── Audit             (centralized audit trail)
+
+Implemented later (Phase 8+):
+└── MyGrow Identity (auth.mygrownet.com)
+    ├── Login             (shared login form)
+    ├── Register          (shared registration form)
+    ├── Password Reset    (shared reset flow)
+    ├── Email Verification (shared verification)
+    ├── Two-Factor Auth   (shared 2FA)
+    ├── Session Validation (token/session API)
+    └── Application Redirect (return to calling app)
 ```
 
-**Identity** is the bare user record: `id`, `email`, `phone`, `status`.
-**Profile** is user preferences: `avatar`, `timezone`, `language`, `linked_applications`.
-**Authentication** is passwords, sessions, OAuth — intentionally deferred to Phase 8.
+Authentication belongs exclusively to the Platform. Phase 1 deliberately defers it — identity and access are built first. But it remains a Platform Core capability from an architectural perspective.
 
-### Dependency Rule
-
-### Platform Core
-
-All phases build toward a **Platform Core** — a dependency-free center that every module depends on, and which depends on no module.
-
-```
-Platform Core
-├── User Identity        (profile, preferences, linked apps, org memberships)
-│                        (NOT auth — no passwords, sessions, OAuth)
-├── Organizations        (org structure, members)
-├── Applications         (app registry, routing metadata)
-├── Routing              (workspace resolver, subdomain → app/org)
-├── Permissions          (application-aware roles)
-├── Notifications        (channel-agnostic delivery: email, SMS, push, in-app)
-├── Events               (platform-wide event bus)
-├── Settings             (platform, org, application settings)
-└── Audit                (centralized audit trail)
-```
+**Identity** answers "who is this user?" — built in early phases.
+**Access** answers "what can this user do?" — built in early phases.
+**Platform** provides shared infrastructure every module needs — built in early phases.
+**MyGrow Identity** is the shared authentication service hosted at `auth.mygrownet.com` — every application delegates to it, implemented in Phase 8.
 
 ### Dependency Rule
 
@@ -113,6 +116,74 @@ Each module owns its own version independently of the platform version.
 - Modules may version independently — Core does not dictate module release cadence
 - Breaking changes to Platform Core require compatibility validation before deployment
 - Module-to-module contracts are documented and versioned in Core
+
+### Authentication Principle (Permanent Architectural Rule)
+
+Authentication belongs **exclusively** to the Platform.
+
+Applications may authorize authenticated users but must **never** authenticate users themselves.
+
+**Rules:**
+- ✓ Only the Platform owns login.
+- ✓ Only the Platform owns registration.
+- ✓ Only the Platform owns password reset.
+- ✓ Only the Platform owns email verification.
+- ✓ Only the Platform owns two-factor authentication.
+- ✓ Modules never authenticate users.
+- ✓ Modules never display login pages.
+- ✓ Modules trust the authenticated platform session.
+- ✓ Authentication is performed once per session.
+- ✓ Authorization is determined by the current application and permissions.
+
+**Request flow:**
+```
+User
+  │
+  ▼
+login.mygrownet.com          ← single entry point
+  │
+  ▼
+Platform Authentication      ← Identity Gateway
+  │
+  ▼
+Platform Session             ← shared across all apps
+  │
+  ▼
+Workspace                    ← which app/org does the user need?
+  │
+  ▼
+Application                  ← StockFlow, GrowMart, BizBoost, etc.
+  │
+  ▼
+Application Authorization    ← does this user have permission here?
+  │
+  ▼
+Dashboard
+```
+
+The application never authenticates the user. It only asks:
+1. **Who is this user?** — validated session from Gateway
+2. **Is the session valid?** — check with Gateway
+3. **What role does this user have here?** — Platform Core permissions
+
+Any new application added to MyGrowNet must integrate with the Platform Authentication Gateway and must not implement its own login, registration, password reset, or session management.
+
+**What every module must expose:**
+```
+Instead of:
+  /login              ← ❌ no
+  /register           ← ❌ no
+  /forgot-password    ← ❌ no
+
+Modules expose only:
+  /                   ← landing or dashboard
+  /dashboard          ← authenticated home
+  /settings           ← user preferences
+  /profile            ← user profile
+  ... application-specific routes
+```
+
+There should never be `stockflow.mygrownet.com/login` or `growfinance.mygrownet.com/login`. Those URLs should either redirect to the platform login or — if already authenticated — continue into the application.
 
 ---
 
@@ -487,58 +558,561 @@ Medium — accessor coverage must be complete. Any missed field returns `null` s
 
 ---
 
-## Phase 8: Authentication Unification
+## Phase 8: MyGrow Identity & Centralized Authentication
 
 ### Goal
-Unify the three separate auth systems into a single identity gateway. This is intentionally late — auth touches everything and should only change once the Core, User model, and routing are stable.
+
+Eliminate **all** module-specific authentication systems. After Phase 8 there will be exactly one authentication system for the entire MyGrowNet platform — **MyGrow Identity**, hosted at `auth.mygrownet.com`.
+
+Authentication belongs exclusively to the Platform. Applications may authorize authenticated users but must **never** authenticate users themselves. This is a permanent architectural rule, not a temporary migration step.
+
+| Before Phase 8 | After Phase 8 |
+|---|---|
+| 3 auth guards (web, stockflow, primeedge) | 1 auth system (MyGrow Identity) |
+| 3 login pages across subdomains | 1 login page (`auth.mygrownet.com/login`) |
+| Applications own user tables | Platform owns all user records |
+| New apps must build auth from scratch | New apps integrate with MyGrow Identity — no auth code needed |
+| Password reset scattered per app | Password reset centralized |
+| Email verification duplicated per app | Email verification centralized |
+
+### Authentication vs Authorization
+
+A critical distinction that every developer must understand:
+
+| Authentication | Authorization |
+|---|---|
+| Login | Application Access |
+| Logout | Roles |
+| Registration | Permissions |
+| Password Reset | Organization Membership |
+| Email Verification | Feature Access |
+| Two-Factor Authentication | Workspace Resolution |
+| Session Management | Data-Level Permissions |
+| **Belongs to the Platform** | **Belongs to the Application** |
+
+Authentication answers *"who is this user?"* Authorization answers *"what can this user do?"* Applications may determine the latter but must **never** perform the former.
+
+### Application Authentication Rule
+
+Applications never authenticate users. Applications only determine:
+- Is the user authenticated? (check with MyGrow Identity)
+- Does the user have access? (check Platform Core permissions)
+- Which role does the user have? (check Platform Core roles)
+
+### Authentication Rules
+
+| Rule | Applies To |
+|---|---|
+| Only the Platform owns login | Every module, every subdomain |
+| Only the Platform owns registration | Every module, every subdomain |
+| Only the Platform owns password reset | Every module, every subdomain |
+| Only the Platform owns email verification | Every module, every subdomain |
+| Only the Platform owns two-factor authentication | Every module, every subdomain |
+| Modules never authenticate users | StockFlow, PrimeEdge, GrowNet, all current and future |
+| Modules never display login pages | StockFlow, PrimeEdge, GrowBuilder, all |
+| Modules trust the authenticated platform session | Every module |
+| Authentication is performed once per session | Every module |
+| Authorization is determined by the current app and permissions | Platform Core Access layer |
+
+### Authentication URLs
+
+All authentication is performed exclusively through `auth.mygrownet.com`:
+
+| URL | Purpose |
+|---|---|
+| `https://auth.mygrownet.com/login` | Login form |
+| `https://auth.mygrownet.com/logout` | Logout |
+| `https://auth.mygrownet.com/register` | Registration |
+| `https://auth.mygrownet.com/password/reset` | Password reset |
+| `https://auth.mygrownet.com/email/verify` | Email verification |
+| `https://auth.mygrownet.com/session/validate` | Session validation API |
+
+Applications should never implement these routes. MyGrow Identity is the single entry point for all authentication on the platform.
+
+### Identity Gateway Principles
+
+The Identity Gateway is the single authentication authority for the entire MyGrowNet platform.
+
+**Rules:**
+
+1. **Only `auth.mygrownet.com`** serves login, registration, password reset, email verification, and two-factor authentication.
+2. **Applications never authenticate users directly.** They may only verify that the platform session is valid.
+3. **Applications never maintain independent login pages.** If a user needs to authenticate, the application redirects to `auth.mygrownet.com/login` with a signed `return_url`.
+4. **Authentication cookies are issued for `.mygrownet.com`** to enable seamless navigation between applications without repeated logins.
+5. **Future OAuth2 or OpenID Connect support** will be implemented inside the Identity Gateway without changing application code.
+6. **Default destination:** Platform-originated logins (no `return_url`) go to `mygrownet.com/workspace`. Application-originated logins return to the calling application.
+
+### Problem
+
+Today authentication is scattered:
+
+| Application | Has /login | Has /register | Has /password/reset |
+|---|---|---|---|
+| Main site | ✅ | ✅ | ✅ |
+| StockFlow subdomain | ✅ | ❌ | ❌ |
+| PrimeEdge | ✅ | ✅ | ❌ |
+| GrowMart | ❌ | ❌ | ❌ |
+| BizBoost | ❌ | ❌ | ❌ |
+
+Each app that implements auth owns its own login page, session, and user table. This is duplication at best, a security risk at worst.
+
+There should never be `stockflow.mygrownet.com/login` or `growfinance.mygrownet.com/login`. Those URLs must redirect to `auth.mygrownet.com/login` or — if already authenticated — continue into the application.
+
+### Target Architecture
+
+**MyGrow Identity** is the single authentication authority for the entire platform. It is not just another application — it is the official identity service that every application trusts.
+
+```
+                    auth.mygrownet.com
+                           │
+                    MyGrow Identity
+                    (Platform Core)
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+   mygrownet.com     stockflow.      growbuilder.
+    /workspace       mygrownet.com   mygrownet.com
+    /apps
+    /marketing
+          │                │                │
+          └────────────────┼────────────────┘
+                     Shared Session
+                 (.mygrownet.com cookie)
+```
+
+**Every application delegates** authentication to `auth.mygrownet.com`. The shared session cookie at `.mygrownet.com` means a user logs in once and is authenticated everywhere.
+
+### Login Flow
+
+```
+User visits any application
+
+If not authenticated:
+
+stockflow.mygrownet.com
+        │
+        ▼
+Redirect to auth.mygrownet.com/login?return_url=...
+        │
+        ▼
+User logs in once
+        │
+        ▼
+Identity Gateway creates the session
+        │
+        ▼
+Browser receives cookie for SESSION_DOMAIN=.mygrownet.com
+        │
+        ▼
+Redirect back to return_url
+        │
+        ▼
+stockflow.mygrownet.com
+
+StockFlow sees the same session and does not ask for another login.
+```
+
+This is how Google, Microsoft, Atlassian, GitHub Enterprise, and most SaaS platforms operate.
+
+### Default Destination
+
+- **Platform-originated login** (user visits `auth.mygrownet.com/login` directly with no `return_url`): redirect to `mygrownet.com/workspace`
+- **Application-originated login** (user was redirected from `stockflow.mygrownet.com` with `return_url`): redirect back to the original application
+
+This keeps the experience consistent:
+- Users who start from the platform land in `/workspace`
+- Users who start from an application return directly to that application
+- Users authenticate only once across the entire MyGrowNet ecosystem
+
+### Identity vs Access
+
+Two distinct concerns that Platform Core must own separately:
+
+| Concept | Responsibility | Examples |
+|---|---|---|
+| **Identity** | Who the user is | User record, profile, organizations, auth providers |
+| **Access** | What the user can do | Roles, permissions, workspace resolver |
+
+MyGrow Identity belongs to the **Identity** concern. Roles and permissions belong to **Access**.
 
 ### Current Auth Landscape
-| Guard | User Table | Auth Style |
-|---|---|---|
-| `web` | `users` | Blade + session |
-| `stockflow` | `sa_users` | Controller + session |
-| `primeedge` | `prime_edge_clients` | Controller + session |
+| Guard | User Table | Auth Style | Has Own Login? |
+|---|---|---|---|
+| `web` | `users` | Blade + session | ✅ Main site → redirects to auth.mygrownet.com |
+| `stockflow` | `sa_users` | — | ❌ Dropped Phase 8d/8e — redirects to auth.mygrownet.com |
+| `primeedge` | `prime_edge_clients` | — | ❌ Removed Phase 8a, table dropped Phase 8e |
 
 ### Design Principles
-- **Identity-provider agnostic** — do not lock into Passport today. Design the abstraction to support Passport, Keycloak, Authentik, FusionAuth, Auth0, Clerk, or a custom solution.
-- **Evolutionary replacement** — existing auth continues working alongside the new unified gateway.
-- **Feature-flagged** — new login behind a config flag until validated.
+- **Applications never authenticate** — identity is a platform service, not an application concern.
+- **Single login surface** — `https://auth.mygrownet.com/login` for all applications.
+- **MyGrow Identity as the source of truth** — every application validates sessions/tokens against MyGrow Identity, not against its own user table.
+- **Identity-provider agnostic** — design the abstraction to support Passport, Keycloak, Authentik, FusionAuth, Auth0, or a custom solution without changing applications.
+- **Evolutionary replacement** — existing auth continues working alongside MyGrow Identity during transition.
+- **Applications own access, not identity** — StockFlow decides who can view reports, but MyGrow Identity decides who the user is.
+
+### What Each Application Loses
+
+| Feature | Before | After |
+|---|---|---|
+| Login page | Each app has one | MyGrow Identity only |
+| Register page | Each app has one | MyGrow Identity only |
+| Password reset | Each app has one | MyGrow Identity only |
+| Email verification | Each app does it | MyGrow Identity only |
+| 2FA | Scattered | MyGrow Identity only |
+| User table | Separate per app | Platform `users` table |
+| Auth middleware | Custom per guard | Gateway validation |
+
+### MyGrow Identity Components
+
+```
+MyGrow Identity (auth.mygrownet.com)
+├── Login                  (POST /login → session + redirect)
+├── Logout                 (POST /logout → invalidate session)
+├── Register               (POST /register → create user + redirect)
+├── Password Reset         (forgot / reset flows)
+├── Email Verification     (verify link → mark verified)
+├── Two-Factor Auth        (setup / verify / recovery codes)
+├── Session Validation     (validate cookie sessions for browser apps)
+├── Token Validation       (validate Sanctum tokens for mobile/API)
+├── Sanctum Token Minting  (issue API tokens — single authority)
+├── Application Redirect   (redirect back with signed+expiring return_url)
+└── Rate Limiting          (per-IP + per-user throttling, lockout, anomaly detection)
+```
 
 ### Steps
 
-#### 8.1 Populate `user_applications` for existing accounts
-Artisan command linking existing users across all three auth systems to their applications.
+Phase 8 is split into six sequenced sub-phases. Each has a clear deliverable, and later sub-phases are not started until the previous one is validated in production.
 
-#### 8.2 Design identity abstraction
+---
+
+#### Phase 8a: Foundation (completed)
+
+Clean up the dead `primeedge` guard and middleware that Phase 8b+ will not need. No new functionality — just removing what the gateway replaces.
+
+- Remove `primeedge` guard and provider from `config/auth.php` (no users ever existed)
+- Remove `ResolveSubdomainAuth` middleware (file deleted, entry removed from `bootstrap/app.php`)
+- Update PrimeEdge routes from `auth:primeedge` → `auth:web` and `guest:primeedge` → `guest`
+- Update architecture docs and ADR-006 to reflect MyGrow Identity naming
+- Mark `prime_edge/` migration folder as Legacy in AGENTS.md canonical table
+
+---
+
+#### Phase 8b: Build MyGrow Identity Gateway ✅ (Jul 2026)
+
+Gateway built at `auth.mygrownet.com` with 16 routes (login, register, password reset, email verify, 2FA, session validation), 7 Blade controllers, 7 Tailwind views. `DetectSubdomain` handler added. `HandleInertiaRequests` skips Inertia for gateway. 3 rate limiters registered. Sanctum token minting deferred — `mintToken()` throws until `composer require laravel/sanctum`.
+
+**8b.1 Design contract**
+
+Define the interface between applications and MyGrow Identity before writing code. Applications should not need to change when the underlying identity provider changes.
+
 ```php
-interface IdentityProvider
-{
-    public function authenticate(array $credentials): ?Identity;
-    public function getUser(Identity $identity): User;
-}
-
-// Laravel-specific implementation (can be swapped later)
-class LaravelIdentityProvider implements IdentityProvider { ... }
+// config/platform.php
+'identity' => [
+    'login_url' => env('IDENTITY_LOGIN_URL', 'https://auth.mygrownet.com/login'),
+    'register_url' => env('IDENTITY_REGISTER_URL', 'https://auth.mygrownet.com/register'),
+],
 ```
 
-#### 8.3 Unified login gateway (behind feature flag)
-A single `/login` endpoint that resolves the user regardless of auth system. Routes to the correct dashboard based on `user_applications`.
+Applications reference this config:
+```php
+redirect()->away(config('platform.identity.login_url') . '?return_url=' . urlencode($currentUrl));
+```
 
-#### 8.4 Cross-subdomain session resolution
-Enhance the existing `SESSION_DOMAIN` sharing with middleware that resolves the correct auth context per subdomain.
+```
+interface MyGrowIdentity
+{
+    public function authenticate(Request $request): AuthResult;
+    public function validateSession(string $token): ?User;  // supports cookie + token modes
+    public function redirectToLogin(string $returnUrl): RedirectResponse;
+    public function getLoginUrl(): string;
+}
+```
 
-#### 8.5 Deprecate standalone auth controllers
-Mark StockFlow and PrimeEdge auth controllers as deprecated. Add redirects to the unified gateway.
+**8b.2 Build the gateway routes**
+
+Create the shared auth routes under `routes/my-grow-identity.php`. These routes are served exclusively by `auth.mygrownet.com` — the dedicated identity subdomain within the same Laravel application:
+
+| Method | URI | Name | Purpose |
+|---|---|---|---|
+| GET | `/login` | `identity.login` | Login form |
+| POST | `/login` | `identity.login.store` | Authenticate |
+| POST | `/logout` | `identity.logout` | Logout |
+| GET | `/register` | `identity.register` | Registration form |
+| POST | `/register` | `identity.register.store` | Create account |
+| GET | `/password/reset` | `identity.password.request` | Forgot password |
+| POST | `/password/email` | `identity.password.email` | Send reset link |
+| GET | `/password/reset/{token}` | `identity.password.reset` | Reset form |
+| POST | `/password/reset` | `identity.password.update` | Save new password |
+| GET | `/email/verify/{id}/{hash}` | `identity.verification.verify` | Verify email |
+| POST | `/email/verification-notification` | `identity.verification.send` | Resend verification |
+| GET | `/session/validate` | `identity.session.validate` | Session + token validation API |
+| GET | `/2fa/setup` | `identity.2fa.setup` | Configure 2FA |
+| POST | `/2fa/verify` | `identity.2fa.verify` | Verify 2FA code |
+
+These routes are the only authentication routes on the entire platform. No application may expose its own versions.
+
+**8b.3 Session/token validation**
+
+`MyGrowIdentity::validateSession(string $token)` is designed from day one for two modes:
+
+- **Cookie-based** — browser requests on `.mygrownet.com` subdomains read the shared session
+- **Token-based** — mobile apps, API clients, and custom domains pass a Sanctum token or signed JWT
+
+The validator detects the request type and dispatches to the correct handler. MyGrow Identity is the issuing authority for both — tokens and sessions are minted by the gateway, not by individual applications.
+
+**8b.4 Sanctum integration**
+
+Phase 5's Public API uses Sanctum tokens. Phase 8 does not replace Sanctum — it becomes the single issuer:
+
+```
+                MyGrow Identity
+                       │
+          ┌────────────┴────────────┐
+          │                         │
+     Browser                   Mobile / API
+          │                         │
+     Session cookie           Sanctum token
+   (.mygrownet.com)     (minted by MyGrow Identity)
+          │                         │
+          └────────────┬────────────┘
+                       │
+              validateSession()
+              dispatches by request type
+```
+
+Sanctum tokens are minted by MyGrow Identity, not by StockFlow or any other application. Existing Sanctum tokens remain valid; new tokens go through the gateway.
+
+**8b.5 Rate limiting and abuse prevention**
+
+Consolidating all login attempts onto one endpoint raises the attack value proportionally. These protections are required, not optional:
+
+- `auth.mygrownet.com/login` uses Laravel's `RateLimiter` — per-IP limits (generous) and per-user throttling (aggressive, < 5 attempts/min)
+- Account lockout after N consecutive failures with exponential backoff
+- Anomaly detection for credential-stuffing patterns (e.g., same IP attempting logins for 50+ accounts)
+- All abuse metrics are logged and alertable
+
+---
+
+#### Phase 8c: Application Redirect Rollout ✅ (Jul 2026)
+
+`RedirectToMyGrowIdentity` middleware built with HMAC+expiry signing. Applied to StockFlow and PrimeEdge route groups. Per-app kill switches in `config/platform.php` (all default `false`). `identity.redirect` alias registered in Kernel. StockFlow AuthController and Admin AuthController rewritten as redirect proxies.
+
+**8c.1 Build the redirect middleware**
+
+Every application that previously owned its own auth must now redirect unauthenticated users to the gateway. **Open redirect protection is mandatory** — a raw `return_url` without validation creates a high-value phishing vector on the single login surface of the entire platform.
+
+The HMAC payload includes an expiry timestamp. A leaked `return_url` in browser history, server logs, or a screenshot is valid for only 5 minutes.
+
+```
+// Application middleware — generates a signed+timestamped return_url
+class RedirectToMyGrowIdentity
+{
+    public function handle($request, $next)
+    {
+        if (!Auth::check()) {
+            $returnUrl = $request->fullUrl();
+            $expires = time() + config('platform.identity.return_url_ttl', 300);
+            $payload = $returnUrl . '|' . $expires;
+            $signature = hash_hmac('sha256', $payload, config('platform.identity.signing_key'));
+            $loginUrl = config('platform.identity.login_url');
+            return redirect()->away($loginUrl
+                . '?return_url=' . urlencode($returnUrl)
+                . '&expires=' . $expires
+                . '&signature=' . $signature);
+        }
+        return $next($request);
+    }
+}
+```
+
+On the Identity Gateway side, before redirecting back:
+
+```
+// Gateway verifier — validate return_url before redirecting
+function validateReturnUrl(string $returnUrl, string $signature, int $expires): bool
+{
+    // 1. Expiry check — reject stale links
+    if (time() > $expires) {
+        return false;  // redirect to default workspace instead
+    }
+
+    // 2. HMAC verification
+    $payload = $returnUrl . '|' . $expires;
+    $expected = hash_hmac('sha256', $payload, config('platform.identity.signing_key'));
+    if (!hash_equals($expected, $signature)) {
+        return false;
+    }
+
+    // 3. Allow-list enforcement
+    $host = parse_url($returnUrl, PHP_URL_HOST);
+    $allowed = config('platform.identity.allowed_return_hosts', ['*.mygrownet.com']);
+    foreach ($allowed as $pattern) {
+        if (fnmatch($pattern, $host)) {
+            return true;
+        }
+    }
+
+    return false; // host not in allow-list — redirect to workspace instead
+}
+```
+
+Full config:
+
+```php
+// config/platform.php
+'identity' => [
+    'login_url'            => env('IDENTITY_LOGIN_URL', 'https://auth.mygrownet.com/login'),
+    'register_url'         => env('IDENTITY_REGISTER_URL', 'https://auth.mygrownet.com/register'),
+    'signing_key'          => env('IDENTITY_SIGNING_KEY'),          // HMAC key shared between apps and gateway
+    'return_url_ttl'       => env('IDENTITY_RETURN_URL_TTL', 300),  // seconds
+    'allowed_return_hosts' => ['*.mygrownet.com'],
+    'app_redirect_enabled' => [     // per-app kill switch — all default false
+        'stockflow'   => env('IDENTITY_REDIRECT_STOCKFLOW', false),
+        'growbuilder' => env('IDENTITY_REDIRECT_GROWBUILDER', false),
+    ],
+],
+```
+
+**Never delete authentication code immediately.** Old auth pages remain deployed as redirect proxies until validated:
+
+```php
+// StockFlow login route becomes a signed, expiring redirect proxy:
+Route::get('/login', function () {
+    $returnUrl = request()->fullUrl();
+    $expires = time() + config('platform.identity.return_url_ttl', 300);
+    $payload = $returnUrl . '|' . $expires;
+    $signature = hash_hmac('sha256', $payload, config('platform.identity.signing_key'));
+    return redirect()->away(config('platform.identity.login_url')
+        . '?return_url=' . urlencode($returnUrl)
+        . '&expires=' . $expires
+        . '&signature=' . $signature
+        . '&app=stockflow');
+})->name('stockflow.sub.login');
+```
+
+**8c.2 Per-app rollout**
+
+1. Set `IDENTITY_REDIRECT_STOCKFLOW=true` in production `.env` for the first application
+2. Monitor authentication success rates, error logs, and support tickets
+3. If something breaks, flip back to `false` — old auth is still deployed and functional
+4. Only after validation, move to the next application
+5. Repeat until every application's flag is `true`
+
+**8c.3 Remove old auth pages per-app**
+
+Once an application has been running on gateway redirects in production with zero incidents:
+- Delete its standalone `LoginController`, `RegisterController`, etc.
+- Remove its auth route definitions (not the redirect proxy — that stays)
+- Remove its application-level `Auth` middleware references
+
+---
+
+#### Phase 8d: StockFlow Migration ✅ (Jul 2026)
+
+StockFlow guard and `stockflow_users` provider removed from `config/auth.php`. `auth:stockflow` → `auth:web` in all route files. `StockFlowPermission`, `StockFlowAdminMiddleware`, `LandingController` updated to use `Auth::guard('web')`. `HandleInertiaRequests`, `ShareModulesData`, `LaravelIdentityProvider` cleaned of SaUserModel references. `stockflow:check-guard-usage` command created. **No exit criterion wait** — StockFlow had 0 real users, making guard removal safe immediately.
+
+**Completed actions:**
+1. ✅ Audit determined StockFlow had 0 real users and PrimeEdge had 0 users — exit criterion was effectively met
+2. ✅ Guard and provider removed from `config/auth.php`
+3. ✅ All routes changed from `auth:stockflow` → `auth:web`
+4. ✅ `SaUserModel.php` deleted
+5. ✅ StockFlow auth controllers rewritten as redirect proxies
+6. ✅ `MergeDuplicateUsers` command created (runs before table drop as safety net)
+7. ✅ Redirect middleware enabled for StockFlow routes
+
+---
+
+#### Phase 8e: Legacy Table Decommissioning ✅ (Jul 2026)
+
+`SaUserModel.php` deleted. `MergeDuplicateUsers` command created. Migration `2026_07_21_000001_drop_legacy_user_tables.php` drops `sa_users` and `prime_edge_clients` with FK cleanup. No real users existed in either table — all code actions completed, migration runs on deploy.
+
+---
+
+#### Phase 8f: Custom Domain SSO (designed, implementation deferred)
+
+The gateway supports custom domains (e.g., `taradasidental.com`) that cannot share `.mygrownet.com` cookies. The interface handles this from day one (`validateSession(string $token)`), but the implementation is deferred until an organization actually requests a custom domain.
+
+**8f.1 JWT exchange flow**
+
+```
+Custom domain → redirect to auth.mygrownet.com/login
+    → authenticate
+    → gateway issues short-lived signed JWT
+    → redirect back to custom domain with JWT in URL
+    → application validates JWT against validateSession() API
+```
+
+**8f.2 JWT replay protection**
+
+The JWT travels as a URL query parameter, which means it can appear in server access logs and Referer headers. Two mitigation options — decide during staging security review before enabling custom domains:
+
+- **Single-use nonce (jti):** Include a unique `jti` claim in the JWT. Gateway tracks used `jti` values (Redis, TTL = JWT lifetime). A replayed URL with the same `jti` is rejected.
+- **POST redirect:** Gateway auto-submits a hidden form that delivers the JWT in the request body instead of the query string, keeping it out of access logs and Referer headers.
 
 ### Verification
-- Existing auth for all three systems continues working
-- New unified login works for all user types
-- `user_applications` table populated
-- No duplicate sessions or auth conflicts
-- Feature flag disables the new flow entirely when off
+
+**Authentication flow:**
+- An unauthenticated visitor to `stockflow.mygrownet.com` is redirected to `auth.mygrownet.com/login`
+- After login, they are redirected back to their original application
+- Password reset, email verification, and 2FA all work through MyGrow Identity
+- No application has its own `/login` or `/register` route that authenticates — StockFlow routes are signed HMAC redirect proxies
+- `config('platform.identity.login_url')` is the single source of truth for the login URL
+- The `stockflow` guard has been removed (Phase 8d) — all apps use the `web` guard
+- New applications integrate with MyGrow Identity without writing auth code
+
+**Security (open redirect protection):**
+- `return_url` is HMAC-signed by the originating application, verified by the gateway
+- HMAC payload includes an expiry timestamp — links are rejected after `return_url_ttl` (default 300s)
+- Gateway enforces allow-list (`*.mygrownet.com` or explicitly configured hosts)
+- Rejected signatures, expired links, or hosts not in allow-list redirect to `mygrownet.com/workspace` instead
+
+**Rate limiting & abuse prevention (single high-value endpoint):**
+- `auth.mygrownet.com/login` uses Laravel's `RateLimiter` — per-IP limits (generous) and per-user throttling (aggressive, < 5 attempts/min)
+- Account lockout after N consecutive failures, with exponential backoff
+- Anomaly detection (e.g., same IP attempting logins for 50 different accounts) flagged via notification
+- These protections are required, not optional — consolidating all login attempts onto one endpoint raises the attack value proportionally
+
+**Kill switch (per-app feature flag):**
+- Each application has `config('platform.identity.app_redirect_enabled.{app_slug}')` — defaults to `false`
+- Flipped to `true` only after that specific app is validated in production
+- If a rollout breaks for one app, flip that app's flag back to `false` without affecting any other app
+- The old auth code remains deployed and functional until every app is validated and the flag is removed
+
+**Token-based validation (custom domains, mobile, API):**
+- `MyGrowIdentity::validateSession(string $token)` supports both cookie-based (browser → `.mygrownet.com` cookie) and token-based (custom domains, mobile apps, partner integrations) validation
+- Browser requests: session cookie → auto-detected
+- Mobile/API requests: Sanctum token → validated by MyGrow Identity
+- MyGrow Identity is the issuing authority for both — Sanctum tokens are minted by MyGrow Identity, not by individual applications
+
+**Custom domain SSO:**
+- For custom domains (e.g., `taradasidental.com`) that cannot share `.mygrownet.com` cookies, authentication uses a signed JWT exchange instead of a shared session
+- Flow: custom domain → redirect to `auth.mygrownet.com/login` → authenticate → gateway issues short-lived signed JWT → return to custom domain → application validates JWT against `validateSession()` API
+- The interface supports both modes from day one — see `validateSession(string $token)` in the contract
+
+**⚠️ JWT replay protection:** The JWT travels as a URL query parameter on the redirect, which means it can appear in server access logs and Referer headers. Two mitigation options (choose one during implementation):
+  - **Single-use nonce (jti):** Include a unique `jti` claim in the JWT. The gateway tracks used `jti` values (Redis, TTL = JWT lifetime). A replayed URL with the same `jti` is rejected.
+  - **POST redirect:** Instead of a GET redirect with the JWT in the query string, the gateway auto-submits a hidden form (POST) that delivers the JWT in the request body, keeping it out of access logs and Referer headers.
+
+Neither blocks implementation — decide during staging security review.
+
+**Local development:**
+- Use `*.mygrow.test` via `/etc/hosts` (or Laravel Herd/Valet) so the `.mygrow.test` session cookie works across subdomains
+- `SESSION_DOMAIN=.mygrow.test` in `.env` for local development
+- The `allowed_return_hosts` allow-list must include `*.mygrow.test` in non-production environments
+
+**Legacy table decommissioning:**
+- `MergeDuplicateUsers` command runs before any table is dropped
+- Every merge action is logged for audit
+- Ambiguous cases require manual review — no silent data loss
 
 ### Risk
-High — auth is the most sensitive subsystem. Must be feature-flagged and validated on staging against real account types before production rollout.
+High — auth is the most sensitive subsystem. Must be validated on staging against real account types before production rollout. The sub-phase structure (8a → 8b → 8c → 8d → 8e → 8f) with per-app kill switches ensures a failure in one application never affects others. Phases 8b–8e are code-complete; 8f deferred. Sanctum must be installed (`composer require laravel/sanctum && php artisan install:api`) for token minting to work.
+
+### What Phase 8 is NOT
+- It is NOT a microservice extraction — MyGrow Identity lives inside the monolith at `auth.mygrownet.com`
+- It is NOT a replacement for Sanctum — Phase 5's Public API continues using Sanctum tokens for mobile/API auth. MyGrow Identity mints both: Sanctum tokens for mobile/API, sessions for browser. `validateSession()` dispatches to the correct validator based on request type. (Note: Sanctum not yet installed — `mintToken()` throws at runtime.)
+- It is NOT a rewrite of working auth — existing auth is redirected through MyGrow Identity by signed HMAC proxies, not replaced overnight
+- It is NOT optional for new applications — any application added to MyGrowNet after Phase 8 must integrate with MyGrow Identity and must not implement its own auth
 
 ---
 
@@ -597,7 +1171,7 @@ Document options for scaling modules independently — only if operational needs
 ### Candidates
 | Module | Decoupling Level | Extraction Complexity |
 |---|---|---|
-| StockFlow | High (full DDD, own auth, own subdomain) | Low |
+| StockFlow | High (full DDD, own subdomain) | Low |
 | PrimeEdge | High (own guard, own user table) | Low |
 | GrowMart | Medium (partial DDD, minimal User coupling) | Medium |
 | CMS (BMS) | Low (100 tables, complex routing) | High |
@@ -641,7 +1215,7 @@ Full regression test suite must pass after each removal.
 | **5** | Platform APIs (design) | Phase 4 | Low |
 | **6** | Application-Aware Roles | Phase 1, 4 | Low |
 | **7** | User Model Decomposition | Phase 6 | Medium |
-| **8** | Authentication Unification | Phase 3, 7 | High |
+| **8** | MyGrow Identity & Centralized Authentication (6 sub-phases: 8a ✅, 8b ✅, 8c ✅, 8d ✅, 8e ✅, 8f ⏳ Custom Domains deferred) | Phase 3, 7 | High |
 | **9** | Platform Events & Shared Services | Phase 4, 6 | Low |
 | **10** | Future Scaling Options (decision point) | All above | N/A |
 | **11** | Deprecation Cleanup | All above | Medium |
@@ -659,7 +1233,7 @@ Before beginning implementation, create one-page Architecture Decision Records (
 | ADR-003 | Organizations Model (canonical business entity) |
 | ADR-004 | Parallel Routing (RoutingEngine + DetectSubdomain) |
 | ADR-005 | Application Registry (DB identity + config behavior) |
-| ADR-006 | Authentication Unification (identity-provider agnostic, deferred) |
+| ADR-006 | MyGrow Identity & Centralized Authentication |
 | ADR-007 | Event-Driven Cross-Module Communication |
 
 Each ADR should contain: **Context → Decision → Consequences** — one page, no more.
@@ -672,10 +1246,11 @@ Each ADR should contain: **Context → Decision → Consequences** — one page,
 2. **Feature flags** — new behavior behind config flags until validated
 3. **Parallel run** — old and new systems run concurrently during transition
 4. **Rollback always possible** — each phase can be rolled back independently
-5. **Auth is last** — authentication should not change until the Core, User model, and routing are stable
-6. **No microservices** — modular monolith unless extraction is proven necessary by operational data
-7. **Config over DB for runtime behavior** — database identifies; config determines behavior
-8. **Identity-provider agnostic** — abstract auth so Passport, Keycloak, Auth0, or custom can be swapped
-9. **Platform Core** — the core depends on nothing; every module depends on the core
-10. **Module versioning** — each module versions independently; Core defines compatibility contracts
-11. **Platform Core owns shared concerns** — if two or more applications require the same capability, evaluate moving it into Platform Core instead of duplicating it in each module
+5. **Authentication belongs exclusively to the Platform** — applications may authorize, but never authenticate. This is permanent, not temporary.
+6. **Only one authentication system** — after Phase 8, there will be exactly one auth system for the entire platform. This is not negotiable for future applications.
+7. **No microservices** — modular monolith unless extraction is proven necessary by operational data
+8. **Config over DB for runtime behavior** — database identifies; config determines behavior
+9. **Identity-provider agnostic** — abstract auth so Passport, Keycloak, Auth0, or custom can be swapped without changing applications
+10. **Platform Core** — the core depends on nothing; every module depends on the core
+11. **Module versioning** — each module versions independently; Core defines compatibility contracts
+12. **Platform Core owns shared concerns** — if two or more applications require the same capability, evaluate moving it into Platform Core instead of duplicating it in each module

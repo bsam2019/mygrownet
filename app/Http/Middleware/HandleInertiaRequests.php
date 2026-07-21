@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Core\Models\Domain;
-use App\Infrastructure\Persistence\Eloquent\StockFlow\SaUserModel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -24,6 +23,11 @@ class HandleInertiaRequests extends Middleware
     public function rootView(Request $request): string
     {
         $host = $request->getHost();
+
+        // MyGrow Identity Gateway — uses Blade views, not Inertia
+        if ($request->attributes->has('identity_gateway')) {
+            return 'identity.layout';
+        }
 
         // Check if this is a StockFlow company subdomain
         if ($request->attributes->has('stockflow_company_id')) {
@@ -89,52 +93,44 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // MyGrow Identity Gateway — no Inertia data needed
+        if ($request->attributes->has('identity_gateway')) {
+            return [...parent::share($request), 'csrf_token' => csrf_token()];
+        }
+
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        // Use the correct auth guard for StockFlow subdomains.
-        // The default $request->user() uses the 'web' guard, but StockFlow
-        // users authenticate via the 'stockflow' guard. Routes inside the
-        // auth:stockflow middleware group switch the guard before Inertia
-        // renders the response, but the dashboard (GET /) is outside that
-        // group, so we must explicitly fall back to the stockflow guard.
+        // StockFlow guard removed Phase 8d — all users authenticate via web guard
         $user = $request->user();
-        if (!$user && $request->attributes->has('stockflow_company_id')) {
-            $user = Auth::guard('stockflow')->user();
-        }
 
         // Prepare lightweight user payload with cached roles and permissions
         $authUser = null;
         if ($user) {
-            // StockFlow users use SaUserModel which has no roles() relationship
-            if ($user instanceof SaUserModel) {
-                $authUser = $user->only(['id', 'name', 'email']);
-            } else {
-                // Use cache to avoid loading roles/permissions on every request
-                $cacheKey = "user_auth_data_{$user->id}";
-                $authData = cache()->remember($cacheKey, 300, function () use ($user) { // 5 min cache
-                    $roles = $user->roles()->pluck('slug')->toArray();
-                    $permissions = $user->roles()
-                        ->with('permissions:id,slug')
-                        ->get()
-                        ->pluck('permissions')
-                        ->flatten()
-                        ->pluck('slug')
-                        ->unique()
-                        ->values()
-                        ->toArray();
+            // Use cache to avoid loading roles/permissions on every request
+            $cacheKey = "user_auth_data_{$user->id}";
+            $authData = cache()->remember($cacheKey, 300, function () use ($user) {
+                $roles = $user->roles()->pluck('slug')->toArray();
+                $permissions = $user->roles()
+                    ->with('permissions:id,slug')
+                    ->get()
+                    ->pluck('permissions')
+                    ->flatten()
+                    ->pluck('slug')
+                    ->unique()
+                    ->values()
+                    ->toArray();
 
-                    return [
-                        'roles' => $roles,
-                        'permissions' => $permissions,
-                        'application_roles' => $user->getAllApplicationRoles(),
-                    ];
-                });
+                return [
+                    'roles' => $roles,
+                    'permissions' => $permissions,
+                    'application_roles' => $user->getAllApplicationRoles(),
+                ];
+            });
 
-                $authUser = array_merge(
-                    $user->only(['id', 'name', 'email']),
-                    $authData
-                );
-            }
+            $authUser = array_merge(
+                $user->only(['id', 'name', 'email']),
+                $authData
+            );
         }
 
         // Get support stats for admin users

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
-/** @deprecated Use App\Http\Controllers\Platform\UnifiedAuthController instead. Will be removed after Phase 8 validation. */
+/** @deprecated Use App\Http\Controllers\Platform\UnifiedAuthController instead. Will be removed after Phase 8 cleanup. */
 class AuthenticatedSessionController extends Controller
 {
     public function create()
@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::guard('primeedge')->attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('web')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             return redirect()->intended(route('primeedge.dashboard'));
         }
@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request)
     {
-        Auth::guard('primeedge')->logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

@@ -11,7 +11,7 @@ class StockFlowAdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::guard('stockflow')->user();
+        $user = Auth::guard('web')->user();
 
         if (!$user) {
             return redirect()->route('stockflow.admin.login');

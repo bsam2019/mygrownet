@@ -26,6 +26,25 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // MyGrow Identity rate limiters (Phase 8b)
+        // Per-IP throttling for the single login endpoint
+        RateLimiter::for('identity-login-ip', function (Request $request) {
+            return Limit::perMinute(config('platform.identity.rate_limiting.per_ip', 20))
+                ->by($request->ip());
+        });
+
+        // Per-user throttling for brute-force protection
+        RateLimiter::for('identity-login-user', function (Request $request) {
+            $email = $request->input('email', '');
+            return Limit::perMinute(config('platform.identity.rate_limiting.per_user', 5))
+                ->by($email ? strtolower($email) . '|' . $request->ip() : $request->ip());
+        });
+
+        // Session validation API rate limiting
+        RateLimiter::for('identity-session-validate', function (Request $request) {
+            return Limit::perMinute(120)->by($request->ip());
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

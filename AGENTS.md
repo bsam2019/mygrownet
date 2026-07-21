@@ -14,10 +14,16 @@
 |---|---|---|---|
 | `core/` | Platform Core (orgs, apps, org_id FK) | `CoreServiceProvider` | ✅ Active |
 | `zamstay/` | ZamStay | `ZamStayServiceProvider` | ✅ Active |
-| `prime_edge/` | PrimeEdge | (check ServiceProvider) | ✅ Active |
+| `prime_edge/` | PrimeEdge | (check ServiceProvider) | ⚠️ Legacy — guard removed Phase 8a, table dropped Phase 8e, no users ever existed |
 | (root) | StockFlow, CMS, BizBoost, GrowBuilder, GrowMart, GrowBiz, Employee, etc. | Laravel auto-loader | ⚠️ Legacy — migrate to subfolders later |
+| `core/` | BizBoost, GrowBiz, BizDocs, QuickInvoice company stubs | `CoreServiceProvider` | ✅ New — `organization_id` FK columns added Jul 2026 |
 
 **Rule:** Before creating `database/migrations/{name}/`, check this table. If the module already has a folder, use it. If root, create a new folder with the exact module slug. Register via ServiceProvider. **Never** use a different name for the same module (e.g. `stock-audit/` instead of `stockflow/`, or `platform/` instead of `core/`).
+
+## CMS/BMS Namespace Migration (Completed Jul 2026)
+The CMS models were moved from `App\Infrastructure\Persistence\Eloquent\CMS\` to `App\Infrastructure\Persistence\Eloquent\BMS\`. A one-time script replaced all 127 imports across `app/` and `database/` seeders. The old `CMS\` namespace directory has been deleted.
+
+**Note on naming:** Several model classes retain "Cms" in their class name (e.g. `CmsUserModel`, `CmsUser`) despite being in the `BMS\` namespace. These are pre-existing names and don't affect functionality — the class names match historical CMS terminology.
 
 ## Common Issues & Fixes
 - **Login modal 404 or redirects to old page**: Cached routes in production don't include POST /login. **Fix**: SSH to server, run `php artisan route:clear && php artisan route:cache`. See `DEPLOYMENT_FIX.md` and `docs/LOGIN_MODAL_TROUBLESHOOTING.md`.
@@ -29,6 +35,7 @@
 - **ZamStay 500 error**: Caused by missing subdomain handler in `DetectSubdomain` middleware and unloaded zamstay migrations. **Fix**: Added `zamstay` handler to `DetectSubdomain.php`, created `ZamStayServiceProvider` to load `database/migrations/zamstay/`, removed double route loading from `RouteServiceProvider`. After pulling on production: run `php artisan migrate --path=database/migrations/zamstay` then `php artisan optimize`.
 - **StockFlow subdomain "Page not found: ./pages/auth/Login.vue"**: Route cache or outdated frontend build. **Fix**: Run `bash fix-stockflow-production.sh` or manually: `php artisan route:clear && php artisan route:cache && php artisan optimize`. See `docs/STOCKFLOW_SUBDOMAIN_FIX.md` and `DEPLOY_STOCKFLOW_FIX.md` for complete guide.
 - **Migration errors (table/column already exists)**: Migrations fail because schema elements exist from previous runs. **Fix**: Mark all pending migrations as complete using `php artisan migrate:mark-complete` command. See `docs/PROPER_MIGRATION_FIX.md`. This is safer than fixing hundreds of migration files individually.
+- **StockFlow login redirects to auth.mygrownet.com and back in loop**: Sessions not shared across subdomains or redirect middleware configured before auth resolves. **Fix**: Ensure `SESSION_DOMAIN=.mygrownet.com` in production .env, and check that `IDENTITY_REDIRECT_STOCKFLOW` is not `true` until migration is validated.
 
 ## Deployment
 1. Commit and push to `origin/main` on local
@@ -37,11 +44,13 @@
 4. Run `php artisan optimize` (config, routes, events cached)
 5. Built frontend assets must be deployed separately (build locally then upload or use CI)
 6. **Production only**: Ensure `.env` has `SESSION_DOMAIN=.mygrownet.com` for cross-subdomain auth
+7. **After Phase 8 pull**: Run `php artisan migrate --path=database/migrations/2026_07_21_000001_drop_legacy_user_tables.php` then `php artisan route:clear && php artisan route:cache`
 
 **Quick script**: `bash fix-production.sh` (runs all cache clear/rebuild commands)
 
 ## Routes
 - Auth: `GET|HEAD auth/google` and `GET|HEAD auth/google/callback` — no prefix, no subdomain
+- Identity Gateway: 16 routes in `routes/my-grow-identity.php` served exclusively by `auth.mygrownet.com` (login, register, password reset, email verify, 2FA, session validation)
 - Each subdomain needs its own callback URL registered in Google Cloud Console
 
 ### Workspace Routes (authenticated)
@@ -51,6 +60,10 @@
 | POST | `/workspace/switch-context` | `workspace.switch-context` | `WorkspaceController@switchContext` |
 | POST | `/workspace/launch/{application}` | `workspace.launch` | `WorkspaceController@launch` |
 | GET | `/org/{slug}` | `workspace.organization` | `OrganizationWorkspaceController@show` |
+| GET | `/organizations/create` | `workspace.organization.create` | `OrganizationWorkspaceController@create` |
+| POST | `/organizations` | `workspace.organization.store` | `OrganizationWorkspaceController@store` |
+| POST | `/org/{slug}/install/{application}` | `workspace.organization.install` | `OrganizationWorkspaceController@install` |
+| GET | `/apps` | `apps.catalog` | `WorkspaceController@catalog` |
 | GET | `/dashboard` | — | 301 → `/workspace` |
 | GET | `/_platform/workspace` | — | `WorkspaceResolver` diagnostic |
 
@@ -68,6 +81,7 @@
 |---|---|
 | `ensure.organization.access` | `EnsureOrganizationAccess` |
 | `ensure.application.access` | `EnsureApplicationAccess` |
+| `identity.redirect` | `RedirectToMyGrowIdentity` |
 
 ## PrimeEdge Advisory Subdomain Setup
 - **DNS**: Create `CNAME primeedge` pointing to `mygrownet.com` (or A record to droplet IP)
@@ -237,3 +251,38 @@ Available in Vue as `usePage().props.workspace`.
 - Architecture Decision Records at `docs/adr/ADR-001` through `ADR-007`
 - Platform event bus: OrganizationCreated, OrganizationArchived, MemberAdded, ApplicationSubscribed events dispatch automatically; listeners live in target modules (StockFlow, CMS)
 - Shared services contracts reserved at `docs/platform-evolution/SHARED_SERVICES.md` (Storage, Search, Payment, Audit, AI, Reporting)
+
+### Application Authentication Rule
+Applications do not authenticate users. They only verify that the Platform Core has already authenticated the user and that the user has permission to access the application.
+
+```
+Identity Gateway (Platform Core)
+    │
+Authenticates User
+    │
+Creates Session / Issues Token
+    │
+Redirects to Application
+    │
+▼
+Application
+    │
+Checks:
+• Is user authenticated? (validate session/token with Gateway)
+• Does user have access?  (check Platform Core permissions)
+    │
+▼
+Open application
+```
+
+### Identity Design Principle
+Design around a **Platform Identity** that every application trusts. Today that identity may use the `web` guard and a shared session (`SESSION_DOMAIN=.mygrownet.com`). In the future it could be backed by an Identity Gateway inside Platform Core — a shared authentication service that every application delegates to, without each app owning its own login.
+
+### Auth Landscape (Phase 8a–8e Completed Jul 2026)
+The `primeedge` and `stockflow` guards have been removed (no real users ever existed for `primeedge`; StockFlow had one test user). `ResolveSubdomainAuth` middleware deleted. `SaUserModel` deleted. `sa_users` and `prime_edge_clients` tables dropped via migration.
+
+| Guard | Table | Status |
+|---|---|---|
+| `web` | `users` | **Only** authentication system — all apps target this |
+
+**Phase 8 (MyGrow Identity & Centralized Authentication)** built `auth.mygrownet.com` as the shared identity gateway. All applications redirect to `auth.mygrownet.com/login` via `RedirectToMyGrowIdentity` middleware (per-app kill switch in `config/platform.php`). StockFlow login routes now act as signed HMAC redirect proxies. Sanctum needs installation for token minting to work.
