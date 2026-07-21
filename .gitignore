@@ -39,3 +39,6 @@ Thumbs.db
 docker-compose.override.yml
 
 ..mygrownet-feature2/
+
+# Vite generated dependency chunks (regenerated on dev/build)
+.vite/deps/
